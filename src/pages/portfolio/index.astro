@@ -1,0 +1,25 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+import { getWriteups } from '@lib/content';
+
+const writeups = await getWriteups();
+---
+
+<BaseLayout
+  seo={{
+    title: 'Portfolio',
+    description: 'Cybersecurity, infrastructure, and software project writeups by Joe Severino.',
+    path: '/portfolio/',
+  }}
+>
+  <main class="wide section">
+    <header class="page-header">
+      <h1 class="page-title">Portfolio</h1>
+    </header>
+    <hr class="page-divider" />
+    <ul class="project-grid">
+      {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+    </ul>
+  </main>
+</BaseLayout>

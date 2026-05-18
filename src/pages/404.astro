@@ -1,0 +1,13 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+---
+
+<BaseLayout seo={{ title: 'Page Not Found', description: 'The requested page could not be found.', path: '/404.html', noindex: true }}>
+  <main class="container section">
+    <h1 class="section-title">Page Not Found</h1>
+    <div class="prose">
+      <p>The page you were looking for does not exist.</p>
+      <p><a class="button" href="/portfolio/">View Portfolio</a></p>
+    </div>
+  </main>
+</BaseLayout>

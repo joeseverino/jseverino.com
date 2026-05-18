@@ -1,0 +1,31 @@
+---
+import { formatDate, type Writeup } from '@lib/content';
+
+type Props = {
+  writeup: Writeup;
+  eager?: boolean;
+};
+
+const { writeup, eager = false } = Astro.props;
+---
+
+<li class="project-card">
+  <h4 class="project-card-title">
+    <a href={`/portfolio/${writeup.slug}/`} target="_self">{writeup.title}</a>
+  </h4>
+  <figure class="project-card-media">
+    <a href={`/portfolio/${writeup.slug}/`} target="_self">
+      <img
+        loading={eager ? undefined : 'lazy'}
+        fetchpriority={eager ? 'high' : undefined}
+        decoding="async"
+        src={writeup.heroImage}
+        alt={writeup.title}
+      />
+    </a>
+  </figure>
+  <p class="project-card-summary">{writeup.excerpt}</p>
+  <div class="project-card-date">
+    <time datetime={writeup.date}>{formatDate(writeup.date)}</time>
+  </div>
+</li>

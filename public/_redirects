@@ -1,0 +1,10 @@
+# Cloudflare Pages redirects — see https://developers.cloudflare.com/pages/configuration/redirects/
+# Format:  <source>  <destination>  [<status>]
+#
+# Note: Pages only supports 3xx (redirect) and 200 (rewrite) statuses here.
+# To make a path return 404, just leave it unmatched and rely on the
+# `404.html` file at the site root, which Pages auto-serves with status 404.
+
+# WordPress admin paths — redirect home (admin doesn't exist on the static surface).
+/wp-admin/*          /                                   302
+/wp-login.php        /                                   302

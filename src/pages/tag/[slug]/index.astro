@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+import { getAllTags, getWriteups, titleCase } from '@lib/content';
+
+export async function getStaticPaths() {
+  return (await getAllTags()).map((tag) => ({
+    params: { slug: tag.slug },
+    props: { tag },
+  }));
+}
+
+const { tag } = Astro.props;
+const writeups = (await getWriteups()).filter((writeup) => writeup.technologies.includes(tag.slug));
+---
+
+<BaseLayout
+  seo={{
+    title: titleCase(tag.slug),
+    description: `Portfolio writeups tagged ${titleCase(tag.slug)}.`,
+    path: `/tag/${tag.slug}/`,
+  }}
+>
+  <main class="wide section">
+    <header class="page-header">
+      <h1 class="page-title">Tag: {titleCase(tag.slug)}</h1>
+    </header>
+    <hr class="page-divider" />
+    <ul class="project-grid">
+      {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+    </ul>
+  </main>
+</BaseLayout>
