@@ -1,0 +1,44 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+import TechnologyCloud from '@components/TechnologyCloud.astro';
+import { getFeaturedWriteups, getPage, renderPageMarkdown } from '@lib/content';
+
+const page = await getPage('home');
+const featured = await getFeaturedWriteups();
+const contentBlocks = page.body.split(/(::featured-projects\s*::|::technology-cloud\s*::)/g).filter(Boolean);
+---
+
+<BaseLayout
+  seo={{
+    title: page.title,
+    description: page.description,
+    path: page.path,
+  }}
+>
+  <main>
+    {
+      contentBlocks.map((block) => {
+        if (block.startsWith('::featured-projects')) {
+          return (
+            <section class="wide section">
+              <ul class="project-grid">
+                {featured.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+              </ul>
+            </section>
+          );
+        }
+
+        if (block.startsWith('::technology-cloud')) {
+          return (
+            <section class="container section">
+              <TechnologyCloud />
+            </section>
+          );
+        }
+
+        return <div class="home-content" set:html={renderPageMarkdown(block)} />;
+      })
+    }
+  </main>
+</BaseLayout>

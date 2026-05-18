@@ -1,0 +1,28 @@
+---
+import { getAllTags, getTechnologyGroups, titleCase } from '@lib/content';
+
+const availableTags = new Set((await getAllTags()).map((tag) => tag.slug));
+const groups = getTechnologyGroups()
+  .map((group) => ({
+    ...group,
+    tags: group.tags.filter((tag) => availableTags.has(tag)),
+  }))
+  .filter((group) => group.tags.length > 0);
+---
+
+<div class="tag-groups">
+  {
+    groups.map((group) => (
+      <div>
+        <h3 class="tag-group-title">{group.name}</h3>
+        <div class="tag-list">
+          {group.tags.map((tag) => (
+            <a class="tag" href={`/tag/${tag}/`}>
+              {titleCase(tag)}
+            </a>
+          ))}
+        </div>
+      </div>
+    ))
+  }
+</div>

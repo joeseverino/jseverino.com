@@ -1,0 +1,69 @@
+---
+import { site } from '@lib/site';
+
+type Props = {
+  title?: string;
+  description?: string;
+  path?: string;
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  tags?: string[];
+};
+
+const {
+  title = site.defaultTitle,
+  description = site.defaultDescription,
+  path = Astro.url.pathname,
+  image = site.defaultOgImage,
+  type = 'website',
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  tags = [],
+} = Astro.props;
+
+const canonical = new URL(path, site.url).href;
+const ogImage = new URL(image, site.url).href;
+const fullTitle = title === site.defaultTitle ? title : `${title} | Joe Severino`;
+const jsonLd =
+  type === 'article'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: title,
+        description,
+        url: canonical,
+        image: ogImage,
+        datePublished: publishedTime,
+        dateModified: modifiedTime || publishedTime,
+        keywords: tags,
+        author: { '@type': 'Person', name: 'Joe Severino', url: site.url },
+      }
+    : {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: site.name,
+        url: site.url,
+      };
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+<link rel="canonical" href={canonical} />
+<meta property="og:type" content={type} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogImage} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+{tags.map((tag) => <meta property="article:tag" content={tag} />)}
+<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />

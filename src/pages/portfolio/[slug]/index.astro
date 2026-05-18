@@ -1,0 +1,54 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { formatDate, getWriteups, titleCase } from '@lib/content';
+
+export async function getStaticPaths() {
+  return (await getWriteups()).map((writeup) => ({
+    params: { slug: writeup.slug },
+    props: { writeup },
+  }));
+}
+
+const { writeup } = Astro.props;
+---
+
+<BaseLayout
+  seo={{
+    title: writeup.title,
+    description: writeup.excerpt,
+    path: `/portfolio/${writeup.slug}/`,
+    image: writeup.heroImage,
+    type: 'article',
+    publishedTime: writeup.date,
+    modifiedTime: writeup.lastReviewed,
+    tags: writeup.technologies,
+  }}
+>
+  <main class="article">
+    <header class="article-header">
+      <div class="article-meta">
+        <h1 class="article-title">{writeup.title}</h1>
+        <p class="article-date"><time datetime={writeup.date}>{formatDate(writeup.date)}</time></p>
+      </div>
+      <figure class="article-hero">
+        <img src={writeup.heroImage} alt="" decoding="async" fetchpriority="high" />
+      </figure>
+    </header>
+
+    <article class="prose" set:html={writeup.bodyHtml} />
+
+    {
+      writeup.technologies.length > 0 && (
+        <footer class="article-tags">
+          <h4>Technologies Used</h4>
+          <div class="tech-pills">
+            {writeup.technologies.map((tag: string) => (
+              <a href={`/tag/${tag}/`} rel="tag">{titleCase(tag)}</a>
+            ))}
+          </div>
+          <hr class="article-separator" />
+        </footer>
+      )
+    }
+  </main>
+</BaseLayout>

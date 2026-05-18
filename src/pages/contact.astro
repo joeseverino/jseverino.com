@@ -1,0 +1,15 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { getPage } from '@lib/content';
+
+const page = await getPage('contact');
+---
+
+<BaseLayout seo={{ title: page.title, description: page.description, path: page.path }}>
+  <main class="content-page">
+    <div class="content-flow">
+      <h2 class="page-title">{page.title}</h2>
+      <div class="prose" set:html={page.bodyHtml} />
+    </div>
+  </main>
+</BaseLayout>

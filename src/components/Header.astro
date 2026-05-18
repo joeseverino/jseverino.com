@@ -1,0 +1,28 @@
+---
+import { getSiteChrome } from '@lib/content';
+
+const current = Astro.url.pathname;
+const { name, navItems } = getSiteChrome();
+---
+
+<header class="site-header" data-sticky-header>
+  <div class="wide site-nav">
+    <a class="brand" href="/" rel="home" aria-current={current === '/' ? 'page' : undefined}>{name}</a>
+    <nav aria-label="Primary navigation">
+      <ul class="nav-list">
+        {navItems.map((item) => (
+          <li><a class="nav-link" href={item.href} aria-current={current === item.href ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector('[data-sticky-header]');
+  if (header) {
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>

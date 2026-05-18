@@ -1,0 +1,26 @@
+{
+  "name": "jseverino-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean:generated": "rm -rf .astro dist",
+    "sync:content": "node bin/sync-content.mjs",
+    "audit:assets": "node bin/audit-assets.mjs",
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "publish:check": "npm run clean:generated && npm run sync:content && npm run check && npm run build && npm run audit:assets",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "check": "ASTRO_TELEMETRY_DISABLED=1 astro check"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/rss": "^4.0.12",
+    "@astrojs/sitemap": "^3.5.1",
+    "astro": "^5.8.0",
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^14.1.0",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {}
+}

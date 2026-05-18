@@ -1,0 +1,944 @@
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/assets/fonts/inter/inter-variable.woff2') format('woff2');
+}
+
+:root {
+  /* Colors — from theme.json palette */
+  --color-bg: #ffffff;
+  --color-text: #0b0620;
+  --color-text-alt: #5e4e9e;
+  --color-primary: #381d92;
+  --color-primary-deep: #1c0a63;
+  --color-soft: #f2f2fa;
+  --color-muted: #797684;
+  --color-border: rgba(11, 6, 32, 0.08);
+
+  /* Shadows — from theme.json shadow.presets */
+  --shadow-sm: 0 6px 10px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 10px 16px rgba(0, 0, 0, 0.22);
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+  --radius-button: 2rem;
+
+  /* Layout — from theme.json layout */
+  --content: 42rem;     /* default constrained block width (paragraphs, headings, body images) */
+  --wide: 80rem;        /* alignwide block width (page headers, dividers) */
+  --cards: 1100px;      /* featured-projects grid cap (from style.css line 498) */
+  --gutter: clamp(1.5rem, 6vw, 2rem);
+
+  /* Spacing — from theme.json spacing.spacingSizes */
+  --space-20: 1rem;
+  --space-30: clamp(1.5rem, 6vw, 2rem);
+  --space-40: clamp(2rem, 8vw, 3rem);
+  --space-50: clamp(2.5rem, 8vw, 4rem);
+  --space-55: clamp(3rem, 12vw, 5rem);
+  --space-60: clamp(3.5rem, 10vw, 6rem);
+  --space-70: clamp(4rem, 15vw, 7rem);
+
+  /* Aliases used through the stylesheet */
+  --space-1: 0.5rem;
+  --space-2: var(--space-20);
+  --space-3: var(--space-30);
+  --space-4: var(--space-40);
+  --space-5: var(--space-50);
+  --space-6: var(--space-60);
+
+  /* Typography — from theme.json typography.fontSizes (fluid clamps) */
+  --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
+  --font-sm: 1rem;        /* small (nav, button, dates) */
+  --font-base: 1.125rem;  /* body — matches WP computed body 18px */
+  --font-md: 1.25rem;     /* medium (brand, sticky-button) */
+  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
+  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
+  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
+  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
+  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --radius-md: 10px;
+  }
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: var(--font-base);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.25ch;
+  transition: color 0.15s ease;
+}
+
+a:hover,
+a:focus {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  vertical-align: bottom;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: var(--font-xxl); }
+h2 { font-size: var(--font-xl); }
+h3 { font-size: var(--font-lg); }
+h4 { font-size: var(--font-h-md); }
+
+/* h5 + h6 from theme.json — uppercase eyebrow-style subsection headings */
+h5 {
+  font-size: var(--font-h-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+h6 {
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.prose li + li,
+.content-flow li + li {
+  margin-top: 0.35rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.65rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+pre {
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: #020617;
+  color: #d1d5db;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  overflow-x: auto;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+p > code,
+li > code,
+figcaption > code,
+h1 > code,
+h2 > code,
+h3 > code,
+h4 > code {
+  padding: 0.1em 0.42em;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+hr {
+  margin: var(--space-4) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────── */
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  margin-inline: auto;
+}
+
+.wide {
+  width: min(var(--wide), calc(100% - (var(--gutter) * 2)));
+  margin-inline: auto;
+}
+
+/* Block-gap rhythm between top-level main children (matches WP block-gap).
+   Applies to home page (.home-content → section → .home-content alternation)
+   and to inner blocks of portfolio/tag/resume pages. */
+main > * + * {
+  margin-top: var(--space-3);
+}
+
+/* Markdown heading + generated block pairs, e.g.
+   ### Featured Projects
+   ::featured-projects
+   Keep this as a page-authoring pattern without the double block gap. */
+main > .home-content + .section {
+  margin-top: 0.65rem;
+}
+
+/* Constrained body wrapper for about / contact / resume pages.
+   Mirrors WP's is-layout-constrained on .wp-block-post-content. */
+.content-flow {
+  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  margin-inline: auto;
+}
+
+.content-flow > * + * {
+  margin-top: var(--space-3);
+}
+
+.section-title {
+  margin-bottom: var(--space-3);
+}
+
+.page-header {
+  text-align: center;
+}
+
+.page-title {
+  font-size: var(--font-xl);
+  text-align: center;
+}
+
+.page-divider {
+  margin: var(--space-3) 0 25px;
+  border: 0;
+  border-top: 2px solid var(--color-text);
+  opacity: 0.4;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.divider {
+  margin-top: var(--space-4);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Site header ────────────────────────────────────────────────────── */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* backdrop lives on ::before so the box-shadow can transition independently
+   without the Safari sticky-pointer-events bug. matches WP .site-sticky-header. */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.site-header.scrolled::before {
+  background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 3.6rem;
+  padding: 0.65rem 0;
+}
+
+.brand {
+  font-size: var(--font-md);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 0;
+  height: 1.5px;
+  background: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-link:focus,
+.nav-link[aria-current='page'] {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.nav-link:hover::after,
+.nav-link:focus::after,
+.nav-link[aria-current='page']::after {
+  width: 100%;
+}
+
+/* ── Home content (page bodies wrapped by index.astro) ──────────────── */
+
+.home-content {
+  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  margin-inline: auto;
+}
+
+.home-content > * {
+  margin-block-start: var(--space-3);
+}
+
+.home-content > :first-child {
+  margin-block-start: 0;
+}
+
+/* Section h3s ("Featured Projects", "About Me", "Technologies") — left-aligned even
+   inside the centered hero block, matching WP's default h3 alignment. */
+.home-content > h3 {
+  padding-bottom: 25px;
+  text-align: left;
+}
+
+.home-content:has(+ .section) > h3:last-child {
+  padding-bottom: 0;
+}
+
+/* The first content block on a page is the hero — centered */
+.home-content:first-child {
+  padding-top: 0;
+  text-align: center;
+}
+
+.home-content:first-child > p:first-child {
+  font-size: var(--font-xs);
+}
+
+/* h2 sits tight under the eyebrow, like the WP source's inline margin:0 */
+.home-content:first-child > h2 {
+  margin-block-start: 0.4rem;
+}
+
+/* Home hero has a couple of intentionally tighter WP blocks:
+   the summary paragraph uses spacing-20, the location pill sits directly
+   underneath it, and the button row starts at 1.4rem. */
+.home-content:first-child > p:nth-of-type(3) {
+  margin-block-start: var(--space-2);
+  margin-block-end: var(--space-2);
+}
+
+.home-content:first-child > p:nth-of-type(4):not(:has(a)) {
+  margin-block-start: 0;
+}
+
+.home-content:first-child > .actions {
+  margin-top: 1.4rem;
+}
+
+/* ── Pill (single info chip) ────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: var(--radius-pill);
+  background: var(--color-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.home-content:first-child > p:has(img.emoji),
+.home-content:first-child > p:nth-of-type(4):not(:has(a)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: var(--radius-pill);
+  background: var(--color-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ── Buttons + action rows ──────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: var(--space-3);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc((1em * 1.6) + (0.667em * 2) + 4px);
+  padding: calc(0.667em + 2px) calc(1.333em + 2px);
+  border: 0;
+  border-radius: var(--radius-button);
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
+}
+
+.button:hover,
+.button:focus {
+  transform: translateY(-2px);
+  background: var(--color-text);
+  color: var(--color-bg);
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+}
+
+.button.secondary {
+  background: transparent;
+  border: 2px solid currentColor;
+  color: inherit;
+  padding: 0.667em 1.33em;
+}
+
+.button.secondary:hover,
+.button.secondary:focus {
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-color: var(--color-text);
+}
+
+.sticky-button {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 9999;
+  transform: translateX(-50%);
+}
+
+/* ── Project cards ──────────────────────────────────────────────────── */
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  max-width: var(--cards);
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.project-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.project-card-media {
+  height: 180px;
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-soft);
+}
+
+.project-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.project-card-title {
+  display: flex;
+  align-items: center;
+  min-height: 4.4em;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.project-card-title a {
+  transition: color 0.15s ease;
+}
+
+.project-card-title a:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.project-card-title a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.project-card-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  min-height: 6em;
+  margin: 0;
+  padding: 0 14px;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.project-card-date {
+  padding: 0 14px 14px;
+  color: var(--color-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* ── Split / 2-column ───────────────────────────────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.split img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 19px;
+}
+
+.split > div > :first-child {
+  margin-top: 0;
+}
+
+/* ── Figures / images / captions (shared across home, prose, content-flow) ── */
+
+figure {
+  margin: 0;
+}
+
+.home-content figure,
+.prose figure,
+.content-flow figure {
+  margin-inline: auto;
+}
+
+.home-content figure img,
+.prose figure img,
+.content-flow figure img {
+  border-radius: var(--radius-sm);
+}
+
+.home-content figcaption,
+.prose figcaption,
+.content-flow figcaption,
+.home-content p:has(img) + p,
+.prose p:has(img) + p {
+  margin-top: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── Tag pills (writeup tags + grouped tag cloud) ───────────────────── */
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 6px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text);
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.tag:hover,
+.tag:focus {
+  background: rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+}
+
+.tag-group-title {
+  margin-bottom: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tag-groups {
+  display: grid;
+  gap: 1.25rem;
+  margin-bottom: var(--space-5);
+}
+
+/* ── Writeup article ────────────────────────────────────────────────── */
+
+/* WP .post-clean = 820px wrapper containing constrained content at 42rem (--content).
+   In a clean port we don't need the 820px wrapper — every child is 42rem anyway. */
+.article {
+  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  margin: 0 auto;
+}
+
+/* single.html block structure: title-cluster (blockGap 0.5rem) -> hero (2.5rem) -> content (2rem) -> tech (2rem) */
+.article > * + * {
+  margin-top: 2rem;
+}
+
+.article-title {
+  margin: 10px 0 6px;
+  font-size: var(--font-xl);
+}
+
+.article-date {
+  margin: 0 0 18px;
+  color: var(--color-muted);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.article-hero {
+  margin: 40px 0 20px;
+  overflow: hidden;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.article-hero img {
+  display: block;
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+}
+
+/* Technologies block — h4 heading, pill list, faded separator (single.html blockGap 1.2rem) */
+.article-tags > * + * {
+  margin-top: 1.2rem;
+}
+
+.article-tags h4 {
+  font-size: var(--font-h-md);
+}
+
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.tech-pills a {
+  display: inline-block;
+  margin: 4px 6px 4px 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--color-text);
+  font-size: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.tech-pills a:hover,
+.tech-pills a:focus {
+  background: rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+}
+
+.article-separator {
+  margin-top: var(--space-3);
+  border: 0;
+  border-top: 2px solid var(--color-text);
+  opacity: 0.4;
+}
+
+/* ── Prose (writeup body) ───────────────────────────────────────────── */
+
+.prose {
+  line-height: 1.65;
+}
+
+/* WP block-gap default (spacing-30 = ~32px) applies uniformly between all blocks
+   including headings. No special heading rule. */
+.prose > * + * {
+  margin-top: var(--space-3);
+}
+
+.prose a:not(.button) {
+  text-decoration: underline;
+}
+
+.prose img {
+  display: block;
+  margin-inline: auto;
+}
+
+.prose p:has(img) {
+  margin-top: 18px;
+}
+
+.prose p:has(img) + p {
+  margin-top: 0.5rem;
+}
+
+/* ── Contact form ───────────────────────────────────────────────────── */
+
+.contact-intake {
+  max-width: 720px;
+  margin: var(--space-3) auto 0;
+}
+
+.contact-intake-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.contact-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.contact-field label {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.contact-field input,
+.contact-field textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.contact-field input:focus,
+.contact-field textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 29, 146, 0.12);
+}
+
+.contact-field textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.hidden-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.contact-submit {
+  justify-self: start;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.site-footer {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--gutter);
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: flex-end;
+  width: min(var(--wide), 100%);
+  margin-inline: auto;
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.social-links svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .site-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .nav-list {
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
