@@ -95,8 +95,61 @@ function stripArticleChrome(markdown: string): string {
     .trim();
 }
 
+function preprocessImageDirectives(markdown: string): string {
+  return markdown.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    (match, altRaw: string, url: string) => {
+      const parts = altRaw.split('|').map((p) => p.trim());
+      let alt = parts[0] ?? '';
+      let width: string | null = null;
+      let nocap = false;
+
+      for (const part of parts.slice(1)) {
+        if (/^\d+$/.test(part)) width = part;
+        else if (part.toLowerCase() === 'nocap' || part.toLowerCase() === 'nocaption') nocap = true;
+      }
+
+      if (!width && !nocap && alt === altRaw) return match;
+
+      const attrs = [
+        `src="${url}"`,
+        `alt="${alt.replace(/"/g, '&quot;')}"`,
+        width ? `width="${width}"` : '',
+        nocap ? 'data-nocap' : '',
+        alt ? 'data-has-alt-caption' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      return `<img ${attrs}>`;
+    },
+  );
+}
+
 function restoreFigures(html: string): string {
-  return html.replace(
+  // Pass 1: image with explicit caption from alt text → figure, drop next-paragraph absorption.
+  let result = html.replace(
+    /<p><img([^>]*?)data-has-alt-caption([^>]*)><\/p>/g,
+    (_match, before: string, after: string) => {
+      const attrs = `${before}${after}`.replace(/\s+/g, ' ').trim();
+      const altMatch = attrs.match(/alt="([^"]*)"/);
+      const caption = altMatch?.[1] ?? '';
+      const cleaned = attrs.replace(/\s*data-nocap\b/, '');
+      return `<figure><img ${cleaned}><figcaption>${caption}</figcaption></figure>`;
+    },
+  );
+
+  // Pass 2: image with data-nocap → keep image, leave next paragraph alone.
+  result = result.replace(
+    /<p><img([^>]*?)data-nocap([^>]*)><\/p>/g,
+    (_match, before: string, after: string) => {
+      const cleaned = `${before}${after}`.replace(/\s+/g, ' ').trim();
+      return `<p><img ${cleaned}></p>`;
+    },
+  );
+
+  // Pass 3: legacy heuristic — image followed by short paragraph becomes figure+caption.
+  return result.replace(
     /<p><img([^>]*)><\/p>\n<p>([^<][\s\S]*?)<\/p>/g,
     (match, imageAttrs: string, caption: string) => {
       const text = caption.replace(/<[^>]+>/g, '').trim();
@@ -195,7 +248,7 @@ function preprocessPageMarkdown(markdown: string): string {
 }
 
 function renderWriteupMarkdown(markdown: string, slug: string): string {
-  const html = md.render(renderTerminal(stripArticleChrome(markdown)));
+  const html = md.render(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown))));
   return promoteStandaloneLinks(restoreFigures(html))
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)

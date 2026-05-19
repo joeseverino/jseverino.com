@@ -175,9 +175,10 @@ ol {
 .prose table,
 .content-flow table,
 .home-content table {
-  margin: 1.75rem 0;
+  width: 100%;
+  margin: 1.5rem 0;
   font-size: 0.95rem;
-  max-width: 100%;
+  border-collapse: collapse;
 }
 
 table {
@@ -185,32 +186,29 @@ table {
   background: transparent;
 }
 
-thead {
-  background: var(--color-soft);
-}
-
 th {
   font-weight: 600;
   text-align: left;
   color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
+  background: transparent;
 }
 
 th,
 td {
-  padding: 0.75rem 0.85rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: 0.55rem 0.75rem;
   vertical-align: top;
 }
 
 tbody tr:nth-child(odd) {
-  background: rgba(15, 23, 42, 0.02);
+  background: var(--color-soft);
 }
 
 tbody tr:nth-child(even) {
-  background: var(--color-bg);
+  background: transparent;
 }
 
-tbody tr:last-child td {
+td {
   border-bottom: 0;
 }
 
