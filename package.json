@@ -21,7 +21,7 @@
     "astro": "^5.8.0",
     "gray-matter": "^4.0.3",
     "markdown-it": "^14.1.0",
-    "typescript": "^5.8.3"
+    "typescript": "^6.0.3"
   },
   "devDependencies": {}
 }
