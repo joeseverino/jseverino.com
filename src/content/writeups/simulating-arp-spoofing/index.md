@@ -4,23 +4,17 @@ excerpt: >-
   A networking security lab that simulates ARP spoofing in Mininet, analyzes
   packet captures in Wireshark, and demonstrates enterprise mitigations using
   DHCP Snooping and Dynamic ARP Inspection in Cisco Packet Tracer.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: true
-featured_order: 6
+published: true
+published_at: 2026-03-15T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - cisco-packet-tracer
   - mininet
   - python
   - wireshark
-published_at: 2026-03-15T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: true
+featured_order: 6
 ---
 
 # Simulating ARP Spoofing with Mininet and Demonstrating Enterprise Mitigations

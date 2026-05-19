@@ -4,19 +4,13 @@ excerpt: >-
   Analyzing the 2025 Marks & Spencer cyberattack using the Diamond Model,
   mapping identity-based intrusion techniques to MITRE ATT&CK and aligning
   remediation strategies with NIST controls.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2026-03-29T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/diamond-model-e1776739706305.png
 technologies:
   - diamond-model-of-intrusion-analysis
-published_at: 2026-03-29T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # Marks & Spencer Cyberattack – Diamond Model Analysis

@@ -6,7 +6,7 @@ const pages = defineCollection({
     title: z.string(),
     description: z.string().optional(),
     path: z.string(),
-    status: z.enum(['draft', 'published']).default('published'),
+    published: z.boolean().default(true),
   }),
 });
 
@@ -15,19 +15,13 @@ const writeups = defineCollection({
   schema: z.object({
     title: z.string(),
     excerpt: z.string().optional(),
-    description: z.string().optional(),
-    status: z.string().default('active'),
-    sensitivity: z.string().default('public'),
-    content_type: z.string().optional(),
-    category: z.string().default('portfolio'),
-    featured: z.boolean().default(false),
-    featured_order: z.number().int().optional(),
-    cover_image: z.string().optional(),
-    technologies: z.array(z.string()).default([]),
+    published: z.boolean().default(false),
     published_at: z.coerce.date().optional(),
     last_reviewed: z.coerce.date().optional(),
-    external_url: z.string().optional(),
-    tags: z.array(z.string()).default([]),
+    cover_image: z.string().optional(),
+    technologies: z.array(z.string()).default([]),
+    featured: z.boolean().default(false),
+    featured_order: z.number().int().optional(),
   }),
 });
 

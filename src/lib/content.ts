@@ -39,12 +39,10 @@ export type Writeup = {
   date: string;
   lastReviewed?: string;
   technologies: string[];
-  externalUrl?: string;
   heroImage: string;
   bodyHtml: string;
   featured: boolean;
   featuredOrder?: number;
-  category: string;
 };
 
 export type PageContent = {
@@ -180,7 +178,7 @@ function collectionSlug(id: string): string {
 }
 
 export async function getPage(slug: string): Promise<PageContent> {
-  const pages = pagesCache ?? (pagesCache = await getCollection('pages', (page) => page.data.status === 'published'));
+  const pages = pagesCache ?? (pagesCache = await getCollection('pages', (page) => page.data.published));
   const page = pages.find((entry) => collectionSlug(entry.id) === slug);
   if (!page) throw new Error(`Missing page content: ${slug}`);
 
@@ -232,10 +230,7 @@ export function getTechnologyGroups(): TechnologyGroup[] {
 export async function getWriteups(): Promise<Writeup[]> {
   if (writeupsCache) return writeupsCache;
 
-  const entries = await getCollection('writeups', (entry) => {
-    const status = String(entry.data.status ?? '');
-    return entry.data.category === 'portfolio' && status !== 'archived' && entry.data.sensitivity === 'public';
-  });
+  const entries = await getCollection('writeups', (entry) => entry.data.published === true);
 
   const writeups = entries.map((entry) => {
     const slug = collectionSlug(entry.id);
@@ -247,16 +242,14 @@ export async function getWriteups(): Promise<Writeup[]> {
     return {
       slug,
       title: entry.data.title,
-      excerpt: entry.data.excerpt ?? entry.data.description ?? '',
+      excerpt: entry.data.excerpt ?? '',
       date: normalizeDate(entry.data.published_at),
       lastReviewed: normalizeDate(entry.data.last_reviewed),
       technologies: entry.data.technologies,
-      externalUrl: entry.data.external_url,
       heroImage,
       bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
       featured: entry.data.featured,
       featuredOrder: entry.data.featured_order,
-      category: entry.data.category,
     } satisfies Writeup;
   });
 

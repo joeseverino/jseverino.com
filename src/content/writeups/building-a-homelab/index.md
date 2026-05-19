@@ -4,12 +4,9 @@ excerpt: >-
   A retired Dell OptiPlex turned into an always-on private homelab for remote
   LAN access, containerized services, reverse proxying, and trusted internal
   HTTPS.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: true
-featured_order: 3
+published: true
+published_at: 2026-05-06T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - debian
@@ -25,11 +22,8 @@ technologies:
   - utm
   - windows-11-pro
   - wireguard
-published_at: 2026-05-06T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: true
+featured_order: 3
 ---
 
 # Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA
