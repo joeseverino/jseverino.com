@@ -135,6 +135,14 @@ function renderCenter(markdown: string): string {
   });
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function renderTerminal(markdown: string): string {
   return markdown.replace(blockRe('terminal'), (_, content: string) => {
     const lines = content.replace(/\r?\n$/, '').split(/\r?\n/);
@@ -143,9 +151,9 @@ function renderTerminal(markdown: string): string {
         if (line === '') return '';
         if (/^\$\s?/.test(line)) {
           const cmd = line.replace(/^\$\s?/, '');
-          return `<span class="line"><span class="prompt">$</span> <span class="cmd">${md.utils.escapeHtml(cmd)}</span></span>`;
+          return `<span class="line"><span class="prompt">$</span> <span class="cmd">${escapeHtml(cmd)}</span></span>`;
         }
-        return `<span class="line out">${md.utils.escapeHtml(line)}</span>`;
+        return `<span class="line out">${escapeHtml(line)}</span>`;
       })
       .join('\n');
     return `\n\n<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"></span><span class="terminal-label">TERMINAL</span></div><pre><code>${rendered}</code></pre></div>\n\n`;
