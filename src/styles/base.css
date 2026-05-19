@@ -175,15 +175,12 @@ ol {
 .prose table,
 .content-flow table,
 .home-content table {
-  display: block;
-  overflow-x: auto;
-  width: 100%;
   margin: 1.75rem 0;
   font-size: 0.95rem;
+  max-width: 100%;
 }
 
 table {
-  width: 100%;
   border-collapse: collapse;
   background: transparent;
 }
@@ -583,6 +580,12 @@ main > .home-content + .section {
   justify-content: center;
   gap: 1.5rem;
   margin-top: var(--space-3);
+}
+
+.prose .actions {
+  justify-content: flex-start;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .button {

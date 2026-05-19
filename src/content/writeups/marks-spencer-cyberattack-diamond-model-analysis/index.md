@@ -39,7 +39,11 @@ Marks & Spencer was the primary victim due to its scale and heavy reliance on in
 
 #### MITRE ATT&CK Mapping
 
-[TABLE]
+| Technique | ID | Relevance |
+| --- | --- | --- |
+| Impersonation | T1656 | Attackers posed as a legitimate employee during helpdesk interaction |
+| Valid Accounts | T1078 | Compromised credentials were used to access legitimate internal systems |
+| Data Encrypted for Impact | T1486 | Ransomware was deployed to encrypt systems and create extortion pressure |
 
 #### Key Takeaways
 
