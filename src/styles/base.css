@@ -916,7 +916,13 @@ figure {
 
 .prose img {
   display: block;
+  max-width: min(100%, 560px);
+  height: auto;
   margin-inline: auto;
+}
+
+.prose figure img {
+  max-width: min(100%, 560px);
 }
 
 .prose p:has(img) {
