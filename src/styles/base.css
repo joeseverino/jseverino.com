@@ -172,44 +172,53 @@ ol {
   margin-top: 0.35rem;
 }
 
+/* WP block-editor parity: .wp-block-table.is-style-stripes
+   (extracted from the legacy mirror's inline CSS).
+   width: 100%, transparent cell borders, 3px thead bottom,
+   #f0f0f0 odd-row stripe, 0.5em padding, centered cells. */
+
 .prose table,
 .content-flow table,
 .home-content table {
   width: 100%;
   margin: 1.5rem 0;
-  font-size: 0.95rem;
   border-collapse: collapse;
+  border-spacing: 0;
+  background: transparent;
 }
 
 table {
   border-collapse: collapse;
-  background: transparent;
 }
 
-th {
-  font-weight: 600;
-  text-align: left;
-  color: var(--color-text);
-  border-bottom: 2px solid var(--color-border);
-  background: transparent;
+.prose thead,
+.content-flow thead,
+.home-content thead {
+  border-bottom: 3px solid currentColor;
 }
 
-th,
-td {
-  padding: 0.55rem 0.75rem;
+.prose th,
+.prose td,
+.content-flow th,
+.content-flow td,
+.home-content th,
+.home-content td {
+  padding: 0.5em;
+  border: 0;
+  text-align: center;
   vertical-align: top;
 }
 
-tbody tr:nth-child(odd) {
-  background: var(--color-soft);
+.prose th,
+.content-flow th,
+.home-content th {
+  font-weight: 600;
 }
 
-tbody tr:nth-child(even) {
-  background: transparent;
-}
-
-td {
-  border-bottom: 0;
+.prose tbody tr:nth-child(odd),
+.content-flow tbody tr:nth-child(odd),
+.home-content tbody tr:nth-child(odd) {
+  background-color: #f0f0f0;
 }
 
 pre {
