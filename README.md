@@ -72,19 +72,17 @@ After that, commit and push this repo. Cloudflare Pages builds `dist/`.
 
 ## Content Rules
 
-Writeups publish only when their vault frontmatter says they are public
-portfolio content:
+Pages and writeups publish only when their vault frontmatter uses the explicit
+publish gate:
 
 ```yaml
-category: portfolio
-sensitivity: public
-status: active
+published: true
 ```
 
-The card excerpt belongs in frontmatter only:
+The card and SEO summary belongs in frontmatter only:
 
 ```yaml
-excerpt: >-
+description: >-
   Short card and SEO summary.
 cover_image: ./images/cover.png
 technologies:
@@ -94,8 +92,8 @@ featured: true
 featured_order: 1
 ```
 
-Do not repeat the excerpt as the first paragraph or blockquote. The sync script
-strips exact repeated excerpts as a safety net.
+Do not repeat the description as the first paragraph or blockquote. The sync
+script strips exact repeated descriptions as a safety net.
 
 ## Page Blocks
 
