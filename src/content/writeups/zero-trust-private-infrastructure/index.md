@@ -4,12 +4,9 @@ excerpt: >-
   A private cloud and homelab architecture using Tailscale, Caddy, private DNS,
   browser-trusted TLS, nftables, and DOCKER-USER filtering to keep internal
   services reachable to trusted devices only.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: true
-featured_order: 1
+published: true
+published_at: 2026-05-10T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - adguard-home
@@ -27,11 +24,8 @@ technologies:
   - uptime-kuma
   - wireguard
   - zero-trust
-published_at: 2026-05-10T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: true
+featured_order: 1
 ---
 
 # Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls

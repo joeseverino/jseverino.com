@@ -5,11 +5,9 @@ excerpt: >-
   into active recall sessions. It imports JSON decks locally, tracks progress in
   the browser, reviews missed questions, and exports save states without
   uploading study material to a server.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2026-05-03T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/Screenshot-2026-05-02-at-9.43.11-PM-scaled.png
 technologies:
   - browser-local-storage
@@ -20,11 +18,7 @@ technologies:
   - json
   - local-first-architecture
   - php
-published_at: 2026-05-03T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # Building Study Quiz: A Local-First Exam Prep App

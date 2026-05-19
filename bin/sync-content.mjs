@@ -85,17 +85,22 @@ function publicWriteupData(data) {
   return {
     title: data.title,
     excerpt: data.excerpt,
-    status: data.status,
-    sensitivity: data.sensitivity,
-    content_type: data.content_type,
-    category: data.category,
-    featured: Boolean(data.featured),
-    ...(Number.isInteger(data.featured_order) ? { featured_order: data.featured_order } : {}),
-    ...(data.cover_image ? { cover_image: data.cover_image } : {}),
-    technologies: Array.isArray(data.technologies) ? data.technologies : [],
+    published: true,
     ...(data.published_at ? { published_at: data.published_at } : {}),
     ...(data.last_reviewed ? { last_reviewed: data.last_reviewed } : {}),
-    tags: Array.isArray(data.tags) ? data.tags : [],
+    ...(data.cover_image ? { cover_image: data.cover_image } : {}),
+    technologies: Array.isArray(data.technologies) ? data.technologies : [],
+    featured: Boolean(data.featured),
+    ...(Number.isInteger(data.featured_order) ? { featured_order: data.featured_order } : {}),
+  };
+}
+
+function publicPageData(data) {
+  return {
+    title: data.title,
+    ...(data.description ? { description: data.description } : {}),
+    path: data.path,
+    published: true,
   };
 }
 
@@ -190,11 +195,15 @@ function syncPages() {
     const sourceIndex = path.join(sourceDir, 'index.md');
     if (!fs.existsSync(sourceIndex)) continue;
 
-    const original = fs.readFileSync(sourceIndex, 'utf8');
-    const refs = collectMarkdownAssetRefs(original);
-    const rewritten = rewritePageAssetPaths(original, slug);
+    const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
+    if (parsed.data.published !== true) continue;
+
+    const refs = collectMarkdownAssetRefs(parsed.content);
+    const rewrittenBody = rewritePageAssetPaths(parsed.content, slug);
+    const synced = matter.stringify(rewrittenBody, publicPageData(parsed.data));
+
     fs.mkdirSync(targetPages, { recursive: true });
-    fs.writeFileSync(path.join(targetPages, `${slug}.md`), rewritten);
+    fs.writeFileSync(path.join(targetPages, `${slug}.md`), synced);
 
     copyReferencedAssets(refs, sourceDir, path.join(targetPageAssets, slug));
   }
@@ -213,12 +222,7 @@ function syncWriteups() {
     if (!fs.existsSync(sourceIndex)) continue;
 
     const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
-    const isPublic =
-      parsed.data.sensitivity === 'public' &&
-      parsed.data.status !== 'archived' &&
-      parsed.data.category === 'portfolio';
-
-    if (!isPublic) continue;
+    if (parsed.data.published !== true) continue;
 
     const content = stripRepeatedExcerpt(parsed.content, parsed.data.excerpt);
     const refs = collectMarkdownAssetRefs(content);

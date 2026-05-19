@@ -3,22 +3,16 @@ title: Validating the vsftpd 2.3.4 Backdoor in an Isolated Lab
 excerpt: >-
   A mini lab that identifies vsftpd 2.3.4 through service enumeration, validates
   the known backdoor, and captures the FTP trigger packet in Wireshark.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2026-04-21T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/meterpreter-sysinfo.png
 technologies:
   - kali-linux
   - metasploit-framework
   - nmap
   - wireshark
-published_at: 2026-04-21T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # Validating the vsftpd 2.3.4 Backdoor in an Isolated Lab

@@ -3,19 +3,13 @@ title: OOP Football Score Simulator
 excerpt: >-
   An Object-Oriented Python project that simulates American football games with
   team records, realistic scoring, and automatic stat updates.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2025-08-19T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/Screenshot-2025-08-18-at-10.11.09-PM-e1755573289572.png
 technologies:
   - python
-published_at: 2025-08-19T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # OOP Football Score Simulator

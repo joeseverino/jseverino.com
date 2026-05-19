@@ -5,19 +5,13 @@ excerpt: >-
   the user to select a difficulty level (1–3) and then challenges them with 10
   random addition problems. The player has up to 3 attempts for each question,
   and their final score is displayed at the end.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2025-08-10T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/Screenshot-2025-08-10-at-4.39.45-PM.png
 technologies:
   - python
-published_at: 2025-08-10T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # Math Quiz Game

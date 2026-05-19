@@ -4,12 +4,9 @@ excerpt: >-
   A WordPress hardening project that combines Cloudflare edge security, a custom
   security plugin, browser-enforced policies, reduced default exposure, and a
   passkey-only admin login.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: true
-featured_order: 5
+published: true
+published_at: 2026-04-23T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - cloudflare
@@ -19,11 +16,8 @@ technologies:
   - webauthn
   - wordpress
   - zero-trust
-published_at: 2026-04-23T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: true
+featured_order: 5
 ---
 
 # Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication

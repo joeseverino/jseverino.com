@@ -3,11 +3,9 @@ title: Deploying a Wazuh SIEM Lab for Endpoint Monitoring and Vulnerability Dete
 excerpt: >-
   A Wazuh SIEM lab used to monitor a Windows endpoint, detect vulnerabilities,
   investigate malware alerts, and configure automated email notifications.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: false
+published: true
+published_at: 2026-03-08T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - smtp
@@ -15,11 +13,7 @@ technologies:
   - vulnerability-detection
   - wazuh-siem
   - windows-endpoint
-published_at: 2026-03-08T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: false
 ---
 
 # Deploying a Wazuh SIEM Lab for Endpoint Monitoring and Vulnerability Detection

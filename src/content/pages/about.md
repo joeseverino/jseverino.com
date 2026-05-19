@@ -2,7 +2,7 @@
 title: About Me
 description: About Joe Severino.
 path: /about/
-status: published
+published: true
 ---
 
 I’ve been building things on and around the web since I was a kid, long before I knew what any of it really meant. Before I knew what HTML was, I was 10 years old mimicking application logins by hyperlinking local Microsoft Word documents together.

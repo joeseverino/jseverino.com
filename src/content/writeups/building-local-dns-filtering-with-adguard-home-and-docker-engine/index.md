@@ -5,12 +5,9 @@ excerpt: >-
   for per-device query visibility, Tailscale peer routing for tailnet-wide
   filtering, and internal HTTPS through Nginx Proxy Manager backed by a private
   Root CA.
-status: active
-sensitivity: public
-content_type: portfolio_article
-category: portfolio
-featured: true
-featured_order: 2
+published: true
+published_at: 2026-05-08T00:00:00.000Z
+last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/cover.png
 technologies:
   - adguard-home
@@ -22,11 +19,8 @@ technologies:
   - private-root-ca
   - tailscale
   - ubuntu-server
-published_at: 2026-05-08T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
-tags:
-  - writeup
-  - published
+featured: true
+featured_order: 2
 ---
 
 # Deploying Local DNS Filtering with AdGuard Home and Docker Engine
