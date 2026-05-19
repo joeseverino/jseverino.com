@@ -256,9 +256,11 @@ The biggest value was not any single feature. It was bringing the pieces togethe
 
 This also gave me a better appreciation for the difference between adding security controls and engineering a security layer. The controls need to be visible, testable, documented, and safe to maintain over time. That became the real goal of the project, and it’s been great learning about what specific systems hardening tools are available. Clone this repository to your WordPress server and give it a try!
 
-\$ git clone https://github.com/joeseverino/severino-labs-security-layer.git\
-\$ cd severino-labs-security-layer\
-\$ ls\
-LICENSE README.md assets includes templates
+::terminal
+$ git clone https://github.com/joeseverino/severino-labs-security-layer.git
+$ cd severino-labs-security-layer
+$ ls
+LICENSE  README.md  assets  includes  templates
+::
 
 [View on GitHub](https://github.com/joeseverino/severino-labs-security-layer)
