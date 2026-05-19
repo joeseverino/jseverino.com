@@ -8,10 +8,50 @@ const { name, navItems } = getSiteChrome();
 <header class="site-header" data-sticky-header>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" aria-current={current === '/' ? 'page' : undefined}>{name}</a>
-    <nav aria-label="Primary navigation">
+
+    <nav class="primary-nav" aria-label="Primary navigation">
       <ul class="nav-list">
         {navItems.map((item) => (
           <li><a class="nav-link" href={item.href} aria-current={current === item.href ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <button
+      class="nav-toggle"
+      type="button"
+      aria-controls="mobile-nav"
+      aria-expanded="false"
+      aria-label="Open menu"
+      data-nav-toggle
+    >
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+  </div>
+
+  <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
+    <div class="mobile-nav-backdrop" data-nav-close></div>
+    <nav class="mobile-nav-panel" aria-label="Mobile navigation">
+      <button
+        class="mobile-nav-close"
+        type="button"
+        aria-label="Close menu"
+        data-nav-close
+      >
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="mobile-nav-list">
+        {navItems.map((item) => (
+          <li>
+            <a
+              class="mobile-nav-link"
+              href={item.href}
+              aria-current={current === item.href ? 'page' : undefined}
+            >{item.label}</a>
+          </li>
         ))}
       </ul>
     </nav>
@@ -24,5 +64,44 @@ const { name, navItems } = getSiteChrome();
     const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 4);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
+  const closers = document.querySelectorAll<HTMLElement>('[data-nav-close]');
+
+  if (toggle && mobileNav) {
+    const open = () => {
+      mobileNav.hidden = false;
+      requestAnimationFrame(() => mobileNav.classList.add('is-open'));
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', 'Close menu');
+      document.body.classList.add('nav-locked');
+      const firstLink = mobileNav.querySelector<HTMLAnchorElement>('.mobile-nav-link');
+      firstLink?.focus();
+    };
+    const close = () => {
+      mobileNav.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Open menu');
+      document.body.classList.remove('nav-locked');
+      const onEnd = () => {
+        mobileNav.hidden = true;
+        mobileNav.removeEventListener('transitionend', onEnd);
+      };
+      mobileNav.addEventListener('transitionend', onEnd);
+      toggle.focus();
+    };
+
+    toggle.addEventListener('click', () => {
+      mobileNav.classList.contains('is-open') ? close() : open();
+    });
+    closers.forEach((el) => el.addEventListener('click', close));
+    mobileNav.querySelectorAll('.mobile-nav-link').forEach((el) => {
+      el.addEventListener('click', close);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) close();
+    });
   }
 </script>
