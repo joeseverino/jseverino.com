@@ -106,6 +106,14 @@ function restoreFigures(html: string): string {
   );
 }
 
+function promoteStandaloneLinks(html: string): string {
+  return html.replace(
+    /<p><a href="([^"]+)"([^>]*)>([^<]+)<\/a><\/p>/g,
+    (_match, href: string, attrs: string, text: string) =>
+      `<div class="actions"><a class="button" href="${href}"${attrs}>${text}</a></div>`,
+  );
+}
+
 function renderButton(match: string, classes = ''): string {
   const link = match.match(/\[([^\]]+)\]\(([^)]+)\)/);
   if (!link) return '';
@@ -188,7 +196,7 @@ function preprocessPageMarkdown(markdown: string): string {
 
 function renderWriteupMarkdown(markdown: string, slug: string): string {
   const html = md.render(renderTerminal(stripArticleChrome(markdown)));
-  return restoreFigures(html)
+  return promoteStandaloneLinks(restoreFigures(html))
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
     .replaceAll('src="images/', `src="/assets/writeups/${slug}/images/`);
