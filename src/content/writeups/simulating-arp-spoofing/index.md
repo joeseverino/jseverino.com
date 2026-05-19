@@ -1,6 +1,6 @@
 ---
 title: Simulating ARP Spoofing with Mininet and Demonstrating Enterprise Mitigations
-excerpt: >-
+description: >-
   A networking security lab that simulates ARP spoofing in Mininet, analyzes
   packet captures in Wireshark, and demonstrates enterprise mitigations using
   DHCP Snooping and Dynamic ARP Inspection in Cisco Packet Tracer.

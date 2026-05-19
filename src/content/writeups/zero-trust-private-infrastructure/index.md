@@ -1,6 +1,6 @@
 ---
 title: 'Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls'
-excerpt: >-
+description: >-
   A private cloud and homelab architecture using Tailscale, Caddy, private DNS,
   browser-trusted TLS, nftables, and DOCKER-USER filtering to keep internal
   services reachable to trusted devices only.

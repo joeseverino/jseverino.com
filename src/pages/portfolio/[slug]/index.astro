@@ -15,7 +15,7 @@ const { writeup } = Astro.props;
 <BaseLayout
   seo={{
     title: writeup.title,
-    description: writeup.excerpt,
+    description: writeup.description,
     path: `/portfolio/${writeup.slug}/`,
     image: writeup.heroImage,
     type: 'article',

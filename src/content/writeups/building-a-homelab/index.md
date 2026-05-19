@@ -1,6 +1,6 @@
 ---
 title: 'Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA'
-excerpt: >-
+description: >-
   A retired Dell OptiPlex turned into an always-on private homelab for remote
   LAN access, containerized services, reverse proxying, and trusted internal
   HTTPS.

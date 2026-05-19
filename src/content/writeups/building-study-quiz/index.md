@@ -1,6 +1,6 @@
 ---
 title: 'Building Study Quiz: A Local-First Exam Prep App'
-excerpt: >-
+description: >-
   Study Quiz is a browser-based study app I built to turn private question banks
   into active recall sessions. It imports JSON decks locally, tracks progress in
   the browser, reviews missed questions, and exports save states without

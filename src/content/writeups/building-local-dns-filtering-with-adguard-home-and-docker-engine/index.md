@@ -1,6 +1,6 @@
 ---
 title: Deploying Local DNS Filtering with AdGuard Home and Docker Engine
-excerpt: >-
+description: >-
   A self-hosted DNS filtering setup built on Docker Engine with host networking
   for per-device query visibility, Tailscale peer routing for tailnet-wide
   filtering, and internal HTTPS through Nginx Proxy Manager backed by a private
