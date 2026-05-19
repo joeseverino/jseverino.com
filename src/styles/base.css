@@ -219,24 +219,23 @@ pre {
 }
 
 .terminal-dots {
-  display: inline-flex;
-  gap: 0.35rem;
+  position: relative;
+  display: inline-block;
+  width: 2.65rem;
+  height: 0.65rem;
+  flex: 0 0 auto;
 }
 
-.terminal-dots::before,
-.terminal-dots::after {
+.terminal-dots::before {
   content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
   width: 0.65rem;
-  height: 0.65rem;
   border-radius: 50%;
   background: #ef4444;
   box-shadow:
     1rem 0 0 #f59e0b,
     2rem 0 0 #22c55e;
-}
-
-.terminal-dots::after {
-  display: none;
 }
 
 .terminal-block pre {
