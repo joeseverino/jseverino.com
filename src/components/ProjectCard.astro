@@ -24,7 +24,7 @@ const { writeup, eager = false } = Astro.props;
       />
     </a>
   </figure>
-  <p class="project-card-summary">{writeup.excerpt}</p>
+  <p class="project-card-summary">{writeup.description}</p>
   <div class="project-card-date">
     <time datetime={writeup.date}>{formatDate(writeup.date)}</time>
   </div>

@@ -1,6 +1,6 @@
 ---
 title: Validating the vsftpd 2.3.4 Backdoor in an Isolated Lab
-excerpt: >-
+description: >-
   A mini lab that identifies vsftpd 2.3.4 through service enumeration, validates
   the known backdoor, and captures the FTP trigger packet in Wireshark.
 published: true

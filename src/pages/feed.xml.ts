@@ -9,7 +9,7 @@ export async function GET(context: { site: string }) {
     site: context.site,
     items: (await getWriteups()).map((writeup) => ({
       title: writeup.title,
-      description: writeup.excerpt,
+      description: writeup.description,
       pubDate: new Date(`${writeup.date}T00:00:00Z`),
       link: `/portfolio/${writeup.slug}/`,
     })),

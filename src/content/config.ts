@@ -14,7 +14,7 @@ const writeups = defineCollection({
   type: 'content',
   schema: z.object({
     title: z.string(),
-    excerpt: z.string().optional(),
+    description: z.string().optional(),
     published: z.boolean().default(false),
     published_at: z.coerce.date().optional(),
     last_reviewed: z.coerce.date().optional(),

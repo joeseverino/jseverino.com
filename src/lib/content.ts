@@ -35,7 +35,7 @@ const contactFormHtml = `<div class="contact-intake">
 export type Writeup = {
   slug: string;
   title: string;
-  excerpt: string;
+  description: string;
   date: string;
   lastReviewed?: string;
   technologies: string[];
@@ -242,7 +242,7 @@ export async function getWriteups(): Promise<Writeup[]> {
     return {
       slug,
       title: entry.data.title,
-      excerpt: entry.data.excerpt ?? '',
+      description: entry.data.description ?? '',
       date: normalizeDate(entry.data.published_at),
       lastReviewed: normalizeDate(entry.data.last_reviewed),
       technologies: entry.data.technologies,

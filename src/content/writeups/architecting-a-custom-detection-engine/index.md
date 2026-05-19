@@ -2,7 +2,7 @@
 title: >-
   Architecting a Custom Detection Engine with File Integrity and Security Event
   Monitoring
-excerpt: >-
+description: >-
   A custom application-layer detection engine with file integrity monitoring,
   security event logging, Zero Trust-protected testing, and Git-based
   deployment.

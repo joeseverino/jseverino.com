@@ -84,7 +84,7 @@ function copyReferencedAssets(refs, sourceDir, targetDir) {
 function publicWriteupData(data) {
   return {
     title: data.title,
-    excerpt: data.excerpt,
+    description: data.description,
     published: true,
     ...(data.published_at ? { published_at: data.published_at } : {}),
     ...(data.last_reviewed ? { last_reviewed: data.last_reviewed } : {}),
@@ -119,7 +119,7 @@ function rewriteWriteupAssetPaths(markdown, slug) {
     .replace(/^```\s*(?:wp-block-code|source-code-block|cli-block)$/gm, '```text');
 }
 
-function normalizeExcerpt(text) {
+function normalizeDescription(text) {
   return text
     .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1')
     .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
@@ -131,10 +131,10 @@ function normalizeExcerpt(text) {
     .trim();
 }
 
-function stripRepeatedExcerpt(markdown, excerpt) {
-  if (typeof excerpt !== 'string' || !excerpt.trim()) return markdown;
+function stripRepeatedDescription(markdown, description) {
+  if (typeof description !== 'string' || !description.trim()) return markdown;
 
-  const expected = normalizeExcerpt(excerpt);
+  const expected = normalizeDescription(description);
   const lines = markdown.split(/\r?\n/);
   const output = [];
   let index = 0;
@@ -159,7 +159,7 @@ function stripRepeatedExcerpt(markdown, excerpt) {
       index += 1;
     }
 
-    const text = normalizeExcerpt(candidate.join(' ').replace(/^>\s?/gm, ''));
+    const text = normalizeDescription(candidate.join(' ').replace(/^>\s?/gm, ''));
     if (text === expected) {
       while (index < lines.length && lines[index].trim() === '') index += 1;
       continue;
@@ -224,7 +224,7 @@ function syncWriteups() {
     const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
     if (parsed.data.published !== true) continue;
 
-    const content = stripRepeatedExcerpt(parsed.content, parsed.data.excerpt);
+    const content = stripRepeatedDescription(parsed.content, parsed.data.description);
     const refs = collectMarkdownAssetRefs(content);
     const coverRef = normalizeLocalAssetRef(parsed.data.cover_image);
     if (coverRef) refs.add(coverRef);

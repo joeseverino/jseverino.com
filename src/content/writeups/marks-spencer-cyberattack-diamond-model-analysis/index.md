@@ -1,6 +1,6 @@
 ---
 title: Marks & Spencer Cyberattack – Diamond Model Analysis
-excerpt: >-
+description: >-
   Analyzing the 2025 Marks & Spencer cyberattack using the Diamond Model,
   mapping identity-based intrusion techniques to MITRE ATT&CK and aligning
   remediation strategies with NIST controls.

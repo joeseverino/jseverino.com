@@ -1,6 +1,6 @@
 ---
 title: Math Quiz Game
-excerpt: >-
+description: >-
   A simple command-line math quiz game written in Python. The program prompts
   the user to select a difficulty level (1–3) and then challenges them with 10
   random addition problems. The player has up to 3 attempts for each question,
