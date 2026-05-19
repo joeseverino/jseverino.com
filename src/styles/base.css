@@ -195,6 +195,78 @@ pre {
   overflow-x: auto;
 }
 
+.terminal-block {
+  margin: 1.75rem 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #0b1220;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #111827;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.terminal-dots {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.terminal-dots::before,
+.terminal-dots::after {
+  content: '';
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow:
+    1rem 0 0 #f59e0b,
+    2rem 0 0 #22c55e;
+}
+
+.terminal-dots::after {
+  display: none;
+}
+
+.terminal-block pre {
+  margin: 0;
+  padding: 1.1rem 1.4rem;
+  background: transparent;
+  border-radius: 0;
+  color: #e2e8f0;
+  line-height: 1.85;
+}
+
+.terminal-block .line {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.terminal-block .prompt {
+  color: #38bdf8;
+  user-select: none;
+}
+
+.terminal-block .cmd {
+  color: #f8fafc;
+}
+
+.terminal-block .line.out {
+  color: #4ade80;
+}
+
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }

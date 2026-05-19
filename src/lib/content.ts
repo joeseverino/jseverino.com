@@ -135,6 +135,23 @@ function renderCenter(markdown: string): string {
   });
 }
 
+function renderTerminal(markdown: string): string {
+  return markdown.replace(blockRe('terminal'), (_, content: string) => {
+    const lines = content.replace(/\r?\n$/, '').split(/\r?\n/);
+    const rendered = lines
+      .map((line) => {
+        if (line === '') return '';
+        if (/^\$\s?/.test(line)) {
+          const cmd = line.replace(/^\$\s?/, '');
+          return `<span class="line"><span class="prompt">$</span> <span class="cmd">${md.utils.escapeHtml(cmd)}</span></span>`;
+        }
+        return `<span class="line out">${md.utils.escapeHtml(line)}</span>`;
+      })
+      .join('\n');
+    return `\n\n<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"></span><span class="terminal-label">TERMINAL</span></div><pre><code>${rendered}</code></pre></div>\n\n`;
+  });
+}
+
 function renderSplit(markdown: string): string {
   return markdown.replace(blockRe('split'), (_, content: string) => {
     const parts = content.split(/^:::\s*$/m);
@@ -158,11 +175,11 @@ function preprocessPageMarkdown(markdown: string): string {
     .replace(blockRe('button sticky'), (_, button: string) => renderButton(button, 'sticky-button'))
     .replace(blockRe('button'), (_, button: string) => renderButton(button));
 
-  return renderSplit(renderCenter(withInlineDirectives));
+  return renderSplit(renderCenter(renderTerminal(withInlineDirectives)));
 }
 
 function renderWriteupMarkdown(markdown: string, slug: string): string {
-  const html = md.render(stripArticleChrome(markdown));
+  const html = md.render(renderTerminal(stripArticleChrome(markdown)));
   return restoreFigures(html)
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
