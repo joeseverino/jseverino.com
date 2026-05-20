@@ -1,6 +1,8 @@
 ---
 title: About Me
-description: About Joe Severino.
+description: >-
+  The path Joe Severino took into cybersecurity — from tinkering with the web as
+  a kid to hands-on network defense, infrastructure, and detection work.
 path: /about/
 published: true
 ---

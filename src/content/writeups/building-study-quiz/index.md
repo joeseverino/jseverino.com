@@ -35,9 +35,11 @@ There was also a constraint: I wanted the app to be public, but I couldn’t pub
 
 That became the core idea: build the tool publicly, keep the data private, and avoid adding backend complexity that wasn’t needed.
 
+::figure
 ![](/assets/writeups/building-study-quiz/images/Screenshot-2026-05-02-at-9.19.12-PM-1-1024x773.png)
 
 The app is public, but the question bank stays local.
+::
 
 #### The Problem
 
@@ -80,9 +82,11 @@ The simplest way to protect the data was to never send it anywhere.
 
 I checked this directly in the browser. After a 130 minute session, the Network tab only shows the page, JavaScript, and CSS. There are no requests for question data, answers, or scoring. Everything stays in the browser.
 
+::figure
 ![](/assets/writeups/building-study-quiz/images/network_inspect-1024x763.png)
 
 The Network tab shows the app loading only the document, JavaScript, and CSS. The question deck and quiz progress stay in the browser instead of being posted to a server.
+::
 
 That confirms the app actually stays local. The browser’s network activity confirms that the study flow does not depend on upload requests or backend grading calls.
 
@@ -96,9 +100,11 @@ The import model is what makes the app portfolio-safe. Instead of shipping the C
 
 The deck library also makes the project more general. It is not limited to one course or one exam. Any properly structured question bank can become a Study Quiz deck.
 
+::figure
 ![](/assets/writeups/building-study-quiz/images/Screenshot-2026-05-02-at-9.19.12-PM-1024x773.png)
 
 The deck library supports local imports, demo content, custom deck creation, and reusable study sessions without bundling private question material into the public app.
+::
 
 #### Study Workflow
 
@@ -112,17 +118,21 @@ The app presents one question at a time, shows the answer choices, accepts the u
 
 Study Quiz tracks missed questions during a session so they can be reviewed afterward. It also identifies weak questions over time, which makes it possible to drill the areas that actually need more work instead of rerunning the full deck every time.
 
+::figure
 ![](/assets/writeups/building-study-quiz/images/blurred-edited.png)
 
 Weak-question review turns past mistakes into targeted practice instead of treating every question as equally urgent.
+::
 
 #### Real Session Validation
 
 I used this for a full Exam 2 review session with 134 questions. I finished with 130 correct and 4 wrong over about two hours. I then used it as my main review tool going into the exam and scored 100 percent on the proctored Exam 2. It wasn’t just a demo. It held up during real exam prep.
 
+::figure
 ![](/assets/writeups/building-study-quiz/images/recap-1024x763.png)
 
 The recap screen shows a completed 134-question study session with score, duration, missed-question count, best streak, and module-level performance.
+::
 
 #### Tradeoffs
 

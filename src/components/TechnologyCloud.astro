@@ -1,13 +1,17 @@
 ---
-import { getAllTags, getTechnologyGroups, titleCase } from '@lib/content';
+import { getAllTags, getTechnologyGroups } from '@lib/content';
 
+const collator = new Intl.Collator('en', { sensitivity: 'base' });
 const availableTags = new Set((await getAllTags()).map((tag) => tag.slug));
 const groups = getTechnologyGroups()
   .map((group) => ({
     ...group,
-    tags: group.tags.filter((tag) => availableTags.has(tag)),
+    tags: group.tags
+      .filter((tag) => availableTags.has(tag.slug))
+      .sort((a, b) => collator.compare(a.label, b.label)),
   }))
-  .filter((group) => group.tags.length > 0);
+  .filter((group) => group.tags.length > 0)
+  .sort((a, b) => collator.compare(a.name, b.name));
 ---
 
 <div class="tag-groups">
@@ -17,8 +21,8 @@ const groups = getTechnologyGroups()
         <h3 class="tag-group-title">{group.name}</h3>
         <div class="tag-list">
           {group.tags.map((tag) => (
-            <a class="tag" href={`/tag/${tag}/`}>
-              {titleCase(tag)}
+            <a class="tag" href={`/tag/${tag.slug}/`}>
+              {tag.label}
             </a>
           ))}
         </div>

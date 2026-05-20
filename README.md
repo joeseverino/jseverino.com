@@ -105,12 +105,26 @@ Right-column text.
 ::
 ```
 
-For an image caption, follow the image with a short paragraph:
+For a portfolio image with a caption, use an explicit figure block:
 
 ```md
+::figure
 ![Dashboard](./images/dashboard.png)
 
 Dashboard after enabling alerts.
+::
+```
+
+For a table with a caption, use an explicit table block:
+
+```md
+::table
+| Node | IP Address |
+|------|------------|
+| h1   | 10.0.0.1   |
+
+Topology addressing used in the lab.
+::
 ```
 
 ## Repo boundaries
