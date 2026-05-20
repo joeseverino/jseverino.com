@@ -24,6 +24,8 @@ The vault is the canonical surface for pages, portfolio writeups, and the images
 | Authoring | Obsidian over a private vault |
 | Static generator | Astro 6 (content collections, per-page islands) |
 | Hosting | Cloudflare Pages |
+| Contact intake | Cloudflare Pages Functions, Turnstile, D1 |
+| Operations dashboard | Django app that reads contact submissions from D1 |
 | Analytics | GA4, gated by `PUBLIC_GA_MEASUREMENT_ID`, production-only |
 | Feeds & sitemap | `@astrojs/rss`, `@astrojs/sitemap` |
 
@@ -48,6 +50,17 @@ npm run publish:check
 ```
 
 `publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
+
+## Contact flow
+
+The contact form is static at the page level, but submissions go through a
+Cloudflare Pages Function at `/api/contact`. The function validates a
+Cloudflare Turnstile token, applies a small per-IP rate limit, records browser
+and device context, and stores the message in Cloudflare D1.
+
+Email notifications are intentionally not part of the public site. My private
+Django operations app reads the D1-backed submissions so contact intake stays
+off the static surface while still giving me a review workflow.
 
 ## Content rules
 
