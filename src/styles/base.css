@@ -127,6 +127,7 @@ h1,
 h2,
 h3,
 h4 {
+  margin: 0;
   font-weight: 600;
   line-height: 1.15;
 }
@@ -144,6 +145,7 @@ h4 { font-size: var(--font-h-md); }
 
 /* h5 + h6 from theme.json — uppercase eyebrow-style subsection headings */
 h5 {
+  margin: 0;
   font-size: var(--font-h-sm);
   font-weight: 500;
   line-height: 1.6;
@@ -151,6 +153,7 @@ h5 {
 }
 
 h6 {
+  margin: 0;
   font-size: var(--font-base);
   font-weight: 400;
   line-height: 1.6;
@@ -367,14 +370,6 @@ main > * + * {
   margin-top: var(--space-3);
 }
 
-/* Markdown heading + generated block pairs, e.g.
-   ### Featured Projects
-   ::featured-projects
-   Keep this as a page-authoring pattern without the double block gap. */
-main > .home-content + .section {
-  margin-top: 0.65rem;
-}
-
 /* Constrained body wrapper for about / contact / resume pages.
    Mirrors WP's is-layout-constrained on .wp-block-post-content. */
 .content-flow {
@@ -518,14 +513,10 @@ main > .home-content + .section {
 }
 
 /* Section h3s ("Featured Projects", "About Me", "Technologies") — left-aligned even
-   inside the centered hero block, matching WP's default h3 alignment. */
+   inside the centered hero block, matching WP's default h3 alignment.
+   Spacing below them is governed by the standard block-gap rules. */
 .home-content > h3 {
-  padding-bottom: 25px;
   text-align: left;
-}
-
-.home-content:has(+ .section) > h3:last-child {
-  padding-bottom: 0;
 }
 
 /* The first content block on a page is the hero — centered */
@@ -658,7 +649,7 @@ main > .home-content + .section {
 
 .project-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
   max-width: var(--cards);
   margin: 0 auto;
