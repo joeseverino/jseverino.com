@@ -50,8 +50,7 @@
   --space-5: var(--space-50);
   --space-6: var(--space-60);
 
-  /* Typography — legacy WP theme.json fontSizes, copied verbatim. These
-     resolve against the 1.15rem root above, identical to legacy. */
+  /* Typography */
   --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
   --font-sm: 1rem;        /* small (nav, button, dates) */
   --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem); /* body */
@@ -176,62 +175,66 @@ ol {
   margin-top: 0.35rem;
 }
 
-/* WP block-editor parity: .wp-block-table.is-style-stripes
-   (extracted from the legacy mirror's inline CSS).
-   width: 100%, transparent cell borders, 3px thead bottom,
-   #f0f0f0 odd-row stripe, 0.5em padding, centered cells. */
+table {
+  border-collapse: collapse;
+}
 
-.prose table,
-.content-flow table,
-.home-content table {
-  width: 100%;
+.table-figure {
+  display: block;
   margin: 1.5rem 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-figure table {
+  width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
   background: transparent;
 }
 
-.prose th,
-.prose td,
-.content-flow th,
-.content-flow td,
-.home-content th,
-.home-content td {
-  overflow-wrap: anywhere;
+.table-figure .table-fixed {
+  table-layout: fixed;
+  width: 100%;
 }
 
-table {
-  border-collapse: collapse;
-}
-
-.prose thead,
-.content-flow thead,
-.home-content thead {
+.table-figure thead {
   border-bottom: 3px solid currentColor;
 }
 
-.prose th,
-.prose td,
-.content-flow th,
-.content-flow td,
-.home-content th,
-.home-content td {
-  padding: 0.5em;
-  border: 0;
-  text-align: left;
-  vertical-align: top;
+.table-figure tfoot {
+  border-top: 3px solid currentColor;
 }
 
-.prose th,
-.content-flow th,
-.home-content th {
+.table-figure th,
+.table-figure td {
+  padding: 0.5em;
+  border: 1px solid transparent;
+  text-align: center;
+  vertical-align: middle;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.table-figure th {
   font-weight: 600;
 }
 
-.prose tbody tr:nth-child(odd),
-.content-flow tbody tr:nth-child(odd),
-.home-content tbody tr:nth-child(odd) {
+.table-figure--striped {
+  background-color: initial;
+  border-collapse: inherit;
+  border-spacing: 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.table-figure--striped tbody tr:nth-child(odd) {
   background-color: #f0f0f0;
+}
+
+.table-figure figcaption {
+  color: #555;
+  font-size: 13px;
+  text-align: center;
 }
 
 pre {
@@ -363,7 +366,7 @@ hr {
   margin-inline: auto;
 }
 
-/* Block-gap rhythm between top-level main children (matches WP block-gap).
+/* Block-gap rhythm between top-level main children.
    Applies to home page (.home-content → section → .home-content alternation)
    and to inner blocks of portfolio/tag/resume pages. */
 main > * + * {
@@ -371,7 +374,7 @@ main > * + * {
 }
 
 /* Constrained body wrapper for about / contact / resume pages.
-   Mirrors WP's is-layout-constrained on .wp-block-post-content. */
+   Keeps long-form pages readable without extra wrappers. */
 .content-flow {
   width: min(var(--content), calc(100% - (var(--gutter) * 2)));
   margin-inline: auto;
@@ -419,8 +422,8 @@ main > * + * {
   z-index: 1000;
 }
 
-/* backdrop lives on ::before so the box-shadow can transition independently
-   without the Safari sticky-pointer-events bug. matches WP .site-sticky-header. */
+/* Backdrop lives on ::before so the box-shadow can transition independently
+   without the Safari sticky-pointer-events bug. */
 .site-header::before {
   content: '';
   position: absolute;
@@ -513,7 +516,7 @@ main > * + * {
 }
 
 /* Section h3s ("Featured Projects", "About Me", "Technologies") — left-aligned even
-   inside the centered hero block, matching WP's default h3 alignment.
+   inside the centered hero block.
    Spacing below them is governed by the standard block-gap rules. */
 .home-content > h3 {
   text-align: left;
@@ -529,12 +532,12 @@ main > * + * {
   font-size: var(--font-xs);
 }
 
-/* h2 sits tight under the eyebrow, like the WP source's inline margin:0 */
+/* h2 sits tight under the eyebrow. */
 .home-content:first-child > h2 {
   margin-block-start: 0.4rem;
 }
 
-/* Home hero has a couple of intentionally tighter WP blocks:
+/* Home hero has a couple of intentionally tighter content blocks:
    the summary paragraph uses spacing-20, the location pill sits directly
    underneath it, and the button row starts at 1.4rem. */
 .home-content:first-child > p:nth-of-type(3) {
@@ -740,8 +743,7 @@ main > * + * {
 
 /* ── Split / 2-column ───────────────────────────────────────────────── */
 
-/* Equal-width columns matching legacy `.wp-block-columns` (each .wp-block-column has flex-grow:1).
-   Gap matches legacy --wp--preset--spacing--30 = clamp(1.5rem, 6vw, 2rem). */
+/* Equal-width columns for split content blocks. */
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -755,8 +757,7 @@ main > * + * {
   border-radius: 19px;
 }
 
-/* Vertical rhythm between siblings inside each column — matches legacy
-   `.is-layout-flow > * { margin-block-start: var(--wp--preset--spacing--30) }`. */
+/* Vertical rhythm between siblings inside each column. */
 .split > div > * {
   margin-block-start: clamp(1.5rem, 6vw, 2rem);
 }
@@ -819,7 +820,6 @@ figure {
   text-decoration: none;
 }
 
-/* Matches legacy plugin `.sl-tag-group-label` verbatim. */
 .tag-group-title {
   margin: 0 0 0.6rem 0;
   color: #888;
@@ -829,7 +829,6 @@ figure {
   text-transform: uppercase;
 }
 
-/* Matches legacy `.sl-tag-group { margin-bottom: 1.5rem }`. */
 .tag-groups {
   display: grid;
   gap: 1.5rem;
@@ -838,8 +837,7 @@ figure {
 
 /* ── Writeup article ────────────────────────────────────────────────── */
 
-/* WP .post-clean = 820px wrapper containing constrained content at 42rem (--content).
-   In a clean port we don't need the 820px wrapper — every child is 42rem anyway. */
+/* Constrained article wrapper. */
 .article {
   width: min(var(--content), calc(100% - (var(--gutter) * 2)));
   margin: 0 auto;
@@ -923,8 +921,7 @@ figure {
   line-height: 1.65;
 }
 
-/* WP block-gap default (spacing-30 = ~32px) applies uniformly between all blocks
-   including headings. No special heading rule. */
+/* Uniform article spacing, including around headings. */
 .prose > * + * {
   margin-top: var(--space-3);
 }
@@ -1119,25 +1116,28 @@ figure {
 
 .mobile-nav {
   position: fixed;
-  inset: 0;
-  z-index: 60;
+  top: var(--header-height, 3.6rem);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+  transition: opacity 0.22s ease, visibility 0s linear 0.22s;
 }
 
 .mobile-nav.is-open {
   opacity: 1;
   visibility: visible;
-  transition: opacity 0.25s ease, visibility 0s linear 0s;
+  transition: opacity 0.22s ease, visibility 0s linear 0s;
 }
 
 .mobile-nav-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(11, 6, 32, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .mobile-nav-panel {
@@ -1145,73 +1145,95 @@ figure {
   inset: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  padding: 4rem 2rem;
-  background: var(--color-bg);
-  transform: translateY(-1rem);
-  transition: transform 0.25s ease;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 1rem var(--space-30) 2rem;
+  background: transparent;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: none;
 }
 
-.mobile-nav.is-open .mobile-nav-panel {
-  transform: translateY(0);
+.mobile-nav-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
 }
 
 .mobile-nav-close {
   position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 1px;
+  height: 1px;
   padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
   border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  color: var(--color-text);
 }
 
 .mobile-nav-close span {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1.5rem;
-  height: 2px;
-  background: currentColor;
-  border-radius: 2px;
+  display: none;
 }
-.mobile-nav-close span:nth-child(1) { transform: translate(-50%, -50%) rotate(45deg); }
-.mobile-nav-close span:nth-child(2) { transform: translate(-50%, -50%) rotate(-45deg); }
 
 .mobile-nav-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
+  align-items: flex-start;
+  gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+.mobile-nav-list li {
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.nav-js-ready .mobile-nav.is-open .mobile-nav-list li {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.nav-js-ready .mobile-nav.is-open.nav-items-ready .mobile-nav-list li {
+  opacity: 1;
+  transform: none;
+}
+
 .mobile-nav-link {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  display: block;
+  width: 100%;
+  padding: 0.85rem 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.4;
   color: var(--color-text);
   text-decoration: none;
-  padding: 0.25rem 0.5rem;
 }
 
 .mobile-nav-link[aria-current='page'] {
-  color: var(--color-primary);
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
 body.nav-locked {
   overflow: hidden;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 599px) {
   .primary-nav {
     display: none;
   }

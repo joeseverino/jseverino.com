@@ -9,6 +9,11 @@ const vaultRoot = process.env.VAULT_DIR
   ? path.resolve(process.env.VAULT_DIR)
   : path.resolve(siteRoot, '../../Severino Labs');
 
+// --drafts also syncs `published: false` pages and writeups, for local preview
+// only. They render in `astro dev` but the production build still excludes them
+// (see getWriteups/getPage in src/lib/content.ts).
+const includeDrafts = process.argv.includes('--drafts');
+
 const sourcePages = path.join(vaultRoot, '06 Pages');
 const sourceWriteups = path.join(vaultRoot, '05 Writeups');
 const targetPages = path.join(siteRoot, 'src/content/pages');
@@ -85,7 +90,7 @@ function publicWriteupData(data) {
   return {
     title: data.title,
     description: data.description,
-    published: true,
+    published: data.published === true,
     ...(data.published_at ? { published_at: data.published_at } : {}),
     ...(data.last_reviewed ? { last_reviewed: data.last_reviewed } : {}),
     ...(data.cover_image ? { cover_image: data.cover_image } : {}),
@@ -100,7 +105,7 @@ function publicPageData(data) {
     title: data.title,
     ...(data.description ? { description: data.description } : {}),
     path: data.path,
-    published: true,
+    published: data.published === true,
   };
 }
 
@@ -196,7 +201,7 @@ function syncPages() {
     if (!fs.existsSync(sourceIndex)) continue;
 
     const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
-    if (parsed.data.published !== true) continue;
+    if (!includeDrafts && parsed.data.published !== true) continue;
 
     const refs = collectMarkdownAssetRefs(parsed.content);
     const rewrittenBody = rewritePageAssetPaths(parsed.content, slug);
@@ -222,7 +227,7 @@ function syncWriteups() {
     if (!fs.existsSync(sourceIndex)) continue;
 
     const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
-    if (parsed.data.published !== true) continue;
+    if (!includeDrafts && parsed.data.published !== true) continue;
 
     const content = stripRepeatedDescription(parsed.content, parsed.data.description);
     const refs = collectMarkdownAssetRefs(content);
@@ -245,3 +250,9 @@ syncWriteups();
 
 console.log(`Synced pages from ${sourcePages}`);
 console.log(`Synced public writeups from ${sourceWriteups}`);
+
+if (includeDrafts) {
+  console.log(
+    'Included drafts (published: false) — local preview only; do not commit or publish this sync.',
+  );
+}

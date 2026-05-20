@@ -61,8 +61,13 @@ const { name, navItems } = getSiteChrome();
 <script>
   const header = document.querySelector('[data-sticky-header]');
   if (header) {
+    const syncHeaderHeight = () => {
+      document.documentElement.style.setProperty('--header-height', `${header.getBoundingClientRect().height}px`);
+    };
     const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 4);
+    syncHeaderHeight();
     onScroll();
+    window.addEventListener('resize', syncHeaderHeight, { passive: true });
     window.addEventListener('scroll', onScroll, { passive: true });
   }
 
@@ -71,9 +76,29 @@ const { name, navItems } = getSiteChrome();
   const closers = document.querySelectorAll<HTMLElement>('[data-nav-close]');
 
   if (toggle && mobileNav) {
+    document.body.classList.add('nav-js-ready');
+    let lastClosed = 0;
+
+    const setItemDelays = () => {
+      mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li').forEach((item, index) => {
+        item.style.transitionDelay = `${index * 0.055}s`;
+      });
+    };
+
+    const clearItemDelays = () => {
+      mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li').forEach((item) => {
+        item.style.transitionDelay = '0s';
+      });
+    };
+
     const open = () => {
+      if (Date.now() - lastClosed < 350) return;
       mobileNav.hidden = false;
-      requestAnimationFrame(() => mobileNav.classList.add('is-open'));
+      setItemDelays();
+      requestAnimationFrame(() => {
+        mobileNav.classList.add('is-open');
+        requestAnimationFrame(() => mobileNav.classList.add('nav-items-ready'));
+      });
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
       document.body.classList.add('nav-locked');
@@ -81,12 +106,15 @@ const { name, navItems } = getSiteChrome();
       firstLink?.focus();
     };
     const close = () => {
+      lastClosed = Date.now();
+      mobileNav.classList.remove('nav-items-ready');
       mobileNav.classList.remove('is-open');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
       document.body.classList.remove('nav-locked');
       const onEnd = () => {
         mobileNav.hidden = true;
+        clearItemDelays();
         mobileNav.removeEventListener('transitionend', onEnd);
       };
       mobileNav.addEventListener('transitionend', onEnd);
