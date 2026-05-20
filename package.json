@@ -27,6 +27,7 @@
     "@astrojs/check": "^0.9.4",
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.5.1",
+    "@types/markdown-it": "^14.1.2",
     "astro": "^6.3.5",
     "gray-matter": "^4.0.3",
     "markdown-it": "^14.1.0",
