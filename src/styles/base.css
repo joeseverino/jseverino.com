@@ -1081,6 +1081,7 @@ figure {
 
 .nav-toggle {
   display: none;
+  position: relative;
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
@@ -1120,10 +1121,11 @@ figure {
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 999;
+  z-index: 1001;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.22s ease, visibility 0s linear 0.22s;
+  background: transparent;
 }
 
 .mobile-nav.is-open {
@@ -1133,11 +1135,30 @@ figure {
 }
 
 .mobile-nav-backdrop {
-  position: absolute;
-  inset: 0;
+  display: none;
+}
+
+#mobile-menu-backdrop {
+  position: fixed;
+  top: var(--header-height, 3.6rem);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
   background: color-mix(in srgb, var(--color-bg) 72%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  animation: nav-fade-in 0.22s ease both;
+}
+
+@keyframes nav-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .mobile-nav-panel {

@@ -79,6 +79,18 @@ const { name, navItems } = getSiteChrome();
     document.body.classList.add('nav-js-ready');
     let lastClosed = 0;
 
+    const createBackdrop = () => {
+      if (document.getElementById('mobile-menu-backdrop')) return;
+      const backdrop = document.createElement('div');
+      backdrop.id = 'mobile-menu-backdrop';
+      backdrop.addEventListener('click', close);
+      document.body.appendChild(backdrop);
+    };
+
+    const removeBackdrop = () => {
+      document.getElementById('mobile-menu-backdrop')?.remove();
+    };
+
     const setItemDelays = () => {
       mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li').forEach((item, index) => {
         item.style.transitionDelay = `${index * 0.055}s`;
@@ -94,6 +106,7 @@ const { name, navItems } = getSiteChrome();
     const open = () => {
       if (Date.now() - lastClosed < 350) return;
       mobileNav.hidden = false;
+      createBackdrop();
       setItemDelays();
       requestAnimationFrame(() => {
         mobileNav.classList.add('is-open');
@@ -109,6 +122,7 @@ const { name, navItems } = getSiteChrome();
       lastClosed = Date.now();
       mobileNav.classList.remove('nav-items-ready');
       mobileNav.classList.remove('is-open');
+      removeBackdrop();
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
       document.body.classList.remove('nav-locked');
@@ -128,6 +142,11 @@ const { name, navItems } = getSiteChrome();
     closers.forEach((el) => el.addEventListener('click', close));
     mobileNav.querySelectorAll('.mobile-nav-link').forEach((el) => {
       el.addEventListener('click', close);
+    });
+    mobileNav.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('.mobile-nav-link') || target.closest('.mobile-nav-close')) return;
+      close();
     });
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) close();
