@@ -8,5 +8,6 @@
       "@lib/*": ["src/lib/*"],
       "@styles/*": ["src/styles/*"]
     }
-  }
+  },
+  "exclude": ["dist", "functions"]
 }

@@ -1,15 +1,27 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import { getPage } from '@lib/content';
+import ContactForm from '@components/ContactForm.astro';
+import { getPage, renderPageMarkdown } from '@lib/content';
 
 const page = await getPage('contact');
+const blocks = page.body
+  .split(/(::contact-form\s*::)/g)
+  .filter((block) => block.trim().length > 0);
 ---
 
 <BaseLayout seo={{ title: page.title, description: page.description, path: page.path }}>
   <main class="content-page">
     <div class="content-flow">
       <h2 class="page-title">{page.title}</h2>
-      <div class="prose" set:html={page.bodyHtml} />
+      {
+        blocks.map((block) =>
+          block.trimStart().startsWith('::contact-form') ? (
+            <ContactForm />
+          ) : (
+            <div class="prose" set:html={renderPageMarkdown(block)} />
+          ),
+        )
+      }
     </div>
   </main>
 </BaseLayout>

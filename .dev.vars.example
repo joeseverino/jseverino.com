@@ -1,0 +1,10 @@
+# Server-side secrets for the Pages Function, used by `wrangler pages dev`.
+# Copy to .dev.vars (gitignored). In production set these in the Cloudflare
+# Pages dashboard under Settings -> Variables and Secrets.
+
+# Cloudflare Turnstile secret key. The value below is Cloudflare's
+# "always passes" TEST secret — replace with the real one for production.
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+
+# Email notifications are not enabled. If Resend is added later, its secrets
+# (RESEND_API_KEY, CONTACT_TO_EMAIL, CONTACT_FROM_EMAIL) would go here too.
