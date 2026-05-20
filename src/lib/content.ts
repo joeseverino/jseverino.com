@@ -4,11 +4,19 @@ import MarkdownIt from 'markdown-it';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-});
+function createMarkdownRenderer() {
+  return new MarkdownIt({
+    html: true,
+    linkify: true,
+    typographer: true,
+  });
+}
+
+const md = createMarkdownRenderer();
+const fragmentMd = createMarkdownRenderer();
+
+md.renderer.rules.table_open = () => '<figure class="table-figure"><table>';
+md.renderer.rules.table_close = () => '</table></figure>';
 
 const contactFormHtml = `<div class="contact-intake">
   <form class="contact-intake-form" method="post" action="/contact/">
@@ -59,15 +67,22 @@ export type SiteChrome = {
   navItems: { href: string; label: string }[];
 };
 
+export type TechnologyTag = {
+  slug: string;
+  label: string;
+};
+
 export type TechnologyGroup = {
   name: string;
-  tags: string[];
+  tags: TechnologyTag[];
 };
 
 let pagesCache: CollectionEntry<'pages'>[] | undefined;
 let writeupsCache: Writeup[] | undefined;
 let siteChromeCache: SiteChrome | undefined;
-let technologyGroupsCache: TechnologyGroup[] | undefined;
+// No module-level cache for technology groups: the source file is read on
+// every call so dev edits to `src/content/technology-groups.md` show up
+// without restarting the dev server. The parse is microseconds.
 
 function normalizeDate(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -126,6 +141,66 @@ function preprocessImageDirectives(markdown: string): string {
   );
 }
 
+function renderFigureBlocks(markdown: string): string {
+  return markdown.replace(blockRe('figure'), (_match, content: string) => {
+    const lines = content.trim().split(/\r?\n/);
+    const imageIndex = lines.findIndex((line) => line.trim() !== '');
+    if (imageIndex === -1) return '';
+
+    const imageLine = lines[imageIndex].trim();
+    const image = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
+    if (!image) return md.render(content.trim());
+
+    const [, altRaw, src] = image;
+    const captionMarkdown = lines.slice(imageIndex + 1).join('\n').trim();
+    const alt = altRaw.replace(/"/g, '&quot;');
+    const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
+
+    return [
+      '<figure>',
+      `<img src="${src}" alt="${alt}">`,
+      caption ? `<figcaption>${caption}</figcaption>` : '',
+      '</figure>',
+    ]
+      .filter(Boolean)
+      .join('');
+  });
+}
+
+function renderTableBlocks(markdown: string): string {
+  return markdown.replace(blockRe('table'), (_match, content: string) => {
+    const lines = content.trim().split(/\r?\n/);
+    const tableLines = [];
+    const captionLines = [];
+    let inCaption = false;
+
+    for (const line of lines) {
+      if (!inCaption && line.trim() !== '' && line.trim().startsWith('|')) {
+        tableLines.push(line);
+        continue;
+      }
+
+      if (line.trim() !== '') inCaption = true;
+      if (inCaption) captionLines.push(line);
+    }
+
+    if (tableLines.length === 0) return md.render(content.trim());
+
+    const table = fragmentMd.render(tableLines.join('\n')).trim();
+    const captionMarkdown = captionLines.join('\n').trim();
+    const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
+
+    return [
+      '<figure class="table-figure">',
+      table,
+      caption ? `<figcaption>${caption}</figcaption>` : '',
+      '</figure>',
+    ]
+      .filter(Boolean)
+      .join('');
+  });
+}
+
 function restoreFigures(html: string): string {
   // Pass 1: image with explicit caption from alt text → figure, drop next-paragraph absorption.
   let result = html.replace(
@@ -148,15 +223,7 @@ function restoreFigures(html: string): string {
     },
   );
 
-  // Pass 3: legacy heuristic — image followed by short paragraph becomes figure+caption.
-  return result.replace(
-    /<p><img([^>]*)><\/p>\n<p>([^<][\s\S]*?)<\/p>/g,
-    (match, imageAttrs: string, caption: string) => {
-      const text = caption.replace(/<[^>]+>/g, '').trim();
-      if (text.length > 180) return match;
-      return `<figure><img${imageAttrs}><figcaption>${caption}</figcaption></figure>`;
-    },
-  );
+  return result;
 }
 
 function promoteStandaloneLinks(html: string): string {
@@ -248,7 +315,8 @@ function preprocessPageMarkdown(markdown: string): string {
 }
 
 function renderWriteupMarkdown(markdown: string, slug: string): string {
-  const html = md.render(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown))));
+  const prepared = renderTableBlocks(renderFigureBlocks(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown)))));
+  const html = md.render(prepared);
   return promoteStandaloneLinks(restoreFigures(html))
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
@@ -294,23 +362,58 @@ export function getSiteChrome(): SiteChrome {
 }
 
 export function getTechnologyGroups(): TechnologyGroup[] {
-  if (technologyGroupsCache) return technologyGroupsCache;
-
   const file = path.resolve(process.cwd(), 'src/content/technology-groups.md');
   const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
   const sections = body.split(/^##\s+/m).slice(1);
 
-  technologyGroupsCache = sections
+  return sections
     .map((section) => {
       const [nameLine = '', ...lines] = section.split('\n');
-      const tags = lines
-        .map((line) => line.match(/^- (.+)$/)?.[1]?.trim())
-        .filter((tag): tag is string => Boolean(tag));
+      const tags: TechnologyTag[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
+        const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
+        if (cells.length < 2) continue;
+        const [slug, label] = cells;
+        if (!slug || !label) continue;
+        if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;
+        if (/^:?-{2,}:?$/.test(slug)) continue;
+        tags.push({ slug, label });
+      }
       return { name: nameLine.trim(), tags };
     })
     .filter((group) => group.name && group.tags.length > 0);
+}
 
-  return technologyGroupsCache;
+function getTechnologyLabel(slug: string): string | undefined {
+  for (const group of getTechnologyGroups()) {
+    for (const tag of group.tags) if (tag.slug === slug) return tag.label;
+  }
+  return undefined;
+}
+
+let warnedUnknownTechnologies = false;
+
+function warnOnUnknownTechnologies(writeups: Writeup[]): void {
+  if (warnedUnknownTechnologies) return;
+  const known = new Set<string>();
+  for (const group of getTechnologyGroups()) {
+    for (const tag of group.tags) known.add(tag.slug);
+  }
+  const unknown = new Set<string>();
+  for (const writeup of writeups) {
+    for (const tag of writeup.technologies) {
+      if (!known.has(tag)) unknown.add(tag);
+    }
+  }
+  if (unknown.size > 0) {
+    const list = [...unknown].sort().join(', ');
+    console.warn(
+      `[technology-groups] Writeup frontmatter references tag slugs missing from src/content/technology-groups.md: ${list}`,
+    );
+  }
+  warnedUnknownTechnologies = true;
 }
 
 export async function getWriteups(): Promise<Writeup[]> {
@@ -338,6 +441,8 @@ export async function getWriteups(): Promise<Writeup[]> {
       featuredOrder: entry.data.featured_order,
     } satisfies Writeup;
   });
+
+  warnOnUnknownTechnologies(writeups);
 
   writeupsCache = writeups.sort((a, b) => b.date.localeCompare(a.date));
   return writeupsCache;
@@ -369,6 +474,9 @@ export async function getAllTags(): Promise<{ slug: string; label: string; count
 }
 
 export function titleCase(value: string): string {
+  const label = getTechnologyLabel(value);
+  if (label) return label;
+
   return value
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))

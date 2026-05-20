@@ -50,16 +50,17 @@
   --space-5: var(--space-50);
   --space-6: var(--space-60);
 
-  /* Typography — from theme.json typography.fontSizes (fluid clamps) */
+  /* Typography — legacy WP theme.json fontSizes, copied verbatim. These
+     resolve against the 1.15rem root above, identical to legacy. */
   --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
   --font-sm: 1rem;        /* small (nav, button, dates) */
-  --font-base: 1.125rem;  /* body — matches WP computed body 18px */
+  --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem); /* body */
   --font-md: 1.25rem;     /* medium (brand, sticky-button) */
-  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
-  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
-  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
-  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
-  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);
+  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);     /* h5 heading-small */
+  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);     /* h4 heading-medium */
+  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);      /* h3 large */
+  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);             /* h2 x-large */
+  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);     /* h1 xx-large */
 }
 
 @media (max-width: 768px) {
@@ -150,7 +151,7 @@ h5 {
 }
 
 h6 {
-  font-size: 1.125rem;
+  font-size: var(--font-base);
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: 0.03em;
@@ -187,6 +188,15 @@ ol {
   background: transparent;
 }
 
+.prose th,
+.prose td,
+.content-flow th,
+.content-flow td,
+.home-content th,
+.home-content td {
+  overflow-wrap: anywhere;
+}
+
 table {
   border-collapse: collapse;
 }
@@ -205,7 +215,7 @@ table {
 .home-content td {
   padding: 0.5em;
   border: 0;
-  text-align: center;
+  text-align: left;
   vertical-align: top;
 }
 
@@ -739,10 +749,12 @@ main > .home-content + .section {
 
 /* ── Split / 2-column ───────────────────────────────────────────────── */
 
+/* Equal-width columns matching legacy `.wp-block-columns` (each .wp-block-column has flex-grow:1).
+   Gap matches legacy --wp--preset--spacing--30 = clamp(1.5rem, 6vw, 2rem). */
 .split {
   display: grid;
-  grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1fr);
-  gap: var(--space-4);
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.5rem, 6vw, 2rem);
   align-items: center;
 }
 
@@ -752,8 +764,14 @@ main > .home-content + .section {
   border-radius: 19px;
 }
 
+/* Vertical rhythm between siblings inside each column — matches legacy
+   `.is-layout-flow > * { margin-block-start: var(--wp--preset--spacing--30) }`. */
+.split > div > * {
+  margin-block-start: clamp(1.5rem, 6vw, 2rem);
+}
+
 .split > div > :first-child {
-  margin-top: 0;
+  margin-block-start: 0;
 }
 
 /* ── Figures / images / captions (shared across home, prose, content-flow) ── */
@@ -810,18 +828,20 @@ figure {
   text-decoration: none;
 }
 
+/* Matches legacy plugin `.sl-tag-group-label` verbatim. */
 .tag-group-title {
-  margin-bottom: 0.5rem;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  margin: 0 0 0.6rem 0;
+  color: #888;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
+/* Matches legacy `.sl-tag-group { margin-bottom: 1.5rem }`. */
 .tag-groups {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.5rem;
   margin-bottom: var(--space-5);
 }
 
@@ -856,12 +876,13 @@ figure {
   overflow: hidden;
   border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: var(--radius-md);
+  aspect-ratio: 16 / 9;
 }
 
 .article-hero img {
   display: block;
   width: 100%;
-  height: 320px;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -923,13 +944,13 @@ figure {
 
 .prose img {
   display: block;
-  max-width: min(100%, 560px);
+  max-width: 100%;
   height: auto;
   margin-inline: auto;
 }
 
 .prose figure img {
-  max-width: min(100%, 560px);
+  max-width: 100%;
 }
 
 .prose p:has(img) {

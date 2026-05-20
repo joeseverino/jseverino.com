@@ -1,8 +1,8 @@
 ---
-title: Joe Severino | Cybersecurity - IT Project Management
+title: Joe Severino | Cybersecurity and Networking
 description: >-
-  Joe Severino is a cybersecurity professional and IT Project Coordinator with
-  Security+ and ISC2 CC, pursuing an M.S. in Cybersecurity at Georgia Tech.
+  Joe Severino is a cybersecurity professional and Delivery Operations Analyst
+  with Security+ and ISC2 CC, pursuing an M.S. in Cybersecurity at Georgia Tech.
 path: /
 published: true
 ---

@@ -48,13 +48,17 @@ The most important Tailscale setting in this setup is tailnet lock. When it’s 
 
 Both signing devices are enrolled in MDM and protected by iCloud Advanced Data Protection, which applies end-to-end encryption to iCloud data. Apple cannot access the contents, and neither can anyone who compromises an Apple account without the device PIN.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/02-tailscale-lock-enabled-subnet-ping-1024x602.png)
 
 Tailnet lock confirmed enabled on the VPS, with a successful ping to a homelab LAN IP over the Tailscale subnet route.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/03-tailscale-admin-exit-node-approved-1024x694.png)
 
 The VPS registered in the Tailscale admin console as an approved exit node. New nodes cannot appear here without a co-signed key.
+::
 
 #### The VPS: Zero Public Attack Surface
 
@@ -66,13 +70,17 @@ Docker complicates host firewalls because it manages its own iptables rules and 
 
 SSH is hardened further: key-only authentication, an explicit user allowlist, `MaxAuthTries 3`, and fail2ban with incremental bans. Three failed attempts in 10 minutes mean a one-hour ban, increasing up to a week for repeat offenders. Unattended upgrades handle OS security patches automatically.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-config-1024x602.png)
 
 nftables config on the VPS. SSH accepted from the Tailscale CGNAT range and home LAN fallback, port 22 dropped entirely, and a DOCKER-USER chain blocking all public interface traffic from reaching containers.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/10-nmap-vps-all-ports-filtered-1024x520.png)
 
 Nmap scan shows the host doesn’t even respond to probes: “Host seems down.” A scanner gets nothing.
+::
 
 #### The Homelab: Headless, Firewall-First
 
@@ -82,17 +90,21 @@ The homelab runs on a Windows OptiPlex that sits headless in a corner with no mo
 
 Windows Firewall scopes both SSH (port 22) and RDP (port 3389) exclusively to the Tailscale CGNAT range. LAN-originated management connections are dropped. There’s no path into the management plane from the local network. Tailscale is required.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/08-windows-firewall-ssh-tailscale-cgnat-only-1024x490.png)
 
 Windows Firewall SSH rule scoped to `100.64.0.0/10`, the Tailscale CGNAT range. Any connection from the LAN or public internet is dropped before it reaches the SSH service.
+::
 
 ##### Ubuntu Server VM
 
 The VM has its own nftables host filter. SSH is restricted to the Tailscale CGNAT range and the home LAN subnet, a slightly wider scope than the Windows host because local LAN access to the VM is occasionally useful for debugging. The table is persisted via systemd and survives reboots.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/09-nftables-vm-ssh-restriction-applied-1024x490.png)
 
 nftables `inet host_filter` table applied on the Ubuntu VM. SSH is limited to Tailscale CGNAT plus the home LAN subnet. Both the Windows host and the VM enforce their own independent firewall rules.
+::
 
 ##### Subnet Routing
 
@@ -118,9 +130,11 @@ The entire issuance and renewal lifecycle is handled by [tls-cert-renewal-automa
 
 For internal homelab services, I run a private root CA on an offline Debian VM in UTM on my Mac. The VM has no network access outside the Mac’s local hypervisor network. It’s not on the home LAN, not on Tailscale, not reachable from anywhere. It only boots when I need to issue a certificate. The CA key is passphrase-protected and never leaves the VM. A custom tool I wrote ([cert-generator](https://github.com/joeseverino/cert-generator)) handles the full issuance workflow: SSH into the VM, generate a CSR, prompt for the passphrase, sign the cert, retrieve the files, and clean up. The service private key doesn’t persist on the CA host after issuance.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/01-offline-ca-vm-ssh-session-1024x670.png)
 
 SSH session into the offline CA VM running in UTM on the Mac. The VM has no LAN interface, no Tailscale presence, and no internet access. The only path to it is through the Mac’s local hypervisor network.
+::
 
 Compromising the homelab, VPS, or tailnet does not provide network access to the CA private key. A compromise of the Mac would still require access to the offline CA VM and the CA passphrase before a fraudulent certificate could be issued.
 
@@ -132,27 +146,37 @@ All Tailscale devices use AdGuard Home as their DNS resolver, enforced via Tails
 
 Internal service names, including subdomains like `status.jseverino.com` that have no public DNS record, resolve via AdGuard DNS rewrites to Tailscale IPs. Public resolvers return NXDOMAIN for these names. They don’t exist from the outside.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/adguard-dns-rewrites-vps-subdomains-1024x694.png)
 
 AdGuard DNS rewrites mapping private subdomains to the VPS Tailscale IP. Public resolvers have no record for these names.
+::
 
 The VPS uses an independent Cloudflare DNS-over-TLS resolver via systemd-resolved. Routing its DNS through the homelab AdGuard would add latency and create an availability dependency. If the homelab VM is down, the VPS would lose DNS too. Keeping them separate means each side is self-sufficient.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/04-resolved-conf-cloudflare-dot-1024x602.png)
 
 `/etc/systemd/resolved.conf` on the VPS. Cloudflare DoT is enforced globally and `Domains=~.` ensures this config wins over any per-link DNS pushed by DHCP or Tailscale.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/05-resolvectl-status-dot-confirmed-1024x602.png)
 
 `resolvectl status` confirming DNS-over-TLS is active. All interfaces resolve via Cloudflare on port 853. No plaintext DNS leaves the VPS.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/06-wireshark-dns-plaintext-before-dot-1-1024x709.png)
 
 Before DoT: DNS queries on port 53, query contents fully visible in plaintext. The domain name, query type, and response are all readable on the wire.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/07-wireshark-dns-over-tls-after-dot-1-1024x661.png)
 
 After DoT: all DNS traffic to Cloudflare on port 853. The TLS handshake is visible but the query contents are encrypted. Application data only.
+::
 
 #### Monitoring: External Visibility
 
@@ -162,13 +186,17 @@ The monitoring dashboard itself is a private service accessible only to Tailscal
 
 There’s a self-monitoring problem here: if Uptime Kuma monitored `status.jseverino.com`, it would be checking whether it could reach Caddy to proxy back to itself. If Caddy is down, the check fails. If Kuma is down, the check never runs. The loop makes the check meaningless. Instead, Caddy serves a dedicated health endpoint at `health.jseverino.com` that returns `200 OK` directly with no backend. Caddy being alive is sufficient to confirm Kuma is reachable.
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/12-uptime-kuma-all-monitors-green-1024x694.png)
 
 All seven monitors green, running from the VPS outside the homelab. SSH reachability, DNS, container management, and the public site, all checked every 60 seconds.
+::
 
+::figure
 ![](/assets/writeups/zero-trust-private-infrastructure/images/11-portainer-two-environments-connected-1024x694.png)
 
 Portainer managing both environments from a single interface. The homelab VM connected via local Docker socket and the VPS connected via a Portainer Agent over Tailscale.
+::
 
 #### Remaining Risks
 

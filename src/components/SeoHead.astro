@@ -28,6 +28,25 @@ const {
 const canonical = new URL(path, site.url).href;
 const ogImage = new URL(image, site.url).href;
 const fullTitle = title === site.defaultTitle ? title : `${title} | Joe Severino`;
+
+const person = {
+  '@type': 'Person',
+  '@id': `${site.url}/#person`,
+  name: 'Joe Severino',
+  url: site.url,
+  jobTitle: 'Delivery Operations Analyst',
+  description: site.defaultDescription,
+  knowsAbout: [
+    'Cybersecurity',
+    'Network Security',
+    'Infrastructure',
+    'Detection Engineering',
+    'Homelab',
+    'Linux',
+  ],
+  sameAs: ['https://github.com/joeseverino', 'https://linkedin.com/in/joeseverino'],
+};
+
 const jsonLd =
   type === 'article'
     ? {
@@ -40,13 +59,21 @@ const jsonLd =
         datePublished: publishedTime,
         dateModified: modifiedTime || publishedTime,
         keywords: tags,
-        author: { '@type': 'Person', name: 'Joe Severino', url: site.url },
+        author: person,
+        publisher: person,
       }
     : {
         '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: site.name,
-        url: site.url,
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            '@id': `${site.url}/#website`,
+            name: site.name,
+            url: site.url,
+            publisher: { '@id': `${site.url}/#person` },
+          },
+          person,
+        ],
       };
 ---
 

@@ -42,9 +42,11 @@ This post walks through how I put that together: Windows 11 Pro, Tailscale, Dock
 
 The base machine is a Dell OptiPlex 7050 SFF, small, quiet, and more than enough for a first homelab server.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/IMG_3991-942x1024.jpeg)
 
 The OptiPlex on its way home before becoming the base host for my homelab.
+::
 
 | Component   | Spec                       |
 |-------------|----------------------------|
@@ -59,13 +61,17 @@ I wiped the previous install and did a clean Windows 11 Pro setup. The OptiPlex 
 
 The temporary networking setup was less polished but worked perfectly. My desk area does not have Ethernet, so I used a TP-Link travel router in client mode to bridge WiFi to Ethernet. That let me get the OptiPlex online, install what I needed, and configure Remote Desktop before moving it next to the router for direct Ethernet through my unmanaged switch. I typically use that same adapter for my HP LaserJet, which lets the printer advertise over Bonjour and show up automatically on my devices after my initial setup.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled.jpeg)
 
 The travel router behind my desk bridging WiFi to a wired Ethernet port for devices that need a wired connection.
+::
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/printer-bonjour-airprint-1024x887.png)
 
 The HP LaserJet showing up in macOS Printers and Scanners as AirPrint. Auto-discovered, zero device setup.
+::
 
 #### Private Access with Tailscale
 
@@ -78,29 +84,37 @@ On the homelab I enabled two features:
 | Subnet router | Advertises my home LAN (192.168.1.0/24) to my tailnet so I can reach local devices remotely without installing Tailscale on each one |
 | Exit node | Routes all my traffic through home when I’m on untrusted networks like hotel WiFi |
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/tailscale-route-settings-1024x721.png)
 
 The Tailscale admin console with subnet routing and exit node both enabled and approved for the homelab machine.
+::
 
 I also locked down Windows Firewall so SSH and Remote Desktop only accept connections from Tailscale’s address range (`100.64.0.0/10`). If a device isn’t on the tailnet, those ports don’t exist as far as it’s concerned.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale.png)
 
 Two PowerShell commands restricting SSH and Remote Desktop to the Tailscale subnet.
+::
 
 #### Docker and Nginx Proxy Manager
 
 With remote access working, I installed Docker Desktop, confirmed it could pull and run containers, and then set up Nginx Proxy Manager. NPM is a Docker-based reverse proxy with a web UI for managing proxy hosts and SSL certificates. I use it to route the internal homelab hostname to the right container and handle HTTPS termination.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/docker-desktop-all-containers-1024x643.png)
 
 Docker Desktop showing the current running containers. homelab-proxy and app-1 are Nginx Proxy Manager. The severino-labs containers serve the homelab landing page.
+::
 
 The landing page is intentionally simple: a welcome screen, a status row showing Docker and nginx are up, and a download link for the root CA certificate so other devices on the network can install it.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/Screenshot-2026-05-05-at-8.32.03-PM-1024x693.png)
 
 The homelab page running in a browser over Tailscale.
+::
 
 #### Local HTTPS with a Private Root CA
 
@@ -108,15 +122,19 @@ This was the part I cared most about getting right. I wanted internal services t
 
 The solution was a private root CA. I set up a small Debian VM in UTM on my Mac to act as the CA environment. It uses host-only networking so it has no internet access and can only communicate with my Mac. The root CA private key stays inside that VM, and I shut it down whenever it’s not actively issuing or renewing a certificate.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/utm-offline-root-ca-summary-1024x773.png)
 
 The UTM VM creation. Named “Offline Root CA”, host-only networking, 512MB RAM, 5GB storage. Boots up to sign a cert, then shuts back down.
+::
 
 For the homelab certificate I generated a key and CSR inside the VM and signed it with the root CA. The certificate includes Subject Alternative Names for both the internal hostname and local IP address, since modern browsers ignore the Common Name field entirely and only validate against the SAN list.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/openssl-sign-homelab-cert-1024x796.png)
 
 Signing the homelab CSR with the root CA key inside the Debian VM through SSH. Output is homelab.crt, valid for 825 days.
+::
 
 The signing process produces four files:
 
@@ -129,15 +147,19 @@ The signing process produces four files:
 
 I uploaded the server key, signed certificate, and CA certificate chain into Nginx Proxy Manager as a custom certificate, attached it to the homelab proxy host, and enabled Force SSL and HTTP/2.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/npm-proxy-host-homelab-domain-1024x693.png)
 
 The NPM proxy host config with “homelab” as the domain, forwarding to 192.168.1.13 on port 8081.
+::
 
 Before installing the root CA on my devices, the browser showed the expected chain warning. The cert was correctly signed but the CA wasn’t recognized yet, so the whole chain failed.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/homelab-cert-chain-detail-1024x693.png)
 
 The cert chain before installing the root CA. Both certificates are there and correctly linked, but the root is flagged as not trusted so the whole chain fails.
+::
 
 Installing it on macOS is one command:
 
@@ -153,15 +175,19 @@ Import-Certificate -FilePath "$env:USERPROFILE\homelab-ca.pem" -CertStoreLocatio
 
 After that, `https://homelab` loads cleanly with no warnings on any device where I have installed the root CA.
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/homelab-cert-trusted-valid-1024x693.png)
 
 `https://homelab` loading in Safari with a trusted certificate. The page has a download link for the root CA so other devices on the network can get set up without running commands.
+::
 
 #### Current Stack
 
 At a high level, the flow looks like this:
 
+::figure
 ![](/assets/writeups/building-a-homelab/images/Untitled-Diagram.drawio.png)
+::
 
 | Layer                 | What’s handling it                       |
 |-----------------------|------------------------------------------|
