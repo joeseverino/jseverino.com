@@ -18,28 +18,6 @@ const fragmentMd = createMarkdownRenderer();
 md.renderer.rules.table_open = () => '<figure class="table-figure"><table>';
 md.renderer.rules.table_close = () => '</table></figure>';
 
-const contactFormHtml = `<div class="contact-intake">
-  <form class="contact-intake-form" method="post" action="/contact/">
-    <div class="contact-field">
-      <label for="contact-name">Name</label>
-      <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength="190" />
-    </div>
-    <div class="contact-field">
-      <label for="contact-email">Email</label>
-      <input type="email" id="contact-email" name="email" autocomplete="email" required maxlength="190" />
-    </div>
-    <div class="contact-field">
-      <label for="contact-message">Message</label>
-      <textarea id="contact-message" name="message" required maxlength="5000" rows="7"></textarea>
-    </div>
-    <div class="contact-field hidden-field" aria-hidden="true">
-      <label for="contact-company">Company</label>
-      <input type="text" id="contact-company" name="company" tabindex="-1" autocomplete="off" />
-    </div>
-    <button type="submit" class="button contact-submit">Send Message</button>
-  </form>
-</div>`;
-
 export type Writeup = {
   slug: string;
   title: string;
@@ -307,7 +285,6 @@ function preprocessPageMarkdown(markdown: string): string {
   const withInlineDirectives = renderButtons(markdown)
     .replace(/::featured-projects\s*::/g, '<div data-content-block="featured-projects"></div>')
     .replace(/::technology-cloud\s*::/g, '<div data-content-block="technology-cloud"></div>')
-    .replace(/::contact-form\s*::/g, contactFormHtml)
     .replace(blockRe('button sticky'), (_, button: string) => renderButton(button, 'sticky-button'))
     .replace(blockRe('button'), (_, button: string) => renderButton(button));
 
