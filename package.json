@@ -19,7 +19,7 @@
     "audit:assets": "node bin/audit-assets.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "build": "ASTRO_TELEMETRY_DISABLED=1 astro check && ASTRO_TELEMETRY_DISABLED=1 astro build",
-    "publish:check": "npm run clean:generated && npm run sync:content && npm run check && npm run build && npm run clean:conflicts && npm run audit:assets",
+    "publish:check": "npm run clean:generated && npm run sync:content && npm run clean:conflicts && npm run check && npm run build && npm run clean:conflicts && npm run audit:assets",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "check": "ASTRO_TELEMETRY_DISABLED=1 astro check"
   },
