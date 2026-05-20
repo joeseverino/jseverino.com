@@ -82,8 +82,6 @@ featured: true
 featured_order: 1
 ```
 
-Don't repeat the description as the body's first paragraph; the sync script strips exact duplicates as a safety net.
-
 ## Page blocks
 
 Markdown handles prose. These directives cover the custom blocks:
