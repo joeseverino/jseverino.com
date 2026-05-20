@@ -15,7 +15,8 @@ function createMarkdownRenderer() {
 const md = createMarkdownRenderer();
 const fragmentMd = createMarkdownRenderer();
 
-md.renderer.rules.table_open = () => '<figure class="table-figure"><table>';
+md.renderer.rules.table_open = () =>
+  '<figure class="table-figure table-figure--striped"><table class="table-fixed">';
 md.renderer.rules.table_close = () => '</table></figure>';
 
 export type Writeup = {
@@ -164,12 +165,15 @@ function renderTableBlocks(markdown: string): string {
 
     if (tableLines.length === 0) return md.render(content.trim());
 
-    const table = fragmentMd.render(tableLines.join('\n')).trim();
+    const table = fragmentMd
+      .render(tableLines.join('\n'))
+      .trim()
+      .replace('<table>', '<table class="table-fixed">');
     const captionMarkdown = captionLines.join('\n').trim();
     const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
 
     return [
-      '<figure class="table-figure">',
+      '<figure class="table-figure table-figure--striped">',
       table,
       caption ? `<figcaption>${caption}</figcaption>` : '',
       '</figure>',
@@ -309,7 +313,13 @@ function collectionSlug(id: string): string {
 }
 
 export async function getPage(slug: string): Promise<PageContent> {
-  const pages = pagesCache ?? (pagesCache = await getCollection('pages', (page) => page.data.published));
+  const pages =
+    pagesCache ??
+    (pagesCache = await getCollection(
+      'pages',
+      // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+      (page) => import.meta.env.DEV || page.data.published,
+    ));
   const page = pages.find((entry) => collectionSlug(entry.id) === slug);
   if (!page) throw new Error(`Missing page content: ${slug}`);
 
@@ -396,7 +406,11 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
 export async function getWriteups(): Promise<Writeup[]> {
   if (writeupsCache) return writeupsCache;
 
-  const entries = await getCollection('writeups', (entry) => entry.data.published === true);
+  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+  const entries = await getCollection(
+    'writeups',
+    (entry) => import.meta.env.DEV || entry.data.published === true,
+  );
 
   const writeups = entries.map((entry) => {
     const slug = collectionSlug(entry.id);
