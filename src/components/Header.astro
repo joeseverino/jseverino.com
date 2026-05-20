@@ -94,7 +94,8 @@ const { name, navItems } = getSiteChrome();
     };
 
     toggle.addEventListener('click', () => {
-      mobileNav.classList.contains('is-open') ? close() : open();
+      if (mobileNav.classList.contains('is-open')) close();
+      else open();
     });
     closers.forEach((el) => el.addEventListener('click', close));
     mobileNav.querySelectorAll('.mobile-nav-link').forEach((el) => {

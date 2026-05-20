@@ -1,7 +1,15 @@
 {
   "name": "jseverino-com",
   "version": "0.1.0",
+  "description": "Personal site for Joe Severino — built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
+  "license": "UNLICENSED",
+  "author": "Joe Severino",
+  "homepage": "https://jseverino.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joeseverino/jseverino.com.git"
+  },
   "type": "module",
   "scripts": {
     "clean:generated": "node bin/clean-generated.mjs --all",
