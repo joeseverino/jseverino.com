@@ -22,7 +22,7 @@ The vault is the canonical surface for pages, portfolio writeups, and the images
 | Layer | Choice |
 |---|---|
 | Authoring | Obsidian over a private vault |
-| Static generator | Astro 5 (content collections, per-page islands) |
+| Static generator | Astro 6 (content collections, per-page islands) |
 | Hosting | Cloudflare Pages |
 | Analytics | GA4, gated by `PUBLIC_GA_MEASUREMENT_ID`, production-only |
 | Feeds & sitemap | `@astrojs/rss`, `@astrojs/sitemap` |
