@@ -44,7 +44,7 @@ I started with Docker Desktop to see if it was worth pursuing before committing 
 But the query log was wrong. Every single query was showing the same source IP, `172.21.0.1`, the Docker bridge gateway. My laptop, my phone, my TV, all the same. Per-device visibility was the whole point, so this was a problem.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/18-query-log-test-domain-proof-1024x643.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof.png)
 
 Every client collapsed behind the same Docker bridge IP. Per-device filtering is useless if every device looks identical.
 ::
@@ -77,7 +77,7 @@ https://cloudflare-dns.com/dns-query
 ```
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/10-dns-settings-upstream-cloudflare-doh-1024x643.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings.png)
 
 Cloudflare DoH set as the upstream resolver. Queries that pass the local filter leave the VM encrypted.
 ::
@@ -85,7 +85,7 @@ Cloudflare DoH set as the upstream resolver. Queries that pass the local filter 
 The query log changed immediately after the move. Real IPs, individual devices.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/21-docker-ps-all-containers-running-1-1024x586.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running.png)
 
 All four containers on Docker Engine. `adguardhome` has no IP in the network column because it’s using host networking, bound directly to the VM.
 ::
@@ -111,7 +111,7 @@ tailscale up --accept-dns=false
 ```
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/16-tailscale-dns-global-nameserver-configured-1-1024x694.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver.png)
 
 Global nameserver set to the VM’s Tailscale IP with Override DNS enabled. Every Tailscale client uses AdGuard regardless of local DNS settings.
 ::
@@ -137,7 +137,7 @@ I wanted to reach the AdGuard admin UI at a real hostname with a valid cert inst
 I added a DNS rewrite in AdGuard pointing `adguard.homelab` to `192.168.1.233`. I’m using `.homelab` as a private internal namespace, not a real TLD, just a convention. Since Nginx Proxy Manager is on the same VM, the rewrite resolves to the VM’s LAN IP and NPM proxies the request internally to AdGuard’s web UI on port 3001.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/16-adguard-dns-rewrites-all-homelab-1024x694.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites.png)
 
 All `.homelab` hostnames pointing at the VM.
 ::
@@ -145,7 +145,7 @@ All `.homelab` hostnames pointing at the VM.
 For the certificate I used my cert-gen script, which SSHes into an offline Debian VM running in UTM on my Mac. The CA VM uses a host-only network adapter, so it’s reachable from my Mac via SSH but has no path to the internet or the rest of the network. SSH is key-only and the CA private key is passphrase-protected. The VM only gets booted when I need to sign something. The script generates the key and CSR, has the CA sign the certificate, pulls the files back locally, and then the CA goes back offline.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/01-cert-gen-admin-homelab-1024x704.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation.png)
 
 cert-gen SSHing into the offline Debian CA to sign the certificate. The screenshot shows `admin.homelab` but the same workflow produced the cert for `adguard.homelab`.
 ::
@@ -153,7 +153,7 @@ cert-gen SSHing into the offline Debian CA to sign the certificate. The screensh
 Cert and key go into NPM, proxy host set up for `adguard.homelab` pointing at `129.1268.1.233:3001`.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/15-npm-proxy-hosts-list-all-online-1024x694.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png)
 
 All four `.homelab` proxy hosts online with custom certs from the private Root CA.
 ::
@@ -181,7 +181,7 @@ AdGuard Home admin UI (localhost:3001)
 Within minutes of pointing my first device at AdGuard, the Samsung TV started showing up in the query log making Netflix-related DNS requests. Not because anyone opened Netflix, just because I powered it on. Background startup traffic, completely invisible before.
 
 ::figure
-![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/01-query-log-samsung-tv-netflix-requests-1024x643.png)
+![](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix.png)
 
 AdGuard Home showed Netflix logging and customer event domains from my Samsung TV immediately after power-on, before I manually opened Netflix.
 ::

@@ -37,7 +37,7 @@ Running a public WordPress site safely takes more than turning on HTTPS and usin
 I wanted this site to be practical and secure. That meant reducing the default WordPress attack surface, adding stronger browser-enforced protections, and improving administrative authentication beyond a standard password workflow. Cloudflare was an important part of that, but edge protection alone was not enough. I also wanted the application itself to be more defensive.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-1024x681.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard.png)
 
 The site was already behind Cloudflare, but edge protection alone did not address WordPress-specific exposure or strengthen the administrative login flow.
 ::
@@ -51,7 +51,7 @@ This project came out of that full problem set: hardening a public WordPress sit
 Cloudflare sits in front of the site as the public-facing edge layer, which means web traffic reaches Cloudflare before it reaches the WordPress origin. That gives me a cleaner perimeter to manage and lets core DNS and transport controls live at the edge rather than relying on WordPress alone.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/DNS-1-1024x652.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records.png)
 
 Cloudflare manages the site’s DNS layer, with proxied web records and DNS-only SPF, DKIM, and DMARC records. DMARC is configured with a reject policy to block unauthenticated mail claiming to come from the domain.
 ::
@@ -61,7 +61,7 @@ Cloudflare also secures the site’s DNS layer with DNSSEC, adding signed DNS re
 That edge role is not limited to DNS. Cloudflare also enforces how browsers connect to the site, which is where transport security becomes more meaningful than simply having HTTPS available. Instead of only serving the site over TLS, I configure the edge to require modern HTTPS behavior, including TLS 1.3 and browser-facing policy that treats HTTPS as the normal and expected path.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/HSTS-668x1024.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings.png)
 
 Cloudflare is configured to send HSTS headers with a 12-month max-age and apply that policy across subdomains, while preload remains disabled.
 ::
@@ -108,7 +108,7 @@ This strengthens the site’s internet-facing boundary, but it does not harden W
 Instead of relying on a third-party security plugin to handle core hardening decisions for me, I built my own WordPress security layer as a custom plugin. That gives me direct control over what the site does and does not expose, which matters more to me than installing a large security suite and accepting its defaults, feature set, and overhead.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/plugins-3-1024x740.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list.png)
 
 The custom Severino Labs Security Layer plugin runs as part of the live WordPress environment and centralizes site-specific hardening in one maintained layer.
 ::
@@ -116,7 +116,7 @@ The custom Severino Labs Security Layer plugin runs as part of the live WordPres
 For this site, I want the application-side hardening to be explicit and understandable. A custom plugin lets me define that behavior myself: disabling XML-RPC, reducing user enumeration paths, removing the public WordPress version signal, sending browser security headers, and shaping the login experience around passkeys. Rather than spreading those controls across theme files, snippets, and multiple plugin settings pages, I keep them in one maintained layer that I fully understand.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/ssh-php-1024x614.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh.png)
 
 I manage the custom Severino Labs Security Layer plugin directly on the web hosting server over SSH, keeping the site’s hardening logic under my control.
 ::
@@ -145,7 +145,7 @@ add_filter('xmlrpc_methods', function ($methods) {
 [View Plugin on GitHub](https://github.com/joeseverino/severino-labs-security-layer)
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/no-xml-xrp-1024x662.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked.png)
 
 Direct access to xmlrpc.php is blocked as part of reducing the site’s default WordPress exposure.
 ::
@@ -209,7 +209,7 @@ header(
 That policy is intentionally practical rather than theoretical. It is strict enough to reduce unnecessary resource loading and limit common abuse paths, but it still allows the services the site actually uses. The goal is not to publish a decorative CSP that breaks real functionality; the goal is to enforce a policy that reflects the site’s real dependencies and keeps the browser on a shorter leash by default.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/curl-1024x640.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response.png)
 
 A live curl -I response confirms that the site returns browser-enforced security headers including framing, MIME-type, referrer, permissions, CSP, and HSTS policy.
 ::
@@ -223,7 +223,7 @@ At the WordPress layer, administrative access is restricted to a passkey-only lo
 The hosting account is also treated as a critical control point because access there reaches far beyond WordPress itself. cPanel can affect files, databases, email, and domain configuration, so I protect it with a strong unique password and two-factor authentication rather than treating it like a secondary admin surface.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/cpanel2fa-2-1024x489.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login.png)
 
 cPanel remains a high-value administrative control point, so it is protected with a strong unique password and two-factor authentication.
 ::
@@ -237,7 +237,7 @@ Together, these controls harden the main administrative paths into the environme
 Protecting administrative access is not only about how users authenticate, but also whether they can reach the login interface at all. Even with a passkey-only WordPress login, the default administrative path is still publicly reachable unless it is explicitly restricted.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/application-1024x750.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application.png)
 
 Cloudflare Access application protecting the WordPress administrative endpoint at /wp-admin.
 ::
@@ -247,7 +247,7 @@ To reduce that exposure, I placed the WordPress administrative endpoint behind C
 I configured an access policy that requires both identity and device posture. In practice, that means access is only allowed if the user belongs to my administrative access list and the device is presenting the expected Cloudflare client posture signal.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/policy-1024x750.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy.png)
 
 Access policy requiring both administrative identity and a trusted device posture (WARP) before access is granted.
 ::
@@ -255,7 +255,7 @@ Access policy requiring both administrative identity and a trusted device postur
 Enrolled devices are registered with Cloudflare Zero Trust and associated with the administrative posture profile used in access policy evaluation.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/devices-1-1024x750.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices.png)
 
 Enrolled devices registered with Cloudflare Zero Trust and associated with the administrative posture profile used for access enforcement.
 ::
@@ -267,7 +267,7 @@ That layered design matters because it separates two different security decision
 When device posture is missing or the request does not satisfy policy, Cloudflare blocks the request at the edge with a 403 Forbidden response. That means unauthenticated or untrusted devices are stopped before they can interact with WordPress.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/forbidden-1024x750.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page.png)
 
 Requests to wp-admin are blocked at the edge when Zero Trust requirements are not satisfied.
 ::
@@ -283,7 +283,7 @@ In this case, the plugin does more than restyle the default WordPress login page
 Because passkey registration is disabled, this setup does not allow new credentials to be enrolled through the public-facing login experience. In practice, that means the passkey-enabled administrative path is limited to the credential I already provisioned rather than being open for ongoing self-registration.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/signin-1024x638.png)
+![](/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login.png)
 
 My custom security plugin replaces the default WordPress login screen with a passkey-only interface, while passkey registration remains disabled.
 ::
@@ -297,7 +297,7 @@ The hardest part of the passkey setup was not the login interface itself. It was
 To verify what was happening, I checked the browser’s network activity during passkey registration. The request returned an HTTP 200 response, which made the issue harder to spot at first because the flow appeared successful on the surface even though nothing was actually being saved.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/200-copy-1024x200.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response.png)
 
 The passkey registration request returned HTTP 200 even though no credential was being added to the Passkey list.
 ::
@@ -305,13 +305,13 @@ The passkey registration request returned HTTP 200 even though no credential was
 That pushed me into WordPress-side debugging. I enabled debug logging in wp-config.php, which exposed the real failure: the plugin was trying to write to a database table that did not exist.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/wp-config-1024x488.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code.png)
 
 Debug logging was enabled in wp-config.php to surface the backend error behind the failed passkey registration flow.
 ::
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/log-1-1024x593.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal.png)
 
 WordPress debug logging exposed the real failure: WP-WebAuthn was attempting to write to the wpos_wwa_credentials table, which did not exist.
 ::
@@ -319,13 +319,13 @@ WordPress debug logging exposed the real failure: WP-WebAuthn was attempting to 
 After that, I checked the plugin code to confirm which table WP-WebAuthn expected to use, then created the missing table manually in phpMyAdmin.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/wp-webauthn-php-1024x650.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code.png)
 
 Reviewing the plugin code confirmed which table the registration flow expected to use.
 ::
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-1024x623.png)
+![](/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table.png)
 
 I created the missing WP-WebAuthn table manually in phpMyAdmin.
 ::
@@ -333,7 +333,7 @@ I created the missing WP-WebAuthn table manually in phpMyAdmin.
 With the table in place, registration finally worked and the passkey was saved correctly.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/success-1024x394.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success.png)
 
 After the missing table was created, passkey registration succeeded and the credential was saved correctly.
 ::
@@ -343,13 +343,13 @@ After the missing table was created, passkey registration succeeded and the cred
 I also keep the site’s presentation-layer customizations in a child theme so they stay separate from both the parent theme and the Severino Labs Security Layer plugin. That separation makes updates easier to manage and keeps responsibilities cleaner: the child theme handles site-specific design and template changes, while the custom plugin handles security and authentication logic.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/themes-2-1024x740.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen.png)
 
 My site uses a child theme to keep presentation-layer customizations separate from the parent theme.
 ::
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/theme-1024x593.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code.png)
 
 Theme files are maintained separately from my custom security plugin so design changes and security logic remain isolated.
 ::
@@ -361,7 +361,7 @@ After implementing the controls, I validated them against the live site instead 
 I also used external validation to confirm that those controls were visible from outside the environment. That gave me a direct way to check that the hardening work was not just present in code, but active in the site’s real public-facing behavior.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/observatory-1024x675.png)
+![](/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report.png)
 
 Observatory results provided an external check that the site’s browser-facing security controls were active in the live environment.
 ::

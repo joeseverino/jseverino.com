@@ -68,7 +68,7 @@ The travel router behind my desk bridging WiFi to a wired Ethernet port for devi
 ::
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/printer-bonjour-airprint-1024x887.png)
+![](/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings.png)
 
 The HP LaserJet showing up in macOS Printers and Scanners as AirPrint. Auto-discovered, zero device setup.
 ::
@@ -85,7 +85,7 @@ On the homelab I enabled two features:
 | Exit node | Routes all my traffic through home when I’m on untrusted networks like hotel WiFi |
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/tailscale-route-settings-1024x721.png)
+![](/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings.png)
 
 The Tailscale admin console with subnet routing and exit node both enabled and approved for the homelab machine.
 ::
@@ -103,7 +103,7 @@ Two PowerShell commands restricting SSH and Remote Desktop to the Tailscale subn
 With remote access working, I installed Docker Desktop, confirmed it could pull and run containers, and then set up Nginx Proxy Manager. NPM is a Docker-based reverse proxy with a web UI for managing proxy hosts and SSL certificates. I use it to route the internal homelab hostname to the right container and handle HTTPS termination.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/docker-desktop-all-containers-1024x643.png)
+![](/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers.png)
 
 Docker Desktop showing the current running containers. homelab-proxy and app-1 are Nginx Proxy Manager. The severino-labs containers serve the homelab landing page.
 ::
@@ -123,7 +123,7 @@ This was the part I cared most about getting right. I wanted internal services t
 The solution was a private root CA. I set up a small Debian VM in UTM on my Mac to act as the CA environment. It uses host-only networking so it has no internet access and can only communicate with my Mac. The root CA private key stays inside that VM, and I shut it down whenever it’s not actively issuing or renewing a certificate.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/utm-offline-root-ca-summary-1024x773.png)
+![](/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary.png)
 
 The UTM VM creation. Named “Offline Root CA”, host-only networking, 512MB RAM, 5GB storage. Boots up to sign a cert, then shuts back down.
 ::
@@ -131,7 +131,7 @@ The UTM VM creation. Named “Offline Root CA”, host-only networking, 512MB RA
 For the homelab certificate I generated a key and CSR inside the VM and signed it with the root CA. The certificate includes Subject Alternative Names for both the internal hostname and local IP address, since modern browsers ignore the Common Name field entirely and only validate against the SAN list.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/openssl-sign-homelab-cert-1024x796.png)
+![](/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing.png)
 
 Signing the homelab CSR with the root CA key inside the Debian VM through SSH. Output is homelab.crt, valid for 825 days.
 ::
@@ -148,7 +148,7 @@ The signing process produces four files:
 I uploaded the server key, signed certificate, and CA certificate chain into Nginx Proxy Manager as a custom certificate, attached it to the homelab proxy host, and enabled Force SSL and HTTP/2.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/npm-proxy-host-homelab-domain-1024x693.png)
+![](/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host.png)
 
 The NPM proxy host config with “homelab” as the domain, forwarding to 192.168.1.13 on port 8081.
 ::
@@ -156,7 +156,7 @@ The NPM proxy host config with “homelab” as the domain, forwarding to 192.16
 Before installing the root CA on my devices, the browser showed the expected chain warning. The cert was correctly signed but the CA wasn’t recognized yet, so the whole chain failed.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/homelab-cert-chain-detail-1024x693.png)
+![](/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted.png)
 
 The cert chain before installing the root CA. Both certificates are there and correctly linked, but the root is flagged as not trusted so the whole chain fails.
 ::
@@ -176,7 +176,7 @@ Import-Certificate -FilePath "$env:USERPROFILE\homelab-ca.pem" -CertStoreLocatio
 After that, `https://homelab` loads cleanly with no warnings on any device where I have installed the root CA.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/homelab-cert-trusted-valid-1024x693.png)
+![](/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid.png)
 
 `https://homelab` loading in Safari with a trusted certificate. The page has a download link for the root CA so other devices on the network can get set up without running commands.
 ::
