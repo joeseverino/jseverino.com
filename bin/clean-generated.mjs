@@ -17,10 +17,27 @@ const generatedRoots = [
 ];
 
 // Pure build caches — safe to delete wholesale, never conflict-resolved.
-const buildOutput = ['.astro', 'dist', 'node_modules/.vite'];
+// `dist.nosync` is the local Astro outDir (see astro.config.mjs); the
+// `.nosync` suffix keeps it outside iCloud so this delete stays a fast,
+// local operation instead of crawling through the iCloud FileProvider.
+const buildOutput = ['.astro', 'dist.nosync', 'node_modules/.vite'];
 
 function remove(target) {
   fs.rmSync(path.join(siteRoot, target), { recursive: true, force: true });
+}
+
+function removeRootNodeModuleConflicts() {
+  let removed = 0;
+
+  for (const entry of fs.readdirSync(siteRoot, { withFileTypes: true })) {
+    if (!/^node_modules \d+$/.test(entry.name)) continue;
+
+    fs.rmSync(path.join(siteRoot, entry.name), { recursive: true, force: true });
+    console.log(`Removed dependency conflict copy: ${entry.name}`);
+    removed += 1;
+  }
+
+  return removed;
 }
 
 // A trailing " <number>" before the extension (or end of a directory name) is
@@ -97,7 +114,7 @@ if (removeBuildOutput) {
   for (const target of buildOutput) remove(target);
 }
 
-const removed = generatedRoots.reduce(
+const removed = removeRootNodeModuleConflicts() + generatedRoots.reduce(
   (count, root) => count + resolveNumberedCopies(root),
   0,
 );

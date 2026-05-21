@@ -51,6 +51,42 @@ npm run publish:check
 
 `publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
 
+## Working in iCloud Drive
+
+This repo lives inside an iCloud Drive folder. iCloud syncs, evicts, and
+occasionally creates numbered conflict copies of files or folders it is trying
+to reconcile. That is risky for the generated trees a publish touches:
+
+- **`node_modules`** — an evicted or conflict-copied install can make
+  `astro check` scan dependencies as source, which produces false errors from
+  Astro's own packages.
+- **`dist/`** — deleting and rewriting the built site through iCloud's file
+  daemon makes builds and cleanup slow, and can leave stale output behind.
+
+The repo handles this in two layers:
+
+- Astro writes local build output to **`dist.nosync/`**, set by `outDir` in
+  `astro.config.mjs`. Cloudflare Pages still builds to plain `dist/` because it
+  sets `CF_PAGES`, so hosting behavior does not change.
+- `clean:generated` removes root-level iCloud dependency conflict copies such
+  as `node_modules 2`, `node_modules 3`, and `node_modules 4` before checking
+  or building.
+- TypeScript excludes `node_modules`, `node_modules.*`, and `node_modules *`,
+  so a conflict copy cannot get treated as application source.
+
+These generated paths are gitignored. `publish:check` runs the cleanup first,
+so `site publish` and `site publish-all` should recover automatically from the
+dependency conflict-copy issue.
+
+If `node_modules` itself gets corrupted, rebuild the install:
+
+```sh
+rm -rf node_modules
+npm install
+```
+
+Then run `npm run publish:check` before pushing.
+
 ## Contact flow
 
 The contact form is static at the page level, but submissions go through a
@@ -165,7 +201,7 @@ Committed:
 
 Not committed:
 
-- `node_modules/`, `.astro/`, `dist/`, `.env*`
+- `node_modules`, `node_modules N` conflict copies, `dist.nosync/`, `.astro/`, `.env*`
 
 ## History
 

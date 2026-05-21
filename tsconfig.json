@@ -9,5 +9,12 @@
       "@styles/*": ["src/styles/*"]
     }
   },
-  "exclude": ["dist", "functions"]
+  "exclude": [
+    "dist",
+    "dist.*",
+    "functions",
+    "node_modules",
+    "node_modules.*",
+    "node_modules *"
+  ]
 }
