@@ -37,8 +37,10 @@ featured: false
 
 ## How to Run
 
-- Clone this repository
+Clone the repository and run the simulator:
 
-```text
-git clone https://github.com/joeseverino/football-score-simulator/blob/main/football.py
-```
+::terminal
+$ git clone https://github.com/joeseverino/football-score-simulator.git
+$ cd football-score-simulator
+$ python3 football.py
+::

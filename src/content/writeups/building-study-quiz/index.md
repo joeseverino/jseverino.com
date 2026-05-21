@@ -152,12 +152,12 @@ The final app does that: import the deck, practice in the browser, track progres
 
 Check it out at [`quiz.jseverino.net`](https://quiz.jseverino.net), or clone the repo and run it locally.
 
-```text
-$ git clone [email protected]:joeseverino/study-quiz.git
+::terminal
+$ git clone https://github.com/joeseverino/study-quiz.git
 $ cd study-quiz
 $ php -S localhost:8000
 
 Study Quiz is running locally at http://localhost:8000
-```
+::
 
 [View on GitHub](https://github.com/joeseverino/study-quiz)

@@ -40,4 +40,10 @@ featured: false
 
 ## How to Run
 
-1.  Clone this repository:git clone https://github.com/joeseverino/math-quiz-game.git cd math-quiz
+Clone the repository and run the script:
+
+::terminal
+$ git clone https://github.com/joeseverino/math-quiz-game.git
+$ cd math-quiz-game
+$ python3 math-quiz-game.py
+::
