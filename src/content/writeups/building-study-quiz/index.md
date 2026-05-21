@@ -36,7 +36,7 @@ There was also a constraint: I wanted the app to be public, but I couldn’t pub
 That became the core idea: build the tool publicly, keep the data private, and avoid adding backend complexity that wasn’t needed.
 
 ::figure
-![](/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank.png)
+![Diagram of the public Study Quiz app with a local-only question bank](/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank.png)
 
 The app is public, but the question bank stays local.
 ::
@@ -83,7 +83,7 @@ The simplest way to protect the data was to never send it anywhere.
 I checked this directly in the browser. After a 130 minute session, the Network tab only shows the page, JavaScript, and CSS. There are no requests for question data, answers, or scoring. Everything stays in the browser.
 
 ::figure
-![](/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection.png)
+![Browser Network tab showing the Study Quiz app loading only static files](/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection.png)
 
 The Network tab shows the app loading only the document, JavaScript, and CSS. The question deck and quiz progress stay in the browser instead of being posted to a server.
 ::
@@ -101,7 +101,7 @@ The import model is what makes the app portfolio-safe. Instead of shipping the C
 The deck library also makes the project more general. It is not limited to one course or one exam. Any properly structured question bank can become a Study Quiz deck.
 
 ::figure
-![](/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow.png)
+![Study Quiz deck library with local import and custom deck options](/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow.png)
 
 The deck library supports local imports, demo content, custom deck creation, and reusable study sessions without bundling private question material into the public app.
 ::
@@ -112,14 +112,14 @@ The core quiz loop is intentionally direct.
 
 The app presents one question at a time, shows the answer choices, accepts the user’s response, displays whether the answer was correct, reveals the explanation, updates the running score, and moves to the next question.
 
-![](/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow.png)
+![The Study Quiz question and answer screen](/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow.png)
 
 #### Missed Questions and Weak Review
 
 Study Quiz tracks missed questions during a session so they can be reviewed afterward. It also identifies weak questions over time, which makes it possible to drill the areas that actually need more work instead of rerunning the full deck every time.
 
 ::figure
-![](/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review.png)
+![Study Quiz weak-question review screen for targeted practice](/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review.png)
 
 Weak-question review turns past mistakes into targeted practice instead of treating every question as equally urgent.
 ::
@@ -129,7 +129,7 @@ Weak-question review turns past mistakes into targeted practice instead of treat
 I used this for a full Exam 2 review session with 134 questions. I finished with 130 correct and 4 wrong over about two hours. I then used it as my main review tool going into the exam and scored 100 percent on the proctored Exam 2. It wasn’t just a demo. It held up during real exam prep.
 
 ::figure
-![](/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results.png)
+![Study Quiz session recap showing score, streak, and module results](/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results.png)
 
 The recap screen shows a completed 134-question study session with score, duration, missed-question count, best streak, and module-level performance.
 ::

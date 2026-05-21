@@ -9,7 +9,7 @@ published: true
 
 Cybersecurity • Networking
 
-## Hi, I'm Joe Severino
+# Hi, I'm Joe Severino
 
 Delivery Operations Analyst • CCNA • Security+ • ISC2 CC  
 M.S. Cybersecurity (in progress), Georgia Tech
@@ -23,7 +23,7 @@ Building hands-on security projects across network defense, endpoint monitoring,
 - [Get in Touch](/contact/)
 ::
 
-### Featured Projects
+## Featured Projects
 
 ::featured-projects
 ::
@@ -32,7 +32,7 @@ Building hands-on security projects across network defense, endpoint monitoring,
 [View Full Portfolio](/portfolio/)
 ::
 
-### About Me
+## About Me
 
 ::split
 ![Joe Severino](/assets/pages/home/images/portrait.jpg)
@@ -46,7 +46,7 @@ Today, my focus is network security and the systems behind it. I still approach 
 ::
 ::
 
-### Technologies
+## Technologies
 
 ::technology-cloud
 ::

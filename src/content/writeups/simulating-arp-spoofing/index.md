@@ -30,7 +30,7 @@ Address Resolution Protocol (ARP) spoofing is a common Layer-2 attack that allow
 This lab environment was built using [Mininet](https://mininet.org/) and [Open vSwitch](https://www.openvswitch.org/). Three hosts were connected to a single Layer-2 switch controlled by a [POX SDN Controller](https://github.com/noxrepo/pox). The attacker host was placed on the same broadcast domain as the victim and target to allow for ARP poisoning.
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png)
+![Mininet topology of three hosts on an Open vSwitch managed by a POX controller](/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png)
 
 Mininet topology with three hosts connected to an Open vSwitch instance managed by a POX SDN Controller.
 ::
@@ -46,13 +46,13 @@ This topology uses manually assigned IP and MAC addresses to make ARP table beha
 ::
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected.png)
+![POX controller establishing an OpenFlow connection with the virtual switch](/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected.png)
 
 The POX controller successfully establishes an OpenFlow connection with the virtual switch (s1).
 ::
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup.png)
+![Mininet initializing the network from a script](/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup.png)
 
 Mininet initializing from the predetermined script.
 ::
@@ -69,7 +69,7 @@ The Mininet topology was launched using a [custom Python script](https://github.
 To demonstrate ARP spoofing, normal HTTP traffic was first generated between the victim (h1) and the target server (h2). The attacker (h3) then launched an ARP poisoning attack to intercept communication between the two nodes.
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup.png)
+![Python HTTP server starting on host h2](/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup.png)
 
 An HTTP server is launched on h2 to allow for application-layer traffic in this experiment.
 ::
@@ -79,7 +79,7 @@ h2> python -m http.server 80
 ```
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup.png)
+![Wireshark packet capture started on the switch interface](/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup.png)
 
 A packet capture is started on the switch interface to observe traffic during the attack.
 ::
@@ -89,7 +89,7 @@ s1> tcpdump -i s1-eth1 -w vulnerable.pcap
 ```
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic.png)
+![Normal ARP table and HTTP traffic between hosts h1 and h2](/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic.png)
 
 Normal ARP table and HTTP communication between h1 and h2.
 ::
@@ -100,7 +100,7 @@ h1> curl http://10.0.0.2
 ```
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup.png)
+![The attacker host launching arpspoof against h1 and h2](/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup.png)
 
 The attacker host starts ARP spoofing to poison the ARP table of both h1 and h2.
 ::
@@ -111,7 +111,7 @@ h3> arpspoof -t 10.0.0.2 10.0.0.1
 ```
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic.png)
+![Poisoned ARP table with h3 mapped to the h2 address during interception](/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic.png)
 
 The ARP table now shows h3 associated with 10.0.0.2 while HTTP communication appears to be working as expected.
 ::
@@ -126,13 +126,13 @@ h1> curl http://10.0.0.2
 The [Wireshark](https://www.wireshark.org/) packet capture analysis shows that the attacker successfully spoofed ARP replies, claiming ownership of 10.0.0.2. As a result, the victim updates its ARP table and begins forwarding traffic to the attacker’s MAC address instead of the real host’s.
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture.png)
+![Wireshark capture of spoofed ARP replies claiming the h2 IP address](/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture.png)
 
 h3 continuously sends ARP replies claiming ownership of 10.0.0.2.
 ::
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic.png)
+![Wireshark showing traffic for h2 redirected to the attacker host](/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic.png)
 
 Traffic destined for h2 (10.0.0.2) is actually being sent to h3’s MAC address.
 ::
@@ -161,19 +161,19 @@ ARP spoofing can enable interception and modification of network traffic, usuall
 To demonstrate how enterprise networks mitigate ARP spoofing attacks, I recreated the topology in [Cisco Packet Tracer](https://www.netacad.com/skillsforall/files/Cisco_Packet_Tracer_Download_and_Installation_Instructions.pdf) using a Layer-2 switch and a DHCP-enabled router. Security features, DHCP Snooping and Dynamic ARP Inspection (DAI) were configured on the switch to prevent spoofed ARP responses.
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology.png)
+![ARP spoofing topology rebuilt in Cisco Packet Tracer with a DHCP router](/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology.png)
 
 The topology was recreated in Cisco Packet Tracer with a DHCP-enabled router to support security features such as DHCP Snooping and Dynamic ARP Inspection.
 ::
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config.png)
+![Cisco router configuration enabling a DHCP pool for the network](/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config.png)
 
 r1 enables its g0/0 interface and configures a DHCP pool to dynamically assign addresses to hosts on the network.
 ::
 
 ::figure
-![](/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config.png)
+![Cisco switch configured with DHCP Snooping and Dynamic ARP Inspection](/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config.png)
 
 s1 enables DHCP Snooping and Dynamic ARP Inspection, with the router-facing interface f0/5 configured as a trusted port.
 ::

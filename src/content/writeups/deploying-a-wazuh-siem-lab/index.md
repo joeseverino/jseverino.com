@@ -29,13 +29,13 @@ This exercise involved deploying [Wazuh](https://wazuh.com/), an open source Sec
 This lab environment was designed to simulate a simplified enterprise security monitoring architecture. Windows endpoint runs the Wazuh agent, which collects system and security telemetry and forwards it to the centralized Wazuh server hosted on an Ubuntu virtual machine. The Wazuh server performs log analysis, threat detection, and vulnerability monitoring while storing indexed event data and presenting alerts through the Wazuh dahboard.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png)
+![Architecture diagram of the Wazuh SIEM lab](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png)
 
 Wazuh SIEM Lab Architecture
 ::
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration.png)
+![VirtualBox VM configuration for the Ubuntu Wazuh server](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration.png)
 
 Ubuntu VM hosting the Wazuh Server
 ::
@@ -51,7 +51,7 @@ sudo ./wazuh-install.sh -a
 ```
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful.png)
+![Terminal showing the Wazuh installation completed successfully](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful.png)
 
 Successful completion of the Wazuh installation process
 ::
@@ -65,7 +65,7 @@ sudo systemctl status wazuh-dashboard | head -n 7
 ```
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status.png)
+![Running status for all three Wazuh server processes](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status.png)
 
 Running status for all 3 processes
 ::
@@ -73,7 +73,7 @@ Running status for all 3 processes
 I then obtained the VM IP address using *hostname -i* and opened that within the Windows machine browser.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login.png)
+![Wazuh dashboard login page served over HTTPS](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login.png)
 
 Wazuh dashboard login page accessible via HTTPS
 ::
@@ -85,19 +85,19 @@ Finally, I downloaded the Wazuh Agent Package [here](https://documentation.wazuh
 ```
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer.png)
+![Wazuh agent installer after generating an authentication key](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer.png)
 
 Wazuh Agent after successful Authentication key generation
 ::
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview.png)
+![Wazuh dashboard overview](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview.png)
 
 Wazuh Dashboard Overview
 ::
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints.png)
+![Wazuh endpoints view showing one active agent](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints.png)
 
 Wazuh Endpoints showing one active agent
 ::
@@ -107,7 +107,7 @@ Wazuh Endpoints showing one active agent
 Now that the Windows endpoint was onboarded, the Wazuh vulnerability detection began analyzing installed software and comparing it against known vulnerabilities from public CVE databases.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation.png)
+![High-severity CVEs detected on the Windows endpoint before remediation](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation.png)
 
 High severity CVEs detected on the Windows endpoint
 ::
@@ -115,7 +115,7 @@ High severity CVEs detected on the Windows endpoint
 Each detected vulnerability is mapped to a CVE Identifier and includes detailed information such as the affected package, version, severity rating, and vulnerability description.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details.png)
+![Wazuh vulnerability detail view for a detected CVE](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details.png)
 
 Detailed vulnerability details for CVE-2026-21523
 ::
@@ -123,7 +123,7 @@ Detailed vulnerability details for CVE-2026-21523
 To remediate the detected vulnerabilities, I updated Visual Studio Code, Wireshark, and Python.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update.png)
+![Updating the vulnerable Python installation on the Windows endpoint](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update.png)
 
 Updating the vulnerable Python installation
 ::
@@ -131,7 +131,7 @@ Updating the vulnerable Python installation
 After the updates completed, the Wazuh agent service was restarted so the manager could refresh the endpoint telemetry.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service.png)
+![Restarting the Wazuh agent service on Windows](/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service.png)
 
 Restarting the Wazuh Windows agent service
 ::
@@ -139,7 +139,7 @@ Restarting the Wazuh Windows agent service
 Once the system inventory was rescanned, the Wazuh vulnerability dashboard confirmed that the previously detected high-severity vulnerabilities were no longer present.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation.png)
+![Wazuh vulnerability dashboard with no high-severity CVEs after remediation](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation.png)
 
 Vulnerability dashboard after remediation showing no remaining high-severity CVEs.
 ::
@@ -153,19 +153,19 @@ Purpose: prove the SIEM detects malicious activity from the endpoint.
 To validate that endpoint telemetry was properly ingested into the SIEM, I downloaded the EICAR antivirus test file on the Windows endpoint. Windows Defender immediately detected the file and generated Event ID 1116 in the Defender log.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download.png)
+![Windows Defender blocking the EICAR test file download](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download.png)
 
 Defender blocked the file from downloading
 ::
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat.png)
+![Windows Defender protection history showing the blocked test threat](/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat.png)
 
 Microsoft Defender detecting the EICAR test file and generating a malware detection event
 ::
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat.png)
+![Wazuh dashboard alert generated from the Defender detection event](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat.png)
 
 Wazuh ingesting the Defender event and generating a high-severity security alert
 ::
@@ -175,7 +175,7 @@ Wazuh ingesting the Defender event and generating a high-severity security alert
 The generated alert was investigated in the Wazuh dashboard to examine the associated telemetry. The alert identified the source as Microsoft Defender and included information such as the hostname, detection time, file path, and malware classification.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details.png)
+![Wazuh alert detail showing Defender telemetry and threat classification](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details.png)
 
 Detailed Wazuh alert information showing Defender telemetry and threat classification
 ::
@@ -185,7 +185,7 @@ Detailed Wazuh alert information showing Defender telemetry and threat classific
 Wazuh alerts were configured to send email notifications through a locally configured Postfix relay. The relay authenticates to the domain’s SMTP server and forwards alerts to an external mailbox. Domain email authentication records (SPF, DKIM, and DMARC) were configured to ensure proper email deliverability and prevent spoofing.
 
 ::figure
-![](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification.png)
+![Email notification triggered by the Wazuh malware detection alert](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification.png)
 
 Email notification generated after the malware detection alert was triggered
 ::
