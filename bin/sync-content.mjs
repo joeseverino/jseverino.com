@@ -124,11 +124,26 @@ function rewriteWriteupAssetPaths(markdown, slug) {
     .replace(/^```\s*(?:wp-block-code|source-code-block|cli-block)$/gm, '```text');
 }
 
+// Strip HTML-tag-like sequences. A single `/<[^>]+>/` pass is incomplete:
+// removing one match can splice the neighbouring characters into a fresh
+// tag-like sequence the pass already moved past. Loop to a fixpoint so
+// nothing tag-shaped can survive.
+function stripHtmlTags(value) {
+  let current = value;
+  let previous;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]+>/g, '');
+  } while (current !== previous);
+  return current;
+}
+
 function normalizeDescription(text) {
-  return text
+  const withoutMarkdownLinks = text
     .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
-    .replace(/<[^>]+>/g, '')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+
+  return stripHtmlTags(withoutMarkdownLinks)
     .replace(/\\$/gm, ' ')
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
