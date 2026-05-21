@@ -38,7 +38,7 @@ site status        # repo state, dist state, content snapshot state
 site sync          # vault → src/content + public/assets
 site check         # astro check
 site publish       # clean + sync + check + build + audit
-site publish-all   # full path: hq sync, publish, push (Cloudflare rebuilds)
+site publish-all   # full path: hq sync, publish, commit, push (Cloudflare rebuilds)
 ```
 
 Equivalent inside this repo:
