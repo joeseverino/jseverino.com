@@ -15,7 +15,7 @@
     "clean:generated": "node bin/clean-generated.mjs --all",
     "clean:conflicts": "node bin/clean-generated.mjs",
     "sync:content": "node bin/sync-content.mjs",
-    "migrate:figures": "node bin/migrate-figures.mjs",
+    "make:og": "node bin/make-og-image.mjs",
     "audit:assets": "node bin/audit-assets.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",
