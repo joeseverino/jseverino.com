@@ -515,11 +515,13 @@ main > * + * {
   margin-block-start: 0;
 }
 
-/* Section h3s ("Featured Projects", "About Me", "Technologies") — left-aligned even
-   inside the centered hero block.
+/* Section h2s ("Featured Projects", "About Me", "Technologies") — left-aligned even
+   inside the centered hero block. Sized to var(--font-lg) so promoting them from
+   <h3> to <h2> for a clean SEO heading outline does not change their rendered size.
    Spacing below them is governed by the standard block-gap rules. */
-.home-content > h3 {
+.home-content > h2 {
   text-align: left;
+  font-size: var(--font-lg);
 }
 
 /* The first content block on a page is the hero — centered */
@@ -532,9 +534,11 @@ main > * + * {
   font-size: var(--font-xs);
 }
 
-/* h2 sits tight under the eyebrow. */
-.home-content:first-child > h2 {
+/* h1 sits tight under the eyebrow. Sized to var(--font-xl) so promoting the hero
+   heading from <h2> to <h1> for SEO does not change its rendered size. */
+.home-content:first-child > h1 {
   margin-block-start: 0.4rem;
+  font-size: var(--font-xl);
 }
 
 /* Home hero has a couple of intentionally tighter content blocks:

@@ -31,7 +31,7 @@ const { writeup } = Astro.props;
         <p class="article-date"><time datetime={writeup.date}>{formatDate(writeup.date)}</time></p>
       </div>
       <figure class="article-hero">
-        <img src={writeup.heroImage} alt="" decoding="async" fetchpriority="high" />
+        <img src={writeup.heroImage} alt={writeup.title} decoding="async" fetchpriority="high" />
       </figure>
     </header>
 
