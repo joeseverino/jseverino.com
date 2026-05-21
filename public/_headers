@@ -11,8 +11,19 @@
 /*.html
   Cache-Control: public, max-age=300, must-revalidate
 
+# Security headers for every route.
+# The Content-Security-Policy script-src sha256 values are hashes of three
+# inline scripts emitted into the build:
+#   sha256-uoOR... Google Analytics gtag bootstrap (GoogleAnalytics.astro)
+#   sha256-eEd7... sticky-header / nav script      (Header.astro)
+#   sha256-JXxJ... contact form submit script      (ContactForm.astro)
+# Regenerate after editing those components or upgrading Astro:
+#   npm run build:static && npm run csp:hashes
+# `npm run publish:check` fails if a build hash is missing from this file.
+# Full detail: vault runbook "Content Security Policy — jseverino.com".
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-uoORXFNm5nmCJELuBMiWIEZlkabV2dAt+n+cDbnK5+s=' 'sha256-eEd7JZzAkAhq8psUfjQNbckhmgiWYS7bQQ2gdN6TQxA=' 'sha256-JXxJ1myeqyP5sXv8eHm2uBwOSUzRljiHDBMspnX4XyA=' https://www.googletagmanager.com https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; font-src 'self'; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests

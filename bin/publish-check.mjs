@@ -142,6 +142,9 @@ status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
 
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 
+const csp = run('verify CSP hashes', node, ['bin/csp-hashes.mjs', '--check']);
+status('csp', csp.stdout.trim() || 'verified');
+
 const audit = run('audit assets', node, ['bin/audit-assets.mjs']);
 const auditLines = audit.output
   .split('\n')
