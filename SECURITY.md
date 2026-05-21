@@ -104,6 +104,7 @@ Cloudflare Pages applies the headers in `public/_headers` to every response:
 
 | Header | Value | Purpose |
 |---|---|---|
+| `Content-Security-Policy` | see `public/_headers` | Restricts the scripts, styles, and origins a page may load — detailed below. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
@@ -112,10 +113,24 @@ Cloudflare Pages applies the headers in `public/_headers` to every response:
 Fingerprinted assets (`/_astro/*`, `/assets/*`) are served `immutable` with a
 one-year cache; HTML is short-cached and revalidated.
 
-A `Content-Security-Policy` is **not** currently set. The site's third-party
-surface is small and explicit — Cloudflare Turnstile and Google Analytics — so
-a CSP that allowlists exactly those origins is a sensible future hardening step
-rather than a present gap in a dynamic app.
+### Content Security Policy
+
+The policy starts from `default-src 'self'` and allowlists exactly the
+third-party origins the site uses — Google Analytics (`www.googletagmanager.com`),
+Cloudflare Turnstile (`challenges.cloudflare.com`), and the Cloudflare Web
+Analytics beacon (`static.cloudflareinsights.com`).
+
+`script-src` contains no `'unsafe-inline'`. The three inline scripts the build
+emits — the Google Analytics bootstrap, the header/nav script, and the contact
+form script — are each allowed by an exact `sha256` hash, so the policy admits
+those specific scripts and nothing else inline. `object-src 'none'`,
+`base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'self'` close the
+remaining injection and clickjacking vectors.
+
+The hashes are kept honest by the build, not by memory: `bin/csp-hashes.mjs`
+recomputes them from the built HTML, and `npm run publish:check` fails if
+`public/_headers` is missing a hash for any inline script that actually
+shipped — a stale hash cannot reach production.
 
 ## Supply chain and CI
 

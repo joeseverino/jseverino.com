@@ -49,7 +49,7 @@ npm run check
 npm run publish:check
 ```
 
-`publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
+`publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, verify CSP hashes, audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
 
 ## Working in iCloud Drive
 
