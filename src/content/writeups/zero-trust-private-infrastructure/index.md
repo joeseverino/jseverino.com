@@ -7,7 +7,7 @@ description: >-
 published: true
 published_at: 2026-05-10T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: ./images/zero-trust-private-infrastructure-cover.png
 technologies:
   - adguard-home
   - caddy
@@ -30,7 +30,7 @@ featured_order: 1
 
 # Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls
 
-![hero](/assets/writeups/zero-trust-private-infrastructure/images/12-uptime-kuma-all-monitors-green-scaled.png)
+![hero](/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover.png)
 
 #### Overview
 

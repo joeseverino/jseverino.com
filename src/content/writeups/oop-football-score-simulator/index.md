@@ -6,7 +6,7 @@ description: >-
 published: true
 published_at: 2025-08-19T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/Screenshot-2025-08-18-at-10.11.09-PM-e1755573289572.png
+cover_image: ./images/oop-football-score-simulator-output.png
 technologies:
   - python
 featured: false
@@ -14,7 +14,7 @@ featured: false
 
 # OOP Football Score Simulator
 
-![hero](/assets/writeups/oop-football-score-simulator/images/Screenshot-2025-08-18-at-10.11.09-PM-e1755573289572.png)
+![hero](/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output.png)
 
 - Python
 - OOP

@@ -7,7 +7,7 @@ description: >-
 published: true
 published_at: 2026-04-23T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: ./images/wordpress-cloudflare-security-cover.png
 technologies:
   - cloudflare
   - php
@@ -22,7 +22,7 @@ featured_order: 5
 
 # Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication
 
-![hero](/assets/writeups/securing-my-wordpress-site/images/cover.png)
+![hero](/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover.png)
 
 #### Overview
 
@@ -71,7 +71,7 @@ In this configuration, HSTS is enabled with a one-year max-age and the policy is
 I also added targeted Cloudflare custom rules for high-noise WordPress and file exposure probes. XML-RPC requests and sensitive file patterns such as `.env`, `.log`, `.bak`, and `.sql` are blocked at the edge, reducing unnecessary traffic to the origin and keeping those requests out of the WordPress application layer.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/sec_rules-1024x560.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules.png)
 
 Cloudflare custom rules block XML-RPC and sensitive file patterns at the edge before requests reach the WordPress origin.
 ::
@@ -79,7 +79,7 @@ Cloudflare custom rules block XML-RPC and sensitive file patterns at the edge be
 I also added a direct-origin protection control so the site is not only relying on Cloudflare’s proxy behavior. Cloudflare injects a private request header containing a locally generated random hex value from openssl rand -hex 32 on origin-bound traffic, and a `.htaccess` rule at the web root requires that header before allowing the request to continue.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/cf_header_rule-1024x698.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule.png)
 
 Cloudflare injects a private request header on origin-bound traffic for the proxied site hostname, with the header value redacted.
 ::
@@ -96,7 +96,7 @@ This creates a simple origin trust boundary. Normal visitors reach the site thro
 I validated the control from the terminal by testing both paths. A direct request to the origin IP returned `403 Forbidden`, while a normal request through the Cloudflare-proxied hostname returned `200 OK`.
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/header_curl_tests-1024x634.png)
+![](/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests.png)
 
 A direct request to the origin IP returns 403 Forbidden, while the normal Cloudflare-proxied hostname returns 200 OK.
 ::
@@ -367,7 +367,7 @@ Observatory results provided an external check that the site’s browser-facing 
 ::
 
 ::figure
-![](/assets/writeups/securing-my-wordpress-site/images/cf_log-1024x642.png)
+![](/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log.png)
 
 Cloudflare Security Events showed blocked requests from multiple countries shortly after the custom rules were enabled, confirming that XML-RPC and sensitive file probes were being stopped at the edge.
 ::

@@ -8,7 +8,7 @@ description: >-
 published: true
 published_at: 2025-08-10T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/Screenshot-2025-08-10-at-4.39.45-PM.png
+cover_image: ./images/math-quiz-game-home-screen.png
 technologies:
   - python
 featured: false
@@ -16,7 +16,7 @@ featured: false
 
 # Math Quiz Game
 
-![hero](/assets/writeups/math-quiz-game/images/Screenshot-2025-08-10-at-4.39.45-PM.png)
+![hero](/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen.png)
 
 - Python
 - CLI

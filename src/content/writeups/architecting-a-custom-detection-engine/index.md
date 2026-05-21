@@ -9,7 +9,7 @@ description: >-
 published: true
 published_at: 2026-04-26T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: ./images/custom-wordpress-detection-engine-cover.png
 technologies:
   - cloudflare
   - css
@@ -31,7 +31,7 @@ featured_order: 4
 
 # Architecting a Custom Detection Engine with File Integrity and Security Event Monitoring
 
-![hero](/assets/writeups/architecting-a-custom-detection-engine/images/dashboard-scaled.png)
+![hero](/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover.png)
 
 #### Overview
 
@@ -48,7 +48,7 @@ Hardening and monitoring solve different problems. Hardening reduces what is exp
 That is why I expanded the plugin beyond prevention-focused controls. I wanted the WordPress side of the stack to answer practical questions directly from the admin dashboard: Has anything changed on disk? When was the last integrity check? Are XML-RPC or enumeration attempts still reaching the application? Which requests are being handled by the plugin instead of being stopped at Cloudflare?
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/dashboard-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview.png)
 
 The expanded security layer now shows file integrity status, security event activity, recommendations, and system state directly inside WordPress.
 ::
@@ -60,7 +60,7 @@ This turned the project from a simple hardening plugin into a small application-
 The plugin is organized as a small set of focused modules instead of one large file. The main plugin file defines the plugin metadata, constants, activation behavior, and module loading. Each major responsibility then lives in its own include file: settings, hardening, file integrity monitoring, security event monitoring, passkey login, and the admin interface.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/plugin_files-472x1024.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure.png)
 
 The plugin is organized into focused modules for admin assets, login assets, runtime data protection, file integrity monitoring, application hardening, passkey login, security event monitoring, settings, and templates.
 ::
@@ -68,7 +68,7 @@ The plugin is organized into focused modules for admin assets, login assets, run
 That separation made the plugin easier to reason about as it grew. The hardening logic can be reviewed separately from the file integrity monitor, the event logger can be reviewed separately from the admin UI, and the passkey login code stays isolated from the monitoring features.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/main_file-2-1024x681.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file.png)
 
 The main plugin file defines the plugin metadata, version, requirements, license, shared constants, and module-loading behavior for the rest of the security layer.
 ::
@@ -76,7 +76,7 @@ The main plugin file defines the plugin metadata, version, requirements, license
 I also separated static assets and runtime data. CSS and JavaScript live under the assets directory, the custom security error page lives under templates, and runtime artifacts such as logs and FIM baselines live under data. The data directory is intentionally excluded from Git so local security logs and file hashes are not published with the codebase.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/github-1024x568.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository.png)
 
 The public repository keeps the plugin code, documentation, license, Composer metadata, and shared development stubs together while excluding runtime security data.
 ::
@@ -86,7 +86,7 @@ The public repository keeps the plugin code, documentation, license, Composer me
 File Integrity Monitoring was the first major detection feature I added to the plugin. The idea is straightforward: define which files and directories matter, create a trusted SHA-256 baseline of those files, and compare future checks against that known-good state.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/FIM_overview-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview.png)
 
 The File Integrity Monitoring page shows whether monitoring is enabled, whether a trusted baseline exists, the latest check result, changed-file count, and baseline metadata in one view.
 ::
@@ -94,7 +94,7 @@ The File Integrity Monitoring page shows whether monitoring is enabled, whether 
 The baseline is what makes the monitor useful. It only has value if it represents a file state I actually trust, so I create or refresh it after confirming the current WordPress, plugin, and theme files are expected. Once that baseline exists, the plugin can report whether important files were added, removed, or modified.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/automation-2-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks.png)
 
 Scheduled FIM checks run through WordPress cron, while the change summary separates added, removed, and modified files after each integrity check.
 ::
@@ -102,7 +102,7 @@ Scheduled FIM checks run through WordPress cron, while the change summary separa
 I also added scheduled checks through WordPress cron so integrity monitoring does not depend only on manual review. The schedule gives the plugin a recurring way to check the current file state and preserve recent activity in the local FIM log.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/FIM_change-1-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert.png)
 
 Modified: wp-content/themes/extendable-joe-severino/functions.php
 ::
@@ -112,7 +112,7 @@ After intentionally modifying the child theme’s functions.php file, the integr
 Not every file belongs in an integrity check. Core entry files, WordPress configuration files, the security plugin, and the child theme are useful targets. Logs, caches, uploads, backups, temporary files, Composer dependencies, and Git metadata are intentionally excluded so the monitor does not create noise from files that are expected to change.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/hash_list-1024x712.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline.png)
 
 The FIM baseline stores file hashes, sizes, and modified timestamps locally. File contents are not stored in the baseline.
 ::
@@ -124,7 +124,7 @@ This does not make the plugin a malware scanner. It does not decide whether a ch
 Security Event Monitoring was the second half of the detection layer. File integrity monitoring answers whether important files changed. Event monitoring answers what suspicious requests are still reaching the WordPress application.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/SEM_Overview-1-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview.png)
 
 The Security Events page summarizes whether event monitoring is enabled and breaks recent activity into XML-RPC blocks, enumeration attempts, and total events.
 ::
@@ -132,7 +132,7 @@ The Security Events page summarizes whether event monitoring is enabled and brea
 The event logger records requests handled by the security layer, including XML-RPC probes, REST API user enumeration attempts, author enumeration attempts, and requests that reach the custom security error page. Each event includes the request URI, HTTP method, source IP, user agent, referer, user context, and Cloudflare metadata when those headers are present.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/SEM_Table-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table.png)
 
 Each logged event includes request metadata such as method, URI, source IP, country, user context, and event type so blocked requests can be reviewed without digging through raw server logs.
 ::
@@ -140,7 +140,7 @@ Each logged event includes request metadata such as method, URI, source IP, coun
 This distinction matters because Cloudflare and WordPress see different parts of the request path. If Cloudflare blocks a request at the edge, WordPress never sees it and the plugin cannot log it. If the request reaches WordPress, the plugin can classify it, block it, and preserve local context for review.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/SEM_hardening-1024x681.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook.png)
 
 The hardening layer calls the SEM logger when an unused WordPress endpoint is requested, classifying `/xmlrpc.php` separately from other blocked endpoints and preserving the reason before returning a 403 response.
 ::
@@ -152,7 +152,7 @@ That gave me two layers of visibility: Cloudflare for edge enforcement, and the 
 After adding file integrity monitoring and security event logging, I built the admin dashboard around visibility instead of configuration alone. The goal was to make the plugin answer the obvious questions quickly: is monitoring enabled, does a trusted baseline exist, did the last integrity check pass, are security events being logged, and is anything worth reviewing?
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/overview_2-1-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard.png)
 
 The dashboard brings recent security activity, quick actions, and system status into one view so the plugin can be operated without jumping directly into raw logs or code.
 ::
@@ -162,7 +162,7 @@ The dashboard pulls those signals into one place. It shows the current plugin he
 The security score is not meant to be a universal rating of the entire WordPress environment. It is a local health indicator for this plugin’s own coverage. It reflects whether the plugin is active, whether FIM and SEM are enabled, whether a trusted baseline exists, whether the latest integrity check passed, and whether the recent event history is clean.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/security_score-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score.png)
 
 The security score is a local plugin health indicator, not a full security rating for the entire WordPress environment.
 ::
@@ -174,7 +174,7 @@ That visibility made the plugin feel less like a set of hidden hooks and more li
 After building the admin dashboard, I added a scheduled daily security report so the plugin could summarize its current state without requiring me to manually log into WordPress every day. The report is delivered as a branded “Daily Security Dashboard” email and includes the plugin health score, file integrity status, security event totals, recent activity, top event types, and the next scheduled FIM check.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/Screenshot-2026-04-29-at-8.44.48-PM-1024x916.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report.png)
 
 Daily security report delivered by the plugin and rendered in Apple Mail, showing plugin health, file integrity status, actual recent security events, top event types, and contact form activity.
 ::
@@ -192,7 +192,7 @@ Those files can reveal details about the live environment, including monitored p
 I protected that runtime data in multiple places. Git ignore rules exclude logs, JSON state files, local archives, Composer dependencies, temporary files, environment files, and key material patterns from the repository. Inside the plugin’s data directory, .htaccess and index.php provide an additional guard against direct browsing. At the edge, Cloudflare also blocks sensitive file types and paths before they should ever reach WordPress.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/gitignore-1024x681.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore.png)
 
 Runtime logs, JSON state files, local archives, Composer dependencies, temporary files, environment files, and key material patterns are excluded so the public repository contains source code and documentation without live operational data.
 ::
@@ -217,7 +217,7 @@ The main shortcut is slpush *“message”* , which turns the release path and l
 - Runs git pull –ff-only inside the live plugin directory
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/slpush-1024x681.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow.png)
 
 The `slpush` shortcut validates the local state, commits and pushes approved changes, then sends a non-interactive SSH command to the server so the live plugin directory can run a fast-forward-only pull, and replies with confirmation.
 ::
@@ -239,7 +239,7 @@ That separate repository became part of the larger story: the plugin improved my
 For repository integrity, I use GitHub vigilant mode and signed commits. That gives the public release history a strong audit trail while keeping signing keys local instead of placing them on the production server.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/vigilant-1024x732.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release.png)
 
 The public release is tagged in GitHub with release notes, version history, and a verified signed commit, giving the project a clearer audit trail than one-off server edits.
 ::
@@ -255,13 +255,13 @@ First, I tested the code itself. I added a small phptest shell helper to run PHP
 [View phptest on GitHub](https://github.com/joeseverino/phptest)
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/phptest-1024x656.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper.png)
 
 The phptest helper runs php -l across the current directory tree, skips excluded dependency paths, and confirms each PHP file parses cleanly before release.
 ::
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/install-2-1024x712.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install.png)
 
 A separate WordPress test instance was created so the plugin could be validated outside the production site.
 ::
@@ -271,7 +271,7 @@ I also tested the plugin like a normal WordPress plugin instead of only relying 
 The TST environment is isolated behind Cloudflare Zero Trust Access. The subdomain, [test.jseverino.net](https://test.jseverino.net), is not publicly reachable. Access requires my admin email allowlist and the same WARP device posture model used for administrative access. That let me validate the plugin in a real WordPress install while keeping the staging environment blocked at the edge.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/Screenshot-2026-04-25-at-10.24.07-PM-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access.png)
 
 The TST environment is protected by Cloudflare Zero Trust Access, using the same admin posture model as wp-admin so validation can happen without leaving the staging site publicly exposed.
 ::
@@ -279,13 +279,13 @@ The TST environment is protected by Cloudflare Zero Trust Access, using the same
 One useful validation point was that the test environment still showed zero WordPress-side security events after several days. Since the subdomain was protected by Cloudflare Zero Trust, that was the expected result: unauthorized requests should be stopped at the edge before WordPress or the plugin ever sees them. In this case, a quiet SEM log was a good sign because the test site was not meant to be publicly reachable.
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/Screenshot-2026-04-29-at-9.25.51-PM-1024x676.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard.png)
 
 After installing the plugin on the test WordPress site, the dashboard loaded normally and showed the expected first-run state: FIM and SEM enabled, baseline needed, no integrity check run yet, and zero plugin-side security events.
 ::
 
 ::figure
-![](/assets/writeups/architecting-a-custom-detection-engine/images/rule-1024x679.png)
+![](/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule.png)
 
 Cloudflare Zero Trust checks the enrolled device posture and admin email allowlist before allowing access to the TST environment.
 ::

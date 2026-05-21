@@ -8,7 +8,7 @@ description: >-
 published: true
 published_at: 2026-05-08T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: ./images/adguard-home-docker-dns-cover.png
 technologies:
   - adguard-home
   - dns
@@ -25,7 +25,7 @@ featured_order: 2
 
 # Deploying Local DNS Filtering with AdGuard Home and Docker Engine
 
-![hero](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/Screenshot-2026-05-08-at-12.37.13-PM-scaled.png)
+![hero](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png)
 
 #### Overview
 

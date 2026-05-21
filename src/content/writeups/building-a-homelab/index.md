@@ -7,7 +7,7 @@ description: >-
 published: true
 published_at: 2026-05-06T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: ./images/homelab-tailscale-docker-cover.png
 technologies:
   - debian
   - docker
@@ -28,7 +28,7 @@ featured_order: 3
 
 # Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA
 
-![hero](/assets/writeups/building-a-homelab/images/Screenshot-2026-05-05-at-8.54.06-PM-scaled.png)
+![hero](/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png)
 
 #### Overview
 
@@ -43,7 +43,7 @@ This post walks through how I put that together: Windows 11 Pro, Tailscale, Dock
 The base machine is a Dell OptiPlex 7050 SFF, small, quiet, and more than enough for a first homelab server.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/IMG_3991-942x1024.jpeg)
+![](/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server.jpeg)
 
 The OptiPlex on its way home before becoming the base host for my homelab.
 ::
@@ -111,7 +111,7 @@ Docker Desktop showing the current running containers. homelab-proxy and app-1 a
 The landing page is intentionally simple: a welcome screen, a status row showing Docker and nginx are up, and a download link for the root CA certificate so other devices on the network can install it.
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/Screenshot-2026-05-05-at-8.32.03-PM-1024x693.png)
+![](/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale.png)
 
 The homelab page running in a browser over Tailscale.
 ::
@@ -186,7 +186,7 @@ After that, `https://homelab` loads cleanly with no warnings on any device where
 At a high level, the flow looks like this:
 
 ::figure
-![](/assets/writeups/building-a-homelab/images/Untitled-Diagram.drawio.png)
+![](/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture.png)
 ::
 
 | Layer                 | What’s handling it                       |

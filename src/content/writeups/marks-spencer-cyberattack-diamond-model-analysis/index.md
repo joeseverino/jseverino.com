@@ -7,7 +7,7 @@ description: >-
 published: true
 published_at: 2026-03-29T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
-cover_image: ./images/diamond-model-e1776739706305.png
+cover_image: ./images/marks-spencer-cyberattack-diamond-model.png
 technologies:
   - diamond-model-of-intrusion-analysis
 featured: false
@@ -15,7 +15,7 @@ featured: false
 
 # Marks & Spencer Cyberattack – Diamond Model Analysis
 
-![hero](/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/diamond-model-e1776739706305.png)
+![hero](/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png)
 
 #### Incident Overview
 
