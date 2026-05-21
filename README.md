@@ -82,9 +82,44 @@ featured: true
 featured_order: 1
 ```
 
-## Page blocks
+## Content blocks
 
-Markdown handles prose. These directives cover the custom blocks:
+Markdown handles prose. Custom `::` directives cover the rest, and they are
+surface-specific — writeup blocks render in writeups, page blocks in pages.
+`::terminal` is the only one shared by both.
+
+### Writeup blocks
+
+```md
+::figure
+![Dashboard](./images/dashboard.png)
+
+Dashboard after enabling alerts.
+::
+
+::table
+| Node | IP Address |
+|------|------------|
+| h1   | 10.0.0.1   |
+
+Topology addressing used in the lab.
+::
+
+::terminal
+$ site publish-all
+shipped
+::
+```
+
+Writeup prose also has inline image shorthand:
+
+- `![A caption](./images/x.png)` alone on a line — the alt text becomes the
+  figure caption.
+- `![Alt|480|nocap](./images/x.png)` — `|`-separated options: a number sets
+  pixel width, `nocap` keeps a plain image with no caption.
+- A paragraph that is only a link renders as a button.
+
+### Page blocks
 
 ```md
 ::buttons
@@ -101,9 +136,9 @@ Centered Markdown.
 ::
 
 ::split
-![Image](./images/example.jpg)
+Left column.
 :::
-Right-column text.
+Right column.
 ::
 
 ::featured-projects
@@ -116,27 +151,8 @@ Right-column text.
 ::
 ```
 
-For a portfolio image with a caption, use an explicit figure block:
-
-```md
-::figure
-![Dashboard](./images/dashboard.png)
-
-Dashboard after enabling alerts.
-::
-```
-
-For a table with a caption, use an explicit table block:
-
-```md
-::table
-| Node | IP Address |
-|------|------------|
-| h1   | 10.0.0.1   |
-
-Topology addressing used in the lab.
-::
-```
+`::button sticky` renders a button pinned to the viewport; `::terminal` works
+on pages too.
 
 ## Repo boundaries
 
