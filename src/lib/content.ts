@@ -49,6 +49,7 @@ export type SiteChrome = {
 export type TechnologyTag = {
   slug: string;
   label: string;
+  featured: boolean;
 };
 
 export type TechnologyGroup = {
@@ -362,11 +363,11 @@ export function getTechnologyGroups(): TechnologyGroup[] {
         if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
         const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
         if (cells.length < 2) continue;
-        const [slug, label] = cells;
+        const [slug, label, featured] = cells;
         if (!slug || !label) continue;
         if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;
         if (/^:?-{2,}:?$/.test(slug)) continue;
-        tags.push({ slug, label });
+        tags.push({ slug, label, featured: featured?.toLowerCase() === 'yes' });
       }
       return { name: nameLine.trim(), tags };
     })
