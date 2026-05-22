@@ -5,7 +5,7 @@ description: >-
   team records, realistic scoring, and automatic stat updates.
 published: true
 published_at: 2025-08-19T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/oop-football-score-simulator-output.png
 technologies:
   - python
@@ -15,11 +15,6 @@ featured: false
 # OOP Football Score Simulator
 
 ![hero](/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output.png)
-
-- Python
-- OOP
-- Classes
-- Libraries
 
 [View on GitHub](https://github.com/joeseverino/football-score-simulator)
 

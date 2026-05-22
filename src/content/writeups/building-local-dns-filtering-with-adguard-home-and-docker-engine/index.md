@@ -149,7 +149,7 @@ For the certificate I used my cert-gen script, which SSHes into an offline Debia
 cert-gen SSHing into the offline Debian CA to sign the certificate. The screenshot shows `admin.homelab` but the same workflow produced the cert for `adguard.homelab`.
 ::
 
-Cert and key go into NPM, proxy host set up for `adguard.homelab` pointing at `129.1268.1.233:3001`.
+Cert and key go into NPM, proxy host set up for `adguard.homelab` pointing at `192.168.1.233:3001`.
 
 ::figure
 ![Nginx Proxy Manager showing four .homelab proxy hosts online](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png)

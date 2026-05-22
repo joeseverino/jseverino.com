@@ -26,7 +26,7 @@ This exercise involved deploying [Wazuh](https://wazuh.com/), an open source Sec
 
 #### Lab Architecture
 
-This lab environment was designed to simulate a simplified enterprise security monitoring architecture. Windows endpoint runs the Wazuh agent, which collects system and security telemetry and forwards it to the centralized Wazuh server hosted on an Ubuntu virtual machine. The Wazuh server performs log analysis, threat detection, and vulnerability monitoring while storing indexed event data and presenting alerts through the Wazuh dahboard.
+This lab environment was designed to simulate a simplified enterprise security monitoring architecture. Windows endpoint runs the Wazuh agent, which collects system and security telemetry and forwards it to the centralized Wazuh server hosted on an Ubuntu virtual machine. The Wazuh server performs log analysis, threat detection, and vulnerability monitoring while storing indexed event data and presenting alerts through the Wazuh dashboard.
 
 ::figure
 ![Architecture diagram of the Wazuh SIEM lab](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png)

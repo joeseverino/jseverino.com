@@ -19,14 +19,14 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | Slug | Label |
 | --- | --- |
 | browser-local-storage | Browser Local Storage |
-| diamond-model-of-intrusion-analysis | Diamond Model of Intrusion Analysis |
+| csp | Content Security Policy |
+| diamond-model | Diamond Model |
 | file-integrity-monitoring | File Integrity Monitoring |
-| import-export-workflows | Import/Export Workflows |
 | local-first-architecture | Local-First Architecture |
-| local-https | Local HTTPS |
+| mitre-attack | MITRE ATT&CK |
+| nist | NIST |
 | private-root-ca | Private Root CA |
 | security-event-monitoring | Security Event Monitoring |
-| sha-256 | SHA-256 |
 | vulnerability-detection | Vulnerability Detection |
 | webauthn | WebAuthn |
 | zero-trust | Zero Trust |
@@ -40,7 +40,6 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | phpmyadmin | phpMyAdmin |
 | portainer | Portainer |
 | uptime-kuma | Uptime Kuma |
-| vs-code | VS Code |
 
 ## Languages
 
@@ -60,7 +59,6 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | --- | --- |
 | caddy | Caddy |
 | cisco-packet-tracer | Cisco Packet Tracer |
-| dns | DNS |
 | dns-over-https | DNS over HTTPS |
 | mininet | Mininet |
 | nftables | nftables |
@@ -76,20 +74,17 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 
 | Slug | Label |
 | --- | --- |
-| cloud-vps | Cloud VPS |
 | cloudflare | Cloudflare |
 | debian | Debian |
+| digitalocean | DigitalOcean |
 | docker | Docker |
 | docker-engine | Docker Engine |
-| homelab | Homelab |
 | hyper-v | Hyper-V |
-| ubuntu-linux | Ubuntu Linux |
 | ubuntu-server | Ubuntu Server |
 | utm | UTM |
+| windows | Windows |
 | windows-11-pro | Windows 11 Pro |
-| windows-endpoint | Windows Endpoint |
 | wordpress | WordPress |
-| wp-cron | WP-Cron |
 
 ## Security Tools
 
@@ -101,5 +96,5 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | metasploit-framework | Metasploit Framework |
 | nmap | Nmap |
 | openssl | OpenSSL |
-| wazuh-siem | Wazuh SIEM |
+| wazuh | Wazuh |
 | wireshark | Wireshark |

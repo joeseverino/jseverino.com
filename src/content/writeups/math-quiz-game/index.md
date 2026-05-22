@@ -7,7 +7,7 @@ description: >-
   and their final score is displayed at the end.
 published: true
 published_at: 2025-08-10T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/math-quiz-game-home-screen.png
 technologies:
   - python
@@ -17,10 +17,6 @@ featured: false
 # Math Quiz Game
 
 ![hero](/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen.png)
-
-- Python
-- CLI
-- Libraries
 
 [View on GitHub](https://github.com/joeseverino/math-quiz-game)
 

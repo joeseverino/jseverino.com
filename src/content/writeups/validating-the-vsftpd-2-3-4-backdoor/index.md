@@ -5,11 +5,12 @@ description: >-
   the known backdoor, and captures the FTP trigger packet in Wireshark.
 published: true
 published_at: 2026-04-21T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/meterpreter-sysinfo.png
 technologies:
   - kali-linux
   - metasploit-framework
+  - mitre-attack
   - nmap
   - wireshark
 featured: false
