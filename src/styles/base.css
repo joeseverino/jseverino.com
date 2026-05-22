@@ -455,6 +455,7 @@ main > * + * {
   line-height: 1.15;
   letter-spacing: -0.02em;
   text-transform: uppercase;
+  text-decoration: none;
 }
 
 .nav-list {
@@ -1053,9 +1054,25 @@ figure {
 
 .footer-inner {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   width: min(var(--wide), 100%);
   margin-inline: auto;
+}
+
+.source-link {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #333040;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+
+.source-link:hover {
+  color: var(--color-text);
+  text-decoration: none;
 }
 
 .social-links {
