@@ -1061,6 +1061,8 @@ figure {
 }
 
 .source-link {
+  display: flex;
+  align-items: center;
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.85rem;
   font-weight: 700;
