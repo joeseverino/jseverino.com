@@ -1086,6 +1086,11 @@ figure {
   list-style: none;
 }
 
+.social-links a {
+  display: flex;
+  align-items: center;
+}
+
 .social-links svg {
   width: 24px;
   height: 24px;
