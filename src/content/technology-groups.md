@@ -50,11 +50,11 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | --- | --- | --- |
 | css | CSS |  |
 | html | HTML |  |
-| javascript | JavaScript |  |
+| javascript | JavaScript | yes |
 | json | JSON |  |
-| php | PHP |  |
+| php | PHP | yes |
 | python | Python | yes |
-| zsh | zsh |  |
+| zsh | zsh | yes |
 
 ## Networking
 
@@ -79,11 +79,11 @@ This file syncs to `src/content/technology-groups.md` in the site repo via
 | --- | --- | --- |
 | cloudflare | Cloudflare | yes |
 | debian | Debian |  |
-| digitalocean | DigitalOcean |  |
+| digitalocean | DigitalOcean | yes |
 | docker | Docker | yes |
 | docker-engine | Docker Engine |  |
 | hyper-v | Hyper-V |  |
-| ubuntu-server | Ubuntu Server |  |
+| ubuntu-server | Ubuntu Server | yes |
 | utm | UTM |  |
 | windows | Windows |  |
 | windows-11-pro | Windows 11 Pro |  |
