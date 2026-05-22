@@ -1,0 +1,9 @@
+---
+import { buildPicture, type PictureOptions } from '@lib/images';
+
+type Props = PictureOptions;
+
+const html = buildPicture(Astro.props);
+---
+
+<Fragment set:html={html} />

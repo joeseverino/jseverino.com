@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import Picture from '@components/Picture.astro';
 import { formatDate, getWriteups, titleCase } from '@lib/content';
 
 export async function getStaticPaths() {
@@ -31,7 +32,13 @@ const { writeup } = Astro.props;
         <p class="article-date"><time datetime={writeup.date}>{formatDate(writeup.date)}</time></p>
       </div>
       <figure class="article-hero">
-        <img src={writeup.heroImage} alt={writeup.title} decoding="async" fetchpriority="high" />
+        <Picture
+          src={writeup.heroImage}
+          alt={writeup.title}
+          sizes="(max-width: 1024px) 100vw, 960px"
+          loading="eager"
+          fetchpriority="high"
+        />
       </figure>
     </header>
 

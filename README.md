@@ -190,13 +190,33 @@ Right column.
 `::button sticky` renders a button pinned to the viewport; `::terminal` works
 on pages too.
 
+## Images
+
+Source images live in the vault next to the writeup that uses them, at full
+resolution. The sync step does not copy them as-is — it runs every PNG and
+JPEG through `sharp` and emits, per image:
+
+- AVIF and WebP variants at 512, 1024, and 1600 px wide (never upscaled)
+- a re-encoded raster fallback at the original path, capped at 1600 px
+
+Encoded output is cached by source-content hash under `node_modules/.cache`, so
+a re-sync only re-encodes images that actually changed. Widths, formats, and
+intrinsic dimensions are recorded in `src/lib/image-manifest.json`.
+
+At render time `src/lib/images.ts` turns every manifest-known `<img>` into a
+responsive `<picture>` — `<source>` for AVIF and WebP, the raster as the `<img>`
+fallback, explicit `width`/`height` to reserve layout. `ProjectCard` and the
+article hero use the `Picture` component directly; writeup and page bodies are
+rewritten by `enhanceImages` after Markdown rendering. A browser downloads a
+right-sized AVIF (tens of KB) instead of a full-resolution PNG.
+
 ## Repo boundaries
 
 Committed:
 
 - `src/` — Astro source
 - `public/` — static assets, `_headers`, `_redirects`
-- `src/content/` — synced public snapshot (committed so Cloudflare can build from this repo alone)
+- `src/content/`, `public/assets/`, `src/lib/image-manifest.json` — synced public snapshot and generated image variants (committed so Cloudflare can build from this repo alone)
 - package and config files
 
 Not committed:

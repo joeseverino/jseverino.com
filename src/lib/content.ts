@@ -3,6 +3,7 @@ import path from 'node:path';
 import MarkdownIt from 'markdown-it';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
+import { enhanceImages } from './images';
 
 function createMarkdownRenderer() {
   return new MarkdownIt({
@@ -299,14 +300,15 @@ function preprocessPageMarkdown(markdown: string): string {
 function renderWriteupMarkdown(markdown: string, slug: string): string {
   const prepared = renderTableBlocks(renderFigureBlocks(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown)))));
   const html = md.render(prepared);
-  return promoteStandaloneLinks(restoreFigures(html))
+  const resolved = promoteStandaloneLinks(restoreFigures(html))
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
     .replaceAll('src="images/', `src="/assets/writeups/${slug}/images/`);
+  return enhanceImages(resolved);
 }
 
 export function renderPageMarkdown(markdown: string): string {
-  return restoreFigures(md.render(preprocessPageMarkdown(markdown)));
+  return enhanceImages(restoreFigures(md.render(preprocessPageMarkdown(markdown))));
 }
 
 function collectionSlug(id: string): string {

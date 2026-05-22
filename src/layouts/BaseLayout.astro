@@ -18,6 +18,13 @@ const { seo = {}, bodyClass = '' } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="preload"
+      href="/assets/fonts/inter/inter-variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <SeoHead {...seo} />
     <GoogleAnalytics />
     <link rel="icon" href="/assets/media/2025/08/cropped-JS-2-32x32.png" sizes="32x32" />

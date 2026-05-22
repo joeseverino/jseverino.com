@@ -1,5 +1,6 @@
 ---
 import { formatDate, type Writeup } from '@lib/content';
+import Picture from '@components/Picture.astro';
 
 type Props = {
   writeup: Writeup;
@@ -10,17 +11,17 @@ const { writeup, eager = false } = Astro.props;
 ---
 
 <li class="project-card">
-  <h4 class="project-card-title">
+  <h3 class="project-card-title">
     <a href={`/portfolio/${writeup.slug}/`} target="_self">{writeup.title}</a>
-  </h4>
+  </h3>
   <figure class="project-card-media">
     <a href={`/portfolio/${writeup.slug}/`} target="_self">
-      <img
-        loading={eager ? undefined : 'lazy'}
-        fetchpriority={eager ? 'high' : undefined}
-        decoding="async"
+      <Picture
         src={writeup.heroImage}
         alt={writeup.title}
+        sizes="(max-width: 700px) 100vw, 360px"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : undefined}
       />
     </a>
   </figure>

@@ -1,0 +1,4899 @@
+{
+  "/assets/pages/about/images/000webhost-breach.png": {
+    "w": 2630,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/pages/about/images/000webhost-breach-512.avif"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/000webhost-breach-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/000webhost-breach-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/pages/about/images/000webhost-breach-512.webp"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/000webhost-breach-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/000webhost-breach-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/pages/about/images/000webhost-breach.png"
+  },
+  "/assets/pages/about/images/first-cloudflare-setup.png": {
+    "w": 1774,
+    "h": 1470,
+    "avif": [
+      [
+        512,
+        "/assets/pages/about/images/first-cloudflare-setup-512.avif"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/first-cloudflare-setup-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/first-cloudflare-setup-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/pages/about/images/first-cloudflare-setup-512.webp"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/first-cloudflare-setup-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/first-cloudflare-setup-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/pages/about/images/first-cloudflare-setup.png"
+  },
+  "/assets/pages/about/images/welcome-plaintext-password.png": {
+    "w": 1774,
+    "h": 1470,
+    "avif": [
+      [
+        512,
+        "/assets/pages/about/images/welcome-plaintext-password-512.avif"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/welcome-plaintext-password-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/welcome-plaintext-password-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/pages/about/images/welcome-plaintext-password-512.webp"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/welcome-plaintext-password-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/welcome-plaintext-password-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/pages/about/images/welcome-plaintext-password.png"
+  },
+  "/assets/pages/home/images/portrait.jpg": {
+    "w": 4640,
+    "h": 6960,
+    "avif": [
+      [
+        512,
+        "/assets/pages/home/images/portrait-512.avif"
+      ],
+      [
+        1024,
+        "/assets/pages/home/images/portrait-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/pages/home/images/portrait-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/pages/home/images/portrait-512.webp"
+      ],
+      [
+        1024,
+        "/assets/pages/home/images/portrait-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/pages/home/images/portrait-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/pages/home/images/portrait.jpg"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline.png": {
+    "w": 2624,
+    "h": 1824,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release.png": {
+    "w": 2778,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper.png": {
+    "w": 3104,
+    "h": 1988,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook.png": {
+    "w": 2908,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report.png": {
+    "w": 1930,
+    "h": 1726,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository.png": {
+    "w": 2242,
+    "h": 1244,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score.png": {
+    "w": 2996,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file.png": {
+    "w": 2908,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure.png": {
+    "w": 604,
+    "h": 1310,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure-512.avif"
+      ],
+      [
+        604,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure-604.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure-512.webp"
+      ],
+      [
+        604,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure-604.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-plugin-file-structure.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore.png": {
+    "w": 2908,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard.png": {
+    "w": 3008,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install.png": {
+    "w": 2493,
+    "h": 1733,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install.png"
+  },
+  "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow.png": {
+    "w": 2908,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow.png"
+  },
+  "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server.jpeg": {
+    "w": 4250,
+    "h": 4621,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server.jpeg"
+  },
+  "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers.png": {
+    "w": 3024,
+    "h": 1898,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers.png"
+  },
+  "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted.png": {
+    "w": 2924,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted.png"
+  },
+  "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale.png": {
+    "w": 2924,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale.png"
+  },
+  "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png": {
+    "w": 2684,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png"
+  },
+  "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture.png": {
+    "w": 236,
+    "h": 251,
+    "avif": [
+      [
+        236,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-236.avif"
+      ]
+    ],
+    "webp": [
+      [
+        236,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-236.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture.png"
+  },
+  "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid.png": {
+    "w": 2924,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid.png"
+  },
+  "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings.png": {
+    "w": 1670,
+    "h": 1446,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings.png"
+  },
+  "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host.png": {
+    "w": 2924,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host.png"
+  },
+  "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing.png": {
+    "w": 1848,
+    "h": 1436,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing.png"
+  },
+  "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale.png": {
+    "w": 979,
+    "h": 512,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-512.avif"
+      ],
+      [
+        979,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-979.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-512.webp"
+      ],
+      [
+        979,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-979.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale.png"
+  },
+  "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings.png": {
+    "w": 2812,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings.png"
+  },
+  "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled.jpeg": {
+    "w": 4284,
+    "h": 4284,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled.jpeg"
+  },
+  "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary.png": {
+    "w": 2024,
+    "h": 1528,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings.png": {
+    "w": 3024,
+    "h": 1898,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix.png": {
+    "w": 3024,
+    "h": 1898,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof.png": {
+    "w": 3024,
+    "h": 1898,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running.png": {
+    "w": 2424,
+    "h": 1388,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation.png": {
+    "w": 1702,
+    "h": 1170,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation.png"
+  },
+  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection.png": {
+    "w": 2664,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow.png": {
+    "w": 2630,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard.png": {
+    "w": 2630,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank.png": {
+    "w": 2630,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow.png": {
+    "w": 1267,
+    "h": 938,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-1024.avif"
+      ],
+      [
+        1267,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-1267.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-1024.webp"
+      ],
+      [
+        1267,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-1267.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results.png": {
+    "w": 2664,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results.png"
+  },
+  "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review.png": {
+    "w": 1233,
+    "h": 908,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-1024.avif"
+      ],
+      [
+        1233,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-1233.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-1024.webp"
+      ],
+      [
+        1233,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-1233.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service.png": {
+    "w": 1631,
+    "h": 889,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login.png": {
+    "w": 1500,
+    "h": 998,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-1024.avif"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-1500.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-1024.webp"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-1500.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer.png": {
+    "w": 320,
+    "h": 281,
+    "avif": [
+      [
+        320,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer-320.avif"
+      ]
+    ],
+    "webp": [
+      [
+        320,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer-320.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-agent-installer.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat.png": {
+    "w": 1870,
+    "h": 1203,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification.png": {
+    "w": 1642,
+    "h": 1600,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview.png": {
+    "w": 1500,
+    "h": 998,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-1024.avif"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-1500.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-1024.webp"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-1500.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation.png": {
+    "w": 1870,
+    "h": 1155,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation.png": {
+    "w": 1581,
+    "h": 998,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-1024.avif"
+      ],
+      [
+        1581,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-1581.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-1024.webp"
+      ],
+      [
+        1581,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-1581.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful.png": {
+    "w": 1920,
+    "h": 1008,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints.png": {
+    "w": 1500,
+    "h": 998,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-1024.avif"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-1500.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-1024.webp"
+      ],
+      [
+        1500,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-1500.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status.png": {
+    "w": 1920,
+    "h": 1008,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png": {
+    "w": 361,
+    "h": 362,
+    "avif": [
+      [
+        361,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-361.avif"
+      ]
+    ],
+    "webp": [
+      [
+        361,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-361.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover.png": {
+    "w": 1834,
+    "h": 1203,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details.png": {
+    "w": 1870,
+    "h": 1203,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration.png": {
+    "w": 694,
+    "h": 637,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration-512.avif"
+      ],
+      [
+        694,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration-694.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration-512.webp"
+      ],
+      [
+        694,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration-694.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-virtualbox-vm-configuration.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details.png": {
+    "w": 1870,
+    "h": 1155,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download.png": {
+    "w": 365,
+    "h": 111,
+    "avif": [
+      [
+        365,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download-365.avif"
+      ]
+    ],
+    "webp": [
+      [
+        365,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download-365.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-defender-blocked-download.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update.png": {
+    "w": 983,
+    "h": 607,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-512.avif"
+      ],
+      [
+        983,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-983.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-512.webp"
+      ],
+      [
+        983,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-983.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update.png"
+  },
+  "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat.png": {
+    "w": 1204,
+    "h": 951,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-1024.avif"
+      ],
+      [
+        1204,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-1204.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-1024.webp"
+      ],
+      [
+        1204,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-1204.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2.png": {
+    "w": 860,
+    "h": 329,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-512.avif"
+      ],
+      [
+        860,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-860.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-512.webp"
+      ],
+      [
+        860,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-860.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig.png": {
+    "w": 876,
+    "h": 678,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-512.avif"
+      ],
+      [
+        876,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-876.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-512.webp"
+      ],
+      [
+        876,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-876.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request.png"
+  },
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream.png"
+  },
+  "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png": {
+    "w": 1536,
+    "h": 737,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1024.avif"
+      ],
+      [
+        1536,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1536.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1024.webp"
+      ],
+      [
+        1536,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1536.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png"
+  },
+  "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen.png": {
+    "w": 1020,
+    "h": 676,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-512.avif"
+      ],
+      [
+        1020,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-1020.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-512.webp"
+      ],
+      [
+        1020,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-1020.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen.png"
+  },
+  "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output.png": {
+    "w": 1020,
+    "h": 676,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-512.avif"
+      ],
+      [
+        1020,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-1020.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-512.webp"
+      ],
+      [
+        1020,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-1020.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy.png": {
+    "w": 2584,
+    "h": 1892,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page.png": {
+    "w": 2584,
+    "h": 1892,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application.png": {
+    "w": 2584,
+    "h": 1892,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings.png": {
+    "w": 1012,
+    "h": 1552,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-512.avif"
+      ],
+      [
+        1012,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-1012.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-512.webp"
+      ],
+      [
+        1012,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-1012.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule.png": {
+    "w": 2914,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records.png": {
+    "w": 1656,
+    "h": 1054,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log.png": {
+    "w": 2200,
+    "h": 1380,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules.png": {
+    "w": 2196,
+    "h": 1202,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard.png": {
+    "w": 2696,
+    "h": 1792,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices.png": {
+    "w": 2584,
+    "h": 1892,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login.png": {
+    "w": 2412,
+    "h": 1152,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login.png": {
+    "w": 2680,
+    "h": 1670,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report.png": {
+    "w": 2870,
+    "h": 1892,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table.png": {
+    "w": 2502,
+    "h": 1522,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover.png": {
+    "w": 2258,
+    "h": 1186,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests.png": {
+    "w": 2298,
+    "h": 1422,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response.png": {
+    "w": 1860,
+    "h": 1162,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal.png": {
+    "w": 3048,
+    "h": 1764,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh.png": {
+    "w": 2630,
+    "h": 1578,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list.png": {
+    "w": 2748,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen.png": {
+    "w": 2748,
+    "h": 1986,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code.png": {
+    "w": 3048,
+    "h": 1764,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response.png": {
+    "w": 1134,
+    "h": 222,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-1024.avif"
+      ],
+      [
+        1134,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-1134.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-1024.webp"
+      ],
+      [
+        1134,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-1134.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code.png": {
+    "w": 1342,
+    "h": 640,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-1024.avif"
+      ],
+      [
+        1342,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-1342.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-1024.webp"
+      ],
+      [
+        1342,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-1342.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code.png": {
+    "w": 2108,
+    "h": 1338,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success.png": {
+    "w": 2166,
+    "h": 834,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success.png"
+  },
+  "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked.png": {
+    "w": 1279,
+    "h": 827,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-1024.avif"
+      ],
+      [
+        1279,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-1279.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-1024.webp"
+      ],
+      [
+        1279,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-1279.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover.png": {
+    "w": 2040,
+    "h": 1236,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology.png": {
+    "w": 2342,
+    "h": 1846,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config.png": {
+    "w": 1928,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config.png": {
+    "w": 1928,
+    "h": 1934,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png": {
+    "w": 911,
+    "h": 1019,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.avif"
+      ],
+      [
+        911,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-911.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.webp"
+      ],
+      [
+        911,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-911.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic.png": {
+    "w": 2432,
+    "h": 1464,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup.png": {
+    "w": 1411,
+    "h": 958,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-1024.avif"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-1411.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-1024.webp"
+      ],
+      [
+        1411,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-1411.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup.png"
+  },
+  "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture.png": {
+    "w": 2432,
+    "h": 1464,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2.png": {
+    "w": 860,
+    "h": 329,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-512.avif"
+      ],
+      [
+        860,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-860.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-512.webp"
+      ],
+      [
+        860,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-860.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan.png"
+  },
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results.png": {
+    "w": 1920,
+    "h": 1080,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered.png": {
+    "w": 2656,
+    "h": 1348,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session.png": {
+    "w": 2558,
+    "h": 1673,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed.png": {
+    "w": 2414,
+    "h": 1418,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config.png": {
+    "w": 2414,
+    "h": 1418,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping.png": {
+    "w": 2414,
+    "h": 1418,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction.png": {
+    "w": 3212,
+    "h": 1538,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config.png": {
+    "w": 2666,
+    "h": 1568,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only.png": {
+    "w": 3212,
+    "h": 1538,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot.png": {
+    "w": 2984,
+    "h": 1926,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot.png": {
+    "w": 2782,
+    "h": 1926,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot.png"
+  },
+  "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover.png": {
+    "w": 2920,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover.png"
+  }
+}

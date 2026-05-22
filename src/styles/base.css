@@ -111,6 +111,11 @@ img {
   vertical-align: bottom;
 }
 
+/* <picture> is a transparent wrapper — its <img> keeps every existing rule. */
+picture {
+  display: contents;
+}
+
 h1,
 h2,
 h3,

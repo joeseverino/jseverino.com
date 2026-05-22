@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
+import sharp from 'sharp';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = process.env.VAULT_DIR
@@ -22,6 +24,13 @@ const targetTechnologyGroups = path.join(siteRoot, 'src/content/technology-group
 const targetWriteups = path.join(siteRoot, 'src/content/writeups');
 const targetWriteupAssets = path.join(siteRoot, 'public/assets/writeups');
 const targetPageAssets = path.join(siteRoot, 'public/assets/pages');
+const targetImageManifest = path.join(siteRoot, 'src/lib/image-manifest.json');
+const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
+
+// Responsive variant widths (px). Each image gets AVIF + WebP at every width
+// at or below its own, plus a re-encoded raster fallback at the original path.
+const VARIANT_WIDTHS = [512, 1024, 1600];
+const imageManifest = {};
 
 function emptyDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
@@ -67,8 +76,80 @@ function collectMarkdownAssetRefs(markdown) {
   return refs;
 }
 
-function copyReferencedAssets(refs, sourceDir, targetDir) {
-  const copied = [];
+const OPTIMIZABLE = /\.(?:png|jpe?g)$/i;
+
+// Generate AVIF + WebP variants for one image, plus a capped raster fallback at
+// the original path. Encoded outputs are cached by source-content hash, so a
+// re-sync only re-encodes images that actually changed.
+async function optimizeImage(source, target, url) {
+  try {
+    const buffer = fs.readFileSync(source);
+    const meta = await sharp(buffer).metadata();
+    const intrinsicW = meta.width ?? 0;
+    const intrinsicH = meta.height ?? 0;
+    if (!intrinsicW || !intrinsicH) throw new Error('unreadable dimensions');
+
+    const hash = crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 16);
+    const dir = path.dirname(target);
+    const ext = path.extname(target);
+    const base = path.basename(target, ext);
+    const urlDir = url.slice(0, url.lastIndexOf('/'));
+    fs.mkdirSync(dir, { recursive: true });
+
+    const maxWidth = VARIANT_WIDTHS[VARIANT_WIDTHS.length - 1];
+    const widths = [
+      ...new Set([
+        ...VARIANT_WIDTHS.filter((width) => width < intrinsicW),
+        Math.min(intrinsicW, maxWidth),
+      ]),
+    ].sort((a, b) => a - b);
+
+    // Copy from cache when the encoded output already exists; otherwise encode.
+    const emit = async (outName, cacheName, encode) => {
+      const outFile = path.join(dir, outName);
+      const cacheFile = path.join(imageCacheDir, cacheName);
+      if (fs.existsSync(cacheFile)) {
+        fs.copyFileSync(cacheFile, outFile);
+      } else {
+        fs.writeFileSync(outFile, await encode());
+        fs.copyFileSync(outFile, cacheFile);
+      }
+    };
+
+    const avif = [];
+    const webp = [];
+    for (const width of widths) {
+      const avifName = `${base}-${width}.avif`;
+      const webpName = `${base}-${width}.webp`;
+      await emit(avifName, `${hash}-${width}.avif`, () =>
+        sharp(buffer).resize({ width }).avif({ quality: 60 }).toBuffer(),
+      );
+      await emit(webpName, `${hash}-${width}.webp`, () =>
+        sharp(buffer).resize({ width }).webp({ quality: 82 }).toBuffer(),
+      );
+      avif.push([width, `${urlDir}/${avifName}`]);
+      webp.push([width, `${urlDir}/${webpName}`]);
+    }
+
+    // Raster fallback at the original path — capped, re-encoded, never upscaled.
+    await emit(path.basename(target), `${hash}-fallback${ext}`, () => {
+      const pipeline = sharp(buffer).resize({
+        width: Math.min(intrinsicW, maxWidth),
+        withoutEnlargement: true,
+      });
+      return (
+        /\.png$/i.test(ext) ? pipeline.png({ compressionLevel: 9 }) : pipeline.jpeg({ quality: 82 })
+      ).toBuffer();
+    });
+
+    imageManifest[url] = { w: intrinsicW, h: intrinsicH, avif, webp, fallback: url };
+  } catch (error) {
+    console.warn(`[images] could not optimize ${url} (${error.message}); copying original`);
+    copyFile(source, target);
+  }
+}
+
+async function processReferencedAssets(refs, sourceDir, targetDir, urlPrefix) {
   for (const ref of refs) {
     const source = path.resolve(sourceDir, ref);
     const target = path.resolve(targetDir, ref);
@@ -80,10 +161,12 @@ function copyReferencedAssets(refs, sourceDir, targetDir) {
       throw new Error(`Missing referenced asset: ${source}`);
     }
 
-    copyFile(source, target);
-    copied.push(ref);
+    if (OPTIMIZABLE.test(ref)) {
+      await optimizeImage(source, target, `${urlPrefix}/${ref}`);
+    } else {
+      copyFile(source, target);
+    }
   }
-  return copied;
 }
 
 function publicWriteupData(data) {
@@ -191,7 +274,7 @@ function stripRepeatedDescription(markdown, description) {
   return output.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
 }
 
-function syncPages() {
+async function syncPages() {
   if (!fs.existsSync(sourcePages)) {
     throw new Error(`Missing vault pages directory: ${sourcePages}`);
   }
@@ -225,11 +308,16 @@ function syncPages() {
     fs.mkdirSync(targetPages, { recursive: true });
     fs.writeFileSync(path.join(targetPages, `${slug}.md`), synced);
 
-    copyReferencedAssets(refs, sourceDir, path.join(targetPageAssets, slug));
+    await processReferencedAssets(
+      refs,
+      sourceDir,
+      path.join(targetPageAssets, slug),
+      `/assets/pages/${slug}`,
+    );
   }
 }
 
-function syncWriteups() {
+async function syncWriteups() {
   emptyDir(targetWriteups);
   emptyDir(targetWriteupAssets);
 
@@ -256,15 +344,32 @@ function syncWriteups() {
     fs.mkdirSync(targetDir, { recursive: true });
     fs.writeFileSync(path.join(targetDir, 'index.md'), syncedMarkdown);
 
-    copyReferencedAssets(refs, sourceDir, path.join(targetWriteupAssets, slug));
+    await processReferencedAssets(
+      refs,
+      sourceDir,
+      path.join(targetWriteupAssets, slug),
+      `/assets/writeups/${slug}`,
+    );
   }
 }
 
-syncPages();
-syncWriteups();
+fs.mkdirSync(imageCacheDir, { recursive: true });
+await syncPages();
+await syncWriteups();
+
+const sortedManifest = Object.fromEntries(
+  Object.keys(imageManifest)
+    .sort()
+    .map((key) => [key, imageManifest[key]]),
+);
+fs.mkdirSync(path.dirname(targetImageManifest), { recursive: true });
+fs.writeFileSync(targetImageManifest, `${JSON.stringify(sortedManifest, null, 2)}\n`);
 
 console.log(`Synced pages from ${sourcePages}`);
 console.log(`Synced public writeups from ${sourceWriteups}`);
+console.log(
+  `Optimized ${Object.keys(imageManifest).length} images → ${path.relative(siteRoot, targetImageManifest)}`,
+);
 
 if (includeDrafts) {
   console.log(
