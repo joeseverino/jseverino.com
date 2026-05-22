@@ -1063,6 +1063,7 @@ figure {
 .source-link {
   display: flex;
   align-items: center;
+  height: 24px;
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.85rem;
   font-weight: 700;
