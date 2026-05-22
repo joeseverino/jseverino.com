@@ -7,11 +7,10 @@ description: >-
   Root CA.
 published: true
 published_at: 2026-05-08T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/adguard-home-docker-dns-cover.png
 technologies:
   - adguard-home
-  - dns
   - dns-over-https
   - docker-engine
   - hyper-v

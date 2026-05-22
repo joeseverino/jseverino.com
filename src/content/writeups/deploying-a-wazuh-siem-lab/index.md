@@ -5,14 +5,14 @@ description: >-
   investigate malware alerts, and configure automated email notifications.
 published: true
 published_at: 2026-03-08T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/wazuh-siem-lab-cover.png
 technologies:
   - smtp
-  - ubuntu-linux
+  - ubuntu-server
   - vulnerability-detection
-  - wazuh-siem
-  - windows-endpoint
+  - wazuh
+  - windows
 featured: false
 ---
 

@@ -7,17 +7,15 @@ description: >-
   uploading study material to a server.
 published: true
 published_at: 2026-05-03T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/study-quiz-local-first-app-dashboard.png
 technologies:
   - browser-local-storage
   - css
   - html
-  - import-export-workflows
   - javascript
   - json
   - local-first-architecture
-  - php
 featured: false
 ---
 

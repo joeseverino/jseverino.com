@@ -6,21 +6,20 @@ description: >-
   services reachable to trusted devices only.
 published: true
 published_at: 2026-05-10T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/zero-trust-private-infrastructure-cover.png
 technologies:
   - adguard-home
   - caddy
-  - cloud-vps
   - cloudflare
+  - digitalocean
   - docker
-  - homelab
   - lets-encrypt
   - nftables
   - portainer
   - ssh
   - tailscale
-  - ubuntu-linux
+  - ubuntu-server
   - uptime-kuma
   - wireguard
   - zero-trust

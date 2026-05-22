@@ -8,21 +8,17 @@ description: >-
   deployment.
 published: true
 published_at: 2026-04-26T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/custom-wordpress-detection-engine-cover.png
 technologies:
   - cloudflare
-  - css
   - file-integrity-monitoring
   - git
   - github
-  - javascript
   - php
   - security-event-monitoring
-  - sha-256
-  - vs-code
+  - smtp
   - wordpress
-  - wp-cron
   - zero-trust
   - zsh
 featured: true

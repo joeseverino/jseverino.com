@@ -6,10 +6,12 @@ description: >-
   remediation strategies with NIST controls.
 published: true
 published_at: 2026-03-29T00:00:00.000Z
-last_reviewed: 2026-05-17T00:00:00.000Z
+last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/marks-spencer-cyberattack-diamond-model.png
 technologies:
-  - diamond-model-of-intrusion-analysis
+  - diamond-model
+  - mitre-attack
+  - nist
 featured: false
 ---
 
