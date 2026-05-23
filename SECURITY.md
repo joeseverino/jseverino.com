@@ -130,10 +130,10 @@ third-party origins the site uses — Cloudflare Turnstile
 (`challenges.cloudflare.com`) and the Cloudflare Web Analytics beacon
 (`static.cloudflareinsights.com`).
 
-`script-src` contains no `'unsafe-inline'`. Three `sha256` hashes are
+`script-src` contains no `'unsafe-inline'`. Four `sha256` hashes are
 allowlisted: two for the inline scripts the build emits (the header/nav
-script and the contact form script), and one for a deterministic inline
-script Cloudflare injects at the edge as part of bot protection / Speed
+script and the contact form script), and two for deterministic inline
+scripts Cloudflare injects at the edge as part of bot protection / Speed
 Brain. Nothing else inline is admitted. `object-src 'none'`,
 `base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'self'` close the
 remaining injection and clickjacking vectors.
@@ -143,11 +143,13 @@ The build-side hashes are kept honest by the build, not by memory:
 `npm run publish:check` fails if `public/_headers` is missing a hash for any
 inline script that actually shipped — a stale hash cannot reach production.
 
-The Cloudflare-injected hash is managed by hand: if Cloudflare rolls a new
-version of the script, the browser console shows a fresh CSP violation that
-includes the new expected `sha256`. Paste that value into `public/_headers`
-in place of the old one. This is the only third-party hash the policy
-trusts; everything else inline is rejected.
+The Cloudflare-injected hashes are managed by hand: if Cloudflare rolls a
+new version of one of those scripts (or starts injecting another one), the
+browser console shows a fresh CSP violation that includes the new expected
+`sha256`. Paste that value into `public/_headers` — replacing the old hash
+if it's an updated version, or appending it if it's an additional script.
+These are the only third-party hashes the policy trusts; everything else
+inline is rejected.
 
 ## Supply chain and CI
 

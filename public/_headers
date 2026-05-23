@@ -16,10 +16,11 @@
 # inline scripts emitted into the build:
 #   sha256-eEd7... sticky-header / nav script      (Header.astro)
 #   sha256-JXxJ... contact form submit script      (ContactForm.astro)
-# Plus one hash for a deterministic inline script Cloudflare auto-injects at
-# the edge (bot-protection / Speed Brain — bundled with features that cannot
-# be selectively disabled):
-#   sha256-780dS3... Cloudflare edge-injected script
+# Plus two hashes for deterministic inline scripts Cloudflare auto-injects
+# at the edge (bot-protection / Speed Brain — bundled with features that
+# cannot be selectively disabled):
+#   sha256-780dS3... Cloudflare edge-injected script #1
+#   sha256-W2uumU... Cloudflare edge-injected script #2
 # Regenerate the first two after editing those components or upgrading Astro:
 #   npm run build:static && npm run csp:hashes
 # The Cloudflare hash is updated by hand when CF rolls a new version — the
@@ -31,4 +32,4 @@
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-eEd7JZzAkAhq8psUfjQNbckhmgiWYS7bQQ2gdN6TQxA=' 'sha256-JXxJ1myeqyP5sXv8eHm2uBwOSUzRljiHDBMspnX4XyA=' 'sha256-780dS3bZm4nWYzDRtcZ0CLWBOybm3TMijMlIymv/kt0=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-eEd7JZzAkAhq8psUfjQNbckhmgiWYS7bQQ2gdN6TQxA=' 'sha256-JXxJ1myeqyP5sXv8eHm2uBwOSUzRljiHDBMspnX4XyA=' 'sha256-780dS3bZm4nWYzDRtcZ0CLWBOybm3TMijMlIymv/kt0=' 'sha256-W2uumUrToDJlcmw4VIMEqikToK5YeYJOtXzeG2GK6+E=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
