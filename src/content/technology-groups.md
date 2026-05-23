@@ -7,15 +7,15 @@ marked `yes` (and referenced by at least one published writeup) appear there.
 Every slug still shows on its individual writeup pages and `/tag/<slug>/` pages
 regardless of the flag — the flag only curates the home page.
 
-Group taxonomy and ordering match the legacy WordPress site
-(`static.jseverino.com`). Tags within a group are sorted alphabetically by label
-at render time, so the order here is informational.
+Group taxonomy and ordering were seeded from the legacy WordPress site and now
+serve as the stable public tag model. Tags within a group are sorted
+alphabetically by label at render time, so the order here is informational.
 
 If a writeup's `technologies:` frontmatter references a slug that is missing
 from this file, a warning is printed at dev/build time so it can be added.
 
-This file syncs to `src/content/technology-groups.md` in the site repo via
-`bin/sync-content.mjs`. Edit here, not in the site repo.
+This vault file syncs to `src/content/technology-groups.md` in the site
+repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 
 ## Concepts & Frameworks
 
