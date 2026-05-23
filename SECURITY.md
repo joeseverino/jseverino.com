@@ -110,7 +110,9 @@ under the contact form.
 
 ## HTTP response headers
 
-Cloudflare Pages applies the headers in `public/_headers` to every response:
+Cloudflare Pages applies the headers in `public/_headers` to responses. For HTML
+responses in production, `functions/_middleware.ts` replaces the static CSP with
+a nonce-bearing policy and adds the matching nonce to every script tag.
 
 | Header | Value | Purpose |
 |---|---|---|
@@ -125,31 +127,25 @@ one-year cache; HTML is short-cached and revalidated.
 
 ### Content Security Policy
 
-The policy starts from `default-src 'self'` and allowlists exactly the
-third-party origins the site uses — Cloudflare Turnstile
-(`challenges.cloudflare.com`) and the Cloudflare Web Analytics beacon
-(`static.cloudflareinsights.com`).
+The policy starts from `default-src 'self'` and allowlists only the third-party
+origins the site uses: Cloudflare Turnstile (`challenges.cloudflare.com`) and
+the Cloudflare Web Analytics beacon (`static.cloudflareinsights.com`).
 
-`script-src` contains no `'unsafe-inline'`. Four `sha256` hashes are
-allowlisted: two for the inline scripts the build emits (the header/nav
-script and the contact form script), and two for deterministic inline
-scripts Cloudflare injects at the edge as part of bot protection / Speed
-Brain. Nothing else inline is admitted. `object-src 'none'`,
-`base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'self'` close the
-remaining injection and clickjacking vectors.
+Production HTML uses a per-request nonce. The Pages middleware generates the
+nonce, attaches it to every `<script>` in the HTML response with
+`HTMLRewriter`, and emits a CSP containing that nonce. Cloudflare JavaScript
+Detections and the Web Analytics beacon also receive or match the production
+policy, so the site keeps a strict `script-src` without adding
+`'unsafe-inline'`.
 
-The build-side hashes are kept honest by the build, not by memory:
-`bin/csp-hashes.mjs` recomputes them from the built HTML, and
+The static `_headers` CSP remains as a fallback for static serving and local
+inspection. Its `sha256` values cover the executable inline scripts emitted by
+the build. `bin/csp-hashes.mjs` recomputes those hashes from the built HTML, and
 `npm run publish:check` fails if `public/_headers` is missing a hash for any
-inline script that actually shipped — a stale hash cannot reach production.
+inline executable script that actually shipped.
 
-The Cloudflare-injected hashes are managed by hand: if Cloudflare rolls a
-new version of one of those scripts (or starts injecting another one), the
-browser console shows a fresh CSP violation that includes the new expected
-`sha256`. Paste that value into `public/_headers` — replacing the old hash
-if it's an updated version, or appending it if it's an additional script.
-These are the only third-party hashes the policy trusts; everything else
-inline is rejected.
+`object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
+`frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
 
 ## Supply chain and CI
 

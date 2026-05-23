@@ -49,7 +49,7 @@ npm run check
 npm run publish:check
 ```
 
-`publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, verify CSP hashes, audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
+`publish:check` is the pre-push pipeline: clean generated output, sync from vault, run Astro diagnostics, build, verify the static CSP fallback hashes, and audit published image weight. After that, `git push` triggers the Cloudflare Pages build.
 
 ## Working in iCloud Drive
 
@@ -97,6 +97,20 @@ and device context, and stores the message in Cloudflare D1.
 Email notifications are intentionally not part of the public site. My private
 Django operations app reads the D1-backed submissions so contact intake stays
 off the static surface while still giving me a review workflow.
+
+## Response headers and CSP
+
+Static headers live in `public/_headers`. In production, `functions/_middleware.ts`
+replaces the static CSP on HTML responses with a per-request nonce-based policy
+and adds the same nonce to every script tag using Cloudflare's `HTMLRewriter`.
+That keeps first-party inline scripts, Cloudflare Web Analytics, Turnstile, and
+Cloudflare edge-injected scripts compatible with a strict `script-src` without
+adding `'unsafe-inline'`.
+
+The hash-based CSP in `_headers` remains as a fallback for static serving and as
+an audit guard. `bin/csp-hashes.mjs` recomputes hashes from the built HTML, and
+`npm run publish:check` fails if a shipped inline executable script is missing
+from the fallback policy.
 
 ## Content rules
 

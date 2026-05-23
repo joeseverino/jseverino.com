@@ -17,20 +17,19 @@
 # functions/_middleware.ts replaces this with a per-request nonce-based CSP for
 # HTML responses and adds the same nonce to script tags.
 #
-# The fallback script-src sha256 values are hashes of two inline scripts emitted
-# into the build:
+# The fallback script-src sha256 values cover inline executable scripts emitted
+# by the static build:
 #   sha256-/rxU... sticky-header / nav script      (Header.astro)
 #   sha256-JXxJ... contact form submit script      (ContactForm.astro)
-# Plus two hashes for deterministic inline scripts Cloudflare auto-injects
-# at the edge (bot-protection / Speed Brain — bundled with features that
-# cannot be selectively disabled):
+# plus deterministic inline scripts Cloudflare may inject at the edge
+# (bot-protection / Speed Brain):
 #   sha256-780dS3... Cloudflare edge-injected script #1
 #   sha256-W2uumU... Cloudflare edge-injected script #2
 # Regenerate the first two after editing those components or upgrading Astro:
 #   npm run build:static && npm run csp:hashes
-# The Cloudflare hash is updated by hand when CF rolls a new version — the
-# browser console reports the fresh hash in a CSP violation, paste it in.
-# `npm run publish:check` fails if a build hash is missing from this file.
+# The production middleware attaches nonces to HTML scripts, so these hashes are
+# mainly a fallback and an audit guard. `npm run publish:check` fails if a build
+# hash is missing from this file.
 # Full detail: vault runbook "Content Security Policy — jseverino.com".
 /*
   X-Content-Type-Options: nosniff
