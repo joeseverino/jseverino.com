@@ -16,14 +16,14 @@ const writeups = (await getWriteups()).filter((writeup) => writeup.technologies.
 
 <BaseLayout
   seo={{
-    title: titleCase(tag.slug),
+    title: `${titleCase(tag.slug)} Projects`,
     description: `Portfolio writeups tagged ${titleCase(tag.slug)}.`,
     path: `/tag/${tag.slug}/`,
   }}
 >
   <main class="wide section">
     <header class="page-header">
-      <h1 class="page-title">Tag: {titleCase(tag.slug)}</h1>
+      <h1 class="page-title">{titleCase(tag.slug)} Projects</h1>
     </header>
     <hr class="page-divider" />
     <ul class="project-grid">
