@@ -14,7 +14,7 @@
   --color-primary: #381d92;
   --color-primary-deep: #1c0a63;
   --color-soft: #f2f2fa;
-  --color-muted: #797684;
+  --color-muted: #6E6B7C;
   --color-border: rgba(11, 6, 32, 0.08);
 
   /* Shadows — from theme.json shadow.presets */
@@ -832,7 +832,7 @@ figure {
 
 .tag-group-title {
   margin: 0 0 0.6rem 0;
-  color: #888;
+  color: var(--color-muted);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
