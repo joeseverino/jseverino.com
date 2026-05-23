@@ -3,6 +3,10 @@ import { getSiteChrome } from '@lib/content';
 
 const current = Astro.url.pathname;
 const { name, navItems } = getSiteChrome();
+const navigation = navItems.map((item) => ({
+  ...item,
+  current: current === item.href,
+}));
 ---
 
 <header class="site-header" data-sticky-header>
@@ -11,8 +15,12 @@ const { name, navItems } = getSiteChrome();
 
     <nav class="primary-nav" aria-label="Primary navigation">
       <ul class="nav-list">
-        {navItems.map((item) => (
-          <li><a class="nav-link" href={item.href} aria-current={current === item.href ? 'page' : undefined}>{item.label}</a></li>
+        {navigation.map((item) => (
+          <li>
+            <a class="nav-link" href={item.href} aria-current={item.current ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
         ))}
       </ul>
     </nav>
@@ -32,7 +40,6 @@ const { name, navItems } = getSiteChrome();
   </div>
 
   <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
-    <div class="mobile-nav-backdrop" data-nav-close></div>
     <nav class="mobile-nav-panel" aria-label="Mobile navigation">
       <button
         class="mobile-nav-close"
@@ -44,12 +51,13 @@ const { name, navItems } = getSiteChrome();
         <span></span>
       </button>
       <ul class="mobile-nav-list">
-        {navItems.map((item) => (
+        {navigation.map((item) => (
           <li>
             <a
               class="mobile-nav-link"
+              data-mobile-nav-link
               href={item.href}
-              aria-current={current === item.href ? 'page' : undefined}
+              aria-current={item.current ? 'page' : undefined}
             >{item.label}</a>
           </li>
         ))}
@@ -74,6 +82,7 @@ const { name, navItems } = getSiteChrome();
   const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
   const closers = document.querySelectorAll<HTMLElement>('[data-nav-close]');
+  const mobileNavLinkSelector = '[data-mobile-nav-link]';
 
   if (toggle && mobileNav) {
     document.body.classList.add('nav-js-ready');
@@ -115,7 +124,7 @@ const { name, navItems } = getSiteChrome();
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
       document.body.classList.add('nav-locked');
-      const firstLink = mobileNav.querySelector<HTMLAnchorElement>('.mobile-nav-link');
+      const firstLink = mobileNav.querySelector<HTMLAnchorElement>(mobileNavLinkSelector);
       firstLink?.focus();
     };
     const close = () => {
@@ -140,12 +149,12 @@ const { name, navItems } = getSiteChrome();
       else open();
     });
     closers.forEach((el) => el.addEventListener('click', close));
-    mobileNav.querySelectorAll('.mobile-nav-link').forEach((el) => {
+    mobileNav.querySelectorAll(mobileNavLinkSelector).forEach((el) => {
       el.addEventListener('click', close);
     });
     mobileNav.addEventListener('click', (event) => {
       const target = event.target as HTMLElement;
-      if (target.closest('.mobile-nav-link') || target.closest('.mobile-nav-close')) return;
+      if (target.closest(mobileNavLinkSelector) || target.closest('[data-nav-close]')) return;
       close();
     });
     document.addEventListener('keydown', (e) => {

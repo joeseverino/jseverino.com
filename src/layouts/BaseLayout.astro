@@ -9,7 +9,7 @@ type Props = {
   bodyClass?: string;
 };
 
-const { seo = {}, bodyClass = '' } = Astro.props;
+const { seo = {}, bodyClass } = Astro.props;
 ---
 
 <!doctype html>
@@ -29,7 +29,7 @@ const { seo = {}, bodyClass = '' } = Astro.props;
     <link rel="icon" href="/assets/media/2025/08/cropped-JS-2-192x192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/assets/media/2025/08/cropped-JS-2-180x180.png" />
   </head>
-  <body class={bodyClass}>
+  <body class={bodyClass || undefined}>
     <div class="page-shell">
       <Header />
       <slot />
