@@ -6,6 +6,8 @@
 // CSP headers and applies the nonce to its own injected scripts.
 
 const CSP_HEADER = 'Content-Security-Policy';
+const CLOUDFLARE_BEACON_HASH =
+  "'sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=='";
 
 function createNonce(): string {
   const bytes = new Uint8Array(16);
@@ -18,7 +20,7 @@ function createNonce(): string {
 function csp(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
+    `script-src 'self' 'nonce-${nonce}' ${CLOUDFLARE_BEACON_HASH} blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self'",
