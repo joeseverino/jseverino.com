@@ -1,5 +1,6 @@
 ---
 import { getSiteChrome } from '@lib/content';
+import NavLinks from '@components/NavLinks.astro';
 
 const current = Astro.url.pathname;
 const { name, navItems } = getSiteChrome();
@@ -14,15 +15,7 @@ const navigation = navItems.map((item) => ({
     <a class="brand" href="/" rel="home" aria-current={current === '/' ? 'page' : undefined}>{name}</a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
-      <ul class="nav-list">
-        {navigation.map((item) => (
-          <li>
-            <a class="nav-link" href={item.href} aria-current={item.current ? 'page' : undefined}>
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
+      <NavLinks items={navigation} listClass="nav-list" linkClass="nav-link" />
     </nav>
 
     <button
@@ -50,18 +43,12 @@ const navigation = navItems.map((item) => ({
         <span></span>
         <span></span>
       </button>
-      <ul class="mobile-nav-list">
-        {navigation.map((item) => (
-          <li>
-            <a
-              class="mobile-nav-link"
-              data-mobile-nav-link
-              href={item.href}
-              aria-current={item.current ? 'page' : undefined}
-            >{item.label}</a>
-          </li>
-        ))}
-      </ul>
+      <NavLinks
+        items={navigation}
+        listClass="mobile-nav-list"
+        linkClass="mobile-nav-link"
+        linkDataAttribute="data-mobile-nav-link"
+      />
     </nav>
   </div>
 </header>

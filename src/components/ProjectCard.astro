@@ -12,10 +12,10 @@ const { writeup, eager = false } = Astro.props;
 
 <li class="project-card">
   <h3 class="project-card-title">
-    <a href={`/portfolio/${writeup.slug}/`} target="_self">{writeup.title}</a>
+    <a href={`/portfolio/${writeup.slug}/`}>{writeup.title}</a>
   </h3>
   <figure class="project-card-media">
-    <a href={`/portfolio/${writeup.slug}/`} target="_self">
+    <a href={`/portfolio/${writeup.slug}/`}>
       <Picture
         src={writeup.heroImage}
         alt={writeup.title}
