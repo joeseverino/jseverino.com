@@ -12,8 +12,13 @@
   Cache-Control: public, max-age=300, must-revalidate
 
 # Security headers for every route.
-# The Content-Security-Policy script-src sha256 values are hashes of two
-# inline scripts emitted into the build:
+# The static Content-Security-Policy below is a fallback for static asset
+# serving without Pages Functions middleware. In production,
+# functions/_middleware.ts replaces this with a per-request nonce-based CSP for
+# HTML responses and adds the same nonce to script tags.
+#
+# The fallback script-src sha256 values are hashes of two inline scripts emitted
+# into the build:
 #   sha256-/rxU... sticky-header / nav script      (Header.astro)
 #   sha256-JXxJ... contact form submit script      (ContactForm.astro)
 # Plus two hashes for deterministic inline scripts Cloudflare auto-injects
