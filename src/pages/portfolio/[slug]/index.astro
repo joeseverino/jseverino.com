@@ -23,6 +23,11 @@ const { writeup } = Astro.props;
     publishedTime: writeup.date,
     modifiedTime: writeup.lastReviewed,
     tags: writeup.technologies,
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Portfolio', url: '/portfolio/' },
+      { name: writeup.title, url: `/portfolio/${writeup.slug}/` },
+    ],
   }}
 >
   <main class="article">

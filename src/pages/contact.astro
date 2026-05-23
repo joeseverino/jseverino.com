@@ -9,7 +9,17 @@ const blocks = page.body
   .filter((block) => block.trim().length > 0);
 ---
 
-<BaseLayout seo={{ title: page.title, description: page.description, path: page.path }}>
+<BaseLayout
+  seo={{
+    title: page.title,
+    description: page.description,
+    path: page.path,
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: page.title, url: page.path },
+    ],
+  }}
+>
   <main class="content-page">
     <div class="content-flow">
       <h2 class="page-title">{page.title}</h2>

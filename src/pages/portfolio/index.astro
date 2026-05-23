@@ -11,6 +11,10 @@ const writeups = await getWriteups();
     title: 'Portfolio',
     description: 'Cybersecurity, infrastructure, and software project writeups by Joe Severino.',
     path: '/portfolio/',
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Portfolio', url: '/portfolio/' },
+    ],
   }}
 >
   <main class="wide section">

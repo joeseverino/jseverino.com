@@ -1,6 +1,8 @@
 ---
 import { site } from '@lib/site';
 
+type Breadcrumb = { name: string; url: string };
+
 type Props = {
   title?: string;
   description?: string;
@@ -11,6 +13,7 @@ type Props = {
   publishedTime?: string;
   modifiedTime?: string;
   tags?: string[];
+  breadcrumbs?: Breadcrumb[];
 };
 
 const {
@@ -23,6 +26,7 @@ const {
   publishedTime,
   modifiedTime,
   tags = [],
+  breadcrumbs = [],
 } = Astro.props;
 
 const canonical = new URL(path, site.url).href;
@@ -47,34 +51,52 @@ const person = {
   sameAs: ['https://github.com/joeseverino', 'https://linkedin.com/in/joeseverino'],
 };
 
-const jsonLd =
-  type === 'article'
+const breadcrumbList =
+  breadcrumbs.length > 0
     ? {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: title,
-        description,
-        url: canonical,
-        image: ogImage,
-        datePublished: publishedTime,
-        dateModified: modifiedTime || publishedTime,
-        keywords: tags,
-        author: person,
-        publisher: person,
+        '@type': 'BreadcrumbList',
+        '@id': `${canonical}#breadcrumb`,
+        itemListElement: breadcrumbs.map((bc, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: bc.name,
+          item: new URL(bc.url, site.url).href,
+        })),
       }
-    : {
-        '@context': 'https://schema.org',
-        '@graph': [
-          {
-            '@type': 'WebSite',
-            '@id': `${site.url}/#website`,
-            name: site.name,
-            url: site.url,
-            publisher: { '@id': `${site.url}/#person` },
-          },
-          person,
-        ],
-      };
+    : undefined;
+
+const jsonLd: any = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    type === 'article'
+      ? {
+          '@type': 'Article',
+          '@id': `${canonical}#article`,
+          headline: title,
+          description,
+          url: canonical,
+          image: ogImage,
+          datePublished: publishedTime,
+          dateModified: modifiedTime || publishedTime,
+          keywords: tags,
+          author: { '@id': `${site.url}/#person` },
+          publisher: { '@id': `${site.url}/#person` },
+          mainEntityOfPage: { '@id': canonical },
+        }
+      : {
+          '@type': 'WebSite',
+          '@id': `${site.url}/#website`,
+          name: site.name,
+          url: site.url,
+          publisher: { '@id': `${site.url}/#person` },
+        },
+    person,
+  ],
+};
+
+if (breadcrumbList) {
+  jsonLd['@graph'].push(breadcrumbList);
+}
 ---
 
 <title>{fullTitle}</title>

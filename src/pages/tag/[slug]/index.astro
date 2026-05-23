@@ -19,6 +19,11 @@ const writeups = (await getWriteups()).filter((writeup) => writeup.technologies.
     title: `${titleCase(tag.slug)} Projects`,
     description: `Portfolio writeups tagged ${titleCase(tag.slug)}.`,
     path: `/tag/${tag.slug}/`,
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Portfolio', url: '/portfolio/' },
+      { name: titleCase(tag.slug), url: `/tag/${tag.slug}/` },
+    ],
   }}
 >
   <main class="wide section">
