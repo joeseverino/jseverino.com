@@ -16,8 +16,14 @@
 # inline scripts emitted into the build:
 #   sha256-eEd7... sticky-header / nav script      (Header.astro)
 #   sha256-JXxJ... contact form submit script      (ContactForm.astro)
-# Regenerate after editing those components or upgrading Astro:
+# Plus one hash for a deterministic inline script Cloudflare auto-injects at
+# the edge (bot-protection / Speed Brain — bundled with features that cannot
+# be selectively disabled):
+#   sha256-780dS3... Cloudflare edge-injected script
+# Regenerate the first two after editing those components or upgrading Astro:
 #   npm run build:static && npm run csp:hashes
+# The Cloudflare hash is updated by hand when CF rolls a new version — the
+# browser console reports the fresh hash in a CSP violation, paste it in.
 # `npm run publish:check` fails if a build hash is missing from this file.
 # Full detail: vault runbook "Content Security Policy — jseverino.com".
 /*
@@ -25,4 +31,4 @@
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-eEd7JZzAkAhq8psUfjQNbckhmgiWYS7bQQ2gdN6TQxA=' 'sha256-JXxJ1myeqyP5sXv8eHm2uBwOSUzRljiHDBMspnX4XyA=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-eEd7JZzAkAhq8psUfjQNbckhmgiWYS7bQQ2gdN6TQxA=' 'sha256-JXxJ1myeqyP5sXv8eHm2uBwOSUzRljiHDBMspnX4XyA=' 'sha256-780dS3bZm4nWYzDRtcZ0CLWBOybm3TMijMlIymv/kt0=' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests
