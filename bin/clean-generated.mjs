@@ -23,7 +23,15 @@ const generatedRoots = [
 const buildOutput = ['.astro', 'dist.nosync', 'node_modules/.vite'];
 
 function remove(target) {
-  fs.rmSync(path.join(siteRoot, target), { recursive: true, force: true });
+  try {
+    fs.rmSync(path.join(siteRoot, target), { recursive: true, force: true });
+  } catch (err) {
+    if (err.code === 'ENOTEMPTY' || err.code === 'EBUSY') {
+      console.warn(`Warning: Could not fully remove ${target} (it may be in use).`);
+    } else {
+      throw err;
+    }
+  }
 }
 
 function removeRootNodeModuleConflicts() {
