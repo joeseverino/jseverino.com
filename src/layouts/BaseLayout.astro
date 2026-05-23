@@ -1,6 +1,5 @@
 ---
 import SeoHead from '@components/SeoHead.astro';
-import GoogleAnalytics from '@components/GoogleAnalytics.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import '@styles/base.css';
@@ -26,7 +25,6 @@ const { seo = {}, bodyClass = '' } = Astro.props;
       crossorigin
     />
     <SeoHead {...seo} />
-    <GoogleAnalytics />
     <link rel="icon" href="/assets/media/2025/08/cropped-JS-2-32x32.png" sizes="32x32" />
     <link rel="icon" href="/assets/media/2025/08/cropped-JS-2-192x192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/assets/media/2025/08/cropped-JS-2-180x180.png" />

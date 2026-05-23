@@ -26,7 +26,7 @@ The vault is the canonical surface for pages, portfolio writeups, and the images
 | Hosting | Cloudflare Pages |
 | Contact intake | Cloudflare Pages Functions, Turnstile, D1 |
 | Operations dashboard | Django app that reads contact submissions from D1 |
-| Analytics | GA4, gated by `PUBLIC_GA_MEASUREMENT_ID`, production-only |
+| Analytics | Cloudflare Web Analytics (cookieless beacon) |
 | Feeds & sitemap | `@astrojs/rss`, `@astrojs/sitemap` |
 
 ## Workflow
