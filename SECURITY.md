@@ -63,8 +63,8 @@ Cloudflare Pages clones this repository, runs `npm run build`, and uploads
 
 - never touches the private vault — it builds from the committed snapshot
   alone;
-- needs no server-side secrets — the only build-time variables are *public*
-  values (the Turnstile **site** key and the GA measurement ID);
+- needs no server-side secrets — the only build-time variable is a *public*
+  value (the Turnstile **site** key);
 - is reproducible — dependencies install from the committed `package-lock.json`
   via `npm ci`, and the Node version is pinned in `.nvmrc`.
 
@@ -116,14 +116,14 @@ one-year cache; HTML is short-cached and revalidated.
 ### Content Security Policy
 
 The policy starts from `default-src 'self'` and allowlists exactly the
-third-party origins the site uses — Google Analytics (`www.googletagmanager.com`),
-Cloudflare Turnstile (`challenges.cloudflare.com`), and the Cloudflare Web
-Analytics beacon (`static.cloudflareinsights.com`).
+third-party origins the site uses — Cloudflare Turnstile
+(`challenges.cloudflare.com`) and the Cloudflare Web Analytics beacon
+(`static.cloudflareinsights.com`).
 
-`script-src` contains no `'unsafe-inline'`. The three inline scripts the build
-emits — the Google Analytics bootstrap, the header/nav script, and the contact
-form script — are each allowed by an exact `sha256` hash, so the policy admits
-those specific scripts and nothing else inline. `object-src 'none'`,
+`script-src` contains no `'unsafe-inline'`. The two inline scripts the build
+emits — the header/nav script and the contact form script — are each allowed
+by an exact `sha256` hash, so the policy admits those specific scripts and
+nothing else inline. `object-src 'none'`,
 `base-uri 'self'`, `form-action 'self'`, and `frame-ancestors 'self'` close the
 remaining injection and clickjacking vectors.
 
@@ -161,9 +161,9 @@ surface:
   an explicit HTML-escaping helper.
 - **Escaped structured data.** JSON-LD injected into `<head>` has `<`
   characters escaped so a string value can never break out into live markup.
-- **Analytics is gated.** Google Analytics loads only in a production build
-  *and* only when `PUBLIC_GA_MEASUREMENT_ID` is set — never in local dev or
-  preview builds.
+- **Analytics is cookieless.** The only analytics is Cloudflare Web Analytics
+  — a small sampling beacon auto-injected by the Cloudflare proxy. No
+  cookies, no cross-site identifiers, no consent banner.
 
 ## What switching from WordPress changed
 
