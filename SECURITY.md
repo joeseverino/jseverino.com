@@ -93,10 +93,20 @@ database and reviewed in a separate private operations app. There is no SMTP
 integration, which removes an entire category of risk (email header/content
 injection, leaked mail credentials) by simply not having it.
 
-**Data handling note.** To support abuse review, a submission record includes
-the sender's IP, user-agent, and Cloudflare country code alongside the message.
-This data lives only in the private D1 database and is not exposed on the
-public site.
+**Data handling.** A submission record stores the sender's name, email,
+message, IP address, user-agent, parsed browser and device, Cloudflare
+two-letter country code, and the page the form was submitted from. The
+non-message fields support abuse review and basic context. Records live
+only in the private D1 database and are not exposed on the public site.
+There is no automated retention or deletion — records are kept indefinitely
+until the site owner removes them. To request a copy of, or deletion of,
+your submission, send a follow-up through the contact form and start the
+message with **"Data request"** so it can be triaged correctly.
+
+**Privacy notice.** A plain-English version of what's collected, why,
+retention, and how to request deletion lives at
+[`/privacy/`](https://jseverino.com/privacy/), linked from a one-liner
+under the contact form.
 
 ## HTTP response headers
 
