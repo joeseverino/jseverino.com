@@ -233,6 +233,7 @@ Committed:
 - **`src/content/`, `public/assets/`, `src/lib/image-manifest.json`** — synced public snapshot and generated image variants (committed so Cloudflare can build from this repo alone)
 - **`docs/SEO.md`** — technical reference for the SEO and metadata strategy
 - **`docs/Authoring-Guide.md`** — manual for the custom Markdown directives and components
+- **`docs/Vault-Workflow.md`** — architecture reference for the Vault-as-CMS sync logic
 - package and config files
 
 Not committed:
