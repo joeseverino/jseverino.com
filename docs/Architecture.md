@@ -177,6 +177,7 @@ This does not replace human review, but it catches broken builds, stale CSP hash
 ## Related Docs
 
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
+- [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
 - [`SECURITY.md`](../SECURITY.md)

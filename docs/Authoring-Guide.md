@@ -167,5 +167,6 @@ Before publishing:
 ## Related Docs
 
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
+- [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Architecture.md`](./Architecture.md)
 - [`docs/SEO.md`](./SEO.md)

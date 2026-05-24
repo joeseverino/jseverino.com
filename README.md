@@ -128,8 +128,9 @@ Do not commit:
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
+- [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
 - [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.
 
 ## History
 
-This site moved from WordPress to Astro in early 2026. The main reason was architectural simplification: remove the public origin runtime, remove plugin/admin attack surface, and make the shipped site a reviewable static artifact.
+This site moved from WordPress to Astro in early 2026. The main reason was architectural simplification: remove the public origin runtime, remove plugin/admin attack surface, and make the shipped site a reviewable static artifact. The migration rationale and measured comparison are documented in [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md).

@@ -103,5 +103,6 @@ Then inspect generated HTML for:
 ## Related Docs
 
 - [`docs/Architecture.md`](./Architecture.md)
+- [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`SECURITY.md`](../SECURITY.md)
