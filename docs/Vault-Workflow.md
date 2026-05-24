@@ -1,76 +1,140 @@
-# Vault-as-CMS Workflow
+# Vault Workflow
 
-This site uses a [Vault-as-CMS architecture](./Architecture.md). The private **Severino Labs** Obsidian vault is the canonical source of truth for all content, while this repository serves as the public build and deployment target.
-
-## 1. Stack Topology
+The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them.
 
 ```text
-Severino Labs vault (Private)
-  ├── 06 Pages/           # Page markdown & site-wide data
-  └── 05 Writeups/        # Portfolio writeups & project images
-      │
-      │ site sync (bin/sync-content.mjs)
+Private vault
+  06 Pages/
+  05 Writeups/
+      |
+      | npm run sync:content
       v
-jseverino.com repo (Public Snapshot)
-  ├── src/content/        # Sanitized markdown snapshots
-  └── public/assets/      # Optimized public assets
-      │
-      │ Cloudflare Pages Build
+Public repo snapshot
+  src/content/
+  public/assets/
+      |
+      | npm run build:static
       v
-Live Site (jseverino.com)
+Cloudflare Pages output
 ```
 
-## 2. Content Organization (Vault)
+## Vault Layout
 
-### Portfolio Writeups
-Located in `05 Writeups/<slug>/`. The folder name determines the URL slug.
-*   `index.md`: The main content, using [custom directives](./Authoring-Guide.md) rendered via [`src/lib/content.ts`](../src/lib/content.ts).
-*   `images/`: Local assets referenced by the writeup.
-*   `source/`: (Optional) Private working materials; ignored by the sync script.
+Pages live under:
 
-### Site Pages
-Located in `06 Pages/<slug>/`.
-*   `index.md`: Page content (About, Contact, Resume, etc.).
-*   `_site.md`: Global site name and navigation links, synced to [`src/content/site.md`](../src/content/site.md).
-*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#6-technology-taxonomy), synced to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
+```text
+06 Pages/<slug>/index.md
+```
 
-## 3. The Sync Contract
+Special page-level source files:
 
-The [`bin/sync-content.mjs`](../bin/sync-content.mjs) script enforces a strict [security boundary](../SECURITY.md) between private notes and public site.
+```text
+06 Pages/_site.md
+06 Pages/_technology-groups.md
+```
 
-### The Publish Gate
-Content only reaches this repository if its frontmatter includes:
+Portfolio writeups live under:
+
+```text
+05 Writeups/<slug>/index.md
+05 Writeups/<slug>/images/
+```
+
+The folder slug becomes the public writeup slug.
+
+## Publish Contract
+
+Content is synced only when frontmatter includes:
+
 ```yaml
 published: true
 ```
-If `published` is `false` or missing, the content is treated as a draft and is never copied to the site repo.
 
-### Metadata Stripping
-To maintain privacy, the sync script strips vault-only metadata from the frontmatter. Fields like `doc_id`, `system`, `related_projects`, and `sensitivity` stay in the private vault and never reach the public repo. This process is detailed in the [Content Sync Engine](./Architecture.md#2-the-content-sync-engine).
+Unpublished content is skipped during normal sync. Draft preview is available through `npm run dev:drafts`, which is for local preview only.
 
+## Metadata Boundary
 
-## 4. Tooling & CLI
+The sync script uses allowlists. It writes only fields needed by the public site.
 
-The site is managed via a custom `site` CLI toolchain (part of the `joeseverino/tools` repository).
+Public page fields:
 
-| Command | Action |
-| --- | --- |
-| `site new-writeup <slug>` | Scaffolds a new writeup folder in the vault with draft frontmatter. |
-| `site sync` | Runs [`bin/sync-content.mjs`](../bin/sync-content.mjs) to pull `published` content into the local repo. |
-| `site dev` | Starts the Astro dev server for local preview. |
-| `site dev --drafts` | Syncs all content (including drafts) for local-only preview. |
-| `site publish` | Performs a full audit: clean, sync, check, and build. |
-| `site publish-all` | The "one command" to sync, build, commit the snapshot, and push to GitHub. Runs [`bin/publish-check.mjs`](../bin/publish-check.mjs). |
+- `title`
+- `description`
+- `path`
+- `published`
 
-## 5. Security Boundaries
+Public writeup fields:
 
-*   **No Origin**: The site is 100% static (SSG). There is no database or admin panel to harden. See the [Security Posture](../SECURITY.md) for full architecture details.
-*   **Build Independence**: Cloudflare Pages builds from the committed snapshot in this repo. It has zero access to the private vault.
-*   **Auditability**: Because the synced content is committed to Git, the public surface is fully auditable in the repository history.
+- `title`
+- `description`
+- `published`
+- `published_at`
+- `last_reviewed`
+- `cover_image`
+- `technologies`
+- `featured`
+- `featured_order`
 
----
+Vault-only fields such as internal IDs, system names, sensitivity labels, related projects, and operator notes are not copied.
 
-## Related Documentation
-*   [Authoring Guide](./Authoring-Guide.md) — Reference for custom components used in the vault.
-*   [Technical Architecture](./Architecture.md) — Deep dive into the sync engine and image pipeline.
-*   [Technical SEO & Metadata](./SEO.md) — How synced content is optimized for search.
+## Site Identity
+
+`06 Pages/_site.md` syncs to [`src/content/site.md`](../src/content/site.md).
+
+It controls:
+
+- site/person name;
+- professional title;
+- public summary;
+- skills;
+- social links;
+- primary navigation.
+
+The header, footer, and JSON-LD read from this synced file.
+
+## Technology Taxonomy
+
+`06 Pages/_technology-groups.md` syncs to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
+
+Writeups store technology slugs. The renderer resolves those slugs into labels and groups so display names stay consistent across the site.
+
+## Assets
+
+Writeup and page images should be referenced with local relative paths:
+
+```md
+![Caption](./images/example.png)
+```
+
+The sync script:
+
+- resolves the path against the source folder;
+- refuses paths outside that folder;
+- copies non-image assets as-is;
+- optimizes image assets into responsive variants;
+- writes the image manifest used by `Picture.astro`.
+
+## Local Workflow
+
+```sh
+npm run sync:content
+npm run check
+npm run build:static
+node bin/csp-hashes.mjs --check
+npm run publish:check
+```
+
+`npm run publish:check` is the preferred final local gate before committing generated content changes.
+
+## Cloudflare Build Boundary
+
+Cloudflare Pages builds from the committed repository. It does not read the private vault and does not run `sync:content`.
+
+That means published content changes must be synced and committed before deploy.
+
+## Related Docs
+
+- [`docs/Architecture.md`](./Architecture.md)
+- [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
+- [`docs/SEO.md`](./SEO.md)
+- [`SECURITY.md`](../SECURITY.md)

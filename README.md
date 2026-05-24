@@ -1,61 +1,135 @@
-# jseverino.com (v2.0.0)
+# jseverino.com
 
-The high-performance, security-hardened personal site of Joe Severino. Built with **Astro 6**, delivered via **Cloudflare Pages**, and authored entirely from a private **Obsidian** vault.
+Personal cybersecurity portfolio for Joe Severino, built with Astro, sourced from a private Obsidian vault, and deployed as static output on Cloudflare Pages.
+
+The repository is the public, sanitized build source. The private vault is the editorial source of truth. Cloudflare builds only from committed files in this repo; it does not need access to the vault.
 
 ```text
-Severino Labs vault  ─►  jseverino.com repo  ─►  Cloudflare Pages
-(Private SOT)            (Sanitized Snapshot)    (Edge Delivery)
+Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare Pages
 ```
 
-This repository implements a **"Vault-as-CMS"** architecture, where a private notes vault serves as the canonical source of truth for all content, identity, and metadata.
+## What This Repo Does
 
-## 💎 Technical Excellence (The Diamond Standard)
+- Builds a static personal site with Astro 6.
+- Syncs public pages, portfolio writeups, global site identity, navigation, and technology taxonomy from a private vault.
+- Rewrites local image references into public asset paths.
+- Generates AVIF, WebP, and optimized fallback image variants.
+- Records image dimensions in [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) so rendered images include stable `width` and `height` attributes.
+- Emits canonical metadata, Open Graph/Twitter metadata, JSON-LD, sitemap, RSS, and robots.txt.
+- Uses Cloudflare Pages Functions only where dynamic behavior is required: CSP nonce injection and contact form submission handling.
 
-The site is engineered for maximum performance, operational discipline, and security:
+## Repository Map
 
-*   **Asynchronous Content Engine**: The sync pipeline ([`bin/sync-content.mjs`](./bin/sync-content.mjs)) uses non-blocking `fs.promises` and Sharp for high-speed content transformation and image optimization.
-*   **Zero Cumulative Layout Shift (CLS)**: Every image is processed into a responsive matrix (AVIF/WebP) with intrinsic dimensions tracked in a [manifest](./src/lib/image-manifest.json) to ensure perfect layout stability.
-*   **Automated Metadata Hashing**: The system automatically tracks "Last Reviewed" dates by hashing content during sync, eliminating manual date management.
-*   **Nonce-based CSP**: A strict, edge-enforced Content Security Policy ([`functions/_middleware.ts`](./functions/_middleware.ts)) prevents XSS without compromising first-party functionality.
-*   **Single Source of Truth**: All site identity, professional skills, and navigation are managed from a single Markdown file in the vault, synced directly to the repo ([`src/content/site.md`](./src/content/site.md)).
+| Path | Purpose |
+| --- | --- |
+| [`src/pages/`](./src/pages/) | Astro routes for pages, portfolio, tags, RSS, robots.txt, and errors. |
+| [`src/layouts/BaseLayout.astro`](./src/layouts/BaseLayout.astro) | Shared document shell, preload, header, footer, and SEO head. |
+| [`src/components/`](./src/components/) | Reusable UI and metadata components. |
+| [`src/lib/content.ts`](./src/lib/content.ts) | Markdown rendering, custom directive transforms, content loading, taxonomy lookup, and site chrome parsing. |
+| [`src/content/pages/`](./src/content/pages/) | Sanitized synced page Markdown. |
+| [`src/content/writeups/`](./src/content/writeups/) | Sanitized synced portfolio Markdown. |
+| [`src/content/site.md`](./src/content/site.md) | Synced public site identity, professional summary, social links, and navigation. |
+| [`src/content/technology-groups.md`](./src/content/technology-groups.md) | Synced public taxonomy for technology labels and groups. |
+| [`public/assets/`](./public/assets/) | Synced and optimized public media. |
+| [`public/_headers`](./public/_headers) | Static Cloudflare header fallback. HTML CSP is replaced by middleware in production. |
+| [`public/_redirects`](./public/_redirects) | Static Cloudflare redirects. |
+| [`functions/_middleware.ts`](./functions/_middleware.ts) | Per-request HTML CSP nonce generation and script nonce injection. |
+| [`functions/api/contact.ts`](./functions/api/contact.ts) | Contact form endpoint with Turnstile, validation, rate limiting, and D1 storage. |
+| [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
+| [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, CSP hash check, and asset audit. |
 
-## 🚀 Workflow
+## Content Model
 
-Management is handled via a [personal CLI suite](https://github.com/joeseverino/tools):
+The private vault is organized as:
+
+```text
+06 Pages/
+  _site.md
+  _technology-groups.md
+  home/index.md
+  about/index.md
+  contact/index.md
+  resume/index.md
+
+05 Writeups/
+  project-slug/
+    index.md
+    images/
+```
+
+[`bin/sync-content.mjs`](./bin/sync-content.mjs) copies only published content and only allowed frontmatter fields. Vault-only fields such as internal IDs, systems, related projects, sensitivity, and operator notes are dropped by omission. Local assets are resolved against their source directory and refused if they escape that directory.
+
+Page frontmatter may include an explicit `path`. If omitted, the site falls back to `/` for `home` and `/<slug>/` for other pages. Writeup URLs come from their folder slug.
+
+## Image Pipeline
+
+During sync, image references are collected from Markdown and frontmatter. Optimizable images are processed into:
+
+- AVIF at 512, 1024, and 1600 px widths.
+- WebP at 512, 1024, and 1600 px widths.
+- An optimized fallback file.
+
+The generated paths and intrinsic dimensions are written to [`src/lib/image-manifest.json`](./src/lib/image-manifest.json). [`Picture.astro`](./src/components/Picture.astro) uses that manifest to output responsive `<picture>` markup with stable dimensions, which prevents layout shift without hand-maintained image metadata.
+
+Image encodes are cached under `node_modules/.cache/jseverino-img` by source-content hash. The cache speeds local syncs but is not part of the public source of truth.
+
+## Metadata And SEO
+
+`SeoHead.astro` emits:
+
+- Canonical URL.
+- Open Graph and Twitter card metadata.
+- JSON-LD for `WebSite`, `Person`, `Article`, and `BreadcrumbList` where applicable.
+- `robots` noindex where requested.
+
+The `Person` schema reads from [`src/content/site.md`](./src/content/site.md), so the displayed identity, social links, and structured data stay aligned. Portfolio writeups pass published and reviewed dates into Article schema.
+
+## Security Model
+
+The public site is static HTML, CSS, JavaScript, and assets. There is no WordPress runtime, no public database-backed page renderer, no admin panel, no comments, no uploads, and no account system.
+
+Dynamic behavior is intentionally narrow:
+
+- [`functions/_middleware.ts`](./functions/_middleware.ts) runs for HTML responses, generates a nonce, adds it to every `<script>`, and replaces the static CSP with a nonce-bearing policy.
+- [`functions/api/contact.ts`](./functions/api/contact.ts) accepts contact submissions, verifies Turnstile server-side, validates input, applies a per-IP hourly limit, and stores accepted messages in Cloudflare D1 with parameterized SQL.
+
+The static [`public/_headers`](./public/_headers) CSP remains useful for local/static inspection and non-middleware contexts. [`bin/csp-hashes.mjs --check`](./bin/csp-hashes.mjs) verifies that deterministic inline script hashes in `_headers` match the built output.
+
+## Local Commands
 
 ```sh
-site sync          # Pull published content & identity from vault
-site publish       # Full audit: clean + sync + check + build + image weight audit
-site publish-all   # Orchestrated path: hq sync, publish, commit, push to edge
+npm run sync:content       # Sync published vault content into the repo
+npm run dev                # Start Astro dev server
+npm run dev:drafts         # Sync drafts locally, then start dev server
+npm run check              # Astro type/content diagnostics
+npm run build:static       # Build static output to dist.nosync locally
+npm run publish:check      # Clean, sync, check, build, verify CSP, audit assets
 ```
 
-Equivalent local commands:
-*   `npm run sync:content` — Runs [`bin/sync-content.mjs`](./bin/sync-content.mjs).
-*   `npm run publish:check` — Runs [`bin/publish-check.mjs`](./bin/publish-check.mjs) (integrity guard).
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface.
 
-## 🏗️ Architecture & Documentation
+## Generated And Local Files
 
-The site's internals are fully documented for both engineering showcase and operational clarity:
+Do not commit:
 
-*   [**Technical Architecture**](./docs/Architecture.md) — Deep dive into the transformation engine ([`src/lib/content.ts`](./src/lib/content.ts)), image pipeline, and security model.
-*   [**Vault-as-CMS Workflow**](./docs/Vault-Workflow.md) — How the private/public boundary is enforced.
-*   [**Authoring Guide**](./docs/Authoring-Guide.md) — Manual for custom Markdown directives (`::terminal`, `::split`, `::cta`, etc.).
-*   [**Technical SEO**](./docs/SEO.md) — Blueprint for search visibility and Person Schema ([`src/components/SeoHead.astro`](./src/components/SeoHead.astro)).
-*   [**Security Posture**](./SECURITY.md) — Master threat model and edge security controls ([`public/_headers`](./public/_headers)).
+- `node_modules/`, `node_modules.*`
+- `.astro/`, `.vite/`
+- `dist/`, `dist.nosync/`
+- `.env*`, `.dev.vars*`
+- `.claude/`, `.gemini/`
+- `.DS_Store`
+- iCloud conflict copies such as `home 2.md`
 
-## 📦 Repo Boundaries
+[`bin/clean-generated.mjs`](./bin/clean-generated.mjs) removes generated output and resolves iCloud conflict copies before publish checks.
 
-**Committed:**
-- [`src/`](./src/) — Astro source & transformation logic.
-- [`public/`](./public/) — Static assets & Cloudflare [`_headers`](./public/_headers).
-- [`src/content/`](./src/content/) — Sanitized public content snapshots.
-- [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) — Intrinsic dimension database.
-- [`docs/`](./docs/) — Comprehensive technical documentation suite.
+## Documentation
 
-**Not Committed:**
-- `.astro/`, `dist.nosync/`, `node_modules/` — Build and dependency artifacts.
-- `.env*`, `.dev.vars` — Local environment secrets.
-- iCloud conflict copies (`* 2.*`, etc.) are automatically resolved by [`bin/clean-generated.mjs`](./bin/clean-generated.mjs).
+- [`docs/Architecture.md`](./docs/Architecture.md) explains the build, content, rendering, image, and edge architecture.
+- [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
+- [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
+- [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
+- [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.
 
-## 📜 History
-This site transitioned from WordPress to a static Astro build in early 2026 to collapse the source of truth into local Markdown files and eliminate the "origin" attack surface. The legacy WordPress mirror is preserved at [`joeseverino/jseverino.com-legacy`](https://github.com/joeseverino/jseverino.com-legacy).
+## History
+
+This site moved from WordPress to Astro in early 2026. The main reason was architectural simplification: remove the public origin runtime, remove plugin/admin attack surface, and make the shipped site a reviewable static artifact.

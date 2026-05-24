@@ -22,6 +22,7 @@ node_modules [0-9]*
 !.dev.vars.example
 .DS_Store
 .claude/
+.gemini/
 
 # Logs
 *.log

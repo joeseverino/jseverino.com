@@ -3,6 +3,7 @@ title: Joe Severino | Cybersecurity and Networking
 description: >-
   Joe Severino is a cybersecurity professional and Delivery Operations Analyst
   with CCNA and Security+, pursuing an M.S. in Cybersecurity at Georgia Tech.
+path: /
 published: true
 ---
 

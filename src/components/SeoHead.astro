@@ -30,10 +30,6 @@ const {
   breadcrumbs = [],
 } = Astro.props;
 
-const canonical = new URL(path, site.url).href;
-const ogImage = new URL(image, site.url).href;
-const fullTitle = title === site.defaultTitle ? title : `${title} | Joe Severino`;
-
 const {
   name: personName,
   title: jobTitle,
@@ -41,6 +37,10 @@ const {
   skills: personSkills,
   socialLinks: personSocialLinks,
 } = getSiteChrome();
+
+const canonical = new URL(path, site.url).href;
+const ogImage = new URL(image, site.url).href;
+const fullTitle = title === site.defaultTitle ? title : `${title} | ${personName}`;
 
 const person = {
   '@type': 'Person',

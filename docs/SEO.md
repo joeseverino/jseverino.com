@@ -1,38 +1,101 @@
-# Technical SEO & Metadata Implementation
+# SEO And Metadata
 
-This document serves as a reference for the SEO strategies implemented in this Astro build. It captures the "blueprint" for maintaining high search visibility and technical performance, as detailed in the [Technical Architecture](./Architecture.md).
+This site handles SEO as build-time metadata, not as a plugin layer. Routes pass explicit metadata into [`SeoHead.astro`](../src/components/SeoHead.astro), and shared identity data comes from [`src/content/site.md`](../src/content/site.md).
 
-## 1. Structured Data (JSON-LD)
-We use a centralized [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) component (see [Architecture](./Architecture.md#1-architectural-overview-the-no-origin-model)) to inject Schema.org metadata:
-*   **BreadcrumbList**: Dynamically generated based on the page path to improve search engine "path" visibility.
-*   **Person Schema**: Identifies the author and connects social profiles (LinkedIn, GitHub) to the "Entity" Joe Severino.
-*   **Article Schema**: Automatically applied to portfolio writeups with `publishedTime` and `modifiedTime`.
+## Canonical URLs
 
-## 2. Heading Hierarchy
-*   **Semantic H1s**: Every page (About, Contact, Resume) uses exactly one `<h1>` for the primary title.
-*   **Visual Consistency**: Use the `.page-title` CSS class in [`src/styles/base.css`](../src/styles/base.css) to ensure that SEO-correct `<h1>` tags look identical to standard headings, maintaining design intent while improving crawlability.
+Every page emits one canonical URL.
 
-## 3. Image Optimization Pipeline
-A custom [`bin/sync-content.mjs`](../bin/sync-content.mjs) script (part of the [Vault-as-CMS Workflow](./Vault-Workflow.md)) handles assets before they reach the browser:
-*   **Multi-format**: Generates **AVIF** (priority), **WebP**, and optimized fallback JPEGs/PNGs.
-*   **Responsive Widths**: Resizes images to 512px, 1024px, and 1600px widths.
-*   **Layout Stability**: The [`src/components/Picture.astro`](../src/components/Picture.astro) component uses the [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) to include explicit `width` and `height` attributes, preventing Layout Shift (CLS) and ensuring a high Core Web Vitals score. See the [Image Pipeline](./Architecture.md#4-high-performance-image-pipeline) for details.
+Rules:
 
+- The homepage canonical is `https://jseverino.com/`.
+- Standard pages use their synced `path` when present.
+- If no page path exists, `home` falls back to `/` and other page slugs fall back to `/<slug>/`.
+- Portfolio writeups use `/portfolio/<slug>/`.
+- Tag pages use `/tag/<slug>/`.
 
-## 4. Security & Crawling
-*   **Content Security Policy (CSP)**: Nonce-based policy (via Cloudflare Pages Functions in [`functions/_middleware.ts`](../functions/_middleware.ts)) that allows tracking (Cloudflare Analytics) and Turnstile without compromising security or SEO. See the [Security Posture](../SECURITY.md) for full details.
-*   **Canonical URLs**: Every page includes a `<link rel="canonical">` to prevent duplicate content issues, especially with trailing slash variations.
-*   **Identity Verification**: Social links in the footer ([`src/components/Footer.astro`](../src/components/Footer.astro)) use `rel="me"` for IndieWeb and Mastodon-style identity verification.
+Canonical correctness matters because the content source uses a `home` slug internally while the public homepage is `/`.
 
-## 5. Automated Discovery
-*   **Sitemap**: Generated via `@astrojs/sitemap` at `/sitemap-index.xml`.
-*   **RSS Feed**: Available at [`src/pages/feed.xml.ts`](../src/pages/feed.xml.ts) for content syndication.
-*   **Robots.txt**: Dynamically served from [`src/pages/robots.txt.ts`](../src/pages/robots.txt.ts) to point crawlers to the latest sitemap.
+## Titles And Descriptions
 
----
+`SeoHead.astro` receives the route title and description.
 
-## Related Documentation
-*   [Technical Architecture](./Architecture.md) — Internal engine and performance details.
-*   [Vault-as-CMS Workflow](./Vault-Workflow.md) — How content moves from Obsidian to the site.
-*   [Authoring Guide](./Authoring-Guide.md) — Manual for custom Markdown directives.
-*   [Security Posture](../SECURITY.md) — Detailed security architecture and controls.
+- The default homepage title is stored in [`src/lib/site.ts`](../src/lib/site.ts).
+- Non-default titles append the public person/site name from [`src/content/site.md`](../src/content/site.md).
+- Descriptions come from page or writeup frontmatter where available.
+
+## Structured Data
+
+`SeoHead.astro` emits JSON-LD.
+
+Global pages include:
+
+- `WebSite`
+- `Person`
+- optional `BreadcrumbList`
+
+Portfolio writeups include:
+
+- `Article`
+- `Person`
+- optional `BreadcrumbList`
+
+The `Person` entity reads:
+
+- name from [`src/content/site.md`](../src/content/site.md);
+- job title from [`src/content/site.md`](../src/content/site.md);
+- summary from [`src/content/site.md`](../src/content/site.md);
+- skills from [`src/content/site.md`](../src/content/site.md);
+- social profile URLs from [`src/content/site.md`](../src/content/site.md).
+
+This keeps visible identity, footer links, and structured data aligned.
+
+## Article Dates
+
+Writeups use:
+
+- `published_at` for `datePublished`;
+- `last_reviewed` for `dateModified` when available.
+
+The sync process preserves existing review dates on first sync and updates them only when known synced content changes. The local hash cache is a helper, not the canonical historical record.
+
+## Images
+
+Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image.
+
+Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by avoiding image layout shift.
+
+## Discovery Files
+
+- Sitemap is generated by `@astrojs/sitemap` at `/sitemap-index.xml`.
+- RSS is generated by [`src/pages/feed.xml.ts`](../src/pages/feed.xml.ts).
+- Robots.txt is generated by [`src/pages/robots.txt.ts`](../src/pages/robots.txt.ts) and points to the sitemap.
+
+## Security Headers And SEO
+
+The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy.
+
+The static [`public/_headers`](../public/_headers) policy remains a fallback and is verified by [`bin/csp-hashes.mjs --check`](../bin/csp-hashes.mjs).
+
+## Validation Checklist
+
+After major metadata changes:
+
+```sh
+npm run build:static
+node bin/csp-hashes.mjs --check
+```
+
+Then inspect generated HTML for:
+
+- homepage canonical is `/`;
+- navigation includes all [`src/content/site.md`](../src/content/site.md) links;
+- `Person.knowsAbout` includes all public skills;
+- `Person.sameAs` includes all public social links;
+- article pages include correct published and modified dates.
+
+## Related Docs
+
+- [`docs/Architecture.md`](./Architecture.md)
+- [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
+- [`SECURITY.md`](../SECURITY.md)

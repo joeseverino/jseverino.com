@@ -175,12 +175,11 @@ async function processReferencedAssets(refs, sourceDir, targetDir, urlPrefix) {
 }
 
 function publicWriteupData(data, contentHash, slug) {
-  const isChanged = syncManifest[slug] !== contentHash;
+  const previousHash = syncManifest[slug];
+  const isChanged = typeof previousHash === 'string' && previousHash !== contentHash;
   const lastReviewed = isChanged ? today : data.last_reviewed || data.published_at || today;
 
-  if (isChanged) {
-    syncManifest[slug] = contentHash;
-  }
+  syncManifest[slug] = contentHash;
 
   return {
     title: data.title,
@@ -199,6 +198,7 @@ function publicPageData(data) {
   return {
     title: data.title,
     ...(data.description ? { description: data.description } : {}),
+    ...(data.path ? { path: data.path } : {}),
     published: data.published === true,
   };
 }

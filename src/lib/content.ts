@@ -335,7 +335,7 @@ export async function getPage(slug: string): Promise<PageContent> {
     slug,
     title: page.data.title,
     description: page.data.description ?? '',
-    path: page.data.path || `/${slug}/`,
+    path: page.data.path || (slug === 'home' ? '/' : `/${slug}/`),
     body: page.body ?? '',
     bodyHtml: renderPageMarkdown(page.body ?? ''),
   };
@@ -350,7 +350,8 @@ export function getSiteChrome(): SiteChrome {
   const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
 
   const parseSection = (header: string) => {
-    const re = new RegExp(`^##\\s+${header}\\s*\\n([\\s\\S]*?)(?:\\n##|$)`, 'm');
+    const escapedHeader = header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(?:^|\\n)##\\s+${escapedHeader}\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)`);
     return body.match(re)?.[1]?.trim() ?? '';
   };
 
