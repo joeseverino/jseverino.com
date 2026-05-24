@@ -19,7 +19,7 @@ const socialLinks = [
     <ul class="social-links">
       {socialLinks.map((link) => (
         <li>
-          <a href={link.href} aria-label={link.label}>
+          <a href={link.href} aria-label={link.label} rel="me">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d={link.path}></path>
             </svg>

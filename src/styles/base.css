@@ -413,12 +413,6 @@ main > * + * {
   text-align: center;
 }
 
-.divider {
-  margin-top: var(--space-4);
-  border: 0;
-  border-top: 1px solid var(--color-border);
-}
-
 /* ── Site header ────────────────────────────────────────────────────── */
 
 .site-header {

@@ -18,7 +18,7 @@ const page = await getPage('resume');
 >
   <main class="content-page resume-page">
     <div class="content-flow">
-      <h2 class="page-title">{page.title}</h2>
+      <h1 class="page-title">{page.title}</h1>
       <div class="prose" set:html={page.bodyHtml} />
     </div>
   </main>
