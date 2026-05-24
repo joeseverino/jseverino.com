@@ -134,9 +134,7 @@ featured_order: 1
 
 ## Content blocks
 
-Markdown handles prose. Custom `::` directives cover the rest, and they are
-surface-specific — writeup blocks render in writeups, page blocks in pages.
-`::terminal` is the only one shared by both.
+Markdown handles prose. Custom `::` directives cover the rest—expanded by `src/lib/content.ts` at sync-time rendering. See the [**Authoring Guide**](./docs/Authoring-Guide.md) for full syntax and examples.
 
 ### Writeup blocks
 
@@ -179,6 +177,9 @@ Writeup prose also has inline image shorthand:
 
 ::button
 [Single](/portfolio/)
+::
+
+::cta
 ::
 
 ::center

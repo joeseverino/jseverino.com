@@ -37,6 +37,15 @@ Building static entrypoints...
     - [Secondary Action](/path2/)
     ::
     ```
+*   **Call-to-Action (CTA)**: `::cta ::` (Injects a standard button row for Portfolio/Contact).
+
+### Centered Content
+Renders content with center-alignment.
+```md
+::center
+Text or Markdown to be centered.
+::
+```
 
 ## 3. Page-Specific Directives
 Used primarily for structured layouts in `src/content/pages/`.
