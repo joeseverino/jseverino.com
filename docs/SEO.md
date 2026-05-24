@@ -3,7 +3,7 @@
 This document serves as a reference for the SEO strategies implemented in this Astro build. It captures the "blueprint" for maintaining high search visibility and technical performance, as detailed in the [Technical Architecture](./Architecture.md).
 
 ## 1. Structured Data (JSON-LD)
-We use a centralized [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) component (see [Core Stack](./Architecture.md#1-core-stack)) to inject Schema.org metadata:
+We use a centralized [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) component (see [Architecture](./Architecture.md#1-architectural-overview-the-no-origin-model)) to inject Schema.org metadata:
 *   **BreadcrumbList**: Dynamically generated based on the page path to improve search engine "path" visibility.
 *   **Person Schema**: Identifies the author and connects social profiles (LinkedIn, GitHub) to the "Entity" Joe Severino.
 *   **Article Schema**: Automatically applied to portfolio writeups with `publishedTime` and `modifiedTime`.
@@ -16,7 +16,8 @@ We use a centralized [`src/components/SeoHead.astro`](../src/components/SeoHead.
 A custom [`bin/sync-content.mjs`](../bin/sync-content.mjs) script (part of the [Vault-as-CMS Workflow](./Vault-Workflow.md)) handles assets before they reach the browser:
 *   **Multi-format**: Generates **AVIF** (priority), **WebP**, and optimized fallback JPEGs/PNGs.
 *   **Responsive Widths**: Resizes images to 512px, 1024px, and 1600px widths.
-*   **Layout Stability**: The [`src/components/Picture.astro`](../src/components/Picture.astro) component uses the [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) to include explicit `width` and `height` attributes, preventing Layout Shift (CLS) and ensuring a high Core Web Vitals score. See the [Image Pipeline](./Architecture.md#3-high-performance-image-pipeline) for details.
+*   **Layout Stability**: The [`src/components/Picture.astro`](../src/components/Picture.astro) component uses the [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) to include explicit `width` and `height` attributes, preventing Layout Shift (CLS) and ensuring a high Core Web Vitals score. See the [Image Pipeline](./Architecture.md#4-high-performance-image-pipeline) for details.
+
 
 ## 4. Security & Crawling
 *   **Content Security Policy (CSP)**: Nonce-based policy (via Cloudflare Pages Functions in [`functions/_middleware.ts`](../functions/_middleware.ts)) that allows tracking (Cloudflare Analytics) and Turnstile without compromising security or SEO. See the [Security Posture](../SECURITY.md) for full details.

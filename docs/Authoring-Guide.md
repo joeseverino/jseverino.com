@@ -53,7 +53,7 @@ Right column content.
 
 ### Dynamic Content Injection
 *   **`::featured-projects ::`**: Injects the responsive grid of projects marked `featured: true` in their frontmatter, using [`src/components/ProjectCard.astro`](../src/components/ProjectCard.astro).
-*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from [`src/content/technology-groups.md`](../src/content/technology-groups.md) (see [Technology Taxonomy](./Architecture.md#technology-taxonomy)) via [`src/components/TechnologyCloud.astro`](../src/components/TechnologyCloud.astro).
+*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from [`src/content/technology-groups.md`](../src/content/technology-groups.md) (see [Technology Taxonomy](./Architecture.md#6-technology-taxonomy)) via [`src/components/TechnologyCloud.astro`](../src/components/TechnologyCloud.astro).
 
 ## 4. Writeup-Specific Directives
 Used primarily in `src/content/writeups/` to handle complex technical documentation.
@@ -73,7 +73,8 @@ Detailed caption with **Markdown** and [links](/) support.
 Table caption providing context for the data above.
 ::
 ```
-*Note: Writeup tables are automatically rendered with a "striped" style in [`src/styles/base.css`](../src/styles/base.css).*
+*Note: Writeup tables are automatically rendered with a "striped" style in [`src/styles/base.css`](../src/styles/base.css), as defined in the [Transformation Layer](./Architecture.md#3-the-transformation-layer).*
+
 
 ---
 

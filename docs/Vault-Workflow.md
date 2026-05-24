@@ -32,7 +32,7 @@ Located in `05 Writeups/<slug>/`. The folder name determines the URL slug.
 Located in `06 Pages/<slug>/`.
 *   `index.md`: Page content (About, Contact, Resume, etc.).
 *   `_site.md`: Global site name and navigation links, synced to [`src/content/site.md`](../src/content/site.md).
-*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#technology-taxonomy), synced to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
+*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#6-technology-taxonomy), synced to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
 
 ## 3. The Sync Contract
 
@@ -46,7 +46,8 @@ published: true
 If `published` is `false` or missing, the content is treated as a draft and is never copied to the site repo.
 
 ### Metadata Stripping
-To maintain privacy, the sync script strips vault-only metadata from the frontmatter. Fields like `doc_id`, `system`, `related_projects`, and `sensitivity` stay in the private vault and never reach the public repo. This process is detailed in the [Technical Architecture](./Architecture.md#2-the-content-pipeline).
+To maintain privacy, the sync script strips vault-only metadata from the frontmatter. Fields like `doc_id`, `system`, `related_projects`, and `sensitivity` stay in the private vault and never reach the public repo. This process is detailed in the [Content Sync Engine](./Architecture.md#2-the-content-sync-engine).
+
 
 ## 4. Tooling & CLI
 
