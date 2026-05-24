@@ -230,7 +230,8 @@ Committed:
 
 - `src/` — Astro source
 - `public/` — static assets, `_headers`, `_redirects`
-- `src/content/`, `public/assets/`, `src/lib/image-manifest.json` — synced public snapshot and generated image variants (committed so Cloudflare can build from this repo alone)
+- **`src/content/`, `public/assets/`, `src/lib/image-manifest.json`** — synced public snapshot and generated image variants (committed so Cloudflare can build from this repo alone)
+- **`docs/SEO.md`** — technical reference for the SEO and metadata strategy
 - package and config files
 
 Not committed:
