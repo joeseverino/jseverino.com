@@ -234,6 +234,7 @@ Committed:
 - **`docs/SEO.md`** — technical reference for the SEO and metadata strategy
 - **`docs/Authoring-Guide.md`** — manual for the custom Markdown directives and components
 - **`docs/Vault-Workflow.md`** — architecture reference for the Vault-as-CMS sync logic
+- **`docs/Architecture.md`** — deep dive into the technical stack, security, and image pipeline
 - package and config files
 
 Not committed:

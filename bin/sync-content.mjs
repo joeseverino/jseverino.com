@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
+import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -11,9 +12,6 @@ const vaultRoot = process.env.VAULT_DIR
   ? path.resolve(process.env.VAULT_DIR)
   : path.resolve(siteRoot, '../../Severino Labs');
 
-// --drafts also syncs `published: false` pages and writeups, for local preview
-// only. They render in `astro dev` but the production build still excludes them
-// (see getWriteups/getPage in src/lib/content.ts).
 const includeDrafts = process.argv.includes('--drafts');
 
 const sourcePages = path.join(vaultRoot, '06 Pages');
@@ -27,19 +25,17 @@ const targetPageAssets = path.join(siteRoot, 'public/assets/pages');
 const targetImageManifest = path.join(siteRoot, 'src/lib/image-manifest.json');
 const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
 
-// Responsive variant widths (px). Each image gets AVIF + WebP at every width
-// at or below its own, plus a re-encoded raster fallback at the original path.
 const VARIANT_WIDTHS = [512, 1024, 1600];
 const imageManifest = {};
 
-function emptyDir(dir) {
-  fs.rmSync(dir, { recursive: true, force: true });
-  fs.mkdirSync(dir, { recursive: true });
+async function emptyDir(dir) {
+  await fsPromises.rm(dir, { recursive: true, force: true });
+  await fsPromises.mkdir(dir, { recursive: true });
 }
 
-function copyFile(source, target) {
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.copyFileSync(source, target);
+async function copyFile(source, target) {
+  await fsPromises.mkdir(path.dirname(target), { recursive: true });
+  await fsPromises.copyFile(source, target);
 }
 
 function normalizeLocalAssetRef(ref) {
@@ -47,10 +43,10 @@ function normalizeLocalAssetRef(ref) {
   if (/^(?:https?:)?\/\//.test(ref)) return undefined;
   if (ref.startsWith('#') || ref.startsWith('data:') || ref.startsWith('mailto:')) return undefined;
 
-  const withoutHash = ref.split('#')[0];
-  const withoutQuery = withoutHash.split('?')[0];
+  const [withoutHash] = ref.split('#');
+  const [withoutQuery] = withoutHash.split('?');
   const decoded = decodeURIComponent(withoutQuery)
-    .replaceAll('\\', '/')
+    .replace(/\\/g, '/')
     .replace(/^\.\//, '')
     .replace(/^\/+/, '');
 
@@ -61,29 +57,26 @@ function normalizeLocalAssetRef(ref) {
 
 function collectMarkdownAssetRefs(markdown) {
   const refs = new Set();
-  for (const match of markdown.matchAll(/!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
-    const ref = normalizeLocalAssetRef(match[1]);
-    if (ref) refs.add(ref);
-  }
-  for (const match of markdown.matchAll(/(?<!!)\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
-    const ref = normalizeLocalAssetRef(match[1]);
-    if (ref) refs.add(ref);
-  }
-  for (const match of markdown.matchAll(/\bsrc=["']([^"']+)["']/g)) {
-    const ref = normalizeLocalAssetRef(match[1]);
-    if (ref) refs.add(ref);
+  const patterns = [
+    /!\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
+    /(?<!!)\[[^\]]+\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g,
+    /\bsrc=["']([^"']+)["']/g
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of markdown.matchAll(pattern)) {
+      const ref = normalizeLocalAssetRef(match[1]);
+      if (ref) refs.add(ref);
+    }
   }
   return refs;
 }
 
 const OPTIMIZABLE = /\.(?:png|jpe?g)$/i;
 
-// Generate AVIF + WebP variants for one image, plus a capped raster fallback at
-// the original path. Encoded outputs are cached by source-content hash, so a
-// re-sync only re-encodes images that actually changed.
 async function optimizeImage(source, target, url) {
   try {
-    const buffer = fs.readFileSync(source);
+    const buffer = await fsPromises.readFile(source);
     const meta = await sharp(buffer).metadata();
     const intrinsicW = meta.width ?? 0;
     const intrinsicH = meta.height ?? 0;
@@ -94,7 +87,7 @@ async function optimizeImage(source, target, url) {
     const ext = path.extname(target);
     const base = path.basename(target, ext);
     const urlDir = url.slice(0, url.lastIndexOf('/'));
-    fs.mkdirSync(dir, { recursive: true });
+    await fsPromises.mkdir(dir, { recursive: true });
 
     const maxWidth = VARIANT_WIDTHS[VARIANT_WIDTHS.length - 1];
     const widths = [
@@ -104,15 +97,16 @@ async function optimizeImage(source, target, url) {
       ]),
     ].sort((a, b) => a - b);
 
-    // Copy from cache when the encoded output already exists; otherwise encode.
     const emit = async (outName, cacheName, encode) => {
       const outFile = path.join(dir, outName);
       const cacheFile = path.join(imageCacheDir, cacheName);
-      if (fs.existsSync(cacheFile)) {
-        fs.copyFileSync(cacheFile, outFile);
-      } else {
-        fs.writeFileSync(outFile, await encode());
-        fs.copyFileSync(outFile, cacheFile);
+      try {
+        await fsPromises.access(cacheFile);
+        await fsPromises.copyFile(cacheFile, outFile);
+      } catch {
+        const encoded = await encode();
+        await fsPromises.writeFile(outFile, encoded);
+        await fsPromises.copyFile(outFile, cacheFile);
       }
     };
 
@@ -131,21 +125,20 @@ async function optimizeImage(source, target, url) {
       webp.push([width, `${urlDir}/${webpName}`]);
     }
 
-    // Raster fallback at the original path — capped, re-encoded, never upscaled.
     await emit(path.basename(target), `${hash}-fallback${ext}`, () => {
       const pipeline = sharp(buffer).resize({
         width: Math.min(intrinsicW, maxWidth),
         withoutEnlargement: true,
       });
       return (
-        /\.png$/i.test(ext) ? pipeline.png({ compressionLevel: 9 }) : pipeline.jpeg({ quality: 82 })
+        ext.toLowerCase() === '.png' ? pipeline.png({ compressionLevel: 9 }) : pipeline.jpeg({ quality: 82 })
       ).toBuffer();
     });
 
     imageManifest[url] = { w: intrinsicW, h: intrinsicH, avif, webp, fallback: url };
   } catch (error) {
     console.warn(`[images] could not optimize ${url} (${error.message}); copying original`);
-    copyFile(source, target);
+    await copyFile(source, target);
   }
 }
 
@@ -157,14 +150,16 @@ async function processReferencedAssets(refs, sourceDir, targetDir, urlPrefix) {
     if (!source.startsWith(sourceDir + path.sep)) {
       throw new Error(`Refusing to copy asset outside source directory: ${ref}`);
     }
-    if (!fs.existsSync(source)) {
+    try {
+      await fsPromises.access(source);
+    } catch {
       throw new Error(`Missing referenced asset: ${source}`);
     }
 
     if (OPTIMIZABLE.test(ref)) {
       await optimizeImage(source, target, `${urlPrefix}/${ref}`);
     } else {
-      copyFile(source, target);
+      await copyFile(source, target);
     }
   }
 }
@@ -207,10 +202,6 @@ function rewriteWriteupAssetPaths(markdown, slug) {
     .replace(/^```\s*(?:wp-block-code|source-code-block|cli-block)$/gm, '```text');
 }
 
-// Strip HTML-tag-like sequences. A single `/<[^>]+>/` pass is incomplete:
-// removing one match can splice the neighbouring characters into a fresh
-// tag-like sequence the pass already moved past. Loop to a fixpoint so
-// nothing tag-shaped can survive.
 function stripHtmlTags(value) {
   let current = value;
   let previous;
@@ -275,20 +266,17 @@ function stripRepeatedDescription(markdown, description) {
 }
 
 async function syncPages() {
-  if (!fs.existsSync(sourcePages)) {
-    throw new Error(`Missing vault pages directory: ${sourcePages}`);
-  }
+  const entries = await fsPromises.readdir(sourcePages, { withFileTypes: true });
+  await emptyDir(targetPages);
+  await emptyDir(targetPageAssets);
 
-  emptyDir(targetPages);
-  emptyDir(targetPageAssets);
-
-  for (const entry of fs.readdirSync(sourcePages, { withFileTypes: true })) {
+  for (const entry of entries) {
     if (entry.isFile() && entry.name === '_site.md') {
-      copyFile(path.join(sourcePages, entry.name), targetSite);
+      await copyFile(path.join(sourcePages, entry.name), targetSite);
       continue;
     }
     if (entry.isFile() && entry.name === '_technology-groups.md') {
-      copyFile(path.join(sourcePages, entry.name), targetTechnologyGroups);
+      await copyFile(path.join(sourcePages, entry.name), targetTechnologyGroups);
       continue;
     }
     if (entry.isFile() || entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
@@ -296,17 +284,22 @@ async function syncPages() {
     const slug = entry.name;
     const sourceDir = path.join(sourcePages, slug);
     const sourceIndex = path.join(sourceDir, 'index.md');
-    if (!fs.existsSync(sourceIndex)) continue;
+    try {
+      await fsPromises.access(sourceIndex);
+    } catch {
+      continue;
+    }
 
-    const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
+    const raw = await fsPromises.readFile(sourceIndex, 'utf8');
+    const parsed = matter(raw);
     if (!includeDrafts && parsed.data.published !== true) continue;
 
     const refs = collectMarkdownAssetRefs(parsed.content);
     const rewrittenBody = rewritePageAssetPaths(parsed.content, slug);
     const synced = matter.stringify(rewrittenBody, publicPageData(parsed.data));
 
-    fs.mkdirSync(targetPages, { recursive: true });
-    fs.writeFileSync(path.join(targetPages, `${slug}.md`), synced);
+    await fsPromises.mkdir(targetPages, { recursive: true });
+    await fsPromises.writeFile(path.join(targetPages, `${slug}.md`), synced);
 
     await processReferencedAssets(
       refs,
@@ -318,18 +311,24 @@ async function syncPages() {
 }
 
 async function syncWriteups() {
-  emptyDir(targetWriteups);
-  emptyDir(targetWriteupAssets);
+  const entries = await fsPromises.readdir(sourceWriteups, { withFileTypes: true });
+  await emptyDir(targetWriteups);
+  await emptyDir(targetWriteupAssets);
 
-  for (const entry of fs.readdirSync(sourceWriteups, { withFileTypes: true })) {
+  for (const entry of entries) {
     if (!entry.isDirectory()) continue;
 
     const slug = entry.name;
     const sourceDir = path.join(sourceWriteups, slug);
     const sourceIndex = path.join(sourceDir, 'index.md');
-    if (!fs.existsSync(sourceIndex)) continue;
+    try {
+      await fsPromises.access(sourceIndex);
+    } catch {
+      continue;
+    }
 
-    const parsed = matter(fs.readFileSync(sourceIndex, 'utf8'));
+    const raw = await fsPromises.readFile(sourceIndex, 'utf8');
+    const parsed = matter(raw);
     if (!includeDrafts && parsed.data.published !== true) continue;
 
     const content = stripRepeatedDescription(parsed.content, parsed.data.description);
@@ -341,8 +340,8 @@ async function syncWriteups() {
     const syncedMarkdown = matter.stringify(rewrittenContent, publicWriteupData(parsed.data));
 
     const targetDir = path.join(targetWriteups, slug);
-    fs.mkdirSync(targetDir, { recursive: true });
-    fs.writeFileSync(path.join(targetDir, 'index.md'), syncedMarkdown);
+    await fsPromises.mkdir(targetDir, { recursive: true });
+    await fsPromises.writeFile(path.join(targetDir, 'index.md'), syncedMarkdown);
 
     await processReferencedAssets(
       refs,
@@ -353,7 +352,7 @@ async function syncWriteups() {
   }
 }
 
-fs.mkdirSync(imageCacheDir, { recursive: true });
+await fsPromises.mkdir(imageCacheDir, { recursive: true });
 await syncPages();
 await syncWriteups();
 
@@ -362,8 +361,8 @@ const sortedManifest = Object.fromEntries(
     .sort()
     .map((key) => [key, imageManifest[key]]),
 );
-fs.mkdirSync(path.dirname(targetImageManifest), { recursive: true });
-fs.writeFileSync(targetImageManifest, `${JSON.stringify(sortedManifest, null, 2)}\n`);
+await fsPromises.mkdir(path.dirname(targetImageManifest), { recursive: true });
+await fsPromises.writeFile(targetImageManifest, `${JSON.stringify(sortedManifest, null, 2)}\n`);
 
 console.log(`Synced pages from ${sourcePages}`);
 console.log(`Synced public writeups from ${sourceWriteups}`);
