@@ -27,3 +27,11 @@ A custom `sync-content.mjs` script handles assets before they reach the browser:
 *   **Sitemap**: Generated via `@astrojs/sitemap` at `/sitemap-index.xml`.
 *   **RSS Feed**: Available at `/feed.xml` for content syndication.
 *   **Robots.txt**: Dynamically served to point crawlers to the latest sitemap.
+
+---
+
+## Related Documentation
+*   [Technical Architecture](./Architecture.md) — Internal engine and performance details.
+*   [Vault-as-CMS Workflow](./Vault-Workflow.md) — How content moves from Obsidian to the site.
+*   [Authoring Guide](./Authoring-Guide.md) — Manual for custom Markdown directives.
+*   [Security Posture](../SECURITY.md) — Detailed security architecture and controls.

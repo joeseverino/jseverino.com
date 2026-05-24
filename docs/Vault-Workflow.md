@@ -66,3 +66,10 @@ The site is managed via a custom `site` CLI toolchain (part of the `joeseverino/
 *   **No Origin**: The site is 100% static (SSG). There is no database or admin panel to harden.
 *   **Build Independence**: Cloudflare Pages builds from the committed snapshot in this repo. It has zero access to the private vault.
 *   **Auditability**: Because the synced content is committed to Git, the public surface is fully auditable in the repository history.
+
+---
+
+## Related Documentation
+*   [Authoring Guide](./Authoring-Guide.md) — Reference for custom components used in the vault.
+*   [Technical Architecture](./Architecture.md) — Deep dive into the sync engine and image pipeline.
+*   [Technical SEO & Metadata](./SEO.md) — How synced content is optimized for search.
