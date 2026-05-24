@@ -69,7 +69,7 @@ The sync process preserves existing review dates on first sync and updates them 
 
 Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image.
 
-Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by **avoiding image layout shift** (validated as **CLS: 0** in the [May 2026 Audit](./WordPress-To-Astro-Migration.md#may-2026-performance-and-security-audit)).
+Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by avoiding image layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
 
 ## Discovery Files
 
@@ -79,7 +79,7 @@ Article/body images are optimized during sync and rendered with stable dimension
 
 ## Security Headers And SEO
 
-The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. This move to a hardened, static origin resulted in a **~92% reduction in TTFB** (documented in the [May 2026 Audit](./WordPress-To-Astro-Migration.md#server-response-and-security-audit-date-52426)), providing a more stable and faster response signal for search crawlers.
+The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The static Astro origin also gives crawlers a simpler response path than the legacy WordPress runtime; measured response snapshots are documented in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
 The static [`public/_headers`](../public/_headers) policy remains a fallback and is verified by [`bin/csp-hashes.mjs --check`](../bin/csp-hashes.mjs).
 

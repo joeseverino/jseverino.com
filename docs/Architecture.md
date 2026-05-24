@@ -15,7 +15,7 @@ The public serving layer is static by default. The only request-time code is Clo
 - [`functions/_middleware.ts`](../functions/_middleware.ts) rewrites HTML responses to add CSP nonces.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact form submissions.
 
-There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. This removal of the origin runtime resulted in a **92% reduction in TTFB** (documented in the [May 2026 Audit](./WordPress-To-Astro-Migration.md#server-response-and-security-audit-date-52426)).
+There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
 ## 2. Source Of Truth
 
@@ -121,7 +121,7 @@ For each optimizable source image, the pipeline emits:
 
 [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) records the output variants and source dimensions. [`src/components/Picture.astro`](../src/components/Picture.astro) uses the manifest to render stable responsive images with explicit `width` and `height` attributes.
 
-This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is validated by a **~60% reduction in observed transfer weight** compared to the legacy WordPress origin (see the [Case Study](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup)).
+This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
 
 ## 8. SEO And Metadata
 
@@ -148,7 +148,7 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 2. Use `HTMLRewriter` to add the nonce to every `<script>` tag.
 3. Emit a `Content-Security-Policy` header containing that nonce.
 
-The policy significantly reduces script-injection risk while still allowing first-party scripts, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security-audit-date-52426) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
+The policy significantly reduces script-injection risk while still allowing first-party scripts, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
 
 The contact function applies:
 
