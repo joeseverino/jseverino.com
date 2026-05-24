@@ -41,7 +41,7 @@ the contact form (see below). Everything else is a flat file.
 ### The private/public boundary is one auditable step
 
 Content is authored in a private notes vault and copied into this repository
-by an asynchronous Node.js sync script ([`bin/sync-content.mjs`](../bin/sync-content.mjs)). That script is the entire
+by an asynchronous Node.js sync script ([`bin/sync-content.mjs`](./bin/sync-content.mjs)). That script is the entire
 trust boundary between private notes and the public site:
 
 - **Allowlist, not denylist.** Only an explicit set of frontmatter fields is
@@ -65,8 +65,8 @@ Cloudflare Pages clones this repository, runs `npm run build`, and uploads
   alone;
 - needs no server-side secrets — the only build-time variable is a *public*
   value (the Turnstile **site** key);
-- is reproducible — dependencies install from the committed [`package-lock.json`](../package-lock.json)
-  via `npm ci`, and the Node version is pinned in [`.nvmrc`](../.nvmrc).
+- is reproducible — dependencies install from the committed [`package-lock.json`](./package-lock.json)
+  via `npm ci`, and the Node version is pinned in [`.nvmrc`](./.nvmrc).
 
 The one server-side secret (the Turnstile **secret** key) exists only in the
 Pages Function's runtime environment, configured in the Cloudflare dashboard.
@@ -76,7 +76,7 @@ gitignored.
 ## The contact form: the one dynamic surface
 
 The contact page is static HTML, but submissions POST to a Cloudflare Pages
-Function at `/api/contact` ([`functions/api/contact.ts`](../functions/api/contact.ts)). It is small,
+Function at `/api/contact` ([`functions/api/contact.ts`](./functions/api/contact.ts)). It is small,
 single-purpose, and layered:
 
 | Control | What it does |
@@ -110,13 +110,13 @@ under the contact form.
 
 ## HTTP response headers
 
-Cloudflare Pages applies the headers in [`public/_headers`](../public/_headers) to responses. For HTML
-responses in production, [`functions/_middleware.ts`](../functions/_middleware.ts) replaces the static CSP with
+Cloudflare Pages applies the headers in [`public/_headers`](./public/_headers) to responses. For HTML
+responses in production, [`functions/_middleware.ts`](./functions/_middleware.ts) replaces the static CSP with
 a nonce-bearing policy and adds the matching nonce to every script tag.
 
 | Header | Value | Purpose |
 |---|---|---|
-| `Content-Security-Policy` | see [`public/_headers`](../public/_headers) | Restricts the scripts, styles, and origins a page may load — detailed below. |
+| `Content-Security-Policy` | see [`public/_headers`](./public/_headers) | Restricts the scripts, styles, and origins a page may load — detailed below. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
@@ -131,17 +131,17 @@ The policy starts from `default-src 'self'` and allowlists only the third-party
 origins the site uses: Cloudflare Turnstile (`challenges.cloudflare.com`) and
 the Cloudflare Web Analytics beacon (`static.cloudflareinsights.com`).
 
-Production HTML uses a per-request nonce. The Pages middleware ([`functions/_middleware.ts`](../functions/_middleware.ts)) generates the
+Production HTML uses a per-request nonce. The Pages middleware ([`functions/_middleware.ts`](./functions/_middleware.ts)) generates the
 nonce, attaches it to every `<script>` in the HTML response with
 `HTMLRewriter`, and emits a CSP containing that nonce. Cloudflare JavaScript
 Detections and the Web Analytics beacon also receive or match the production
 policy, so the site keeps a strict `script-src` without adding
 `'unsafe-inline'`.
 
-The static [`public/_headers`](../public/_headers) CSP remains as a fallback for static serving and local
+The static [`public/_headers`](./public/_headers) CSP remains as a fallback for static serving and local
 inspection. Its `sha256` values cover the executable inline scripts emitted by
-the build. [`bin/csp-hashes.mjs`](../bin/csp-hashes.mjs) recomputes those hashes from the built HTML, and
-[`npm run publish:check`](../bin/publish-check.mjs) fails if [`public/_headers`](../public/_headers) is missing a hash for any
+the build. [`bin/csp-hashes.mjs`](./bin/csp-hashes.mjs) recomputes those hashes from the built HTML, and
+[`npm run publish:check`](./bin/publish-check.mjs) fails if [`public/_headers`](./public/_headers) is missing a hash for any
 inline executable script that actually shipped.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
@@ -154,11 +154,11 @@ prebuilt output, but the build toolchain is still treated as a supply-chain
 surface:
 
 - **Dependabot** opens grouped update PRs — npm weekly, GitHub Actions
-  monthly ([`.github/dependabot.yml`](../.github/dependabot.yml)).
+  monthly ([`.github/dependabot.yml`](./.github/dependabot.yml)).
 - **CodeQL** scans the JavaScript/TypeScript on every push and PR to `main`
-  and on a weekly schedule ([`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml)).
+  and on a weekly schedule ([`.github/workflows/codeql.yml`](./.github/workflows/codeql.yml)).
 - **Dependency review** runs on every PR and fails on a high-severity
-  advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
+  advisory ([`.github/workflows/dependency-review.yml`](./.github/workflows/dependency-review.yml)).
 - **Build CI** runs `npm ci && npm run build` on every push and PR, so a
   broken or tampered dependency tree fails fast.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
@@ -173,9 +173,9 @@ surface:
 - **Trusted Markdown input.** Markdown is authored only by the site owner, so
   raw HTML in Markdown is allowed by design. Where content is interpolated
   into HTML by custom directives (e.g. `::terminal` blocks), it is run through
-  an explicit HTML-escaping helper in [`src/lib/content.ts`](../src/lib/content.ts).
+  an explicit HTML-escaping helper in [`src/lib/content.ts`](./src/lib/content.ts).
 - **Escaped structured data.** JSON-LD injected into `<head>` has `<`
-  characters escaped so a string value can never break out into live markup. See [`src/components/SeoHead.astro`](../src/components/SeoHead.astro).
+  characters escaped so a string value can never break out into live markup. See [`src/components/SeoHead.astro`](./src/components/SeoHead.astro).
 - **Analytics is cookieless.** The only analytics is Cloudflare Web Analytics
   — a small sampling beacon auto-injected by the Cloudflare proxy. No
   cookies, no cross-site identifiers, no consent banner.
