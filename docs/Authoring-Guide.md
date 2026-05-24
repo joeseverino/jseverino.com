@@ -1,9 +1,9 @@
 # Content Authoring & Component Reference
 
-This site uses a custom Markdown extension layer. Content is authored in a private vault using standard Markdown plus a set of `::` directives that the Astro engine transforms into optimized, responsive components.
+This site uses a custom Markdown extension layer. Content is authored in a private vault using standard Markdown plus a set of `::` directives that the Astro engine transforms into optimized, responsive components as part of the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 
 ## 1. Custom Image Syntax
-We extend standard Markdown images with pipe-separated options to control layout and captions.
+We extend standard Markdown images with pipe-separated options to control layout and captions. These are processed by the [High-Performance Image Pipeline](./Architecture.md#3-high-performance-image-pipeline).
 
 *   **Standard**: `![Caption](./images/x.png)`  
     The alt text becomes the visible figure caption automatically.
@@ -53,13 +53,13 @@ Right column content.
 
 ### Dynamic Content Injection
 *   **`::featured-projects ::`**: Injects the responsive grid of projects marked `featured: true` in their frontmatter.
-*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from `src/content/technology-groups.md`.
+*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from `src/content/technology-groups.md` (see [Technology Taxonomy](./Architecture.md#technology-taxonomy)).
 
 ## 4. Writeup-Specific Directives
 Used primarily in `src/content/writeups/` to handle complex technical documentation.
 
 ### Figures & Tables
-Standard Markdown works, but these directives allow for multi-line captions and specialized styling:
+Standard Markdown works, but these directives allow for multi-line captions and specialized styling, which supports our [Technical SEO](./SEO.md) goals:
 ```md
 ::figure
 ![Alt](./images/diagram.png)

@@ -1,6 +1,6 @@
 # Vault-as-CMS Workflow
 
-This site uses a "Vault-as-CMS" architecture. The private **Severino Labs** Obsidian vault is the canonical source of truth for all content, while this repository serves as the public build and deployment target.
+This site uses a [Vault-as-CMS architecture](./Architecture.md). The private **Severino Labs** Obsidian vault is the canonical source of truth for all content, while this repository serves as the public build and deployment target.
 
 ## 1. Stack Topology
 
@@ -24,7 +24,7 @@ Live Site (jseverino.com)
 
 ### Portfolio Writeups
 Located in `05 Writeups/<slug>/`. The folder name determines the URL slug.
-*   `index.md`: The main content.
+*   `index.md`: The main content, using [custom directives](./Authoring-Guide.md).
 *   `images/`: Local assets referenced by the writeup.
 *   `source/`: (Optional) Private working materials; ignored by the sync script.
 
@@ -32,11 +32,11 @@ Located in `05 Writeups/<slug>/`. The folder name determines the URL slug.
 Located in `06 Pages/<slug>/`.
 *   `index.md`: Page content (About, Contact, Resume, etc.).
 *   `_site.md`: Global site name and navigation links.
-*   `_technology-groups.md`: Single source of truth for the technology cloud taxonomy.
+*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#technology-taxonomy).
 
 ## 3. The Sync Contract
 
-The `bin/sync-content.mjs` script enforces a strict boundary between private notes and public site.
+The `bin/sync-content.mjs` script enforces a strict [security boundary](../SECURITY.md) between private notes and public site.
 
 ### The Publish Gate
 Content only reaches this repository if its frontmatter includes:
@@ -46,7 +46,7 @@ published: true
 If `published` is `false` or missing, the content is treated as a draft and is never copied to the site repo.
 
 ### Metadata Stripping
-To maintain privacy, the sync script strips vault-only metadata from the frontmatter. Fields like `doc_id`, `system`, `related_projects`, and `sensitivity` stay in the private vault and never reach the public repo.
+To maintain privacy, the sync script strips vault-only metadata from the frontmatter. Fields like `doc_id`, `system`, `related_projects`, and `sensitivity` stay in the private vault and never reach the public repo. This process is detailed in the [Technical Architecture](./Architecture.md#2-the-content-pipeline).
 
 ## 4. Tooling & CLI
 
@@ -63,7 +63,7 @@ The site is managed via a custom `site` CLI toolchain (part of the `joeseverino/
 
 ## 5. Security Boundaries
 
-*   **No Origin**: The site is 100% static (SSG). There is no database or admin panel to harden.
+*   **No Origin**: The site is 100% static (SSG). There is no database or admin panel to harden. See the [Security Posture](../SECURITY.md) for full architecture details.
 *   **Build Independence**: Cloudflare Pages builds from the committed snapshot in this repo. It has zero access to the private vault.
 *   **Auditability**: Because the synced content is committed to Git, the public surface is fully auditable in the repository history.
 
