@@ -1,7 +1,8 @@
 # Dependencies
 # node_modules is a symlink to node_modules.nosync. The `.nosync` suffix
 # tells iCloud Drive to never sync that folder — no eviction, no conflict
-# copies, no corrupted installs. See README "Working in iCloud Drive".
+# copies, no corrupted installs. See docs/Release-Checklist.md for the
+# release-time conflict-copy check.
 node_modules
 node_modules.*
 node_modules [0-9]*

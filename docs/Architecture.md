@@ -180,4 +180,5 @@ This does not replace human review, but it catches broken builds, stale CSP hash
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
+- [`docs/Release-Checklist.md`](./Release-Checklist.md)
 - [`SECURITY.md`](../SECURITY.md)

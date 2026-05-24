@@ -103,10 +103,11 @@ npm run dev                # Start Astro dev server
 npm run dev:drafts         # Sync drafts locally, then start dev server
 npm run check              # Astro type/content diagnostics
 npm run build:static       # Build static output to dist.nosync locally
+npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run publish:check      # Clean, sync, check, build, verify CSP, audit assets
 ```
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface.
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo <url|path|slug>` calls the same SEO preview script after a local build.
 
 ## Generated And Local Files
 
@@ -129,6 +130,7 @@ Do not commit:
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
 - [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
+- [`docs/Release-Checklist.md`](./docs/Release-Checklist.md) documents preflight, publish, signed tag, deploy, header, SEO, and accessibility checks.
 - [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.
 
 ## History
