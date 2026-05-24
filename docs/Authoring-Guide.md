@@ -162,7 +162,7 @@ Before publishing:
 - Images use local relative paths.
 - Captions are descriptive.
 - No private hostnames, keys, internal notes, or vault metadata appear in body content.
-- `npm run publish:check` passes after sync.
+- `npm run publish:check` passes after sync (see [Pre-flight Validation](./WordPress-To-Astro-Migration.md#pre-flight-validation)).
 
 ## Related Docs
 

@@ -22,9 +22,8 @@ The result is a site that is easier to operate and easier to audit:
 - content is written privately in a [Vault-driven workflow](./Vault-Workflow.md), then synced through an allowlisted pipeline;
 - pages are generated as static HTML, CSS, JavaScript, and optimized assets;
 - screenshots are converted to responsive AVIF/WebP variants via a custom [image pipeline](./Architecture.md#7-image-pipeline);
-- metadata, sitemap, RSS, JSON-LD, and canonical URLs are generated from the
-  same content source;
-- Cloudflare Pages serves the site without exposing a WordPress runtime.
+- [metadata, sitemap, RSS, JSON-LD, and canonical URLs](./SEO.md) are generated from the same content source;
+- Cloudflare Pages serves the site without exposing a WordPress runtime (see [Architecture](./Architecture.md)).
 
 ## Decision Drivers
 
@@ -33,10 +32,10 @@ The result is a site that is easier to operate and easier to audit:
 | Public runtime | PHP, WordPress, theme, plugins, database | Static files on Cloudflare Pages |
 | Admin surface | Public WordPress admin path unless externally protected | No public admin application |
 | Plugin risk | Plugin/theme code executes in the public origin | No production plugin runtime |
-| Content source | Database plus theme/plugin behavior | Markdown snapshot generated from the private vault |
+| Content source | Database plus theme/plugin behavior | Markdown snapshot generated from the [private vault](./Vault-Workflow.md) |
 | Image delivery | Large PNG screenshots from uploads | Responsive AVIF/WebP plus optimized fallbacks |
-| Reviewability | Runtime behavior spread across WordPress, plugins, database, and theme | Public repo contains the build source and generated content snapshot |
-| Deployment | Origin application and database must remain healthy | Static deploy artifact can be rebuilt and redeployed |
+| Reviewability | Runtime behavior spread across WordPress, plugins, database, and theme | Public repo contains the build source and [generated content snapshot](./Architecture.md#2-source-of-truth) |
+| Deployment | Origin application and database must remain healthy | Static deploy artifact can be [rebuilt and redeployed](./Architecture.md#release-gate) |
 
 ## Architecture Change
 

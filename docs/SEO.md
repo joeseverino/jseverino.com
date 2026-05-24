@@ -69,7 +69,7 @@ The sync process preserves existing review dates on first sync and updates them 
 
 Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image.
 
-Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by avoiding image layout shift.
+Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by **avoiding image layout shift** (validated as **CLS: 0** in the [May 2026 Audit](./WordPress-To-Astro-Migration.md#may-2026-performance-and-security-audit)).
 
 ## Discovery Files
 
