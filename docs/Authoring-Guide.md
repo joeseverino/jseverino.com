@@ -1,9 +1,9 @@
 # Content Authoring & Component Reference
 
-This site uses a custom Markdown extension layer. Content is authored in a private vault using standard Markdown plus a set of `::` directives that the Astro engine transforms into optimized, responsive components as part of the [Vault-as-CMS Workflow](./Vault-Workflow.md).
+This site uses a custom Markdown extension layer. Content is authored in a private vault using standard Markdown plus a set of `::` directives that the Astro engine transforms into optimized, responsive components as part of the [Vault-as-CMS Workflow](./Vault-Workflow.md). The transformation logic is implemented in [`src/lib/content.ts`](../src/lib/content.ts).
 
 ## 1. Custom Image Syntax
-We extend standard Markdown images with pipe-separated options to control layout and captions. These are processed by the [High-Performance Image Pipeline](./Architecture.md#3-high-performance-image-pipeline).
+We extend standard Markdown images with pipe-separated options to control layout and captions. These are processed by the [High-Performance Image Pipeline](./Architecture.md#3-high-performance-image-pipeline) and rendered via [`src/components/Picture.astro`](../src/components/Picture.astro).
 
 *   **Standard**: `![Caption](./images/x.png)`  
     The alt text becomes the visible figure caption automatically.
@@ -42,7 +42,7 @@ Building static entrypoints...
 Used primarily for structured layouts in `src/content/pages/`.
 
 ### Split Layout (2-Column)
-Uses `:::` as a separator to create a responsive two-column grid.
+Uses `::::: as a separator to create a responsive two-column grid.
 ```md
 ::split
 Left column content (Markdown, images, etc.).
@@ -52,8 +52,8 @@ Right column content.
 ```
 
 ### Dynamic Content Injection
-*   **`::featured-projects ::`**: Injects the responsive grid of projects marked `featured: true` in their frontmatter.
-*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from `src/content/technology-groups.md` (see [Technology Taxonomy](./Architecture.md#technology-taxonomy)).
+*   **`::featured-projects ::`**: Injects the responsive grid of projects marked `featured: true` in their frontmatter, using [`src/components/ProjectCard.astro`](../src/components/ProjectCard.astro).
+*   **`::technology-cloud ::`**: Injects the categorized tag cloud sourced from [`src/content/technology-groups.md`](../src/content/technology-groups.md) (see [Technology Taxonomy](./Architecture.md#technology-taxonomy)) via [`src/components/TechnologyCloud.astro`](../src/components/TechnologyCloud.astro).
 
 ## 4. Writeup-Specific Directives
 Used primarily in `src/content/writeups/` to handle complex technical documentation.
@@ -73,7 +73,7 @@ Detailed caption with **Markdown** and [links](/) support.
 Table caption providing context for the data above.
 ::
 ```
-*Note: Writeup tables are automatically rendered with a "striped" style.*
+*Note: Writeup tables are automatically rendered with a "striped" style in [`src/styles/base.css`](../src/styles/base.css).*
 
 ---
 

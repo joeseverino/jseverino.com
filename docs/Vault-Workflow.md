@@ -24,19 +24,19 @@ Live Site (jseverino.com)
 
 ### Portfolio Writeups
 Located in `05 Writeups/<slug>/`. The folder name determines the URL slug.
-*   `index.md`: The main content, using [custom directives](./Authoring-Guide.md).
+*   `index.md`: The main content, using [custom directives](./Authoring-Guide.md) rendered via [`src/lib/content.ts`](../src/lib/content.ts).
 *   `images/`: Local assets referenced by the writeup.
 *   `source/`: (Optional) Private working materials; ignored by the sync script.
 
 ### Site Pages
 Located in `06 Pages/<slug>/`.
 *   `index.md`: Page content (About, Contact, Resume, etc.).
-*   `_site.md`: Global site name and navigation links.
-*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#technology-taxonomy).
+*   `_site.md`: Global site name and navigation links, synced to [`src/content/site.md`](../src/content/site.md).
+*   `_technology-groups.md`: Single source of truth for the [technology taxonomy](./Architecture.md#technology-taxonomy), synced to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
 
 ## 3. The Sync Contract
 
-The `bin/sync-content.mjs` script enforces a strict [security boundary](../SECURITY.md) between private notes and public site.
+The [`bin/sync-content.mjs`](../bin/sync-content.mjs) script enforces a strict [security boundary](../SECURITY.md) between private notes and public site.
 
 ### The Publish Gate
 Content only reaches this repository if its frontmatter includes:
@@ -55,11 +55,11 @@ The site is managed via a custom `site` CLI toolchain (part of the `joeseverino/
 | Command | Action |
 | --- | --- |
 | `site new-writeup <slug>` | Scaffolds a new writeup folder in the vault with draft frontmatter. |
-| `site sync` | Runs the sync script to pull `published` content into the local repo. |
+| `site sync` | Runs [`bin/sync-content.mjs`](../bin/sync-content.mjs) to pull `published` content into the local repo. |
 | `site dev` | Starts the Astro dev server for local preview. |
 | `site dev --drafts` | Syncs all content (including drafts) for local-only preview. |
 | `site publish` | Performs a full audit: clean, sync, check, and build. |
-| `site publish-all` | The "one command" to sync, build, commit the snapshot, and push to GitHub. |
+| `site publish-all` | The "one command" to sync, build, commit the snapshot, and push to GitHub. Runs [`bin/publish-check.mjs`](../bin/publish-check.mjs). |
 
 ## 5. Security Boundaries
 
