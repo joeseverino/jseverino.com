@@ -224,6 +224,16 @@ article hero use the `Picture` component directly; writeup and page bodies are
 rewritten by `enhanceImages` after Markdown rendering. A browser downloads a
 right-sized AVIF (tens of KB) instead of a full-resolution PNG.
 
+## Technical Excellence (v2.0.0)
+
+The **v2.0.0 "Diamond Standard" Refactor** modernized the site's internals for maximum performance and maintainability:
+
+- **Asynchronous Sync Engine**: Refactored `bin/sync-content.mjs` to use `fs.promises`, providing non-blocking I/O for faster content and image processing.
+- **Automated Metadata**: Implemented content hashing to automatically track "Last Reviewed" dates and derived page paths from file slugs.
+- **Identity Centralization**: Moved all site identity (name, skills, social links) to a single source of truth in the vault (`_site.md`), eliminating hardcoded strings in Astro components.
+- **Interlinked Knowledge Web**: Added a comprehensive technical documentation suite in `/docs`, interlinking architecture, SEO, and workflow guides with direct links to the source code.
+- **Zero Layout Shift (CLS)**: Hardened the image pipeline to ensure 100% stable layouts by injecting intrinsic dimensions from a generated manifest into every responsive `<picture>` tag.
+
 ## Repo boundaries
 
 Committed:
