@@ -10,6 +10,7 @@ Use this guide when writing or reviewing vault content.
 - Set `published: true` only when the page or writeup is ready to ship.
 - Put writeup images in the writeup's local `images/` folder.
 - Reference local images as `./images/file.png`.
+- Start writeup body sections at `##`; the article title is already rendered as the page `h1`.
 - Prefer normal Markdown unless a directive adds real structure.
 - Do not rely on raw HTML unless there is a specific reason.
 

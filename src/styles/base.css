@@ -930,6 +930,25 @@ figure {
   margin-top: var(--space-3);
 }
 
+.prose h2 {
+  font-size: var(--font-h-md);
+}
+
+.prose h3 {
+  font-size: var(--font-h-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.prose h4 {
+  font-size: var(--font-base);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .prose a:not(.button) {
   text-decoration: underline;
 }

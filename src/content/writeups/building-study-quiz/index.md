@@ -23,7 +23,7 @@ featured: false
 
 ![hero](/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard.png)
 
-#### Overview
+## Overview
 
 Study Quiz came from a real problem while I was preparing for CS6250 Computer Networks.
 
@@ -39,7 +39,7 @@ That became the core idea: build the tool publicly, keep the data private, and a
 The app is public, but the question bank stays local.
 ::
 
-#### The Problem
+## The Problem
 
 The question pool wasn’t built for repetition. It was easy to read through, but not great for actually testing yourself.
 
@@ -48,7 +48,7 @@ start a session → answer → get feedback → read explanation → track misse
 
 And at the end, I didn’t just want a score. I wanted to know what I actually needed to work on.
 
-#### The Constraint: Public App, Private Data
+## The Constraint: Public App, Private Data
 
 The most important decision was separating the app from the content.
 
@@ -58,17 +58,17 @@ Nothing is bundled into the repo. The user imports their own JSON file locally. 
 
 There’s also a demo deck so anyone can try it without needing the real questions.
 
-#### The Solution
+## The Solution
 
 I built Study Quiz as a browser-based app where the user brings the study material instead of the server storing it.
 
 The app handles the quiz logic, progress tracking, and review flow. The content comes from a local JSON import. Once the deck is loaded, the app can run a full study session, track results, identify misses, and preserve progress in the browser.
 
-#### What I Built
+## What I Built
 
 Study Quiz is a local-first quiz app built for active recall. You import a deck, run through questions, get immediate feedback, and track how you’re doing over time. Missed questions are saved so you can review them and focus on weak areas instead of rerunning everything.
 
-#### Why I Chose a Local-First Architecture
+## Why I Chose a Local-First Architecture
 
 A backend would have made this more complicated without making it better.
 
@@ -76,7 +76,7 @@ This workflow is personal and doesn’t need accounts or hosted data. The browse
 
 The simplest way to protect the data was to never send it anywhere.
 
-#### Verifying the No-Upload Design
+## Verifying the No-Upload Design
 
 I checked this directly in the browser. After a 130 minute session, the Network tab only shows the page, JavaScript, and CSS. There are no requests for question data, answers, or scoring. Everything stays in the browser.
 
@@ -88,7 +88,7 @@ The Network tab shows the app loading only the document, JavaScript, and CSS. Th
 
 That confirms the app actually stays local. The browser’s network activity confirms that the study flow does not depend on upload requests or backend grading calls.
 
-#### Deck Library and Import Flow
+## Deck Library and Import Flow
 
 The home screen is designed around fast entry into a study session.
 
@@ -104,7 +104,7 @@ The deck library also makes the project more general. It is not limited to one c
 The deck library supports local imports, demo content, custom deck creation, and reusable study sessions without bundling private question material into the public app.
 ::
 
-#### Study Workflow
+## Study Workflow
 
 The core quiz loop is intentionally direct.
 
@@ -112,7 +112,7 @@ The app presents one question at a time, shows the answer choices, accepts the u
 
 ![The Study Quiz question and answer screen](/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow.png)
 
-#### Missed Questions and Weak Review
+## Missed Questions and Weak Review
 
 Study Quiz tracks missed questions during a session so they can be reviewed afterward. It also identifies weak questions over time, which makes it possible to drill the areas that actually need more work instead of rerunning the full deck every time.
 
@@ -122,7 +122,7 @@ Study Quiz tracks missed questions during a session so they can be reviewed afte
 Weak-question review turns past mistakes into targeted practice instead of treating every question as equally urgent.
 ::
 
-#### Real Session Validation
+## Real Session Validation
 
 I used this for a full Exam 2 review session with 134 questions. I finished with 130 correct and 4 wrong over about two hours. I then used it as my main review tool going into the exam and scored 100 percent on the proctored Exam 2. It wasn’t just a demo. It held up during real exam prep.
 
@@ -132,7 +132,7 @@ I used this for a full Exam 2 review session with 134 questions. I finished with
 The recap screen shows a completed 134-question study session with score, duration, missed-question count, best streak, and module-level performance.
 ::
 
-#### Tradeoffs
+## Tradeoffs
 
 The local-first design fits this project, but it has tradeoffs.
 
@@ -140,7 +140,7 @@ Progress is tied to the browser unless exported. Clearing browser data can remov
 
 Those tradeoffs were acceptable because the goal was not to build a hosted platform. The goal was to build a fast, private, repeatable study tool.
 
-#### Conclusion
+## Conclusion
 
 Study Quiz worked because I kept the scope honest.
 

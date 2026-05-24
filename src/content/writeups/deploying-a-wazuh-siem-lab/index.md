@@ -20,11 +20,11 @@ featured: false
 
 ![hero](/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover.png)
 
-#### Project Overview
+## Project Overview
 
 This exercise involved deploying [Wazuh](https://wazuh.com/), an open source Security Information and Event Management (SIEM) and Extended Detection and Response (XDR) platform in a home lab environment.
 
-#### Lab Architecture
+## Lab Architecture
 
 This lab environment was designed to simulate a simplified enterprise security monitoring architecture. Windows endpoint runs the Wazuh agent, which collects system and security telemetry and forwards it to the centralized Wazuh server hosted on an Ubuntu virtual machine. The Wazuh server performs log analysis, threat detection, and vulnerability monitoring while storing indexed event data and presenting alerts through the Wazuh dashboard.
 
@@ -40,7 +40,7 @@ Wazuh SIEM Lab Architecture
 Ubuntu VM hosting the Wazuh Server
 ::
 
-#### Wazuh Deployment
+## Wazuh Deployment
 
 After provisioning an Ubuntu 24.04.3 Virtual Machine, I changed the Network Adapter to use a Bridged Adapter instead of NAT to prevent future issues. I then entered the following commands to download the Wazuh Installer, make it executable, and ran the installer.
 
@@ -102,7 +102,7 @@ Wazuh Dashboard Overview
 Wazuh Endpoints showing one active agent
 ::
 
-#### Vulnerability Detection
+## Vulnerability Detection
 
 Now that the Windows endpoint was onboarded, the Wazuh vulnerability detection began analyzing installed software and comparing it against known vulnerabilities from public CVE databases.
 
@@ -146,7 +146,7 @@ Vulnerability dashboard after remediation showing no remaining high-severity CVE
 
 This remediation process demonstrates how SIEM platforms can be used not only to detect threats, but also for vulnerability management and system hardening.
 
-#### Malware Detection Test
+## Malware Detection Test
 
 Purpose: prove the SIEM detects malicious activity from the endpoint.
 
@@ -170,7 +170,7 @@ Microsoft Defender detecting the EICAR test file and generating a malware detect
 Wazuh ingesting the Defender event and generating a high-severity security alert
 ::
 
-#### Incident Investigation
+## Incident Investigation
 
 The generated alert was investigated in the Wazuh dashboard to examine the associated telemetry. The alert identified the source as Microsoft Defender and included information such as the hostname, detection time, file path, and malware classification.
 
@@ -180,7 +180,7 @@ The generated alert was investigated in the Wazuh dashboard to examine the assoc
 Detailed Wazuh alert information showing Defender telemetry and threat classification
 ::
 
-#### Alert Notification Configuration
+## Alert Notification Configuration
 
 Wazuh alerts were configured to send email notifications through a locally configured Postfix relay. The relay authenticates to the domain’s SMTP server and forwards alerts to an external mailbox. Domain email authentication records (SPF, DKIM, and DMARC) were configured to ensure proper email deliverability and prevent spoofing.
 
@@ -190,7 +190,7 @@ Wazuh alerts were configured to send email notifications through a locally confi
 Email notification generated after the malware detection alert was triggered
 ::
 
-#### Lessons Learned
+## Lessons Learned
 
 - SIEM deployments require adequate storage. During the initial setup, the Ubuntu VM didn’t have enough disk space allocated, which prevented Wazuh from starting correctly. Expanding the VM storage resolved the issue.
 - Bridged networking simplified communication between the endpoint and SIEM server. Using a bridged adapter allowed the Windows endpoint to communicate directly with the Ubuntu Wazuh server using the local network IP.

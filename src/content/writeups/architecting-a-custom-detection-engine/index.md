@@ -29,13 +29,13 @@ featured_order: 4
 
 ![hero](/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover.png)
 
-#### Overview
+## Overview
 
 After building the [original hardening layer for my personal WordPress site](/portfolio/securing-my-wordpress-site/), I expanded the plugin into something more useful than a collection of security controls. The next step was visibility: knowing when important files changed, seeing which suspicious requests still reached WordPress, and managing those signals from inside the admin dashboard.
 
 This project documents that evolution of the Severino Labs Security Layer. The plugin now combines file integrity monitoring, security event logging, admin-facing status dashboards, passkey readiness safeguards, and a Git-based development workflow into one reviewable codebase. Instead of relying on scattered snippets or manual server edits, I wanted a security layer I could understand, test, maintain, and explain.
 
-#### Why I Expanded the Security Layer
+## Why I Expanded the Security Layer
 
 The first version of the security layer was mostly about reducing exposure. It blocked unnecessary WordPress entry points, removed common enumeration paths, sent browser security headers, and supported the custom passkey-first login experience. That was useful, but it still left an important gap: it did not give me much visibility into what was happening after the controls were in place.
 
@@ -51,7 +51,7 @@ The expanded security layer now shows file integrity status, security event acti
 
 This turned the project from a simple hardening plugin into a small application-layer security monitoring system. The goal was not to replace Cloudflare, backups, malware scanning, or host-level controls. The goal was to add local visibility and integrity checks to the custom security layer I was already maintaining.
 
-#### Plugin Architecture
+## Plugin Architecture
 
 The plugin is organized as a small set of focused modules instead of one large file. The main plugin file defines the plugin metadata, constants, activation behavior, and module loading. Each major responsibility then lives in its own include file: settings, hardening, file integrity monitoring, security event monitoring, passkey login, and the admin interface.
 
@@ -77,7 +77,7 @@ I also separated static assets and runtime data. CSS and JavaScript live under t
 The public repository keeps the plugin code, documentation, license, Composer metadata, and shared development stubs together while excluding runtime security data.
 ::
 
-#### File Integrity Monitoring
+## File Integrity Monitoring
 
 File Integrity Monitoring was the first major detection feature I added to the plugin. The idea is straightforward: define which files and directories matter, create a trusted SHA-256 baseline of those files, and compare future checks against that known-good state.
 
@@ -115,7 +115,7 @@ The FIM baseline stores file hashes, sizes, and modified timestamps locally. Fil
 
 This does not make the plugin a malware scanner. It does not decide whether a change is malicious by itself. Its job is narrower and more reliable: tell me when an important file no longer matches the trusted baseline.
 
-#### Security Event Monitoring
+## Security Event Monitoring
 
 Security Event Monitoring was the second half of the detection layer. File integrity monitoring answers whether important files changed. Event monitoring answers what suspicious requests are still reaching the WordPress application.
 
@@ -143,7 +143,7 @@ The hardening layer calls the SEM logger when an unused WordPress endpoint is re
 
 That gave me two layers of visibility: Cloudflare for edge enforcement, and the plugin for application-layer events that actually touched the WordPress environment.
 
-#### Admin Dashboard and Visibility
+## Admin Dashboard and Visibility
 
 After adding file integrity monitoring and security event logging, I built the admin dashboard around visibility instead of configuration alone. The goal was to make the plugin answer the obvious questions quickly: is monitoring enabled, does a trusted baseline exist, did the last integrity check pass, are security events being logged, and is anything worth reviewing?
 
@@ -165,7 +165,7 @@ The security score is a local plugin health indicator, not a full security ratin
 
 That visibility made the plugin feel less like a set of hidden hooks and more like a security layer I could operate day to day.
 
-#### Daily Security Report with SMTP Delivery
+## Daily Security Report with SMTP Delivery
 
 After building the admin dashboard, I added a scheduled daily security report so the plugin could summarize its current state without requiring me to manually log into WordPress every day. The report is delivered as a branded “Daily Security Dashboard” email and includes the plugin health score, file integrity status, security event totals, recent activity, top event types, and the next scheduled FIM check.
 
@@ -179,7 +179,7 @@ The report is delivered through configurable SMTP settings instead of relying on
 
 This completed the monitoring loop I wanted for the project: the plugin hardens WordPress, records application-layer security events, checks important files against a trusted baseline, summarizes the current state in the dashboard, and sends a daily status report through authenticated SMTP delivery.
 
-#### Protecting Runtime Security Data
+## Protecting Runtime Security Data
 
 Because the plugin creates local security data, I separated runtime artifacts from the public codebase. File integrity baselines, FIM logs, SEM logs, and status files are useful on the live site, but they do not belong in GitHub.
 
@@ -195,7 +195,7 @@ Runtime logs, JSON state files, local archives, Composer dependencies, temporary
 
 This is not about treating the FIM baseline or event log as secret application credentials. It is about keeping operational security data out of a public repository and reducing unnecessary exposure of files that only the plugin should need.
 
-#### Git-Based Development, Deployment, and Reusable Tooling
+## Git-Based Development, Deployment, and Reusable Tooling
 
 As the plugin grew, I moved from browser-based editing to a real development and deployment workflow. I started with WordPress and cPanel edits, then moved to SSH, and eventually made my local Git repository the source of truth.
 
@@ -242,7 +242,7 @@ The public release is tagged in GitHub with release notes, version history, and 
 
 This workflow made the project easier to review, deploy, and recover from. Instead of one-off edits inside a live WordPress environment, changes now move through a repeatable path: local development, Git review, GitHub push, server pull, and live validation.
 
-#### Validation and Real-World Events
+## Validation and Real-World Events
 
 Before treating the plugin as ready, I validated it from a few different angles: code checks, repository hygiene, install testing, staged WordPress testing, and live security events.
 
@@ -288,7 +288,7 @@ Cloudflare Zero Trust checks the enrolled device posture and admin email allowli
 
 Cloudflare shows what is blocked at the edge. The plugin shows what reaches WordPress and is handled at the application layer. Together, they gave me a better picture of where enforcement was happening and whether the custom security layer was doing useful work after release.
 
-#### Conclusion
+## Conclusion
 
 This project started as a fun way to harden my WordPress site, but it turned into a full application-layer security project. The final plugin now combines WordPress hardening, browser security controls, file integrity monitoring, security event logging, a passkey-first login option, runtime data protection, and a Git-based deployment workflow.
 

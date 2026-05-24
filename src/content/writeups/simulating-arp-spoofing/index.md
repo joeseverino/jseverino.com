@@ -21,11 +21,11 @@ featured_order: 6
 
 ![hero](/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover.png)
 
-#### Project Overview
+## Project Overview
 
 Address Resolution Protocol (ARP) spoofing is a common Layer-2 attack that allows an adversary to intercept network traffic by manipulating MAC address resolution. This project demonstrates how ARP spoofing can be performed within a virtual network created using Mininet, Open vSwitch, and the POX controller. By poisoning the ARP tables of two hosts, the attacker can become a man-in-the-middle and observe and manipulate network traffic between them. Packet captures are used to analyze how spoofed ARP replies redirect traffic and enable interception. Then I demonstrate how enterprise networks mitigate this attack using security mechanisms such as DHCP Snooping and Dynamic ARP Inspection.
 
-#### Lab Architecture
+## Lab Architecture
 
 This lab environment was built using [Mininet](https://mininet.org/) and [Open vSwitch](https://www.openvswitch.org/). Three hosts were connected to a single Layer-2 switch controlled by a [POX SDN Controller](https://github.com/noxrepo/pox). The attacker host was placed on the same broadcast domain as the victim and target to allow for ARP poisoning.
 
@@ -64,7 +64,7 @@ sudo python topology.py
 
 The Mininet topology was launched using a [custom Python script](https://github.com/joeseverino/arp-spoofing-mininet-lab/blob/main/topology.py), and the POX controller successfully established an OpenFlow connection with the virtual switch.
 
-#### Attack Setup
+## Attack Setup
 
 To demonstrate ARP spoofing, normal HTTP traffic was first generated between the victim (h1) and the target server (h2). The attacker (h3) then launched an ARP poisoning attack to intercept communication between the two nodes.
 
@@ -121,7 +121,7 @@ h1> arp -n
 h1> curl http://10.0.0.2
 ```
 
-#### Packet Capture Analysis
+## Packet Capture Analysis
 
 The [Wireshark](https://www.wireshark.org/) packet capture analysis shows that the attacker successfully spoofed ARP replies, claiming ownership of 10.0.0.2. As a result, the victim updates its ARP table and begins forwarding traffic to the attacker’s MAC address instead of the real host’s.
 
@@ -139,7 +139,7 @@ Traffic destined for h2 (10.0.0.2) is actually being sent to h3’s MAC address.
 
 [View PCAP File](https://github.com/joeseverino/arp-spoofing-mininet-lab/blob/main/vulnerable.pcap)
 
-#### Attack Flow
+## Attack Flow
 
 The ARP spoofing attack works through the following steps:
 
@@ -154,7 +154,7 @@ The ARP spoofing attack works through the following steps:
 5.  Man-in-the-middle established
     - By enabling IP forwarding, h3 relays packets between the victim and target while eavesdropping on all packets between the two.
 
-#### Security Implications and Mitigations
+## Security Implications and Mitigations
 
 ARP spoofing can enable interception and modification of network traffic, usually with no visible indication to the affected victim. This can lead to session hijacking, eavesdropping, data exfiltration, and more. Because ARP does not provide any form of authentication, Layer-2 networks are vulnerable without added protections.
 
@@ -189,7 +189,7 @@ s1 (config-if)# ip arp inspection trust
 
 [View Packet Tracer Lab](https://github.com/joeseverino/arp-spoofing-mininet-lab/blob/main/arp_spoofing_mitigation_lab.pkt)
 
-#### Lessons Learned
+## Lessons Learned
 
 - While Mininet can simulate the attack, advanced mitigation features such as DHCP Snooping and Dynamic ARP Inspection are not supported. To demonstrate how these are configured in production environments, I recreated the topology in Cisco Packet Tracer.
 - Simulated Mininet traffic generates actual packets that can be analyzed in a packet capture. Starting tcpdump prior to the attack allowed for real-world analysis of the effect.

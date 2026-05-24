@@ -26,17 +26,17 @@ featured_order: 2
 
 ![hero](/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png)
 
-#### Overview
+## Overview
 
 I wanted to know what my devices were actually doing on my network. That turned into more of a project than I expected: a Docker networking problem that required spinning up a new VM, a Tailscale DNS visibility issue that only got fixed by installing Tailscale on the server itself, and an internal HTTPS setup built on a private Root CA that lives offline in a VM on my Mac.
 
-#### Why I Added AdGuard Home
+## Why I Added AdGuard Home
 
 I already had a homelab running on a Windows OptiPlex with Docker Desktop, Nginx Proxy Manager, and my own Root CA for local HTTPS. What I didn’t have was any visibility into what was actually happening on my network at the DNS level.
 
 AdGuard Home is a self-hosted DNS server that handles ad and tracker blocking network-wide without touching individual devices, and keeps a query log showing exactly which device made which request. The filtering stays local and the logs stay local, even though allowed queries still forward to an upstream resolver.
 
-#### Installing and Testing AdGuard Home
+## Installing and Testing AdGuard Home
 
 I started with Docker Desktop to see if it was worth pursuing before committing to anything more involved. `docker-compose.yml`, port 53 for DNS, port 3000 for the web UI, pointed a test device at the machine’s IP. Filtering worked immediately.
 
@@ -48,7 +48,7 @@ But the query log was wrong. Every single query was showing the same source IP,�
 Every client collapsed behind the same Docker bridge IP. Per-device filtering is useless if every device looks identical.
 ::
 
-#### Why I Moved to Docker Engine
+## Why I Moved to Docker Engine
 
 Docker Desktop on Windows runs inside its own Linux VM, and the default bridge networking means DNS queries hit Docker’s network interface before they reach AdGuard. By the time a query arrives, the original client source is gone. AdGuard just sees the bridge gateway.
 
@@ -89,13 +89,13 @@ The query log changed immediately after the move. Real IPs, individual devices.
 All four containers on Docker Engine. `adguardhome` has no IP in the network column because it’s using host networking, bound directly to the VM.
 ::
 
-#### Configuring DNS for Local and Tailscale Devices
+## Configuring DNS for Local and Tailscale Devices
 
-##### Local Devices
+### Local Devices
 
 My ISP doesn’t let you set a custom DNS server via DHCP from the router config, so I had to configure each device manually. I gave the Ubuntu Server VM a static IP at `192.168.1.233` first so clients had a stable target, then pointed each device at it. Not a great workflow but it gets the job done before I invest in a router.
 
-##### Tailscale Devices
+### Tailscale Devices
 
 I run Tailscale across all my devices and wanted everything on the tailnet using AdGuard regardless of where it was.
 
@@ -115,7 +115,7 @@ tailscale up --accept-dns=false
 Global nameserver set to the VM’s Tailscale IP with Override DNS enabled. Every Tailscale client uses AdGuard regardless of local DNS settings.
 ::
 
-##### The ACL Problem
+### The ACL Problem
 
 Both my Windows OptiPlex and the Ubuntu VM are tagged Tailscale nodes. Tagged nodes lose their user identity, so they’re not members of any user group and aren’t automatically allowed to talk to each other even if they share a tag. My Mac and phone could reach both machines fine, but the Windows homelab machine couldn’t reach the VM at all, which meant pointing its DNS at the VM’s Tailscale IP broke DNS on the Windows machine entirely.
 
@@ -129,7 +129,7 @@ The fix is a tag-to-tag grant in the ACL:
 }
 ```
 
-#### Adding Internal HTTPS and a Local Hostname
+## Adding Internal HTTPS and a Local Hostname
 
 I wanted to reach the AdGuard admin UI at a real hostname with a valid cert instead of typing an IP and port.
 
@@ -175,7 +175,7 @@ Nginx Proxy Manager (same VM, port 443)
 AdGuard Home admin UI (localhost:3001)
 ```
 
-#### What I Learned from the Query Logs
+## What I Learned from the Query Logs
 
 Within minutes of pointing my first device at AdGuard, the Samsung TV started showing up in the query log making Netflix-related DNS requests. Not because anyone opened Netflix, just because I powered it on. Background startup traffic, completely invisible before.
 

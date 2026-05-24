@@ -29,7 +29,7 @@ featured_order: 3
 
 ![hero](/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png)
 
-#### Overview
+## Overview
 
 After spending a ton of time building out the security and deployment workflow for my public web server, I wanted a dedicated machine for private infrastructure at home. I was about to buy a used workstation on eBay when my dad gave me a retired Dell OptiPlex 7050 SFF that was no longer being used at his office. It had exactly what I needed: 16GB of DDR4, an Intel Core i5-6500, and a 512GB M.2 SSD already inside.
 
@@ -37,7 +37,7 @@ I knew right away what I wanted to do with it. I wanted an always-on machine on 
 
 This post walks through how I put that together: Windows 11 Pro, Tailscale, Docker, Nginx Proxy Manager, and local HTTPS backed by a private root CA I manage from an offline Debian VM on my Mac.
 
-#### The Hardware
+## The Hardware
 
 The base machine is a Dell OptiPlex 7050 SFF, small, quiet, and more than enough for a first homelab server.
 
@@ -72,7 +72,7 @@ The travel router behind my desk bridging WiFi to a wired Ethernet port for devi
 The HP LaserJet showing up in macOS Printers and Scanners as AirPrint. Auto-discovered, zero device setup.
 ::
 
-#### Private Access with Tailscale
+## Private Access with Tailscale
 
 The first major piece was Tailscale. I didn’t want to expose Remote Desktop, SSH, or anything else directly to the internet. Tailscale gives every device a private WireGuard-based IP on my tailnet, so I can reach the homelab securely from my Mac or phone without opening a single port on my router.
 
@@ -97,7 +97,7 @@ I also locked down Windows Firewall so SSH and Remote Desktop only accept connec
 Two PowerShell commands restricting SSH and Remote Desktop to the Tailscale subnet.
 ::
 
-#### Docker and Nginx Proxy Manager
+## Docker and Nginx Proxy Manager
 
 With remote access working, I installed Docker Desktop, confirmed it could pull and run containers, and then set up Nginx Proxy Manager. NPM is a Docker-based reverse proxy with a web UI for managing proxy hosts and SSL certificates. I use it to route the internal homelab hostname to the right container and handle HTTPS termination.
 
@@ -115,7 +115,7 @@ The landing page is intentionally simple: a welcome screen, a status row showing
 The homelab page running in a browser over Tailscale.
 ::
 
-#### Local HTTPS with a Private Root CA
+## Local HTTPS with a Private Root CA
 
 This was the part I cared most about getting right. I wanted internal services to use real HTTPS with no browser warnings, without exposing anything publicly just to get a certificate.
 
@@ -180,7 +180,7 @@ After that, `https://homelab` loads cleanly with no warnings on any device where
 `https://homelab` loading in Safari with a trusted certificate. The page has a download link for the root CA so other devices on the network can get set up without running commands.
 ::
 
-#### Current Stack
+## Current Stack
 
 At a high level, the flow looks like this:
 
@@ -200,7 +200,7 @@ At a high level, the flow looks like this:
 | Certificate authority | Host-only Debian VM (UTM, Mac)           |
 | Firewall              | SSH and RDP restricted to Tailscale only |
 
-#### What’s Next
+## What’s Next
 
 The OptiPlex is running 24/7 with Tailscale, Docker, and Nginx Proxy Manager up, internal HTTPS working across all my devices, and the homelab landing page live. Next up is moving over my Wazuh Manager for security event monitoring and starting to put real private apps behind the proxy. The foundation is in place and that was the important part to get right first.
 

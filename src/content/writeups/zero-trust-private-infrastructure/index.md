@@ -31,17 +31,17 @@ featured_order: 1
 
 ![hero](/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover.png)
 
-#### Overview
+## Overview
 
 I run a private cloud and homelab setup where no services are exposed to the public internet. The stack is a DigitalOcean VPS, a Windows homelab host running Hyper-V, and an Ubuntu Server VM that hosts all Docker services, all connected over a Tailscale WireGuard mesh. Remote users on the tailnet reach internal services over encrypted WireGuard tunnels, browser-trusted TLS terminates at Caddy on the VPS, and three independent enforcement layers sit between any attacker and an application. This writeup covers the full design: how the network is structured, why each security decision was made, and where the remaining risks sit.
 
-#### The Network Foundation: Tailscale
+## The Network Foundation: Tailscale
 
 Everything runs on a Tailscale tailnet: a WireGuard mesh connecting a cloud VPS, a Windows homelab host, an Ubuntu Server VM, and admin devices. Tailscale handles key distribution, NAT traversal, and access control. No node trusts another by default. ACLs define exactly which node can reach which port on which other node.
 
 The VPS has a public IP, so tunnels to it are typically direct peer-to-peer. The homelab nodes sit behind residential NAT and use Tailscale’s DERP relay as a fallback when direct paths aren’t available, but traffic stays encrypted through WireGuard either way.
 
-##### Tailnet Lock
+### Tailnet Lock
 
 The most important Tailscale setting in this setup is tailnet lock. When it’s enabled, a new device cannot join the tailnet just because it was authorized in the admin console. Its WireGuard key must also be co-signed by one of two designated signing nodes. In my case that’s my MacBook Pro and iPhone. An attacker who compromised my Tailscale account credentials would still be unable to add a rogue node without physical access to one of those devices and the ability to bypass its authentication.
 
@@ -59,7 +59,7 @@ Tailnet lock confirmed enabled on the VPS, with a successful ping to a homelab L
 The VPS registered in the Tailscale admin console as an approved exit node. New nodes cannot appear here without a co-signed key.
 ::
 
-#### The VPS: Zero Public Attack Surface
+## The VPS: Zero Public Attack Surface
 
 The cloud VPS is the only node with a public IP, so its exposure matters most. The goal was simple: present no reachable services to the public internet.
 
@@ -81,11 +81,11 @@ nftables config on the VPS. SSH accepted from the Tailscale CGNAT range and home
 Nmap scan shows the host doesn’t even respond to probes: “Host seems down.” A scanner gets nothing.
 ::
 
-#### The Homelab: Headless, Firewall-First
+## The Homelab: Headless, Firewall-First
 
 The homelab runs on a Windows OptiPlex that sits headless in a corner with no monitor or keyboard. All management happens over the network. A Hyper-V VM running Ubuntu Server handles all Docker services.
 
-##### Windows Host
+### Windows Host
 
 Windows Firewall scopes both SSH (port 22) and RDP (port 3389) exclusively to the Tailscale CGNAT range. LAN-originated management connections are dropped. There’s no path into the management plane from the local network. Tailscale is required.
 
@@ -95,7 +95,7 @@ Windows Firewall scopes both SSH (port 22) and RDP (port 3389) exclusively to th
 Windows Firewall SSH rule scoped to `100.64.0.0/10`, the Tailscale CGNAT range. Any connection from the LAN or public internet is dropped before it reaches the SSH service.
 ::
 
-##### Ubuntu Server VM
+### Ubuntu Server VM
 
 The VM has its own nftables host filter. SSH is restricted to the Tailscale CGNAT range and the home LAN subnet, a slightly wider scope than the Windows host because local LAN access to the VM is occasionally useful for debugging. The table is persisted via systemd and survives reboots.
 
@@ -105,11 +105,11 @@ The VM has its own nftables host filter. SSH is restricted to the Tailscale CGNA
 nftables `inet host_filter` table applied on the Ubuntu VM. SSH is limited to Tailscale CGNAT plus the home LAN subnet. Both the Windows host and the VM enforce their own independent firewall rules.
 ::
 
-##### Subnet Routing
+### Subnet Routing
 
 The OptiPlex advertises the full home LAN subnet (`192.168.1.0/24`) as a Tailscale subnet route. This gives tailnet devices access to anything on the home LAN that isn’t running Tailscale itself, like printers, TVs, or other LAN-only devices. Services running on Tailscale nodes are reached directly by their Tailscale IP, not through the subnet route.
 
-#### Defense-in-Depth: Three Independent Layers
+## Defense-in-Depth: Three Independent Layers
 
 The architecture is designed so that no single compromised component exposes an application. An attacker needs to defeat three independent layers:
 
@@ -119,7 +119,7 @@ The architecture is designed so that no single compromised component exposes an 
 
 **Layer 3: Application.** Caddy enforces TLS and there’s no plain HTTP path. Uptime Kuma has no port exposed on the VPS host at all; it’s only reachable via Caddy on an internal Docker bridge network. External access to the application is forced through Caddy rather than a directly exposed container port.
 
-#### Certificates: Two Authorities, Two Contexts
+## Certificates: Two Authorities, Two Contexts
 
 Two certificate authorities serve different parts of the stack.
 
@@ -137,7 +137,7 @@ SSH session into the offline CA VM running in UTM on the Mac. The VM has no LAN 
 
 Compromising the homelab, VPS, or tailnet does not provide network access to the CA private key. A compromise of the Mac would still require access to the offline CA VM and the CA passphrase before a fraudulent certificate could be issued.
 
-#### DNS as a Security Control
+## DNS as a Security Control
 
 DNS plays an active role in access control here, not just naming.
 
@@ -177,7 +177,7 @@ Before DoT: DNS queries on port 53, query contents fully visible in plaintext. T
 After DoT: all DNS traffic to Cloudflare on port 853. The TLS handshake is visible but the query contents are encrypted. Application data only.
 ::
 
-#### Monitoring: External Visibility
+## Monitoring: External Visibility
 
 Uptime Kuma runs on the VPS and monitors all critical infrastructure from outside the homelab. If the homelab goes down (VM crash, OptiPlex reboot, network failure), Uptime Kuma is unaffected and catches the outage. An internal monitor would go dark alongside the thing it’s watching.
 
@@ -197,7 +197,7 @@ All seven monitors green, running from the VPS outside the homelab. SSH reachabi
 Portainer managing both environments from a single interface. The homelab VM connected via local Docker socket and the VPS connected via a Portainer Agent over Tailscale.
 ::
 
-#### Remaining Risks
+## Remaining Risks
 
 No architecture is without trade-offs. Two items are currently accepted or pending.
 

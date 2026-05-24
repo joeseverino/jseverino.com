@@ -25,13 +25,13 @@ featured_order: 5
 
 ![hero](/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover.png)
 
-#### Overview
+## Overview
 
 This project documents how I secured my personal WordPress site by reducing the default attack surface, enforcing browser security policies, and implementing a custom passkey-only login experience. Instead of relying on multiple generic security plugins, I built a security layer plugin to handle controls such as XML-RPC disablement, user enumeration protection, response headers, and Content Security Policy enforcement.
 
 I also use Cloudflare at the edge to strengthen transport security with HTTPS enforcement, modern TLS settings, HSTS, and Zero Trust access control for administrative endpoints. The result was a layered setup that combined edge security, device and identity-aware administrative access control, application-level hardening, and browser-enforced protections while keeping the site maintainable through a separate child theme and custom security plugin.
 
-#### The Problem
+## The Problem
 
 Running a public WordPress site safely takes more than turning on HTTPS and using a strong password. Out of the box, WordPress exposes more than I wanted on an internet-facing site, including common login paths, unnecessary endpoints, and platform details that make reconnaissance easier.
 
@@ -47,7 +47,7 @@ Passkeys were a major part of that goal. I wanted a cleaner, stronger login expe
 
 This project came out of that full problem set: hardening a public WordPress site at the edge, in the application, and at the authentication layer while keeping the environment manageable day to day.
 
-#### Edge Security with Cloudflare
+## Edge Security with Cloudflare
 
 Cloudflare sits in front of the site as the public-facing edge layer, which means web traffic reaches Cloudflare before it reaches the WordPress origin. That gives me a cleaner perimeter to manage and lets core DNS and transport controls live at the edge rather than relying on WordPress alone.
 
@@ -104,7 +104,7 @@ A direct request to the origin IP returns 403 Forbidden, while the normal Cloudf
 
 This strengthens the site’s internet-facing boundary, but it does not harden WordPress by itself. Cloudflare improves the edge and transport layer; the WordPress attack surface, browser security headers beyond this setting, and authentication controls still need to be handled separately inside the stack.
 
-#### Building a Custom WordPress Security Layer Plugin
+## Building a Custom WordPress Security Layer Plugin
 
 Instead of relying on a third-party security plugin to handle core hardening decisions for me, I built my own WordPress security layer as a custom plugin. That gives me direct control over what the site does and does not expose, which matters more to me than installing a large security suite and accepting its defaults, feature set, and overhead.
 
@@ -126,7 +126,7 @@ That approach also keeps the security model narrower and more intentional. Third
 
 In practice, this plugin becomes the WordPress-side counterpart to Cloudflare. Cloudflare handles the edge, while the custom plugin handles application-layer hardening inside WordPress itself. The sections that follow break down the controls it manages in more detail.
 
-#### Reducing the Default WordPress Attack Surface
+## Reducing the Default WordPress Attack Surface
 
 WordPress exposes more than I want by default on a public-facing site. Some of that exposure is not necessary for this environment, especially when the goal is to reduce reconnaissance value and remove features that do not need to be available at all. In the custom security plugin, I use a small set of targeted controls to cut back that default surface rather than leaving WordPress in its out-of-the-box state.
 
@@ -174,7 +174,7 @@ Finally, I remove the public WordPress version signal from the page header so th
 remove_action('wp_head', 'wp_generator');
 ```
 
-#### Browser-Enforced Security Policies
+## Browser-Enforced Security Policies
 
 Not every meaningful security control lives in authentication or server-side request handling. Browsers also enforce policy on the client side, which makes response headers an important part of the site’s security model. In the custom plugin, I send a set of browser-facing headers that limit framing behavior, reduce content-type ambiguity, control referrer leakage, restrict access to sensitive browser features, and define a Content Security Policy for what the page is allowed to load.
 
@@ -215,7 +215,7 @@ That policy is intentionally practical rather than theoretical. It is strict eno
 A live curl -I response confirms that the site returns browser-enforced security headers including framing, MIME-type, referrer, permissions, CSP, and HSTS policy.
 ::
 
-#### Hardening Administrative Access
+## Hardening Administrative Access
 
 Hardening a public site is not only about filtering traffic and reducing exposed features. It also means protecting the interfaces that can administer the environment in the first place. For this site, that includes the WordPress admin login, the hosting control panel, and direct server access over SSH.
 
@@ -233,7 +233,7 @@ For direct management access, I also use SSH key-based authentication on the hos
 
 Together, these controls harden the main administrative paths into the environment rather than focusing only on public-facing traffic. Edge protections, WordPress hardening, and administrative access controls each solve different parts of the same security problem.
 
-#### Enforcing Zero Trust Access on Administrative Endpoints
+## Enforcing Zero Trust Access on Administrative Endpoints
 
 Protecting administrative access is not only about how users authenticate, but also whether they can reach the login interface at all. Even with a passkey-only WordPress login, the default administrative path is still publicly reachable unless it is explicitly restricted.
 
@@ -275,7 +275,7 @@ Requests to wp-admin are blocked at the edge when Zero Trust requirements are no
 
 In a production environment, this same model could be extended with stronger posture controls such as minimum operating system version, disk encryption, or endpoint protection requirements. For this implementation, I used the Cloudflare client as a practical device trust signal that materially reduces exposure without changing the WordPress application itself.
 
-#### Building a Passkey-Only Login Experience
+## Building a Passkey-Only Login Experience
 
 The custom login experience is also part of the Severino Labs Security Layer plugin. Instead of treating authentication as a separate add-on, I keep the login behavior inside the same custom hardening layer that manages the rest of the site’s WordPress-side security controls.
 
@@ -291,7 +291,7 @@ My custom security plugin replaces the default WordPress login screen with a pas
 
 That design keeps the login experience aligned with the actual access model. The interface is simplified to a single action, the default password workflow is removed from view, and the administrative entry point reflects the stronger authentication policy enforced behind it. Rather than layering passkeys on top of the stock WordPress login page, the plugin makes passkey-only access the expected and explicit behavior.
 
-#### Debugging WP-WebAuthn Passkey Creation
+## Debugging WP-WebAuthn Passkey Creation
 
 The hardest part of the passkey setup was not the login interface itself. It was getting WP-WebAuthn to actually save a newly registered passkey. During testing, the plugin reported that registration was successful, but no credential was being stored in the list.
 
@@ -339,7 +339,7 @@ With the table in place, registration finally worked and the passkey was saved c
 After the missing table was created, passkey registration succeeded and the credential was saved correctly.
 ::
 
-#### Child Theme and Maintainability
+## Child Theme and Maintainability
 
 I also keep the site’s presentation-layer customizations in a child theme so they stay separate from both the parent theme and the Severino Labs Security Layer plugin. That separation makes updates easier to manage and keeps responsibilities cleaner: the child theme handles site-specific design and template changes, while the custom plugin handles security and authentication logic.
 
@@ -355,7 +355,7 @@ My site uses a child theme to keep presentation-layer customizations separate fr
 Theme files are maintained separately from my custom security plugin so design changes and security logic remain isolated.
 ::
 
-#### Validation and Testing
+## Validation and Testing
 
 After implementing the controls, I validated them against the live site instead of assuming the configuration alone was enough. That included confirming that security headers were being returned, that unnecessary WordPress exposure had been reduced, and that the passkey registration and login flow worked correctly once the WP-WebAuthn persistence issue was fixed.
 
@@ -375,7 +375,7 @@ Cloudflare Security Events showed blocked requests from multiple countries short
 
 I also checked Cloudflare Security Events after enabling the custom rules. The logs showed blocked requests from multiple countries within a short period, which is consistent with broad automated scanning rather than normal visitor behavior. This confirmed that the rules were actively filtering XML-RPC and sensitive file probing before those requests reached the WordPress origin.
 
-#### Tradeoffs and Practical Constraints
+## Tradeoffs and Practical Constraints
 
 This setup is intentionally practical rather than scanner-perfect. Mozilla Observatory gives the site a B (75/100), with the main deductions coming from the current Content Security Policy, missing Subresource Integrity, and the lack of Cross-Origin-Resource-Policy.
 
@@ -383,7 +383,7 @@ Those findings are useful, but I do not treat every recommendation as something 
 
 For this site, the goal is a security configuration that is stronger, controlled, and maintainable in the live environment, not one that looks perfect in a scan while introducing unnecessary breakage.
 
-#### Conclusion
+## Conclusion
 
 Securing this WordPress site ended up being more than a matter of turning on HTTPS or installing a few plugins. The final setup combines Cloudflare at the edge, a custom WordPress security plugin inside the application, reduced default WordPress exposure, browser-enforced security headers, hardened administrative access, and a passkey-only login experience.
 
@@ -391,13 +391,13 @@ Just as important, the project stayed practical. Instead of stacking generic too
 
 The result is a WordPress deployment that is materially stronger than the default setup while still remaining understandable, maintainable, and tailored to how the site is actually run.
 
-#### Future Goals
+## Future Goals
 
 A future project I want to explore is sso.jseverino.net as a centralized authentication layer for my personal sites. The goal would be to unify access across environments like jseverino.com and jseverino.net instead of managing them as separate login boundaries.
 
 Beyond that, I want to keep tightening the site’s browser security policy over time as dependencies are reduced and stricter controls become easier to support cleanly.
 
-#### Lessons Learned
+## Lessons Learned
 
 - Some controls are more effective at the edge than inside the application. Moving HSTS enforcement from WordPress to Cloudflare resolved an Observatory finding and aligned transport policy with the edge layer.
 - Verifying live changes sometimes required more than a browser cache clear. Purging Cloudflare cache and enabling Development Mode made updates visible consistently.
