@@ -17,7 +17,7 @@ The site is engineered for maximum performance, operational discipline, and secu
 *   **Zero Cumulative Layout Shift (CLS)**: Every image is processed into a responsive matrix (AVIF/WebP) with intrinsic dimensions tracked in a [manifest](./src/lib/image-manifest.json) to ensure perfect layout stability.
 *   **Automated Metadata Hashing**: The system automatically tracks "Last Reviewed" dates by hashing content during sync, eliminating manual date management.
 *   **Nonce-based CSP**: A strict, edge-enforced Content Security Policy ([`functions/_middleware.ts`](./functions/_middleware.ts)) prevents XSS without compromising first-party functionality.
-*   **Single Source of Truth**: All site identity, professional skills, and navigation are managed from a single Markdown file in the vault, synced directly to the repo.
+*   **Single Source of Truth**: All site identity, professional skills, and navigation are managed from a single Markdown file in the vault, synced directly to the repo ([`src/content/site.md`](./src/content/site.md)).
 
 ## 🚀 Workflow
 
@@ -30,27 +30,27 @@ site publish-all   # Orchestrated path: hq sync, publish, commit, push to edge
 ```
 
 Equivalent local commands:
-*   `npm run sync:content` — Run the async sync engine.
-*   `npm run publish:check` — The pre-push integrity guard.
+*   `npm run sync:content` — Runs [`bin/sync-content.mjs`](./bin/sync-content.mjs).
+*   `npm run publish:check` — Runs [`bin/publish-check.mjs`](./bin/publish-check.mjs) (integrity guard).
 
 ## 🏗️ Architecture & Documentation
 
 The site's internals are fully documented for both engineering showcase and operational clarity:
 
-*   [**Technical Architecture**](./docs/Architecture.md) — Deep dive into the transformation engine, image pipeline, and security model.
+*   [**Technical Architecture**](./docs/Architecture.md) — Deep dive into the transformation engine ([`src/lib/content.ts`](./src/lib/content.ts)), image pipeline, and security model.
 *   [**Vault-as-CMS Workflow**](./docs/Vault-Workflow.md) — How the private/public boundary is enforced.
 *   [**Authoring Guide**](./docs/Authoring-Guide.md) — Manual for custom Markdown directives (`::terminal`, `::split`, `::cta`, etc.).
-*   [**Technical SEO**](./docs/SEO.md) — Blueprint for search visibility and Person Schema.
-*   [**Security Posture**](./SECURITY.md) — Master threat model and edge security controls.
+*   [**Technical SEO**](./docs/SEO.md) — Blueprint for search visibility and Person Schema ([`src/components/SeoHead.astro`](./src/components/SeoHead.astro)).
+*   [**Security Posture**](./SECURITY.md) — Master threat model and edge security controls ([`public/_headers`](./public/_headers)).
 
 ## 📦 Repo Boundaries
 
 **Committed:**
-- `src/` — Astro source & transformation logic.
-- `public/` — Static assets & Cloudflare `_headers`.
-- `src/content/` — Sanitized public content snapshots.
-- `src/lib/image-manifest.json` — Intrinsic dimension database.
-- `docs/` — Comprehensive technical documentation suite.
+- [`src/`](./src/) — Astro source & transformation logic.
+- [`public/`](./public/) — Static assets & Cloudflare [`_headers`](./public/_headers).
+- [`src/content/`](./src/content/) — Sanitized public content snapshots.
+- [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) — Intrinsic dimension database.
+- [`docs/`](./docs/) — Comprehensive technical documentation suite.
 
 **Not Committed:**
 - `.astro/`, `dist.nosync/`, `node_modules/` — Build and dependency artifacts.
