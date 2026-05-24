@@ -23,10 +23,20 @@ const targetWriteups = path.join(siteRoot, 'src/content/writeups');
 const targetWriteupAssets = path.join(siteRoot, 'public/assets/writeups');
 const targetPageAssets = path.join(siteRoot, 'public/assets/pages');
 const targetImageManifest = path.join(siteRoot, 'src/lib/image-manifest.json');
+const syncManifestPath = path.join(siteRoot, 'node_modules/.cache/jseverino-sync-manifest.json');
 const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
 
 const VARIANT_WIDTHS = [512, 1024, 1600];
 const imageManifest = {};
+let syncManifest = {};
+
+try {
+  syncManifest = JSON.parse(fs.readFileSync(syncManifestPath, 'utf8'));
+} catch {
+  syncManifest = {};
+}
+
+const today = new Date().toISOString().slice(0, 10);
 
 async function emptyDir(dir) {
   await fsPromises.rm(dir, { recursive: true, force: true });
@@ -164,13 +174,20 @@ async function processReferencedAssets(refs, sourceDir, targetDir, urlPrefix) {
   }
 }
 
-function publicWriteupData(data) {
+function publicWriteupData(data, contentHash, slug) {
+  const isChanged = syncManifest[slug] !== contentHash;
+  const lastReviewed = isChanged ? today : data.last_reviewed || data.published_at || today;
+
+  if (isChanged) {
+    syncManifest[slug] = contentHash;
+  }
+
   return {
     title: data.title,
     description: data.description,
     published: data.published === true,
     ...(data.published_at ? { published_at: data.published_at } : {}),
-    ...(data.last_reviewed ? { last_reviewed: data.last_reviewed } : {}),
+    last_reviewed: lastReviewed,
     ...(data.cover_image ? { cover_image: data.cover_image } : {}),
     technologies: Array.isArray(data.technologies) ? data.technologies : [],
     featured: Boolean(data.featured),
@@ -182,7 +199,6 @@ function publicPageData(data) {
   return {
     title: data.title,
     ...(data.description ? { description: data.description } : {}),
-    path: data.path,
     published: data.published === true,
   };
 }
@@ -332,12 +348,17 @@ async function syncWriteups() {
     if (!includeDrafts && parsed.data.published !== true) continue;
 
     const content = stripRepeatedDescription(parsed.content, parsed.data.description);
+    const contentHash = crypto.createHash('sha256').update(content).digest('hex');
+
     const refs = collectMarkdownAssetRefs(content);
     const coverRef = normalizeLocalAssetRef(parsed.data.cover_image);
     if (coverRef) refs.add(coverRef);
 
     const rewrittenContent = rewriteWriteupAssetPaths(content, slug);
-    const syncedMarkdown = matter.stringify(rewrittenContent, publicWriteupData(parsed.data));
+    const syncedMarkdown = matter.stringify(
+      rewrittenContent,
+      publicWriteupData(parsed.data, contentHash, slug),
+    );
 
     const targetDir = path.join(targetWriteups, slug);
     await fsPromises.mkdir(targetDir, { recursive: true });
@@ -362,7 +383,9 @@ const sortedManifest = Object.fromEntries(
     .map((key) => [key, imageManifest[key]]),
 );
 await fsPromises.mkdir(path.dirname(targetImageManifest), { recursive: true });
+await fsPromises.mkdir(path.dirname(syncManifestPath), { recursive: true });
 await fsPromises.writeFile(targetImageManifest, `${JSON.stringify(sortedManifest, null, 2)}\n`);
+await fsPromises.writeFile(syncManifestPath, JSON.stringify(syncManifest, null, 2));
 
 console.log(`Synced pages from ${sourcePages}`);
 console.log(`Synced public writeups from ${sourceWriteups}`);

@@ -44,6 +44,10 @@ export type PageContent = {
 
 export type SiteChrome = {
   name: string;
+  title: string;
+  summary: string;
+  skills: string[];
+  socialLinks: { label: string; href: string }[];
   navItems: { href: string; label: string }[];
 };
 
@@ -291,6 +295,7 @@ function preprocessPageMarkdown(markdown: string): string {
   const withInlineDirectives = renderButtons(markdown)
     .replace(/::featured-projects\s*::/g, '<div data-content-block="featured-projects"></div>')
     .replace(/::technology-cloud\s*::/g, '<div data-content-block="technology-cloud"></div>')
+    .replace(/::cta\s*::/g, '\n\n::buttons\n- [View Portfolio](/portfolio/)\n- [Get in Touch](/contact/)\n::\n\n')
     .replace(blockRe('button sticky'), (_, button: string) => renderButton(button, 'sticky-button'))
     .replace(blockRe('button'), (_, button: string) => renderButton(button));
 
@@ -330,7 +335,7 @@ export async function getPage(slug: string): Promise<PageContent> {
     slug,
     title: page.data.title,
     description: page.data.description ?? '',
-    path: page.data.path,
+    path: page.data.path || `/${slug}/`,
     body: page.body ?? '',
     bodyHtml: renderPageMarkdown(page.body ?? ''),
   };
@@ -341,13 +346,36 @@ export function getSiteChrome(): SiteChrome {
 
   const file = path.resolve(process.cwd(), 'src/content/site.md');
   const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '# Joe Severino';
-  const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
-  const navItems = [...body.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map((match) => ({
-    label: match[1],
-    href: match[2],
-  }));
 
-  siteChromeCache = { name, navItems };
+  const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
+
+  const parseSection = (header: string) => {
+    const re = new RegExp(`^##\\s+${header}\\s*\\n([\\s\\S]*?)(?:\\n##|$)`, 'm');
+    return body.match(re)?.[1]?.trim() ?? '';
+  };
+
+  const title = parseSection('Title');
+  const summary = parseSection('Summary');
+  const skills = parseSection('Skills')
+    .split('\n')
+    .map((s) => s.replace(/^- /, '').trim())
+    .filter(Boolean);
+
+  const socialLinks = [...parseSection('Social Links').matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map(
+    (match) => ({
+      label: match[1],
+      href: match[2],
+    }),
+  );
+
+  const navItems = [...parseSection('Navigation').matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map(
+    (match) => ({
+      label: match[1],
+      href: match[2],
+    }),
+  );
+
+  siteChromeCache = { name, title, summary, skills, socialLinks, navItems };
   return siteChromeCache;
 }
 

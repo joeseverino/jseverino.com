@@ -1,7 +1,6 @@
 ---
 title: Privacy
 description: 'What this site collects, where it goes, and how to ask for it to be deleted.'
-path: /privacy/
 published: true
 ---
 

@@ -3,7 +3,6 @@ title: Resume
 description: >-
   Joe Severino's resume — cybersecurity and IT project experience,
   certifications (CCNA, Security+, ISC2 CC), and an M.S. in Cybersecurity.
-path: /resume/
 published: true
 ---
 

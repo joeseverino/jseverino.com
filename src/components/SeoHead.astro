@@ -1,5 +1,6 @@
 ---
 import { site } from '@lib/site';
+import { getSiteChrome } from '@lib/content';
 
 type Breadcrumb = { name: string; url: string };
 
@@ -33,22 +34,23 @@ const canonical = new URL(path, site.url).href;
 const ogImage = new URL(image, site.url).href;
 const fullTitle = title === site.defaultTitle ? title : `${title} | Joe Severino`;
 
+const {
+  name: personName,
+  title: jobTitle,
+  summary: personSummary,
+  skills: personSkills,
+  socialLinks: personSocialLinks,
+} = getSiteChrome();
+
 const person = {
   '@type': 'Person',
   '@id': `${site.url}/#person`,
-  name: 'Joe Severino',
+  name: personName,
   url: site.url,
-  jobTitle: 'Delivery Operations Analyst',
-  description: site.defaultDescription,
-  knowsAbout: [
-    'Cybersecurity',
-    'Network Security',
-    'Infrastructure',
-    'Detection Engineering',
-    'Homelab',
-    'Linux',
-  ],
-  sameAs: ['https://github.com/joeseverino', 'https://linkedin.com/in/joeseverino'],
+  jobTitle,
+  description: personSummary || site.defaultDescription,
+  knowsAbout: personSkills,
+  sameAs: personSocialLinks.map((link) => link.href),
 };
 
 const breadcrumbList =
