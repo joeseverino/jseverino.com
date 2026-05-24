@@ -79,7 +79,7 @@ Article/body images are optimized during sync and rendered with stable dimension
 
 ## Security Headers And SEO
 
-The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy.
+The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. This move to a hardened, static origin resulted in a **~92% reduction in TTFB** (documented in the [May 2026 Audit](./WordPress-To-Astro-Migration.md#server-response-and-security-audit-date-52426)), providing a more stable and faster response signal for search crawlers.
 
 The static [`public/_headers`](../public/_headers) policy remains a fallback and is verified by [`bin/csp-hashes.mjs --check`](../bin/csp-hashes.mjs).
 
