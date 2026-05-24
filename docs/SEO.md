@@ -24,6 +24,12 @@ Canonical correctness matters because the content source uses a `home` slug inte
 - Non-default titles append the public person/site name from [`src/content/site.md`](../src/content/site.md).
 - Descriptions come from page or writeup frontmatter where available.
 
+## Heading Hierarchy
+
+Article pages render the writeup title as the page `h1`. Writeup body sections therefore start at `##`, which renders as `h2`, and subsections use `###`, which renders as `h3`.
+
+The article CSS intentionally preserves the existing visual scale for those semantic headings, so the HTML outline improves without changing the typography users see.
+
 ## Structured Data
 
 `SeoHead.astro` emits JSON-LD.
