@@ -73,6 +73,7 @@ const navigation = navItems.map((item) => ({
 
   if (toggle && mobileNav) {
     document.body.classList.add('nav-js-ready');
+    const mobileNavItems = mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li');
     let lastClosed = 0;
 
     const createBackdrop = () => {
@@ -88,13 +89,13 @@ const navigation = navItems.map((item) => ({
     };
 
     const setItemDelays = () => {
-      mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li').forEach((item, index) => {
+      mobileNavItems.forEach((item, index) => {
         item.style.transitionDelay = `${index * 0.055}s`;
       });
     };
 
     const clearItemDelays = () => {
-      mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li').forEach((item) => {
+      mobileNavItems.forEach((item) => {
         item.style.transitionDelay = '0s';
       });
     };
@@ -122,7 +123,8 @@ const navigation = navItems.map((item) => ({
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
       document.body.classList.remove('nav-locked');
-      const onEnd = () => {
+      const onEnd = (event: TransitionEvent) => {
+        if (event.target !== mobileNav) return;
         mobileNav.hidden = true;
         clearItemDelays();
         mobileNav.removeEventListener('transitionend', onEnd);
