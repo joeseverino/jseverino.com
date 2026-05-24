@@ -7,6 +7,14 @@ const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const distRoot = path.join(siteRoot, 'dist.nosync');
 const siteUrl = 'https://jseverino.com';
 const siteHost = new URL(siteUrl).hostname;
+const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
+const color = {
+  dim: (value) => useColor ? `\u001b[2m${value}\u001b[0m` : value,
+  green: (value) => useColor ? `\u001b[32m${value}\u001b[0m` : value,
+  yellow: (value) => useColor ? `\u001b[33m${value}\u001b[0m` : value,
+  blue: (value) => useColor ? `\u001b[34m${value}\u001b[0m` : value,
+  bold: (value) => useColor ? `\u001b[1m${value}\u001b[0m` : value,
+};
 
 function usage() {
   console.log(`Usage: node bin/seo-preview.mjs <url|path|slug>
@@ -14,8 +22,12 @@ function usage() {
 Examples:
   node bin/seo-preview.mjs jseverino.com
   node bin/seo-preview.mjs portfolio
+  node bin/seo-preview.mjs --result portfolio
   node bin/seo-preview.mjs /portfolio/architecting-a-custom-detection-engine/
   node bin/seo-preview.mjs architecting-a-custom-detection-engine
+
+Options:
+  -r, --result   Show only the Google-style result preview
 
 Reads built HTML from dist.nosync. Run npm run build:static first if the page is missing.`);
 }
@@ -113,12 +125,19 @@ function crumb(url) {
   return parts.length ? `${parsed.hostname} › ${parts.join(' › ')}` : parsed.hostname;
 }
 
-function verdict(label, ok, detail) {
-  const mark = ok ? 'OK' : 'CHECK';
-  console.log(`${mark.padEnd(5)} ${label.padEnd(14)} ${detail}`);
+function row(label, value) {
+  console.log(`  ${color.dim(label.padEnd(12))} ${value}`);
 }
 
-const input = process.argv[2];
+function check(label, ok, detail) {
+  const mark = ok ? color.green('PASS') : color.yellow('REVIEW');
+  console.log(`  ${mark.padEnd(useColor ? 15 : 8)} ${label.padEnd(13)} ${detail}`);
+}
+
+const args = process.argv.slice(2);
+const resultOnly = args.includes('-r') || args.includes('--result');
+const input = args.find((arg) => !arg.startsWith('-'));
+
 if (!input || input === '-h' || input === '--help') {
   usage();
   process.exit(input ? 0 : 1);
@@ -143,30 +162,48 @@ const ogTitle = attr(html, 'property="og:title"');
 const ogDescription = attr(html, 'property="og:description"');
 const ogImage = attr(html, 'property="og:image"');
 const ogType = attr(html, 'property="og:type"');
+const titleLength = textWidth(pageTitle);
+const descriptionLength = textWidth(description);
+const relativeFile = path.relative(siteRoot, file);
 
 console.log();
-console.log('Google result preview');
-console.log('─────────────────────');
-console.log(crumb(canonical));
-console.log(truncate(pageTitle, 62));
-console.log(truncate(description, 158));
+function printResult() {
+  console.log(color.bold('Google-style result'));
+  console.log(`  ${color.green(crumb(canonical))}`);
+  console.log(`  ${color.blue(truncate(pageTitle, 62))}`);
+  console.log(`  ${truncate(description, 158)}`);
+  console.log();
+}
+
+if (resultOnly) {
+  printResult();
+  process.exit(0);
+}
+
+console.log(color.bold('SEO Preview'));
+console.log(color.dim('Generated from built Astro HTML'));
 console.log();
-console.log('Metadata');
-console.log('────────');
-console.log(`Path:        ${urlPath}`);
-console.log(`Canonical:   ${canonical}`);
-console.log(`Title:       ${pageTitle} (${textWidth(pageTitle)} chars)`);
-console.log(`Description: ${description} (${textWidth(description)} chars)`);
-console.log(`Robots:      ${robots || 'indexable'}`);
-console.log(`OG type:     ${ogType || 'missing'}`);
-console.log(`OG title:    ${ogTitle || 'missing'}`);
-console.log(`OG image:    ${ogImage || 'missing'}`);
+row('input', input);
+row('path', urlPath);
+row('source', relativeFile);
 console.log();
-console.log('Checks');
-console.log('──────');
-verdict('canonical', new URL(canonical).hostname === siteHost, 'uses production domain');
-verdict('title', textWidth(pageTitle) >= 20 && textWidth(pageTitle) <= 65, 'target 20-65 chars');
-verdict('description', textWidth(description) >= 70 && textWidth(description) <= 170, 'target 70-170 chars');
-verdict('robots', !/noindex/i.test(robots), robots || 'indexable');
-verdict('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image present');
+
+printResult();
+
+console.log(color.bold('Metadata'));
+row('canonical', canonical);
+row('title', `${pageTitle} ${color.dim(`(${titleLength} chars)`)}`);
+row('description', `${description} ${color.dim(`(${descriptionLength} chars)`)}`);
+row('robots', robots || 'indexable');
+row('og:type', ogType || color.yellow('missing'));
+row('og:title', ogTitle || color.yellow('missing'));
+row('og:image', ogImage || color.yellow('missing'));
+console.log();
+
+console.log(color.bold('Checks'));
+check('canonical', new URL(canonical).hostname === siteHost, 'production domain');
+check('title', titleLength >= 20 && titleLength <= 65, 'target 20-65 chars');
+check('description', descriptionLength >= 70 && descriptionLength <= 170, 'target 70-170 chars');
+check('robots', !/noindex/i.test(robots), robots || 'indexable');
+check('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image');
 console.log();

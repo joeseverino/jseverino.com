@@ -137,7 +137,8 @@ Check:
 - Rich Results Test detects Article or WebSite structured data where expected.
 - The page title, meta description, canonical URL, and Open Graph image are correct.
 - `site seo <url|path|slug>` renders the expected Google-style title, URL,
-  description, and metadata checks from built HTML.
+  description, and metadata checks from built HTML. Use
+  `site seo --result <url|path|slug>` when only the snippet mockup is needed.
 - Keyboard navigation reaches header links, mobile menu controls, project cards,
   footer social links, and the contact form.
 - VoiceOver rotor headings show one page `h1`, then article or section headings

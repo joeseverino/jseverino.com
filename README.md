@@ -107,7 +107,7 @@ npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run publish:check      # Clean, sync, check, build, verify CSP, audit assets
 ```
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo <url|path|slug>` calls the same SEO preview script after a local build.
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup.
 
 ## Generated And Local Files
 
