@@ -1,65 +1,100 @@
-# Technical Architecture: jseverino.com
+# Master Technical Architecture: jseverino.com
 
-This document serves as the master technical reference for the engineering, security, and performance architecture of [jseverino.com](../). It describes a custom-built content delivery system optimized for a "Vault-as-CMS" workflow.
+This document provides a deep-dive into the engineering, security, and performance architecture of [jseverino.com](../). It describes a custom-built content delivery system optimized for high-performance edge delivery and a "Vault-as-CMS" authoring workflow.
 
-## 1. The Core Philosophy: Security by Construction
-The site is built on a "No Origin" model, meaning there is no application server or database reachable by the public. Whole classes of web vulnerabilities (SQLi, RCE, Auth Bypass) are eliminated by the static nature of the build.
+---
 
-*   **SSG Architecture**: Built with [Astro](../astro.config.mjs) (Static Site Generation).
-*   **Zero JS Runtime**: The site ships near-zero client-side JavaScript, ensuring high security and performance.
-*   **Isolation**: The build environment (Cloudflare Pages) has zero access to the private vault; it builds from a sanitized public snapshot.
+## 1. Architectural Overview: The "No Origin" Model
 
-## 2. The Transformation Engine ([`src/lib/content.ts`](../src/lib/content.ts))
-Rather than using standard Markdown rendering, the site uses a multi-pass transformation engine built on `markdown-it`.
+The site is built on a **Security by Construction** philosophy. By utilizing **Static Site Generation (SSG)** with [Astro](../astro.config.mjs), we eliminate the traditional application server and database from the public attack surface.
 
-### Custom Directives (`::`)
-A set of regex-driven passes transforms Obsidian-style directives into semantic HTML:
-*   **Terminal Simulation**: `renderTerminal()` transforms `::terminal` blocks into macOS-style windows with traffic-light controls and simulated prompts.
-*   **Responsive Layouts**: `renderSplit()` implements a two-column grid system using `::split` and `:::` separators.
-*   **Dynamic Injection**: `preprocessPageMarkdown()` detects placeholders like `::featured-projects::` and replaces them with data-bound Astro components.
+*   **Unidirectional Data Flow**: Content flows from a private Obsidian vault -> public repository snapshot -> Cloudflare Pages Edge.
+*   **Decoupled Rendering**: The build process transforms rich Markdown and custom directives into highly optimized, standard HTML/CSS.
+*   **Edge Intelligence**: Dynamic logic (contact form) is isolated to Cloudflare Pages Functions, utilizing Cloudflare D1 for edge-based SQLite storage.
 
-### Table & Figure Enhancements
-Custom rules extend the base renderer:
-*   **Striped Tables**: The `table_open` rule is overridden to wrap every Markdown table in a `<figure class="table-figure table-figure--striped">`, ensuring consistent styling and mobile horizontal scrolling.
-*   **Auto-Captions**: `preprocessImageDirectives()` and `restoreFigures()` work together to promote standard Markdown images to `<figure>` elements if alt text is provided, while supporting pipe-separated overrides like `![alt|nocap]`.
+---
 
-## 3. High-Performance Image Pipeline
-Images are processed via a custom Sharp-powered pipeline in [`bin/sync-content.mjs`](../bin/sync-content.mjs) to achieve a perfect 100 Performance score.
+## 2. The Content Sync Engine ([`bin/sync-content.mjs`](../bin/sync-content.mjs))
 
-### Multi-Format Generation
-Every source image is converted into a tiered matrix of variants:
-1.  **AVIF**: Primary modern format (high compression, high quality).
-2.  **WebP**: Secondary modern format for broader compatibility.
-3.  **Raster Fallback**: Optimized JPEG/PNG at the original path for legacy support.
+The sync engine is an asynchronous Node.js pipeline responsible for the "Sanitization & Optimization" pass. It ensures that the public repository contains only the data necessary for the build.
 
-### Zero Layout Shift (CLS)
-One of the most critical features is the automated dimension tracking:
-*   **The Manifest**: [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) stores the intrinsic width and height of every asset generated during sync.
-*   **The Component**: [`src/components/Picture.astro`](../src/components/Picture.astro) looks up these dimensions at build-time. It sets explicit `width` and `height` attributes on the `<img>` tag, allowing the browser to reserve space before the pixel data arrives.
+### Asynchronous Pipeline
+Refactored to use `fs.promises`, the engine performs non-blocking I/O operations for directory traversal, metadata parsing, and asset processing, maximizing performance during large content updates.
 
-## 4. Security Infrastructure
-### Nonce-based CSP ([`functions/_middleware.ts`](../functions/_middleware.ts))
-The site uses a strict Content Security Policy (CSP) without compromising the utility of first-party inline scripts:
-1.  **Middleware**: On every request, a unique cryptographic nonce is generated.
-2.  **Injection**: `HTMLRewriter` scans the document and attaches the nonce to every `<script>` tag.
-3.  **Enforcement**: The `Content-Security-Policy` header is emitted with the matching nonce, blocking all unauthorized third-party scripts and XSS attempts.
+### Metadata Sanitization (Allowlist Strategy)
+To prevent private vault data (IDs, internal notes, relationship tags) from leaking, the engine uses an **Allowlist Strategy**.
+*   [`publicWriteupData()`](../bin/sync-content.mjs) and [`publicPageData()`](../bin/sync-content.mjs) functions explicitly extract only defined fields (`title`, `description`, `technologies`, etc.).
+*   Any vault-specific metadata (e.g., `doc_id`, `system`, `related_projects`) is dropped by omission during the `matter.stringify` pass.
 
-### Contact Integrity
-The contact form ([`src/components/ContactForm.astro`](../src/components/ContactForm.astro)) is backed by a Cloudflare Pages Function ([`functions/api/contact.ts`](../functions/api/contact.ts)) that implements:
-*   **Cloudflare Turnstile**: Automated bot challenge verification.
-*   **Rate Limiting**: IP-based throttling via Cloudflare D1.
-*   **Honeypot**: Hidden fields to catch unsophisticated bot spam.
+### Advanced Content Reconciliation
+The engine implements custom logic like `stripRepeatedDescription()` to maintain SEO integrity. It uses a fixpoint iteration algorithm to strip HTML-tag-like sequences and reconcile descriptions that may have been duplicated between frontmatter and the body prose during authoring.
 
-## 5. Local Toolchain & Workflow
-The site is supported by a specialized CLI (part of the [`joeseverino/tools`](https://github.com/joeseverino/tools) repo) that coordinates the [Vault-as-CMS Workflow](./Vault-Workflow.md):
+---
 
-*   [`bin/clean-generated.mjs`](../bin/clean-generated.mjs): Resolves iCloud-specific conflict copies ("home 2.md") by comparing mtimes and content freshness.
-*   [`bin/publish-check.mjs`](../bin/publish-check.mjs): The "Stale Hash Guard." It fails the build if the inline script hashes in [`public/_headers`](../public/_headers) don't match the actual build output.
+## 3. The Transformation Layer ([`src/lib/content.ts`](../src/lib/content.ts))
+
+The "magic" of the site's rich content lies in a custom transformation layer built on top of `markdown-it`.
+
+### Multi-Pass Block Engine
+The library uses a series of regex-driven passes to transform Obsidian-style `::` directives into semantic HTML:
+*   **Terminal Simulation**: `renderTerminal()` transforms blocks into macOS-style windows with traffic-light controls. It intelligently distinguishes between command lines (prefixed with `$`) and standard output.
+*   **Layout Directives**: `renderSplit()` implements a responsive 2-column grid using `::split` and `:::` separators, allowing for sophisticated layouts directly from Markdown.
+*   **Dynamic Component Injection**: `preprocessPageMarkdown()` detects placeholders (like `::featured-projects::`) and replaces them with data-bound Astro components at build-time.
+
+### Renderer Rule Overrides
+We extend the base `markdown-it` renderer to enforce engineering standards:
+*   **Striped Tables**: The `table_open` rule is overridden to wrap every table in a `<figure class="table-figure table-figure--striped">`. This ensures responsive horizontal scrolling and consistent styling without manual class application.
+*   **Intelligent Figures**: Standard Markdown images are promoted to `<figure>` elements if alt text is present, supporting advanced syntax like `![Caption|width|nocap]` for fine-grained layout control.
+
+---
+
+## 4. High-Performance Image Pipeline
+
+The image pipeline is engineered to achieve a **Perfect 100 Performance Score** by solving the two hardest problems in web imaging: weight and layout shift.
+
+### The Optimization Matrix
+Every source image processed by [`bin/sync-content.mjs`](../bin/sync-content.mjs) is converted into a matrix of variants:
+*   **Tiered Formats**: **AVIF** (Priority), **WebP** (Secondary), and an optimized **Raster Fallback** (JPEG/PNG).
+*   **Tiered Widths**: Automatically generated at 512px, 1024px, and 1600px breakpoints.
+
+### Hash-Based Content Addressing (Caching)
+To ensure fast re-syncs, images are cached in `node_modules/.cache/jseverino-img` using **SHA-256 content hashes**. If the source image hasn't changed, the engine skips the expensive re-encoding pass and copies the cached variant directly.
+
+### Zero Cumulative Layout Shift (CLS)
+We eliminate layout shift through **Intrinsic Dimension Tracking**:
+1.  During sync, **Sharp** extracts the original width/height of every image.
+2.  This data is written to [`src/lib/image-manifest.json`](../src/lib/image-manifest.json).
+3.  The [`src/components/Picture.astro`](../src/components/Picture.astro) component looks up these dimensions and sets explicit `width` and `height` attributes on the `<img>` tag, allowing the browser to reserve space before the image is even downloaded.
+
+---
+
+## 5. Security & Edge Infrastructure
+
+### Nonce-Based CSP ([`functions/_middleware.ts`](../functions/_middleware.ts))
+The site enforces a **Strict Content Security Policy** without sacrificing functionality:
+*   **Dynamic Nonce**: Every response generated by Cloudflare Pages is assigned a unique cryptographic nonce.
+*   **HTMLRewriter**: This edge-based utility scans the HTML stream and injects the nonce into every `<script>` tag.
+*   **Headers**: The `Content-Security-Policy` header (defined in [`public/_headers`](../public/_headers)) is emitted with the matching nonce, blocking all XSS and unauthorized script injection.
+
+### Secure Dynamic Boundary ([`functions/api/contact.ts`](../functions/api/contact.ts))
+The contact form is the only non-static surface. It is protected by:
+*   **Cloudflare Turnstile**: Zero-friction bot challenge.
+*   **Cloudflare D1**: SQL injection protection via parameterized queries and edge-based storage.
+*   **Rate Limiting**: IP-based throttling enforced at the middleware layer.
+
+---
+
+## 6. CI/CD & Operational Integrity
+
+The build pipeline ([`bin/publish-check.mjs`](../bin/publish-check.mjs)) acts as the final quality gate:
+*   **Stale Hash Guard**: Verifies that the inline script hashes in the production headers match the actual build output.
+*   **Asset Audit**: Automatically fails the build if any image exceeds a 1.5MB weight threshold or if sitemaps are inconsistent.
+*   **iCloud Conflict Resolution**: [`bin/clean-generated.mjs`](../bin/clean-generated.mjs) ensures that development in an iCloud-synced environment doesn't result in duplicate or stale files shipping to production.
 
 ---
 
 ## Related Documentation
-*   [Vault-as-CMS Workflow](./Vault-Workflow.md) — The sync lifecycle and content gates.
-*   [Authoring Guide](./Authoring-Guide.md) — Manual for using the custom transformation directives.
-*   [Technical SEO & Metadata](./SEO.md) — Deep dive into search and social visibility.
-*   [Security Posture](../SECURITY.md) — Detailed threat model and security architecture.
+*   [Vault-as-CMS Workflow](./Vault-Workflow.md) — Detailed sync lifecycle and content organization.
+*   [Authoring Guide](./Authoring-Guide.md) — Manual for custom Markdown directives and components.
+*   [Technical SEO & Metadata](./SEO.md) — Deep dive into search and social optimization.
+*   [Security Posture](../SECURITY.md) — Master threat model and security architecture.
