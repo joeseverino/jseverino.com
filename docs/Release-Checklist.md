@@ -135,6 +135,40 @@ pass/fail booleans (`has_csp`, `no_unsafe_inline_script`, `has_csp_report_to`,
 `has_csp_report_uri`, `has_reporting_endpoints`) — one call replaces the
 `curl` parse above.
 
+**HAR audit (deep verification).** The MCP check confirms response headers
+arrive. A HAR audit confirms that those headers do not break a real browser
+session under the full third-party load. Run after any change to
+[`functions/_middleware.ts`](../functions/_middleware.ts) or
+[`public/_headers`](../public/_headers), and as the operational gate for
+promoting Trusted Types from report-only to enforcing.
+
+Capture HARs from a clean browser profile (DevTools → Network → "Export
+HAR…" in Chromium, or Develop → Show Web Inspector → Network → "Export"
+in Safari) for the three high-traffic surfaces:
+
+- `https://jseverino.com/`
+- `https://jseverino.com/contact/` (loads Turnstile widget)
+- `https://jseverino.com/portfolio/<a-writeup>/`
+
+Then inspect each capture:
+
+```sh
+# All requests returned 2xx
+jq -r '.log.entries[] | .response.status' ./capture.har | sort | uniq -c
+
+# Zero CSP or Trusted Types violations were sent
+jq -r '.log.entries[]
+  | select(.request.url | contains("/api/csp-report"))
+  | "\(.response.status) \(.request.url)"' ./capture.har
+```
+
+A clean run is: 2xx across the board (one 204 from `/cdn-cgi/rum?` is
+expected) and zero output from the second command. A POST to
+`/api/csp-report` means the browser tripped the enforcing CSP or the
+Trusted Types report-only directive — inspect the report body in the HAR
+(grep the entry's `request.postData.text` for `effective-directive`) or
+read the matching D1 row to identify the source.
+
 ## 7. D1 And CSP Reporting Checks
 
 After any change to [`db/schema.sql`](../db/schema.sql), apply the schema to the
@@ -158,6 +192,26 @@ wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS csp
 
 CSP reports from browser extensions are filtered by the report endpoint and
 should not be treated as site regressions.
+
+**Trusted Types promotion gate.** The site emits
+`require-trusted-types-for 'script'` in a
+`Content-Security-Policy-Report-Only` header. Filter just that directive's
+violations to decide whether to promote it into the enforcing CSP:
+
+```sh
+wrangler d1 execute jseverino-contact --remote --command \
+  "SELECT created_at, disposition, document_uri, source_file, line_number
+   FROM csp_reports
+   WHERE effective_directive = 'require-trusted-types-for'
+   ORDER BY created_at DESC LIMIT 20;"
+```
+
+Promotion criteria: ~7 days of clean reports across `/`, `/contact/`, and
+at least one writeup (verified by the HAR audit in
+[§6](#6-cloudflare-deploy-verification)). When the query returns no rows
+across that window, move the directive from `cspReportOnly()` into the
+enforcing `csp()` function in
+[`functions/_middleware.ts`](../functions/_middleware.ts).
 
 ## 8. SEO And Accessibility Spot Checks
 

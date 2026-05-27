@@ -220,9 +220,10 @@ visitors, which lets `script-src` enforce the policy on every script
 the browser actually sees.
 
 [`public/_headers`](./public/_headers) carries the other security headers
-(`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
-`Permissions-Policy`) but does not set a static CSP fallback — CSP is issued
-per-request by the middleware.
+(`X-Content-Type-Options`, `X-Frame-Options`, `X-Permitted-Cross-Domain-Policies`,
+`Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`,
+`Cross-Origin-Resource-Policy`) but does not set a static CSP fallback —
+CSP is issued per-request by the middleware.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
@@ -235,6 +236,20 @@ payload size, filters reports to `https://jseverino.com` documents, drops common
 browser-extension blocked-URI schemes, and stores compact records in D1. This
 adds operational visibility without adding `report-sample` or collecting inline
 code snippets.
+
+**Trusted Types (report-only).** The middleware emits a second
+`Content-Security-Policy-Report-Only` header carrying
+`require-trusted-types-for 'script'`. Trusted Types defends against
+DOM-XSS by blocking dangerous sinks (`innerHTML`, `outerHTML`,
+`insertAdjacentHTML`, `document.write`, …) unless they are routed through
+an explicit `TrustedTypePolicy`. Since the site ships no inline script and
+Astro emits no client-side DOM-sink usage, the directive is expected to be
+a no-op when promoted to enforcing — the report-only header confirms that
+empirically on real visitor traffic before promotion. Violations land in
+the same `/api/csp-report` D1 sink as enforced violations with
+`disposition="report"` and can be filtered by `effective_directive` for
+review. Promotion criteria and the D1 query are in
+[`docs/Release-Checklist.md`](./docs/Release-Checklist.md#7-d1-and-csp-reporting-checks).
 
 ## DNS and transport
 
@@ -314,6 +329,17 @@ server — one call returns the live headers plus named pass/fail booleans
 (`has_csp`, `no_unsafe_inline_script`, `has_csp_report_to`,
 `has_csp_report_uri`, `has_reporting_endpoints`). This is the canonical
 post-deploy verification step in
+[`docs/Release-Checklist.md`](./docs/Release-Checklist.md#6-cloudflare-deploy-verification).
+
+A deeper post-deploy check is the **HAR audit**: capture HAR files for
+`/`, `/contact/` (which loads the Turnstile widget), and one writeup,
+then confirm every request returned 2xx and that no entry POSTed to
+`/api/csp-report`. Where the MCP tool confirms response headers, the HAR
+audit confirms that those headers do not break a real browser session
+under the full third-party load (Cloudflare beacon, Turnstile challenge
+flow, Cloudflare-injected speculation rules). A zero-violation HAR run
+across all three surfaces is the operational gate for promoting Trusted
+Types from report-only to enforcing. Full procedure in
 [`docs/Release-Checklist.md`](./docs/Release-Checklist.md#6-cloudflare-deploy-verification).
 
 ## Supply chain and CI
