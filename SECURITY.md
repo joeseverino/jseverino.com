@@ -306,6 +306,16 @@ to confirm Observatory hasn't regressed. The Pentest-Tools findings above
 will reappear on every rescan — they are inherent to the architecture and
 have been intentionally accepted.
 
+The same checks run against the live deployed site from a Claude Code session
+by calling the
+[`check_jseverino_security_headers`](https://github.com/joeseverino/severino-vault-mcp)
+tool on the local [`severino-vault-mcp`](https://github.com/joeseverino/severino-vault-mcp)
+server — one call returns the live headers plus named pass/fail booleans
+(`has_csp`, `no_unsafe_inline_script`, `has_csp_report_to`,
+`has_csp_report_uri`, `has_reporting_endpoints`). This is the canonical
+post-deploy verification step in
+[`docs/Release-Checklist.md`](./docs/Release-Checklist.md#6-cloudflare-deploy-verification).
+
 ## Supply chain and CI
 
 The repository has no runtime dependencies shipped to visitors beyond the
