@@ -96,16 +96,18 @@ The input is trusted owner-authored Markdown. Where custom directives interpolat
 
 ## 6. Site Chrome And Taxonomy
 
-Global site chrome comes from [`src/content/site.md`](../src/content/site.md).
+Global site chrome comes from [`src/content/site.md`](../src/content/site.md) — a YAML-frontmatter-only entry in the `site` content collection. A Zod schema in [`src/content.config.ts`](../src/content.config.ts) validates the shape at build time, so a missing field or a malformed URL fails the build with a precise error rather than rendering a broken page.
 
-That file controls:
+The schema covers:
 
-- public display name;
-- professional title;
-- summary used by structured data;
-- skills used in `Person.knowsAbout`;
-- social links used in footer and `Person.sameAs`;
-- primary navigation links.
+- `name` — public display name (drives header brand, JSON-LD `Person.name`, page-title suffix);
+- `title` — professional title (JSON-LD `Person.jobTitle`);
+- `summary` — one-sentence summary (JSON-LD `Person.description`);
+- `skills` — string list (`Person.knowsAbout`);
+- `socialLinks` — `{label, href}[]` (footer icons, `Person.sameAs`);
+- `navItems` — `{label, href}[]` (primary navigation).
+
+[`getSiteChrome()`](../src/lib/content.ts) loads the entry via `getEntry('site', 'site')` and memoizes it for the build. The header, footer, and `SeoHead` components all await this single source of truth.
 
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 

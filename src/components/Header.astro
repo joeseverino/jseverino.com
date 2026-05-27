@@ -3,7 +3,7 @@ import { getSiteChrome } from '@lib/content';
 import NavLinks from '@components/NavLinks.astro';
 
 const current = Astro.url.pathname;
-const { name, navItems } = getSiteChrome();
+const { name, navItems } = await getSiteChrome();
 const navigation = navItems.map((item) => ({
   ...item,
   current: current === item.href,

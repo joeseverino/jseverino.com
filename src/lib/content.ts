@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import MarkdownIt from 'markdown-it';
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { enhanceImages } from './images';
 import { site } from './site';
@@ -353,36 +353,11 @@ export async function getPage(slug: string): Promise<PageContent> {
   };
 }
 
-export function getSiteChrome(): SiteChrome {
-  return siteChromeCache.get(() => {
-    const file = path.resolve(process.cwd(), 'src/content/site.md');
-    const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '# Joe Severino';
-
-    const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
-
-    const parseSection = (header: string) => {
-      const escapedHeader = header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp(`(?:^|\\n)##\\s+${escapedHeader}\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)`);
-      return body.match(re)?.[1]?.trim() ?? '';
-    };
-
-    const parseLinks = (section: string) =>
-      [...section.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map((match) => ({
-        label: match[1],
-        href: match[2],
-      }));
-
-    return {
-      name,
-      title: parseSection('Title'),
-      summary: parseSection('Summary'),
-      skills: parseSection('Skills')
-        .split('\n')
-        .map((s) => s.replace(/^- /, '').trim())
-        .filter(Boolean),
-      socialLinks: parseLinks(parseSection('Social Links')),
-      navItems: parseLinks(parseSection('Navigation')),
-    };
+export async function getSiteChrome(): Promise<SiteChrome> {
+  return siteChromeCache.getAsync(async () => {
+    const entry = await getEntry('site', 'site');
+    if (!entry) throw new Error('Missing src/content/site.md');
+    return entry.data;
   });
 }
 

@@ -79,18 +79,30 @@ Vault-only fields such as internal IDs, system names, sensitivity labels, relate
 
 ## Site Identity
 
-`06 Pages/_site.md` syncs to [`src/content/site.md`](../src/content/site.md).
+`06 Pages/_site.md` syncs to [`src/content/site.md`](../src/content/site.md). The file is YAML frontmatter only — no markdown body. The header, footer, and JSON-LD read from this synced file.
 
-It controls:
+```yaml
+---
+name: Joe Severino
+title: Delivery Operations Analyst
+summary: One-sentence professional summary used in JSON-LD and OG metadata.
+skills:
+  - Cybersecurity
+  - Network Security
+socialLinks:
+  - label: LinkedIn
+    href: https://linkedin.com/in/joeseverino/
+  - label: GitHub
+    href: https://github.com/joeseverino
+navItems:
+  - label: About
+    href: /about/
+  - label: Portfolio
+    href: /portfolio/
+---
+```
 
-- site/person name;
-- professional title;
-- public summary;
-- skills;
-- social links;
-- primary navigation.
-
-The header, footer, and JSON-LD read from this synced file.
+A Zod schema in [`src/content.config.ts`](../src/content.config.ts) validates every field at build time; a typo, a missing key, or a malformed URL fails the build with a precise error. `socialLinks` and `navItems` render as raw JSON in Obsidian's Properties panel because Obsidian doesn't have a native renderer for arrays of objects — to edit them, switch the file to source view (`Cmd+E`) and edit the YAML directly. Scalar fields (`name`, `title`, `summary`, `skills`) render in Properties cleanly.
 
 ## Technology Taxonomy
 

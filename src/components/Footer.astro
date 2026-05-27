@@ -1,7 +1,7 @@
 ---
 import { getSiteChrome } from '@lib/content';
 
-const { socialLinks } = getSiteChrome();
+const { socialLinks } = await getSiteChrome();
 
 const iconPaths: Record<string, string> = {
   LinkedIn:
