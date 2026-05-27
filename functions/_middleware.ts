@@ -6,6 +6,7 @@
 // CSP headers and applies the nonce to its own injected scripts.
 
 const CSP_HEADER = 'Content-Security-Policy';
+const CSP_REPORT_ONLY_HEADER = 'Content-Security-Policy-Report-Only';
 const REPORTING_ENDPOINTS_HEADER = 'Reporting-Endpoints';
 const CSP_REPORT_ENDPOINT = 'https://jseverino.com/api/csp-report';
 const CLOUDFLARE_BEACON_HASH =
@@ -38,6 +39,19 @@ function csp(nonce: string): string {
   ].join('; ');
 }
 
+// Report-only companion policy. Carries Trusted Types directives that are
+// not yet enforced: violations are surfaced via the same /api/csp-report
+// endpoint with disposition="report". Promote into csp() once reports stay
+// clean for a few days. See SECURITY.md and the modernization backlog for
+// the promotion criteria.
+function cspReportOnly(): string {
+  return [
+    "require-trusted-types-for 'script'",
+    'report-to csp-endpoint',
+    `report-uri ${CSP_REPORT_ENDPOINT}`,
+  ].join('; ');
+}
+
 class ScriptNonceHandler {
   constructor(private readonly nonce: string) {}
 
@@ -61,6 +75,7 @@ export async function onRequest(context: { next(): Promise<Response> }): Promise
 
   const headers = new Headers(transformed.headers);
   headers.set(CSP_HEADER, csp(nonce));
+  headers.set(CSP_REPORT_ONLY_HEADER, cspReportOnly());
   headers.set(REPORTING_ENDPOINTS_HEADER, `csp-endpoint="${CSP_REPORT_ENDPOINT}"`);
 
   return new Response(transformed.body, {
