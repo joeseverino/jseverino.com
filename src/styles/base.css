@@ -657,6 +657,12 @@ main > * + * {
   transform: translateX(-50%);
 }
 
+/* Preserve horizontal centering when the base .button:hover replaces transform. */
+.sticky-button:hover,
+.sticky-button:focus {
+  transform: translateX(-50%) translateY(-2px);
+}
+
 /* ── Project cards ──────────────────────────────────────────────────── */
 
 .project-grid {
