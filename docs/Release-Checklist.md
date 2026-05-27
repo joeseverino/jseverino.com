@@ -57,7 +57,6 @@ A clean release should report:
 sync       content snapshot updated
 check      0 errors, 0 warnings
 build      <n> pages built
-csp        <n> inline-script hash(es) verified against public/_headers
 assets     Images: <n>; Total image weight: <n>; No images over 1.5 MB.
 ```
 

@@ -108,15 +108,48 @@ retention, and how to request deletion lives at
 [`/privacy/`](https://jseverino.com/privacy/), linked from a one-liner
 under the contact form.
 
+### D1 schema
+
+Submissions land in a Cloudflare D1 SQLite database. The schema is
+committed at [`db/schema.sql`](./db/schema.sql) and is applied with:
+
+```sh
+# Production database:
+wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+
+# Local database (for `wrangler pages dev`):
+wrangler d1 execute jseverino-contact --local --file=./db/schema.sql
+```
+
+The `contact_submissions` table:
+
+| Column | Type | Purpose |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY` | Autoincrement row id. |
+| `name`, `email`, `message` | `TEXT NOT NULL` | The submission body. |
+| `status` | `TEXT NOT NULL DEFAULT 'unread'` | Triage state, updated from the private operations app. |
+| `turnstile` | `TEXT NOT NULL DEFAULT 'verified'` | Records that server-side Turnstile verification passed before the row was written. |
+| `ip_address`, `user_agent`, `browser`, `device`, `country` | `TEXT` | Request context for abuse review. |
+| `source_url` | `TEXT` | Page the form was submitted from. |
+| `assigned_to`, `admin_notes` | `TEXT` | Triage fields, updated from the private operations app. |
+| `created_at`, `updated_at` | `TEXT NOT NULL DEFAULT (datetime('now'))` | Audit timestamps. |
+
+Two indices keep operational queries fast: `created_at DESC` for the
+recent-submissions feed and `status` for the unread filter.
+
+The function-side bindings and environment variables that this table
+depends on are documented in [Architecture §11 Runtime Configuration](./docs/Architecture.md#11-runtime-configuration).
+
 ## HTTP response headers
 
-Cloudflare Pages applies the headers in [`public/_headers`](./public/_headers) to responses. For HTML
-responses in production, [`functions/_middleware.ts`](./functions/_middleware.ts) replaces the static CSP with
-a nonce-bearing policy and adds the matching nonce to every script tag.
+Cloudflare Pages applies the static headers in [`public/_headers`](./public/_headers) to every
+response. For HTML responses in production, [`functions/_middleware.ts`](./functions/_middleware.ts) additionally
+emits a per-request, nonce-bearing `Content-Security-Policy` header and attaches
+the matching nonce to every `<script>` tag.
 
 | Header | Value | Purpose |
 |---|---|---|
-| `Content-Security-Policy` | see [`public/_headers`](./public/_headers) | Restricts the scripts, styles, and origins a page may load — detailed below. |
+| `Content-Security-Policy` | per-request from [`functions/_middleware.ts`](./functions/_middleware.ts) | Restricts the scripts, styles, and origins a page may load — detailed below. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
@@ -138,11 +171,19 @@ Detections and the Web Analytics beacon also receive or match the production
 policy, so the site keeps a strict `script-src` without adding
 `'unsafe-inline'`.
 
-The static [`public/_headers`](./public/_headers) CSP remains as a fallback for static serving and local
-inspection. Its `sha256` values cover the executable inline scripts emitted by
-the build. [`bin/csp-hashes.mjs`](./bin/csp-hashes.mjs) recomputes those hashes from the built HTML, and
-[`npm run publish:check`](./bin/publish-check.mjs) fails if [`public/_headers`](./public/_headers) is missing a hash for any
-inline executable script that actually shipped.
+Component scripts are emitted as external `/_astro/*.js` bundles
+(via `vite.build.assetsInlineLimit: 0` in
+[`astro.config.mjs`](./astro.config.mjs)), not inlined into HTML.
+The only inline `<script>` element in production HTML is the JSON-LD
+structured-data block — which is data, not executable code, but still
+receives a nonce. There is no inline executable JavaScript shipped to
+visitors, which lets `script-src` enforce the policy on every script
+the browser actually sees.
+
+[`public/_headers`](./public/_headers) carries the other security headers
+(`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`) but does not set a static CSP fallback — CSP is issued
+per-request by the middleware.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.

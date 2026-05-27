@@ -67,38 +67,44 @@ const breadcrumbList =
       }
     : undefined;
 
-const jsonLd: any = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    type === 'article'
-      ? {
-          '@type': 'Article',
-          '@id': `${canonical}#article`,
-          headline: title,
-          description,
-          url: canonical,
-          image: ogImage,
-          datePublished: publishedTime,
-          dateModified: modifiedTime || publishedTime,
-          keywords: tags,
-          author: { '@id': `${site.url}/#person` },
-          publisher: { '@id': `${site.url}/#person` },
-          mainEntityOfPage: { '@id': canonical },
-        }
-      : {
-          '@type': 'WebSite',
-          '@id': `${site.url}/#website`,
-          name: site.name,
-          url: site.url,
-          publisher: { '@id': `${site.url}/#person` },
-        },
-    person,
-  ],
+type JsonLdNode = Record<string, unknown>;
+type JsonLd = {
+  '@context': 'https://schema.org';
+  '@graph': JsonLdNode[];
 };
 
-if (breadcrumbList) {
-  jsonLd['@graph'].push(breadcrumbList);
-}
+const graph: JsonLdNode[] = [
+  type === 'article'
+    ? {
+        '@type': 'Article',
+        '@id': `${canonical}#article`,
+        headline: title,
+        description,
+        url: canonical,
+        image: ogImage,
+        datePublished: publishedTime,
+        dateModified: modifiedTime || publishedTime,
+        keywords: tags,
+        author: { '@id': `${site.url}/#person` },
+        publisher: { '@id': `${site.url}/#person` },
+        mainEntityOfPage: { '@id': canonical },
+      }
+    : {
+        '@type': 'WebSite',
+        '@id': `${site.url}/#website`,
+        name: site.name,
+        url: site.url,
+        publisher: { '@id': `${site.url}/#person` },
+      },
+  person,
+];
+
+if (breadcrumbList) graph.push(breadcrumbList);
+
+const jsonLd: JsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': graph,
+};
 ---
 
 <title>{fullTitle}</title>

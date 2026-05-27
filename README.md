@@ -31,12 +31,12 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`src/content/site.md`](./src/content/site.md) | Synced public site identity, professional summary, social links, and navigation. |
 | [`src/content/technology-groups.md`](./src/content/technology-groups.md) | Synced public taxonomy for technology labels and groups. |
 | [`public/assets/`](./public/assets/) | Synced and optimized public media. |
-| [`public/_headers`](./public/_headers) | Static Cloudflare header fallback. HTML CSP is replaced by middleware in production. |
+| [`public/_headers`](./public/_headers) | Static Cloudflare security headers. CSP is issued per-request by the middleware (not set here). |
 | [`public/_redirects`](./public/_redirects) | Static Cloudflare redirects. |
 | [`functions/_middleware.ts`](./functions/_middleware.ts) | Per-request HTML CSP nonce generation and script nonce injection. |
 | [`functions/api/contact.ts`](./functions/api/contact.ts) | Contact form endpoint with Turnstile, validation, rate limiting, and D1 storage. |
 | [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
-| [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, CSP hash check, and asset audit. |
+| [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, and asset audit. |
 
 ## Content Model
 
@@ -90,10 +90,8 @@ The public site is static HTML, CSS, JavaScript, and assets. There is no WordPre
 
 Dynamic behavior is intentionally narrow:
 
-- [`functions/_middleware.ts`](./functions/_middleware.ts) runs for HTML responses, generates a nonce, adds it to every `<script>`, and replaces the static CSP with a nonce-bearing policy.
+- [`functions/_middleware.ts`](./functions/_middleware.ts) runs for HTML responses, generates a nonce, adds it to every `<script>`, and emits a nonce-bearing CSP. [`public/_headers`](./public/_headers) carries the other security headers; CSP is issued only per-request by the middleware.
 - [`functions/api/contact.ts`](./functions/api/contact.ts) accepts contact submissions, verifies Turnstile server-side, validates input, applies a per-IP hourly limit, and stores accepted messages in Cloudflare D1 with parameterized SQL.
-
-The static [`public/_headers`](./public/_headers) CSP remains useful for local/static inspection and non-middleware contexts. [`bin/csp-hashes.mjs --check`](./bin/csp-hashes.mjs) verifies that deterministic inline script hashes in `_headers` match the built output.
 
 ## Local Commands
 
@@ -104,7 +102,7 @@ npm run dev:drafts         # Sync drafts locally, then start dev server
 npm run check              # Astro type/content diagnostics
 npm run build:static       # Build static output to dist.nosync locally
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
-npm run publish:check      # Clean, sync, check, build, verify CSP, audit assets
+npm run publish:check      # Clean, sync, check, build, audit assets
 ```
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup.

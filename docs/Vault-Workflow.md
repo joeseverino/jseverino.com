@@ -120,7 +120,6 @@ The sync script:
 npm run sync:content
 npm run check
 npm run build:static
-node bin/csp-hashes.mjs --check
 npm run publish:check
 ```
 

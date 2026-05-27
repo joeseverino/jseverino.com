@@ -11,4 +11,13 @@ export default defineConfig({
   trailingSlash: 'always',
   outDir,
   integrations: [sitemap()],
+  // Emit component <script> blocks as external /_astro/*.js files instead of
+  // inlining them. The middleware still nonces every <script> tag, so CSP is
+  // unaffected; this keeps the rendered HTML clean and lets the browser cache
+  // bundled JS across pages.
+  vite: {
+    build: {
+      assetsInlineLimit: 0,
+    },
+  },
 });

@@ -62,12 +62,26 @@ export type TechnologyGroup = {
   tags: TechnologyTag[];
 };
 
-let pagesCache: CollectionEntry<'pages'>[] | undefined;
-let writeupsCache: Writeup[] | undefined;
-let siteChromeCache: SiteChrome | undefined;
-// No module-level cache for technology groups: the source file is read on
-// every call so dev edits to `src/content/technology-groups.md` show up
-// without restarting the dev server. The parse is microseconds.
+// Build-time memoization. Technology groups are intentionally not cached so
+// dev edits to `src/content/technology-groups.md` show up without restarting
+// the dev server; the parse is microseconds.
+function memo<T>(): { get(load: () => T): T; getAsync(load: () => Promise<T>): Promise<T> } {
+  let value: T | undefined;
+  return {
+    get(load) {
+      if (value === undefined) value = load();
+      return value;
+    },
+    async getAsync(load) {
+      if (value === undefined) value = await load();
+      return value;
+    },
+  };
+}
+
+const pagesCache = memo<CollectionEntry<'pages'>[]>();
+const writeupsCache = memo<Writeup[]>();
+const siteChromeCache = memo<SiteChrome>();
 
 function normalizeDate(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -321,13 +335,10 @@ function collectionSlug(id: string): string {
 }
 
 export async function getPage(slug: string): Promise<PageContent> {
-  const pages =
-    pagesCache ??
-    (pagesCache = await getCollection(
-      'pages',
-      // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
-      (page) => import.meta.env.DEV || page.data.published,
-    ));
+  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+  const pages = await pagesCache.getAsync(() =>
+    getCollection('pages', (page) => import.meta.env.DEV || page.data.published),
+  );
   const page = pages.find((entry) => collectionSlug(entry.id) === slug);
   if (!page) throw new Error(`Missing page content: ${slug}`);
 
@@ -342,42 +353,36 @@ export async function getPage(slug: string): Promise<PageContent> {
 }
 
 export function getSiteChrome(): SiteChrome {
-  if (siteChromeCache) return siteChromeCache;
+  return siteChromeCache.get(() => {
+    const file = path.resolve(process.cwd(), 'src/content/site.md');
+    const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '# Joe Severino';
 
-  const file = path.resolve(process.cwd(), 'src/content/site.md');
-  const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '# Joe Severino';
+    const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
 
-  const name = body.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? 'Joe Severino';
+    const parseSection = (header: string) => {
+      const escapedHeader = header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`(?:^|\\n)##\\s+${escapedHeader}\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)`);
+      return body.match(re)?.[1]?.trim() ?? '';
+    };
 
-  const parseSection = (header: string) => {
-    const escapedHeader = header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`(?:^|\\n)##\\s+${escapedHeader}\\s*\\n([\\s\\S]*?)(?=\\n##\\s+|$)`);
-    return body.match(re)?.[1]?.trim() ?? '';
-  };
+    const parseLinks = (section: string) =>
+      [...section.matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map((match) => ({
+        label: match[1],
+        href: match[2],
+      }));
 
-  const title = parseSection('Title');
-  const summary = parseSection('Summary');
-  const skills = parseSection('Skills')
-    .split('\n')
-    .map((s) => s.replace(/^- /, '').trim())
-    .filter(Boolean);
-
-  const socialLinks = [...parseSection('Social Links').matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map(
-    (match) => ({
-      label: match[1],
-      href: match[2],
-    }),
-  );
-
-  const navItems = [...parseSection('Navigation').matchAll(/^- \[([^\]]+)\]\(([^)]+)\)$/gm)].map(
-    (match) => ({
-      label: match[1],
-      href: match[2],
-    }),
-  );
-
-  siteChromeCache = { name, title, summary, skills, socialLinks, navItems };
-  return siteChromeCache;
+    return {
+      name,
+      title: parseSection('Title'),
+      summary: parseSection('Summary'),
+      skills: parseSection('Skills')
+        .split('\n')
+        .map((s) => s.replace(/^- /, '').trim())
+        .filter(Boolean),
+      socialLinks: parseLinks(parseSection('Social Links')),
+      navItems: parseLinks(parseSection('Navigation')),
+    };
+  });
 }
 
 export function getTechnologyGroups(): TechnologyGroup[] {
@@ -436,39 +441,37 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
 }
 
 export async function getWriteups(): Promise<Writeup[]> {
-  if (writeupsCache) return writeupsCache;
+  return writeupsCache.getAsync(async () => {
+    // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+    const entries = await getCollection(
+      'writeups',
+      (entry) => import.meta.env.DEV || entry.data.published === true,
+    );
 
-  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
-  const entries = await getCollection(
-    'writeups',
-    (entry) => import.meta.env.DEV || entry.data.published === true,
-  );
+    const writeups = entries.map((entry) => {
+      const slug = collectionSlug(entry.id);
+      const heroImage =
+        resolveWriteupAsset(entry.data.cover_image, slug) ??
+        firstBodyImage(entry.body ?? '', slug) ??
+        '/assets/media/2025/08/cropped-JS-2-192x192.png';
 
-  const writeups = entries.map((entry) => {
-    const slug = collectionSlug(entry.id);
-    const heroImage =
-      resolveWriteupAsset(entry.data.cover_image, slug) ??
-      firstBodyImage(entry.body ?? '', slug) ??
-      '/assets/media/2025/08/cropped-JS-2-192x192.png';
+      return {
+        slug,
+        title: entry.data.title,
+        description: entry.data.description ?? '',
+        date: normalizeDate(entry.data.published_at),
+        lastReviewed: normalizeDate(entry.data.last_reviewed),
+        technologies: entry.data.technologies,
+        heroImage,
+        bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
+        featured: entry.data.featured,
+        featuredOrder: entry.data.featured_order,
+      } satisfies Writeup;
+    });
 
-    return {
-      slug,
-      title: entry.data.title,
-      description: entry.data.description ?? '',
-      date: normalizeDate(entry.data.published_at),
-      lastReviewed: normalizeDate(entry.data.last_reviewed),
-      technologies: entry.data.technologies,
-      heroImage,
-      bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
-      featured: entry.data.featured,
-      featuredOrder: entry.data.featured_order,
-    } satisfies Writeup;
+    warnOnUnknownTechnologies(writeups);
+    return writeups.sort((a, b) => b.date.localeCompare(a.date));
   });
-
-  warnOnUnknownTechnologies(writeups);
-
-  writeupsCache = writeups.sort((a, b) => b.date.localeCompare(a.date));
-  return writeupsCache;
 }
 
 export async function getFeaturedWriteups(): Promise<Writeup[]> {

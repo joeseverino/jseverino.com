@@ -81,7 +81,7 @@ Article/body images are optimized during sync and rendered with stable dimension
 
 The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The static Astro origin also gives crawlers a simpler response path than the legacy WordPress runtime; measured response snapshots are documented in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
-The static [`public/_headers`](../public/_headers) policy remains a fallback and is verified by [`bin/csp-hashes.mjs --check`](../bin/csp-hashes.mjs).
+[`public/_headers`](../public/_headers) carries the other security headers; CSP itself is issued only by the middleware.
 
 ## Validation Checklist
 
@@ -89,7 +89,6 @@ After major metadata changes:
 
 ```sh
 npm run build:static
-node bin/csp-hashes.mjs --check
 ```
 
 Then inspect generated HTML for:

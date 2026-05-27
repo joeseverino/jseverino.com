@@ -7,9 +7,10 @@ node_modules
 node_modules.*
 node_modules [0-9]*
 
-# Astro and Vite generated state
+# Astro, Vite, and Wrangler generated state
 .astro/
 .vite/
+.wrangler/
 
 # Build output (dist.nosync is the local outDir, dist is Cloudflare's)
 /dist*

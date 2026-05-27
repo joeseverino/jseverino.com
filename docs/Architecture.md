@@ -142,13 +142,17 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 ## 9. Edge Security
 
-[`public/_headers`](../public/_headers) defines the static header baseline. In production HTML responses, [`functions/_middleware.ts`](../functions/_middleware.ts) replaces the static CSP with a nonce-based policy:
+[`public/_headers`](../public/_headers) defines the static security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`). The Content-Security-Policy is **not** set there — it is issued only by the middleware, per-request, so every HTML response carries a fresh nonce.
 
-1. Generate a per-request nonce.
-2. Use `HTMLRewriter` to add the nonce to every `<script>` tag.
-3. Emit a `Content-Security-Policy` header containing that nonce.
+For every HTML response, [`functions/_middleware.ts`](../functions/_middleware.ts):
 
-The policy significantly reduces script-injection risk while still allowing first-party scripts, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
+1. Generates a per-request nonce.
+2. Uses `HTMLRewriter` to attach the nonce to every `<script>` tag in the response body.
+3. Emits a `Content-Security-Policy` response header containing that same nonce.
+
+Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block — which is data, not executable code, but still receives a nonce. This means CSP enforcement applies to every script the browser sees, and there is no inline executable JavaScript on the page at all.
+
+The policy significantly reduces script-injection risk while still allowing first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
 
 The contact function applies:
 
@@ -160,7 +164,92 @@ The contact function applies:
 - per-IP hourly rate limiting backed by D1;
 - parameterized D1 inserts.
 
-## 10. Release Gate
+## 10. Build Output
+
+`npm run build:static` produces a deployable static site. Locally the build lands in `dist.nosync/`; on Cloudflare Pages (which sets `CF_PAGES=1`) it lands in `dist/`. See [`astro.config.mjs`](../astro.config.mjs) for the `outDir` selection.
+
+The output tree:
+
+```text
+dist/
+├── _astro/                     # Astro-emitted fingerprinted bundles
+│   ├── *.css                   # Component + global CSS, content-hashed
+│   └── *.js                    # Component <script> blocks, content-hashed
+├── _headers                    # Cloudflare Pages headers (copied from public/)
+├── _redirects                  # Cloudflare Pages redirects (copied from public/)
+├── assets/                     # Synced static assets and image variants
+│   ├── fonts/                  # Subset Inter variable WOFF2
+│   ├── media/                  # Site iconography and OG defaults
+│   ├── og/                     # Open Graph card images
+│   ├── pages/                  # Page-attached assets
+│   └── writeups/<slug>/        # Per-writeup images, AVIF/WebP/fallback variants
+├── functions/                  # Pages Functions (bundled separately at deploy)
+├── <route>/index.html          # One HTML file per route
+└── sitemap-index.xml           # @astrojs/sitemap output
+```
+
+**Fingerprinting.** Astro hashes every artifact under `_astro/` (and any image variant written by the pipeline) by content. Filenames change when bytes change, so they can be cached `immutable` for one year (see [`public/_headers`](../public/_headers)) without risk of stale serves. HTML is short-cached and revalidated.
+
+**External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block — and that is data, not executable code. The middleware nonces every `<script>` tag the browser sees, including the external bundles.
+
+**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/` directory separately at deploy time; it is not part of the static `dist/` tree the Astro build writes. The middleware and the contact endpoint run as Workers at the edge.
+
+## 11. Runtime Configuration
+
+The site needs three pieces of Cloudflare-side configuration to run. None of them live in the repo; they are configured in the Cloudflare Pages project settings.
+
+### D1 binding
+
+| Binding | Database | Used by |
+|---|---|---|
+| `DB` | `jseverino-contact` | [`functions/api/contact.ts`](../functions/api/contact.ts) |
+
+The schema lives at [`db/schema.sql`](../db/schema.sql) and is applied with:
+
+```sh
+# Remote (production):
+wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+
+# Local (for `wrangler pages dev`):
+wrangler d1 execute jseverino-contact --local --file=./db/schema.sql
+```
+
+The schema is described in detail in [`SECURITY.md`](../SECURITY.md#d1-schema).
+
+### Function environment variables
+
+| Variable | Scope | Used by |
+|---|---|---|
+| `TURNSTILE_SECRET_KEY` | Server (Pages Function env) | [`functions/api/contact.ts`](../functions/api/contact.ts) |
+
+This is the secret half of the Cloudflare Turnstile keypair. It must never appear in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.dev.vars.example`](../.dev.vars.example) to `.dev.vars` (gitignored) — `wrangler pages dev` reads it automatically.
+
+### Build environment variables
+
+| Variable | Scope | Used by |
+|---|---|---|
+| `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
+
+This is the public half of the Turnstile keypair — it is safe to ship in HTML. It is set as a build environment variable in the Pages project so the static build can embed it into the contact form. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+
+### No `wrangler.toml`
+
+This repo intentionally has no `wrangler.toml`. Pages projects with both dashboard config and a `wrangler.toml` create a precedence conflict; keeping the binding and environment configuration in the Cloudflare dashboard puts the runtime config in one place and out of the public repository.
+
+### Local preview against the real edge runtime
+
+`astro dev` is the day-to-day dev server. It does not run Pages Functions, so the middleware (CSP nonces) and `/api/contact` endpoint are inactive locally.
+
+To exercise the edge runtime locally, build first and run `wrangler pages dev`:
+
+```sh
+npm run build:static
+npx wrangler pages dev dist.nosync
+```
+
+The site is then served at `http://localhost:8788` with the middleware and the contact function active. `curl -sI http://localhost:8788/ | grep -i content-security-policy` is the canonical pre-deploy CSP check.
+
+## 12. Release Gate
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 
@@ -169,10 +258,9 @@ The contact function applies:
 3. iCloud conflict-copy cleanup;
 4. Astro check;
 5. Astro build;
-6. CSP hash verification;
-7. image weight audit.
+6. image weight audit.
 
-This does not replace human review, but it catches broken builds, stale CSP hashes, oversized assets, and generated-file drift before publishing.
+This does not replace human review, but it catches broken builds, oversized assets, and generated-file drift before publishing.
 
 ## Related Docs
 

@@ -17,7 +17,6 @@
     "sync:content": "node bin/sync-content.mjs",
     "make:og": "node bin/make-og-image.mjs",
     "audit:assets": "node bin/audit-assets.mjs",
-    "csp:hashes": "node bin/csp-hashes.mjs",
     "seo:preview": "node bin/seo-preview.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",

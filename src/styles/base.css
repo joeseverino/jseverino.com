@@ -32,6 +32,11 @@
   --wide: 80rem;        /* alignwide block width (page headers, dividers) */
   --cards: 1100px;      /* featured-projects grid cap (from style.css line 498) */
   --gutter: clamp(1.5rem, 6vw, 2rem);
+  --w-constrained: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  --w-wide: min(var(--wide), calc(100% - (var(--gutter) * 2)));
+
+  /* Type stacks */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Spacing — from theme.json spacing.spacingSizes */
   --space-20: 1rem;
@@ -248,7 +253,7 @@ pre {
   border-radius: var(--radius-sm);
   background: #020617;
   color: #d1d5db;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.92rem;
   line-height: 1.65;
   overflow-x: auto;
@@ -270,7 +275,7 @@ pre {
   padding: 0.6rem 1rem;
   background: #111827;
   border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -326,7 +331,7 @@ pre {
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 p > code,
@@ -362,12 +367,12 @@ hr {
 }
 
 .container {
-  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  width: var(--w-constrained);
   margin-inline: auto;
 }
 
 .wide {
-  width: min(var(--wide), calc(100% - (var(--gutter) * 2)));
+  width: var(--w-wide);
   margin-inline: auto;
 }
 
@@ -381,7 +386,7 @@ main > * + * {
 /* Constrained body wrapper for about / contact / resume pages.
    Keeps long-form pages readable without extra wrappers. */
 .content-flow {
-  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  width: var(--w-constrained);
   margin-inline: auto;
 }
 
@@ -503,7 +508,7 @@ main > * + * {
 /* ── Home content (page bodies wrapped by index.astro) ──────────────── */
 
 .home-content {
-  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  width: var(--w-constrained);
   margin-inline: auto;
 }
 
@@ -843,7 +848,7 @@ figure {
 
 /* Constrained article wrapper. */
 .article {
-  width: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  width: var(--w-constrained);
   margin: 0 auto;
 }
 
@@ -1050,6 +1055,10 @@ figure {
   color: var(--color-muted);
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+.contact-privacy .privacy-link {
+  text-decoration: underline;
 }
 
 .contact-status {
