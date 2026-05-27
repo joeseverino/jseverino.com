@@ -6,6 +6,8 @@
 // CSP headers and applies the nonce to its own injected scripts.
 
 const CSP_HEADER = 'Content-Security-Policy';
+const REPORTING_ENDPOINTS_HEADER = 'Reporting-Endpoints';
+const CSP_REPORT_ENDPOINT = 'https://jseverino.com/api/csp-report';
 const CLOUDFLARE_BEACON_HASH =
   "'sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=='";
 
@@ -31,6 +33,8 @@ function csp(nonce: string): string {
     "form-action 'self'",
     "frame-ancestors 'self'",
     'upgrade-insecure-requests',
+    'report-to csp-endpoint',
+    `report-uri ${CSP_REPORT_ENDPOINT}`,
   ].join('; ');
 }
 
@@ -57,6 +61,7 @@ export async function onRequest(context: { next(): Promise<Response> }): Promise
 
   const headers = new Headers(transformed.headers);
   headers.set(CSP_HEADER, csp(nonce));
+  headers.set(REPORTING_ENDPOINTS_HEADER, `csp-endpoint="${CSP_REPORT_ENDPOINT}"`);
 
   return new Response(transformed.body, {
     status: transformed.status,

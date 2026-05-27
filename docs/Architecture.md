@@ -12,8 +12,9 @@ Private vault -> sync script -> public repo snapshot -> Astro static build -> Cl
 
 The public serving layer is static by default. The only request-time code is Cloudflare Pages Functions:
 
-- [`functions/_middleware.ts`](../functions/_middleware.ts) rewrites HTML responses to add CSP nonces.
+- [`functions/_middleware.ts`](../functions/_middleware.ts) rewrites HTML responses to add CSP nonces and reporting directives.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact form submissions.
+- [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) receives CSP violation reports and stores filtered records in D1.
 
 There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
@@ -151,10 +152,13 @@ For every HTML response, [`functions/_middleware.ts`](../functions/_middleware.t
 1. Generates a per-request nonce.
 2. Uses `HTMLRewriter` to attach the nonce to every `<script>` tag in the response body.
 3. Emits a `Content-Security-Policy` response header containing that same nonce.
+4. Emits `Reporting-Endpoints` plus CSP `report-to` / `report-uri` directives pointing at `/api/csp-report`.
 
 Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block — which is data, not executable code, but still receives a nonce. This means CSP enforcement applies to every script the browser sees, and there is no inline executable JavaScript on the page at all.
 
 The policy significantly reduces script-injection risk while still allowing first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
+
+The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise such as `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, and `edge-extension:` blocked URIs. Reports are capped in size before parsing and are written to the same D1 binding as the contact form.
 
 The contact function applies:
 
@@ -197,7 +201,7 @@ dist/
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block — and that is data, not executable code. The middleware nonces every `<script>` tag the browser sees, including the external bundles.
 
-**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/` directory separately at deploy time; it is not part of the static `dist/` tree the Astro build writes. The middleware and the contact endpoint run as Workers at the edge.
+**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/` directory separately at deploy time; it is not part of the static `dist/` tree the Astro build writes. The middleware, contact endpoint, and CSP report endpoint run as Workers at the edge.
 
 ### Resource hints
 
@@ -266,7 +270,7 @@ The site needs three pieces of Cloudflare-side configuration to run. None of the
 
 | Binding | Database | Used by |
 |---|---|---|
-| `DB` | `jseverino-contact` | [`functions/api/contact.ts`](../functions/api/contact.ts) |
+| `DB` | `jseverino-contact` | [`functions/api/contact.ts`](../functions/api/contact.ts), [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) |
 
 The schema lives at [`db/schema.sql`](../db/schema.sql) and is applied with:
 
@@ -279,6 +283,11 @@ wrangler d1 execute jseverino-contact --local --file=./db/schema.sql
 ```
 
 The schema is described in detail in [`SECURITY.md`](../SECURITY.md#d1-schema).
+
+The same database holds:
+
+- `contact_submissions` — accepted contact form submissions and triage fields.
+- `csp_reports` — filtered CSP violation reports from browsers.
 
 ### Function environment variables
 
@@ -302,7 +311,7 @@ This repo intentionally has no `wrangler.toml`. Pages projects with both dashboa
 
 ### Local preview against the real edge runtime
 
-`astro dev` is the day-to-day dev server. It does not run Pages Functions, so the middleware (CSP nonces) and `/api/contact` endpoint are inactive locally.
+`astro dev` is the day-to-day dev server. It does not run Pages Functions, so the middleware (CSP nonces/reporting), `/api/contact`, and `/api/csp-report` are inactive locally.
 
 To exercise the edge runtime locally, build first and run `wrangler pages dev`:
 
@@ -311,7 +320,7 @@ npm run build:static
 npx wrangler pages dev dist.nosync
 ```
 
-The site is then served at `http://localhost:8788` with the middleware and the contact function active. `curl -sI http://localhost:8788/ | grep -i content-security-policy` is the canonical pre-deploy CSP check.
+The site is then served at `http://localhost:8788` with the middleware and Functions active. `curl -sI http://localhost:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the canonical pre-deploy CSP/reporting check.
 
 ## 13. Release Gate
 

@@ -16,7 +16,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 - Generates AVIF, WebP, and optimized fallback image variants.
 - Records image dimensions in [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) so rendered images include stable `width` and `height` attributes.
 - Emits canonical metadata, Open Graph/Twitter metadata, JSON-LD, sitemap, RSS, and robots.txt.
-- Uses Cloudflare Pages Functions only where dynamic behavior is required: CSP nonce injection and contact form submission handling.
+- Uses Cloudflare Pages Functions only where dynamic behavior is required: CSP nonce injection, CSP violation reporting, and contact form submission handling.
 
 ## Repository Map
 
@@ -35,6 +35,8 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`public/_redirects`](./public/_redirects) | Static Cloudflare redirects. |
 | [`functions/_middleware.ts`](./functions/_middleware.ts) | Per-request HTML CSP nonce generation and script nonce injection. |
 | [`functions/api/contact.ts`](./functions/api/contact.ts) | Contact form endpoint with Turnstile, validation, rate limiting, and D1 storage. |
+| [`functions/api/csp-report.ts`](./functions/api/csp-report.ts) | CSP violation report receiver with noise filtering and D1 storage. |
+| [`db/schema.sql`](./db/schema.sql) | D1 schema for contact submissions and CSP reports. |
 | [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
 | [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, and asset audit. |
 
@@ -90,8 +92,9 @@ The public site is static HTML, CSS, JavaScript, and assets. There is no WordPre
 
 Dynamic behavior is intentionally narrow:
 
-- [`functions/_middleware.ts`](./functions/_middleware.ts) runs for HTML responses, generates a nonce, adds it to every `<script>`, and emits a nonce-bearing CSP. [`public/_headers`](./public/_headers) carries the other security headers; CSP is issued only per-request by the middleware.
+- [`functions/_middleware.ts`](./functions/_middleware.ts) runs for HTML responses, generates a nonce, adds it to every `<script>`, emits a nonce-bearing CSP, and advertises the CSP report endpoint. [`public/_headers`](./public/_headers) carries the other security headers; CSP is issued only per-request by the middleware.
 - [`functions/api/contact.ts`](./functions/api/contact.ts) accepts contact submissions, verifies Turnstile server-side, validates input, applies a per-IP hourly limit, and stores accepted messages in Cloudflare D1 with parameterized SQL.
+- [`functions/api/csp-report.ts`](./functions/api/csp-report.ts) receives browser CSP violation reports, drops extension/off-site noise, and stores compact records in the same D1 database for review.
 
 ## Local Commands
 
@@ -103,9 +106,27 @@ npm run check              # Astro type/content diagnostics
 npm run build:static       # Build static output to dist.nosync locally
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run publish:check      # Clean, sync, check, build, audit assets
+npm audit --omit=dev       # Check known dependency advisories
+npm outdated               # Check direct dependency freshness
 ```
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup.
+
+## Cloudflare Operations
+
+The Pages project owns runtime bindings in the Cloudflare dashboard; this repo intentionally has no `wrangler.toml`. The shared D1 binding is named `DB` and points at `jseverino-contact`.
+
+Apply the D1 schema after any change to [`db/schema.sql`](./db/schema.sql):
+
+```sh
+wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+```
+
+Check CSP reports after deployment:
+
+```sh
+wrangler d1 execute jseverino-contact --remote --command "SELECT created_at, effective_directive, blocked_uri, document_uri FROM csp_reports ORDER BY created_at DESC LIMIT 20;"
+```
 
 ## Generated And Local Files
 

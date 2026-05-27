@@ -29,3 +29,31 @@ CREATE INDEX IF NOT EXISTS idx_contact_submissions_created_at
 
 CREATE INDEX IF NOT EXISTS idx_contact_submissions_status
   ON contact_submissions (status);
+
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_ip_created_at
+  ON contact_submissions (ip_address, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS csp_reports (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  document_uri         TEXT,
+  blocked_uri          TEXT,
+  effective_directive  TEXT,
+  violated_directive   TEXT,
+  disposition          TEXT,
+  referrer             TEXT,
+  source_file          TEXT,
+  line_number          INTEGER,
+  column_number        INTEGER,
+  status_code          INTEGER,
+  user_agent           TEXT,
+  ip_address           TEXT,
+  country              TEXT,
+  raw_report           TEXT    NOT NULL,
+  created_at           TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_csp_reports_created_at
+  ON csp_reports (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_csp_reports_effective_directive
+  ON csp_reports (effective_directive);

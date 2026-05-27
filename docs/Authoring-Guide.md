@@ -145,7 +145,7 @@ Use table blocks when a table needs a caption.
 | Control | Purpose |
 | --- | --- |
 | Turnstile | Bot challenge |
-| D1 | Contact message storage |
+| D1 | Contact messages and CSP reports |
 
 Contact form controls.
 ::

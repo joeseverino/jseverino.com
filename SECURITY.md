@@ -1,7 +1,7 @@
 # Security
 
 This document describes the security posture of [jseverino.com](https://jseverino.com):
-the deliberate architecture choices, the one dynamic surface, and what the
+the deliberate architecture choices, the narrow dynamic surfaces, and what the
 move off WordPress changed.
 
 The guiding idea is **security by construction** — the site is built so that
@@ -43,8 +43,9 @@ SQL injection into page rendering, server-side template injection, auth
 bypass, remote code execution on an origin — simply do not apply to the
 serving layer.
 
-The only code that executes per request is one Cloudflare Pages Function for
-the contact form (see below). Everything else is a flat file.
+The only code that executes per request is Cloudflare Pages Functions for the
+HTML CSP middleware, contact form, and CSP report receiver (see below).
+Everything else is a flat file.
 
 ### The private/public boundary is one auditable step
 
@@ -81,7 +82,7 @@ Pages Function's runtime environment, configured in the Cloudflare dashboard.
 It is never in the build, never in the repo, and `.env` / `.dev.vars` files are
 gitignored.
 
-## The contact form: the one dynamic surface
+## The contact form: the visitor-facing dynamic surface
 
 The contact page is static HTML, but submissions POST to a Cloudflare Pages
 Function at `/api/contact` ([`functions/api/contact.ts`](./functions/api/contact.ts)). It is small,
@@ -93,6 +94,7 @@ single-purpose, and layered:
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, enforced with a `COUNT(*)` against recent rows. Excess returns HTTP 429. |
 | **Input validation** | Name, email, and message are required; lengths are capped (190 / 190 / 5000 chars); email is format-checked. Oversized or malformed input is rejected with a 400. |
+| **Request caps** | The endpoint accepts only JSON, caps request bodies at 8 KiB, and truncates stored request metadata before insert. |
 | **Parameterized SQL** | The D1 insert uses bound parameters (`.bind(...)`) on a prepared statement. User input is never concatenated into SQL — no injection path. |
 | **Minimal error disclosure** | Failures return short, generic messages. Internal detail goes to server logs, not the client. |
 
@@ -142,8 +144,25 @@ The `contact_submissions` table:
 | `assigned_to`, `admin_notes` | `TEXT` | Triage fields, updated from the private operations app. |
 | `created_at`, `updated_at` | `TEXT NOT NULL DEFAULT (datetime('now'))` | Audit timestamps. |
 
-Two indices keep operational queries fast: `created_at DESC` for the
-recent-submissions feed and `status` for the unread filter.
+Three indices keep operational queries fast: `created_at DESC` for the
+recent-submissions feed, `status` for the unread filter, and
+`(ip_address, created_at DESC)` for the hourly rate-limit lookup.
+
+The `csp_reports` table stores filtered browser CSP violation reports:
+
+| Column | Type | Purpose |
+|---|---|---|
+| `id` | `INTEGER PRIMARY KEY` | Autoincrement row id. |
+| `document_uri`, `blocked_uri` | `TEXT` | The page that triggered the report and the blocked resource URI. |
+| `effective_directive`, `violated_directive`, `disposition` | `TEXT` | CSP directive context from the browser. |
+| `referrer`, `source_file` | `TEXT` | Browser-supplied source context when present. |
+| `line_number`, `column_number`, `status_code` | `INTEGER` | Optional numeric report metadata. |
+| `user_agent`, `ip_address`, `country` | `TEXT` | Request context for operational triage. |
+| `raw_report` | `TEXT NOT NULL` | Size-capped original report JSON for debugging. |
+| `created_at` | `TEXT NOT NULL DEFAULT (datetime('now'))` | Audit timestamp. |
+
+Two indices support report review: `created_at DESC` for the latest reports and
+`effective_directive` for grouping recurring policy issues.
 
 The function-side bindings and environment variables that this table
 depends on are documented in [Architecture §12 Runtime Configuration](./docs/Architecture.md#12-runtime-configuration).
@@ -152,12 +171,14 @@ depends on are documented in [Architecture §12 Runtime Configuration](./docs/Ar
 
 Cloudflare Pages applies the static headers in [`public/_headers`](./public/_headers) to every
 response. For HTML responses in production, [`functions/_middleware.ts`](./functions/_middleware.ts) additionally
-emits a per-request, nonce-bearing `Content-Security-Policy` header and attaches
-the matching nonce to every `<script>` tag.
+emits a per-request, nonce-bearing `Content-Security-Policy` header, attaches
+the matching nonce to every `<script>` tag, and advertises the CSP reporting
+endpoint.
 
 | Header | Value | Purpose |
 |---|---|---|
 | `Content-Security-Policy` | per-request from [`functions/_middleware.ts`](./functions/_middleware.ts) | Restricts the scripts, styles, and origins a page may load — detailed below. |
+| `Reporting-Endpoints` | `csp-endpoint="https://jseverino.com/api/csp-report"` | Gives browsers the named endpoint used by CSP `report-to`. |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (Cloudflare-managed) | Forces HTTPS for one year on the apex domain and all subdomains. Set at the Cloudflare zone level (SSL/TLS → Edge Certificates → HSTS) so it applies to every response without being duplicated in `_headers`. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
@@ -206,6 +227,15 @@ per-request by the middleware.
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
 
+The enforced policy also includes `report-to csp-endpoint` and the legacy
+fallback `report-uri https://jseverino.com/api/csp-report`. The report receiver
+([`functions/api/csp-report.ts`](./functions/api/csp-report.ts)) accepts both
+legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
+payload size, filters reports to `https://jseverino.com` documents, drops common
+browser-extension blocked-URI schemes, and stores compact records in D1. This
+adds operational visibility without adding `report-sample` or collecting inline
+code snippets.
+
 ## DNS and transport
 
 The HTTP-layer controls above sit on top of two further defensive layers
@@ -236,6 +266,45 @@ These layers cost nothing in page weight or latency — they are
 configuration only — but they close off whole categories of attack
 (downgrade, off-path certificate misissuance, DNS spoofing) before any
 request reaches the HTTP layer.
+
+## External verification
+
+The HTTP and DNS controls above are continuously verifiable by independent
+scanners. The current public snapshot:
+
+| Scanner | Result | Notes |
+| --- | --- | --- |
+| [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com) | **A+ — 135 / 100, 10 / 10 tests passed** (2026-05-27) | Bonus points come from `default-src 'none'` with no `'unsafe-*'`, Subresource Integrity on all scripts, `Referrer-Policy`, `X-Frame-Options` via CSP `frame-ancestors`, and `Cross-Origin-Resource-Policy`. The only outstanding recommendation is HSTS preload, intentionally deferred — preload is effectively irreversible across every current and future subdomain. |
+| [Pentest-Tools Light Website Scanner](https://pentest-tools.com/website-vulnerability-scanning/website-scanner) | **Low — 0 critical / 0 high / 0 medium / 3 low** (2026-05-27, 40 tests) | The three low findings were reviewed and dismissed as not applicable to this site's threat model — see below. |
+
+The Pentest-Tools low findings, for the record so a future review does not
+re-investigate them:
+
+- **"Unsafe security header: Content-Security-Policy"** — generic
+  CWE-1021 boilerplate triggered by the presence of `'self'` in
+  `script-src`. The risk only materializes for sites that serve JSONP
+  endpoints, run Angular, or accept user uploads — none of which apply
+  here. The Observatory CSP test (a stricter, more specific check) scores
+  this same policy at the maximum +10.
+- **"Robots.txt file found"** — an acknowledgement that `/robots.txt`
+  exists, which it should. The "recommendation" is to make sure the file
+  does not list sensitive paths; it lists only crawler directives for a
+  public site.
+- **"Server software and technology found"** — fingerprints `Astro`,
+  `HTTP/3`, `Cloudflare`, `HSTS`, `Open Graph`, `Priority Hints`. The
+  Cloudflare and HTTP/3 signals come from headers that Cloudflare adds
+  and cannot be removed without breaking those features. HSTS is a
+  security control being detected, not an information leak. Open Graph
+  and Priority Hints are required for sharing previews and load-priority
+  hints. Astro is detected from the `/_astro/*` build-output path, which
+  is not safely renamable. The same stack is also openly documented in
+  `docs/Architecture.md` and the WordPress-to-Astro migration writeup,
+  so the fingerprint is not a meaningful information leak for this site.
+
+Rescan after any change to `functions/_middleware.ts` or `public/_headers`
+to confirm Observatory hasn't regressed. The Pentest-Tools findings above
+will reappear on every rescan — they are inherent to the architecture and
+have been intentionally accepted.
 
 ## Supply chain and CI
 

@@ -37,16 +37,26 @@ interface ContactPayload {
 }
 
 const MAX_PER_IP_PER_HOUR = 5;
+const MAX_BODY_BYTES = 8_192;
+const MAX_USER_AGENT_LENGTH = 512;
+const MAX_SOURCE_URL_LENGTH = 2_048;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+    },
   });
 }
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
+}
+
+function truncate(value: string, max: number): string {
+  return value.length > max ? value.slice(0, max) : value;
 }
 
 function parseBrowser(ua: string): string {
@@ -89,9 +99,23 @@ async function verifyTurnstile(token: string, ip: string, secret: string): Promi
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
 
+  const contentType = request.headers.get('Content-Type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return json({ ok: false, error: 'Invalid request.' }, 415);
+  }
+
+  const contentLength = Number(request.headers.get('Content-Length') ?? 0);
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return json({ ok: false, error: 'Request is too large.' }, 413);
+  }
+
   let payload: ContactPayload;
   try {
-    payload = (await request.json()) as ContactPayload;
+    const body = await request.text();
+    if (body.length > MAX_BODY_BYTES) {
+      return json({ ok: false, error: 'Request is too large.' }, 413);
+    }
+    payload = JSON.parse(body) as ContactPayload;
   } catch {
     return json({ ok: false, error: 'Invalid request.' }, 400);
   }
@@ -138,8 +162,12 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     }
   }
 
-  const userAgent = request.headers.get('User-Agent') ?? '';
-  const sourceUrl = asString(payload.sourceUrl) || (request.headers.get('Referer') ?? '');
+  const userAgent = truncate(request.headers.get('User-Agent') ?? '', MAX_USER_AGENT_LENGTH);
+  const sourceUrl = truncate(
+    asString(payload.sourceUrl) || (request.headers.get('Referer') ?? ''),
+    MAX_SOURCE_URL_LENGTH,
+  );
+  const country = truncate(request.headers.get('CF-IPCountry') ?? '', 2);
 
   try {
     await env.DB.prepare(
@@ -155,7 +183,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         userAgent || null,
         parseBrowser(userAgent),
         parseDevice(userAgent),
-        request.headers.get('CF-IPCountry') || null,
+        country || null,
         sourceUrl || null,
       )
       .run();

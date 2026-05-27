@@ -52,8 +52,8 @@ Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browse
 ```
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
-assets, applies headers, runs a [small HTML middleware](../functions/_middleware.ts) for CSP nonces, and
-handles the [contact form endpoint](../functions/api/contact.ts). It no longer fronts a public WordPress page
+assets, applies headers, runs a [small HTML middleware](../functions/_middleware.ts) for CSP nonces and reporting, and
+handles the [contact form endpoint](../functions/api/contact.ts) plus the [CSP report endpoint](../functions/api/csp-report.ts). It no longer fronts a public WordPress page
 renderer.
 
 ## May 2026 Migration Comparison
@@ -238,10 +238,12 @@ The migration removes entire classes of work from production operations:
 The remaining dynamic pieces are narrow and explicit:
 
 - [`functions/_middleware.ts`](../functions/_middleware.ts) adds CSP nonces to
-  HTML responses.
+  HTML responses and advertises the CSP report endpoint.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact
   submissions with Turnstile verification, input validation, rate limiting, and
   D1 storage.
+- [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) stores filtered
+  browser CSP violation reports in the same D1 database for operational review.
 
 ## Operational Shift
 

@@ -5,8 +5,8 @@ This checklist is the human release gate for `jseverino.com`. It complements
 automated checks.
 
 Use it for production pushes, signed releases, and any change that affects
-content sync, generated assets, Cloudflare headers, CSP, SEO metadata, or the
-contact form.
+content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO
+metadata, D1 schema, or the contact form.
 
 ## 1. Preflight
 
@@ -49,6 +49,8 @@ Run the canonical repo-local gate:
 
 ```sh
 npm run publish:check
+npm audit --omit=dev
+npm outdated
 ```
 
 A clean release should report:
@@ -58,6 +60,8 @@ sync       content snapshot updated
 check      0 errors, 0 warnings
 build      <n> pages built
 assets     Images: <n>; Total image weight: <n>; No images over 1.5 MB.
+npm audit  0 vulnerabilities
+npm outdated  no direct packages listed
 ```
 
 Then confirm the worktree is still intentional:
@@ -112,6 +116,8 @@ Confirm:
 
 - `content-security-policy` is present on HTML responses.
 - The HTML CSP does not include `script-src 'unsafe-inline'`.
+- `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
+- The HTML CSP includes `report-to csp-endpoint` and `report-uri https://jseverino.com/api/csp-report`.
 - `strict-transport-security` includes `includeSubDomains`.
 - `x-content-type-options: nosniff` is present.
 - `referrer-policy: strict-origin-when-cross-origin` is present.
@@ -121,7 +127,31 @@ Confirm:
 Browser-extension errors, including AdGuard content script messages, are not site
 release failures unless they reproduce with extensions disabled.
 
-## 7. SEO And Accessibility Spot Checks
+## 7. D1 And CSP Reporting Checks
+
+After any change to [`db/schema.sql`](../db/schema.sql), apply the schema to the
+remote D1 database:
+
+```sh
+wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+```
+
+Confirm the expected operational tables exist:
+
+```sh
+wrangler d1 execute jseverino-contact --remote --command "SELECT name, type FROM sqlite_master WHERE type IN ('table','index') ORDER BY type, name;"
+```
+
+After deployment, confirm the CSP report table is readable:
+
+```sh
+wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS csp_report_count FROM csp_reports;"
+```
+
+CSP reports from browser extensions are filtered by the report endpoint and
+should not be treated as site regressions.
+
+## 8. SEO And Accessibility Spot Checks
 
 After deployment, validate the high-value URLs:
 
@@ -143,7 +173,7 @@ Check:
 - VoiceOver rotor headings show one page `h1`, then article or section headings
   in a coherent order.
 
-## 8. Scorecard Update
+## 9. Scorecard Update
 
 Update the vault scorecard in `00 Reporting` only for work that was actually
 completed and verified. Do not raise the score for planned items.
@@ -155,5 +185,6 @@ Recommended evidence to record:
 - signed tag verification result;
 - Cloudflare deploy URL or timestamp;
 - live header check summary;
+- D1 schema/reporting check summary when applicable;
 - Search Console and Rich Results outcomes;
 - manual keyboard and VoiceOver notes.
