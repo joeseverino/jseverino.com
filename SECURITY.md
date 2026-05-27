@@ -163,6 +163,7 @@ the matching nonce to every `<script>` tag.
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates the document's browsing context group, blocking `window.opener` access from cross-origin pages. Defends against tab-napping and reduces exposure to Spectre-class side-channel attacks. |
+| `Cross-Origin-Resource-Policy` | `same-site` | Prevents pages on other sites from embedding the site's assets as cross-origin sub-resources (hotlinked images, scripts, etc.). `same-site` rather than `same-origin` so subdomains under `jseverino.com` can still load shared assets. |
 | `Permissions-Policy` | `accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()` | Explicitly denies every powerful browser feature the site does not use, including hardware APIs, media capture, sensors, the Topics/FLoC interest-cohort APIs, and synchronous XHR. |
 
 Fingerprinted assets (`/_astro/*`, `/assets/*`) are served `immutable` with a
@@ -179,7 +180,10 @@ nonce, attaches it to every `<script>` in the HTML response with
 `HTMLRewriter`, and emits a CSP containing that nonce. Cloudflare JavaScript
 Detections and the Web Analytics beacon also receive or match the production
 policy, so the site keeps a strict `script-src` without adding
-`'unsafe-inline'`.
+`'unsafe-inline'`. `style-src` is equally strict (`'self'` only, no
+`'unsafe-inline'`): Astro hoists every component style to fingerprinted
+external CSS in `/_astro/`, and no inline `<style>` blocks or
+`style="..."` attributes are emitted in production HTML.
 
 Component scripts are emitted as external `/_astro/*.js` bundles
 (via `vite.build.assetsInlineLimit: 0` in
@@ -212,9 +216,14 @@ that are managed in Cloudflare and DNS rather than in this repository.
   downgrade to HTTP for one year — even via an attacker-supplied redirect.
 - **CAA DNS records.** [Certificate Authority Authorization](https://www.rfc-editor.org/rfc/rfc8659)
   records published in DNS restrict which CAs may issue certificates for
-  the domain. Cloudflare's recommended set authorizes their managed CAs
-  (Google Trust Services, Let's Encrypt, SSL.com, Sectigo) and rejects
-  issuance from any others. Verify with `dig CAA jseverino.com`.
+  the domain. Both `issue` and `issuewild` are pinned to Let's Encrypt
+  and Google Trust Services (`pki.goog`), with `cansignhttpexchanges=yes`
+  on the latter so Google can sign certificates for Cloudflare's Signed
+  Exchanges feature. Cloudflare additionally auto-injects records for its
+  managed-certificate providers (Sectigo, DigiCert, SSL.com) at query
+  time so Universal SSL renewals continue to work — these are merged into
+  DNS responses but are not visible in the DNS dashboard. Verify the
+  full effective set with `dig CAA jseverino.com`.
 - **DNSSEC** is enabled at the registrar so DNS responses for the zone are
   cryptographically signed, preventing on-path tampering with the CAA
   records and other DNS-level controls above.

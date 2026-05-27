@@ -21,7 +21,7 @@ function csp(nonce: string): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' ${CLOUDFLARE_BEACON_HASH} blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self'",
     "img-src 'self' data:",
     "font-src 'self'",
     "connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com",
