@@ -138,7 +138,7 @@ Two indices keep operational queries fast: `created_at DESC` for the
 recent-submissions feed and `status` for the unread filter.
 
 The function-side bindings and environment variables that this table
-depends on are documented in [Architecture §11 Runtime Configuration](./docs/Architecture.md#11-runtime-configuration).
+depends on are documented in [Architecture §12 Runtime Configuration](./docs/Architecture.md#12-runtime-configuration).
 
 ## HTTP response headers
 

@@ -90,5 +90,5 @@ published: true
 - Served as Site Captain, inspecting 30+ machines, topping off printers, and escalating issues in Cherwell.
 
 ::button sticky
-[Download Resume](/assets/media/2026/03/Joseph_Severino_Resume.pdf)
+[Download Resume](/assets/docs/Joseph_Severino_Resume.pdf)
 ::

@@ -276,7 +276,7 @@ npm run publish:check
 On a typical run (observed May 24, 2026), this validates:
 - **Integrity:** Zero TypeScript errors and zero Astro check warnings.
 - **Scale:** Successful build of 70+ pages and 500+ optimized images.
-- **Optimization:** [Image weight limits](./Architecture.md#12-release-gate) (ensuring no individual asset exceeds
+- **Optimization:** [Image weight limits](./Architecture.md#13-release-gate) (ensuring no individual asset exceeds
   1.5 MB).
 
 This shift moves the operational burden from "monitoring a live runtime" to

@@ -30,7 +30,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`src/content/writeups/`](./src/content/writeups/) | Sanitized synced portfolio Markdown. |
 | [`src/content/site.md`](./src/content/site.md) | Synced public site identity, professional summary, social links, and navigation. |
 | [`src/content/technology-groups.md`](./src/content/technology-groups.md) | Synced public taxonomy for technology labels and groups. |
-| [`public/assets/`](./public/assets/) | Synced and optimized public media. |
+| [`public/assets/`](./public/assets/) | Static site assets organized by bucket: `docs/` (downloadable documents), `fonts/`, `icons/`, `og/` (Open Graph cards), `pages/<slug>/` and `writeups/<slug>/` (vault-synced page and writeup assets). See [Architecture §11 Asset Organization](./docs/Architecture.md#11-asset-organization) for the convention. |
 | [`public/_headers`](./public/_headers) | Static Cloudflare security headers. CSP is issued per-request by the middleware (not set here). |
 | [`public/_redirects`](./public/_redirects) | Static Cloudflare redirects. |
 | [`functions/_middleware.ts`](./functions/_middleware.ts) | Per-request HTML CSP nonce generation and script nonce injection. |

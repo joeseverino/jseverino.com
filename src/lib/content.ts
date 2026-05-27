@@ -4,6 +4,7 @@ import MarkdownIt from 'markdown-it';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { enhanceImages } from './images';
+import { site } from './site';
 
 function createMarkdownRenderer() {
   return new MarkdownIt({
@@ -453,7 +454,7 @@ export async function getWriteups(): Promise<Writeup[]> {
       const heroImage =
         resolveWriteupAsset(entry.data.cover_image, slug) ??
         firstBodyImage(entry.body ?? '', slug) ??
-        '/assets/media/2025/08/cropped-JS-2-192x192.png';
+        site.defaultOgImage;
 
       return {
         slug,

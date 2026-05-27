@@ -177,12 +177,13 @@ dist/
 │   └── *.js                    # Component <script> blocks, content-hashed
 ├── _headers                    # Cloudflare Pages headers (copied from public/)
 ├── _redirects                  # Cloudflare Pages redirects (copied from public/)
-├── assets/                     # Synced static assets and image variants
+├── assets/                     # Static site assets — see §11 for the convention
+│   ├── docs/                   # Downloadable documents (resume PDF, etc.)
 │   ├── fonts/                  # Subset Inter variable WOFF2
-│   ├── media/                  # Site iconography and OG defaults
+│   ├── icons/                  # Favicons and apple-touch-icon
 │   ├── og/                     # Open Graph card images
-│   ├── pages/                  # Page-attached assets
-│   └── writeups/<slug>/        # Per-writeup images, AVIF/WebP/fallback variants
+│   ├── pages/<slug>/           # Page-attached assets, synced from the vault
+│   └── writeups/<slug>/        # Per-writeup image variants (AVIF/WebP/fallback), synced from the vault
 ├── functions/                  # Pages Functions (bundled separately at deploy)
 ├── <route>/index.html          # One HTML file per route
 └── sitemap-index.xml           # @astrojs/sitemap output
@@ -194,7 +195,52 @@ dist/
 
 **Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/` directory separately at deploy time; it is not part of the static `dist/` tree the Astro build writes. The middleware and the contact endpoint run as Workers at the edge.
 
-## 11. Runtime Configuration
+## 11. Asset Organization
+
+`public/` is the input side of the asset pipeline. Cloudflare Pages copies its contents verbatim into `dist/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
+
+| Subdirectory | Source | Purpose | Modified by |
+|---|---|---|---|
+| `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
+| `public/assets/fonts/` | Repo | Subset web fonts (Inter variable WOFF2) | Hand-edited in the repo |
+| `public/assets/icons/` | Repo | Favicons and apple-touch-icon | Hand-edited in the repo |
+| `public/assets/og/` | Repo | Open Graph card images (default + per-page) | Hand-edited in the repo / `npm run make:og` |
+| `public/assets/pages/<slug>/` | Vault | Page-attached assets, synced from `06 Pages/<slug>/images/` | `npm run sync:content` |
+| `public/assets/writeups/<slug>/` | Vault | Writeup-attached image variants, synced from `05 Writeups/<slug>/images/` | `npm run sync:content` |
+
+### Vault-synced vs repo-managed
+
+This is the central distinction:
+
+- **Vault-synced** (`pages/`, `writeups/`) tracks editorial content. Files appear here only because the vault references them. They are reprocessed (image variants, manifest entries) on every `sync:content`. **Direct edits in the repo are wiped on the next sync — edit the vault.**
+- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `og/`) is site chrome. These assets belong to the site as a whole, not to a single editorial page. They are tracked in the repo because they don't change often and don't need vault versioning.
+
+A new asset that's specific to one page or writeup belongs in the vault. A new site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the corresponding `public/assets/<bucket>/` directory in the repo.
+
+### Stable URLs
+
+All assets resolve under `/assets/<bucket>/<filename>`. Filenames are not fingerprinted at this level — Astro fingerprints only what goes through `_astro/` (component bundles and component CSS). The URL of a vault-synced image will not change unless its source filename changes.
+
+This stability is intentional for assets that external links may bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf` (linked from LinkedIn, recruiter outreach, etc.).
+
+The image *variants* emitted by the image pipeline (AVIF/WebP at multiple widths) live alongside the original under `images/` and are fingerprinted internally by content; the `<picture>` `srcset` URLs change only when source-image content hashes change.
+
+### Cache behavior
+
+`/assets/*` is served `immutable` with a one-year max-age (see [`public/_headers`](../public/_headers)).
+
+- For **repo-managed assets** (favicons, fonts, OG defaults, downloadable docs): immutable caching is the right tradeoff since these change rarely. To force a refresh of an existing URL, change the filename (e.g., `resume-2027.pdf`).
+- For **vault-synced images**: the image pipeline emits content-hashed variants, so a real content change produces new variant filenames that bypass the cache cleanly.
+
+### When to add a new bucket
+
+The convention scales by adding a new top-level bucket under `public/assets/`. Examples:
+- A `videos/` bucket if you start hosting MP4/WebM downloads.
+- A `data/` bucket for JSON exports or downloadable datasets.
+
+Avoid using existing buckets for unrelated content (e.g., putting a video under `docs/`) — the bucket name is the convention contract.
+
+## 12. Runtime Configuration
 
 The site needs three pieces of Cloudflare-side configuration to run. None of them live in the repo; they are configured in the Cloudflare Pages project settings.
 
@@ -249,7 +295,7 @@ npx wrangler pages dev dist.nosync
 
 The site is then served at `http://localhost:8788` with the middleware and the contact function active. `curl -sI http://localhost:8788/ | grep -i content-security-policy` is the canonical pre-deploy CSP check.
 
-## 12. Release Gate
+## 13. Release Gate
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 

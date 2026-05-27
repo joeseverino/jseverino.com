@@ -114,6 +114,16 @@ The sync script:
 - optimizes image assets into responsive variants;
 - writes the image manifest used by `Picture.astro`.
 
+### What does NOT live in the vault
+
+The vault is for editorial content and assets attached to a specific page or writeup. Site-wide chrome — favicons, web fonts, the default Open Graph image, downloadable documents like the resume PDF — lives in the repo under `public/assets/`, not in the vault. Those assets are referenced from vault markdown by their stable public URL:
+
+```md
+[Download Resume](/assets/docs/Joseph_Severino_Resume.pdf)
+```
+
+A vault page may link to a repo-managed asset, but the asset itself is not synced from anywhere — it is committed to the repo and hand-replaced when it changes. See [Architecture §11 Asset Organization](./Architecture.md#11-asset-organization) for the full convention (which bucket holds what, and the difference between vault-synced and repo-managed assets).
+
 ## Local Workflow
 
 ```sh
