@@ -19,7 +19,7 @@ function createNonce(): string {
 
 function csp(nonce: string): string {
   return [
-    "default-src 'self'",
+    "default-src 'none'",
     `script-src 'self' 'nonce-${nonce}' ${CLOUDFLARE_BEACON_HASH} blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
     "style-src 'self'",
     "img-src 'self' data:",

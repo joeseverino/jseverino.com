@@ -171,9 +171,13 @@ one-year cache; HTML is short-cached and revalidated.
 
 ### Content Security Policy
 
-The policy starts from `default-src 'self'` and allowlists only the third-party
-origins the site uses: Cloudflare Turnstile (`challenges.cloudflare.com`) and
-the Cloudflare Web Analytics beacon (`static.cloudflareinsights.com`).
+The policy starts from `default-src 'none'` — every fetch type the browser
+makes must be explicitly authorized by its own directive, so any future
+resource category (manifests, media, workers) fails closed unless the CSP
+is updated alongside it. From that default-deny baseline the policy
+allowlists only the third-party origins the site uses: Cloudflare Turnstile
+(`challenges.cloudflare.com`) and the Cloudflare Web Analytics beacon
+(`static.cloudflareinsights.com`).
 
 Production HTML uses a per-request nonce. The Pages middleware ([`functions/_middleware.ts`](./functions/_middleware.ts)) generates the
 nonce, attaches it to every `<script>` in the HTML response with
