@@ -15,8 +15,12 @@
 # Content-Security-Policy is issued per-request (with a nonce) by
 # functions/_middleware.ts for HTML responses. No static CSP fallback is set
 # here — Pages Functions middleware runs on every HTML response.
+# Strict-Transport-Security is set at the Cloudflare zone level (SSL/TLS →
+# Edge Certificates → HSTS) so it applies to every response without being
+# duplicated here.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()

@@ -23,6 +23,14 @@ This is a personal site, not a funded program — there is no bug bounty — but
 reports are read and genuine issues are fixed promptly. Please allow a
 reasonable window to remediate before any public disclosure.
 
+The same disclosure path is published in machine-readable form per
+[RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) at
+[`/.well-known/security.txt`](https://jseverino.com/.well-known/security.txt),
+so automated discovery tools and bug-bounty platforms can route reports
+correctly. The committed source lives at
+[`public/.well-known/security.txt`](./public/.well-known/security.txt);
+renew the `Expires` field annually.
+
 ## Architecture: a minimal attack surface
 
 ### No origin, no server-side runtime
@@ -150,10 +158,12 @@ the matching nonce to every `<script>` tag.
 | Header | Value | Purpose |
 |---|---|---|
 | `Content-Security-Policy` | per-request from [`functions/_middleware.ts`](./functions/_middleware.ts) | Restricts the scripts, styles, and origins a page may load — detailed below. |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (Cloudflare-managed) | Forces HTTPS for one year on the apex domain and all subdomains. Set at the Cloudflare zone level (SSL/TLS → Edge Certificates → HSTS) so it applies to every response without being duplicated in `_headers`. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
-| `Permissions-Policy` | `geolocation=(), microphone=(), camera=()` | Denies powerful browser APIs the site never uses. |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Isolates the document's browsing context group, blocking `window.opener` access from cross-origin pages. Defends against tab-napping and reduces exposure to Spectre-class side-channel attacks. |
+| `Permissions-Policy` | `accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()` | Explicitly denies every powerful browser feature the site does not use, including hardware APIs, media capture, sensors, the Topics/FLoC interest-cohort APIs, and synchronous XHR. |
 
 Fingerprinted assets (`/_astro/*`, `/assets/*`) are served `immutable` with a
 one-year cache; HTML is short-cached and revalidated.
@@ -187,6 +197,32 @@ per-request by the middleware.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
+
+## DNS and transport
+
+The HTTP-layer controls above sit on top of two further defensive layers
+that are managed in Cloudflare and DNS rather than in this repository.
+
+- **TLS by default.** Cloudflare's Universal SSL terminates TLS at the edge
+  with a managed certificate. "Always Use HTTPS" is enabled so plain-HTTP
+  requests are redirected at the edge before reaching the origin path.
+- **HSTS.** Configured in the Cloudflare dashboard
+  (SSL/TLS → Edge Certificates → HSTS) with `includeSubDomains` and
+  `max-age=31536000`. After the first HTTPS visit, browsers refuse to
+  downgrade to HTTP for one year — even via an attacker-supplied redirect.
+- **CAA DNS records.** [Certificate Authority Authorization](https://www.rfc-editor.org/rfc/rfc8659)
+  records published in DNS restrict which CAs may issue certificates for
+  the domain. Cloudflare's recommended set authorizes their managed CAs
+  (Google Trust Services, Let's Encrypt, SSL.com, Sectigo) and rejects
+  issuance from any others. Verify with `dig CAA jseverino.com`.
+- **DNSSEC** is enabled at the registrar so DNS responses for the zone are
+  cryptographically signed, preventing on-path tampering with the CAA
+  records and other DNS-level controls above.
+
+These layers cost nothing in page weight or latency — they are
+configuration only — but they close off whole categories of attack
+(downgrade, off-path certificate misissuance, DNS spoofing) before any
+request reaches the HTTP layer.
 
 ## Supply chain and CI
 

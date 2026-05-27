@@ -179,6 +179,8 @@ dist/
 │   └── *.js                    # Component <script> blocks, content-hashed
 ├── _headers                    # Cloudflare Pages headers (copied from public/)
 ├── _redirects                  # Cloudflare Pages redirects (copied from public/)
+├── .well-known/
+│   └── security.txt            # RFC 9116 disclosure pointer (copied from public/)
 ├── assets/                     # Static site assets — see §11 for the convention
 │   ├── docs/                   # Downloadable documents (resume PDF, etc.)
 │   ├── fonts/                  # Subset Inter variable WOFF2

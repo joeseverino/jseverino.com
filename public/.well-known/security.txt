@@ -1,0 +1,8 @@
+# Security disclosure information for jseverino.com — RFC 9116.
+# Renew Expires annually; bump the value when this file changes.
+
+Contact: https://jseverino.com/contact/
+Expires: 2027-05-26T23:59:59.000Z
+Preferred-Languages: en
+Canonical: https://jseverino.com/.well-known/security.txt
+Policy: https://github.com/joeseverino/jseverino.com/blob/main/SECURITY.md
