@@ -7,9 +7,16 @@ import '@styles/base.css';
 type Props = {
   seo?: Parameters<typeof SeoHead>[0];
   bodyClass?: string;
+  /** Extra third-party origins to preconnect to, beyond the site-wide defaults. */
+  preconnect?: string[];
 };
 
-const { seo = {}, bodyClass } = Astro.props;
+const { seo = {}, bodyClass, preconnect = [] } = Astro.props;
+
+// `static.cloudflareinsights.com` serves the Cloudflare Web Analytics beacon,
+// auto-injected into every HTML response by the Cloudflare proxy. Warming the
+// DNS + TLS connection here removes ~100-300ms of cold-start latency for it.
+const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnect];
 ---
 
 <!doctype html>
@@ -17,6 +24,7 @@ const { seo = {}, bodyClass } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {preconnectOrigins.map((origin) => <link rel="preconnect" href={origin} crossorigin />)}
     <link
       rel="preload"
       href="/assets/fonts/inter/inter-variable.woff2"
