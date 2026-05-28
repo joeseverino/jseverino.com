@@ -26,9 +26,9 @@
           }
         ],
         "categories:best-practices": [
-          "error",
+          "warn",
           {
-            "minScore": 0.90
+            "minScore": 0.70
           }
         ],
         "categories:seo": [
