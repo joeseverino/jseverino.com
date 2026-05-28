@@ -16,7 +16,7 @@ M.S. Cybersecurity (in progress), Georgia Tech
 
 Building hands-on security projects across network defense, endpoint monitoring, application hardening, and automation.
 
-📍 St. Louis, MO
+<p class="hero-location">St. Louis, MO</p>
 
 ::buttons
 - [View My Resume](/resume/)
@@ -42,7 +42,7 @@ I started building things on the web early, long before I understood the systems
 Today, my focus is network security and the systems behind it. I still approach projects the same way, but I take the time to write everything out as I go so I understand what I built and can come back to it later.
 
 ::button
-[Read More](/about/)
+[Read About Me](/about/)
 ::
 ::
 
