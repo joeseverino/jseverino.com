@@ -24,6 +24,7 @@ jobs:
       - name: Check repository documentation links
         uses: lycheeverse/lychee-action@v2
         with:
+          output: lychee/repository-documentation.md
           args: >-
             --no-progress
             --verbose
@@ -36,6 +37,7 @@ jobs:
       - name: Check public content links
         uses: lycheeverse/lychee-action@v2
         with:
+          output: lychee/public-content.md
           args: >-
             --no-progress
             --verbose
@@ -43,3 +45,11 @@ jobs:
             --accept 200,204,206,301,302,303,307,308,429,999
             src/content/**/*.md
           fail: true
+
+      - name: Upload link check reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: link-check-reports
+          path: lychee
+          if-no-files-found: ignore
