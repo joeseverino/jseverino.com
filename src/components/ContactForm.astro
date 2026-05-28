@@ -45,6 +45,10 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
       status.hidden = false;
     };
 
+    form.addEventListener('input', () => {
+      if (status && !status.hidden && status.dataset.kind === 'error') status.hidden = true;
+    });
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!button) return;
