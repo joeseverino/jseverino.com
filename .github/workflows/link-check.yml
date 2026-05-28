@@ -21,7 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Check links
+      - name: Check repository documentation links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --verbose
+            --accept 200,204,206,301,302,303,307,308,429,999
+            README.md
+            SECURITY.md
+            docs/**/*.md
+          fail: true
+
+      - name: Check public content links
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
@@ -29,8 +41,5 @@ jobs:
             --verbose
             --base-url https://jseverino.com
             --accept 200,204,206,301,302,303,307,308,429,999
-            README.md
-            SECURITY.md
-            docs/**/*.md
             src/content/**/*.md
           fail: true
