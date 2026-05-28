@@ -116,13 +116,14 @@ the uncached cost of the legacy site:
 | `SEM_hardening-2048x1362.png` | 1.35 MB |
 | `install-2-2048x1424.png` | 1.32 MB |
 
-### Case Study: Homepage
+### Case Study: Homepage Migration Baseline
 
 The homepage serves as the primary entry point and showcases the site's core
-identity. This comparison validates that the performance gains are consistent
-across different page types.
+identity. The May 24, 2026 migration baseline already showed the Astro homepage
+shipping less JavaScript, less total payload, faster first paint, stronger
+accessibility, and better SEO than the legacy WordPress homepage.
 
-| Measurement | Legacy WordPress | Current Astro |
+| Measurement | Legacy WordPress | Astro migration baseline |
 | --- | ---: | ---: |
 | Lighthouse requests | 25 | 16 |
 | Lighthouse total byte weight | 1.15 MB | 610 KB |
@@ -130,10 +131,12 @@ across different page types.
 | Lighthouse Accessibility | 96 | **100** |
 | Lighthouse SEO | 85 | **92** |
 
-The Astro homepage delivers a lighter payload and cleaner accessibility result.
-The WordPress homepage is still useful as a comparison point, but the article
-comparison is more representative because the portfolio writeups carry the
-largest image payloads.
+That baseline was before the final homepage polish. The current PageSpeed
+snapshot below shows the homepage after those fixes: 100 Performance, 100
+Accessibility, 100 Best Practices, and 100 SEO on both mobile and desktop.
+The WordPress homepage remains useful as a comparison point, but the article
+comparison is more representative of the migration's asset-pipeline win because
+portfolio writeups carry the largest image payloads.
 
 ### Codebase Profile
 
@@ -206,7 +209,7 @@ rather than the login challenge. An "Access-blocked" measurement typically shows
 - **False signals:** Accessibility and SEO scores will be based on the login
   template.
 
-The current Astro article Lighthouse run on May 24, 2026 reported:
+The May 24, 2026 Astro article baseline reported:
 
 | Metric | Value |
 | --- | ---: |
@@ -218,11 +221,31 @@ The current Astro article Lighthouse run on May 24, 2026 reported:
 | First-viewport total byte weight | 476 KiB |
 | First-viewport network requests | 13 |
 
-The Astro Lighthouse performance score was lower than the payload improvement
-might suggest because the run included Cloudflare challenge/analytics work and
-reported high Total Blocking Time. That is useful to monitor, but it does not
-change the core migration finding: the shipped page is dramatically smaller,
-static, and easier to audit.
+This article baseline is intentionally kept as a migration artifact: it records
+the payload reduction at the time the WordPress-to-Astro decision was validated.
+Later homepage-specific PageSpeed results are stronger, but they measure a
+different surface. Read together, the evidence is cleaner: the migration made
+the heavy writeup pages dramatically smaller, and subsequent homepage polish
+brought the primary entry point to perfect PageSpeed category scores.
+
+## Current PageSpeed Snapshot
+
+After the post-migration polish, Google PageSpeed Insights reported perfect
+category scores for the live homepage on May 27, 2026 at 9:14 PM CDT. This is
+the current headline benchmark for the production site:
+
+| Mode | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS | Speed Index |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mobile, emulated Moto G Power / Slow 4G | 100 | 100 | 100 | 100 | 0.9 s | 1.8 s | 0 ms | 0 | 1.4 s |
+| Desktop, emulated desktop / custom throttling | 100 | 100 | 100 | 100 | 0.3 s | 0.5 s | 0 ms | 0 | 0.4 s |
+
+The PageSpeed run used Lighthouse 13.3.0 against `https://jseverino.com/`.
+The Best Practices panel passed the trust-and-safety checks for effective CSP,
+strong HSTS, and Trusted Types mitigation, which confirms the security headers
+did not come at the cost of Lighthouse-visible UX or compatibility regressions.
+Compared with the May 24 homepage baseline, the current run raises SEO from 92
+to 100 while keeping Accessibility at 100 and adding 100 Best Practices and 100
+Performance scores on both throttled mobile and desktop profiles.
 
 ## Security And Operations Impact
 

@@ -290,6 +290,7 @@ scanners. The current public snapshot:
 | Scanner | Result | Notes |
 | --- | --- | --- |
 | [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com) | **A+ — 135 / 100, 10 / 10 tests passed** (2026-05-27) | Bonus points come from `default-src 'none'` with no `'unsafe-*'`, Subresource Integrity on all scripts, `Referrer-Policy`, `X-Frame-Options` via CSP `frame-ancestors`, and `Cross-Origin-Resource-Policy`. The only outstanding recommendation is HSTS preload, intentionally deferred — preload is effectively irreversible across every current and future subdomain. |
+| Google PageSpeed Insights | **100 / 100 / 100 / 100 on mobile and desktop** (2026-05-27, 9:14 PM CDT) | Lighthouse 13.3.0 passed the Best Practices trust-and-safety checks for effective CSP, strong HSTS, and Trusted Types mitigation while preserving 100 Performance, Accessibility, Best Practices, and SEO scores. |
 | [Pentest-Tools Light Website Scanner](https://pentest-tools.com/website-vulnerability-scanning/website-scanner) | **Low — 0 critical / 0 high / 0 medium / 3 low** (2026-05-27, 40 tests) | The three low findings were reviewed and dismissed as not applicable to this site's threat model — see below. |
 
 The Pentest-Tools low findings, for the record so a future review does not
@@ -355,11 +356,23 @@ surface:
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](./.github/workflows/dependency-review.yml)).
 - **Build CI** runs `npm ci && npm run build` on every push and PR, so a
-  broken or tampered dependency tree fails fast.
+  broken or tampered dependency tree fails fast, then uploads a CycloneDX
+  SBOM artifact for the built dependency graph.
+- **Workflow lint** runs actionlint when GitHub Actions workflow files change
+  ([`.github/workflows/workflow-lint.yml`](./.github/workflows/workflow-lint.yml)).
+- **Link checks** run lychee against repository documentation and public
+  Markdown content separately, with reports uploaded as workflow artifacts
+  ([`.github/workflows/link-check.yml`](./.github/workflows/link-check.yml)).
+- **Lighthouse CI** checks selected live URLs on a weekly/manual schedule and
+  uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](./.github/workflows/lighthouse.yml)).
+- **OpenSSF Scorecard** runs weekly/manual checks, uploads SARIF to code
+  scanning, and preserves the generated SARIF as an artifact
+  ([`.github/workflows/scorecard.yml`](./.github/workflows/scorecard.yml)).
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit, minimal `permissions:` block (`contents: read` by default).
-- **Pinned tooling.** Actions are pinned to major-version tags and
-  dependencies install from the committed lockfile.
+- **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
+  the actionlint container is pinned by digest, Lighthouse CI uses an explicit
+  npm package version, and dependencies install from the committed lockfile.
 
 ## Content and rendering
 

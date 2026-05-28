@@ -118,6 +118,33 @@ npm outdated               # Check direct dependency freshness
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup.
 
+## Quality Automation
+
+The repo has a small GitHub Actions suite for build, security, and credibility checks:
+
+| Workflow | Purpose | Output |
+| --- | --- | --- |
+| [`build`](./.github/workflows/build.yml) | Installs from `package-lock.json`, builds the Astro site, and generates an npm SBOM. | `sbom` artifact. |
+| [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript on pushes, PRs, and a weekly schedule. | GitHub code scanning alerts. |
+| [`dependency review`](./.github/workflows/dependency-review.yml) | Blocks PRs that introduce high-severity dependency advisories. | PR check and summary comment. |
+| [`workflow lint`](./.github/workflows/workflow-lint.yml) | Runs actionlint when workflow files change. | PR/push check. |
+| [`link check`](./.github/workflows/link-check.yml) | Checks repository docs and public Markdown links separately. | `link-check-reports` artifact. |
+| [`lighthouse`](./.github/workflows/lighthouse.yml) | Runs Lighthouse CI against selected live URLs. | `lighthouse-reports` artifact. |
+| [`scorecard`](./.github/workflows/scorecard.yml) | Runs OpenSSF Scorecard. | Code scanning SARIF plus `scorecard-sarif` artifact. |
+
+Workflow dependencies are pinned to immutable SHAs or container digests. Dependabot still checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml).
+
+## Current PageSpeed Snapshot
+
+Google PageSpeed Insights reported a clean 100 across every scored category for the live homepage on May 27, 2026 at 9:14 PM CDT.
+
+| Mode | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS | Speed Index |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Mobile, emulated Moto G Power / Slow 4G | 100 | 100 | 100 | 100 | 0.9 s | 1.8 s | 0 ms | 0 | 1.4 s |
+| Desktop, emulated desktop / custom throttling | 100 | 100 | 100 | 100 | 0.3 s | 0.5 s | 0 ms | 0 | 0.4 s |
+
+The PDFs used as evidence were exported from PageSpeed Insights for `https://jseverino.com/` with Lighthouse 13.3.0. The run also passed the trust-and-safety checks for effective CSP, strong HSTS, and Trusted Types mitigation.
+
 ## Cloudflare Operations
 
 The Pages project owns runtime bindings in the Cloudflare dashboard; this repo intentionally has no `wrangler.toml`. The shared D1 binding is named `DB` and points at `jseverino-contact`.

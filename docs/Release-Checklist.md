@@ -87,6 +87,23 @@ git push origin main
 Do not commit local caches, build output, `.env*`, `.dev.vars*`, editor folders,
 or numbered iCloud conflict copies.
 
+After pushing, confirm the expected GitHub Actions checks pass. The normal
+remote gate is:
+
+- `build`
+- `codeql`
+- `workflow lint` when workflow files changed
+- `dependency review` on pull requests
+- `link check`, `lighthouse`, and `scorecard` on their schedules or when run manually
+
+For scheduled/manual quality checks, download artifacts when investigating a
+failure or recording evidence:
+
+- `build` uploads `sbom`.
+- `link check` uploads `link-check-reports`.
+- `lighthouse` uploads `lighthouse-reports`.
+- `scorecard` uploads `scorecard-sarif` and also sends SARIF to code scanning.
+
 ## 5. Signed Version Tag
 
 For a versioned release, move the signed tag only after the final release commit
@@ -224,6 +241,10 @@ After deployment, validate the high-value URLs:
 
 Check:
 
+- PageSpeed Insights remains clean for the homepage on mobile and desktop when
+  the change could affect rendering, headers, assets, or SEO. The May 27, 2026
+  baseline was 100 Performance, 100 Accessibility, 100 Best Practices, and
+  100 SEO in both modes.
 - Google Search Console URL inspection uses the intended canonical URL.
 - Rich Results Test detects Article or WebSite structured data where expected.
 - The page title, meta description, canonical URL, and Open Graph image are correct.
