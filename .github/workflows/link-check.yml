@@ -1,0 +1,35 @@
+name: link check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'README.md'
+      - 'SECURITY.md'
+      - 'docs/**/*.md'
+      - 'src/content/**/*.md'
+  schedule:
+    - cron: '37 11 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --verbose
+            --accept 200,204,206,301,302,303,307,308,429
+            README.md
+            SECURITY.md
+            docs/**/*.md
+            src/content/**/*.md
+          fail: true
