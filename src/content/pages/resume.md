@@ -7,7 +7,7 @@ path: /resume/
 published: true
 ---
 
-<p class="center-text"><a href="mailto:joe@jseverino.com">joe@jseverino.com</a> | St. Louis, MO | <a href="https://linkedin.com/in/joeseverino" target="_blank" rel="noopener">LinkedIn</a></p>
+<p class="center-text"><a href="/contact/">Contact</a> | St. Louis, MO | <a href="https://linkedin.com/in/joeseverino" target="_blank" rel="noopener">LinkedIn</a></p>
 
 ---
 
