@@ -3,8 +3,6 @@
 [![build](https://github.com/joeseverino/jseverino.com/actions/workflows/build.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/build.yml)
 [![codeql](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
 [![dependency review](https://github.com/joeseverino/jseverino.com/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/dependency-review.yml)
-[![workflow lint](https://github.com/joeseverino/jseverino.com/actions/workflows/workflow-lint.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/workflow-lint.yml)
-[![link check](https://github.com/joeseverino/jseverino.com/actions/workflows/link-check.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/link-check.yml)
 [![scorecard](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
 [![lighthouse](https://github.com/joeseverino/jseverino.com/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/lighthouse.yml)
 
