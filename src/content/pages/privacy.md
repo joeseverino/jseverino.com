@@ -32,6 +32,10 @@ necessary infrastructure cookies (`__cf_bm` for bot management,
 Turnstile challenge tokens). These are required for the site to
 function and are not used for tracking.
 
+**Browser security diagnostics.** Browsers may send a short automated
+note to the site when a page hits a security-policy mismatch. No extra
+data is collected beyond what a normal page load already includes.
+
 ## Why
 
 So I can read and reply to your message, and filter abusive
