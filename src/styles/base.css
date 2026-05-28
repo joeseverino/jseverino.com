@@ -889,8 +889,9 @@ figure {
   margin-top: 1.2rem;
 }
 
-.article-tags h4 {
+.article-tags h3 {
   font-size: var(--font-h-md);
+  letter-spacing: normal;
 }
 
 .tech-pills {
