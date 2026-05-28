@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url('/assets/fonts/inter/inter-variable.woff2') format('woff2');
+  src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
 }
 
 :root {
@@ -547,14 +547,14 @@ main > * + * {
 }
 
 /* Home hero has a couple of intentionally tighter content blocks:
-   the summary paragraph uses spacing-20, the location pill sits directly
+   the summary paragraph uses spacing-20, the location chip sits directly
    underneath it, and the button row starts at 1.4rem. */
 .home-content:first-child > p:nth-of-type(3) {
   margin-block-start: var(--space-2);
   margin-block-end: var(--space-2);
 }
 
-.home-content:first-child > p:nth-of-type(4):not(:has(a)) {
+.home-content:first-child > .hero-location {
   margin-block-start: 0;
 }
 
@@ -577,8 +577,7 @@ main > * + * {
   line-height: 1;
 }
 
-.home-content:first-child > p:has(img.emoji),
-.home-content:first-child > p:nth-of-type(4):not(:has(a)) {
+.home-content:first-child > .hero-location {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
