@@ -291,18 +291,25 @@ function renderTerminal(markdown: string): string {
   });
 }
 
+// A side whose entire content is a single image markdown line renders
+// inline, so enhanceImages can wrap it as <picture> without a surrounding <p>.
+function renderSplitSide(text: string): string {
+  const trimmed = text.trim();
+  if (/^!\[[^\]]*\]\([^)]+\)$/.test(trimmed)) {
+    return md.renderInline(trimmed);
+  }
+  return restoreFigures(md.render(trimmed));
+}
+
 function renderSplit(markdown: string): string {
   return markdown.replace(blockRe('split'), (_, content: string) => {
     const parts = content.split(/^:::\s*$/m);
     if (parts.length < 2) {
-      const inner = restoreFigures(md.render(content.trim()));
-      return `\n\n<div class="split">${inner}</div>\n\n`;
+      return `\n\n<div class="split">${renderSplitSide(content)}</div>\n\n`;
     }
     const [left, ...rest] = parts;
     const right = rest.join(':::');
-    const leftHtml = restoreFigures(md.render(left.trim()));
-    const rightHtml = restoreFigures(md.render(right.trim()));
-    return `\n\n<div class="split"><div>${leftHtml}</div><div>${rightHtml}</div></div>\n\n`;
+    return `\n\n<div class="split"><div>${renderSplitSide(left)}</div><div>${renderSplitSide(right)}</div></div>\n\n`;
   });
 }
 
