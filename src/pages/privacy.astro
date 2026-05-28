@@ -16,7 +16,7 @@ const page = await getPage('privacy');
     ],
   }}
 >
-  <main class="content-page">
+  <main id="main" tabindex="-1" class="content-page">
     <div class="content-flow">
       <h2 class="page-title">{page.title}</h2>
       <div class="prose" set:html={page.bodyHtml} />

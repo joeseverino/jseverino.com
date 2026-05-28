@@ -17,7 +17,7 @@ const contentBlocks = page.body.split(/(::featured-projects\s*::|::technology-cl
     breadcrumbs: [{ name: 'Home', url: '/' }],
   }}
 >
-  <main>
+  <main id="main" tabindex="-1">
     {
       contentBlocks.map((block) => {
         if (block.startsWith('::featured-projects')) {
