@@ -4,12 +4,22 @@
 # Fingerprinted Astro assets and synced static assets.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
 
 /*.html
   Cache-Control: public, max-age=300, must-revalidate
+
+# Keep branch and deployment preview URLs out of search indexes. The canonical
+# custom domain still indexes normally.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
 
 # Security headers for every route.
 # Content-Security-Policy is issued per-request (with a nonce) by
@@ -19,6 +29,7 @@
 # Edge Certificates → HSTS) so it applies to every response without being
 # duplicated here.
 /*
+  ! Access-Control-Allow-Origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   X-Permitted-Cross-Domain-Policies: none

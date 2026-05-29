@@ -71,9 +71,9 @@ function freshness(entryPath) {
 }
 
 // Resolve iCloud conflict copies: among "name.ext" + "name N.ext", keep the
-// most recently modified one under the canonical (un-numbered) name and drop
-// the rest. Keeping the newest guarantees the freshly synced content wins even
-// if iCloud renamed the canonical file out from under the build.
+// canonical tracked path whenever it exists and drop the numbered copies. If
+// iCloud renamed the canonical path away entirely, restore the newest numbered
+// copy back to the canonical name.
 function resolveNumberedCopies(root) {
   const fullRoot = path.join(siteRoot, root);
   if (!fs.existsSync(fullRoot)) return 0;
@@ -89,9 +89,13 @@ function resolveNumberedCopies(root) {
 
   for (const [canonical, names] of groups) {
     if (names.length > 1 || names.some(isNumberedConflict)) {
-      const winner = names
-        .map((name) => ({ name, mtime: freshness(path.join(fullRoot, name)) }))
-        .sort((a, b) => b.mtime - a.mtime)[0].name;
+      const canonicalPath = path.join(fullRoot, canonical);
+      const canonicalExists = fs.existsSync(canonicalPath);
+      const winner = canonicalExists
+        ? canonical
+        : names
+            .map((name) => ({ name, mtime: freshness(path.join(fullRoot, name)) }))
+            .sort((a, b) => b.mtime - a.mtime)[0].name;
 
       for (const name of names) {
         if (name === winner) continue;

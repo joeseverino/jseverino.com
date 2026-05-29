@@ -56,6 +56,13 @@ const IGNORED_BLOCKED_URI_PREFIXES = [
   'safari-web-extension:',
   'edge-extension:',
 ];
+const IGNORED_SOURCE_FILE_PREFIXES = [
+  'chrome-extension',
+  'chrome-extension:',
+  'moz-extension:',
+  'safari-web-extension:',
+  'edge-extension:',
+];
 
 function noContent(status = 204): Response {
   return new Response(null, {
@@ -99,9 +106,11 @@ function isSiteDocument(documentUri: string): boolean {
 
 function isIgnoredReport(report: NormalizedReport): boolean {
   const blocked = report.blockedUri.toLowerCase();
+  const sourceFile = report.sourceFile.toLowerCase();
   return (
     !isSiteDocument(report.documentUri) ||
-    IGNORED_BLOCKED_URI_PREFIXES.some((prefix) => blocked.startsWith(prefix))
+    IGNORED_BLOCKED_URI_PREFIXES.some((prefix) => blocked.startsWith(prefix)) ||
+    IGNORED_SOURCE_FILE_PREFIXES.some((prefix) => sourceFile.startsWith(prefix))
   );
 }
 
