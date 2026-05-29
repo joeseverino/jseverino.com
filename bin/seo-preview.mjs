@@ -76,14 +76,17 @@ function htmlPath(urlPath) {
   return path.join(distRoot, urlPath, 'index.html');
 }
 
+const ENTITY_MAP = {
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&#x27;': "'",
+};
+
 function decodeEntities(value) {
-  return value
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replaceAll('&#x27;', "'");
+  return value.replace(/&(?:amp|lt|gt|quot|#39|#x27);/g, (match) => ENTITY_MAP[match]);
 }
 
 function attr(html, selector, attrName = 'content') {
