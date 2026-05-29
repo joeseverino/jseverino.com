@@ -31,6 +31,18 @@ correctly. The committed source lives at
 [`public/.well-known/security.txt`](./public/.well-known/security.txt);
 renew the `Expires` field annually.
 
+## Licensing and reuse
+
+The repository is published for transparency and review. It contains original
+source code, written content, images, and other creative work, and is **not**
+an open-source project. The [`LICENSE`](./LICENSE) file is an explicit
+"all rights reserved" notice — copyright is automatic under the Berne
+Convention, but the file makes the posture machine-readable and unambiguous
+to anyone browsing the repo.
+
+Reading the source on GitHub is fine. Copying, forking, modifying, or
+redistributing any portion of the repo requires prior written permission.
+
 ## Architecture: a minimal attack surface
 
 ### No origin, no server-side runtime
@@ -188,7 +200,19 @@ endpoint.
 | `Permissions-Policy` | `accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()` | Explicitly denies every powerful browser feature the site does not use, including hardware APIs, media capture, sensors, the Topics/FLoC interest-cohort APIs, and synchronous XHR. |
 
 Fingerprinted assets (`/_astro/*`, `/assets/*`) are served `immutable` with a
-one-year cache; HTML is short-cached and revalidated.
+one-year cache; HTML is short-cached and revalidated. Those asset routes,
+and the global `/*` rule, also strip any `Access-Control-Allow-Origin`
+that an upstream layer (Cloudflare automatic feature, CDN replay) might
+otherwise add — the site has no public cross-origin asset use case, so the
+absence of CORS headers is the intended default rather than something to
+inherit from the platform.
+
+Preview deployments at `*.pages.dev` carry an `X-Robots-Tag: noindex`
+header (set in [`public/_headers`](./public/_headers) under the
+`https://:project.pages.dev/*` and `https://:version.:project.pages.dev/*`
+rules) so branch and version preview URLs cannot land in search results.
+The canonical custom domain is not affected by those rules and indexes
+normally.
 
 ### Content Security Policy
 
@@ -233,9 +257,13 @@ fallback `report-uri https://jseverino.com/api/csp-report`. The report receiver
 ([`functions/api/csp-report.ts`](./functions/api/csp-report.ts)) accepts both
 legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
 payload size, filters reports to `https://jseverino.com` documents, drops common
-browser-extension blocked-URI schemes, and stores compact records in D1. This
-adds operational visibility without adding `report-sample` or collecting inline
-code snippets.
+browser-extension blocked-URI schemes **and any report whose `source_file`
+starts with a browser-extension scheme** (`chrome-extension:`, `moz-extension:`,
+`safari-web-extension:`, `edge-extension:`), and stores compact records in D1.
+The extension filter applies on both the blocked URI and the source file so
+content-script-injected resources are dropped even when the blocked URI
+appears same-origin. This adds operational visibility without adding
+`report-sample` or collecting inline code snippets.
 
 **Trusted Types (report-only).** The middleware emits a second
 `Content-Security-Policy-Report-Only` header carrying
@@ -368,8 +396,21 @@ surface:
 - **OpenSSF Scorecard** runs weekly/manual checks, uploads SARIF to code
   scanning, and preserves the generated SARIF as an artifact
   ([`.github/workflows/scorecard.yml`](./.github/workflows/scorecard.yml)).
+  The current aggregate is **6.4 / 10** (2026-05-29); the remaining failing
+  checks (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`,
+  `Maintained`) are structural to a single-maintainer personal repo with
+  no runtime input surface, are dismissed in the code-scanning dashboard
+  with an inline justification, and do not represent real security gaps.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
-  explicit, minimal `permissions:` block (`contents: read` by default).
+  explicit top-level `permissions:` block defaulting to `contents: read`.
+  Any elevated scope (notably `security-events: write` for SARIF upload in
+  `codeql.yml` and `scorecard.yml`) is granted at the job level, never at
+  the workflow level, so unrelated jobs in the same workflow cannot
+  silently inherit it.
+- **Code-scanning dashboard.** GitHub code scanning is kept at zero open
+  alerts. CodeQL findings are fixed at the source; Scorecard findings that
+  do not apply to a solo personal repo are dismissed with a documented
+  reason rather than left as noise.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
   the actionlint container is pinned by digest, Lighthouse CI uses an explicit
   npm package version, and dependencies install from the committed lockfile.

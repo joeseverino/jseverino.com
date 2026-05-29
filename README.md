@@ -16,7 +16,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 
 ## What This Repo Does
 
-- Builds a static personal site with Astro 6.
+- Builds a static personal site with Astro 6.4.
 - Syncs public pages, portfolio writeups, global site identity, navigation, and technology taxonomy from a private vault.
 - Rewrites local image references into public asset paths.
 - Generates AVIF, WebP, and optimized fallback image variants.
@@ -132,7 +132,11 @@ The repo has a small GitHub Actions suite for build, security, and credibility c
 | [`lighthouse`](./.github/workflows/lighthouse.yml) | Runs Lighthouse CI against selected live URLs. | `lighthouse-reports` artifact. |
 | [`scorecard`](./.github/workflows/scorecard.yml) | Runs OpenSSF Scorecard. | Code scanning SARIF plus `scorecard-sarif` artifact. |
 
-Workflow dependencies are pinned to immutable SHAs or container digests. Dependabot still checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml).
+Workflow dependencies are pinned to immutable SHAs or container digests. Every workflow declares a top-level `permissions: contents: read` and scopes any `security-events: write` to the specific job that uploads SARIF. Dependabot still checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml).
+
+The GitHub code-scanning dashboard is kept at zero open alerts. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (Branch-Protection, Code-Review, Fuzzing, CII-Best-Practices, Maintained until the repo turns 90 days old) are dismissed with a "won't fix — solo personal repo" reason and an inline explanation. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29) — failing checks are structural to a one-person project and are not real security gaps.
+
+Preview deployments (`*.pages.dev`) carry an `X-Robots-Tag: noindex` from [`public/_headers`](./public/_headers) so only the canonical custom domain ever lands in search results.
 
 ## Current PageSpeed Snapshot
 
@@ -184,6 +188,7 @@ Do not commit:
 - [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
 - [`docs/Release-Checklist.md`](./docs/Release-Checklist.md) documents preflight, publish, signed tag, deploy, header, SEO, and accessibility checks.
 - [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.
+- [`LICENSE`](./LICENSE) covers the original source code, written content, and images in this repository. The repo is published for transparency and review; no rights are granted to copy, modify, or redistribute without prior written permission.
 
 ## History
 

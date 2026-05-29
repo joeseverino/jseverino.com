@@ -104,20 +104,35 @@ failure or recording evidence:
 - `lighthouse` uploads `lighthouse-reports`.
 - `scorecard` uploads `scorecard-sarif` and also sends SARIF to code scanning.
 
+After a release that touches any GitHub Actions workflow, container action,
+or build script, confirm the code-scanning dashboard is still clean:
+
+```sh
+gh api repos/:owner/:repo/code-scanning/alerts \
+  --paginate \
+  --jq 'group_by(.state) | map({state: .[0].state, count: length})'
+```
+
+The expected state is zero `open` alerts. If CodeQL or Scorecard reports
+something new, treat it as a release-blocking finding: fix at the source
+for CodeQL, evaluate-then-fix-or-dismiss-with-justification for Scorecard.
+Scorecard alerts can also be stale after a remediation commit — trigger
+`gh workflow run scorecard.yml` and recheck before treating them as real.
+
 ## 5. Signed Version Tag
 
 For a versioned release, move the signed tag only after the final release commit
 is on `main`.
 
 ```sh
-git tag -s -f v2.0.0 -m "v2.0.0 - Content architecture refactor"
-git tag -v v2.0.0
-git push --force origin v2.0.0
-git ls-remote origin refs/tags/v2.0.0 refs/tags/v2.0.0^{}
+git tag -s -f v3.0.0 -m "v3.0.0 - <release summary>"
+git tag -v v3.0.0
+git push --force origin v3.0.0
+git ls-remote origin refs/tags/v3.0.0 refs/tags/v3.0.0^{}
 ```
 
 The local verification must show a good signature. The peeled remote tag
-(`refs/tags/v2.0.0^{}`) must point to the intended release commit.
+(`refs/tags/v3.0.0^{}`) must point to the intended release commit.
 
 ## 6. Cloudflare Deploy Verification
 
