@@ -237,6 +237,18 @@ function promoteStandaloneLinks(html: string): string {
   );
 }
 
+// Repurpose markdown link titles prefixed with `private: ` as click-tooltip
+// anchors: `[Text](url "private: message")` becomes
+// `<a href="url" data-private-tooltip="message">Text</a>`. Behavior is wired
+// up in src/layouts/BaseLayout.astro; styling in src/styles/base.css.
+function rewritePrivateLinks(html: string): string {
+  return html.replace(
+    /<a\b([^>]*?)\stitle="private:\s*([^"]*)"/gi,
+    (_match, before: string, message: string) =>
+      `<a${before} data-private-tooltip="${message}"`,
+  );
+}
+
 function renderButton(match: string, classes = ''): string {
   const link = match.match(/\[([^\]]+)\]\(([^)]+)\)/);
   if (!link) return '';
@@ -327,7 +339,7 @@ function preprocessPageMarkdown(markdown: string): string {
 function renderWriteupMarkdown(markdown: string, slug: string): string {
   const prepared = renderTableBlocks(renderFigureBlocks(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown)))));
   const html = md.render(prepared);
-  const resolved = promoteStandaloneLinks(restoreFigures(html))
+  const resolved = promoteStandaloneLinks(rewritePrivateLinks(restoreFigures(html)))
     .replace(/language-[^"]*block-code/g, 'language-shell')
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
     .replaceAll('src="images/', `src="/assets/writeups/${slug}/images/`);
@@ -335,7 +347,7 @@ function renderWriteupMarkdown(markdown: string, slug: string): string {
 }
 
 export function renderPageMarkdown(markdown: string): string {
-  return enhanceImages(restoreFigures(md.render(preprocessPageMarkdown(markdown))));
+  return enhanceImages(rewritePrivateLinks(restoreFigures(md.render(preprocessPageMarkdown(markdown)))));
 }
 
 function collectionSlug(id: string): string {

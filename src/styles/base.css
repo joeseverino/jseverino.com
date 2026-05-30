@@ -964,6 +964,31 @@ figure {
   margin-top: 0.5rem;
 }
 
+/* ── Private-link tooltip ───────────────────────────────────────────── */
+/* Floating message for any anchor with `data-private-tooltip="..."`. */
+/* JS handler lives in BaseLayout.astro. */
+
+.private-tooltip {
+  position: absolute;
+  z-index: 50;
+  max-width: min(320px, calc(100vw - 16px));
+  padding: 0.5rem 0.75rem;
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  line-height: 1.4;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.private-tooltip[data-visible] {
+  opacity: 1;
+  transform: none;
+}
+
 /* ── Contact form ───────────────────────────────────────────────────── */
 
 .contact-intake {

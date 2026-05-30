@@ -44,5 +44,43 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
       <slot />
       <Footer />
     </div>
+    <script>
+      // Any anchor with `data-private-tooltip="..."` opens a small floating
+      // message anchored to the click, instead of navigating. Used for links
+      // to private services (e.g. tailnet-only).
+      document.addEventListener('click', (event) => {
+        const trigger = (event.target as Element | null)?.closest<HTMLElement>('[data-private-tooltip]');
+        if (!trigger) return;
+        event.preventDefault();
+
+        document.querySelector('.private-tooltip')?.remove();
+
+        const tip = document.createElement('div');
+        tip.className = 'private-tooltip';
+        tip.setAttribute('role', 'status');
+        tip.textContent = trigger.dataset.privateTooltip ?? '';
+        document.body.appendChild(tip);
+
+        const rect = trigger.getBoundingClientRect();
+        const margin = 8;
+        const maxLeft = document.documentElement.clientWidth - tip.offsetWidth - margin;
+        tip.style.top = `${rect.bottom + window.scrollY + margin}px`;
+        tip.style.left = `${Math.max(margin, Math.min(rect.left + window.scrollX, maxLeft))}px`;
+
+        requestAnimationFrame(() => tip.setAttribute('data-visible', ''));
+
+        const dismiss = (e: Event) => {
+          if (e.type === 'keydown' && (e as KeyboardEvent).key !== 'Escape') return;
+          if (e.type === 'click' && tip.contains(e.target as Node)) return;
+          tip.remove();
+          document.removeEventListener('click', dismiss, true);
+          document.removeEventListener('keydown', dismiss);
+        };
+        setTimeout(() => {
+          document.addEventListener('click', dismiss, true);
+          document.addEventListener('keydown', dismiss);
+        });
+      });
+    </script>
   </body>
 </html>
