@@ -28,15 +28,17 @@ const navigation = navItems.map((item) => ({
     // Also sync on DOMContentLoaded to ensure we have the final layout height
     document.addEventListener('DOMContentLoaded', syncHeight);
 
-    // Use IntersectionObserver for high-performance scroll state detection
-    const header = document.querySelector('[data-sticky-header]');
-    const sentinel = document.querySelector('#scroll-sentinel');
-    if (header && sentinel) {
-      const observer = new IntersectionObserver((entries) => {
-        // Sentinel is at the very top. When it's not intersecting, we have scrolled.
-        header.classList.toggle('scrolled', !entries[0].isIntersecting);
-      }, { threshold: 0 });
-      observer.observe(sentinel);
+    // Scroll-driven animation handles the header shadow natively in supporting
+    // browsers (see base.css). Fall back to an IntersectionObserver elsewhere.
+    if (!CSS.supports('animation-timeline', 'scroll()')) {
+      const header = document.querySelector('[data-sticky-header]');
+      const sentinel = document.querySelector('#scroll-sentinel');
+      if (header && sentinel) {
+        const observer = new IntersectionObserver((entries) => {
+          header.classList.toggle('scrolled', !entries[0].isIntersecting);
+        }, { threshold: 0 });
+        observer.observe(sentinel);
+      }
     }
   </script>
   <div class="wide site-nav">

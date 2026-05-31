@@ -583,6 +583,22 @@ main > * + * {
   }
 }
 
+@supports (animation-timeline: scroll()) {
+  .site-header::before {
+    animation: site-header-scroll-state linear both;
+    animation-timeline: scroll();
+    animation-range: 0 60px;
+    transition: none;
+  }
+
+  @keyframes site-header-scroll-state {
+    to {
+      background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
 .scroll-sentinel {
   position: absolute;
   inset-block-start: 0;
