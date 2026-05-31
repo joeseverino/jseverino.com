@@ -1,10 +1,11 @@
 ---
 import { getSiteChrome } from '@lib/content';
 import NavLinks from '@components/NavLinks.astro';
+import SocialLinks from '@components/SocialLinks.astro';
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
-const { name, navItems } = await getSiteChrome();
+const { name, navItems, socialLinks } = await getSiteChrome();
 const navigation = navItems.map((item) => ({
   ...item,
   current: normalize(current) === normalize(item.href),
@@ -53,6 +54,10 @@ const navigation = navItems.map((item) => ({
       linkClass="mobile-nav-link"
       linkDataAttribute="data-mobile-nav-link"
     />
+    <div class="mobile-nav-footer">
+      <p class="page-kicker">Cybersecurity • Networking</p>
+      <SocialLinks links={socialLinks} class="mobile-nav-social" />
+    </div>
   </nav>
 </header>
 
@@ -69,6 +74,10 @@ const navigation = navItems.map((item) => ({
 
     mobileNav.querySelectorAll<HTMLAnchorElement>('[data-mobile-nav-link]').forEach((link) => {
       link.addEventListener('click', () => mobileNav.hidePopover());
+    });
+
+    mobileNav.addEventListener('click', (event) => {
+      if (event.target === mobileNav) mobileNav.hidePopover();
     });
   }
 </script>

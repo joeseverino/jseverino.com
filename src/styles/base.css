@@ -1242,6 +1242,14 @@ figure {
   }
 }
 
+.svg-defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .skip-link {
   position: fixed;
   inset-block-start: 0;
@@ -1399,11 +1407,11 @@ figure {
 .mobile-nav-link {
   display: block;
   inline-size: 100%;
-  padding-block: 0.85rem;
-  font-size: 1.15rem;
+  padding-block: 1rem;
+  font-size: 1.45rem;
   font-weight: 500;
-  letter-spacing: 0;
-  line-height: 1.4;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   color: var(--color-text);
   text-decoration: none;
 
@@ -1412,8 +1420,21 @@ figure {
     font-weight: 600;
     text-decoration: underline;
     text-decoration-color: var(--color-primary);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 4px;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 6px;
+  }
+}
+
+.mobile-nav-footer {
+  margin-block-start: auto;
+  padding-block-start: var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  & .page-kicker {
+    margin: 0;
   }
 }
 
