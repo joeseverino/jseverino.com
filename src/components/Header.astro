@@ -37,7 +37,7 @@ const navigation = navItems.map((item) => ({
       type="button"
       popovertarget="mobile-nav"
       aria-expanded="false"
-      aria-label="Open menu"
+      aria-label="Menu"
       data-nav-toggle
     >
       <span class="nav-toggle-bar"></span>
@@ -46,16 +46,14 @@ const navigation = navItems.map((item) => ({
     </button>
   </div>
 
-  <div class="mobile-nav" id="mobile-nav" popover="auto" data-mobile-nav>
-    <nav class="mobile-nav-panel" aria-label="Mobile navigation">
-      <NavLinks
-        items={navigation}
-        listClass="mobile-nav-list"
-        linkClass="mobile-nav-link"
-        linkDataAttribute="data-mobile-nav-link"
-      />
-    </nav>
-  </div>
+  <nav class="mobile-nav" id="mobile-nav" popover="auto" aria-label="Mobile navigation" data-mobile-nav>
+    <NavLinks
+      items={navigation}
+      listClass="mobile-nav-list"
+      linkClass="mobile-nav-link"
+      linkDataAttribute="data-mobile-nav-link"
+    />
+  </nav>
 </header>
 
 <script>
@@ -66,9 +64,7 @@ const navigation = navItems.map((item) => ({
     document.body.classList.add('nav-js-ready');
 
     mobileNav.addEventListener('toggle', (event) => {
-      const isOpen = (event as ToggleEvent).newState === 'open';
-      toggle.setAttribute('aria-expanded', String(isOpen));
-      toggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+      toggle.setAttribute('aria-expanded', String((event as ToggleEvent).newState === 'open'));
     });
 
     mobileNav.querySelectorAll<HTMLAnchorElement>('[data-mobile-nav-link]').forEach((link) => {

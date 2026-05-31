@@ -1305,17 +1305,32 @@ figure {
   inset-block-end: 0;
   inline-size: auto;
   block-size: auto;
+  flex-direction: column;
+  align-items: stretch;
   margin: 0;
   border: 0;
-  padding: 0;
+  padding-block: 1rem 2rem;
+  padding-inline: var(--space-30);
   background: transparent;
   color: inherit;
-  overflow: visible;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 
   opacity: 0;
   transition: opacity 0.22s ease, display 0.22s allow-discrete, overlay 0.22s allow-discrete;
 
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    block-size: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
+    pointer-events: none;
+  }
+
   &:popover-open {
+    display: flex;
     opacity: 1;
 
     @starting-style {
@@ -1341,30 +1356,6 @@ figure {
     @starting-style {
       opacity: 0;
     }
-  }
-}
-
-.mobile-nav-panel {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  padding-block: 1rem 2rem;
-  padding-inline: var(--space-30);
-  background: transparent;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  transform: none;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    block-size: 3px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
   }
 }
 
