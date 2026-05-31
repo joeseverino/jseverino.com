@@ -112,7 +112,21 @@ The schema covers:
 
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 
-## 7. Image Pipeline
+## 7. Client Conventions
+
+### Sticky-header shadow
+
+The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The inline script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()` so non-supporting engines still get the shadow without running JS in the modern path.
+
+### Mobile menu
+
+The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget` for open/close; Escape and light-dismiss are native. The script only mirrors `aria-expanded` and `aria-label` on the toggle from the popover `toggle` event. There is no custom focus-trap, backdrop element, or scroll-lock plumbing — the `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` handle those.
+
+### Header height
+
+`--header-height` is declared as a token (3.6rem desktop, 3.8rem at the same `(max-width: 599px)` breakpoint where the nav-toggle takes over). No JS measures or writes it. This keeps the inline `style` attribute on `<html>` empty, which keeps `style-src-attr` violations at zero without weakening the CSP.
+
+## 8. Image Pipeline
 
 Referenced images are processed during sync, before Astro builds the site.
 
@@ -126,7 +140,7 @@ For each optimizable source image, the pipeline emits:
 
 This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
 
-## 8. SEO And Metadata
+## 9. SEO And Metadata
 
 [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) emits page metadata from route-level props and shared site data.
 
@@ -143,7 +157,7 @@ It handles:
 
 The homepage canonical must be `/`, not `/home/`. The page loader preserves explicit synced paths and falls back to `/` only for the `home` slug.
 
-## 9. Edge Security
+## 10. Edge Security
 
 [`public/_headers`](../public/_headers) defines the static security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`). The Content-Security-Policy is **not** set there — it is issued only by the middleware, per-request, so every HTML response carries a fresh nonce.
 
@@ -172,7 +186,7 @@ The contact function applies:
 - per-IP hourly rate limiting backed by D1;
 - parameterized D1 inserts.
 
-## 10. Build Output
+## 11. Build Output
 
 `npm run build:static` produces a deployable static site. Locally the build lands in `dist.nosync/`; on Cloudflare Pages (which sets `CF_PAGES=1`) it lands in `dist/`. See [`astro.config.mjs`](../astro.config.mjs) for the `outDir` selection.
 
@@ -187,7 +201,7 @@ dist/
 ├── _redirects                  # Cloudflare Pages redirects (copied from public/)
 ├── .well-known/
 │   └── security.txt            # RFC 9116 disclosure pointer (copied from public/)
-├── assets/                     # Static site assets — see §11 for the convention
+├── assets/                     # Static site assets — see §12 for the convention
 │   ├── docs/                   # Downloadable documents (resume PDF, etc.)
 │   ├── fonts/                  # Subset Inter variable WOFF2
 │   ├── icons/                  # Favicons and apple-touch-icon
@@ -219,7 +233,7 @@ Per-page preconnect origins are passed into `BaseLayout` via the `preconnect` pr
 
 Resource hints are advisory: a browser may skip them under tight CPU/memory budgets, but on a healthy device they reliably shave hundreds of milliseconds off connection setup for the third-party origins this site uses.
 
-## 11. Asset Organization
+## 12. Asset Organization
 
 `public/` is the input side of the asset pipeline. Cloudflare Pages copies its contents verbatim into `dist/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
 
@@ -264,7 +278,7 @@ The convention scales by adding a new top-level bucket under `public/assets/`. E
 
 Avoid using existing buckets for unrelated content (e.g., putting a video under `docs/`) — the bucket name is the convention contract.
 
-## 12. Runtime Configuration
+## 13. Runtime Configuration
 
 The site needs three pieces of Cloudflare-side configuration to run. None of them live in the repo; they are configured in the Cloudflare Pages project settings.
 
@@ -324,7 +338,7 @@ npx wrangler pages dev dist.nosync
 
 The site is then served at `http://localhost:8788` with the middleware and Functions active. `curl -sI http://localhost:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the canonical pre-deploy CSP/reporting check.
 
-## 13. Release Gate
+## 14. Release Gate
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 
