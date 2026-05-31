@@ -64,7 +64,14 @@ export async function onRequest(context: { next(): Promise<Response> }): Promise
   const response = await context.next();
   const contentType = response.headers.get('Content-Type') ?? '';
 
-  if (!contentType.toLowerCase().includes('text/html')) {
+  // Skip transformation if:
+  // 1. Not an HTML response.
+  // 2. Response has no body (304 Not Modified, 204 No Content).
+  if (
+    !contentType.toLowerCase().includes('text/html') ||
+    response.status === 304 ||
+    response.status === 204
+  ) {
     return response;
   }
 
@@ -73,10 +80,14 @@ export async function onRequest(context: { next(): Promise<Response> }): Promise
     .on('script', new ScriptNonceHandler(nonce))
     .transform(response);
 
+  // HTMLRewriter decompresses the body, so we must remove headers that
+  // describe the original (possibly compressed) payload.
   const headers = new Headers(transformed.headers);
   headers.set(CSP_HEADER, csp(nonce));
   headers.set(CSP_REPORT_ONLY_HEADER, cspReportOnly());
   headers.set(REPORTING_ENDPOINTS_HEADER, `csp-endpoint="${CSP_REPORT_ENDPOINT}"`);
+  headers.delete('Content-Encoding');
+  headers.delete('Content-Length');
 
   return new Response(transformed.body, {
     status: transformed.status,

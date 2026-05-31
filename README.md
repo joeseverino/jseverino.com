@@ -57,6 +57,8 @@ The private vault is organized as:
   home/index.md
   about/index.md
   contact/index.md
+  portfolio/index.md
+  privacy/index.md
   resume/index.md
 
 05 Writeups/
@@ -67,7 +69,7 @@ The private vault is organized as:
 
 [`bin/sync-content.mjs`](./bin/sync-content.mjs) copies only published content and only allowed frontmatter fields. Vault-only fields such as internal IDs, systems, related projects, sensitivity, and operator notes are dropped by omission. Local assets are resolved against their source directory and refused if they escape that directory.
 
-Page frontmatter may include an explicit `path`. If omitted, the site falls back to `/` for `home` and `/<slug>/` for other pages. Writeup URLs come from their folder slug.
+Page frontmatter may include an explicit `path`. If omitted, the site falls back to `/` for `home` and `/<slug>/` for other pages. Writeup URLs come from their folder slug. An optional `intro` field renders as the on-page subtitle below the H1; pages without one fall back to `description`, so SEO meta and visible subtitle stay coupled by default.
 
 ## Image Pipeline
 

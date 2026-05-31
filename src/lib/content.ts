@@ -38,6 +38,7 @@ export type PageContent = {
   slug: string;
   title: string;
   description: string;
+  intro?: string;
   path: string;
   body: string;
   bodyHtml: string;
@@ -366,6 +367,7 @@ export async function getPage(slug: string): Promise<PageContent> {
     slug,
     title: page.data.title,
     description: page.data.description ?? '',
+    intro: page.data.intro,
     path: page.data.path || (slug === 'home' ? '/' : `/${slug}/`),
     body: page.body ?? '',
     bodyHtml: renderPageMarkdown(page.body ?? ''),

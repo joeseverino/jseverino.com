@@ -1,12 +1,15 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ContactForm from '@components/ContactForm.astro';
+import PageHero from '@components/PageHero.astro';
+import PrivateTooltip from '@components/PrivateTooltip.astro';
 import { getPage, renderPageMarkdown } from '@lib/content';
 
 const page = await getPage('contact');
 const blocks = page.body
   .split(/(::contact-form\s*::)/g)
   .filter((block) => block.trim().length > 0);
+const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
 ---
 
 <BaseLayout
@@ -21,9 +24,9 @@ const blocks = page.body
   }}
   preconnect={['https://challenges.cloudflare.com']}
 >
-  <main id="main" tabindex="-1" class="content-page">
+  <main id="main" class="content-page">
     <div class="content-flow">
-      <h1 class="page-title">{page.title}</h1>
+      <PageHero title={page.title} description={page.intro ?? page.description} />
       {
         blocks.map((block) =>
           block.trimStart().startsWith('::contact-form') ? (
@@ -35,4 +38,5 @@ const blocks = page.body
       }
     </div>
   </main>
+  {usesPrivateLinks && <PrivateTooltip />}
 </BaseLayout>

@@ -187,6 +187,10 @@ emits a per-request, nonce-bearing `Content-Security-Policy` header, attaches
 the matching nonce to every `<script>` tag, and advertises the CSP reporting
 endpoint.
 
+The middleware is built to be robust against edge cases:
+- **Skips bodyless responses.** It immediately returns the original response for `304 Not Modified` and `204 No Content` statuses, preventing broken caching behavior or empty documents.
+- **Strips decompression headers.** `HTMLRewriter` decompresses the response stream but does not automatically remove the `Content-Encoding` or `Content-Length` headers. The middleware explicitly deletes these headers after transformation to ensure the browser correctly parses the uncompressed HTML, preventing intermittent blank page errors.
+
 | Header | Value | Purpose |
 |---|---|---|
 | `Content-Security-Policy` | per-request from [`functions/_middleware.ts`](./functions/_middleware.ts) | Restricts the scripts, styles, and origins a page may load — detailed below. |

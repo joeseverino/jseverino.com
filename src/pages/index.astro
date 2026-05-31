@@ -2,11 +2,13 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ProjectCard from '@components/ProjectCard.astro';
 import TechnologyCloud from '@components/TechnologyCloud.astro';
+import PrivateTooltip from '@components/PrivateTooltip.astro';
 import { getFeaturedWriteups, getPage, renderPageMarkdown } from '@lib/content';
 
 const page = await getPage('home');
 const featured = await getFeaturedWriteups();
 const contentBlocks = page.body.split(/(::featured-projects\s*::|::technology-cloud\s*::)/g).filter(Boolean);
+const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
 ---
 
 <BaseLayout
@@ -17,7 +19,7 @@ const contentBlocks = page.body.split(/(::featured-projects\s*::|::technology-cl
     breadcrumbs: [{ name: 'Home', url: '/' }],
   }}
 >
-  <main id="main" tabindex="-1">
+  <main id="main">
     {
       contentBlocks.map((block) => {
         if (block.startsWith('::featured-projects')) {
@@ -42,4 +44,5 @@ const contentBlocks = page.body.split(/(::featured-projects\s*::|::technology-cl
       })
     }
   </main>
+  {usesPrivateLinks && <PrivateTooltip />}
 </BaseLayout>

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
 import { getAllTags, getWriteups, titleCase } from '@lib/content';
 
@@ -11,25 +12,34 @@ export async function getStaticPaths() {
 }
 
 const { tag } = Astro.props;
-const writeups = (await getWriteups()).filter((writeup) => writeup.technologies.includes(tag.slug));
+const allWriteups = await getWriteups();
+const writeups = allWriteups.filter((writeup) => writeup.technologies.includes(tag.slug));
+const tagName = titleCase(tag.slug);
+const projectLabel = writeups.length === 1 ? 'project' : 'projects';
 ---
 
 <BaseLayout
   seo={{
-    title: `${titleCase(tag.slug)} Projects`,
-    description: `Portfolio writeups tagged ${titleCase(tag.slug)}.`,
+    title: `${tagName} Projects`,
+    description: `Portfolio writeups tagged ${tagName}.`,
     path: `/tag/${tag.slug}/`,
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Portfolio', url: '/portfolio/' },
-      { name: titleCase(tag.slug), url: `/tag/${tag.slug}/` },
+      { name: tagName, url: `/tag/${tag.slug}/` },
     ],
   }}
 >
-  <main id="main" tabindex="-1" class="wide section">
-    <header class="page-header">
-      <h1 class="page-title">{titleCase(tag.slug)} Projects</h1>
-    </header>
+  <main id="main" class="wide section">
+    <PageHero
+      class="page-hero--tag"
+      title={`${tagName} Projects`}
+      description={`${writeups.length} ${projectLabel} tagged ${tagName}.`}
+    >
+      <nav class="page-actions" aria-label="Portfolio navigation">
+        <a href="/portfolio/">All projects</a>
+      </nav>
+    </PageHero>
     <hr class="page-divider" />
     <ul class="project-grid">
       {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}

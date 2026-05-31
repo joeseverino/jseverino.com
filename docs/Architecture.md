@@ -149,10 +149,12 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 For every HTML response, [`functions/_middleware.ts`](../functions/_middleware.ts):
 
-1. Generates a per-request nonce.
-2. Uses `HTMLRewriter` to attach the nonce to every `<script>` tag in the response body.
-3. Emits a `Content-Security-Policy` response header containing that same nonce.
-4. Emits `Reporting-Endpoints` plus CSP `report-to` / `report-uri` directives pointing at `/api/csp-report`.
+1. **Skips bodyless responses.** It immediately returns the original response for `304 Not Modified` and `204 No Content` statuses, preventing broken caching behavior or empty documents.
+2. Generates a per-request nonce.
+3. Uses `HTMLRewriter` to attach the nonce to every `<script>` tag in the response body.
+4. **Strips decompression headers.** `HTMLRewriter` decompresses the response stream but does not automatically remove the `Content-Encoding` or `Content-Length` headers. The middleware explicitly deletes these headers after transformation to ensure the browser correctly parses the uncompressed HTML, preventing intermittent blank page errors.
+5. Emits a `Content-Security-Policy` response header containing that same nonce.
+6. Emits `Reporting-Endpoints` plus CSP `report-to` / `report-uri` directives pointing at `/api/csp-report`.
 
 Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block — which is data, not executable code, but still receives a nonce. This means CSP enforcement applies to every script the browser sees, and there is no inline executable JavaScript on the page at all.
 

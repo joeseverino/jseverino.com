@@ -198,6 +198,7 @@ function publicPageData(data) {
   return {
     title: data.title,
     ...(data.description ? { description: data.description } : {}),
+    ...(data.intro ? { intro: data.intro } : {}),
     ...(data.path ? { path: data.path } : {}),
     published: data.published === true,
   };

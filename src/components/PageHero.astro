@@ -1,0 +1,18 @@
+---
+type Props = {
+  title: string;
+  kicker?: string;
+  description?: string;
+  class?: string;
+};
+
+const { title, kicker, description, class: className } = Astro.props;
+const classes = ['page-hero', className].filter(Boolean).join(' ');
+---
+
+<header class={classes}>
+  {kicker && <p class="page-kicker">{kicker}</p>}
+  <h1 class="page-title">{title}</h1>
+  {description && <p class="page-intro">{description}</p>}
+  <slot />
+</header>

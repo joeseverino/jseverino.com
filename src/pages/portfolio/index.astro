@@ -1,29 +1,39 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
-import { getWriteups } from '@lib/content';
+import TagIndex from '@components/TagIndex.astro';
+import { getAllTags, getPage, getWriteups } from '@lib/content';
 
+const page = await getPage('portfolio');
 const writeups = await getWriteups();
+const tags = await getAllTags();
+const tagCount = tags.length;
 ---
 
 <BaseLayout
   seo={{
-    title: 'Portfolio',
-    description: 'Cybersecurity, infrastructure, and software project writeups by Joe Severino.',
-    path: '/portfolio/',
+    title: page.title,
+    description: page.description,
+    path: page.path,
     breadcrumbs: [
       { name: 'Home', url: '/' },
-      { name: 'Portfolio', url: '/portfolio/' },
+      { name: page.title, url: page.path },
     ],
   }}
 >
-  <main id="main" tabindex="-1" class="wide section">
-    <header class="page-header">
-      <h1 class="page-title">Portfolio</h1>
-    </header>
+  <main id="main" class="wide section">
+    <PageHero title={page.title} description={page.intro ?? page.description} />
     <hr class="page-divider" />
     <ul class="project-grid">
       {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
     </ul>
+    <details class="archive-section">
+      <summary>
+        <span>Browse by technology</span>
+        <span>{tagCount} tags</span>
+      </summary>
+      <TagIndex />
+    </details>
   </main>
 </BaseLayout>

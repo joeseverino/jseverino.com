@@ -1,0 +1,38 @@
+---
+import { getAllTags, getTechnologyGroups } from '@lib/content';
+
+const collator = new Intl.Collator('en', { sensitivity: 'base' });
+const tagCounts = new Map((await getAllTags()).map((tag) => [tag.slug, tag.count]));
+const groups = getTechnologyGroups()
+  .map((group) => ({
+    ...group,
+    tags: group.tags
+      .filter((tag) => tagCounts.has(tag.slug))
+      .sort((a, b) => collator.compare(a.label, b.label)),
+  }))
+  .filter((group) => group.tags.length > 0)
+  .sort((a, b) => collator.compare(a.name, b.name));
+---
+
+<div class="archive-taxonomy">
+  {
+    groups.map((group) => (
+      <section class="archive-taxonomy-group" aria-labelledby={`taxonomy-${group.name.replace(/\W+/g, '-').toLowerCase()}`}>
+        <h2 id={`taxonomy-${group.name.replace(/\W+/g, '-').toLowerCase()}`} class="archive-taxonomy-title">
+          {group.name}
+        </h2>
+        <div class="archive-taxonomy-list">
+          {group.tags.map((tag) => {
+            const count = tagCounts.get(tag.slug) ?? 0;
+            return (
+              <a class="archive-tag" href={`/tag/${tag.slug}/`}>
+                <span>{tag.label}</span>
+                <span class="archive-tag-count" aria-label={`${count} projects`}>{count}</span>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    ))
+  }
+</div>

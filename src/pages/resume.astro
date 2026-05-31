@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
+import PrivateTooltip from '@components/PrivateTooltip.astro';
 import { getPage } from '@lib/content';
 
 const page = await getPage('resume');
+const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
 ---
 
 <BaseLayout
@@ -16,10 +19,11 @@ const page = await getPage('resume');
     ],
   }}
 >
-  <main id="main" tabindex="-1" class="content-page resume-page">
+  <main id="main" class="content-page resume-page">
     <div class="content-flow">
-      <h1 class="page-title">{page.title}</h1>
+      <PageHero title={page.title} />
       <div class="prose" set:html={page.bodyHtml} />
     </div>
   </main>
+  {usesPrivateLinks && <PrivateTooltip />}
 </BaseLayout>
