@@ -14,16 +14,6 @@ const navigation = navItems.map((item) => ({
 <div id="scroll-sentinel" class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
   <script is:inline>
-    const syncHeight = () => {
-      const h = document.querySelector('[data-sticky-header]');
-      if (h && h.offsetHeight > 0) {
-        document.documentElement.style.setProperty('--header-height', `${h.offsetHeight}px`);
-      }
-    };
-    syncHeight();
-    window.addEventListener('resize', syncHeight, { passive: true });
-    document.addEventListener('DOMContentLoaded', syncHeight);
-
     if (!CSS.supports('animation-timeline', 'scroll()')) {
       const header = document.querySelector('[data-sticky-header]');
       const sentinel = document.querySelector('#scroll-sentinel');
