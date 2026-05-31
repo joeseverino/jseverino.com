@@ -684,9 +684,8 @@ main > * + * {
   }
 }
 
-/* ── Pill (single info chip) ────────────────────────────────────────── */
+/* ── Hero location chip ─────────────────────────────────────────────── */
 
-.pill,
 .home-content:first-child > .hero-location {
   display: inline-flex;
   align-items: center;
@@ -733,7 +732,7 @@ main > * + * {
   line-height: 1.6;
   text-align: center;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
+  transition: translate 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
 
   &:hover,
   &:focus {
@@ -796,7 +795,7 @@ main > * + * {
   border-radius: var(--radius-sm);
   background: var(--color-bg);
   box-shadow: var(--shadow-sm);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: translate 0.15s ease, box-shadow 0.15s ease;
 
   @media (hover: hover) and (pointer: fine) {
     &:hover {
@@ -1265,18 +1264,6 @@ figure {
   }
 }
 
-.visually-hidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
 .nav-toggle {
@@ -1390,8 +1377,8 @@ figure {
     inline-size: 100%;
     border-block-end: 1px solid rgba(0, 0, 0, 0.06);
     opacity: 1;
-    transform: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    translate: 0 0;
+    transition: opacity 0.2s ease, translate 0.2s ease;
   }
 }
 
