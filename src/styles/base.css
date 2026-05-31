@@ -18,7 +18,7 @@
   --color-primary-deep: #1c0a63;
   --color-soft: #f2f2fa;
   --color-muted: #6E6B7C;
-  --color-border: rgba(11, 6, 32, 0.08);
+  --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
 
   --shadow-sm: 0 6px 10px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 10px 16px rgba(0, 0, 0, 0.22);
@@ -455,7 +455,7 @@ main > * + * {
 .page-actions a:focus,
 .archive-tag:hover,
 .archive-tag:focus {
-  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  border-color: color-mix(in oklch, var(--color-primary) 45%, var(--color-border));
   color: var(--color-primary);
   text-decoration: none;
 }
@@ -550,14 +550,14 @@ main > * + * {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: color-mix(in srgb, var(--color-bg) 70%, transparent);
+    background: color-mix(in oklch, var(--color-bg) 70%, transparent);
     backdrop-filter: blur(var(--blur-chrome));
     -webkit-backdrop-filter: blur(var(--blur-chrome));
     transition: box-shadow 0.2s ease, background 0.2s ease;
   }
 
   &.scrolled::before {
-    background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+    background: color-mix(in oklch, var(--color-bg) 85%, transparent);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   }
 }
@@ -572,7 +572,7 @@ main > * + * {
 
   @keyframes site-header-scroll-state {
     to {
-      background: color-mix(in srgb, var(--color-bg) 85%, transparent);
+      background: color-mix(in oklch, var(--color-bg) 85%, transparent);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
     }
   }
@@ -1126,7 +1126,7 @@ figure {
     &:focus {
       border-color: var(--color-primary);
       outline: none;
-      box-shadow: 0 0 0 3px rgba(56, 29, 146, 0.12);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 12%, transparent);
     }
   }
 
@@ -1331,7 +1331,7 @@ figure {
   }
 
   &::backdrop {
-    background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+    background: color-mix(in oklch, var(--color-bg) 72%, transparent);
     backdrop-filter: blur(var(--blur-chrome));
     -webkit-backdrop-filter: blur(var(--blur-chrome));
     opacity: 0;
