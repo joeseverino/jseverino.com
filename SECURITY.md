@@ -270,19 +270,19 @@ content-script-injected resources are dropped even when the blocked URI
 appears same-origin. This adds operational visibility without adding
 `report-sample` or collecting inline code snippets.
 
-**Trusted Types (report-only).** The middleware emits a second
-`Content-Security-Policy-Report-Only` header carrying
-`require-trusted-types-for 'script'`. Trusted Types defends against
-DOM-XSS by blocking dangerous sinks (`innerHTML`, `outerHTML`,
-`insertAdjacentHTML`, `document.write`, …) unless they are routed through
-an explicit `TrustedTypePolicy`. Since the site ships no inline script and
-Astro emits no client-side DOM-sink usage, the directive is expected to be
-a no-op when promoted to enforcing — the report-only header confirms that
-empirically on real visitor traffic before promotion. Violations land in
-the same `/api/csp-report` D1 sink as enforced violations with
-`disposition="report"` and can be filtered by `effective_directive` for
-review. Promotion criteria and the D1 query are in
-[`docs/Release-Checklist.md`](./docs/Release-Checklist.md#7-d1-and-csp-reporting-checks).
+**Trusted Types (enforced).** The middleware emits
+`require-trusted-types-for 'script'` in the enforced CSP. Trusted Types
+defends against DOM-XSS by blocking dangerous sinks (`innerHTML`,
+`outerHTML`, `insertAdjacentHTML`, `document.write`, …) unless they are
+routed through an explicit `TrustedTypePolicy`. The site ships no inline
+script and Astro emits no client-side DOM-sink usage, so this is a no-op
+for first-party code. Promotion from report-only happened after three
+consecutive days of zero TT violations across real visitor traffic
+(including Cloudflare Turnstile, the only third-party script that
+historically triggered the directive). Any future TT violations now land
+as enforced reports in the `/api/csp-report` D1 sink with
+`disposition="enforce"` and can be filtered by `effective_directive` for
+review.
 
 ## DNS and transport
 
@@ -372,8 +372,9 @@ then confirm every request returned 2xx and that no entry POSTed to
 audit confirms that those headers do not break a real browser session
 under the full third-party load (Cloudflare beacon, Turnstile challenge
 flow, Cloudflare-injected speculation rules). A zero-violation HAR run
-across all three surfaces is the operational gate for promoting Trusted
-Types from report-only to enforcing. Full procedure in
+across all three surfaces is the standing operational gate against
+regressions in any of the enforced directives, including Trusted Types.
+Full procedure in
 [`docs/Release-Checklist.md`](./docs/Release-Checklist.md#6-cloudflare-deploy-verification).
 
 ## Supply chain and CI
