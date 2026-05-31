@@ -14,22 +14,16 @@ const navigation = navItems.map((item) => ({
 <div id="scroll-sentinel" class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
   <script is:inline>
-    // Set header height variable as early as possible to prevent layout shifts.
-    // We only set it if the height is > 0 to avoid race conditions during parsing.
     const syncHeight = () => {
       const h = document.querySelector('[data-sticky-header]');
       if (h && h.offsetHeight > 0) {
         document.documentElement.style.setProperty('--header-height', `${h.offsetHeight}px`);
       }
     };
-
     syncHeight();
     window.addEventListener('resize', syncHeight, { passive: true });
-    // Also sync on DOMContentLoaded to ensure we have the final layout height
     document.addEventListener('DOMContentLoaded', syncHeight);
 
-    // Scroll-driven animation handles the header shadow natively in supporting
-    // browsers (see base.css). Fall back to an IntersectionObserver elsewhere.
     if (!CSS.supports('animation-timeline', 'scroll()')) {
       const header = document.querySelector('[data-sticky-header]');
       const sentinel = document.querySelector('#scroll-sentinel');
@@ -51,7 +45,7 @@ const navigation = navItems.map((item) => ({
     <button
       class="nav-toggle"
       type="button"
-      aria-controls="mobile-nav"
+      popovertarget="mobile-nav"
       aria-expanded="false"
       aria-label="Open menu"
       data-nav-toggle
@@ -62,14 +56,8 @@ const navigation = navItems.map((item) => ({
     </button>
   </div>
 
-  <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
+  <div class="mobile-nav" id="mobile-nav" popover="auto" data-mobile-nav>
     <nav class="mobile-nav-panel" aria-label="Mobile navigation">
-      <button
-        class="visually-hidden"
-        type="button"
-        aria-label="Close menu"
-        data-nav-close
-      ></button>
       <NavLinks
         items={navigation}
         listClass="mobile-nav-list"
@@ -81,92 +69,20 @@ const navigation = navItems.map((item) => ({
 </header>
 
 <script>
-  const header = document.querySelector<HTMLElement>('[data-sticky-header]');
-
   const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
-  const closers = document.querySelectorAll<HTMLElement>('[data-nav-close]');
-  const mobileNavLinkSelector = '[data-mobile-nav-link]';
 
-  if (toggle && mobileNav) {
+  if (toggle && mobileNav && 'showPopover' in mobileNav) {
     document.body.classList.add('nav-js-ready');
-    const mobileNavItems = mobileNav.querySelectorAll<HTMLElement>('.mobile-nav-list li');
-    let lastClosed = 0;
 
-    const createBackdrop = () => {
-      if (document.getElementById('mobile-menu-backdrop')) return;
-      const backdrop = document.createElement('div');
-      backdrop.id = 'mobile-menu-backdrop';
-      document.body.appendChild(backdrop);
-    };
-
-    const removeBackdrop = () => {
-      document.getElementById('mobile-menu-backdrop')?.remove();
-    };
-
-    const setItemDelays = () => {
-      mobileNavItems.forEach((item, index) => {
-        item.style.transitionDelay = `${index * 0.055}s`;
-      });
-    };
-
-    const clearItemDelays = () => {
-      mobileNavItems.forEach((item) => {
-        item.style.transitionDelay = '0s';
-      });
-    };
-
-    const open = () => {
-      if (Date.now() - lastClosed < 350) return;
-      // Re-sync height right before opening to ensure no overlap
-      const h = document.querySelector<HTMLElement>('[data-sticky-header]');
-      if (h && h.offsetHeight > 0) {
-        document.documentElement.style.setProperty('--header-height', `${h.offsetHeight}px`);
-      }
-      mobileNav.hidden = false;
-      createBackdrop();
-      setItemDelays();
-      requestAnimationFrame(() => {
-        mobileNav.classList.add('is-open');
-        requestAnimationFrame(() => mobileNav.classList.add('nav-items-ready'));
-      });
-      toggle.setAttribute('aria-expanded', 'true');
-      toggle.setAttribute('aria-label', 'Close menu');
-      const firstLink = mobileNav.querySelector<HTMLAnchorElement>(mobileNavLinkSelector);
-      firstLink?.focus();
-    };
-    const close = () => {
-      lastClosed = Date.now();
-      mobileNav.classList.remove('nav-items-ready');
-      mobileNav.classList.remove('is-open');
-      removeBackdrop();
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', 'Open menu');
-      const onEnd = (event: TransitionEvent) => {
-        if (event.target !== mobileNav) return;
-        mobileNav.hidden = true;
-        clearItemDelays();
-        mobileNav.removeEventListener('transitionend', onEnd);
-      };
-      mobileNav.addEventListener('transitionend', onEnd);
-      toggle.focus();
-    };
-
-    toggle.addEventListener('click', () => {
-      if (mobileNav.classList.contains('is-open')) close();
-      else open();
+    mobileNav.addEventListener('toggle', (event) => {
+      const isOpen = (event as ToggleEvent).newState === 'open';
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
     });
-    closers.forEach((el) => el.addEventListener('click', close));
-    mobileNav.querySelectorAll(mobileNavLinkSelector).forEach((el) => {
-      el.addEventListener('click', close);
-    });
-    mobileNav.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
-      if (target.closest(mobileNavLinkSelector) || target.closest('[data-nav-close]')) return;
-      close();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && mobileNav.classList.contains('is-open')) close();
+
+    mobileNav.querySelectorAll<HTMLAnchorElement>('[data-mobile-nav-link]').forEach((link) => {
+      link.addEventListener('click', () => mobileNav.hidePopover());
     });
   }
 </script>

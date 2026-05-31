@@ -1349,34 +1349,41 @@ figure {
   inset-block-start: var(--header-height, 3.6rem);
   inset-inline: 0;
   inset-block-end: 0;
-  z-index: 1001;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.22s ease, visibility 0s linear 0.22s;
+  inline-size: auto;
+  block-size: auto;
+  margin: 0;
+  border: 0;
+  padding: 0;
   background: transparent;
+  color: inherit;
+  overflow: visible;
 
-  &.is-open {
+  opacity: 0;
+  transition: opacity 0.22s ease, display 0.22s allow-discrete, overlay 0.22s allow-discrete;
+
+  &:popover-open {
     opacity: 1;
-    visibility: visible;
-    transition: opacity 0.22s ease, visibility 0s linear 0s;
+
+    @starting-style {
+      opacity: 0;
+    }
   }
-}
 
-#mobile-menu-backdrop {
-  position: fixed;
-  inset-block-start: var(--header-height, 3.6rem);
-  inset-inline: 0;
-  inset-block-end: 0;
-  z-index: 999;
-  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
-  backdrop-filter: blur(var(--blur-chrome));
-  -webkit-backdrop-filter: blur(var(--blur-chrome));
-  animation: nav-fade-in 0.22s ease both;
-}
+  &::backdrop {
+    background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+    backdrop-filter: blur(var(--blur-chrome));
+    -webkit-backdrop-filter: blur(var(--blur-chrome));
+    opacity: 0;
+    transition: opacity 0.22s ease, display 0.22s allow-discrete, overlay 0.22s allow-discrete;
+  }
 
-@keyframes nav-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  &:popover-open::backdrop {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
 }
 
 .mobile-nav-panel {
@@ -1421,16 +1428,23 @@ figure {
   }
 }
 
-.nav-js-ready .mobile-nav.is-open {
-  & .mobile-nav-list li {
+.nav-js-ready .mobile-nav:popover-open .mobile-nav-list li {
+  opacity: 1;
+  translate: 0 0;
+  transition: opacity 0.22s ease, translate 0.22s ease;
+
+  @starting-style {
     opacity: 0;
     translate: 0 8px;
   }
 
-  &.nav-items-ready .mobile-nav-list li {
-    opacity: 1;
-    translate: 0 0;
-  }
+  &:nth-child(1) { transition-delay: 0ms; }
+  &:nth-child(2) { transition-delay: 55ms; }
+  &:nth-child(3) { transition-delay: 110ms; }
+  &:nth-child(4) { transition-delay: 165ms; }
+  &:nth-child(5) { transition-delay: 220ms; }
+  &:nth-child(6) { transition-delay: 275ms; }
+  &:nth-child(7) { transition-delay: 330ms; }
 }
 
 .mobile-nav-link {
@@ -1454,9 +1468,7 @@ figure {
   }
 }
 
-/* Lock body scroll when the mobile nav is open. :has() lets CSS infer the
-   parent state from the child class, so the JS only toggles `is-open`. */
-body:has(.mobile-nav.is-open) {
+body:has(.mobile-nav:popover-open) {
   overflow: hidden;
 }
 
