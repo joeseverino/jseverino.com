@@ -102,6 +102,7 @@ single-purpose, and layered:
 
 | Control | What it does |
 |---|---|
+| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`db/contact-openapi.json`](./db/contact-openapi.json) before the function runs. Currently in log-only mode while compliant traffic is observed; promoting to Block rejects non-compliant payloads at the edge with zero function compute. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API before anything is stored. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, enforced with a `COUNT(*)` against recent rows. Excess returns HTTP 429. |

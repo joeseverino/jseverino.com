@@ -186,6 +186,17 @@ The contact function applies:
 - per-IP hourly rate limiting backed by D1;
 - parameterized D1 inserts.
 
+### Edge schema validation
+
+Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`db/contact-openapi.json`](../db/contact-openapi.json) — alongside [`db/schema.sql`](../db/schema.sql), the other machine-readable schema this site declares — and is uploaded to the Cloudflare dashboard (Security → Web assets → Schema validation). It is not consumed by the build.
+
+Coverage:
+
+- **`POST /api/contact`** — bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted; unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
+- **`POST /api/csp-report`** — left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
+
+The action is currently set to **None** (log-only) so non-compliant requests still reach the function and get the function-level error message. Promote to **Block** once compliant traffic is consistently observed for a few days. When the action is Block, non-compliant payloads are rejected at the edge and consume zero Pages Function compute.
+
 ## 11. Build Output
 
 `npm run build:static` produces a deployable static site. Locally the build lands in `dist.nosync/`; on Cloudflare Pages (which sets `CF_PAGES=1`) it lands in `dist/`. See [`astro.config.mjs`](../astro.config.mjs) for the `outDir` selection.
