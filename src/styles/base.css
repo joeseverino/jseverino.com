@@ -58,11 +58,14 @@
   --font-sm: 1rem;
   --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
   --font-md: 1.25rem;
-  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
-  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
-  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
-  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
-  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);
+  --font-lg: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.833), 1.75rem);
+  --font-xl: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
+  --font-xxl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
+
+  --font-prose-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
+  --font-prose-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
+
+  --header-height: 3.6rem;
 }
 
 @media (max-width: 768px) {
@@ -151,11 +154,11 @@ h3 {
 h1 { font-size: var(--font-xxl); }
 h2 { font-size: var(--font-xl); }
 h3 { font-size: var(--font-lg); }
-h4 { font-size: var(--font-h-md); }
+h4 { font-size: var(--font-prose-md); }
 
 h5 {
   margin: 0;
-  font-size: var(--font-h-sm);
+  font-size: var(--font-prose-sm);
   font-weight: 500;
   line-height: 1.6;
   text-transform: uppercase;
@@ -406,11 +409,6 @@ main > * + * {
   text-transform: uppercase;
 }
 
-.page-title {
-  font-size: var(--font-xl);
-  text-wrap: balance;
-}
-
 .page-intro {
   max-inline-size: 650px;
   margin-inline: auto;
@@ -476,7 +474,7 @@ main > * + * {
     border-block: 1px solid var(--color-border);
     color: var(--color-text);
     cursor: pointer;
-    font-size: var(--font-h-sm);
+    font-size: var(--font-prose-sm);
     font-weight: 650;
     list-style: none;
 
@@ -659,7 +657,6 @@ main > * + * {
 
   & > h2 {
     text-align: left;
-    font-size: var(--font-lg);
   }
 
   &:first-child {
@@ -670,7 +667,6 @@ main > * + * {
 
     & > h1 {
       margin-block-start: 0.4rem;
-      font-size: var(--font-xl);
     }
 
     & > p:nth-of-type(3) {
@@ -971,7 +967,6 @@ figure {
 
 .article-title {
   margin-block: 10px 6px;
-  font-size: var(--font-xl);
 }
 
 .article-date {
@@ -1000,7 +995,7 @@ figure {
   & > * + * { margin-block-start: 1.2rem; }
 
   & h3 {
-    font-size: var(--font-h-md);
+    font-size: var(--font-prose-md);
     letter-spacing: normal;
   }
 }
@@ -1027,10 +1022,10 @@ figure {
 
   & > * + * { margin-block-start: var(--space-3); }
 
-  & h2 { font-size: var(--font-h-md); }
+  & h2 { font-size: var(--font-prose-md); }
 
   & h3 {
-    font-size: var(--font-h-sm);
+    font-size: var(--font-prose-sm);
     font-weight: 500;
     line-height: 1.6;
     text-transform: uppercase;
