@@ -3,14 +3,42 @@ import { getSiteChrome } from '@lib/content';
 import NavLinks from '@components/NavLinks.astro';
 
 const current = Astro.url.pathname;
+const normalize = (p: string) => p.replace(/\/$/, '') || '/';
 const { name, navItems } = await getSiteChrome();
 const navigation = navItems.map((item) => ({
   ...item,
-  current: current === item.href,
+  current: normalize(current) === normalize(item.href),
 }));
 ---
 
+<div id="scroll-sentinel" class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
+  <script is:inline>
+    // Set header height variable as early as possible to prevent layout shifts.
+    // We only set it if the height is > 0 to avoid race conditions during parsing.
+    const syncHeight = () => {
+      const h = document.querySelector('[data-sticky-header]');
+      if (h && h.offsetHeight > 0) {
+        document.documentElement.style.setProperty('--header-height', `${h.offsetHeight}px`);
+      }
+    };
+
+    syncHeight();
+    window.addEventListener('resize', syncHeight, { passive: true });
+    // Also sync on DOMContentLoaded to ensure we have the final layout height
+    document.addEventListener('DOMContentLoaded', syncHeight);
+
+    // Use IntersectionObserver for high-performance scroll state detection
+    const header = document.querySelector('[data-sticky-header]');
+    const sentinel = document.querySelector('#scroll-sentinel');
+    if (header && sentinel) {
+      const observer = new IntersectionObserver((entries) => {
+        // Sentinel is at the very top. When it's not intersecting, we have scrolled.
+        header.classList.toggle('scrolled', !entries[0].isIntersecting);
+      }, { threshold: 0 });
+      observer.observe(sentinel);
+    }
+  </script>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" aria-current={current === '/' ? 'page' : undefined}>{name}</a>
 
@@ -51,17 +79,7 @@ const navigation = navItems.map((item) => ({
 </header>
 
 <script>
-  const header = document.querySelector('[data-sticky-header]');
-  if (header) {
-    const syncHeaderHeight = () => {
-      document.documentElement.style.setProperty('--header-height', `${header.getBoundingClientRect().height}px`);
-    };
-    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 4);
-    syncHeaderHeight();
-    onScroll();
-    window.addEventListener('resize', syncHeaderHeight, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
-  }
+  const header = document.querySelector<HTMLElement>('[data-sticky-header]');
 
   const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
@@ -98,6 +116,11 @@ const navigation = navItems.map((item) => ({
 
     const open = () => {
       if (Date.now() - lastClosed < 350) return;
+      // Re-sync height right before opening to ensure no overlap
+      const h = document.querySelector<HTMLElement>('[data-sticky-header]');
+      if (h && h.offsetHeight > 0) {
+        document.documentElement.style.setProperty('--header-height', `${h.offsetHeight}px`);
+      }
       mobileNav.hidden = false;
       createBackdrop();
       setItemDelays();
@@ -107,7 +130,6 @@ const navigation = navItems.map((item) => ({
       });
       toggle.setAttribute('aria-expanded', 'true');
       toggle.setAttribute('aria-label', 'Close menu');
-      document.body.classList.add('nav-locked');
       const firstLink = mobileNav.querySelector<HTMLAnchorElement>(mobileNavLinkSelector);
       firstLink?.focus();
     };
@@ -118,7 +140,6 @@ const navigation = navItems.map((item) => ({
       removeBackdrop();
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Open menu');
-      document.body.classList.remove('nav-locked');
       const onEnd = (event: TransitionEvent) => {
         if (event.target !== mobileNav) return;
         mobileNav.hidden = true;
