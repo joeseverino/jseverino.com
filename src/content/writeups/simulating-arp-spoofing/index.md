@@ -13,8 +13,7 @@ technologies:
   - mininet
   - python
   - wireshark
-featured: true
-featured_order: 6
+featured: false
 ---
 
 # Simulating ARP Spoofing with Mininet and Demonstrating Enterprise Mitigations

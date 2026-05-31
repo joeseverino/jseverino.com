@@ -18,7 +18,7 @@ technologies:
   - wordpress
   - zero-trust
 featured: true
-featured_order: 5
+featured_order: 6
 ---
 
 # Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication

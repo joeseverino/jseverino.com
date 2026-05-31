@@ -24,7 +24,7 @@ technologies:
   - wireguard
   - zero-trust
 featured: true
-featured_order: 1
+featured_order: 2
 ---
 
 # Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls

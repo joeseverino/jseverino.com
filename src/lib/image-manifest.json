@@ -882,6 +882,336 @@
     ],
     "fallback": "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow.png"
   },
+  "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model.png": {
+    "w": 2962,
+    "h": 1976,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/hq-content.png": {
+    "w": 2968,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/hq-content.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard.png": {
+    "w": 2968,
+    "h": 1980,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/inbox.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/inbox.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call.png": {
+    "w": 2526,
+    "h": 1538,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/projects.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/projects.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/reference.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/reference.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/runbook.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/runbook.png"
+  },
+  "/assets/writeups/building-a-custom-mcp-layer/images/template.png": {
+    "w": 2746,
+    "h": 1882,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/template.png"
+  },
   "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server.jpeg": {
     "w": 4250,
     "h": 4621,

@@ -26,6 +26,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | diamond-model | Diamond Model | yes |
 | file-integrity-monitoring | File Integrity Monitoring | yes |
 | local-first-architecture | Local-First Architecture |  |
+| mcp | Model Context Protocol | yes |
 | mitre-attack | MITRE ATT&CK | yes |
 | nist | NIST |  |
 | private-root-ca | Private Root CA | yes |
@@ -38,11 +39,15 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 
 | Slug | Label | Featured |
 | --- | --- | --- |
+| claude-code | Claude Code | yes |
+| django | Django |  |
 | git | Git |  |
-| github | GitHub |  |
+| github | GitHub | yes |
+| lm-studio | LM Studio |  |
+| obsidian | Obsidian |  |
 | phpmyadmin | phpMyAdmin |  |
-| portainer | Portainer |  |
-| uptime-kuma | Uptime Kuma |  |
+| portainer | Portainer | yes |
+| uptime-kuma | Uptime Kuma | yes |
 
 ## Languages
 
@@ -54,6 +59,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | json | JSON |  |
 | php | PHP | yes |
 | python | Python | yes |
+| yaml | YAML |  |
 | zsh | zsh | yes |
 
 ## Networking

@@ -22,7 +22,7 @@ technologies:
   - zero-trust
   - zsh
 featured: true
-featured_order: 4
+featured_order: 5
 ---
 
 # Architecting a Custom Detection Engine with File Integrity and Security Event Monitoring
