@@ -15,6 +15,10 @@ node_modules [0-9]*
 # Build output (dist.nosync is the local outDir, dist is Cloudflare's)
 /dist*
 
+# Playwright artifacts
+/playwright-report/
+/test-results/
+
 # Environment and local machine files
 .env
 .env.*

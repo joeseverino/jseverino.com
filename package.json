@@ -24,7 +24,9 @@
     "build": "npm run -s check && npm run -s build:static",
     "publish:check": "node bin/publish-check.mjs",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "check": "NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning"
+    "check": "NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -40,6 +42,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0"
   }
 }
