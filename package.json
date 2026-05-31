@@ -26,7 +26,9 @@
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "check": "NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:visual": "VISUAL=1 playwright test tests/visual.spec.ts",
+    "test:e2e:visual:update": "VISUAL=1 playwright test tests/visual.spec.ts --update-snapshots"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
