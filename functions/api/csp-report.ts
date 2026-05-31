@@ -110,7 +110,14 @@ function isIgnoredReport(report: NormalizedReport): boolean {
   return (
     !isSiteDocument(report.documentUri) ||
     IGNORED_BLOCKED_URI_PREFIXES.some((prefix) => blocked.startsWith(prefix)) ||
-    IGNORED_SOURCE_FILE_PREFIXES.some((prefix) => sourceFile.startsWith(prefix))
+    IGNORED_SOURCE_FILE_PREFIXES.some((prefix) => sourceFile.startsWith(prefix)) ||
+    // Extensions like AdGuard inject inline <style>/<script> directly into the
+    // page DOM, so the browser attributes the violation to our document instead
+    // of an extension scheme. Pages on this site ship zero inline styles and
+    // the only inline script is the nonce-bearing JSON-LD block, so any
+    // `inline`-blocked report whose source matches the document URI is an
+    // injection from a browser extension or page-level content filter.
+    (blocked === 'inline' && report.sourceFile === report.documentUri)
   );
 }
 
