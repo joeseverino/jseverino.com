@@ -1324,6 +1324,10 @@ figure {
   }
 
   &::backdrop {
+    position: fixed;
+    inset-block-start: var(--header-height, 3.6rem);
+    inset-inline: 0;
+    inset-block-end: 0;
     background: color-mix(in oklch, var(--color-bg) 72%, transparent);
     backdrop-filter: blur(var(--blur-chrome));
     -webkit-backdrop-filter: blur(var(--blur-chrome));
