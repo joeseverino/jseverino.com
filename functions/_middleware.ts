@@ -39,11 +39,13 @@ function csp(nonce: string): string {
   ].join('; ');
 }
 
-// Report-only companion policy. Carries Trusted Types directives that are
-// not yet enforced: violations are surfaced via the same /api/csp-report
-// endpoint with disposition="report". Promote into csp() once reports stay
-// clean for a few days. See SECURITY.md and the modernization backlog for
-// the promotion criteria.
+// Report-only companion policy. Carries Trusted Types so first-party
+// regressions still surface via /api/csp-report. Enforcement is blocked
+// by Cloudflare-injected scripts (JS Detections at /cdn-cgi/challenge-
+// platform/scripts/jsd/main.js, plus the cdn-cgi/rum beacon) that
+// assign to innerHTML and aren't TT-compliant. Disabling those would
+// lose Cloudflare's bot-scoring and real-user telemetry, which the
+// site relies on. Reassess if Cloudflare ships TT-compliant versions.
 function cspReportOnly(): string {
   return [
     "require-trusted-types-for 'script'",
