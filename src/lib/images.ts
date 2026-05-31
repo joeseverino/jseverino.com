@@ -47,7 +47,6 @@ const srcset = (variants: Variant[]): string =>
 /** Build a responsive <picture>, or a plain <img> when the source is unknown. */
 export function buildPicture(opts: PictureOptions): string {
   const { src, alt = '', loading = 'lazy', fetchpriority } = opts;
-  const sizes = opts.sizes ?? '100vw';
   const cls = opts.class ? ` class="${esc(opts.class)}"` : '';
   const fp = fetchpriority ? ` fetchpriority="${fetchpriority}"` : '';
   const altAttr = ` alt="${esc(String(alt))}"`;
@@ -58,14 +57,18 @@ export function buildPicture(opts: PictureOptions): string {
   }
 
   // Emit width/height so the browser reserves the box (no layout shift).
-  // Honor an author display-width override, deriving height from the ratio.
+  // Honor an author display-width override, deriving height from the ratio
+  // and using the same width to anchor the responsive sizes hint so the
+  // browser stops picking a variant sized for the source instead of the slot.
   let w = entry.w;
   let h = entry.h;
   const displayWidth = Number(opts.width);
-  if (Number.isFinite(displayWidth) && displayWidth > 0) {
+  const hasDisplayWidth = Number.isFinite(displayWidth) && displayWidth > 0;
+  if (hasDisplayWidth) {
     w = displayWidth;
     h = Math.round((displayWidth * entry.h) / entry.w);
   }
+  const sizes = opts.sizes ?? (hasDisplayWidth ? `(min-width: 600px) ${displayWidth}px, 100vw` : '100vw');
 
   return (
     '<picture>' +
@@ -81,16 +84,30 @@ const IMG_TAG = /<img\b([^>]*)>/gi;
 const ATTR = /([a-zA-Z][\w-]*)(?:="([^"]*)")?/g;
 
 /** Rewrite every manifest-known <img> in an HTML string into a <picture>. */
-export function enhanceImages(html: string, sizes = '(max-width: 720px) 100vw, 672px'): string {
+export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 100vw, 672px'): string {
   return html.replace(IMG_TAG, (whole: string, attrString: string) => {
     const attrs: Record<string, string> = {};
     for (const match of attrString.matchAll(ATTR)) attrs[match[1].toLowerCase()] = match[2] ?? '';
     if (!attrs.src || !manifest()[attrs.src]) return whole;
+    // `![alt|350](src)` survives as `alt="alt|350"` when the markdown reaches
+    // us already-rendered (e.g., split-side inline images). Split it back out
+    // so the width hint can drive the responsive sizes attribute.
+    let alt = attrs.alt ?? '';
+    let width = attrs.width;
+    if (!width && alt.includes('|')) {
+      const parts = alt.split('|').map((p) => p.trim());
+      const widthPart = parts.slice(1).find((p) => /^\d+$/.test(p));
+      if (widthPart) {
+        alt = parts[0] ?? '';
+        width = widthPart;
+      }
+    }
+    const sizes = width ? undefined : defaultSizes;
     return buildPicture({
       src: attrs.src,
-      alt: attrs.alt ?? '',
+      alt,
       class: attrs.class,
-      width: attrs.width,
+      width,
       sizes,
       loading: attrs.loading === 'eager' ? 'eager' : 'lazy',
       fetchpriority: attrs.fetchpriority === 'high' ? 'high' : undefined,
