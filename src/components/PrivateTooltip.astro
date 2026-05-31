@@ -1,8 +1,4 @@
 <script>
-  // Click handler for `[text](url "private: msg")` anchors in writeup markdown
-  // (transformed to `data-private-tooltip` by lib/content.ts). Floats a small
-  // status message anchored to the click instead of navigating. Loaded only on
-  // pages that render markdown body — bundle is skipped on index/tag/404 pages.
   document.addEventListener('click', (event) => {
     const trigger = (event.target as Element | null)?.closest<HTMLElement>('[data-private-tooltip]');
     if (!trigger) return;

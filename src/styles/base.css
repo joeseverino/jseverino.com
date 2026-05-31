@@ -1,6 +1,3 @@
-/* Cascade order: components beats base beats tokens, regardless of selector
-   specificity. Anything added in a higher layer wins without specificity wars
-   or !important. Layers declared later have higher priority. */
 @layer tokens, base, components;
 
 @layer tokens {
@@ -14,7 +11,6 @@
 }
 
 :root {
-  /* Colors — from theme.json palette */
   --color-bg: #ffffff;
   --color-text: #0b0620;
   --color-text-alt: #5e4e9e;
@@ -24,31 +20,25 @@
   --color-muted: #6E6B7C;
   --color-border: rgba(11, 6, 32, 0.08);
 
-  /* Shadows — from theme.json shadow.presets */
   --shadow-sm: 0 6px 10px rgba(0, 0, 0, 0.18);
   --shadow-md: 0 10px 16px rgba(0, 0, 0, 0.22);
 
-  /* Backdrop blur shared by sticky header + mobile-nav scrim */
   --blur-chrome: 12px;
 
-  /* Radii */
   --radius-sm: 10px;
   --radius-md: 12px;
   --radius-pill: 999px;
   --radius-button: 2rem;
 
-  /* Layout — from theme.json layout */
-  --content: 42rem;     /* default constrained block width (paragraphs, headings, body images) */
-  --wide: 80rem;        /* alignwide block width (page headers, dividers) */
-  --cards: 1100px;      /* featured-projects grid cap (from style.css line 498) */
+  --content: 42rem;
+  --wide: 80rem;
+  --cards: 1100px;
   --gutter: clamp(1.5rem, 6vw, 2rem);
   --w-constrained: min(var(--content), calc(100% - (var(--gutter) * 2)));
   --w-wide: min(var(--wide), calc(100% - (var(--gutter) * 2)));
 
-  /* Type stacks */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Spacing — from theme.json spacing.spacingSizes */
   --space-20: 1rem;
   --space-30: clamp(1.5rem, 6vw, 2rem);
   --space-40: clamp(2rem, 8vw, 3rem);
@@ -57,7 +47,6 @@
   --space-60: clamp(3.5rem, 10vw, 6rem);
   --space-70: clamp(4rem, 15vw, 7rem);
 
-  /* Aliases used through the stylesheet */
   --space-1: 0.5rem;
   --space-2: var(--space-20);
   --space-3: var(--space-30);
@@ -65,16 +54,15 @@
   --space-5: var(--space-50);
   --space-6: var(--space-60);
 
-  /* Typography */
   --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
-  --font-sm: 1rem;        /* small (nav, button, dates) */
-  --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem); /* body */
-  --font-md: 1.25rem;     /* medium (brand, sticky-button) */
-  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);     /* h5 heading-small */
-  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);     /* h4 heading-medium */
-  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);      /* h3 large */
-  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);             /* h2 x-large */
-  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);     /* h1 xx-large */
+  --font-sm: 1rem;
+  --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
+  --font-md: 1.25rem;
+  --font-h-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
+  --font-h-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
+  --font-lg: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
+  --font-xl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
+  --font-xxl: clamp(1.85rem, 1.85rem + ((1vw - 0.2rem) * 3.167), 3.75rem);
 }
 
 @media (max-width: 768px) {
@@ -83,7 +71,7 @@
   }
 }
 
-} /* end @layer tokens */
+}
 
 @layer base {
 
@@ -130,7 +118,6 @@ img {
   vertical-align: bottom;
 }
 
-/* <picture> is a transparent wrapper — its <img> keeps every existing rule. */
 picture {
   display: contents;
 }
@@ -166,7 +153,6 @@ h2 { font-size: var(--font-xl); }
 h3 { font-size: var(--font-lg); }
 h4 { font-size: var(--font-h-md); }
 
-/* h5 + h6 from theme.json — uppercase eyebrow-style subsection headings */
 h5 {
   margin: 0;
   font-size: var(--font-h-sm);
@@ -358,7 +344,7 @@ hr {
   border-block-start: 1px solid var(--color-border);
 }
 
-} /* end @layer base */
+}
 
 @layer components {
 
@@ -380,15 +366,10 @@ hr {
   margin-inline: auto;
 }
 
-/* Block-gap rhythm between top-level main children.
-   Applies to home page (.home-content → section → .home-content alternation)
-   and to inner blocks of portfolio/tag/resume pages. */
 main > * + * {
   margin-block-start: var(--space-3);
 }
 
-/* Constrained body wrapper for about / contact / resume pages.
-   Keeps long-form pages readable without extra wrappers. */
 .content-flow {
   inline-size: var(--w-constrained);
   margin-inline: auto;
@@ -676,19 +657,11 @@ main > * + * {
   & > * { margin-block-start: var(--space-3); }
   & > :first-child { margin-block-start: 0; }
 
-  /* Section h2s ("Featured Projects", "About Me", "Technologies") — left-aligned
-     even inside the centered hero block. Sized to var(--font-lg) so promoting
-     them from <h3> to <h2> for a clean SEO heading outline does not change
-     their rendered size. Spacing below them is governed by block-gap rules. */
   & > h2 {
     text-align: left;
     font-size: var(--font-lg);
   }
 
-  /* The first content block on a page is the hero — centered, with a few
-     intentionally tighter blocks: summary paragraph, location chip flush
-     under it, action row starts at 1.4rem. h1 is sized to --font-xl so
-     promoting from <h2> to <h1> for SEO does not change the rendered size. */
   &:first-child {
     padding-block-start: 0;
     text-align: center;
@@ -896,7 +869,6 @@ main > * + * {
 
 /* ── Split / 2-column ───────────────────────────────────────────────── */
 
-/* Equal-width columns for split content blocks. */
 .split {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -909,7 +881,6 @@ main > * + * {
     border-radius: 19px;
   }
 
-  /* Vertical rhythm between siblings inside each column. */
   & > div {
     & > * { margin-block-start: clamp(1.5rem, 6vw, 2rem); }
     & > :first-child { margin-block-start: 0; }
@@ -989,7 +960,6 @@ figure {
 
 /* ── Writeup article ────────────────────────────────────────────────── */
 
-/* Constrained article wrapper. */
 .article {
   inline-size: var(--w-constrained);
   margin-inline: auto;
@@ -1026,7 +996,6 @@ figure {
   }
 }
 
-/* Technologies block — h4 heading, pill list, faded separator (single.html blockGap 1.2rem) */
 .article-tags {
   & > * + * { margin-block-start: 1.2rem; }
 
@@ -1056,7 +1025,6 @@ figure {
 .prose {
   line-height: 1.65;
 
-  /* Uniform article spacing, including around headings. */
   & > * + * { margin-block-start: var(--space-3); }
 
   & h2 { font-size: var(--font-h-md); }
@@ -1099,8 +1067,6 @@ figure {
 }
 
 /* ── Private-link tooltip ───────────────────────────────────────────── */
-/* Floating message for any anchor with `data-private-tooltip="..."`. */
-/* JS handler lives in BaseLayout.astro. */
 
 .private-tooltip {
   position: absolute;
@@ -1504,4 +1470,4 @@ body:has(.mobile-nav:popover-open) {
   }
 }
 
-} /* end @layer components */
+}
