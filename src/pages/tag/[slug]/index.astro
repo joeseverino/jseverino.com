@@ -23,6 +23,11 @@ const projectLabel = writeups.length === 1 ? 'project' : 'projects';
     title: `${tagName} Projects`,
     description: `Portfolio writeups tagged ${tagName}.`,
     path: `/tag/${tag.slug}/`,
+    pageType: 'itemList',
+    itemListItems: writeups.map((writeup) => ({
+      name: writeup.title,
+      url: `/portfolio/${writeup.slug}/`,
+    })),
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Portfolio', url: '/portfolio/' },

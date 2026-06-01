@@ -7,6 +7,10 @@ published: true
 published_at: 2026-03-08T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/wazuh-siem-lab-cover.png
+cover_alt: >-
+  Wazuh dashboard with agent status donut, last-24h alert counts by severity,
+  and the endpoint security, threat intelligence, and compliance modules enabled
+  in the lab.
 technologies:
   - smtp
   - ubuntu-server

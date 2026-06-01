@@ -105,6 +105,10 @@ function summarizeContentChanges() {
   status('content', summary || 'no content changes');
 }
 
+const security = run('security.txt', node, ['bin/security-txt.mjs', 'check']);
+const securityLine = security.output.split('\n').find((line) => line.startsWith('ok'));
+status('security', securityLine ? securityLine.replace(/^ok\s+/, '').trim() : 'passed');
+
 const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
   if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) {

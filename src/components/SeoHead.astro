@@ -1,8 +1,10 @@
 ---
 import { site } from '@lib/site';
 import { getSiteChrome } from '@lib/content';
+import { getImageDimensions } from '@lib/images';
 
 type Breadcrumb = { name: string; url: string };
+type ListItem = { name: string; url: string };
 
 type Props = {
   title?: string;
@@ -15,6 +17,8 @@ type Props = {
   modifiedTime?: string;
   tags?: string[];
   breadcrumbs?: Breadcrumb[];
+  pageType?: 'profile' | 'collection' | 'itemList';
+  itemListItems?: ListItem[];
 };
 
 const {
@@ -28,6 +32,8 @@ const {
   modifiedTime,
   tags = [],
   breadcrumbs = [],
+  pageType,
+  itemListItems = [],
 } = Astro.props;
 
 const {
@@ -40,7 +46,18 @@ const {
 
 const canonical = new URL(path, site.url).href;
 const ogImage = new URL(image, site.url).href;
+const ogDimensions =
+  getImageDimensions(image) ??
+  (image === site.defaultOgImage
+    ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight }
+    : undefined);
 const fullTitle = title === site.defaultTitle ? title : `${title} | ${personName}`;
+
+const imageObject: Record<string, unknown> = {
+  '@type': 'ImageObject',
+  url: ogImage,
+  ...(ogDimensions ? { width: ogDimensions.width, height: ogDimensions.height } : {}),
+};
 
 const person = {
   '@type': 'Person',
@@ -73,7 +90,7 @@ type JsonLd = {
   '@graph': JsonLdNode[];
 };
 
-const graph: JsonLdNode[] = [
+const primaryNode: JsonLdNode =
   type === 'article'
     ? {
         '@type': 'Article',
@@ -81,7 +98,7 @@ const graph: JsonLdNode[] = [
         headline: title,
         description,
         url: canonical,
-        image: ogImage,
+        image: imageObject,
         datePublished: publishedTime,
         dateModified: modifiedTime || publishedTime,
         keywords: tags,
@@ -95,11 +112,46 @@ const graph: JsonLdNode[] = [
         name: site.name,
         url: site.url,
         publisher: { '@id': `${site.url}/#person` },
-      },
-  person,
-];
+      };
+
+const graph: JsonLdNode[] = [primaryNode, person];
 
 if (breadcrumbList) graph.push(breadcrumbList);
+
+if (pageType === 'profile') {
+  graph.push({
+    '@type': 'ProfilePage',
+    '@id': `${canonical}#profilepage`,
+    url: canonical,
+    name: fullTitle,
+    description,
+    mainEntity: { '@id': `${site.url}/#person` },
+  });
+} else if (pageType === 'collection') {
+  graph.push({
+    '@type': 'CollectionPage',
+    '@id': `${canonical}#collectionpage`,
+    url: canonical,
+    name: fullTitle,
+    description,
+    isPartOf: { '@id': `${site.url}/#website` },
+    about: { '@id': `${site.url}/#person` },
+  });
+} else if (pageType === 'itemList') {
+  graph.push({
+    '@type': 'ItemList',
+    '@id': `${canonical}#itemlist`,
+    url: canonical,
+    name: title,
+    numberOfItems: itemListItems.length,
+    itemListElement: itemListItems.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      url: new URL(item.url, site.url).href,
+    })),
+  });
+}
 
 const jsonLd: JsonLd = {
   '@context': 'https://schema.org',
@@ -112,10 +164,13 @@ const jsonLd: JsonLd = {
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <link rel="canonical" href={canonical} />
 <meta property="og:type" content={type} />
+<meta property="og:site_name" content={site.name} />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={ogImage} />
+{ogDimensions && <meta property="og:image:width" content={String(ogDimensions.width)} />}
+{ogDimensions && <meta property="og:image:height" content={String(ogDimensions.height)} />}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={fullTitle} />
 <meta name="twitter:description" content={description} />

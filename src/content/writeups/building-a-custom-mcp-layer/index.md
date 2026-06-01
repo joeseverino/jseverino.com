@@ -7,7 +7,11 @@ description: >-
 published: true
 published_at: 2026-05-29T00:00:00.000Z
 last_reviewed: 2026-05-30T00:00:00.000Z
-cover_image: ./images/mcp-call.png
+cover_image: ./images/mcp-cover.png
+cover_alt: >-
+  Claude Code routing two operational questions through the severino-vault-mcp
+  server, pulling the Generate Homelab Certificate and Publish a Writeup
+  runbooks back instead of a generic tutorial.
 technologies:
   - claude-code
   - django

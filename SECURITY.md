@@ -18,6 +18,9 @@ report it privately rather than opening a public issue.
   message with **"Security:"**.
 - Include enough detail to reproduce: the URL or endpoint, the request, and
   the observed vs. expected behavior.
+- If the report contains sensitive exploit detail, encrypt it with the
+  published OpenPGP key for `security@jseverino.com` and paste the
+  ASCII-armored encrypted message into the contact form.
 
 This is a personal site, not a funded program — there is no bug bounty — but
 reports are read and genuine issues are fixed promptly. Please allow a
@@ -30,6 +33,27 @@ so automated discovery tools and bug-bounty platforms can route reports
 correctly. The committed source lives at
 [`public/.well-known/security.txt`](./public/.well-known/security.txt);
 renew the `Expires` field annually.
+
+The `Encryption` field in `security.txt` points at the site's Web Key
+Directory (WKD) key:
+[`/.well-known/openpgpkey/hu/t5s8ztdbon8yzntexy6oz5y48etqsnbb`](https://jseverino.com/.well-known/openpgpkey/hu/t5s8ztdbon8yzntexy6oz5y48etqsnbb).
+That file is a public OpenPGP key, not a secret. It lets reporters encrypt a
+message that only the holder of the matching private key can decrypt.
+
+The committed `security.txt` is OpenPGP clear-signed by
+`security@jseverino.com`. The disclosure fields remain readable, and the
+signature lets clients verify that the file has not changed since it was
+signed by the matching private key.
+
+Signing and verification are scripted:
+[`npm run sign:security`](./bin/security-txt.mjs) strips the existing
+signature, re-signs the body with `security@jseverino.com`, and writes it
+back.
+[`npm run check:security`](./bin/security-txt.mjs) verifies the signature,
+confirms all RFC 9116 required fields are present, fails if `Expires` is
+within 30 days, and confirms the `Encryption` URL resolves to a local WKD
+file. `check:security` is wired into `publish:check`, so an unsigned or
+expired `security.txt` fails the release gate before any build runs.
 
 ## Licensing and reuse
 

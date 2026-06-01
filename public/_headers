@@ -6,9 +6,21 @@
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
 
+# Unversioned files (resume PDF, signed docs) — short cache so an update
+# propagates within an hour instead of riding the immutable rule below.
+/assets/docs/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
+
+# WKD key serving — explicit content-type since the binary key file has no
+# extension, and a short cache so revocations propagate within minutes.
+/.well-known/openpgpkey/*
+  Content-Type: application/octet-stream
+  Cache-Control: public, max-age=300, must-revalidate
 
 /*.html
   Cache-Control: public, max-age=300, must-revalidate

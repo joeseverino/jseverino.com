@@ -8,6 +8,9 @@ published: true
 published_at: 2026-03-15T00:00:00.000Z
 last_reviewed: 2026-05-17T00:00:00.000Z
 cover_image: ./images/arp-spoofing-lab-cover.png
+cover_alt: >-
+  Wireshark capture highlighting a "duplicate IP address detected" warning, the
+  telltale signature of an ARP spoofing attack on the lab network.
 technologies:
   - cisco-packet-tracer
   - mininet

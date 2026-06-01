@@ -10,6 +10,10 @@ published: true
 published_at: 2026-04-26T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/custom-wordpress-detection-engine-cover.png
+cover_alt: >-
+  The Severino Labs Security Layer plugin inside WordPress, showing a 90%
+  security score, automated file integrity monitoring, and the day's security
+  event count on the admin dashboard.
 technologies:
   - cloudflare
   - file-integrity-monitoring

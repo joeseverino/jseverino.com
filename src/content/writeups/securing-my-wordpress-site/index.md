@@ -8,6 +8,9 @@ published: true
 published_at: 2026-04-23T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/wordpress-cloudflare-security-cover.png
+cover_alt: >-
+  The passkey-only admin login replacing the WordPress password form — a single
+  "Sign in with Passkey" button gated by a WebAuthn challenge.
 technologies:
   - cloudflare
   - csp

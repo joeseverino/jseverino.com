@@ -113,7 +113,9 @@ npm run dev:drafts         # Sync drafts locally, then start dev server
 npm run check              # Astro type/content diagnostics
 npm run build:static       # Build static output to dist.nosync locally
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
-npm run publish:check      # Clean, sync, check, build, audit assets
+npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key
+npm run check:security     # Verify the signature, required fields, Expires, and WKD file
+npm run publish:check      # check:security + clean + sync + check + build + audit assets
 npm audit --omit=dev       # Check known dependency advisories
 npm outdated               # Check direct dependency freshness
 ```
@@ -187,6 +189,7 @@ Do not commit:
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
+- [`docs/Accessibility.md`](./docs/Accessibility.md) documents landmarks, skip navigation, alt text, focus behavior, reduced motion, keyboard coverage, and contrast posture.
 - [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
 - [`docs/Release-Checklist.md`](./docs/Release-Checklist.md) documents preflight, publish, signed tag, deploy, header, SEO, and accessibility checks.
 - [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.

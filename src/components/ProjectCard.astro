@@ -18,7 +18,7 @@ const { writeup, eager = false } = Astro.props;
     <a href={`/portfolio/${writeup.slug}/`}>
       <Picture
         src={writeup.heroImage}
-        alt={writeup.title}
+        alt={writeup.heroAlt}
         sizes="(max-width: 700px) 100vw, 360px"
         loading={eager ? 'eager' : 'lazy'}
         fetchpriority={eager ? 'high' : undefined}

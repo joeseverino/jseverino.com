@@ -13,6 +13,7 @@ const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
     title: page.title,
     description: page.description,
     path: page.path,
+    pageType: 'profile',
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: page.title, url: page.path },

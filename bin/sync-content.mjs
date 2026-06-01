@@ -188,6 +188,7 @@ function publicWriteupData(data, contentHash, slug) {
     ...(data.published_at ? { published_at: data.published_at } : {}),
     last_reviewed: lastReviewed,
     ...(data.cover_image ? { cover_image: data.cover_image } : {}),
+    ...(data.cover_alt ? { cover_alt: data.cover_alt } : {}),
     technologies: Array.isArray(data.technologies) ? data.technologies : [],
     featured: Boolean(data.featured),
     ...(Number.isInteger(data.featured_order) ? { featured_order: data.featured_order } : {}),

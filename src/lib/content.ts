@@ -29,6 +29,7 @@ export type Writeup = {
   lastReviewed?: string;
   technologies: string[];
   heroImage: string;
+  heroAlt: string;
   bodyHtml: string;
   featured: boolean;
   featuredOrder?: number;
@@ -460,6 +461,7 @@ export async function getWriteups(): Promise<Writeup[]> {
         lastReviewed: normalizeDate(entry.data.last_reviewed),
         technologies: entry.data.technologies,
         heroImage,
+        heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
         bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
         featured: entry.data.featured,
         featuredOrder: entry.data.featured_order,

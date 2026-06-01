@@ -56,6 +56,7 @@ npm outdated
 A clean release should report:
 
 ```text
+security   signed, 5 fields present, expires in <n>d, WKD file present
 sync       content snapshot updated
 check      0 errors, 0 warnings
 build      <n> pages built
@@ -72,6 +73,20 @@ git status -sb
 
 Content changes from the private vault are expected only when the release is
 intended to publish those changes.
+
+If [`public/.well-known/security.txt`](../public/.well-known/security.txt)
+changed (edited fields, bumped `Expires`, rotated the WKD key), re-sign before
+committing:
+
+```sh
+npm run sign:security
+npm run check:security
+```
+
+`sign:security` strips any existing PGP wrapper, clear-signs the body with
+`security@jseverino.com`, and writes the result back in place. `check:security`
+is also wired into `publish:check`, so a release with an unsigned, expired, or
+WKD-mismatched `security.txt` fails the gate before the build runs.
 
 ## 4. Commit And Push
 

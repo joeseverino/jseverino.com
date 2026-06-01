@@ -1080,6 +1080,39 @@
     ],
     "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call.png"
   },
+  "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover.png": {
+    "w": 2526,
+    "h": 1538,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover.png"
+  },
   "/assets/writeups/building-a-custom-mcp-layer/images/projects.png": {
     "w": 2746,
     "h": 1882,

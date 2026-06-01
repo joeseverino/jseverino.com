@@ -71,6 +71,7 @@ Public writeup fields:
 - `published_at`
 - `last_reviewed`
 - `cover_image`
+- `cover_alt`
 - `technologies`
 - `featured`
 - `featured_order`
@@ -159,4 +160,5 @@ That means published content changes must be synced and committed before deploy.
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
+- [`docs/Accessibility.md`](./Accessibility.md)
 - [`SECURITY.md`](../SECURITY.md)

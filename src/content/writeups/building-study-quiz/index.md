@@ -9,6 +9,10 @@ published: true
 published_at: 2026-05-03T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/study-quiz-local-first-app-dashboard.png
+cover_alt: >-
+  Study Quiz answering a Georgia Tech trivia question — the correct year
+  highlighted, the explanation revealed, and the "Got it" / "Still shaky"
+  confidence buttons used for spaced review.
 technologies:
   - browser-local-storage
   - css

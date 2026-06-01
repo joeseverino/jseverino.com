@@ -8,6 +8,10 @@ published: true
 published_at: 2026-05-10T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/zero-trust-private-infrastructure-cover.png
+cover_alt: >-
+  Uptime Kuma showing every monitor in the private homelab and VPS green —
+  homelab SSH, Caddy, AdGuard Home, Portainer, and the public site — all
+  reachable only over Tailscale.
 technologies:
   - adguard-home
   - caddy

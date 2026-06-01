@@ -1,8 +1,20 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
 # Security disclosure information for jseverino.com — RFC 9116.
 # Renew Expires annually; bump the value when this file changes.
 
 Contact: https://jseverino.com/contact/
+Encryption: https://jseverino.com/.well-known/openpgpkey/hu/t5s8ztdbon8yzntexy6oz5y48etqsnbb
 Expires: 2027-05-26T23:59:59.000Z
 Preferred-Languages: en
 Canonical: https://jseverino.com/.well-known/security.txt
 Policy: https://github.com/joeseverino/jseverino.com/blob/main/SECURITY.md
+-----BEGIN PGP SIGNATURE-----
+
+iKkEARYKAFEWIQTwwLw+oh2zpT+3M5++KKKUPBfupQUCahz/uRsUgAAAAAAEAA5t
+YW51MiwyLjUrMS4xMiwwLDMXHHNlY3VyaXR5QGpzZXZlcmluby5jb20ACgkQviii
+lDwX7qWjKQD/e3jogqOGi7LazlC19gjBf5Uj4uhJvW+2ScXkcErrYZ4BAJv8S7LR
+YwnhJjxK/3yftJvb7tIQYBliQooRL0hQAl4G
+=x+lh
+-----END PGP SIGNATURE-----

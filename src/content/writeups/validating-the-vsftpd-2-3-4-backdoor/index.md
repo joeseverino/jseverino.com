@@ -7,6 +7,10 @@ published: true
 published_at: 2026-04-21T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/meterpreter-sysinfo.png
+cover_alt: >-
+  Metasploit's vsftpd_234_backdoor module landing a session on the
+  Metasploitable target, ending in a sysinfo prompt that confirms the backdoor
+  still trips on the colon-paren username.
 technologies:
   - kali-linux
   - metasploit-framework

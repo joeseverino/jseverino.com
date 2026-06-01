@@ -29,6 +29,12 @@ function manifest(): Manifest {
   return manifestCache;
 }
 
+/** Intrinsic width/height for an asset URL, or `undefined` if not in the manifest. */
+export function getImageDimensions(src: string): { width: number; height: number } | undefined {
+  const entry = manifest()[src];
+  return entry ? { width: entry.w, height: entry.h } : undefined;
+}
+
 export type PictureOptions = {
   src: string;
   alt?: string;

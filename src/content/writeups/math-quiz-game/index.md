@@ -9,6 +9,10 @@ published: true
 published_at: 2025-08-10T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/math-quiz-game-home-screen.png
+cover_alt: >-
+  Python source for the math quiz CLI — the INCORRECT, QUESTIONS, and TRIES
+  constants and the start of the main() loop that prompts the player for a
+  difficulty level.
 technologies:
   - python
 featured: false

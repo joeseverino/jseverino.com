@@ -9,6 +9,10 @@ published: true
 published_at: 2026-05-08T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/adguard-home-docker-dns-cover.png
+cover_alt: >-
+  AdGuard Home dashboard at adguard.homelab showing 34,977 DNS queries over 24
+  hours, 6,311 blocked by filters, and per-device query counts that local
+  resolution makes visible.
 technologies:
   - adguard-home
   - dns-over-https

@@ -7,6 +7,9 @@ published: true
 published_at: 2025-08-19T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
 cover_image: ./images/oop-football-score-simulator-output.png
+cover_alt: >-
+  Python source for the simulator's Team class — the __init__, __repr__, and
+  __str__ methods tracking each franchise's wins, losses, and points.
 technologies:
   - python
 featured: false

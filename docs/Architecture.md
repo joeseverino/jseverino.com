@@ -72,6 +72,7 @@ Writeups:
 - optional `published_at`
 - optional `last_reviewed`
 - optional `cover_image`
+- optional `cover_alt`
 - `technologies`
 - `featured`
 - optional `featured_order`
@@ -211,7 +212,8 @@ dist/
 ├── _headers                    # Cloudflare Pages headers (copied from public/)
 ├── _redirects                  # Cloudflare Pages redirects (copied from public/)
 ├── .well-known/
-│   └── security.txt            # RFC 9116 disclosure pointer (copied from public/)
+│   ├── security.txt            # Clear-signed RFC 9116 disclosure pointer
+│   └── openpgpkey/             # WKD public key for encrypted vulnerability reports
 ├── assets/                     # Static site assets — see §12 for the convention
 │   ├── docs/                   # Downloadable documents (resume PDF, etc.)
 │   ├── fonts/                  # Subset Inter variable WOFF2
@@ -353,12 +355,13 @@ The site is then served at `http://localhost:8788` with the middleware and Funct
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 
-1. generated output cleanup;
-2. content sync;
-3. iCloud conflict-copy cleanup;
-4. Astro check;
-5. Astro build;
-6. image weight audit.
+1. `security.txt` verification ([`bin/security-txt.mjs check`](../bin/security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
+2. generated output cleanup;
+3. content sync;
+4. iCloud conflict-copy cleanup;
+5. Astro check;
+6. Astro build;
+7. image weight audit.
 
 The iCloud conflict-copy cleanup step in [`bin/clean-generated.mjs`](../bin/clean-generated.mjs) prefers the canonical (un-numbered) path when it exists and only restores from a numbered conflict copy if the canonical path was renamed away. This prevents the previous behavior where a freshly-synced canonical file could be replaced by an older numbered copy that iCloud touched more recently.
 
@@ -385,5 +388,6 @@ The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
+- [`docs/Accessibility.md`](./Accessibility.md)
 - [`docs/Release-Checklist.md`](./Release-Checklist.md)
 - [`SECURITY.md`](../SECURITY.md)

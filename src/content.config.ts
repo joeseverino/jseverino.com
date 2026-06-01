@@ -32,6 +32,7 @@ const writeups = defineCollection({
     published_at: z.coerce.date().optional(),
     last_reviewed: z.coerce.date().optional(),
     cover_image: z.string().optional(),
+    cover_alt: z.string().optional(),
     technologies: z.array(z.string()).default([]),
     featured: z.boolean().default(false),
     featured_order: z.number().int().optional(),

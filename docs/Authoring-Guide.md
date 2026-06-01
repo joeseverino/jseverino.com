@@ -170,3 +170,4 @@ Before publishing:
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Architecture.md`](./Architecture.md)
 - [`docs/SEO.md`](./SEO.md)
+- [`docs/Accessibility.md`](./Accessibility.md)
