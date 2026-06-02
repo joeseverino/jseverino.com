@@ -29,6 +29,11 @@ node_modules [0-9]*
 .DS_Store
 .claude/
 .gemini/
+.obsidian/
+
+# Stray root-level binaries (export PDFs, exports, etc.).
+# Intentional PDFs live under public/assets/docs/.
+/*.pdf
 
 # Logs
 *.log

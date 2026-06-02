@@ -1,0 +1,77 @@
+name: security.txt expires
+
+on:
+  schedule:
+    # First of every month at 09:00 UTC.
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-expires:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check security.txt Expires
+        id: check
+        run: |
+          set -e
+          DAYS_REMAINING=$(node bin/security-txt.mjs check 2>&1 | grep -oE 'expires in [0-9]+d' | grep -oE '[0-9]+' || echo "0")
+          echo "days_remaining=$DAYS_REMAINING" >> "$GITHUB_OUTPUT"
+          if [ "$DAYS_REMAINING" -lt 60 ]; then
+            echo "expires_soon=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "expires_soon=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update issue
+        if: steps.check.outputs.expires_soon == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const days = ${{ steps.check.outputs.days_remaining }};
+            const title = 'security.txt Expires within 60 days — rotate signature';
+            const body = [
+              `\`public/.well-known/security.txt\` expires in **${days} days**.`,
+              '',
+              'Action required:',
+              '',
+              '1. Bump the `Expires:` field in `public/.well-known/security.txt`.',
+              '2. Run `npm run sign:security` to re-sign.',
+              '3. Run `npm run check:security` to verify.',
+              '4. Commit and push.',
+              '',
+              'This issue was opened automatically by `.github/workflows/security-txt-expires.yml`.',
+            ].join('\n');
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security-txt-expires',
+            });
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security-txt-expires'],
+              });
+            } else {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body,
+              });
+            }

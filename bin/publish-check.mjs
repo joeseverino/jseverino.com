@@ -109,6 +109,14 @@ const security = run('security.txt', node, ['bin/security-txt.mjs', 'check']);
 const securityLine = security.output.split('\n').find((line) => line.startsWith('ok'));
 status('security', securityLine ? securityLine.replace(/^ok\s+/, '').trim() : 'passed');
 
+const contrast = run('contrast pairs', node, ['bin/check-contrast.mjs']);
+const contrastLine = contrast.output.split('\n').find((line) => line.startsWith('ok       '));
+status('contrast', contrastLine ? contrastLine.replace(/^ok\s+/, '').trim() : 'passed');
+
+const parity = run('vault/MCP parity', node, ['bin/check-vault-mcp-parity.mjs']);
+const parityLine = parity.output.split('\n').find((line) => line.startsWith('ok'));
+status('parity', parityLine ? parityLine.replace(/^ok\s+/, '').trim() : 'passed');
+
 const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
   if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) {

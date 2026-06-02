@@ -115,7 +115,12 @@ npm run build:static       # Build static output to dist.nosync locally
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key
 npm run check:security     # Verify the signature, required fields, Expires, and WKD file
-npm run publish:check      # check:security + clean + sync + check + build + audit assets
+npm run check:contrast     # Compute WCAG ratios for every text/background pair in base.css
+npm run check:parity       # Assert vault Frontmatter Schema, Zod, and MCP agree on writeup fields
+npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim frontmatter
+npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
+npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
+npm run publish:check      # security + contrast + parity + sync + check + build + audit assets
 npm audit --omit=dev       # Check known dependency advisories
 npm outdated               # Check direct dependency freshness
 ```

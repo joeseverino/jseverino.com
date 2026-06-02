@@ -57,6 +57,8 @@ A clean release should report:
 
 ```text
 security   signed, 5 fields present, expires in <n>d, WKD file present
+contrast   <n> pairs measured, all >= 4.5:1
+parity     schema/Zod/MCP agree on writeup fields: ...
 sync       content snapshot updated
 check      0 errors, 0 warnings
 build      <n> pages built
