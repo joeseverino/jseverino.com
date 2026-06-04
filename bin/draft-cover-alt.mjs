@@ -130,7 +130,8 @@ async function applyViaMcp(slug, draft) {
   // shell, so writing through MCP requires Claude Code. This script prints
   // the call shape the operator can paste into a Claude session.
   console.log(`\n# To apply via MCP, paste into Claude Code:`);
-  console.log(`# mcp__severino-vault-mcp__update_writeup_frontmatter(slug="${slug}", cover_alt="${draft.replace(/"/g, '\\"')}")`);
+  const escaped = draft.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  console.log(`# mcp__severino-vault-mcp__update_writeup_frontmatter(slug="${slug}", cover_alt="${escaped}")`);
 }
 
 const slugsToProcess = [];
