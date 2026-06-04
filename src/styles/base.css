@@ -1051,6 +1051,7 @@ figure {
     max-inline-size: 100%;
     block-size: auto;
     margin-inline: auto;
+    border-radius: var(--radius-sm);
   }
 
   & figure img { max-inline-size: 100%; }

@@ -33,3 +33,7 @@ First Cloudflare setup, 2014.
 Today, my focus is network security and the systems behind it. I still approach projects the same way, but I take the time to write everything out as I go so I understand what I built and can come back to it later.
 
 Outside of tech, I spend a lot of time running and staying active. It helps me stay consistent and clear my head when I’m deep into a project. I’m working toward running a marathon.
+
+![WinterFest 5K, 2025.|400](/assets/pages/about/images/winterfest-5k-2025.jpg)
+
+[WinterFest 5K, 2025.](https://www.athlinks.com/event/361649/results/Event/1127069/Course/2651567/Bib/4527)

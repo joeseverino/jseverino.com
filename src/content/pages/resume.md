@@ -17,8 +17,7 @@ published: true
 
 **Master of Science, Cybersecurity** (Expected: August 2025 - December 2027)
 
-- Relevant Coursework: CS 6035 - Introduction to Information Security
-- GPA: 4.0
+- Relevant Coursework: CS 6035 - Introduction to Information Security, CS 6250 - Computer Networks, PUBP 6725 - Information Security Policies
 
 ### University of Missouri — _Columbia, MO_
 
@@ -41,21 +40,19 @@ published: true
 
 ## TECHNICAL PROJECTS
 
-### Wazuh SIEM Lab – Endpoint Monitoring & Vulnerability Detection
+### Zero Trust Homelab & Private Infrastructure
 
-[jseverino.com/portfolio/deploying-a-wazuh-siem-lab](/portfolio/deploying-a-wazuh-siem-lab/) — March 2026
+[jseverino.com/portfolio/zero-trust-private-infrastructure](/portfolio/zero-trust-private-infrastructure/) — May 2026
 
-- Deployed Wazuh SIEM on an Ubuntu VM and onboarded a Windows endpoint for security telemetry collection.
-- Identified and remediated high-severity CVEs through vulnerability scanning.
-- Validated malware detection pipeline using EICAR test file and configured email alerts.
+- Architected a zero-trust homelab and VPS over a Tailscale/WireGuard mesh with network, host firewall, and application enforcement layers, leaving no self-hosted services reachable from the public internet.
+- Hardened Windows, Ubuntu Server VM, and VPS nodes with nftables and Windows Firewall; enforced tailnet-wide encrypted DNS, private internal records, and open-sourced supporting automation tools.
 
-### ARP Spoofing Simulation & Network Mitigation Lab
+### Public Web Server Security Architecture
 
-[jseverino.com/portfolio/simulating-arp-spoofing](/portfolio/simulating-arp-spoofing/) — March 2026
+[jseverino.com/portfolio/securing-my-wordpress-site](/portfolio/securing-my-wordpress-site/) — April 2026
 
-- Simulated an ARP spoofing man-in-the-middle attack in a custom Mininet network built with Python.
-- Analyzed packet captures in Wireshark confirming ARP poisoning and redirected traffic between hosts.
-- Demonstrated enterprise mitigation using DHCP Snooping and Dynamic ARP Inspection in Cisco Packet Tracer.
+- Built a custom WordPress security-layer plugin for XML-RPC disablement, user-enumeration protection, CSP, file-integrity monitoring, and security event logging, with 900+ logged events and 500+ blocked enumeration/XML-RPC attempts.
+- Enforced edge security with Cloudflare DNSSEC, HSTS, TLS 1.3, Zero Trust admin access, passkey-only WebAuthn login, and origin-lockdown rules returning 403 to direct origin-IP requests.
 
 ---
 
