@@ -19,9 +19,9 @@
   --color-muted: #6E6B7C;
   --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
 
-  --border-faint: rgb(0 0 0 / 5%);
-  --fill-faint: rgb(0 0 0 / 4%);
-  --fill-faint-strong: rgb(0 0 0 / 8%);
+  --color-border-faint: rgb(0 0 0 / 5%);
+  --color-fill-faint: rgb(0 0 0 / 4%);
+  --color-fill-faint-strong: rgb(0 0 0 / 8%);
 
   --color-code-bg: #f8fafc;
   --color-code-text: #0f172a;
@@ -777,7 +777,7 @@ main > * + * {
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
-  border: 1px solid var(--border-faint);
+  border: 1px solid var(--color-border-faint);
   border-radius: var(--radius-sm);
   background: var(--color-bg);
   box-shadow: var(--shadow-sm);
@@ -916,16 +916,16 @@ figure {
   display: inline-block;
   padding-block: 6px;
   padding-inline: 10px;
-  border: 1px solid var(--border-faint);
+  border: 1px solid var(--color-border-faint);
   border-radius: var(--radius-pill);
-  background: var(--fill-faint);
+  background: var(--color-fill-faint);
   color: var(--color-text);
   font-size: 12px;
   transition: background-color 0.15s ease;
 
   &:hover,
   &:focus {
-    background: var(--fill-faint-strong);
+    background: var(--color-fill-faint-strong);
     text-decoration: none;
   }
 }
