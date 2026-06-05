@@ -11,10 +11,12 @@ test('mobile menu opens via hamburger and closes on Escape', async ({ page }) =>
   await toggle.click();
   await expect(popover).toBeVisible();
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
 
   await page.keyboard.press('Escape');
   await expect(popover).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
 });
 
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {

@@ -24,6 +24,26 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
       testMatch: /.*mobile.*\.spec\.ts/,
     },
+    {
+      name: 'firefox-desktop',
+      use: { ...devices['Desktop Firefox'] },
+      testIgnore: /.*mobile.*\.spec\.ts/,
+    },
+    {
+      name: 'firefox-mobile',
+      use: { ...devices['Desktop Firefox'], viewport: { width: 393, height: 851 } },
+      testMatch: /.*mobile.*\.spec\.ts/,
+    },
+    {
+      name: 'webkit-desktop',
+      use: { ...devices['Desktop Safari'] },
+      testIgnore: /.*mobile.*\.spec\.ts/,
+    },
+    {
+      name: 'webkit-mobile',
+      use: { ...devices['iPhone 13'] },
+      testMatch: /.*mobile.*\.spec\.ts/,
+    },
   ],
   webServer: {
     command: 'npm run build:static && npm run preview',

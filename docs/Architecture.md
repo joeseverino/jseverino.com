@@ -90,6 +90,7 @@ Supported transformations include:
 - fenced-code normalization;
 - terminal blocks;
 - split layouts;
+- hero block on the home page;
 - button and button-row directives;
 - table wrappers with captions;
 - featured project and technology cloud injection on pages.
@@ -114,6 +115,14 @@ The schema covers:
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 
 ## 7. Client Conventions
+
+### Browser contract
+
+The production target is current evergreen Chromium, Firefox, and Safari/WebKit rather than legacy engines. Native CSS nesting, logical properties, `:has()`, `color-mix()`, and the Popover API are baseline requirements. Scroll-driven header animation is progressive: browsers without it use the `IntersectionObserver` fallback.
+
+Playwright exercises the current bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. This is the compatibility contract enforced by CI; no CSS transpilation or legacy polyfill bundle is shipped.
+
+`stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run audit:css` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
 
 ### Sticky-header shadow
 

@@ -36,7 +36,11 @@ Mobile navigation uses the native `popover` API. The browser handles focus resto
 
 ## Reduced Motion
 
-A `@media (prefers-reduced-motion: reduce)` block at the bottom of [`src/styles/base.css`](../src/styles/base.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. Users who set the OS preference get static visuals without the site needing per-element opt-outs.
+A `@media (prefers-reduced-motion: reduce)` block at the bottom of [`src/styles/base.css`](../src/styles/base.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. These declarations use `!important` so component-level transition selectors cannot override the user preference. Users who set the OS preference get static visuals without per-element opt-outs.
+
+## Forced Colors
+
+The `forced-colors: active` block preserves visible borders and focus outlines for buttons, tags, form controls, cards, navigation, and tooltips. Backdrop blur is disabled because forced-colors surfaces should remain opaque and system-controlled. Chromium emulation verifies the contact form focus and control borders in Playwright.
 
 ## Keyboard Navigation
 
@@ -68,7 +72,7 @@ All current pairs meet AA. Update this list when a new component introduces a no
 ## What's Intentionally Not Done
 
 - **No accessibility statement page.** This is a personal portfolio, not a public service; the documentation in this file is the statement.
-- **No high-contrast theme toggle.** The single dark palette is the design intent. OS-level inversion and forced-colors mode (`forced-colors: active`) are respected by the underlying CSS without custom theming.
+- **No high-contrast theme toggle.** The single light palette is the design intent. OS-level inversion remains browser-controlled, while the explicit `forced-colors: active` rules preserve control boundaries and focus.
 - **No font-size scaler.** Browsers handle zoom and reflow; the layout is responsive down to 320px without horizontal scroll.
 
 ## Validation
@@ -77,13 +81,17 @@ Quick checks after layout or component changes:
 
 ```sh
 npm run build:static
+npm run lint:css
+npm run audit:css
+npm run check:contrast
+npm run test:e2e
 # Then in the built HTML:
 # - exactly one <main id="main"> per page
 # - every <img> has an alt attribute
 # - every interactive element renders a visible focus state under keyboard tab
 ```
 
-A manual keyboard pass through the home, a portfolio article, the portfolio listing, and the contact form covers the surfaces most likely to regress.
+Playwright runs the functional accessibility and layout checks in Chromium, Firefox, and WebKit desktop/mobile projects. Chromium owns the visual baselines to avoid engine-specific font-rasterization noise. A manual keyboard pass through the home, a portfolio article, the portfolio listing, and the contact form remains useful before large interaction changes.
 
 ## Related Docs
 

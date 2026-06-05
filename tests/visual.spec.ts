@@ -12,6 +12,7 @@ const SCREENSHOT_OPTIONS = {
 
 test.describe('visual regression', () => {
   test.skip(!SHOULD_RUN, 'Set VISUAL=1 to run visual snapshots (baselines live in tests/visual.spec.ts-snapshots/).');
+  test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines use Chromium to avoid engine-specific rasterization noise.');
 
   test('home page (desktop)', async ({ page }) => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
@@ -48,5 +49,23 @@ test.describe('visual regression', () => {
     await page.goto('/contact/');
     await page.waitForLoadState('networkidle');
     await expect(page).toHaveScreenshot('contact-desktop.png', SCREENSHOT_OPTIONS);
+  });
+
+  test('table block', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/portfolio/building-a-custom-mcp-layer/');
+    await expect(page.locator('.table-figure').first()).toHaveScreenshot('table-block.png', SCREENSHOT_OPTIONS);
+  });
+
+  test('terminal block', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/portfolio/building-study-quiz/');
+    await expect(page.locator('.terminal-block').first()).toHaveScreenshot('terminal-block.png', SCREENSHOT_OPTIONS);
+  });
+
+  test('resume sticky action', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/resume/');
+    await expect(page).toHaveScreenshot('resume-sticky-action.png', SCREENSHOT_OPTIONS);
   });
 });

@@ -110,7 +110,9 @@ Dynamic behavior is intentionally narrow:
 npm run sync:content       # Sync published vault content into the repo
 npm run dev                # Start Astro dev server
 npm run dev:drafts         # Sync drafts locally, then start dev server
-npm run check              # Astro type/content diagnostics
+npm run check              # CSS lint/audit plus Astro type/content diagnostics
+npm run lint:css           # Stylelint validation for authored CSS
+npm run audit:css          # Fail on defined-but-unused CSS custom properties
 npm run build:static       # Build static output to dist.nosync locally
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key

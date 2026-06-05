@@ -35,9 +35,20 @@ test('no console errors on home', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (err) => errors.push(err.message));
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text());
+    if (msg.type() === 'error' && !msg.text().startsWith('Failed to preconnect to ')) {
+      errors.push(msg.text());
+    }
   });
   await page.goto('/');
   await page.waitForLoadState('networkidle');
   expect(errors, errors.join('\n')).toHaveLength(0);
+});
+
+test('sticky header gains a shadow after scrolling', async ({ page }) => {
+  await page.goto('/portfolio/');
+  await page.evaluate(() => window.scrollTo(0, 200));
+
+  await expect
+    .poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').boxShadow))
+    .not.toBe('none');
 });

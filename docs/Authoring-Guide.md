@@ -107,6 +107,31 @@ Right column content.
 
 The `:::` line separates the two columns.
 
+## Hero
+
+Wraps the home-page hero in a centered `<header>`. Use once, at the top of the home page.
+
+```md
+::hero
+<p class="hero-eyebrow">Cybersecurity • Networking</p>
+
+# Hi, I'm Joe Severino
+
+Role • Credentials
+
+<p class="hero-summary">One-line summary of what you build.</p>
+
+<p class="hero-location">City, State</p>
+
+::buttons
+- [View My Resume](/resume/)
+- [Get in Touch](/contact/)
+::
+::
+```
+
+The `hero-eyebrow`, `hero-summary`, and `hero-location` classes style the kicker, the lead summary, and the location chip.
+
 ## Dynamic Page Blocks
 
 These are mainly for top-level pages.

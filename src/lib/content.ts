@@ -18,7 +18,7 @@ const md = createMarkdownRenderer();
 const fragmentMd = createMarkdownRenderer();
 
 md.renderer.rules.table_open = () =>
-  '<figure class="table-figure table-figure--striped"><table class="table-fixed">';
+  '<figure class="table-figure"><table class="table-fixed">';
 md.renderer.rules.table_close = () => '</table></figure>';
 
 export type Writeup = {
@@ -196,7 +196,7 @@ function renderTableBlocks(markdown: string): string {
     const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
 
     return [
-      '<figure class="table-figure table-figure--striped">',
+      '<figure class="table-figure">',
       table,
       caption ? `<figcaption>${caption}</figcaption>` : '',
       '</figure>',
@@ -280,6 +280,13 @@ function renderCenter(markdown: string): string {
   });
 }
 
+function renderHero(markdown: string): string {
+  return markdown.replace(blockRe('hero'), (_, content: string) => {
+    const inner = restoreFigures(md.render(content.trim()));
+    return `\n\n<header class="hero">${inner}</header>\n\n`;
+  });
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -335,7 +342,7 @@ function preprocessPageMarkdown(markdown: string): string {
     .replace(blockRe('button sticky'), (_, button: string) => renderButton(button, 'sticky-button'))
     .replace(blockRe('button'), (_, button: string) => renderButton(button));
 
-  return renderSplit(renderCenter(renderTerminal(withInlineDirectives)));
+  return renderHero(renderSplit(renderCenter(renderTerminal(withInlineDirectives))));
 }
 
 function renderWriteupMarkdown(markdown: string, slug: string): string {

@@ -21,6 +21,8 @@
     "sign:security": "node bin/security-txt.mjs sign",
     "check:security": "node bin/security-txt.mjs check",
     "check:contrast": "node bin/check-contrast.mjs",
+    "audit:css": "node bin/audit-css.mjs",
+    "lint:css": "stylelint \"src/styles/**/*.css\"",
     "check:parity": "node bin/check-vault-mcp-parity.mjs",
     "scaffold:primer": "node bin/scaffold-primer.mjs",
     "scaffold:writeup-field": "node bin/scaffold-writeup-field.mjs",
@@ -31,7 +33,7 @@
     "build": "npm run -s check && npm run -s build:static",
     "publish:check": "node bin/publish-check.mjs",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-    "check": "NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
+    "check": "npm run -s lint:css && npm run -s audit:css && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:visual": "VISUAL=1 playwright test tests/visual.spec.ts",
@@ -52,6 +54,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "playwright": "^1.60.0"
+    "playwright": "^1.60.0",
+    "stylelint": "^17.12.0",
+    "stylelint-config-standard": "^40.0.0"
   }
 }
