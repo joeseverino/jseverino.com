@@ -12,6 +12,25 @@
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
 
+# Chrome assets that change in place (favicons, brand marks, OG cards). Same
+# reasoning as the docs above: a stable filename whose contents get replaced must
+# NOT ride the immutable rule below, or a rebrand stays pinned for a year.
+/favicon.ico
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/icons/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/brand/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/og/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
