@@ -34,9 +34,10 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
       type="font/woff2"
       crossorigin
     />
+    <link rel="stylesheet" href="/brand.css" />
     <SeoHead {...seo} />
     <link rel="alternate" type="application/rss+xml" title="Joe Severino — Portfolio" href="/feed.xml" />
-    <meta name="theme-color" content="#1E3A8A" />
+    <meta name="theme-color" content={BRAND.navy} />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" />

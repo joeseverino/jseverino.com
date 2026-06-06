@@ -31,14 +31,14 @@ export async function renderCard(o) {
 html,body{width:${o.width}px;height:${o.height}px}
 body{display:flex;font-family:Inter,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
 .panel{width:${o.width - o.photoWidth}px;height:${o.height}px;
-  background:linear-gradient(135deg,${BRAND.navy},#14245C);
-  padding:72px;display:flex;flex-direction:column;justify-content:center;color:#fff}
-.eyebrow{font-size:24px;font-weight:600;letter-spacing:3.5px;color:#A9C0E8;text-transform:uppercase}
+  background:linear-gradient(135deg,${BRAND.navy},${BRAND.navyDeep});
+  padding:72px;display:flex;flex-direction:column;justify-content:center;color:${BRAND.onNavy}}
+.eyebrow{font-size:24px;font-weight:600;letter-spacing:3.5px;color:${BRAND.card.textMuted};text-transform:uppercase}
 .name{font-size:78px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin-top:18px}
-.rule{width:64px;height:5px;border-radius:2.5px;background:#5B82D6;margin-top:26px}
-.tagline{font-size:30px;font-weight:400;color:#DDE6FB;margin-top:30px}
-.meta{font-size:24px;font-weight:600;letter-spacing:.5px;color:#A9C0E8;margin-top:14px}
-.url{font-size:25px;font-weight:600;letter-spacing:.5px;color:#A9C0E8;margin-top:34px}
+.rule{width:64px;height:5px;border-radius:2.5px;background:${BRAND.card.accent};margin-top:26px}
+.tagline{font-size:30px;font-weight:400;color:${BRAND.card.textSoft};margin-top:30px}
+.meta{font-size:24px;font-weight:600;letter-spacing:.5px;color:${BRAND.card.textMuted};margin-top:14px}
+.url{font-size:25px;font-weight:600;letter-spacing:.5px;color:${BRAND.card.textMuted};margin-top:34px}
 .photo{width:${o.photoWidth}px;height:${o.height}px;object-fit:cover;object-position:top}
 </style></head><body>
 <div class="panel">

@@ -37,6 +37,9 @@ export default defineConfig({
   site: 'https://jseverino.com',
   trailingSlash: 'always',
   outDir,
+  devToolbar: {
+    enabled: false,
+  },
   integrations: [
     sitemap({
       serialize(item) {

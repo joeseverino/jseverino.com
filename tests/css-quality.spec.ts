@@ -10,6 +10,102 @@ test('focus exposes the skip link', async ({ page }) => {
   await expect(skipLink).toHaveCSS('outline-style', 'solid');
 });
 
+test('brand tokens drive document chrome and interactive states', async ({ page }) => {
+  await page.goto('/portfolio/');
+
+  const brand = '#1e3a8a';
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', /#1E3A8A/i);
+  await expect(page.locator('link[rel="stylesheet"][href="/brand.css"]')).toHaveCount(1);
+  expect(
+    await page
+      .locator('html')
+      .evaluate((element) =>
+        getComputedStyle(element).getPropertyValue('--color-primary').trim().toLowerCase(),
+      ),
+  ).toBe(brand);
+  expect(
+    await page
+      .locator('html')
+      .evaluate((element) =>
+        getComputedStyle(element).getPropertyValue('--color-primary-deep').trim().toLowerCase(),
+      ),
+  ).toBe('#14245c');
+
+  const cardLink = page.locator('.project-card-title a').first();
+  await cardLink.focus();
+  await expect(cardLink).toHaveCSS('color', 'rgb(30, 58, 138)');
+
+  const sourceLink = page.locator('.source-link');
+  await sourceLink.focus();
+  await expect(sourceLink).toHaveCSS('color', 'rgb(20, 36, 92)');
+  expect(await sourceLink.evaluate((element) => getComputedStyle(element).fontFamily)).toContain('Inter');
+});
+
+test('motion tokens drive stable pressed feedback', async ({ page }) => {
+  await page.goto('/portfolio/');
+
+  const root = page.locator('html');
+  expect(
+    await root.evaluate((element) =>
+      getComputedStyle(element).getPropertyValue('--motion-duration-standard').trim(),
+    ),
+  ).toBe('200ms');
+
+  const cardLink = page.locator('.project-card-title a').first();
+  const card = page.locator('.project-card').first();
+  const box = await cardLink.boundingBox();
+  expect(box).not.toBeNull();
+
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  await expect(card).toHaveCSS('translate', '0px -6px');
+  const raisedCardBox = await card.boundingBox();
+  expect(raisedCardBox).not.toBeNull();
+  await expect(card).toHaveCSS('box-shadow', /.+/);
+  await page.mouse.down();
+  await expect(card).toHaveCSS('box-shadow', 'none');
+  expect(await card.boundingBox()).toEqual(raisedCardBox);
+  await page.mouse.move(0, 0);
+  await page.mouse.up();
+
+  await expect(card).toHaveCSS('transition-duration', '0.15s, 0.15s');
+});
+
+test('buttons and cards keep a stable click target through press and release', async ({ page }) => {
+  await page.goto('/404.html');
+
+  const button = page.getByRole('link', { name: 'View Portfolio' });
+  const buttonBox = await button.boundingBox();
+  expect(buttonBox).not.toBeNull();
+  await page.mouse.move(
+    buttonBox!.x + buttonBox!.width / 2,
+    buttonBox!.y + buttonBox!.height / 2,
+  );
+  await expect(button).toHaveCSS('translate', '0px -2px');
+  const raisedButtonBox = await button.boundingBox();
+  expect(raisedButtonBox).not.toBeNull();
+  await page.mouse.down();
+  expect(await button.boundingBox()).toEqual(raisedButtonBox);
+  await page.mouse.up();
+  await expect(page).toHaveURL(/\/portfolio\/$/);
+
+  const cardLink = page.locator('.project-card-title a').first();
+  const href = await cardLink.getAttribute('href');
+  const cardBox = await cardLink.boundingBox();
+  expect(href).not.toBeNull();
+  expect(cardBox).not.toBeNull();
+  await page.mouse.move(
+    cardBox!.x + cardBox!.width / 2,
+    cardBox!.y + cardBox!.height / 2,
+  );
+  await expect(page.locator('.project-card').first()).toHaveCSS('translate', '0px -6px');
+  const raisedCardBox = await cardLink.boundingBox();
+  expect(raisedCardBox).not.toBeNull();
+  await page.mouse.down();
+  expect(await cardLink.boundingBox()).toEqual(raisedCardBox);
+  await page.mouse.up();
+  await expect(page).toHaveURL(new RegExp(`${href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
+});
+
 test('reduced motion disables smooth scrolling and transitions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

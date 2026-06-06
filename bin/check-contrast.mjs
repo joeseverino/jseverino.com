@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { BRAND } from '../src/lib/brand.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const cssPath = path.join(siteRoot, 'src/styles/base.css');
@@ -58,6 +59,8 @@ const tokens = new Map();
 for (const match of css.matchAll(/--color-([a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,6})/g)) {
   tokens.set(`--color-${match[1]}`, match[2].toLowerCase());
 }
+tokens.set('--color-primary', BRAND.navy.toLowerCase());
+tokens.set('--color-primary-deep', BRAND.navyDeep.toLowerCase());
 if (tokens.size === 0) fail(`no --color-* tokens found in ${cssPath}`);
 
 // Predetermined pairs the site renders. Add new ones here when a new
