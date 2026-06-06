@@ -124,7 +124,7 @@ The site keeps its identity local and borrows only the rendering:
   re-run the generators, and commit the new assets.
 
 The engine is an `optionalDependency`, pinned to a published, provenance-attested
-`branding-engine` npm version (`^0.2.1`).
+`branding-engine` npm version (`^0.2.2`).
 Because the rendered assets are committed, the deploy never needs the engine: if
 CI cannot fetch it, the install skips it (non-fatal) and the static build runs
 unchanged. The engine is only ever invoked locally, on demand, to regenerate.
