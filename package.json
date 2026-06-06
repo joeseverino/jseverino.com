@@ -16,6 +16,8 @@
     "clean:conflicts": "node bin/clean-generated.mjs",
     "sync:content": "node bin/sync-content.mjs",
     "make:og": "node bin/make-og-image.mjs",
+    "make:icons": "node bin/make-icons.mjs",
+    "make:social": "node bin/make-github-social.mjs",
     "audit:assets": "node bin/audit-assets.mjs",
     "seo:preview": "node bin/seo-preview.mjs",
     "sign:security": "node bin/security-txt.mjs sign",

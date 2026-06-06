@@ -3,6 +3,7 @@ import SeoHead from '@components/SeoHead.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import SocialIconsDefs from '@components/SocialIconsDefs.astro';
+import { BRAND } from '@lib/brand.mjs';
 import '@styles/base.css';
 
 type Props = {
@@ -35,6 +36,9 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
     />
     <SeoHead {...seo} />
     <link rel="alternate" type="application/rss+xml" title="Joe Severino — Portfolio" href="/feed.xml" />
+    <meta name="theme-color" content="#1E3A8A" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" />
     <link rel="icon" href="/assets/icons/favicon-192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />

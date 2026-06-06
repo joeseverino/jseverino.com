@@ -13,9 +13,9 @@
 :root {
   --color-bg: #ffffff;
   --color-text: #0b0620;
-  --color-text-alt: #5e4e9e;
-  --color-primary: #381d92;
-  --color-soft: #f2f2fa;
+  --color-text-alt: #4C63A0;
+  --color-primary: #1E3A8A; /* brand navy — mirrors BRAND.navy in src/lib/brand.mjs */
+  --color-soft: #eff3fb;
   --color-muted: #6E6B7C;
   --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
 

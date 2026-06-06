@@ -263,8 +263,9 @@ Resource hints are advisory: a browser may skip them under tight CPU/memory budg
 |---|---|---|---|
 | `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
 | `public/assets/fonts/` | Repo | Subset web fonts (Inter variable WOFF2) | Hand-edited in the repo |
-| `public/assets/icons/` | Repo | Favicons and apple-touch-icon | Hand-edited in the repo |
-| `public/assets/og/` | Repo | Open Graph card images (default + per-page) | Hand-edited in the repo / `npm run make:og` |
+| `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `npm run make:icons` |
+| `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `npm run make:icons` (marks) / headshot hand-added |
+| `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `npm run make:og` |
 | `public/assets/pages/<slug>/` | Vault | Page-attached assets, synced from `06 Pages/<slug>/images/` | `npm run sync:content` |
 | `public/assets/writeups/<slug>/` | Vault | Writeup-attached image variants, synced from `05 Writeups/<slug>/images/` | `npm run sync:content` |
 
@@ -276,6 +277,16 @@ This is the central distinction:
 - **Repo-managed** (`docs/`, `fonts/`, `icons/`, `og/`) is site chrome. These assets belong to the site as a whole, not to a single editorial page. They are tracked in the repo because they don't change often and don't need vault versioning.
 
 A new asset that's specific to one page or writeup belongs in the vault. A new site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the corresponding `public/assets/<bucket>/` directory in the repo.
+
+### Brand assets — one source of truth
+
+Favicons, social cards, and HD brand marks are all generated from one place:
+
+- `src/lib/brand.mjs` holds the brand colour + glyph, imported by both the Astro site (`<meta name="theme-color">`) and the generators.
+- `bin/lib/mark.mjs` composes the "JS" mark from real Inter (weight 800) outlines extracted by `bin/lib/extract-glyphs.py` into `inter-glyphs.json`.
+- `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards in real Inter through the shared `bin/lib/card.mjs` (headless Chromium) renderer.
+
+To restyle the brand, change `BRAND.navy` in `src/lib/brand.mjs` (and the mirrored `--color-primary` in `base.css`), then re-run the generators.
 
 ### Stable URLs
 
