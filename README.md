@@ -83,6 +83,12 @@ The generated paths and intrinsic dimensions are written to [`src/lib/image-mani
 
 Image encodes are cached under `node_modules/.cache/jseverino-img` by source-content hash. The cache speeds local syncs but is not part of the public source of truth.
 
+## Brand
+
+The favicons, HD marks, and social cards are generated, not hand-drawn. [`src/lib/brand.mjs`](./src/lib/brand.mjs) holds the site's identity (navy `#1E3A8A` plus the `JS` glyph); the rendering logic lives in a standalone, public package, [`branding-engine`](https://github.com/joeseverino/branding-engine) ([npm](https://www.npmjs.com/package/branding-engine)). The site is just a consumer: `bin/make-icons.mjs`, `bin/make-og-image.mjs`, and `bin/make-github-social.mjs` pass `BRAND` to the engine and write to the repo's own paths.
+
+`branding-engine` is an `optionalDependency` pinned to a published, provenance-attested npm version. Because the generated assets in `public/assets/` are committed, the production build never runs the engine — if install can't fetch it, the optional install is skipped and the static build is unchanged. The engine runs only locally, on demand, to regenerate. The full story (one navy identity, then a shared engine) is in [`docs/Brand-System.md`](./docs/Brand-System.md).
+
 ## Metadata And SEO
 
 `SeoHead.astro` emits:
@@ -193,6 +199,7 @@ Do not commit:
 ## Documentation
 
 - [`docs/Architecture.md`](./docs/Architecture.md) explains the build, content, rendering, image, and edge architecture.
+- [`docs/Brand-System.md`](./docs/Brand-System.md) tells how the site's brand became one navy identity rendered by the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine).
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.

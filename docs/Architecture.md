@@ -282,7 +282,7 @@ A new asset that's specific to one page or writeup belongs in the vault. A new s
 
 Favicons, social cards, and HD brand marks are all generated from one place:
 
-- `src/lib/brand.mjs` holds the brand colour + glyph, imported by both the Astro site (`<meta name="theme-color">`) and the generators. This is the site's identity; the rendering logic lives in the `branding-engine` dependency.
+- `src/lib/brand.mjs` holds the brand colour + glyph, imported by both the Astro site (`<meta name="theme-color">`) and the generators. This is the site's identity; the rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, an `optionalDependency` pinned to a published, provenance-attested npm version.
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
 - `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
 

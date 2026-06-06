@@ -89,13 +89,13 @@ redrawing the logo.
 The result is one engine with several consumers:
 
 ```text
-                 branding-engine
+            branding-engine  (public: npm + GitHub)
    (generic: mark, wordmark, icons, social cards, web tokens)
-          ▲                ▲                    ▲
-   devDependency      file: dependency     file: dependency
-          │                │                    │
-   jseverino.com      severino-brand        tools/brand
-   (this site)        (brand data + kits)   (CLI wrapper)
+          ▲                  ▲                    ▲
+   npm optionalDep      npm dependency       local checkout
+          │                  │                    │
+   jseverino.com        severino-brand        tools/brand
+   (this site)          (brand data + kits)   (CLI wrapper)
 ```
 
 - **The site** depends on the engine to regenerate its favicons and social cards,
@@ -123,7 +123,8 @@ The site keeps its identity local and borrows only the rendering:
   change `BRAND.navy` in `src/lib/brand.mjs` (and the mirrored `--color-primary`),
   re-run the generators, and commit the new assets.
 
-The engine is an `optionalDependency`, pinned to a `branding-engine` commit.
+The engine is an `optionalDependency`, pinned to a published, provenance-attested
+`branding-engine` npm version (`^0.2.1`).
 Because the rendered assets are committed, the deploy never needs the engine: if
 CI cannot fetch it, the install skips it (non-fatal) and the static build runs
 unchanged. The engine is only ever invoked locally, on demand, to regenerate.

@@ -55,7 +55,7 @@
     "yaml": "^2.9.0"
   },
   "optionalDependencies": {
-    "branding-engine": "git+https://github.com/joeseverino/branding-engine.git#ecbc72d23c0119dc7e3d2e8f1e7a5dc2c0116a4b"
+    "branding-engine": "^0.2.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
