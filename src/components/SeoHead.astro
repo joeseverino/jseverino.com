@@ -46,6 +46,7 @@ const {
 
 const canonical = new URL(path, site.url).href;
 const ogImage = new URL(image, site.url).href;
+const personImage = new URL('/assets/brand/joe-severino.jpg', site.url).href;
 const ogDimensions =
   getImageDimensions(image) ??
   (image === site.defaultOgImage
@@ -64,6 +65,7 @@ const person = {
   '@id': `${site.url}/#person`,
   name: personName,
   url: site.url,
+  image: personImage,
   jobTitle,
   description: personSummary || site.defaultDescription,
   knowsAbout: personSkills,
@@ -165,6 +167,7 @@ const jsonLd: JsonLd = {
 <link rel="canonical" href={canonical} />
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={site.name} />
+<meta property="og:locale" content="en_US" />
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
