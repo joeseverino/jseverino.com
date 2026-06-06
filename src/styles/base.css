@@ -132,6 +132,13 @@ a:focus {
   text-decoration-style: dashed;
 }
 
+@media (hover: none) and (pointer: coarse) {
+  .brand,
+  .project-card a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 /* Form controls don't inherit font by default — make them match the site. */
 button,
 input,

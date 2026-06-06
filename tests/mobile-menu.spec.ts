@@ -1,5 +1,20 @@
 import { test, expect } from '@playwright/test';
 
+test('touch targets suppress title-only tap highlights', async ({ page, browserName }) => {
+  test.skip(browserName === 'firefox', 'Firefox does not implement -webkit-tap-highlight-color.');
+
+  await page.goto('/portfolio/');
+
+  const brand = page.locator('.brand');
+  const cardLinks = page.locator('.project-card a');
+
+  await expect(brand).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
+  await expect(cardLinks.first()).toHaveCSS(
+    '-webkit-tap-highlight-color',
+    'rgba(0, 0, 0, 0)',
+  );
+});
+
 test('mobile menu opens via hamburger and closes on Escape', async ({ page }) => {
   await page.goto('/');
   const toggle = page.locator('[data-nav-toggle]');
