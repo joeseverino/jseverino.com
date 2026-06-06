@@ -84,14 +84,24 @@ npm run build:static
 npm run lint:css
 npm run audit:css
 npm run check:contrast
-npm run test:e2e
+CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e
+CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop
 # Then in the built HTML:
 # - exactly one <main id="main"> per page
 # - every <img> has an alt attribute
 # - every interactive element renders a visible focus state under keyboard tab
 ```
 
-Playwright runs the functional accessibility and layout checks in Chromium, Firefox, and WebKit desktop/mobile projects. Chromium owns the visual baselines to avoid engine-specific font-rasterization noise. A manual keyboard pass through the home, a portfolio article, the portfolio listing, and the contact form remains useful before large interaction changes.
+Playwright runs the functional accessibility and layout checks in Chromium,
+Firefox, and WebKit desktop/mobile projects. Chromium on macOS owns the visual
+baselines to avoid engine- and OS-specific font-rasterization noise. When an
+intentional design change alters a baseline, inspect the expected, actual, and
+diff images first, then run `npm run test:e2e:visual:update --
+--project=chromium-desktop`. Commit the reviewed PNG changes with the frontend
+change; GitHub's image diff becomes the version-to-version visual audit trail.
+Never update snapshots only to make CI green. A manual keyboard pass through
+the home, a portfolio article, the portfolio listing, and the contact form
+remains useful before large interaction changes.
 
 ## Related Docs
 

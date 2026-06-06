@@ -396,7 +396,13 @@ GitHub Actions provide the remote quality gate:
 - [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, then uploads lychee reports.
 - [`lighthouse`](../.github/workflows/lighthouse.yml) runs Lighthouse CI against selected live URLs and uploads the generated reports.
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard and uploads SARIF to GitHub code scanning plus an artifact copy.
-- [`playwright`](../.github/workflows/playwright.yml) builds the site, serves it with `astro preview`, and runs the [`tests/`](../tests/) smoke suite (desktop + mobile Chromium). Failures upload the Playwright report as an artifact.
+- [`playwright`](../.github/workflows/playwright.yml) builds the site, serves it
+  with `astro preview`, and runs functional checks across Chromium, Firefox, and
+  WebKit plus a dedicated macOS Chromium visual-regression job. The visual job
+  uses committed PNG baselines and uploads the HTML report plus `test-results/`
+  so expected, actual, and diff images are retained on failure. Approved
+  baseline PNG changes are committed with the frontend change, giving GitHub a
+  durable version-to-version image audit trail.
 
 Every workflow declares a top-level `permissions: contents: read`. Workflows that need to write SARIF to code scanning (`codeql`, `scorecard`) scope `security-events: write` at the **job** level only, so unrelated steps in the same workflow cannot inherit the elevated scope. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
 

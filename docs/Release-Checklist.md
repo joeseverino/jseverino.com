@@ -76,6 +76,24 @@ git status -sb
 Content changes from the private vault are expected only when the release is
 intended to publish those changes.
 
+For any frontend change, run the exact visual gate:
+
+```sh
+CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop
+```
+
+If it fails, inspect the expected, actual, and diff images in `test-results/`.
+For an intentional design change only, update and review the baselines:
+
+```sh
+npm run test:e2e:visual:update -- --project=chromium-desktop
+git diff -- tests/visual.spec.ts-snapshots/
+```
+
+Commit approved baseline PNG changes with the frontend change. GitHub's
+Deleted/Added image view is the version-to-version visual audit trail. Never
+update snapshots merely to make the visual job pass.
+
 If [`public/.well-known/security.txt`](../public/.well-known/security.txt)
 changed (edited fields, bumped `Expires`, rotated the WKD key), re-sign before
 committing:
@@ -109,6 +127,7 @@ remote gate is:
 
 - `build`
 - `codeql`
+- `playwright` functional and visual jobs
 - `workflow lint` when workflow files changed
 - `dependency review` on pull requests
 - `link check`, `lighthouse`, and `scorecard` on their schedules or when run manually
@@ -120,6 +139,8 @@ failure or recording evidence:
 - `link check` uploads `link-check-reports`.
 - `lighthouse` uploads `lighthouse-reports`.
 - `scorecard` uploads `scorecard-sarif` and also sends SARIF to code scanning.
+- `playwright` uploads `playwright-report`; its visual job also uploads
+  `test-results` with expected, actual, and diff images.
 
 After a release that touches any GitHub Actions workflow, container action,
 or build script, confirm the code-scanning dashboard is still clean:
