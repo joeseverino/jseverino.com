@@ -282,11 +282,13 @@ A new asset that's specific to one page or writeup belongs in the vault. A new s
 
 Favicons, social cards, and HD brand marks are all generated from one place:
 
-- `src/lib/brand.mjs` holds the brand colour + glyph, imported by both the Astro site (`<meta name="theme-color">`) and the generators.
-- `bin/lib/mark.mjs` composes the "JS" mark from real Inter (weight 800) outlines extracted by `bin/lib/extract-glyphs.py` into `inter-glyphs.json`.
-- `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards in real Inter through the shared `bin/lib/card.mjs` (headless Chromium) renderer.
+- `src/lib/brand.mjs` holds the brand colour + glyph, imported by both the Astro site (`<meta name="theme-color">`) and the generators. This is the site's identity; the rendering logic lives in the `branding-engine` dependency.
+- The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
+- `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
 
 To restyle the brand, change `BRAND.navy` in `src/lib/brand.mjs` (and the mirrored `--color-primary` in `base.css`), then re-run the generators.
+
+For the full story (how the brand went from an inherited WordPress purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
 
 ### Stable URLs
 
@@ -412,6 +414,7 @@ The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate
 
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
+- [`docs/Brand-System.md`](./Brand-System.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
 - [`docs/Accessibility.md`](./Accessibility.md)

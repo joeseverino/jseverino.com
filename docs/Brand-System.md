@@ -1,0 +1,135 @@
+# Brand System
+
+This document records how `jseverino.com` got a real brand, and how that brand
+grew from a one-off script in this repository into a standalone engine that the
+site, the brand kit, and the command-line tools all share. It is as much a story
+as an architecture note: the interesting part is the path, not just the diagram.
+
+## Two Colors That Never Agreed
+
+The starting point was an accident, not a design.
+
+The site ran on WordPress, and its accent color was purple. Nobody chose that
+purple. It was the default of the WordPress theme, inherited the day the theme
+was installed and never revisited. It showed up in links and headings because
+that is simply what the theme shipped with.
+
+Alongside it was a yellow `JS` logo. Its origin is unknown. There is no source
+file, no design decision, and no record of where or how it was made. It was just
+the logo, the way the purple was just the accent.
+
+So the site had two brand colors, and they had nothing to do with each other.
+The theme was purple by inheritance and the logo was yellow by mystery. Neither
+was deliberate, and the two never matched. That mismatch is what started all of
+this: once you notice that your theme color and your logo are different colors
+that you never actually picked, you cannot un-notice it.
+
+## Choosing A Real Color
+
+The fix was to choose, once, on purpose.
+
+The mark was rendered in a range of candidate colors and compared side by side.
+Navy (`#1E3A8A`) won: it carries a trust-and-infrastructure register that fits a
+security and networking portfolio, and it reads cleanly as a white glyph on a
+solid tile at favicon sizes. Severino HQ, the private operations app, took its
+own teal (`#1f4d57`) so the surfaces stay distinct while sharing one monogram.
+
+The important move was applying the chosen color in **both** places at once. The
+same navy became the favicon and mark tile *and* the site's theme color
+(`--color-primary`, `<meta name="theme-color">`). For the first time the logo and
+the interface were the same color, because they were now driven by the same
+decision instead of two accidents.
+
+## Generated, Not Drawn
+
+Rather than save a static logo file, the mark became something the repository
+generates.
+
+The `JS` monogram is composed from real Inter (weight 800) glyph outlines and
+laid out programmatically into an SVG. One token file, `src/lib/brand.mjs`, holds
+the identity (the navy, the glyph), and three consumers read from it: the favicon
+generator, the social-card renderer, and the CSS that sets the theme color. Change
+the color in one place and the favicon, the Open Graph card, and the interface all
+follow. The site, in effect, generates its own logo from a single source of truth,
+so the "two colors that never agreed" problem cannot come back: there is only one
+color, in one file.
+
+## SVG-First
+
+Tightening that pipeline surfaced a gap. The mark was a true vector built from
+outlines, but the wordmark lockup (the tile plus the name) existed only as a
+raster PNG, screenshotted from a browser. The fix made the wordmark vector-first
+too: it is composed from the same Inter outlines into a `wordmark.svg`, and the
+light/dark PNGs are rasterized from that SVG. A second, all-caps lockup was added
+to match how the site sets the name in its header. The principle is simple:
+geometry is vector; only things that must be raster (social cards, platform
+icons) are raster.
+
+## Out Of The Repo
+
+The generators were generic from the start. The code that lays out a monogram and
+renders a card knows nothing specific about Joe Severino; it takes a color, a set
+of initials, and a name. But that generic code lived inside this site's
+repository, which meant it could not be reused without copying it.
+
+So it was lifted out in two moves. First, the brand *data* (the navy, the glyph,
+the card copy, the portrait) moved into its own kit, `severino-brand`, separating
+"who the brand is" from "how to render it." Then the rendering *engine* was
+extracted into a standalone package, `branding-engine`, leaving behind only the
+data and a dependency. The site stopped owning a private copy of the engine and
+became a consumer of it, like everything else.
+
+Each step was verified by regenerating every asset and diffing it against what was
+already committed. The favicons, marks, social cards, and brand sheets all came
+out byte-for-byte identical, which is how a refactor this deep avoids quietly
+redrawing the logo.
+
+## One Engine, Many Surfaces
+
+The result is one engine with several consumers:
+
+```text
+                 branding-engine
+   (generic: mark, wordmark, icons, social cards, web tokens)
+          ▲                ▲                    ▲
+   devDependency      file: dependency     file: dependency
+          │                │                    │
+   jseverino.com      severino-brand        tools/brand
+   (this site)        (brand data + kits)   (CLI wrapper)
+```
+
+- **The site** depends on the engine to regenerate its favicons and social cards,
+  and commits the output. Its production build never runs the engine.
+- **The brand kit** (`severino-brand`) is pure data plus a dependency on the
+  engine; building it renders the navy kit, the HQ teal kit, and one-off kits for
+  other people.
+- **The `brand` tool** wraps the engine for everyday use from the terminal.
+
+The engine itself is the public, reusable piece:
+[`branding-engine`](https://github.com/joeseverino/branding-engine). Anyone can
+render their own kit from one accent color and a set of initials, with no
+Severino-specific assumptions baked in.
+
+## How The Site Consumes It
+
+The site keeps its identity local and borrows only the rendering:
+
+- `src/lib/brand.mjs` stays here. It is the site's identity (navy, glyph), and the
+  generators pass it to the engine explicitly. The engine is generic; the site
+  supplies the color.
+- `bin/make-icons.mjs`, `bin/make-og-image.mjs`, and `bin/make-github-social.mjs`
+  import `markSvg` / `renderCard` from `branding-engine` instead of a local copy.
+- The generated assets in `public/assets/` are committed. To restyle the brand,
+  change `BRAND.navy` in `src/lib/brand.mjs` (and the mirrored `--color-primary`),
+  re-run the generators, and commit the new assets.
+
+The engine is an `optionalDependency`, pinned to a `branding-engine` commit.
+Because the rendered assets are committed, the deploy never needs the engine: if
+CI cannot fetch it, the install skips it (non-fatal) and the static build runs
+unchanged. The engine is only ever invoked locally, on demand, to regenerate.
+
+## Related Docs
+
+- [`docs/Architecture.md`](./Architecture.md)
+- [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
+- [`branding-engine`](https://github.com/joeseverino/branding-engine) (the engine repo)

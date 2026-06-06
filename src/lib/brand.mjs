@@ -4,8 +4,10 @@
 // Consumers:
 //   - src/layouts/BaseLayout.astro  → theme color
 //   - src/pages/brand.css.ts        → CSS brand custom properties
-//   - bin/lib/mark.mjs              → the brand mark (favicon, OG, social)
-//   - bin/lib/card.mjs              → social-card palette
+//   - bin/make-icons.mjs            → the brand mark (favicon, HD marks)
+//   - bin/make-og-image / make-github-social → social-card palette
+// The rendering logic lives in the branding-engine dependency; this file is the
+// identity the site hands to it.
 export const BRAND = {
   navy: '#1E3A8A',
   navyDeep: '#14245C', // hover/active + card gradient end

@@ -2,7 +2,7 @@
 // Run with: node bin/make-icons.mjs
 //
 // Outputs:
-//   public/favicon.ico                          (16 + 32 — clients that probe the root)
+//   public/favicon.ico                          (16 + 32: clients that probe the root)
 //   public/assets/icons/favicon.svg             (scalable primary, real Inter outlines)
 //   public/assets/icons/favicon-32.png
 //   public/assets/icons/favicon-192.png
@@ -15,15 +15,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { markSvg } from './lib/mark.mjs';
+import { markSvg } from 'branding-engine';
+import { BRAND } from '../src/lib/brand.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const iconsDir = path.join(root, 'public/assets/icons');
 const brandDir = path.join(root, 'public/assets/brand');
 
-const rounded = markSvg({ size: 512, rounded: true });
-const square = markSvg({ size: 512, rounded: false });
-const transparent = markSvg({ size: 1024, rounded: true, bg: null });
+// The engine's mark is generic, so pass our identity explicitly: navy badge with
+// a white glyph; the transparent variant uses the navy glyph (visible on light).
+const badge = { glyph: BRAND.glyph, bg: BRAND.navy, fg: BRAND.onNavy };
+const rounded = markSvg({ size: 512, rounded: true, ...badge });
+const square = markSvg({ size: 512, rounded: false, ...badge });
+const transparent = markSvg({ size: 1024, rounded: true, bg: null, fg: BRAND.navy, glyph: BRAND.glyph });
 
 const png = (svg, size) => sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
 
@@ -52,8 +56,8 @@ fs.mkdirSync(iconsDir, { recursive: true });
 fs.mkdirSync(brandDir, { recursive: true });
 
 // Scalable favicon + brand mark (real Inter outlines, self-contained).
-fs.writeFileSync(path.join(iconsDir, 'favicon.svg'), markSvg({ size: 64, rounded: true }));
-fs.writeFileSync(path.join(brandDir, 'mark.svg'), markSvg({ size: 512, rounded: true }));
+fs.writeFileSync(path.join(iconsDir, 'favicon.svg'), markSvg({ size: 64, rounded: true, ...badge }));
+fs.writeFileSync(path.join(brandDir, 'mark.svg'), markSvg({ size: 512, rounded: true, ...badge }));
 
 // Favicon raster set.
 fs.writeFileSync(path.join(iconsDir, 'favicon-32.png'), await png(rounded, 32));

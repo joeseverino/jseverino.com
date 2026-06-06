@@ -7,6 +7,9 @@ node_modules
 node_modules.*
 node_modules [0-9]*
 
+# branding-engine glyph cache (only written when extracting a custom font)
+.brand-cache/
+
 # Astro, Vite, and Wrangler generated state
 .astro/
 .vite/
