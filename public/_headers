@@ -1,5 +1,9 @@
 # Cloudflare Pages headers.
-# Order matters: specific rules must come before the catch-all "/*".
+# Pages MERGES the headers of every matching rule rather than letting the most
+# specific one win. For a single-value header like Cache-Control that means
+# overlapping path rules combine, so they must not contradict: the immutable rule
+# is scoped to write-once dirs and must never be a broad /assets/*, or it re-adds
+# immutable to the in-place chrome assets and pins a stale logo for a year.
 
 # Fingerprinted Astro assets and synced static assets.
 /_astro/*
@@ -12,9 +16,9 @@
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
 
-# Chrome assets that change in place (favicons, brand marks, OG cards). Same
-# reasoning as the docs above: a stable filename whose contents get replaced must
-# NOT ride the immutable rule below, or a rebrand stays pinned for a year.
+# Chrome assets that change in place (favicons, brand marks, OG cards). Stable
+# filenames whose contents get replaced on a rebrand, so they get a short
+# must-revalidate cache and are deliberately kept out of the immutable rule below.
 /favicon.ico
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
@@ -31,7 +35,18 @@
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
 
-/assets/*
+# Write-once content assets and the webfont keep the 1-year immutable cache.
+# Scoped per-dir (not a broad /assets/*) so it never overlaps the chrome paths
+# above; a stale logo pinned for a year is the failure mode that scoping prevents.
+/assets/writeups/*
+  Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
+
+/assets/pages/*
+  Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
+
+/assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
 
