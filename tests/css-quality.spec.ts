@@ -45,11 +45,13 @@ test('motion tokens drive stable pressed feedback', async ({ page }) => {
   await page.goto('/portfolio/');
 
   const root = page.locator('html');
-  expect(
-    await root.evaluate((element) =>
-      getComputedStyle(element).getPropertyValue('--motion-duration-standard').trim(),
-    ),
-  ).toBe('200ms');
+  const standardDurationMs = await root.evaluate((element) => {
+    const value = getComputedStyle(element)
+      .getPropertyValue('--motion-duration-standard')
+      .trim();
+    return value.endsWith('ms') ? Number.parseFloat(value) : Number.parseFloat(value) * 1000;
+  });
+  expect(standardDurationMs).toBe(200);
 
   const cardLink = page.locator('.project-card-title a').first();
   const card = page.locator('.project-card').first();
