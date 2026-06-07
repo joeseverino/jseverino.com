@@ -20,19 +20,38 @@ decision through the favicon, marks, header wordmark, interface color, Open
 Graph card, and GitHub social preview. The change was deployed only to a
 Cloudflare branch preview; production stayed navy.
 
-[Open the immutable red-brand comparison](https://30d9262b.jseverino.pages.dev/).
+[Open the immutable red-brand comparison](https://6ef83545.jseverino.pages.dev/).
 Unlike a moving branch alias, this URL remains pinned to the exact demonstration
 build even though the source branch has since been restored to navy.
 
-### 1. Confirm The Branch Works By Itself
+### 1. Turn A Git Commit Into A Reviewable Artifact
+
+Cloudflare records the repository, branch, commit, deployment status, duration,
+and immutable URL together. That provenance matters: a reviewer can identify
+the exact code being evaluated, and the documentation can link to a deployment
+that will not move when the branch receives another push.
+
+[![Cloudflare deployment details for the red-brand commit](./images/sitedrift-brand-demo/cloudflare-deployment.png)](https://6ef83545.jseverino.pages.dev/)
+
+### 2. Add The Review Layer During The Normal Build
+
+There is no separate review server to operate. The ordinary Cloudflare build
+runs the repository's static build command, then the installed sitedrift
+dependency wraps the 83 generated HTML files because this is a non-production
+branch. Cloudflare uploads the resulting static assets and scoped Function as
+part of the same successful deployment.
+
+![Cloudflare build log showing sitedrift wrapping 83 preview pages](./images/sitedrift-brand-demo/cloudflare-build-log.png)
+
+### 3. Confirm The Branch Works By Itself
 
 Solo mode presents DEV as a normal, interactive website with a compact review
 bar. This matters because a visual review tool is not useful if it breaks
 navigation, menus, scrolling, or the responsive site it is evaluating.
 
-[![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://30d9262b.jseverino.pages.dev/)
+[![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://6ef83545.jseverino.pages.dev/)
 
-### 2. Compare The Complete Result With Production
+### 4. Compare The Complete Result With Production
 
 Split mode places the red branch and navy production site on the same route and
 scroll position. The page structure and content remain aligned; the coordinated
@@ -42,7 +61,7 @@ systematic change, and `sitedrift` makes its deployed scope immediately visible.
 
 ![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
-### 3. Isolate Changed Pixels
+### 5. Isolate Changed Pixels
 
 Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
 The sparse result shows that the branch changed branding rather than layout or
@@ -51,7 +70,7 @@ and relying on memory.
 
 ![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-### 4. Check More Than Appearance
+### 6. Check More Than Appearance
 
 Both deployments receive the same metadata preview and SEO checklist. In this
 case the title, description, canonical URL, headings, Open Graph fields,
@@ -67,7 +86,7 @@ or becomes unexpectedly heavier.
 
 ![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
 
-### 5. Leave Review Context Without Adding A Service
+### 7. Leave Review Context Without Adding A Service
 
 Review notes are attached to the preview workflow but stored only in that
 browser's `localStorage`. The interface states that boundary directly. Teams

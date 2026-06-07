@@ -121,7 +121,7 @@ Reviewers can switch to Split or Overlay/Diff, mirror links and scrolling,
 inspect response timing deltas, open the SEO comparison, and keep notes in that
 browser's `localStorage`.
 
-[![Red DEV and navy LIVE compared in sitedrift Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)](https://30d9262b.jseverino.pages.dev/)
+[![Red DEV and navy LIVE compared in sitedrift Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)](https://6ef83545.jseverino.pages.dev/)
 
 This comparison connects two tools I built. `branding-engine` turned one
 temporary source-of-truth change from navy to red into a coordinated favicon,
@@ -149,7 +149,7 @@ The integration is deliberately preview-only:
 
 See [Deployment Preview Review](./docs/Deployment-Preview-Review.md) for the
 workflow, architecture, security boundary, verification steps, and the
-[frozen red-brand comparison](https://30d9262b.jseverino.pages.dev/).
+[frozen red-brand comparison](https://6ef83545.jseverino.pages.dev/).
 
 ## Security Model
 

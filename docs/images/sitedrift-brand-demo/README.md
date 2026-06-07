@@ -8,10 +8,14 @@ production site.
 The full explanation appears in
 [Deployment Preview Review](../../Deployment-Preview-Review.md). The exact
 historical deployment remains available at
-[`30d9262b.jseverino.pages.dev`](https://30d9262b.jseverino.pages.dev/).
+[`6ef83545.jseverino.pages.dev`](https://6ef83545.jseverino.pages.dev/).
 
 ## What Each Capture Shows
 
+- `cloudflare-deployment.png`: the exact branch, commit, successful deployment,
+  immutable URL, and build duration are tied together.
+- `cloudflare-build-log.png`: the normal Cloudflare build invokes sitedrift and
+  wraps all 83 generated preview pages automatically.
 - `red-brand-solo.png`: the generated branch remains a fully interactive site.
 - `red-vs-live-split.png`: all brand surfaces change together while layout and
   content remain aligned.
