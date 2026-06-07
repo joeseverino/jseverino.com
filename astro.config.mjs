@@ -1,8 +1,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'astro/config';
+import { loadEnv } from 'vite';
 import sitemap from '@astrojs/sitemap';
 import matter from 'gray-matter';
+
+// Local-only dev server settings, sourced from the gitignored .env so no
+// machine-specific values land in the repo. All unset in prod/CI, so the build
+// is unaffected and a fresh clone behaves like vanilla Astro.
+//   DEV_ALLOWED_HOSTS  comma-separated hostnames the dev server answers to (NPM reverse proxy)
+//   DEV_HOST           "true" to bind all interfaces so the tailnet/LAN can reach it
+//   DEV_PORT           pin a deterministic port; if it's busy Astro just picks the next one
+const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
+const devAllowedHosts = env.DEV_ALLOWED_HOSTS ? env.DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
+const devHost = env.DEV_HOST === 'true' || env.DEV_HOST === '1';
+const devPort = env.DEV_PORT ? Number(env.DEV_PORT) : undefined;
 
 // Build output goes to `dist/` on Cloudflare Pages (it sets CF_PAGES=1) and to
 // `dist.nosync/` locally. The `.nosync` suffix keeps iCloud Drive from syncing
@@ -40,6 +52,10 @@ export default defineConfig({
   devToolbar: {
     enabled: false,
   },
+  server: {
+    ...(devHost && { host: true }),
+    ...(devPort && { port: devPort }),
+  },
   integrations: [
     sitemap({
       serialize(item) {
@@ -55,6 +71,9 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
+    },
+    server: {
+      allowedHosts: devAllowedHosts,
     },
   },
 });
