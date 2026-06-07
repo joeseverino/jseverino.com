@@ -1,6 +1,6 @@
 # Sitedrift Brand Demo Screenshots
 
-Use the red-brand branch to capture a concise visual story of the deployment
+This directory contains the red-brand branch's visual story of the deployment
 preview workflow.
 
 ## Open The Demo
@@ -12,33 +12,30 @@ preview workflow.
 - DEV is the red branch build.
 - LIVE is the unchanged navy production site.
 
-## Capture Set
+## Gallery
 
-| Capture | Save as | What it proves |
+| Capture | File | What it proves |
 |---|---|---|
 | DEV in polished Solo view | `red-brand-solo.png` | A branch preview is a usable site, not a static report. |
 | DEV and LIVE in Split view | `red-vs-live-split.png` | One source-of-truth color change is visible beside production. |
 | Overlay in Diff mode | `red-vs-live-diff.png` | Visual drift can be isolated without manually switching tabs. |
-| Status details and SEO panel | `seo-and-response.png` | The review includes response timing, metadata, and SEO checks. |
+| SEO comparison | `seo-comparison.png` | Both deployments receive metadata previews and page-level checks. |
+| Response details | `response-deltas.png` | Status, response time, transfer size, and deltas are directly comparable. |
+| Review notes | `browser-local-notes.png` | Feedback is useful while remaining explicitly browser-local. |
 
-Capture desktop screenshots at a consistent browser size. For the Split and
-Diff images, keep both panes on `/` at the same scroll position. For the final
-image, show the status detail popover or SEO panel with both DEV and LIVE
-results visible.
+## Images
 
-## Ready-To-Embed Markdown
+![Red-brand branch in sitedrift Solo view](./red-brand-solo.png)
 
-After placing the images in this directory, use:
+![Red DEV compared with navy LIVE in Split view](./red-vs-live-split.png)
 
-```md
-![Red-brand branch in sitedrift Solo view](./docs/images/sitedrift-brand-demo/red-brand-solo.png)
+![Brand drift isolated with sitedrift Diff mode](./red-vs-live-diff.png)
 
-![Red DEV compared with navy LIVE in Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)
+![DEV and LIVE SEO comparison](./seo-comparison.png)
 
-![Brand drift isolated with sitedrift Diff mode](./docs/images/sitedrift-brand-demo/red-vs-live-diff.png)
+![Response details and deltas](./response-deltas.png)
 
-![Response details and SEO comparison](./docs/images/sitedrift-brand-demo/seo-and-response.png)
-```
+![Browser-local review notes](./browser-local-notes.png)
 
 Do not commit browser chrome containing account details, private tabs, local
 filesystem paths, tokens, or review notes with sensitive content.

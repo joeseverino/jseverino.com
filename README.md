@@ -121,6 +121,14 @@ Reviewers can switch to Split or Overlay/Diff, mirror links and scrolling,
 inspect response timing deltas, open the SEO comparison, and keep notes in that
 browser's `localStorage`.
 
+[![Red DEV and navy LIVE compared in sitedrift Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
+
+The live demo changes one brand source-of-truth value and exposes the resulting
+red DEV build beside the unchanged navy production release. The same review
+surface also compares response details and SEO:
+
+![DEV and LIVE SEO checks in sitedrift](./docs/images/sitedrift-brand-demo/seo-comparison.png)
+
 The integration is deliberately preview-only:
 
 - `sitedrift cloudflare` activates only when `CF_PAGES=1` and

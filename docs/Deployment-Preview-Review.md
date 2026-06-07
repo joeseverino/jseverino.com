@@ -23,6 +23,24 @@ wordmark, Open Graph image, and social preview. The deployed sitedrift layer
 makes that coordinated change directly comparable with the current production
 release, including visual, response, metadata, and SEO differences.
 
+### Solo And Split
+
+[![Red-brand DEV deployment in Solo view](./images/sitedrift-brand-demo/red-brand-solo.png)](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
+
+![Red DEV and navy LIVE in Split view](./images/sitedrift-brand-demo/red-vs-live-split.png)
+
+### Visual, Response, And SEO Evidence
+
+![Changed pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
+
+![DEV and LIVE SEO previews and checks](./images/sitedrift-brand-demo/seo-comparison.png)
+
+![Response timing and transfer deltas](./images/sitedrift-brand-demo/response-deltas.png)
+
+### Browser-Local Review Notes
+
+![Review notes explicitly identified as browser-local](./images/sitedrift-brand-demo/browser-local-notes.png)
+
 ## What Reviewers Get
 
 - **Solo** view by default, with one-click switching between DEV and LIVE.
