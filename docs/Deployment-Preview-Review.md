@@ -20,6 +20,8 @@ decision through the favicon, marks, header wordmark, interface color, Open
 Graph card, and GitHub social preview. The change was deployed only to a
 Cloudflare branch preview; production stayed navy.
 
+![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
+
 [Open the immutable red-brand comparison](https://6ef83545.jseverino.pages.dev/).
 Unlike a moving branch alias, this URL remains pinned to the exact demonstration
 build even though the source branch has since been restored to navy.

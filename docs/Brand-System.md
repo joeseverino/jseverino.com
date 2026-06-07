@@ -125,6 +125,19 @@ Open Graph card, social preview, and interface-facing brand values from that
 single edit. Sitedrift then loaded the red branch as DEV and the current navy
 site as LIVE on the same route.
 
+The commit diff makes the source-of-truth relationship concrete. A small set of
+palette values changed in `src/lib/brand.mjs`; the generated Open Graph card
+changed with them. The portrait, typography, dimensions, and content stayed
+fixed because the rendering system did not need to be redesigned.
+
+![Brand token edit and generated Open Graph card diff](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
+
+The same input propagated through the GitHub social preview and transparent
+mark. This is why the generator matters: the repository does not rely on
+someone remembering to recolor a collection of unrelated exported files.
+
+![Generated social preview and mark changing together](./images/sitedrift-brand-demo/github-generated-assets-diff.png)
+
 [![One branding-engine input change compared against production with sitedrift](./images/sitedrift-brand-demo/red-vs-live-split.png)](https://6ef83545.jseverino.pages.dev/)
 
 The side-by-side view shows the value of a single source of truth: every

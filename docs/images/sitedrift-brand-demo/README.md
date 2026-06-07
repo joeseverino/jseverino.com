@@ -12,6 +12,10 @@ historical deployment remains available at
 
 ## What Each Capture Shows
 
+- `github-brand-token-og-diff.png`: the palette changes once in
+  `src/lib/brand.mjs`, and branding-engine regenerates the Open Graph card.
+- `github-generated-assets-diff.png`: the same token change propagates through
+  the GitHub social preview and transparent mark.
 - `cloudflare-deployment.png`: the exact branch, commit, successful deployment,
   immutable URL, and build duration are tied together.
 - `cloudflare-build-log.png`: the normal Cloudflare build invokes sitedrift and
