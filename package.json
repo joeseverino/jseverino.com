@@ -60,7 +60,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0",
-    "sitedrift": "^0.3.5",
+    "sitedrift": "^0.3.6",
     "stylelint": "^17.12.0",
     "stylelint-config-standard": "^40.0.0"
   }
