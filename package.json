@@ -31,7 +31,7 @@
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",
-    "build:static": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "build:static": "ASTRO_TELEMETRY_DISABLED=1 astro build && sitedrift cloudflare --dir dist --live https://jseverino.com --brand \"Joe Severino\"",
     "build": "npm run -s check && npm run -s build:static",
     "publish:check": "node bin/publish-check.mjs",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
@@ -60,6 +60,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0",
+    "sitedrift": "^0.3.0",
     "stylelint": "^17.12.0",
     "stylelint-config-standard": "^40.0.0"
   }
