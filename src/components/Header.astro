@@ -2,6 +2,11 @@
 import { getSiteChrome } from '@lib/content';
 import NavLinks from '@components/NavLinks.astro';
 import SocialLinks from '@components/SocialLinks.astro';
+import wordmark from '../../public/assets/brand/wordmark-caps.svg?raw';
+
+// The wrapper <svg> in the template owns sizing + accessibility, so inline only
+// the tile and glyph geometry and drop the asset's own <svg> shell.
+const wordmarkInner = wordmark.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
@@ -27,7 +32,9 @@ const navigation = navItems.map((item) => ({
     }
   </script>
   <div class="wide site-nav">
-    <a class="brand" href="/" rel="home" aria-current={current === '/' ? 'page' : undefined}>{name}</a>
+    <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
+      <svg class="brand-mark" viewBox="0 0 1736.11 352" aria-hidden="true" focusable="false" set:html={wordmarkInner} />
+    </a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
       <NavLinks items={navigation} listClass="nav-list" linkClass="nav-link" />
