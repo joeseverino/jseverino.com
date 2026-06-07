@@ -65,4 +65,4 @@ These recommendations align with the National Institute of Standards and Technol
 
 This analysis is based on a research paper written as part of my graduate curriculum at the Georgia Institute of Technology.
 
-[Full Paper](/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/term-paper-diamond-model-policy-assessment.pdf)
+[Full Paper](/assets/docs/diamond-model-policy-assessment.pdf)
