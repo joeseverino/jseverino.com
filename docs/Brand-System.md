@@ -98,8 +98,10 @@ The result is one engine with several consumers:
    (this site)          (brand data + kits)   (CLI wrapper)
 ```
 
-- **The site** depends on the engine to regenerate its favicons and social cards,
-  and commits the output. Its production build never runs the engine.
+- **The site** depends on the engine to regenerate its favicons, social cards, and
+  header wordmark, and commits the output. Its production build never runs the
+  engine; the header inlines the committed `wordmark-caps.svg` so its glyphs pick
+  up the link's hover color through `currentColor`.
 - **The brand kit** (`severino-brand`) is pure data plus a dependency on the
   engine; building it renders the navy kit, the HQ teal kit, and one-off kits for
   other people.

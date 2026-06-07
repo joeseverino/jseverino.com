@@ -10,17 +10,23 @@
 //   public/assets/brand/mark.svg                (scalable brand mark, navy badge)
 //   public/assets/brand/mark-512.png  mark-1024.png
 //   public/assets/brand/mark-1024-transparent.png  (navy glyph, no background)
+//   public/assets/brand/wordmark-caps.svg       (tile + name lockup, currentColor text)
 import { Buffer } from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { markSvg } from 'branding-engine';
+import matter from 'gray-matter';
+import { markSvg, wordmarkSvg } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const iconsDir = path.join(root, 'public/assets/icons');
 const brandDir = path.join(root, 'public/assets/brand');
+
+// The lockup spells the site name (same source the header reads), so the wordmark
+// can never drift from the displayed/aria-label name.
+const { data: site } = matter(fs.readFileSync(path.join(root, 'src/content/site.md'), 'utf8'));
 
 // The engine's mark is generic, so pass our identity explicitly: navy badge with
 // a white glyph; the transparent variant uses the navy glyph (visible on light).
@@ -59,6 +65,13 @@ fs.mkdirSync(brandDir, { recursive: true });
 fs.writeFileSync(path.join(iconsDir, 'favicon.svg'), markSvg({ size: 64, rounded: true, ...badge }));
 fs.writeFileSync(path.join(brandDir, 'mark.svg'), markSvg({ size: 512, rounded: true, ...badge }));
 
+// Header lockup: navy tile + caps name, text in currentColor so the header's
+// hover/active color drives it. Inlined by Header.astro, not loaded as an image.
+fs.writeFileSync(
+  path.join(brandDir, 'wordmark-caps.svg'),
+  wordmarkSvg({ tileHex: BRAND.navy, text: site.name, glyph: BRAND.glyph, caps: true }),
+);
+
 // Favicon raster set.
 fs.writeFileSync(path.join(iconsDir, 'favicon-32.png'), await png(rounded, 32));
 fs.writeFileSync(path.join(iconsDir, 'favicon-192.png'), await png(rounded, 192));
@@ -77,4 +90,4 @@ const ico = pngsToIco([
 ]);
 fs.writeFileSync(path.join(root, 'public/favicon.ico'), ico);
 
-console.log('Wrote favicon set + HD brand marks (favicon.ico/svg, 32/192, apple-touch, mark.svg + 512/1024).');
+console.log('Wrote favicon set + HD brand marks (favicon.ico/svg, 32/192, apple-touch, mark.svg + 512/1024, wordmark-caps.svg).');

@@ -642,17 +642,20 @@ main > * + * {
 }
 
 .brand {
-  font-size: var(--font-md);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+
+  & svg {
+    /* Canvas is 352 tall with a 192-unit em, so the wordmark renders at the
+       old text brand's size (--font-md). currentColor drives the glyph fill. */
+    display: block;
+    block-size: calc(var(--font-md) * 352 / 192);
+    inline-size: auto;
+  }
 
   &:hover,
   &:focus {
     color: var(--color-primary);
-    text-decoration: none;
   }
 
   &:active {
