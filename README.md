@@ -132,7 +132,8 @@ The integration is deliberately preview-only:
 - Preview responses remain `noindex`.
 
 See [Deployment Preview Review](./docs/Deployment-Preview-Review.md) for the
-workflow, architecture, security boundary, and verification steps.
+workflow, architecture, security boundary, verification steps, and the
+[live red-brand drift demo](https://demo-red-brand-sitedrift.jseverino.pages.dev/).
 
 ## Security Model
 

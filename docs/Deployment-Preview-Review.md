@@ -6,6 +6,23 @@ preview deployment is DEV; the current `https://jseverino.com` release is LIVE.
 This turns each branch URL into a review environment instead of a standalone
 copy that must be compared manually.
 
+## Live Brand Drift Demo
+
+The `demo/red-brand-sitedrift` branch demonstrates the complete workflow with
+one deliberate source-of-truth change: the site brand color is red in DEV while
+the current production site remains navy in LIVE.
+
+- [Open the stable Cloudflare preview](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
+- Open the trusted local comparison at
+  [`https://compare.homelab:4178`](https://compare.homelab:4178)
+- [See the screenshot capture plan](./images/sitedrift-brand-demo/README.md)
+
+The branch changes the brand tokens once in `src/lib/brand.mjs`.
+`branding-engine` then regenerates the CSS-facing color system, favicon, marks,
+wordmark, Open Graph image, and social preview. The deployed sitedrift layer
+makes that coordinated change directly comparable with the current production
+release, including visual, response, metadata, and SEO differences.
+
 ## What Reviewers Get
 
 - **Solo** view by default, with one-click switching between DEV and LIVE.
