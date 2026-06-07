@@ -80,8 +80,10 @@ bypass, remote code execution on an origin — simply do not apply to the
 serving layer.
 
 The only code that executes per request is Cloudflare Pages Functions for the
-HTML CSP middleware, contact form, and CSP report receiver (see below).
-Everything else is a flat file.
+HTML CSP middleware, contact form, CSP report receiver, and the read-only
+`/__sitedrift/*` preview-review route (see below). The sitedrift route requires
+configuration generated only for non-production deployments and returns `404`
+on production. Everything else is a flat file.
 
 ### The private/public boundary is one auditable step
 
@@ -242,6 +244,20 @@ header (set in [`public/_headers`](./public/_headers) under the
 rules) so branch and version preview URLs cannot land in search results.
 The canonical custom domain is not affected by those rules and indexes
 normally.
+
+### Preview review route
+
+[`functions/__sitedrift/[[path]].ts`](./functions/__sitedrift/[[path]].ts)
+exports the preview proxy from the locked `sitedrift` development dependency.
+It is constrained to `/__sitedrift/*`, accepts only `GET` and `HEAD`, and fixes
+the LIVE destination to `https://jseverino.com`. It does not share bindings with
+the contact form, does not expose D1, and cannot forward contact-form writes.
+
+The static review shell and proxy configuration are generated only for
+non-`main` Pages branches. Production receives ordinary Astro output; because
+its generated configuration is absent, the scoped Function fails closed with
+`404`. Hosted notes remain in browser `localStorage`. See
+[Deployment Preview Review](./docs/Deployment-Preview-Review.md).
 
 ### Content Security Policy
 
@@ -419,6 +435,8 @@ surface:
 - **Build CI** runs `npm ci && npm run build` on every push and PR, so a
   broken or tampered dependency tree fails fast, then uploads a CycloneDX
   SBOM artifact for the built dependency graph.
+- **Preview guard** runs `npm run check:preview` before release to prove that
+  feature branches receive the review wrapper and `main` remains unmodified.
 - **Workflow lint** runs actionlint when GitHub Actions workflow files change
   ([`.github/workflows/workflow-lint.yml`](./.github/workflows/workflow-lint.yml)).
 - **Link checks** run lychee against repository documentation and public

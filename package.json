@@ -1,6 +1,6 @@
 {
   "name": "jseverino-com",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Personal site for Joe Severino — built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
   "license": "UNLICENSED",
@@ -26,6 +26,7 @@
     "audit:css": "node bin/audit-css.mjs",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
     "check:parity": "node bin/check-vault-mcp-parity.mjs",
+    "check:preview": "node bin/check-sitedrift-preview.mjs",
     "scaffold:primer": "node bin/scaffold-primer.mjs",
     "scaffold:writeup-field": "node bin/scaffold-writeup-field.mjs",
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",

@@ -15,6 +15,9 @@ The public serving layer is static by default. The only request-time code is Clo
 - [`functions/_middleware.ts`](../functions/_middleware.ts) rewrites HTML responses to add CSP nonces and reporting directives.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact form submissions.
 - [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) receives CSP violation reports and stores filtered records in D1.
+- [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
+  exports a read-only preview-review proxy under `/__sitedrift/*`. Production
+  has no generated sitedrift configuration, so that route returns `404`.
 
 There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
@@ -211,6 +214,12 @@ The action is currently set to **None** (log-only) so non-compliant requests sti
 
 `npm run build:static` produces a deployable static site. Locally the build lands in `dist.nosync/`; on Cloudflare Pages (which sets `CF_PAGES=1`) it lands in `dist/`. See [`astro.config.mjs`](../astro.config.mjs) for the `outDir` selection.
 
+After Astro builds, the command invokes `sitedrift cloudflare`. On
+non-production Pages branches, sitedrift preserves the generated pages and
+installs its compact DEV-versus-LIVE review shell. On `main`, it exits without
+changing Astro's output. See
+[Deployment Preview Review](./Deployment-Preview-Review.md).
+
 The output tree:
 
 ```text
@@ -230,7 +239,8 @@ dist/
 │   ├── og/                     # Open Graph card images
 │   ├── pages/<slug>/           # Page-attached assets, synced from the vault
 │   └── writeups/<slug>/        # Per-writeup image variants (AVIF/WebP/fallback), synced from the vault
-├── functions/                  # Pages Functions (bundled separately at deploy)
+├── __sitedrift/                # preview only: viewer assets and configuration
+├── __sitedrift_source/         # preview only: preserved Astro HTML
 ├── <route>/index.html          # One HTML file per route
 └── sitemap-index.xml           # @astrojs/sitemap output
 ```
@@ -239,7 +249,12 @@ dist/
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block — and that is data, not executable code. The middleware nonces every `<script>` tag the browser sees, including the external bundles.
 
-**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/` directory separately at deploy time; it is not part of the static `dist/` tree the Astro build writes. The middleware, contact endpoint, and CSP report endpoint run as Workers at the edge.
+**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/`
+directory separately at deploy time; it is not part of the static `dist/` tree
+the Astro build writes. The middleware, contact endpoint, CSP report endpoint,
+and scoped sitedrift proxy run as Workers at the edge. The sitedrift Function
+requires preview-generated configuration and therefore returns `404` on
+production.
 
 ### Resource hints
 
@@ -362,7 +377,9 @@ This repo intentionally has no `wrangler.toml`. Pages projects with both dashboa
 
 ### Local preview against the real edge runtime
 
-`astro dev` is the day-to-day dev server. It does not run Pages Functions, so the middleware (CSP nonces/reporting), `/api/contact`, and `/api/csp-report` are inactive locally.
+`astro dev` is the day-to-day dev server. It does not run Pages Functions, so
+the middleware (CSP nonces/reporting), `/api/contact`, `/api/csp-report`, and
+the hosted sitedrift proxy are inactive locally.
 
 To exercise the edge runtime locally, build first and run `wrangler pages dev`:
 
@@ -417,6 +434,7 @@ The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate
 - [`docs/Brand-System.md`](./Brand-System.md)
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
+- [`docs/Deployment-Preview-Review.md`](./Deployment-Preview-Review.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
 - [`docs/Release-Checklist.md`](./Release-Checklist.md)
 - [`SECURITY.md`](../SECURITY.md)

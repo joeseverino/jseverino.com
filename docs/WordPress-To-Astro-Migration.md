@@ -53,7 +53,7 @@ Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browse
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
 assets, applies headers, runs a [small HTML middleware](../functions/_middleware.ts) for CSP nonces and reporting, and
-handles the [contact form endpoint](../functions/api/contact.ts) plus the [CSP report endpoint](../functions/api/csp-report.ts). It no longer fronts a public WordPress page
+handles the [contact form endpoint](../functions/api/contact.ts) plus the [CSP report endpoint](../functions/api/csp-report.ts). Non-production Pages deployments also carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for visual and SEO comparison against the live site. It no longer fronts a public WordPress page
 renderer.
 
 ## May 2026 Migration Comparison
@@ -267,6 +267,9 @@ The remaining dynamic pieces are narrow and explicit:
   D1 storage.
 - [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) stores filtered
   browser CSP violation reports in the same D1 database for operational review.
+- [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
+  provides a read-only comparison route only when a preview build generated its
+  configuration; production requests fail closed with `404`.
 
 ## Operational Shift
 

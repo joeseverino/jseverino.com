@@ -22,7 +22,14 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 - Generates AVIF, WebP, and optimized fallback image variants.
 - Records image dimensions in [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) so rendered images include stable `width` and `height` attributes.
 - Emits canonical metadata, Open Graph/Twitter metadata, JSON-LD, sitemap, RSS, and robots.txt.
-- Uses Cloudflare Pages Functions only where dynamic behavior is required: CSP nonce injection, CSP violation reporting, and contact form submission handling.
+- Uses Cloudflare Pages Functions only where dynamic behavior is required: CSP
+  nonce injection, CSP violation reporting, contact form submission handling,
+  and the scoped read-only preview review proxy.
+- Wraps non-production Cloudflare Pages deployments with
+  [`sitedrift`](https://github.com/joeseverino/sitedrift), providing a compact
+  DEV-versus-LIVE review toolbar with synchronized navigation, visual
+  comparison, response deltas, and per-page SEO checks. Production output is
+  not wrapped.
 
 ## Repository Map
 
@@ -42,6 +49,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`functions/_middleware.ts`](./functions/_middleware.ts) | Per-request HTML CSP nonce generation and script nonce injection. |
 | [`functions/api/contact.ts`](./functions/api/contact.ts) | Contact form endpoint with Turnstile, validation, rate limiting, and D1 storage. |
 | [`functions/api/csp-report.ts`](./functions/api/csp-report.ts) | CSP violation report receiver with noise filtering and D1 storage. |
+| [`functions/__sitedrift/[[path]].ts`](./functions/__sitedrift/[[path]].ts) | Read-only preview-review proxy scoped to `/__sitedrift/*`. |
 | [`db/schema.sql`](./db/schema.sql) | D1 schema for contact submissions and CSP reports. |
 | [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
 | [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, and asset audit. |
@@ -100,6 +108,32 @@ The favicons, HD marks, and social cards are generated, not hand-drawn. [`src/li
 
 The `Person` schema reads from [`src/content/site.md`](./src/content/site.md), so the displayed identity, social links, and structured data stay aligned. Portfolio writeups pass published and reviewed dates into Article schema.
 
+Every non-production Pages deployment also includes sitedrift's SEO inspection
+panel. It renders DEV and LIVE snippets together, compares title, description,
+and canonical metadata, and checks headings, viewport, language, Open Graph,
+indexing directives, favicon, and image alt coverage.
+
+## Deployment Preview Review
+
+Cloudflare branch and version previews open in compact sitedrift Solo mode,
+showing the preview deployment as DEV and `https://jseverino.com` as LIVE.
+Reviewers can switch to Split or Overlay/Diff, mirror links and scrolling,
+inspect response timing deltas, open the SEO comparison, and keep notes in that
+browser's `localStorage`.
+
+The integration is deliberately preview-only:
+
+- `sitedrift cloudflare` activates only when `CF_PAGES=1` and
+  `CF_PAGES_BRANCH` is not `main`.
+- Production remains ordinary Astro output.
+- `/__sitedrift/*` accepts only `GET` and `HEAD`.
+- The LIVE proxy is fixed to `https://jseverino.com`.
+- Contact and CSP-report routes are not modified.
+- Preview responses remain `noindex`.
+
+See [Deployment Preview Review](./docs/Deployment-Preview-Review.md) for the
+workflow, architecture, security boundary, and verification steps.
+
 ## Security Model
 
 The public site is static HTML, CSS, JavaScript, and assets. There is no WordPress runtime, no public database-backed page renderer, no admin panel, no comments, no uploads, and no account system.
@@ -120,6 +154,7 @@ npm run check              # CSS lint/audit plus Astro type/content diagnostics
 npm run lint:css           # Stylelint validation for authored CSS
 npm run audit:css          # Fail on defined-but-unused CSS custom properties
 npm run build:static       # Build static output to dist.nosync locally
+npm run check:preview      # Prove preview wrapping and the main production guard
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
 npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key
 npm run check:security     # Verify the signature, required fields, Expires, and WKD file
@@ -203,6 +238,7 @@ Do not commit:
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
+- [`docs/Deployment-Preview-Review.md`](./docs/Deployment-Preview-Review.md) documents the sitedrift-powered Cloudflare preview review workflow and production guard.
 - [`docs/Accessibility.md`](./docs/Accessibility.md) documents landmarks, skip navigation, alt text, focus behavior, reduced motion, keyboard coverage, and contrast posture.
 - [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
 - [`docs/Release-Checklist.md`](./docs/Release-Checklist.md) documents preflight, publish, signed tag, deploy, header, SEO, and accessibility checks.

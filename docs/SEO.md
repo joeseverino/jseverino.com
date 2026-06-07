@@ -97,6 +97,18 @@ adds an `X-Robots-Tag: noindex` to every response served from
 which keeps every preview deployment out of search results while leaving
 the canonical `https://jseverino.com/` indexing untouched.
 
+Non-production deployments are wrapped by
+[sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel
+renders DEV and LIVE search snippets together, highlights title, description,
+and canonical differences, and checks H1 count, viewport, language, Open Graph,
+indexing directives, favicon, and image alt coverage. This makes metadata drift
+visible on the exact deployed artifact before merge.
+
+The wrapper does not change production HTML or make preview URLs indexable.
+Canonical metadata still points at `jseverino.com`, and the
+`X-Robots-Tag: noindex` preview rule remains authoritative. See
+[Deployment Preview Review](./Deployment-Preview-Review.md).
+
 ## Security Headers And SEO
 
 The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The middleware also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. The static Astro origin gives crawlers a simpler response path than the legacy WordPress runtime; measured response snapshots are documented in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
@@ -124,10 +136,16 @@ Then inspect generated HTML for:
 - `dist.nosync/sitemap-0.xml` URLs each carry a `<lastmod>`;
 - `ProjectCard` and article hero `<img alt>` describes the image, not the writeup title.
 
+For a non-production Pages deployment, also open sitedrift's SEO panel and
+confirm DEV/LIVE differences are intentional. Its checks are a fast
+browser-level signal, not a replacement for generated-HTML inspection,
+structured-data validation, Search Console, or Lighthouse.
+
 ## Related Docs
 
 - [`docs/Architecture.md`](./Architecture.md)
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
+- [`docs/Deployment-Preview-Review.md`](./Deployment-Preview-Review.md)
 - [`SECURITY.md`](../SECURITY.md)

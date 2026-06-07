@@ -49,6 +49,7 @@ Run the canonical repo-local gate:
 
 ```sh
 npm run publish:check
+npm run check:preview
 npm audit --omit=dev
 npm outdated
 ```
@@ -65,6 +66,7 @@ build      <n> pages built
 assets     Images: <n>; Total image weight: <n>; No images over 1.5 MB.
 npm audit  0 vulnerabilities
 npm outdated  no direct packages listed
+preview    feature branch wrapped; main unchanged
 ```
 
 Then confirm the worktree is still intentional:
@@ -109,6 +111,20 @@ is also wired into `publish:check`, so a release with an unsigned, expired, or
 WKD-mismatched `security.txt` fails the gate before the build runs.
 
 ## 4. Commit And Push
+
+For a feature branch, review the immutable Cloudflare deployment before
+merging:
+
+1. Confirm compact DEV Solo view loads.
+2. Switch to LIVE and confirm the production comparison target.
+3. Exercise Split, linked scrolling, mirrored navigation, Overlay, and Diff.
+4. Click a status badge and review DEV/LIVE response and load deltas.
+5. Open SEO and review snippet, metadata differences, and checks.
+6. Verify desktop Chromium and mobile WebKit behavior.
+7. Confirm browser-local notes are labeled as local and contain no sensitive
+   information.
+
+See [Deployment Preview Review](./Deployment-Preview-Review.md).
 
 Commit source, content snapshot, generated manifest, docs, and public assets
 that are part of the release:
@@ -301,6 +317,8 @@ Check:
 - Google Search Console URL inspection uses the intended canonical URL.
 - Rich Results Test detects Article or WebSite structured data where expected.
 - The page title, meta description, canonical URL, and Open Graph image are correct.
+- The sitedrift SEO panel on the final preview reports only understood,
+  intentional DEV/LIVE differences.
 - `site seo <url|path|slug>` renders the expected Google-style title, URL,
   description, and metadata checks from built HTML. Use
   `site seo --result <url|path|slug>` when only the snippet mockup is needed.

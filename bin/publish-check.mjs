@@ -117,6 +117,10 @@ const parity = run('vault/MCP parity', node, ['bin/check-vault-mcp-parity.mjs'])
 const parityLine = parity.output.split('\n').find((line) => line.startsWith('ok'));
 status('parity', parityLine ? parityLine.replace(/^ok\s+/, '').trim() : 'passed');
 
+const preview = run('sitedrift preview guard', node, ['bin/check-sitedrift-preview.mjs']);
+const previewLine = preview.output.split('\n').find((line) => line.startsWith('ok'));
+status('preview', previewLine ? previewLine.replace(/^ok\s+/, '').trim() : 'passed');
+
 const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
   if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) {
