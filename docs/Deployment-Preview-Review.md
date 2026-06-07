@@ -6,40 +6,75 @@ preview deployment is DEV; the current `https://jseverino.com` release is LIVE.
 This turns each branch URL into a review environment instead of a standalone
 copy that must be compared manually.
 
-## Live Brand Drift Demo
+## Case Study: One Brand Change, Fully Reviewed
 
-The `demo/red-brand-sitedrift` branch demonstrates the complete workflow with
-one deliberate source-of-truth change: the site brand color is red in DEV while
-the current production site remains navy in LIVE.
+This case study connects two public tools I built:
+[`branding-engine`](https://github.com/joeseverino/branding-engine) generates a
+coherent brand system from structured inputs, and
+[`sitedrift`](https://github.com/joeseverino/sitedrift) compares a development
+deployment with the current live site.
 
-- [Open the stable Cloudflare preview](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
-- Open the trusted local comparison at
-  [`https://compare.homelab:4178`](https://compare.homelab:4178)
-- [See the screenshot capture plan](./images/sitedrift-brand-demo/README.md)
+For the demonstration, I temporarily changed the primary brand token in
+`src/lib/brand.mjs` from navy to red. `branding-engine` propagated that one
+decision through the favicon, marks, header wordmark, interface color, Open
+Graph card, and GitHub social preview. The change was deployed only to a
+Cloudflare branch preview; production stayed navy.
 
-The branch changes the brand tokens once in `src/lib/brand.mjs`.
-`branding-engine` then regenerates the CSS-facing color system, favicon, marks,
-wordmark, Open Graph image, and social preview. The deployed sitedrift layer
-makes that coordinated change directly comparable with the current production
-release, including visual, response, metadata, and SEO differences.
+[Open the immutable red-brand comparison](https://30d9262b.jseverino.pages.dev/).
+Unlike a moving branch alias, this URL remains pinned to the exact demonstration
+build even though the source branch has since been restored to navy.
 
-### Solo And Split
+### 1. Confirm The Branch Works By Itself
 
-[![Red-brand DEV deployment in Solo view](./images/sitedrift-brand-demo/red-brand-solo.png)](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
+Solo mode presents DEV as a normal, interactive website with a compact review
+bar. This matters because a visual review tool is not useful if it breaks
+navigation, menus, scrolling, or the responsive site it is evaluating.
 
-![Red DEV and navy LIVE in Split view](./images/sitedrift-brand-demo/red-vs-live-split.png)
+[![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://30d9262b.jseverino.pages.dev/)
 
-### Visual, Response, And SEO Evidence
+### 2. Compare The Complete Result With Production
 
-![Changed pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
+Split mode places the red branch and navy production site on the same route and
+scroll position. The page structure and content remain aligned; the coordinated
+brand change appears in the mark, buttons, and other generated surfaces. This
+is the useful connection between the tools: `branding-engine` creates the
+systematic change, and `sitedrift` makes its deployed scope immediately visible.
 
-![DEV and LIVE SEO previews and checks](./images/sitedrift-brand-demo/seo-comparison.png)
+![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
-![Response timing and transfer deltas](./images/sitedrift-brand-demo/response-deltas.png)
+### 3. Isolate Changed Pixels
 
-### Browser-Local Review Notes
+Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
+The sparse result shows that the branch changed branding rather than layout or
+content. It is a faster regression check than repeatedly switching browser tabs
+and relying on memory.
 
-![Review notes explicitly identified as browser-local](./images/sitedrift-brand-demo/browser-local-notes.png)
+![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
+
+### 4. Check More Than Appearance
+
+Both deployments receive the same metadata preview and SEO checklist. In this
+case the title, description, canonical URL, headings, Open Graph fields,
+favicon, and image-alt coverage remain healthy. A visual redesign can therefore
+be reviewed without silently accepting an SEO regression.
+
+![DEV and LIVE metadata previews and SEO checks](./images/sitedrift-brand-demo/seo-comparison.png)
+
+The response popover puts HTTP status, response time, transfer size, and deltas
+in one compact comparison. These are lightweight same-session diagnostics, not
+synthetic benchmarks, but they quickly expose a branch that fails, redirects,
+or becomes unexpectedly heavier.
+
+![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
+
+### 5. Leave Review Context Without Adding A Service
+
+Review notes are attached to the preview workflow but stored only in that
+browser's `localStorage`. The interface states that boundary directly. Teams
+get a useful review scratchpad without creating an account system, public write
+API, database, or new production security surface.
+
+![Browser-local review notes](./images/sitedrift-brand-demo/browser-local-notes.png)
 
 ## What Reviewers Get
 

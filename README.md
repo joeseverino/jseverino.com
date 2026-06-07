@@ -121,13 +121,21 @@ Reviewers can switch to Split or Overlay/Diff, mirror links and scrolling,
 inspect response timing deltas, open the SEO comparison, and keep notes in that
 browser's `localStorage`.
 
-[![Red DEV and navy LIVE compared in sitedrift Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)](https://demo-red-brand-sitedrift.jseverino.pages.dev/)
+[![Red DEV and navy LIVE compared in sitedrift Split view](./docs/images/sitedrift-brand-demo/red-vs-live-split.png)](https://30d9262b.jseverino.pages.dev/)
 
-The live demo changes one brand source-of-truth value and exposes the resulting
-red DEV build beside the unchanged navy production release. The same review
-surface also compares response details and SEO:
+This comparison connects two tools I built. `branding-engine` turned one
+temporary source-of-truth change from navy to red into a coordinated favicon,
+wordmark, theme, Open Graph card, and social preview. `sitedrift` then wrapped
+the immutable branch deployment and compared it directly with the unchanged
+production site. The result proves both sides of the workflow: generate a
+consistent brand from one decision, then review the complete deployed effect
+before merging it.
 
 ![DEV and LIVE SEO checks in sitedrift](./docs/images/sitedrift-brand-demo/seo-comparison.png)
+
+The review goes beyond appearance. It compares metadata and SEO checks,
+response timing and transfer deltas, pixel differences, and browser-local
+notes while keeping production untouched.
 
 The integration is deliberately preview-only:
 
@@ -141,7 +149,7 @@ The integration is deliberately preview-only:
 
 See [Deployment Preview Review](./docs/Deployment-Preview-Review.md) for the
 workflow, architecture, security boundary, verification steps, and the
-[live red-brand drift demo](https://demo-red-brand-sitedrift.jseverino.pages.dev/).
+[frozen red-brand comparison](https://30d9262b.jseverino.pages.dev/).
 
 ## Security Model
 

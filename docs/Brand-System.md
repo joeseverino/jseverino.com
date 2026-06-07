@@ -112,6 +112,33 @@ The engine itself is the public, reusable piece:
 render their own kit from one accent color and a set of initials, with no
 Severino-specific assumptions baked in.
 
+## Proving A Brand Change Before Shipping It
+
+A generator can make assets consistent, but consistency alone does not prove
+that a redesign works once deployed. I used another tool I built,
+[`sitedrift`](https://github.com/joeseverino/sitedrift), to test that second
+half of the problem.
+
+For a temporary Cloudflare branch deployment, the site's primary token changed
+from navy to red. `branding-engine` regenerated the favicon, marks, wordmark,
+Open Graph card, social preview, and interface-facing brand values from that
+single edit. Sitedrift then loaded the red branch as DEV and the current navy
+site as LIVE on the same route.
+
+[![One branding-engine input change compared against production with sitedrift](./images/sitedrift-brand-demo/red-vs-live-split.png)](https://30d9262b.jseverino.pages.dev/)
+
+The side-by-side view shows the value of a single source of truth: every
+brand-colored surface moves together while the layout and content stay aligned.
+Diff mode makes the same claim more rigorously by suppressing identical pixels
+and exposing only the changed brand surfaces.
+
+![Brand-only pixel differences](./images/sitedrift-brand-demo/red-vs-live-diff.png)
+
+The immutable demonstration remains available at
+[`30d9262b.jseverino.pages.dev`](https://30d9262b.jseverino.pages.dev/). The
+working branch was restored to navy afterward, so the experiment remains
+reviewable without becoming the site's active design.
+
 ## How The Site Consumes It
 
 The site keeps its identity local and borrows only the rendering:
