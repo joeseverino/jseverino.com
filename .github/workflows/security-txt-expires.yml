@@ -25,7 +25,7 @@ jobs:
         id: check
         run: |
           set -e
-          DAYS_REMAINING=$(node bin/security-txt.mjs check 2>&1 | grep -oE 'expires in [0-9]+d' | grep -oE '[0-9]+' || echo "0")
+          DAYS_REMAINING=$(node tests/audits/security-txt.mjs check 2>&1 | grep -oE 'expires in [0-9]+d' | grep -oE '[0-9]+' || echo "0")
           echo "days_remaining=$DAYS_REMAINING" >> "$GITHUB_OUTPUT"
           if [ "$DAYS_REMAINING" -lt 60 ]; then
             echo "expires_soon=true" >> "$GITHUB_OUTPUT"

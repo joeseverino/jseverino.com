@@ -4,14 +4,14 @@
 // rules that set `color:` and `background:` (or `background-color:`), and
 // reports pass/fail against WCAG AA (4.5:1 normal text, 3:1 large text).
 //
-// Wired into `publish:check`. Standalone usage: `node bin/check-contrast.mjs`.
+// Wired into `publish:check`. Standalone usage: `node tests/audits/check-contrast.mjs`.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { BRAND } from '../src/lib/brand.mjs';
+import { BRAND } from '../../src/lib/brand.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const cssPath = path.join(siteRoot, 'src/styles/base.css');
 const AA_NORMAL = 4.5;
 

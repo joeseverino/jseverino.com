@@ -6,9 +6,28 @@ This document explains how `jseverino.com` is built, where data enters the syste
 
 The site is a static Astro build deployed to Cloudflare Pages.
 
-```text
-Private vault -> sync script -> public repo snapshot -> Astro static build -> Cloudflare Pages
+```mermaid
+graph LR
+    Vault["Obsidian Vault  "] -->|1. npm run sync:content  | Repo["Git Repo Snapshot  "]
+    Repo -->|2. npm run build:static  | CF["Cloudflare Pages CDN  "]
 ```
+
+The public serving layer is static by default. The request-time execution and data boundary is managed on the edge:
+
+```mermaid
+graph TD
+    Client["Browser Client  "]
+    Edge["Cloudflare Edge Middleware  "]
+    Static["CDN Static HTML/Assets  "]
+    D1["D1 Database  "]
+
+    Client -->|1. Request Page  | Edge
+    Edge -->|2. Inject Nonce & Issue CSP  | Client
+    Client -->|3. Fetch Assets  | Static
+    Client -->|4. Submit Contact / CSP reports  | Edge
+    Edge -->|5. Parameterized SQL Write  | D1
+```
+
 
 The public serving layer is static by default. The only request-time code is Cloudflare Pages Functions:
 
@@ -394,7 +413,7 @@ The site is then served at `http://localhost:8788` with the middleware and Funct
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 
-1. `security.txt` verification ([`bin/security-txt.mjs check`](../bin/security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
+1. `security.txt` verification ([`tests/audits/security-txt.mjs check`](../tests/audits/security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
 2. generated output cleanup;
 3. content sync;
 4. iCloud conflict-copy cleanup;

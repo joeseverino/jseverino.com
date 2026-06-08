@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const assetsRoot = path.join(siteRoot, 'public/assets');
 const warnBytes = Number(process.env.ASSET_WARN_MB ?? 1.5) * 1024 * 1024;
 

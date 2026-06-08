@@ -4,7 +4,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const securityFile = path.join(siteRoot, 'public/.well-known/security.txt');
 const wkdDir = path.join(siteRoot, 'public/.well-known/openpgpkey/hu');
 const signingEmail = 'security@jseverino.com';
@@ -119,6 +119,6 @@ const command = process.argv[2];
 if (command === 'sign') sign();
 else if (command === 'check') check();
 else {
-  console.error('Usage: node bin/security-txt.mjs <sign|check>');
+  console.error('Usage: node tests/audits/security-txt.mjs <sign|check>');
   process.exit(2);
 }

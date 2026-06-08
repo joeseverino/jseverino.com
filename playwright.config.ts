@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = 4321;
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: './tests/playwright',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -12,6 +12,7 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {
@@ -52,5 +53,8 @@ export default defineConfig({
     timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',
+    env: {
+      PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+    },
   },
 });

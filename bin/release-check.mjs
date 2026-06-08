@@ -41,7 +41,7 @@ if (process.platform !== 'darwin') {
 }
 
 run('publish checks', npm, ['run', '-s', 'publish:check']);
-run('repository policy', process.execPath, ['bin/check-repository-policy.mjs']);
+run('repository policy', process.execPath, ['tests/audits/check-repository-policy.mjs']);
 
 run(
   'functional and visual browser tests',

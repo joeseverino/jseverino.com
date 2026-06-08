@@ -106,19 +106,19 @@ function summarizeContentChanges() {
   status('content', summary || 'no content changes');
 }
 
-const security = run('security.txt', node, ['bin/security-txt.mjs', 'check']);
+const security = run('security.txt', node, ['tests/audits/security-txt.mjs', 'check']);
 const securityLine = security.output.split('\n').find((line) => line.startsWith('ok'));
 status('security', securityLine ? securityLine.replace(/^ok\s+/, '').trim() : 'passed');
 
-const contrast = run('contrast pairs', node, ['bin/check-contrast.mjs']);
+const contrast = run('contrast pairs', node, ['tests/audits/check-contrast.mjs']);
 const contrastLine = contrast.output.split('\n').find((line) => line.startsWith('ok       '));
 status('contrast', contrastLine ? contrastLine.replace(/^ok\s+/, '').trim() : 'passed');
 
-const parity = run('vault/MCP parity', node, ['bin/check-vault-mcp-parity.mjs']);
+const parity = run('vault/MCP parity', node, ['tests/audits/check-vault-mcp-parity.mjs']);
 const parityLine = parity.output.split('\n').find((line) => line.startsWith('ok'));
 status('parity', parityLine ? parityLine.replace(/^ok\s+/, '').trim() : 'passed');
 
-const preview = run('sitedrift preview guard', node, ['bin/check-sitedrift-preview.mjs']);
+const preview = run('sitedrift preview guard', node, ['tests/audits/check-sitedrift-preview.mjs']);
 const previewLine = preview.output.split('\n').find((line) => line.startsWith('ok'));
 status('preview', previewLine ? previewLine.replace(/^ok\s+/, '').trim() : 'passed');
 
@@ -163,7 +163,7 @@ status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
 
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 
-const audit = run('audit assets', node, ['bin/audit-assets.mjs']);
+const audit = run('audit assets', node, ['tests/audits/audit-assets.mjs']);
 const auditLines = audit.output
   .split('\n')
   .map((line) => line.trim())

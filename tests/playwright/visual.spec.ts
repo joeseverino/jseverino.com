@@ -47,7 +47,7 @@ test.describe('visual regression', () => {
   test('contact page (desktop)', async ({ page }) => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto('/contact/');
-    await page.waitForLoadState('networkidle');
+    await expect(page.locator('.contact-intake-form')).toBeVisible();
     await expect(page).toHaveScreenshot('contact-desktop.png', SCREENSHOT_OPTIONS);
   });
 

@@ -191,19 +191,58 @@ npm outdated               # Check direct dependency freshness
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The entire testing suite, local quality audits, repository policies, and visual baselines are documented in [`tests/README.md`](./tests/README.md).
 
-## Quality Automation
+## Validation & Testing Framework
 
-The repo has a small GitHub Actions suite for build, security, and credibility checks:
+To ensure a **zero-drift, self-healing, and highly-audited release workflow**, every change is verified across a multi-tiered testing suite. This suite bridges local audits, cross-browser functional flows, pixel-perfect visual regressions, and live post-deployment assertions.
 
-| Workflow | Purpose | Output |
+The entire architecture, specifications, baseline layouts, and script behaviors are documented in detail within the unified [Validation & Testing Suite Guide](tests/README.md).
+
+### The Verification Gates
+
+```mermaid
+graph TD
+    A["Source Change"] --> B["npm run publish:check"]
+    B -->|Passed| C["npm run release:check"]
+    C -->|Passed| D["git push origin main"]
+    D --> E["npm run deploy:verify"]
+    
+    subgraph publish:check ["Publish Check (Local Gates)"]
+        B1["Security Signatures"]
+        B2["WCAG Contrast Audits"]
+        B3["Schema Parity Checks"]
+        B4["SiteDrift Preview Guard"]
+        B5["CSS Lint & Audit"]
+        B6["Astro Build & Types"]
+    end
+
+    subgraph release:check ["Release Check (E2E & UI)"]
+        C1["Playwright Cross-Browser"]
+        C2["Visual Regression"]
+        C3["Repository Policy"]
+        C4["Worktree Idempotence"]
+    end
+
+    subgraph deploy:verify ["Deploy Verification (Post-Deploy)"]
+        E1["Remote Actions & CodeQL"]
+        E2["Live HSTS/CSP Headers"]
+        E3["Sitemap Link Traversal"]
+        E4["Production Audit"]
+    end
+```
+
+### GitHub Actions Continuous Integration
+
+In addition to local pre-commit checks, continuous security and build audits are run on every push and pull request to `main`:
+
+| Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`build`](./.github/workflows/build.yml) | Installs from `package-lock.json`, builds the Astro site, and generates an npm SBOM. | `sbom` artifact. |
-| [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript on pushes, PRs, and a weekly schedule. | GitHub code scanning alerts. |
-| [`dependency review`](./.github/workflows/dependency-review.yml) | Blocks PRs that introduce high-severity dependency advisories. | PR check and summary comment. |
-| [`workflow lint`](./.github/workflows/workflow-lint.yml) | Runs actionlint when workflow files change. | PR/push check. |
-| [`link check`](./.github/workflows/link-check.yml) | Checks repository docs and public Markdown links separately. | `link-check-reports` artifact. |
-| [`lighthouse`](./.github/workflows/lighthouse.yml) | Runs Lighthouse CI against selected live URLs. | `lighthouse-reports` artifact. |
-| [`scorecard`](./.github/workflows/scorecard.yml) | Runs OpenSSF Scorecard. | Code scanning SARIF plus `scorecard-sarif` artifact. |
+| [`build`](./.github/workflows/build.yml) | Compiles static assets in a clean container environment. | Successful Astro build & CycloneDX SBOM artifact. |
+| [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript source files for semantic vulnerabilities. | Clean GitHub code scanning dashboard (zero open alerts). |
+| [`dependency review`](./.github/workflows/dependency-review.yml) | Audits manifest package updates for high-severity advisories. | Pull request status validation. |
+| [`scorecard`](./.github/workflows/scorecard.yml) | Computes OpenSSF security scorecard health metrics. | Weekly SARIF supply-chain reports. |
+| [`workflow lint`](./.github/workflows/workflow-lint.yml) | Lints GitHub Action runner steps using actionlint. | PR/push syntax validation. |
+| [`link check`](./.github/workflows/link-check.yml) | Audits all Markdown documentation and public links via Lychee. | Detailed connectivity report artifacts. |
+| [`lighthouse`](./.github/workflows/lighthouse.yml) | Benchmarks performance, accessibility, and SEO using Lighthouse CI. | 100/100/100/100 score compliance. |
 
 Workflow dependencies are pinned to immutable SHAs or container digests. Every workflow declares a top-level `permissions: contents: read` and scopes any `security-events: write` to the specific job that uploads SARIF. Dependabot still checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml).
 

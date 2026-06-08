@@ -62,7 +62,7 @@ const TROUBLESHOOTING = {
   },
   'contrast-check': {
     title: 'Color Contrast Audit',
-    action: 'Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `bin/check-contrast.mjs`.',
+    action: 'Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.mjs`.',
   },
   'parity-check': {
     title: 'Vault/MCP/Astro Parity',
@@ -70,7 +70,7 @@ const TROUBLESHOOTING = {
   },
   'preview-check': {
     title: 'SiteDrift Preview Safety',
-    action: 'Check `bin/check-sitedrift-preview.mjs`. SiteDrift proxy wrapping must be active on feature branches and absent on main.',
+    action: 'Check `tests/audits/check-sitedrift-preview.mjs`. SiteDrift proxy wrapping must be active on feature branches and absent on main.',
   },
   'repo-policy': {
     title: 'Repository Policy Enforcement',
@@ -154,13 +154,13 @@ async function diagnose() {
   console.log(COLOR.blue('Phase 2: Running Static Audits and Policy Checks...'));
 
   const staticTests = [
-    { id: 'security-check', name: 'Security Signatures', cmd: 'node', args: ['bin/security-txt.mjs', 'check'] },
-    { id: 'contrast-check', name: 'WCAG Color Contrast', cmd: 'node', args: ['bin/check-contrast.mjs'] },
-    { id: 'parity-check', name: 'Vault/MCP/Code Parity', cmd: 'node', args: ['bin/check-vault-mcp-parity.mjs'] },
-    { id: 'preview-check', name: 'Sitedrift Preview Guard', cmd: 'node', args: ['bin/check-sitedrift-preview.mjs'] },
-    { id: 'repo-policy', name: 'Repository Policy', cmd: 'node', args: ['bin/check-repository-policy.mjs'] },
+    { id: 'security-check', name: 'Security Signatures', cmd: 'node', args: ['tests/audits/security-txt.mjs', 'check'] },
+    { id: 'contrast-check', name: 'WCAG Color Contrast', cmd: 'node', args: ['tests/audits/check-contrast.mjs'] },
+    { id: 'parity-check', name: 'Vault/MCP/Code Parity', cmd: 'node', args: ['tests/audits/check-vault-mcp-parity.mjs'] },
+    { id: 'preview-check', name: 'Sitedrift Preview Guard', cmd: 'node', args: ['tests/audits/check-sitedrift-preview.mjs'] },
+    { id: 'repo-policy', name: 'Repository Policy', cmd: 'node', args: ['tests/audits/check-repository-policy.mjs'] },
     { id: 'css-lint', name: 'Stylelint CSS Check', cmd: 'npx', args: ['stylelint', 'src/styles/**/*.css'] },
-    { id: 'css-audit', name: 'CSS Unused Variables', cmd: 'node', args: ['bin/audit-css.mjs'] },
+    { id: 'css-audit', name: 'CSS Unused Variables', cmd: 'node', args: ['tests/audits/audit-css.mjs'] },
     { id: 'astro-check', name: 'Astro Compiler Diagnostics', cmd: 'npx', args: ['astro', 'check', '--minimumSeverity', 'warning'], env: { ASTRO_TELEMETRY_DISABLED: '1', NODE_OPTIONS: '--max-old-space-size=4096' } },
     { id: 'git-diff-check', name: 'Git Formatting/Conflicts', cmd: 'git', args: ['diff', '--check'] },
   ];
@@ -207,7 +207,7 @@ async function diagnose() {
           id: 'asset-audit',
           name: 'Asset Weight Limits',
           cmd: 'node',
-          args: ['bin/audit-assets.mjs'],
+          args: ['tests/audits/audit-assets.mjs'],
           env: { STRICT_ASSET_AUDIT: '1' },
         },
       ];

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const root = path.resolve(new URL('..', import.meta.url).pathname);
+const root = path.resolve(new URL('../..', import.meta.url).pathname);
 const cli = path.join(root, 'node_modules/sitedrift/sitedrift.mjs');
 const original = '<!doctype html><html><head><title>Preview guard</title></head><body><h1>Original Astro output</h1></body></html>';
 

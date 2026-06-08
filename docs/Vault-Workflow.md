@@ -2,21 +2,31 @@
 
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. This [operational shift](./WordPress-To-Astro-Migration.md#operational-shift) from a live-admin model to a private-first pipeline was a primary driver for the migration away from WordPress.
 
-```text
-Private vault
-  06 Pages/
-  05 Writeups/
-      |
-      | npm run sync:content
-      v
-Public repo snapshot
-  src/content/
-  public/assets/
-      |
-      | npm run build:static
-      v
-Cloudflare Pages output
+```mermaid
+graph TD
+    subgraph Vault ["Private Obsidian Vault  "]
+        VP["06 Pages/  "]
+        VW["05 Writeups/  "]
+    end
+
+    subgraph Repo ["Public Git Repository  "]
+        SC["src/content/  "]
+        PA["public/assets/  "]
+        ZOD["src/content.config.ts (Zod Validation)  "]
+    end
+
+    subgraph Edge ["Cloudflare Pages Edge  "]
+        CF["Cloudflare CDN & Functions  "]
+    end
+
+    VP -->|npm run sync:content| SC
+    VW -->|Sync Content & Metadata| SC
+    VW -->|Optimize Images & Copy Assets| PA
+
+    SC --> ZOD
+    ZOD -->|npm run build:static| CF
 ```
+
 
 ## Vault Layout
 
