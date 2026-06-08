@@ -10,10 +10,8 @@ const removeBuildOutput = process.argv.includes('--all');
 // The repo lives in an iCloud-synced folder, so iCloud spawns numbered conflict
 // copies whenever these get rewritten — they must be resolved before a publish.
 const generatedRoots = [
-  'src/content/pages',
-  'src/content/writeups',
-  'public/assets/pages',
-  'public/assets/writeups',
+  'src/content',
+  'public/assets',
 ];
 
 // Pure build caches — safe to delete wholesale, never conflict-resolved.
@@ -34,15 +32,16 @@ function remove(target) {
   }
 }
 
-function removeRootNodeModuleConflicts() {
+function removeRootConflicts() {
   let removed = 0;
 
   for (const entry of fs.readdirSync(siteRoot, { withFileTypes: true })) {
-    if (!/^node_modules \d+$/.test(entry.name)) continue;
-
-    fs.rmSync(path.join(siteRoot, entry.name), { recursive: true, force: true });
-    console.log(`Removed dependency conflict copy: ${entry.name}`);
-    removed += 1;
+    if (entry.name === 'node_modules') continue;
+    if (isNumberedConflict(entry.name)) {
+      fs.rmSync(path.join(siteRoot, entry.name), { recursive: true, force: true });
+      console.log(`Removed root conflict copy: ${entry.name}`);
+      removed += 1;
+    }
   }
 
   return removed;
@@ -126,7 +125,7 @@ if (removeBuildOutput) {
   for (const target of buildOutput) remove(target);
 }
 
-const removed = removeRootNodeModuleConflicts() + generatedRoots.reduce(
+const removed = removeRootConflicts() + generatedRoots.reduce(
   (count, root) => count + resolveNumberedCopies(root),
   0,
 );

@@ -21,6 +21,7 @@ node_modules [0-9]*
 # Playwright artifacts
 /playwright-report/
 /test-results/
+.validation-report.md
 
 # Environment and local machine files
 .env

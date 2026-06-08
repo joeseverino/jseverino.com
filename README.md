@@ -177,15 +177,19 @@ npm run sign:security      # Clear-sign public/.well-known/security.txt with the
 npm run check:security     # Verify the signature, required fields, Expires, and WKD file
 npm run check:contrast     # Compute WCAG ratios for every text/background pair in base.css
 npm run check:parity       # Assert vault Frontmatter Schema, Zod, and MCP agree on writeup fields
+npm run check:repo         # Enforce Node, lockfile, tracked-file, conflict-copy, and action-pin policy
 npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim frontmatter
 npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
 npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
 npm run publish:check      # security + contrast + parity + sync + check + build + audit assets
+npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
+npm run diagnose           # Run all validations and E2E checks, generating .validation-report.md on fail
+npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
 npm audit --omit=dev       # Check known dependency advisories
 npm outdated               # Check direct dependency freshness
 ```
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup.
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The entire testing suite, local quality audits, repository policies, and visual baselines are documented in [`tests/README.md`](./tests/README.md).
 
 ## Quality Automation
 

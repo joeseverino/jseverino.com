@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const node = process.execPath;
+const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 
 function stripAnsi(value) {
@@ -133,6 +134,10 @@ status('sync', 'content snapshot updated');
 
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 summarizeContentChanges();
+
+run('CSS lint', npm, ['run', '-s', 'lint:css']);
+run('CSS custom property audit', npm, ['run', '-s', 'audit:css']);
+status('css', 'lint and custom property audit passed');
 
 const check = run(
   'astro check',

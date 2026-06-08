@@ -23,11 +23,28 @@ test('writeup page renders article and prose body', async ({ page }) => {
   await expect(page.locator('.prose')).not.toBeEmpty();
 });
 
-test('every public page returns 200', async ({ page }) => {
-  const paths = ['/', '/about/', '/portfolio/', '/resume/', '/contact/', '/privacy/'];
-  for (const path of paths) {
-    const response = await page.goto(path);
-    expect(response?.status(), `expected 200 from ${path}`).toBe(200);
+test('every sitemap page returns 200', async ({ request }) => {
+  const indexResponse = await request.get('/sitemap-index.xml');
+  expect(indexResponse.status()).toBe(200);
+
+  const sitemapUrls = [...(await indexResponse.text()).matchAll(/<loc>([^<]+)<\/loc>/g)]
+    .map((match) => new URL(match[1]).pathname);
+  expect(sitemapUrls.length).toBeGreaterThan(0);
+
+  const publicPaths: string[] = [];
+  for (const sitemapUrl of sitemapUrls) {
+    const sitemapResponse = await request.get(sitemapUrl);
+    expect(sitemapResponse.status(), `expected 200 from ${sitemapUrl}`).toBe(200);
+    publicPaths.push(
+      ...[...(await sitemapResponse.text()).matchAll(/<loc>([^<]+)<\/loc>/g)]
+        .map((match) => new URL(match[1]).pathname),
+    );
+  }
+
+  expect(publicPaths.length).toBeGreaterThan(0);
+  for (const path of publicPaths) {
+    const response = await request.get(path);
+    expect(response.status(), `expected 200 from ${path}`).toBe(200);
   }
 });
 

@@ -398,13 +398,32 @@ The site is then served at `http://localhost:8788` with the middleware and Funct
 2. generated output cleanup;
 3. content sync;
 4. iCloud conflict-copy cleanup;
-5. Astro check;
-6. Astro build;
-7. image weight audit.
+5. CSS lint and unused custom-property audit;
+6. Astro check;
+7. Astro build;
+8. image weight audit.
 
 The iCloud conflict-copy cleanup step in [`bin/clean-generated.mjs`](../bin/clean-generated.mjs) prefers the canonical (un-numbered) path when it exists and only restores from a numbered conflict copy if the canonical path was renamed away. This prevents the previous behavior where a freshly-synced canonical file could be replaced by an older numbered copy that iCloud touched more recently.
 
 This does not replace human review, but it catches broken builds, oversized assets, and generated-file drift before publishing.
+
+[`bin/release-check.mjs`](../bin/release-check.mjs) is the deterministic
+repo-local release orchestrator. It enforces repository policy, snapshots Git
+state, runs `publish:check`, adds the cross-browser functional suite and macOS
+Chromium visual gate, runs `git diff --check`, and fails if validation changed
+the worktree. A pass means the repository-controlled release inputs are
+internally consistent and reproducible. Registry freshness, immutable
+Cloudflare preview review, and live post-deploy checks remain separate because
+they depend on external state or human judgment. See
+[`tests/README.md`](../tests/README.md) for the browser test map and inline
+visual baselines.
+
+[`bin/deploy-verify.mjs`](../bin/deploy-verify.mjs) is the post-push production
+gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
+waits for the exact commit's GitHub and Cloudflare checks, runs the production
+dependency audit, validates live security headers and the production sitedrift
+guard, checks every live sitemap URL, and requires zero open code-scanning
+alerts.
 
 GitHub Actions provide the remote quality gate:
 

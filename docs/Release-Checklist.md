@@ -1,8 +1,7 @@
 # Release Checklist
 
-This checklist is the human release gate for `jseverino.com`. It complements
-[`npm run publish:check`](../bin/publish-check.mjs), which performs the local
-automated checks.
+This checklist separates the deterministic repository gate from checks that
+require a deployed environment or human judgment.
 
 Use it for production pushes, signed releases, and any change that affects
 content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO
@@ -10,7 +9,7 @@ metadata, D1 schema, or the contact form.
 
 ## 1. Preflight
 
-Confirm the branch is clean and current:
+For a production push, confirm the branch is current:
 
 ```sh
 git status -sb
@@ -48,11 +47,13 @@ final status check. Do not commit numbered copies.
 Run the canonical repo-local gate:
 
 ```sh
-npm run publish:check
-npm run check:preview
-npm audit --omit=dev
-npm outdated
+npm run release:check
 ```
+
+`release:check` runs `publish:check` (including the sitedrift production guard),
+the cross-browser functional suite, the macOS Chromium visual suite,
+repository policy, `git diff --check`, and an idempotence check that proves
+validation did not change repository state.
 
 A clean release should report:
 
@@ -61,24 +62,27 @@ security   signed, 5 fields present, expires in <n>d, WKD file present
 contrast   <n> pairs measured, all >= 4.5:1
 parity     schema/Zod/MCP agree on writeup fields: ...
 sync       content snapshot updated
+css        lint and custom property audit passed
 check      0 errors, 0 warnings
 build      <n> pages built
 assets     Images: <n>; Total image weight: <n>; No images over 1.5 MB.
-npm audit  0 vulnerabilities
-npm outdated  no direct packages listed
 preview    feature branch wrapped; main unchanged
 ```
 
-Then confirm the worktree is still intentional:
+`release:check` snapshots the worktree before validation and fails if sync,
+cleanup, generation, or testing changes repository state. A pass therefore
+means the checked-out source and generated content were already internally
+consistent; no second status inspection is required.
+
+To run all codebase validations and E2E browser tests without short-circuiting on the first error, run the diagnostic suite:
 
 ```sh
-git status -sb
+npm run diagnose
 ```
 
-Content changes from the private vault are expected only when the release is
-intended to publish those changes.
+If any check fails, it writes a detailed `.validation-report.md` in the project root with the exact commands needed to fix the issues. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`.
 
-For any frontend change, run the exact visual gate:
+For a focused frontend check without the complete release gate, run:
 
 ```sh
 CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop
@@ -138,40 +142,26 @@ git push origin main
 Do not commit local caches, build output, `.env*`, `.dev.vars*`, editor folders,
 or numbered iCloud conflict copies.
 
-After pushing, confirm the expected GitHub Actions checks pass. The normal
-remote gate is:
+After pushing `main`, run:
 
-- `build`
-- `codeql`
-- `playwright` functional and visual jobs
-- `workflow lint` when workflow files changed
-- `dependency review` on pull requests
-- `link check`, `lighthouse`, and `scorecard` on their schedules or when run manually
+```sh
+npm run deploy:verify
+```
 
-For scheduled/manual quality checks, download artifacts when investigating a
-failure or recording evidence:
+This waits for `build`, CodeQL, Playwright functional/visual, and Cloudflare
+Pages checks on the exact pushed commit. It then verifies the production
+dependency audit, security headers, production sitedrift `404`, every live
+sitemap URL, and zero open code-scanning alerts.
 
-- `build` uploads `sbom`.
+Scheduled/manual quality checks remain separate because they measure external
+freshness rather than the correctness of one deployment:
+
 - `link check` uploads `link-check-reports`.
 - `lighthouse` uploads `lighthouse-reports`.
 - `scorecard` uploads `scorecard-sarif` and also sends SARIF to code scanning.
-- `playwright` uploads `playwright-report`; its visual job also uploads
-  `test-results` with expected, actual, and diff images.
 
-After a release that touches any GitHub Actions workflow, container action,
-or build script, confirm the code-scanning dashboard is still clean:
-
-```sh
-gh api repos/:owner/:repo/code-scanning/alerts \
-  --paginate \
-  --jq 'group_by(.state) | map({state: .[0].state, count: length})'
-```
-
-The expected state is zero `open` alerts. If CodeQL or Scorecard reports
-something new, treat it as a release-blocking finding: fix at the source
-for CodeQL, evaluate-then-fix-or-dismiss-with-justification for Scorecard.
-Scorecard alerts can also be stale after a remediation commit — trigger
-`gh workflow run scorecard.yml` and recheck before treating them as real.
+Use `npm outdated` when intentionally reviewing dependency freshness; an
+available update is not itself a failed deployment.
 
 ## 5. Signed Version Tag
 
@@ -335,7 +325,7 @@ completed and verified. Do not raise the score for planned items.
 Recommended evidence to record:
 
 - final commit SHA;
-- `publish:check` output summary;
+- `release:check` output summary;
 - signed tag verification result;
 - Cloudflare deploy URL or timestamp;
 - live header check summary;

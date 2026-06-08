@@ -1,6 +1,6 @@
 {
   "name": "jseverino-com",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "Personal site for Joe Severino — built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
   "license": "UNLICENSED",
@@ -23,6 +23,7 @@
     "sign:security": "node bin/security-txt.mjs sign",
     "check:security": "node bin/security-txt.mjs check",
     "check:contrast": "node bin/check-contrast.mjs",
+    "check:repo": "node bin/check-repository-policy.mjs",
     "audit:css": "node bin/audit-css.mjs",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
     "check:parity": "node bin/check-vault-mcp-parity.mjs",
@@ -35,12 +36,15 @@
     "build:static": "ASTRO_TELEMETRY_DISABLED=1 astro build && sitedrift cloudflare --dir dist --live https://jseverino.com --brand \"Joe Severino\"",
     "build": "npm run -s check && npm run -s build:static",
     "publish:check": "node bin/publish-check.mjs",
+    "release:check": "node bin/release-check.mjs",
+    "deploy:verify": "node bin/deploy-verify.mjs",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
     "check": "npm run -s lint:css && npm run -s audit:css && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:visual": "VISUAL=1 playwright test tests/visual.spec.ts",
-    "test:e2e:visual:update": "VISUAL=1 playwright test tests/visual.spec.ts --update-snapshots"
+    "test:e2e:visual:update": "VISUAL=1 playwright test tests/visual.spec.ts --update-snapshots",
+    "diagnose": "node bin/diagnose.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -61,7 +65,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0",
-    "sitedrift": "^0.3.8",
+    "sitedrift": "^0.3.11",
     "stylelint": "^17.12.0",
     "stylelint-config-standard": "^40.0.0"
   }
