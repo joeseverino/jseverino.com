@@ -96,7 +96,7 @@ For an intentional design change only, update and review the baselines:
 
 ```sh
 npm run test:e2e:visual:update -- --project=chromium-desktop
-git diff -- tests/visual.spec.ts-snapshots/
+git diff -- tests/playwright/visual.spec.ts-snapshots/
 ```
 
 Commit approved baseline PNG changes with the frontend change. GitHub's

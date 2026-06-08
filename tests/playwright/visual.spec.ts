@@ -11,7 +11,7 @@ const SCREENSHOT_OPTIONS = {
 } as const;
 
 test.describe('visual regression', () => {
-  test.skip(!SHOULD_RUN, 'Set VISUAL=1 to run visual snapshots (baselines live in tests/visual.spec.ts-snapshots/).');
+  test.skip(!SHOULD_RUN, 'Set VISUAL=1 to run visual snapshots (baselines live in tests/playwright/visual.spec.ts-snapshots/).');
   test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines use Chromium to avoid engine-specific rasterization noise.');
 
   test('home page (desktop)', async ({ page }) => {
