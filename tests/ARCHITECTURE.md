@@ -27,37 +27,39 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 
 ```mermaid
 graph TD
-    A["Source change  "] --> B
+    A["Source change"] --> B
     B -->|passes| C
-    C -->|passes| D["git push origin main  "]
+    C -->|passes| D["git push origin main"]
     D --> E
 
-    subgraph publish ["publish:check — local build gate  "]
-        B["npm run publish:check  "]
-        B1["security.txt signature  "]
-        B2["WCAG contrast  "]
-        B3["vault / Zod / MCP parity  "]
-        B4["sitedrift preview guard  "]
-        B5["CSS lint + unused-var check  "]
-        B6["astro check + build  "]
-        B7["asset weight report  "]
+    subgraph publish ["Publish Check (Local Build Gate)"]
+        B["npm run publish:check"]
+        B1["security.txt signature"]
+        B2["WCAG contrast"]
+        B3["vault / Zod / MCP parity"]
+        B4["sitedrift preview guard"]
+        B5["CSS lint + unused-var check"]
+        B6["astro check + build"]
+        B7["asset weight report"]
     end
 
-    subgraph release ["release:check — final local gate  "]
-        C["npm run release:check  "]
-        C1["Playwright E2E + visual  "]
-        C2["repository policy  "]
-        C3["git diff --check (whitespace/markers)  "]
-        C4["worktree left clean  "]
+    subgraph release ["Release Check (Final Local Gate)"]
+        C["npm run release:check"]
+        C1["Playwright E2E + visual"]
+        C2["repository policy"]
+        C3["git diff --check (whitespace/markers)"]
+        C4["worktree left clean"]
     end
 
-    subgraph deploy ["deploy:verify — after push  "]
-        E["npm run deploy:verify  "]
-        E1["remote CI green  "]
-        E2["live HSTS / CSP headers  "]
-        E3["live sitemap 200s  "]
-        E4["open CodeQL alerts  "]
+    subgraph deploy ["Deploy Verification (Post-Push)"]
+        E["npm run deploy:verify"]
+        E1["remote CI green"]
+        E2["live HSTS / CSP headers"]
+        E3["live sitemap 200s"]
+        E4["open CodeQL alerts"]
     end
+
+    classDef default font-size:11px;
 ```
 
 ### The three gates

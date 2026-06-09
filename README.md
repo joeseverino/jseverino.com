@@ -201,36 +201,38 @@ Start with the tour in [`tests/README.md`](./tests/README.md); the full referenc
 
 ```mermaid
 graph TD
-    A["Source Change  "] --> B
+    A["Source Change"] --> B
     B -->|Passed| C
-    C -->|Passed| D["git push origin main  "]
+    C -->|Passed| D["git push origin main"]
     D --> E
     
-    subgraph publish_check ["Publish Check (Local Gates)  "]
-        B["npm run publish:check  "]
-        B1["Security Signatures  "]
-        B2["WCAG Contrast Audits  "]
-        B3["Schema Parity Checks  "]
-        B4["SiteDrift Preview Guard  "]
-        B5["CSS Lint & Audit  "]
-        B6["Astro Build & Types  "]
+    subgraph publish_check ["Publish Check"]
+        B["npm run publish:check"]
+        B1["Security Signatures"]
+        B2["WCAG Contrast Audits"]
+        B3["Schema Parity Checks"]
+        B4["SiteDrift Preview Guard"]
+        B5["CSS Lint & Audit"]
+        B6["Astro Build & Types"]
     end
 
-    subgraph release_check ["Release Check (E2E & UI)  "]
-        C["npm run release:check  "]
-        C1["Playwright Cross-Browser  "]
-        C2["Visual Regression  "]
-        C3["Repository Policy  "]
-        C4["Worktree Idempotence  "]
+    subgraph release_check ["Release Check"]
+        C["npm run release:check"]
+        C1["Playwright Cross-Browser"]
+        C2["Visual Regression"]
+        C3["Repository Policy"]
+        C4["Worktree Idempotence"]
     end
 
-    subgraph deploy_verify ["Deploy Verification (Post-Deploy)  "]
-        E["npm run deploy:verify  "]
-        E1["Remote Actions & CodeQL  "]
-        E2["Live HSTS/CSP Headers  "]
-        E3["Sitemap Link Traversal  "]
-        E4["Production Audit  "]
+    subgraph deploy_verify ["Deploy Verification"]
+        E["npm run deploy:verify"]
+        E1["Remote Actions & CodeQL"]
+        E2["Live HSTS/CSP Headers"]
+        E3["Sitemap Link Traversal"]
+        E4["Production Audit"]
     end
+
+    classDef default font-size:11px;
 ```
 
 ### GitHub Actions Continuous Integration

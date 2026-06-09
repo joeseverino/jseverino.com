@@ -22,7 +22,9 @@ Three gates run in order. The first two are local; the third runs after the push
 
 ```mermaid
 graph LR
-    A["change  "] --> B["publish:check  "] --> C["release:check  "] --> D["git push  "] --> E["deploy:verify  "]
+    A["change"] --> B["publish:check"] --> C["release:check"] --> D["git push"] --> E["deploy:verify"]
+
+    classDef default font-size:11px;
 ```
 
 | Gate | Runs | Covers |

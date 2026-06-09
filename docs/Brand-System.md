@@ -90,14 +90,16 @@ The result is one engine with several consumers:
 
 ```mermaid
 graph TD
-    BE["branding-engine (public: npm + GitHub)  "]
-    JS["jseverino.com (this site)  "]
-    SB["severino-brand (brand data + kits)  "]
-    TB["tools/brand (CLI wrapper)  "]
+    BE["branding-engine (public: npm + GitHub)"]
+    JS["jseverino.com (this site)"]
+    SB["severino-brand (brand data + kits)"]
+    TB["tools/brand (CLI wrapper)"]
 
-    JS -->|npm optionalDep  | BE
-    SB -->|npm dependency  | BE
-    TB -->|local checkout  | BE
+    JS -->|npm optionalDep| BE
+    SB -->|npm dependency| BE
+    TB -->|local checkout| BE
+
+    classDef default font-size:11px;
 ```
 
 - **The site** depends on the engine to regenerate its favicons, social cards, and

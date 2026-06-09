@@ -4,19 +4,19 @@ The private Obsidian vault is the editorial system. This repository is the publi
 
 ```mermaid
 graph TD
-    subgraph Vault ["Private Obsidian Vault  "]
-        VP["06 Pages/  "]
-        VW["05 Writeups/  "]
+    subgraph Vault ["Private Obsidian Vault"]
+        VP["06 Pages/"]
+        VW["05 Writeups/"]
     end
 
-    subgraph Repo ["Public Git Repository  "]
-        SC["src/content/  "]
-        PA["public/assets/  "]
-        ZOD["src/content.config.ts (Zod Validation)  "]
+    subgraph Repo ["Public Git Repository"]
+        SC["src/content/"]
+        PA["public/assets/"]
+        ZOD["src/content.config.ts (Zod Validation)"]
     end
 
-    subgraph Edge ["Cloudflare Pages Edge  "]
-        CF["Cloudflare CDN & Functions  "]
+    subgraph Edge ["Cloudflare Pages Edge"]
+        CF["Cloudflare CDN & Functions"]
     end
 
     VP -->|npm run sync:content| SC
@@ -25,6 +25,8 @@ graph TD
 
     SC --> ZOD
     ZOD -->|npm run build:static| CF
+
+    classDef default font-size:11px;
 ```
 
 

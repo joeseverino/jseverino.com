@@ -8,24 +8,28 @@ The site is a static Astro build deployed to Cloudflare Pages.
 
 ```mermaid
 graph LR
-    Vault["Obsidian Vault  "] -->|1. npm run sync:content  | Repo["Git Repo Snapshot  "]
-    Repo -->|2. npm run build:static  | CF["Cloudflare Pages CDN  "]
+    Vault["Obsidian Vault"] -->|1. npm run sync:content| Repo["Git Repo Snapshot"]
+    Repo -->|2. npm run build:static| CF["Cloudflare Pages CDN"]
+
+    classDef default font-size:11px;
 ```
 
 The public serving layer is static by default. The request-time execution and data boundary is managed on the edge:
 
 ```mermaid
 graph TD
-    Client["Browser Client  "]
-    Edge["Cloudflare Edge Middleware  "]
-    Static["CDN Static HTML/Assets  "]
-    D1["D1 Database  "]
+    Client["Browser Client"]
+    Edge["Cloudflare Edge Middleware"]
+    Static["CDN Static HTML/Assets"]
+    D1["D1 Database"]
 
-    Client -->|1. Request Page  | Edge
-    Edge -->|2. Inject Nonce & Issue CSP  | Client
-    Client -->|3. Fetch Assets  | Static
-    Client -->|4. Submit Contact / CSP reports  | Edge
-    Edge -->|5. Parameterized SQL Write  | D1
+    Client -->|1. Request Page| Edge
+    Edge -->|2. Inject Nonce & Issue CSP| Client
+    Client -->|3. Fetch Assets| Static
+    Client -->|4. Submit Contact / CSP reports| Edge
+    Edge -->|5. Parameterized SQL Write| D1
+
+    classDef default font-size:11px;
 ```
 
 

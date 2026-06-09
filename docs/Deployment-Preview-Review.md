@@ -141,16 +141,18 @@ export { onRequest } from 'sitedrift/cloudflare';
 
 ```mermaid
 graph TD
-    Push["Feature Branch Push  "] --> CF["Cloudflare Pages Build (CF_PAGES=1)  "]
-    CF --> Astro["Astro Build (writes output to dist/)  "]
-    Astro --> SD_Preserve["sitedrift preserves raw HTML under dist/  "]
-    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML with review shell  "]
+    Push["Feature Branch Push"] --> CF["Cloudflare Pages Build (CF_PAGES=1)"]
+    CF --> Astro["Astro Build (writes output to dist/)"]
+    Astro --> SD_Preserve["sitedrift preserves raw HTML under dist/"]
+    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML with review shell"]
 
     subgraph Serving Edge Runtime
-        SD_Replace --> Edge_Shell["/ serves sitedrift review shell  "]
-        SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview  "]
-        SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production  "]
+        SD_Replace --> Edge_Shell["/ serves sitedrift review shell"]
+        SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview"]
+        SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production"]
     end
+
+    classDef default font-size:11px;
 ```
 
 The branch alias and immutable deployment URL expose the same review interface.
