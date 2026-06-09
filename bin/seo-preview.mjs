@@ -2,10 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const distRoot = path.join(siteRoot, 'dist.nosync');
-const siteUrl = 'https://jseverino.com';
+const siteUrl = `https://${SITE.domain}`;
 const siteHost = new URL(siteUrl).hostname;
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const color = {
@@ -20,7 +21,7 @@ function usage() {
   console.log(`Usage: node bin/seo-preview.mjs <url|path|slug>
 
 Examples:
-  node bin/seo-preview.mjs jseverino.com
+  node bin/seo-preview.mjs ${SITE.domain}
   node bin/seo-preview.mjs portfolio
   node bin/seo-preview.mjs --result portfolio
   node bin/seo-preview.mjs /portfolio/architecting-a-custom-detection-engine/

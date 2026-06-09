@@ -6,6 +6,8 @@
 node_modules
 node_modules.*
 node_modules [0-9]*
+# Holding dir for manually-quarantined iCloud node_modules conflict copies.
+node_modules_conflict_tmp/
 
 # branding-engine glyph cache (only written when extracting a custom font)
 .brand-cache/

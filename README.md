@@ -17,7 +17,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 ## What This Repo Does
 
 - Builds a static personal site with Astro 6.4.
-- Syncs public pages, portfolio writeups, global site identity, navigation, and technology taxonomy from a private vault.
+- Syncs public pages, portfolio writeups, and technology taxonomy from a private vault.
 - Rewrites local image references into public asset paths.
 - Generates AVIF, WebP, and optimized fallback image variants.
 - Records image dimensions in [`src/lib/image-manifest.json`](./src/lib/image-manifest.json) so rendered images include stable `width` and `height` attributes.
@@ -41,8 +41,8 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`src/lib/content.ts`](./src/lib/content.ts) | Markdown rendering, custom directive transforms, content loading, taxonomy lookup, and site chrome parsing. |
 | [`src/content/pages/`](./src/content/pages/) | Sanitized synced page Markdown. |
 | [`src/content/writeups/`](./src/content/writeups/) | Sanitized synced portfolio Markdown. |
-| [`src/content/site.md`](./src/content/site.md) | Synced public site identity, professional summary, social links, and navigation. |
 | [`src/content/technology-groups.md`](./src/content/technology-groups.md) | Synced public taxonomy for technology labels and groups. |
+| [`src/lib/site.ts`](./src/lib/site.ts) | Site identity, social links, and navigation (typed config, derived from `src/lib/site.mjs`). |
 | [`public/assets/`](./public/assets/) | Static site assets organized by bucket: `docs/` (downloadable documents), `fonts/`, `icons/`, `og/` (Open Graph cards), `pages/<slug>/` and `writeups/<slug>/` (vault-synced page and writeup assets). See [Architecture §11 Asset Organization](./docs/Architecture.md#11-asset-organization) for the convention. |
 | [`public/_headers`](./public/_headers) | Static Cloudflare security headers. CSP is issued per-request by the middleware (not set here). |
 | [`public/_redirects`](./public/_redirects) | Static Cloudflare redirects. |
@@ -60,7 +60,6 @@ The private vault is organized as:
 
 ```text
 06 Pages/
-  _site.md
   _technology-groups.md
   home/index.md
   about/index.md
@@ -106,7 +105,7 @@ The favicons, HD marks, and social cards are generated, not hand-drawn. [`src/li
 - JSON-LD for `WebSite`, `Person`, `Article`, and `BreadcrumbList` where applicable.
 - `robots` noindex where requested.
 
-The `Person` schema reads from [`src/content/site.md`](./src/content/site.md), so the displayed identity, social links, and structured data stay aligned. Portfolio writeups pass published and reviewed dates into Article schema.
+The `Person` schema reads from [`src/lib/site.ts`](./src/lib/site.ts), so the displayed identity, social links, and structured data stay aligned. Portfolio writeups pass published and reviewed dates into Article schema.
 
 Every non-production Pages deployment also includes sitedrift's SEO inspection
 panel. It renders DEV and LIVE snippets together, compares title, description,
@@ -182,8 +181,10 @@ npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim front
 npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
 npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
 npm run publish:check      # security + contrast + parity + sync + check + build + audit assets
+npm run publish:check -- --no-sync   # Same gate without the vault sync (for code/refactor changes)
 npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
 npm run diagnose           # Run all validations and E2E checks, generating .validation-report.md on fail
+npm run diff:build         # Build HEAD vs the working tree and report any change to shipped output
 npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
 npm audit --omit=dev       # Check known dependency advisories
 npm outdated               # Check direct dependency freshness
@@ -197,42 +198,10 @@ Every change is verified across three gates: local Node audits that assert invar
 
 Start with the tour in [`tests/README.md`](./tests/README.md); the full reference, with every script, spec, code example, and the troubleshooting tree, is [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
-### The Verification Gates
-
 ```mermaid
-graph TD
-    A["Source Change"] --> B
-    B -->|Passed| C
-    C -->|Passed| D["git push origin main"]
-    D --> E
-    
-    subgraph publish_check ["Publish Check"]
-        B["npm run publish:check"]
-        B1["Security Signatures"]
-        B2["WCAG Contrast Audits"]
-        B3["Schema Parity Checks"]
-        B4["SiteDrift Preview Guard"]
-        B5["CSS Lint & Audit"]
-        B6["Astro Build & Types"]
-    end
-
-    subgraph release_check ["Release Check"]
-        C["npm run release:check"]
-        C1["Playwright Cross-Browser"]
-        C2["Visual Regression"]
-        C3["Repository Policy"]
-        C4["Worktree Idempotence"]
-    end
-
-    subgraph deploy_verify ["Deploy Verification"]
-        E["npm run deploy:verify"]
-        E1["Remote Actions & CodeQL"]
-        E2["Live HSTS/CSP Headers"]
-        E3["Sitemap Link Traversal"]
-        E4["Production Audit"]
-    end
-
-    classDef default font-size:11px;
+%%{init: { "htmlLabels": false } }%%
+graph LR
+    A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
 ```
 
 ### GitHub Actions Continuous Integration
@@ -301,6 +270,7 @@ Do not commit:
 - [`docs/Architecture.md`](./docs/Architecture.md) explains the build, content, rendering, image, and edge architecture.
 - [`docs/Brand-System.md`](./docs/Brand-System.md) tells how the site's brand became one navy identity rendered by the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine).
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
+- [`docs/Blueprint-Setup.md`](./docs/Blueprint-Setup.md) inventories every instance-specific value (identity, brand, edge config, dashboard) for reuse as a blueprint.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
 - [`docs/Deployment-Preview-Review.md`](./docs/Deployment-Preview-Review.md) documents the sitedrift-powered Cloudflare preview review workflow and production guard.

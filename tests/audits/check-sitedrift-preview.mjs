@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { SITE } from '../../src/lib/site-config.mjs';
 
 const root = path.resolve(new URL('../..', import.meta.url).pathname);
 const cli = path.join(root, 'node_modules/sitedrift/sitedrift.mjs');
@@ -15,7 +16,7 @@ function build(branch) {
   fs.writeFileSync(path.join(dir, 'index.html'), original);
   const result = spawnSync(
     process.execPath,
-    [cli, 'cloudflare', '--dir', dir, '--live', 'https://jseverino.com', '--brand', 'Joe Severino'],
+    [cli, 'cloudflare', '--dir', dir, '--live', `https://${SITE.domain}`, '--brand', SITE.owner],
     {
       cwd: root,
       env: { ...process.env, CF_PAGES: '1', CF_PAGES_BRANCH: branch },

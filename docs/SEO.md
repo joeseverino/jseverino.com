@@ -1,6 +1,6 @@
 # SEO And Metadata
 
-This site handles SEO as build-time metadata, not as a plugin layer. Routes pass explicit metadata into [`SeoHead.astro`](../src/components/SeoHead.astro), and shared identity data comes from [`src/content/site.md`](../src/content/site.md).
+This site handles SEO as build-time metadata, not as a plugin layer. Routes pass explicit metadata into [`SeoHead.astro`](../src/components/SeoHead.astro), and shared identity data comes from [`src/lib/site.ts`](../src/lib/site.ts).
 
 ## Canonical URLs
 
@@ -21,7 +21,7 @@ Canonical correctness matters because the content source uses a `home` slug inte
 `SeoHead.astro` receives the route title and description.
 
 - The default homepage title is stored in [`src/lib/site.ts`](../src/lib/site.ts).
-- Non-default titles append the public person/site name from [`src/content/site.md`](../src/content/site.md).
+- Non-default titles append the public person/site name from [`src/lib/site.ts`](../src/lib/site.ts).
 - Descriptions come from page or writeup frontmatter where available.
 
 ## Heading Hierarchy
@@ -54,11 +54,11 @@ Pass `pageType: 'profile' | 'collection' | 'itemList'` (and, for `itemList`, an 
 
 The `Person` entity reads:
 
-- name from [`src/content/site.md`](../src/content/site.md);
-- job title from [`src/content/site.md`](../src/content/site.md);
-- summary from [`src/content/site.md`](../src/content/site.md);
-- skills from [`src/content/site.md`](../src/content/site.md);
-- social profile URLs from [`src/content/site.md`](../src/content/site.md).
+- name from [`src/lib/site.ts`](../src/lib/site.ts);
+- job title from [`src/lib/site.ts`](../src/lib/site.ts);
+- summary from [`src/lib/site.ts`](../src/lib/site.ts);
+- skills from [`src/lib/site.ts`](../src/lib/site.ts);
+- social profile URLs from [`src/lib/site.ts`](../src/lib/site.ts).
 
 This keeps visible identity, footer links, and structured data aligned.
 
@@ -126,7 +126,7 @@ npm run build:static
 Then inspect generated HTML for:
 
 - homepage canonical is `/`;
-- navigation includes all [`src/content/site.md`](../src/content/site.md) links;
+- navigation includes all [`src/lib/site.ts`](../src/lib/site.ts) links;
 - `Person.knowsAbout` includes all public skills;
 - `Person.sameAs` includes all public social links;
 - article pages include correct published and modified dates;

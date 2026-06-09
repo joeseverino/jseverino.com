@@ -7,29 +7,27 @@ This document explains how `jseverino.com` is built, where data enters the syste
 The site is a static Astro build deployed to Cloudflare Pages.
 
 ```mermaid
+%%{init: { "htmlLabels": false } }%%
 graph LR
-    Vault["Obsidian Vault"] -->|1. npm run sync:content| Repo["Git Repo Snapshot"]
-    Repo -->|2. npm run build:static| CF["Cloudflare Pages CDN"]
-
-    classDef default font-size:11px;
+    Vault["Obsidian Vault"] --> Sync["1. npm run sync:content"] --> Repo["Git Repo Snapshot"] --> Build["2. npm run build:static"] --> CF["Cloudflare Pages CDN"]
 ```
 
 The public serving layer is static by default. The request-time execution and data boundary is managed on the edge:
 
 ```mermaid
-graph TD
-    Client["Browser Client"]
-    Edge["Cloudflare Edge Middleware"]
-    Static["CDN Static HTML/Assets"]
-    D1["D1 Database"]
+%%{init: { "sequence": { "mirrorActors": false } } }%%
+sequenceDiagram
+    autonumber
+    actor Client as Browser Client
+    participant Edge as Cloudflare Edge
+    participant Static as CDN Static Assets
+    participant D1 as D1 Database
 
-    Client -->|1. Request Page| Edge
-    Edge -->|2. Inject Nonce & Issue CSP| Client
-    Client -->|3. Fetch Assets| Static
-    Client -->|4. Submit Contact / CSP reports| Edge
-    Edge -->|5. Parameterized SQL Write| D1
-
-    classDef default font-size:11px;
+    Client->>Edge: Request Page
+    Edge->>Client: Inject Nonce & Issue CSP
+    Client->>Static: Fetch Assets
+    Client->>Edge: Submit Contact / CSP reports
+    Edge->>D1: Parameterized SQL Write
 ```
 
 
@@ -52,7 +50,6 @@ Synced public source files:
 
 - [`src/content/pages/`](../src/content/pages/)
 - [`src/content/writeups/`](../src/content/writeups/)
-- [`src/content/site.md`](../src/content/site.md)
 - [`src/content/technology-groups.md`](../src/content/technology-groups.md)
 - [`public/assets/pages/`](../public/assets/pages/)
 - [`public/assets/writeups/`](../public/assets/writeups/)
@@ -67,7 +64,6 @@ Cloudflare Pages builds from the committed snapshot. It does not need vault acce
 Main responsibilities:
 
 - Read published vault pages and writeups.
-- Copy `_site.md` to [`src/content/site.md`](../src/content/site.md).
 - Copy `_technology-groups.md` to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
 - Allowlist public frontmatter fields.
 - Drop vault-only metadata by omission.
@@ -125,18 +121,19 @@ The input is trusted owner-authored Markdown. Where custom directives interpolat
 
 ## 6. Site Chrome And Taxonomy
 
-Global site chrome comes from [`src/content/site.md`](../src/content/site.md) — a YAML-frontmatter-only entry in the `site` content collection. A Zod schema in [`src/content.config.ts`](../src/content.config.ts) validates the shape at build time, so a missing field or a malformed URL fails the build with a precise error rather than rendering a broken page.
+Global site chrome is repo configuration, not vault content. It lives in [`src/lib/site.ts`](../src/lib/site.ts), a typed object derived from the cross-runtime identity primitive [`src/lib/site-config.mjs`](../src/lib/site-config.mjs). Because it is plain TypeScript, `astro check` validates the shape at build time and the header, footer, and `SeoHead` import it directly with no async content load.
 
-The schema covers:
+`site.ts` covers:
 
-- `name` — public display name (drives header brand, JSON-LD `Person.name`, page-title suffix);
-- `title` — professional title (JSON-LD `Person.jobTitle`);
-- `summary` — one-sentence summary (JSON-LD `Person.description`);
+- `name` — public display name, derived from `SITE.owner` (header brand, JSON-LD `Person.name`, page-title suffix);
+- `jobTitle` — professional title (JSON-LD `Person.jobTitle`);
+- `summary` — one-sentence summary (JSON-LD `Person.description`, default meta description);
 - `skills` — string list (`Person.knowsAbout`);
 - `socialLinks` — `{label, href}[]` (footer icons, `Person.sameAs`);
-- `navItems` — `{label, href}[]` (primary navigation).
+- `navItems` — `{label, href}[]` (primary navigation);
+- `url` / `repoUrl` — derived from `SITE.domain` and `SITE.github`.
 
-[`getSiteChrome()`](../src/lib/content.ts) loads the entry via `getEntry('site', 'site')` and memoizes it for the build. The header, footer, and `SeoHead` components all await this single source of truth.
+The four instance primitives that everything else derives from — `domain`, `owner`, `github`, `d1` — are single-sourced in [`src/lib/site-config.mjs`](../src/lib/site-config.mjs) (`.mjs` so `bin/` scripts and `astro.config.mjs` import the same values). See [`Blueprint-Setup.md`](./Blueprint-Setup.md) for the full list of per-instance values.
 
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 

@@ -1,13 +1,13 @@
 ---
-import { getSiteChrome } from '@lib/content';
+import { site } from '@lib/site';
 import SocialLinks from '@components/SocialLinks.astro';
 
-const { socialLinks } = await getSiteChrome();
+const { socialLinks } = site;
 ---
 
 <footer class="site-footer">
   <div class="footer-inner">
-    <a href="https://github.com/joeseverino/jseverino.com" class="source-link">&lt;/&gt; View Source</a>
+    <a href={site.repoUrl} class="source-link">&lt;/&gt; View Source</a>
     <SocialLinks links={socialLinks} />
   </div>
 </footer>

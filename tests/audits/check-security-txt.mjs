@@ -11,6 +11,11 @@ import {
   runGpg,
   stripSignature,
 } from '../../src/lib/security-txt.mjs';
+import { SITE } from '../../src/lib/site-config.mjs';
+
+const wkdEncryptionRe = new RegExp(
+  `^https://${SITE.domain.replace(/\./g, '\\.')}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
+);
 
 const expiresWarnDays = 30;
 
@@ -53,11 +58,9 @@ try {
     fail(`security.txt Canonical is "${fields.Canonical}"; expected "${EXPECTED_CANONICAL}"`);
   }
 
-  const wkdMatch = fields.Encryption.match(
-    /^https:\/\/jseverino\.com\/\.well-known\/openpgpkey\/hu\/([a-z0-9]+)$/,
-  );
+  const wkdMatch = fields.Encryption.match(wkdEncryptionRe);
   if (!wkdMatch) {
-    fail(`security.txt Encryption is not a WKD URL on jseverino.com: ${fields.Encryption}`);
+    fail(`security.txt Encryption is not a WKD URL on ${SITE.domain}: ${fields.Encryption}`);
   }
   const wkdFile = path.join(WKD_DIR, wkdMatch[1]);
   if (!fs.existsSync(wkdFile)) {

@@ -1,5 +1,5 @@
 ---
-import { getSiteChrome } from '@lib/content';
+import { site } from '@lib/site';
 import NavLinks from '@components/NavLinks.astro';
 import SocialLinks from '@components/SocialLinks.astro';
 import wordmark from '../../public/assets/brand/wordmark-caps.svg?raw';
@@ -10,7 +10,7 @@ const wordmarkInner = wordmark.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/,
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
-const { name, navItems, socialLinks } = await getSiteChrome();
+const { name, navItems, socialLinks } = site;
 const navigation = navItems.map((item) => ({
   ...item,
   current: normalize(current) === normalize(item.href),

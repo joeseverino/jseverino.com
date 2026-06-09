@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.mjs';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const colors = {
@@ -19,10 +20,10 @@ try {
     height: 640,
     photoWidth: 480,
     eyebrow: 'GitHub • Open Source',
-    name: 'jseverino.com',
+    name: SITE.domain,
     tagline: 'Source for my personal site',
     meta: 'Astro • TypeScript • Cloudflare Pages',
-    url: 'github.com/joeseverino/jseverino.com',
+    url: `github.com/${SITE.github}/${SITE.domain}`,
     photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
     outPath: path.join(root, '.github/social-preview.png'),
     colors,

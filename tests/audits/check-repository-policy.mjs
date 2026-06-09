@@ -81,6 +81,29 @@ if (conflictCopies.length > 0) {
   fail(`iCloud conflict copies remain: ${conflictCopies.sort().join(', ')}`);
 }
 
+// Same-basename JS/TS module siblings (e.g. site.mjs + site.ts in one dir)
+// resolve ambiguously: Vite/Astro try .mjs before .ts, the TS compiler does the
+// reverse. So `astro check` and the bundler disagree and a build can break while
+// the typecheck passes. Declaration files (foo.d.ts) keep a distinct stem and are
+// unaffected. Forbid the collision outright.
+const moduleStems = new Map();
+for (const file of tracked) {
+  const match = file.match(/^(.*)\.(mjs|cjs|js|jsx|mts|cts|ts|tsx)$/);
+  if (!match) continue;
+  const [, stem, ext] = match;
+  if (!moduleStems.has(stem)) moduleStems.set(stem, new Set());
+  moduleStems.get(stem).add(ext);
+}
+const moduleCollisions = [];
+for (const [stem, exts] of moduleStems) {
+  const jsLike = ['mjs', 'cjs', 'js', 'jsx'].some((e) => exts.has(e));
+  const tsLike = ['mts', 'cts', 'ts', 'tsx'].some((e) => exts.has(e));
+  if (jsLike && tsLike) moduleCollisions.push(`${stem}.{${[...exts].sort().join(',')}}`);
+}
+if (moduleCollisions.length > 0) {
+  fail(`same-basename JS/TS modules resolve ambiguously (Vite picks .mjs, tsc picks .ts): ${moduleCollisions.sort().join(', ')}`);
+}
+
 for (const file of tracked.filter((name) => name.startsWith('.github/workflows/'))) {
   const source = read(file);
   for (const match of source.matchAll(/^\s*(?:-\s*)?uses:\s*([^\s#]+).*$/gm)) {

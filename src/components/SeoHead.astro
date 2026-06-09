@@ -1,6 +1,5 @@
 ---
 import { site } from '@lib/site';
-import { getSiteChrome } from '@lib/content';
 import { getImageDimensions } from '@lib/images';
 
 type Breadcrumb = { name: string; url: string };
@@ -36,14 +35,6 @@ const {
   itemListItems = [],
 } = Astro.props;
 
-const {
-  name: personName,
-  title: jobTitle,
-  summary: personSummary,
-  skills: personSkills,
-  socialLinks: personSocialLinks,
-} = await getSiteChrome();
-
 const canonical = new URL(path, site.url).href;
 const ogImage = new URL(image, site.url).href;
 const personImage = new URL('/assets/brand/joe-severino.jpg', site.url).href;
@@ -52,7 +43,7 @@ const ogDimensions =
   (image === site.defaultOgImage
     ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight }
     : undefined);
-const fullTitle = title === site.defaultTitle ? title : `${title} | ${personName}`;
+const fullTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
 
 const imageObject: Record<string, unknown> = {
   '@type': 'ImageObject',
@@ -63,13 +54,13 @@ const imageObject: Record<string, unknown> = {
 const person = {
   '@type': 'Person',
   '@id': `${site.url}/#person`,
-  name: personName,
+  name: site.name,
   url: site.url,
   image: personImage,
-  jobTitle,
-  description: personSummary || site.defaultDescription,
-  knowsAbout: personSkills,
-  sameAs: personSocialLinks.map((link) => link.href),
+  jobTitle: site.jobTitle,
+  description: site.summary,
+  knowsAbout: site.skills,
+  sameAs: site.socialLinks.map((link) => link.href),
 };
 
 const breadcrumbList =

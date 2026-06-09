@@ -27,6 +27,15 @@ function walk(dir, files = []) {
 }
 
 const pages = walk(distDir);
+
+// A build that emitted no HTML is a failure, not a pass. Without this floor an
+// empty or stale outDir reports "ok 0 pages" and silently green-lights a broken
+// build (e.g. if dir resolution drifts or the build half-failed).
+if (pages.length === 0) {
+  console.error(`check-seo: no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
+  process.exit(1);
+}
+
 const problems = [];
 
 for (const file of pages) {

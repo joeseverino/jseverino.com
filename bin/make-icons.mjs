@@ -16,17 +16,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import matter from 'gray-matter';
 import { markSvg, wordmarkSvg } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.mjs';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const iconsDir = path.join(root, 'public/assets/icons');
 const brandDir = path.join(root, 'public/assets/brand');
-
-// The lockup spells the site name (same source the header reads), so the wordmark
-// can never drift from the displayed/aria-label name.
-const { data: site } = matter(fs.readFileSync(path.join(root, 'src/content/site.md'), 'utf8'));
 
 // The engine's mark is generic, so pass our identity explicitly: navy badge with
 // a white glyph; the transparent variant uses the navy glyph (visible on light).
@@ -67,9 +63,10 @@ fs.writeFileSync(path.join(brandDir, 'mark.svg'), markSvg({ size: 512, rounded: 
 
 // Header lockup: navy tile + caps name, text in currentColor so the header's
 // hover/active color drives it. Inlined by Header.astro, not loaded as an image.
+// SITE.owner is the same name the header reads, so the wordmark can't drift.
 fs.writeFileSync(
   path.join(brandDir, 'wordmark-caps.svg'),
-  wordmarkSvg({ tileHex: BRAND.navy, text: site.name, glyph: BRAND.glyph, caps: true }),
+  wordmarkSvg({ tileHex: BRAND.navy, text: SITE.owner, glyph: BRAND.glyph, caps: true }),
 );
 
 // Favicon raster set.

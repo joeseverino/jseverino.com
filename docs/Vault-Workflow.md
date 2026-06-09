@@ -3,10 +3,11 @@
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. This [operational shift](./WordPress-To-Astro-Migration.md#operational-shift) from a live-admin model to a private-first pipeline was a primary driver for the migration away from WordPress.
 
 ```mermaid
+%%{init: { "htmlLabels": false } }%%
 graph TD
     subgraph Vault ["Private Obsidian Vault"]
-        VP["06 Pages/"]
         VW["05 Writeups/"]
+        VP["06 Pages/"]
     end
 
     subgraph Repo ["Public Git Repository"]
@@ -19,14 +20,11 @@ graph TD
         CF["Cloudflare CDN & Functions"]
     end
 
-    VP -->|npm run sync:content| SC
-    VW -->|Sync Content & Metadata| SC
-    VW -->|Optimize Images & Copy Assets| PA
-
+    VP --> SC
+    VW --> SC
+    VW --> PA
     SC --> ZOD
-    ZOD -->|npm run build:static| CF
-
-    classDef default font-size:11px;
+    ZOD --> CF
 ```
 
 
@@ -41,7 +39,6 @@ Pages live under:
 Special page-level source files:
 
 ```text
-06 Pages/_site.md
 06 Pages/_technology-groups.md
 ```
 
@@ -92,30 +89,7 @@ Vault-only fields such as internal IDs, system names, sensitivity labels, relate
 
 ## Site Identity
 
-`06 Pages/_site.md` syncs to [`src/content/site.md`](../src/content/site.md). The file is YAML frontmatter only — no markdown body. The header, footer, and JSON-LD read from this synced file.
-
-```yaml
----
-name: Joe Severino
-title: Delivery Operations Analyst
-summary: One-sentence professional summary used in JSON-LD and OG metadata.
-skills:
-  - Cybersecurity
-  - Network Security
-socialLinks:
-  - label: LinkedIn
-    href: https://linkedin.com/in/joeseverino/
-  - label: GitHub
-    href: https://github.com/joeseverino
-navItems:
-  - label: About
-    href: /about/
-  - label: Portfolio
-    href: /portfolio/
----
-```
-
-A Zod schema in [`src/content.config.ts`](../src/content.config.ts) validates every field at build time; a typo, a missing key, or a malformed URL fails the build with a precise error. `socialLinks` and `navItems` render as raw JSON in Obsidian's Properties panel because Obsidian doesn't have a native renderer for arrays of objects — to edit them, switch the file to source view (`Cmd+E`) and edit the YAML directly. Scalar fields (`name`, `title`, `summary`, `skills`) render in Properties cleanly.
+Site identity is repo configuration, not vault content. The display name, job title, summary, skills, social links, and navigation live in [`src/lib/site.ts`](../src/lib/site.ts), derived from the four instance primitives (`domain`, `owner`, `github`, `d1`) in [`src/lib/site-config.mjs`](../src/lib/site-config.mjs). The header, footer, and JSON-LD import that typed object directly, and `astro check` validates its shape at build time. This keeps the vault scoped to prose content; see [`Blueprint-Setup.md`](./Blueprint-Setup.md) for the per-instance values.
 
 ## Technology Taxonomy
 

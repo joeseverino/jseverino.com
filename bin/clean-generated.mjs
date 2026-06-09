@@ -18,7 +18,9 @@ const generatedRoots = [
 // `dist.nosync` is the local Astro outDir (see astro.config.mjs); the
 // `.nosync` suffix keeps it outside iCloud so this delete stays a fast,
 // local operation instead of crawling through the iCloud FileProvider.
-const buildOutput = ['.astro', 'dist.nosync', 'node_modules/.vite'];
+// `dist` is the CF/sitedrift outDir; build:static can write it locally too, so
+// clean it as well or a stale copy lingers and misleads post-build audits.
+const buildOutput = ['.astro', 'dist.nosync', 'dist', 'node_modules/.vite'];
 
 function remove(target) {
   try {

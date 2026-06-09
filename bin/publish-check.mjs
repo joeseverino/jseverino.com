@@ -4,6 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
+// be verified without sync-content rewriting src/content from the vault (which
+// could drag in unrelated vault drift). Use it when you haven't touched content.
+const noSync = process.argv.includes('--no-sync');
 const node = process.execPath;
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
@@ -133,8 +137,12 @@ for (const line of cleanGenerated.output.split('\n')) {
   }
 }
 
-run('sync content', node, ['bin/sync-content.mjs']);
-status('sync', 'content snapshot updated');
+if (noSync) {
+  status('sync', 'skipped (--no-sync)');
+} else {
+  run('sync content', node, ['bin/sync-content.mjs']);
+  status('sync', 'content snapshot updated');
+}
 
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 summarizeContentChanges();

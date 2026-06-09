@@ -8,3 +8,6 @@
 # WordPress admin paths — redirect home (admin doesn't exist on the static surface).
 /wp-admin/*          /                                   302
 /wp-login.php        /                                   302
+
+# WordPress legacy taxonomy URL — the old /category/portfolio/ archive is now /portfolio/.
+/category/portfolio/   /portfolio/                       301

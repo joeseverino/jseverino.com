@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
-const repository = 'joeseverino/jseverino.com';
-const origin = 'https://jseverino.com';
+const repository = `${SITE.github}/${SITE.domain}`;
+const origin = `https://${SITE.domain}`;
 const requiredChecks = new Set([
   'build',
   'e2e',
@@ -103,7 +104,7 @@ async function verifyHeaders(pathname) {
     'content-security-policy',
     (value) =>
       value.includes('report-to csp-endpoint') &&
-      value.includes('report-uri https://jseverino.com/api/csp-report') &&
+      value.includes(`report-uri ${origin}/api/csp-report`) &&
       !/script-src[^;]*'unsafe-inline'/.test(value),
     'report-to/report-uri and no unsafe-inline in script-src',
   );

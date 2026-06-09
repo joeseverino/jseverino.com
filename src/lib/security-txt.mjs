@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { SITE } from './site-config.mjs';
 
 // Shared, side-effect-free helpers for the security.txt signer (bin/sign-security.mjs)
 // and verifier (tests/audits/check-security-txt.mjs). Both must agree on how the
@@ -9,8 +10,8 @@ import { fileURLToPath } from 'node:url';
 export const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const SECURITY_FILE = path.join(SITE_ROOT, 'public/.well-known/security.txt');
 export const WKD_DIR = path.join(SITE_ROOT, 'public/.well-known/openpgpkey/hu');
-export const SIGNING_EMAIL = 'security@jseverino.com';
-export const EXPECTED_CANONICAL = 'https://jseverino.com/.well-known/security.txt';
+export const SIGNING_EMAIL = `security@${SITE.domain}`;
+export const EXPECTED_CANONICAL = `https://${SITE.domain}/.well-known/security.txt`;
 export const REQUIRED_FIELDS = ['Contact', 'Encryption', 'Expires', 'Canonical', 'Policy'];
 
 export function stripSignature(text) {

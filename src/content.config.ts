@@ -39,33 +39,4 @@ const writeups = defineCollection({
   }),
 });
 
-// Single-entry collection for site-wide identity, social links, and navigation.
-// Sourced from the vault `06 Pages/_site.md` and synced into
-// `src/content/site.md` by `bin/sync-content.mjs`. The Zod schema validates
-// every required field at build time.
-const site = defineCollection({
-  loader: glob({
-    pattern: 'site.md',
-    base: './src/content',
-  }),
-  schema: z.object({
-    name: z.string(),
-    title: z.string(),
-    summary: z.string(),
-    skills: z.array(z.string()),
-    socialLinks: z.array(
-      z.object({
-        label: z.string(),
-        href: z.string().url(),
-      }),
-    ),
-    navItems: z.array(
-      z.object({
-        label: z.string(),
-        href: z.string(),
-      }),
-    ),
-  }),
-});
-
-export const collections = { pages, writeups, site };
+export const collections = { pages, writeups };

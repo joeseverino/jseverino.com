@@ -17,7 +17,6 @@ const includeDrafts = process.argv.includes('--drafts');
 const sourcePages = path.join(vaultRoot, '06 Pages');
 const sourceWriteups = path.join(vaultRoot, '05 Writeups');
 const targetPages = path.join(siteRoot, 'src/content/pages');
-const targetSite = path.join(siteRoot, 'src/content/site.md');
 const targetTechnologyGroups = path.join(siteRoot, 'src/content/technology-groups.md');
 const targetWriteups = path.join(siteRoot, 'src/content/writeups');
 const targetWriteupAssets = path.join(siteRoot, 'public/assets/writeups');
@@ -289,10 +288,6 @@ async function syncPages() {
   await emptyDir(targetPageAssets);
 
   for (const entry of entries) {
-    if (entry.isFile() && entry.name === '_site.md') {
-      await copyFile(path.join(sourcePages, entry.name), targetSite);
-      continue;
-    }
     if (entry.isFile() && entry.name === '_technology-groups.md') {
       await copyFile(path.join(sourcePages, entry.name), targetTechnologyGroups);
       continue;

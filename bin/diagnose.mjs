@@ -174,12 +174,11 @@ async function diagnose() {
     { id: 'git-diff-check', name: 'Git Formatting/Conflicts', cmd: 'git', args: ['diff', '--check'] },
   ];
 
-  const staticResults = await Promise.all(
-    staticTests.map(async (test) => {
-      const result = await runCommand(test.cmd, test.args, { env: test.env });
-      return { ...test, ...result };
-    }),
-  );
+  const staticResults = [];
+  for (const test of staticTests) {
+    const result = await runCommand(test.cmd, test.args, { env: test.env });
+    staticResults.push({ ...test, ...result });
+  }
 
   checks.push(...staticResults);
 

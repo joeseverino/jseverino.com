@@ -1,6 +1,6 @@
 {
   "name": "jseverino-com",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Personal site for Joe Severino — built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
   "license": "UNLICENSED",
@@ -35,7 +35,7 @@
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",
-    "build:static": "ASTRO_TELEMETRY_DISABLED=1 astro build && sitedrift cloudflare --dir dist --live https://jseverino.com --brand \"Joe Severino\"",
+    "build:static": "node bin/build-static.mjs",
     "build": "npm run -s check && npm run -s build:static",
     "publish:check": "node bin/publish-check.mjs",
     "release:check": "node bin/release-check.mjs",
@@ -46,7 +46,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:visual": "VISUAL=1 playwright test tests/playwright/visual.spec.ts",
     "test:e2e:visual:update": "VISUAL=1 playwright test tests/playwright/visual.spec.ts --update-snapshots",
-    "diagnose": "node bin/diagnose.mjs"
+    "diagnose": "node bin/diagnose.mjs",
+    "diff:build": "node bin/diff-build.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

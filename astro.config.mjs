@@ -4,6 +4,9 @@ import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
 import sitemap from '@astrojs/sitemap';
 import matter from 'gray-matter';
+import { SITE } from './src/lib/site-config.mjs';
+
+const origin = `https://${SITE.domain}`;
 
 // Local-only dev server settings, sourced from the gitignored .env so no
 // machine-specific values land in the repo. All unset in prod/CI, so the build
@@ -34,7 +37,7 @@ function buildLastmodMap() {
     try {
       const { data } = matter(fs.readFileSync(file, 'utf8'));
       const stamp = data.last_reviewed || data.published_at;
-      if (stamp) map.set(`https://jseverino.com/portfolio/${slug}/`, new Date(stamp).toISOString());
+      if (stamp) map.set(`${origin}/portfolio/${slug}/`, new Date(stamp).toISOString());
     } catch {
       // Ignore unparseable frontmatter — the URL just falls back to build time.
     }
@@ -43,10 +46,15 @@ function buildLastmodMap() {
 }
 
 const writeupLastmod = buildLastmodMap();
-const buildLastmod = new Date().toISOString();
+// Honor SOURCE_DATE_EPOCH (Unix seconds) for reproducible builds: with it set, a
+// no-op change yields byte-identical output, which bin/diff-build.mjs relies on
+// to surface only real differences. Normal builds fall back to the wall clock.
+const buildLastmod = process.env.SOURCE_DATE_EPOCH
+  ? new Date(Number(process.env.SOURCE_DATE_EPOCH) * 1000).toISOString()
+  : new Date().toISOString();
 
 export default defineConfig({
-  site: 'https://jseverino.com',
+  site: origin,
   trailingSlash: 'always',
   outDir,
   devToolbar: {

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import MarkdownIt from 'markdown-it';
-import { getCollection, getEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { enhanceImages } from './images';
 import { site } from './site';
@@ -45,15 +45,6 @@ export type PageContent = {
   bodyHtml: string;
 };
 
-export type SiteChrome = {
-  name: string;
-  title: string;
-  summary: string;
-  skills: string[];
-  socialLinks: { label: string; href: string }[];
-  navItems: { href: string; label: string }[];
-};
-
 export type TechnologyTag = {
   slug: string;
   label: string;
@@ -84,7 +75,6 @@ function memo<T>(): { get(load: () => T): T; getAsync(load: () => Promise<T>): P
 
 const pagesCache = memo<CollectionEntry<'pages'>[]>();
 const writeupsCache = memo<Writeup[]>();
-const siteChromeCache = memo<SiteChrome>();
 
 function normalizeDate(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -380,14 +370,6 @@ export async function getPage(slug: string): Promise<PageContent> {
     body: page.body ?? '',
     bodyHtml: renderPageMarkdown(page.body ?? ''),
   };
-}
-
-export async function getSiteChrome(): Promise<SiteChrome> {
-  return siteChromeCache.getAsync(async () => {
-    const entry = await getEntry('site', 'site');
-    if (!entry) throw new Error('Missing src/content/site.md');
-    return entry.data;
-  });
 }
 
 export function getTechnologyGroups(): TechnologyGroup[] {

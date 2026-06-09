@@ -14,6 +14,8 @@
     "functions",
     "node_modules",
     "node_modules.*",
-    "node_modules *"
+    "node_modules *",
+    "node_modules_conflict_tmp",
+    "node_modules_conflict*"
   ]
 }

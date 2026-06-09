@@ -26,10 +26,11 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 ## 1. The gate ladder
 
 ```mermaid
+%%{init: { "htmlLabels": false } }%%
 graph TD
     A["Source change"] --> B
-    B -->|passes| C
-    C -->|passes| D["git push origin main"]
+    B --> C
+    C --> D["git push origin main"]
     D --> E
 
     subgraph publish ["Publish Check (Local Build Gate)"]
@@ -59,7 +60,12 @@ graph TD
         E4["open CodeQL alerts"]
     end
 
-    classDef default font-size:11px;
+    %% Force vertical layout nesting
+    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
+    B7 ~~~ C
+    C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
+    C4 ~~~ D
+    E ~~~ E1 ~~~ E2 ~~~ E3 ~~~ E4
 ```
 
 ### The three gates
@@ -145,6 +151,7 @@ Structural health:
 - **Lockfile** dependencies/versions align with `package.json`.
 - **Clean tree** — no committed `.env` / `.dev.vars`, no `dist/` or `playwright-report/`, no iCloud conflict copies.
 - **Action pinning** — every third-party GitHub Action is pinned to an immutable commit SHA, not a mutable tag.
+- **No ambiguous module siblings** — no two tracked files share a basename with both a JS-like (`.mjs`/`.js`) and a TS-like (`.ts`/`.mts`) extension. Such a pair resolves differently in Vite (which tries `.mjs` first) than in the TS compiler (which tries `.ts` first), so a build can break while `astro check` passes. Declaration files (`foo.d.ts`) keep a distinct stem and are fine.
 
 ### `check-docs.mjs`
 Asserts internal documentation integrity across the engineering docs (`README.md`, `SECURITY.md`, `docs/**`, `tests/*.md`, and `AGENTS.md` when present):
@@ -154,7 +161,7 @@ Asserts internal documentation integrity across the engineering docs (`README.md
 Links inside fenced code blocks are treated as example syntax and skipped, so authoring examples like `![alt](./images/x.png)` do not trip it; `npm run` references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, not repo files). This is the check that catches a renamed script or moved file the moment a doc still points at the old name.
 
 ### `check-seo.mjs`
-Runs **after the build**, over the emitted HTML in the local outDir (`dist.nosync`) or the CI outDir (`dist`). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, `og:image`, and only valid JSON-LD. Redirect stubs (`Astro.redirect`, detected by their `meta http-equiv="refresh"`) are skipped, since they are not indexable content. Wired into `publish:check` after the build and into `diagnose`'s post-build phase.
+Runs **after the build**, over the emitted HTML in the local outDir (`dist.nosync`) or the CI outDir (`dist`). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, `og:image`, and only valid JSON-LD. Redirect stubs (`Astro.redirect`, detected by their `meta http-equiv="refresh"`) are skipped, since they are not indexable content. It also **fails on zero pages** — an empty or stale outDir is treated as a broken build, not a pass. Wired into `publish:check` after the build and into `diagnose`'s post-build phase.
 
 ---
 

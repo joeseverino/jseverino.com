@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.mjs';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const colors = {
@@ -18,10 +19,10 @@ try {
     height: 630,
     photoWidth: 462,
     eyebrow: 'Cybersecurity • Networking',
-    name: 'Joe Severino',
+    name: SITE.owner,
     tagline: 'Hands-on security & infrastructure projects',
     meta: 'CCNA • Security+ • ISC2 CC',
-    url: 'jseverino.com',
+    url: SITE.domain,
     photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
     outPath: path.join(root, 'public/assets/og/og-default.png'),
     colors,

@@ -140,6 +140,7 @@ export { onRequest } from 'sitedrift/cloudflare';
 ## Preview Build Flow
 
 ```mermaid
+%%{init: { "htmlLabels": false } }%%
 graph TD
     Push["Feature Branch Push"] --> CF["Cloudflare Pages Build (CF_PAGES=1)"]
     CF --> Astro["Astro Build (writes output to dist/)"]
@@ -151,8 +152,6 @@ graph TD
         SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview"]
         SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production"]
     end
-
-    classDef default font-size:11px;
 ```
 
 The branch alias and immutable deployment URL expose the same review interface.

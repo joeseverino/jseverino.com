@@ -89,17 +89,16 @@ redrawing the logo.
 The result is one engine with several consumers:
 
 ```mermaid
+%%{init: { "htmlLabels": false } }%%
 graph TD
     BE["branding-engine (public: npm + GitHub)"]
-    JS["jseverino.com (this site)"]
-    SB["severino-brand (brand data + kits)"]
-    TB["tools/brand (CLI wrapper)"]
+    JS["jseverino.com (npm optionalDep)"]
+    SB["severino-brand (npm dependency)"]
+    TB["tools/brand (local checkout)"]
 
-    JS -->|npm optionalDep| BE
-    SB -->|npm dependency| BE
-    TB -->|local checkout| BE
-
-    classDef default font-size:11px;
+    JS --> BE
+    SB --> BE
+    TB --> BE
 ```
 
 - **The site** depends on the engine to regenerate its favicons, social cards, and
