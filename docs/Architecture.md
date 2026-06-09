@@ -144,7 +144,7 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit 
 
 Playwright exercises the current bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. This is the compatibility contract enforced by CI; no CSS transpilation or legacy polyfill bundle is shipped.
 
-`stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run audit:css` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
+`stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
 
 ### Sticky-header shadow
 
@@ -413,7 +413,7 @@ The site is then served at `http://localhost:8788` with the middleware and Funct
 
 [`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
 
-1. `security.txt` verification ([`tests/audits/security-txt.mjs check`](../tests/audits/security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
+1. `security.txt` verification ([`tests/audits/check-security-txt.mjs`](../tests/audits/check-security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
 2. generated output cleanup;
 3. content sync;
 4. iCloud conflict-copy cleanup;
@@ -434,8 +434,8 @@ the worktree. A pass means the repository-controlled release inputs are
 internally consistent and reproducible. Registry freshness, immutable
 Cloudflare preview review, and live post-deploy checks remain separate because
 they depend on external state or human judgment. See
-[`tests/README.md`](../tests/README.md) for the browser test map and inline
-visual baselines.
+[`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md) for the browser test map and
+inline visual baselines.
 
 [`bin/deploy-verify.mjs`](../bin/deploy-verify.mjs) is the post-push production
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,

@@ -76,11 +76,15 @@ const TROUBLESHOOTING = {
     title: 'Repository Policy Enforcement',
     action: 'Align Node version (.nvmrc), lockfile dependencies, commit hashes for GitHub Actions, or run `npm run clean:conflicts` to remove iCloud conflict copies.',
   },
+  'docs-check': {
+    title: 'Documentation Integrity',
+    action: 'A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target.',
+  },
   'css-lint': {
     title: 'Stylelint Audit',
     action: 'Fix syntax and rule violations in your CSS files located under `src/styles/`.',
   },
-  'css-audit': {
+  'css-check': {
     title: 'Unused CSS variables',
     action: 'Remove declared CSS custom properties in `src/styles/` that are never referenced with `var(...)`.',
   },
@@ -95,6 +99,10 @@ const TROUBLESHOOTING = {
   'asset-audit': {
     title: 'Asset Size Check',
     action: 'Optimize images in `public/assets/` to ensure none exceed 1.5MB. Set `STRICT_ASSET_AUDIT=0` if override is necessary.',
+  },
+  'seo-check': {
+    title: 'SEO Metadata',
+    action: 'A built page is missing a `<title>`, canonical link, og:title/og:image, or has invalid JSON-LD. Check `src/components/SeoHead.astro` and the page frontmatter.',
   },
   'browser-tests': {
     title: 'Playwright E2E & Visuals',
@@ -154,13 +162,14 @@ async function diagnose() {
   console.log(COLOR.blue('Phase 2: Running Static Audits and Policy Checks...'));
 
   const staticTests = [
-    { id: 'security-check', name: 'Security Signatures', cmd: 'node', args: ['tests/audits/security-txt.mjs', 'check'] },
+    { id: 'security-check', name: 'Security Signatures', cmd: 'node', args: ['tests/audits/check-security-txt.mjs'] },
     { id: 'contrast-check', name: 'WCAG Color Contrast', cmd: 'node', args: ['tests/audits/check-contrast.mjs'] },
     { id: 'parity-check', name: 'Vault/MCP/Code Parity', cmd: 'node', args: ['tests/audits/check-vault-mcp-parity.mjs'] },
     { id: 'preview-check', name: 'Sitedrift Preview Guard', cmd: 'node', args: ['tests/audits/check-sitedrift-preview.mjs'] },
     { id: 'repo-policy', name: 'Repository Policy', cmd: 'node', args: ['tests/audits/check-repository-policy.mjs'] },
+    { id: 'docs-check', name: 'Docs Link Integrity', cmd: 'node', args: ['tests/audits/check-docs.mjs'] },
     { id: 'css-lint', name: 'Stylelint CSS Check', cmd: 'npx', args: ['stylelint', 'src/styles/**/*.css'] },
-    { id: 'css-audit', name: 'CSS Unused Variables', cmd: 'node', args: ['tests/audits/audit-css.mjs'] },
+    { id: 'css-check', name: 'CSS Unused Variables', cmd: 'node', args: ['tests/audits/check-css.mjs'] },
     { id: 'astro-check', name: 'Astro Compiler Diagnostics', cmd: 'npx', args: ['astro', 'check', '--minimumSeverity', 'warning'], env: { ASTRO_TELEMETRY_DISABLED: '1', NODE_OPTIONS: '--max-old-space-size=4096' } },
     { id: 'git-diff-check', name: 'Git Formatting/Conflicts', cmd: 'git', args: ['diff', '--check'] },
   ];
@@ -209,6 +218,12 @@ async function diagnose() {
           cmd: 'node',
           args: ['tests/audits/audit-assets.mjs'],
           env: { STRICT_ASSET_AUDIT: '1' },
+        },
+        {
+          id: 'seo-check',
+          name: 'SEO Metadata',
+          cmd: 'node',
+          args: ['tests/audits/check-seo.mjs'],
         },
       ];
 
@@ -278,7 +293,11 @@ async function diagnose() {
   const success = failedChecks.length === 0;
 
   if (success) {
-    console.log(COLOR.bold(COLOR.green('✓ ALL CHECKS PASSED. Codebase is logically clean and ready to deploy.')));
+    const browserSkipped = checks.some((c) => c.id === 'browser-tests' && c.skipped);
+    const message = browserSkipped
+      ? '✓ ALL CHECKS PASSED. Static checks and build are clean; browser/visual suite skipped (run on macOS before deploy).'
+      : '✓ ALL CHECKS PASSED. Codebase is logically clean and ready to deploy.';
+    console.log(COLOR.bold(COLOR.green(message)));
     // Clean up any stale validation report
     if (fs.existsSync(reportPath)) fs.unlinkSync(reportPath);
     process.exit(0);

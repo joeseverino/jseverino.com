@@ -106,7 +106,7 @@ function summarizeContentChanges() {
   status('content', summary || 'no content changes');
 }
 
-const security = run('security.txt', node, ['tests/audits/security-txt.mjs', 'check']);
+const security = run('security.txt', node, ['tests/audits/check-security-txt.mjs']);
 const securityLine = security.output.split('\n').find((line) => line.startsWith('ok'));
 status('security', securityLine ? securityLine.replace(/^ok\s+/, '').trim() : 'passed');
 
@@ -122,6 +122,10 @@ const preview = run('sitedrift preview guard', node, ['tests/audits/check-sitedr
 const previewLine = preview.output.split('\n').find((line) => line.startsWith('ok'));
 status('preview', previewLine ? previewLine.replace(/^ok\s+/, '').trim() : 'passed');
 
+const docs = run('docs integrity', node, ['tests/audits/check-docs.mjs']);
+const docsLine = docs.output.split('\n').find((line) => line.startsWith('ok'));
+status('docs', docsLine ? docsLine.replace(/^ok\s+/, '').trim() : 'passed');
+
 const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
   if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) {
@@ -136,7 +140,7 @@ run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 summarizeContentChanges();
 
 run('CSS lint', npm, ['run', '-s', 'lint:css']);
-run('CSS custom property audit', npm, ['run', '-s', 'audit:css']);
+run('CSS custom property audit', npm, ['run', '-s', 'check:css']);
 status('css', 'lint and custom property audit passed');
 
 const check = run(
@@ -177,3 +181,7 @@ status(
     .filter(Boolean)
     .join('; '),
 );
+
+const seo = run('seo metadata', node, ['tests/audits/check-seo.mjs']);
+const seoLine = seo.output.split('\n').find((line) => line.startsWith('ok'));
+status('seo', seoLine ? seoLine.replace(/^ok\s+/, '').trim() : 'passed');

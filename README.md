@@ -169,7 +169,7 @@ npm run dev                # Start Astro dev server
 npm run dev:drafts         # Sync drafts locally, then start dev server
 npm run check              # CSS lint/audit plus Astro type/content diagnostics
 npm run lint:css           # Stylelint validation for authored CSS
-npm run audit:css          # Fail on defined-but-unused CSS custom properties
+npm run check:css          # Fail on defined-but-unused CSS custom properties
 npm run build:static       # Build static output to dist.nosync locally
 npm run check:preview      # Prove preview wrapping and the main production guard
 npm run seo:preview -- /   # Preview Google-style metadata from built HTML
@@ -189,13 +189,13 @@ npm audit --omit=dev       # Check known dependency advisories
 npm outdated               # Check direct dependency freshness
 ```
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The entire testing suite, local quality audits, repository policies, and visual baselines are documented in [`tests/README.md`](./tests/README.md).
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
-## Validation & Testing Framework
+## Validation & Testing
 
-To ensure a **zero-drift, self-healing, and highly-audited release workflow**, every change is verified across a multi-tiered testing suite. This suite bridges local audits, cross-browser functional flows, pixel-perfect visual regressions, and live post-deployment assertions.
+Every change is verified across three gates: local Node audits that assert invariants about the source, Playwright specs that drive the built site in a real browser, and post-push probes that re-check the live deploy. Together they cover signed security metadata, WCAG contrast, schema parity, cross-browser functional flows, pixel baselines, and live header/CSP checks.
 
-The entire architecture, specifications, baseline layouts, and script behaviors are documented in detail within the unified [Validation & Testing Suite Guide](tests/README.md).
+Start with the tour in [`tests/README.md`](./tests/README.md); the full reference, with every script, spec, code example, and the troubleshooting tree, is [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
 ### The Verification Gates
 

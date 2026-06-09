@@ -28,7 +28,7 @@ export default defineConfig({
     {
       name: 'firefox-desktop',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /.*mobile.*\.spec\.ts/,
+      testIgnore: [/.*mobile.*\.spec\.ts/, /.*\.single\.spec\.ts/],
     },
     {
       name: 'firefox-mobile',
@@ -38,7 +38,7 @@ export default defineConfig({
     {
       name: 'webkit-desktop',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /.*mobile.*\.spec\.ts/,
+      testIgnore: [/.*mobile.*\.spec\.ts/, /.*\.single\.spec\.ts/],
     },
     {
       name: 'webkit-mobile',

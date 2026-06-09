@@ -46,10 +46,10 @@ signature lets clients verify that the file has not changed since it was
 signed by the matching private key.
 
 Signing and verification are scripted:
-[`npm run sign:security`](./tests/audits/security-txt.mjs) strips the existing
+[`npm run sign:security`](./bin/sign-security.mjs) strips the existing
 signature, re-signs the body with `security@jseverino.com`, and writes it
 back.
-[`npm run check:security`](./tests/audits/security-txt.mjs) verifies the signature,
+[`npm run check:security`](./tests/audits/check-security-txt.mjs) verifies the signature,
 confirms all RFC 9116 required fields are present, fails if `Expires` is
 within 30 days, and confirms the `Encryption` URL resolves to a local WKD
 file. `check:security` is wired into `publish:check`, so an unsigned or

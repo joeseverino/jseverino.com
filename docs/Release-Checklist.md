@@ -4,7 +4,7 @@ This checklist separates the deterministic repository gate from checks that
 require a deployed environment or human judgment.
 
 > [!NOTE]
-> For details on every validation script, configuration, baseline screenshot, and verification step mentioned in this checklist, refer to the unified [Validation & Testing Suite Guide](../tests/README.md).
+> For details on every validation script, configuration, baseline screenshot, and verification step mentioned in this checklist, see the full reference in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md) (or the short tour in [`tests/README.md`](../tests/README.md)).
 
 Use it for production pushes, signed releases, and any change that affects
 content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO

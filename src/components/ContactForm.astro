@@ -83,7 +83,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 
         if (response.ok && result.ok) {
           form.reset();
-          show("Thanks — your message has been sent. I'll get back to you soon.", 'success');
+          show("Thanks, your message has been sent. I'll get back to you soon.", 'success');
         } else {
           show(result.error ?? 'Something went wrong. Please try again.', 'error');
         }

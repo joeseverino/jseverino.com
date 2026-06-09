@@ -1,0 +1,36 @@
+$ npm run diagnose
+
+Starting Deterministic E2E Codebase Diagnosis...
+
+Phase 1: Syncing Content and Cleaning Caches...
+✓ Caches cleared & content synced.
+
+Phase 2: Running Static Audits and Policy Checks...
+  [PASS] Security Signatures (94ms)
+  [PASS] WCAG Color Contrast (52ms)
+  [PASS] Vault/MCP/Code Parity (52ms)
+  [PASS] Sitedrift Preview Guard (256ms)
+  [PASS] Repository Policy (97ms)
+  [PASS] Docs Link Integrity (57ms)
+  [PASS] Stylelint CSS Check (1099ms)
+  [PASS] CSS Unused Variables (46ms)
+  [PASS] Astro Compiler Diagnostics (4897ms)
+  [PASS] Git Formatting/Conflicts (1265ms)
+
+Phase 3: Compiling Production Build...
+  [PASS] Static Site Build (2677ms)
+
+Phase 4: Running Post-Build Audits and Browser Tests...
+  [PASS] Asset Weight Limits (41ms)
+  [PASS] SEO Metadata (43ms)
+  [PASS] Playwright Browser Tests (50367ms)
+
+  [PASS] Worktree Idempotence Check
+
+✓ ALL CHECKS PASSED. Codebase is logically clean and ready to deploy.
+
+# On success there is nothing else to read, and no report file is written:
+# the stale .validation-report.md (if any) is deleted. The full surface here is
+# every static audit, the production build, check-seo, the Playwright suite
+# across all six browser projects (including visual baselines), and an
+# idempotence check proving the run mutated nothing. One command, ~60s, done.

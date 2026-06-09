@@ -34,6 +34,20 @@ test('mobile menu opens via hamburger and closes on Escape', async ({ page }) =>
   await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
 });
 
+test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.locator('[data-nav-toggle]');
+  const popover = page.locator('[data-mobile-nav]');
+
+  await toggle.click();
+  await expect(popover).toBeVisible();
+
+  // Click the popover's own backdrop (top-left corner), not a nav link.
+  await popover.click({ position: { x: 4, y: 4 } });
+  await expect(popover).toBeHidden();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});
+
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {
   await page.goto('/');
   const toggle = page.locator('[data-nav-toggle]');

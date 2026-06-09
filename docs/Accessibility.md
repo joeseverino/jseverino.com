@@ -82,7 +82,7 @@ Quick checks after layout or component changes:
 ```sh
 npm run build:static
 npm run lint:css
-npm run audit:css
+npm run check:css
 npm run check:contrast
 CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e
 CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop

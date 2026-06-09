@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "**/node_modules.nosync": true
+  },
+  "search.exclude": {
+    "**/node_modules.nosync": true
+  },
+  "npm.exclude": [
+    "**/node_modules.nosync/**"
+  ]
+}

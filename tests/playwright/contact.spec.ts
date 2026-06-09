@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Contact Form Interactive Verification', () => {
   test.beforeEach(async ({ page }) => {
+    // Block the Turnstile script so its always-pass test key cannot auto-solve
+    // mid-test. Each test then controls the token state deterministically instead
+    // of racing the widget.
+    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
     await page.goto('/contact/');
   });
 
@@ -84,7 +88,7 @@ test.describe('Contact Form Interactive Verification', () => {
     const status = page.locator('.contact-status');
     await expect(status).toBeVisible();
     await expect(status).toHaveAttribute('data-kind', 'success');
-    await expect(status).toContainText('Thanks — your message has been sent');
+    await expect(status).toContainText('Thanks, your message has been sent');
 
     // Form inputs should be cleared/reset
     await expect(page.locator('#contact-name')).toHaveValue('');
