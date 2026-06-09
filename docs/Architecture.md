@@ -7,7 +7,7 @@ This document explains how `jseverino.com` is built, where data enters the syste
 The site is a static Astro build deployed to Cloudflare Pages.
 
 ```mermaid
-flowchart LR
+graph LR
     Vault["Obsidian Vault  "] -->|1. npm run sync:content  | Repo["Git Repo Snapshot  "]
     Repo -->|2. npm run build:static  | CF["Cloudflare Pages CDN  "]
 ```
@@ -15,7 +15,7 @@ flowchart LR
 The public serving layer is static by default. The request-time execution and data boundary is managed on the edge:
 
 ```mermaid
-flowchart TD
+graph TD
     Client["Browser Client  "]
     Edge["Cloudflare Edge Middleware  "]
     Static["CDN Static HTML/Assets  "]

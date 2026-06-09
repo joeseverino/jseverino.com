@@ -89,11 +89,11 @@ redrawing the logo.
 The result is one engine with several consumers:
 
 ```mermaid
-flowchart TD
-    BE["branding-engine  <br/>(public: npm + GitHub)  <br/><i>generic: mark, wordmark, icons, social cards, web tokens</i>  "]
-    JS["jseverino.com  <br/>(this site)  "]
-    SB["severino-brand  <br/>(brand data + kits)  "]
-    TB["tools/brand  <br/>(CLI wrapper)  "]
+graph TD
+    BE["branding-engine (public: npm + GitHub)  "]
+    JS["jseverino.com (this site)  "]
+    SB["severino-brand (brand data + kits)  "]
+    TB["tools/brand (CLI wrapper)  "]
 
     JS -->|npm optionalDep  | BE
     SB -->|npm dependency  | BE

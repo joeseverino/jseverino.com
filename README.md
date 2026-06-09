@@ -200,13 +200,14 @@ Start with the tour in [`tests/README.md`](./tests/README.md); the full referenc
 ### The Verification Gates
 
 ```mermaid
-flowchart TD
-    A["Source Change  "] --> B["npm run publish:check  "]
-    B -->|Passed| C["npm run release:check  "]
+graph TD
+    A["Source Change  "] --> B
+    B -->|Passed| C
     C -->|Passed| D["git push origin main  "]
-    D --> E["npm run deploy:verify  "]
+    D --> E
     
-    subgraph publish:check ["Publish Check (Local Gates)  "]
+    subgraph publish_check ["Publish Check (Local Gates)  "]
+        B["npm run publish:check  "]
         B1["Security Signatures  "]
         B2["WCAG Contrast Audits  "]
         B3["Schema Parity Checks  "]
@@ -215,14 +216,16 @@ flowchart TD
         B6["Astro Build & Types  "]
     end
 
-    subgraph release:check ["Release Check (E2E & UI)  "]
+    subgraph release_check ["Release Check (E2E & UI)  "]
+        C["npm run release:check  "]
         C1["Playwright Cross-Browser  "]
         C2["Visual Regression  "]
         C3["Repository Policy  "]
         C4["Worktree Idempotence  "]
     end
 
-    subgraph deploy:verify ["Deploy Verification (Post-Deploy)  "]
+    subgraph deploy_verify ["Deploy Verification (Post-Deploy)  "]
+        E["npm run deploy:verify  "]
         E1["Remote Actions & CodeQL  "]
         E2["Live HSTS/CSP Headers  "]
         E3["Sitemap Link Traversal  "]

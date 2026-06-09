@@ -140,11 +140,11 @@ export { onRequest } from 'sitedrift/cloudflare';
 ## Preview Build Flow
 
 ```mermaid
-flowchart TD
-    Push["Feature Branch Push  "] --> CF["Cloudflare Pages Build  <br/><i>CF_PAGES=1, CF_PAGES_BRANCH=&lt;branch&gt;</i>  "]
-    CF --> Astro["Astro Build  <br/><i>writes output to dist/</i>  "]
-    Astro --> SD_Preserve["sitedrift preserves raw HTML  <br/><i>under dist/__sitedrift/dev/</i>  "]
-    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML  <br/><i>with review shell</i>  "]
+graph TD
+    Push["Feature Branch Push  "] --> CF["Cloudflare Pages Build (CF_PAGES=1)  "]
+    CF --> Astro["Astro Build (writes output to dist/)  "]
+    Astro --> SD_Preserve["sitedrift preserves raw HTML under dist/  "]
+    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML with review shell  "]
 
     subgraph Serving Edge Runtime
         SD_Replace --> Edge_Shell["/ serves sitedrift review shell  "]

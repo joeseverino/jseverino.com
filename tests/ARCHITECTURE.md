@@ -26,13 +26,14 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 ## 1. The gate ladder
 
 ```mermaid
-flowchart TD
-    A["Source change  "] --> B["npm run publish:check  "]
-    B -->|passes| C["npm run release:check  "]
+graph TD
+    A["Source change  "] --> B
+    B -->|passes| C
     C -->|passes| D["git push origin main  "]
-    D --> E["npm run deploy:verify  "]
+    D --> E
 
     subgraph publish ["publish:check — local build gate  "]
+        B["npm run publish:check  "]
         B1["security.txt signature  "]
         B2["WCAG contrast  "]
         B3["vault / Zod / MCP parity  "]
@@ -43,6 +44,7 @@ flowchart TD
     end
 
     subgraph release ["release:check — final local gate  "]
+        C["npm run release:check  "]
         C1["Playwright E2E + visual  "]
         C2["repository policy  "]
         C3["git diff --check (whitespace/markers)  "]
@@ -50,6 +52,7 @@ flowchart TD
     end
 
     subgraph deploy ["deploy:verify — after push  "]
+        E["npm run deploy:verify  "]
         E1["remote CI green  "]
         E2["live HSTS / CSP headers  "]
         E3["live sitemap 200s  "]
