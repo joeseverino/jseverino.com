@@ -88,14 +88,16 @@ redrawing the logo.
 
 The result is one engine with several consumers:
 
-```text
-            branding-engine  (public: npm + GitHub)
-   (generic: mark, wordmark, icons, social cards, web tokens)
-          ▲                  ▲                    ▲
-   npm optionalDep      npm dependency       local checkout
-          │                  │                    │
-   jseverino.com        severino-brand        tools/brand
-   (this site)          (brand data + kits)   (CLI wrapper)
+```mermaid
+flowchart TD
+    BE["branding-engine  <br/>(public: npm + GitHub)  <br/><i>generic: mark, wordmark, icons, social cards, web tokens</i>  "]
+    JS["jseverino.com  <br/>(this site)  "]
+    SB["severino-brand  <br/>(brand data + kits)  "]
+    TB["tools/brand  <br/>(CLI wrapper)  "]
+
+    JS -->|npm optionalDep  | BE
+    SB -->|npm dependency  | BE
+    TB -->|local checkout  | BE
 ```
 
 - **The site** depends on the engine to regenerate its favicons, social cards, and

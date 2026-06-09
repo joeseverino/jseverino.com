@@ -200,33 +200,33 @@ Start with the tour in [`tests/README.md`](./tests/README.md); the full referenc
 ### The Verification Gates
 
 ```mermaid
-graph TD
-    A["Source Change"] --> B["npm run publish:check"]
-    B -->|Passed| C["npm run release:check"]
-    C -->|Passed| D["git push origin main"]
-    D --> E["npm run deploy:verify"]
+flowchart TD
+    A["Source Change  "] --> B["npm run publish:check  "]
+    B -->|Passed| C["npm run release:check  "]
+    C -->|Passed| D["git push origin main  "]
+    D --> E["npm run deploy:verify  "]
     
-    subgraph publish:check ["Publish Check (Local Gates)"]
-        B1["Security Signatures"]
-        B2["WCAG Contrast Audits"]
-        B3["Schema Parity Checks"]
-        B4["SiteDrift Preview Guard"]
-        B5["CSS Lint & Audit"]
-        B6["Astro Build & Types"]
+    subgraph publish:check ["Publish Check (Local Gates)  "]
+        B1["Security Signatures  "]
+        B2["WCAG Contrast Audits  "]
+        B3["Schema Parity Checks  "]
+        B4["SiteDrift Preview Guard  "]
+        B5["CSS Lint & Audit  "]
+        B6["Astro Build & Types  "]
     end
 
-    subgraph release:check ["Release Check (E2E & UI)"]
-        C1["Playwright Cross-Browser"]
-        C2["Visual Regression"]
-        C3["Repository Policy"]
-        C4["Worktree Idempotence"]
+    subgraph release:check ["Release Check (E2E & UI)  "]
+        C1["Playwright Cross-Browser  "]
+        C2["Visual Regression  "]
+        C3["Repository Policy  "]
+        C4["Worktree Idempotence  "]
     end
 
-    subgraph deploy:verify ["Deploy Verification (Post-Deploy)"]
-        E1["Remote Actions & CodeQL"]
-        E2["Live HSTS/CSP Headers"]
-        E3["Sitemap Link Traversal"]
-        E4["Production Audit"]
+    subgraph deploy:verify ["Deploy Verification (Post-Deploy)  "]
+        E1["Remote Actions & CodeQL  "]
+        E2["Live HSTS/CSP Headers  "]
+        E3["Sitemap Link Traversal  "]
+        E4["Production Audit  "]
     end
 ```
 

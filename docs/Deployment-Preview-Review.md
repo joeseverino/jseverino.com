@@ -139,14 +139,18 @@ export { onRequest } from 'sitedrift/cloudflare';
 
 ## Preview Build Flow
 
-```text
-feature branch push
-  -> Cloudflare Pages sets CF_PAGES=1 and CF_PAGES_BRANCH=<branch>
-  -> Astro writes dist/
-  -> sitedrift preserves each generated HTML page
-  -> sitedrift replaces the public preview page with its review shell
-  -> /__sitedrift/dev/* serves the preserved preview
-  -> /__sitedrift/live/* reads the matching production route
+```mermaid
+flowchart TD
+    Push["Feature Branch Push  "] --> CF["Cloudflare Pages Build  <br/><i>CF_PAGES=1, CF_PAGES_BRANCH=&lt;branch&gt;</i>  "]
+    CF --> Astro["Astro Build  <br/><i>writes output to dist/</i>  "]
+    Astro --> SD_Preserve["sitedrift preserves raw HTML  <br/><i>under dist/__sitedrift/dev/</i>  "]
+    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML  <br/><i>with review shell</i>  "]
+
+    subgraph Serving Edge Runtime
+        SD_Replace --> Edge_Shell["/ serves sitedrift review shell  "]
+        SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview  "]
+        SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production  "]
+    end
 ```
 
 The branch alias and immutable deployment URL expose the same review interface.

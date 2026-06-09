@@ -26,34 +26,34 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 ## 1. The gate ladder
 
 ```mermaid
-graph TD
-    A["Source change"] --> B["npm run publish:check"]
-    B -->|passes| C["npm run release:check"]
-    C -->|passes| D["git push origin main"]
-    D --> E["npm run deploy:verify"]
+flowchart TD
+    A["Source change  "] --> B["npm run publish:check  "]
+    B -->|passes| C["npm run release:check  "]
+    C -->|passes| D["git push origin main  "]
+    D --> E["npm run deploy:verify  "]
 
-    subgraph publish ["publish:check — local build gate"]
-        B1["security.txt signature"]
-        B2["WCAG contrast"]
-        B3["vault / Zod / MCP parity"]
-        B4["sitedrift preview guard"]
-        B5["CSS lint + unused-var check"]
-        B6["astro check + build"]
-        B7["asset weight report"]
+    subgraph publish ["publish:check — local build gate  "]
+        B1["security.txt signature  "]
+        B2["WCAG contrast  "]
+        B3["vault / Zod / MCP parity  "]
+        B4["sitedrift preview guard  "]
+        B5["CSS lint + unused-var check  "]
+        B6["astro check + build  "]
+        B7["asset weight report  "]
     end
 
-    subgraph release ["release:check — final local gate"]
-        C1["Playwright E2E + visual"]
-        C2["repository policy"]
-        C3["git diff --check (whitespace/markers)"]
-        C4["worktree left clean"]
+    subgraph release ["release:check — final local gate  "]
+        C1["Playwright E2E + visual  "]
+        C2["repository policy  "]
+        C3["git diff --check (whitespace/markers)  "]
+        C4["worktree left clean  "]
     end
 
-    subgraph deploy ["deploy:verify — after push"]
-        E1["remote CI green"]
-        E2["live HSTS / CSP headers"]
-        E3["live sitemap 200s"]
-        E4["open CodeQL alerts"]
+    subgraph deploy ["deploy:verify — after push  "]
+        E1["remote CI green  "]
+        E2["live HSTS / CSP headers  "]
+        E3["live sitemap 200s  "]
+        E4["open CodeQL alerts  "]
     end
 ```
 

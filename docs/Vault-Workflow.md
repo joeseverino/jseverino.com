@@ -3,7 +3,7 @@
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. This [operational shift](./WordPress-To-Astro-Migration.md#operational-shift) from a live-admin model to a private-first pipeline was a primary driver for the migration away from WordPress.
 
 ```mermaid
-graph TD
+flowchart TD
     subgraph Vault ["Private Obsidian Vault  "]
         VP["06 Pages/  "]
         VW["05 Writeups/  "]
