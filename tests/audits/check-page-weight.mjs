@@ -9,7 +9,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { builtHtmlPages, walkFiles } from './lib.mjs';
 
 const BUDGET = {
   pageHtmlBytes: 150 * 1024,
@@ -17,32 +17,8 @@ const BUDGET = {
   totalJsBytes: 25 * 1024,
 };
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const distDir = ['dist.nosync', 'dist']
-  .map((dir) => path.join(siteRoot, dir))
-  .find((dir) => fs.existsSync(dir));
-
-if (!distDir) {
-  console.error('check-page-weight: no build output found. Run `astro build` first.');
-  process.exit(1);
-}
-
-function walk(dir, files = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, files);
-    else files.push(full);
-  }
-  return files;
-}
-
-const files = walk(distDir);
-const htmlFiles = files.filter((file) => file.endsWith('.html'));
-
-if (htmlFiles.length === 0) {
-  console.error(`check-page-weight: no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
-  process.exit(1);
-}
+const { distDir, pages: htmlFiles } = builtHtmlPages('check-page-weight');
+const files = walkFiles(distDir);
 
 const kb = (bytes) => `${Math.ceil(bytes / 1024)}KB`;
 const sum = (list) => list.reduce((total, file) => total + fs.statSync(file).size, 0);

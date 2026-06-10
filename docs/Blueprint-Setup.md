@@ -16,6 +16,7 @@ values a new site built from this codebase must change. Two kinds exist:
 | [`src/lib/site-config.mjs`](../src/lib/site-config.mjs) | `domain`, `owner`, `github`, `d1` | `site.ts`, `astro.config.mjs`, `bin/*`, `tests/audits/*`, `security-txt.mjs` |
 | [`src/lib/brand.mjs`](../src/lib/brand.mjs) | brand color tokens + `JS` glyph | `BaseLayout`, `brand.css.ts`, `bin/make-*` |
 | [`src/lib/site.ts`](../src/lib/site.ts) | editorial chrome: `jobTitle`, `summary`, `skills`, `socialLinks`, `navItems` | `Header`, `Footer`, `SeoHead` |
+| [`src/lib/build-output.mjs`](../src/lib/build-output.mjs) | the build outDir decision (write side) + built-dir resolution (read side) | `astro.config.mjs`, `bin/build-static.mjs`, `bin/seo-preview.mjs`, `bin/diff-build.mjs`, post-build audits via [`tests/audits/lib.mjs`](../tests/audits/lib.mjs) |
 
 Changing `site-config.mjs` + `brand.mjs` propagates the structural identity. `site.ts`
 carries the human copy (bio, skills, nav, social) — edit it directly.

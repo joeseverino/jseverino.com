@@ -5,36 +5,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { builtHtmlPages } from './lib.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const distDir = ['dist.nosync', 'dist']
-  .map((dir) => path.join(siteRoot, dir))
-  .find((dir) => fs.existsSync(dir));
-
-if (!distDir) {
-  console.error('check-seo: no build output found. Run `astro build` first.');
-  process.exit(1);
-}
-
-function walk(dir, files = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, files);
-    else if (entry.name.endsWith('.html')) files.push(full);
-  }
-  return files;
-}
-
-const pages = walk(distDir);
-
-// A build that emitted no HTML is a failure, not a pass. Without this floor an
-// empty or stale outDir reports "ok 0 pages" and silently green-lights a broken
-// build (e.g. if dir resolution drifts or the build half-failed).
-if (pages.length === 0) {
-  console.error(`check-seo: no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
-  process.exit(1);
-}
+const { distDir, pages } = builtHtmlPages('check-seo');
 
 const problems = [];
 

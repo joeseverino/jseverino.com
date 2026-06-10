@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 // Single source for the static build: `astro build`, then wrap the output with
-// sitedrift. The output directory is derived the SAME way astro.config.mjs picks
-// outDir (CF_PAGES => dist, else dist.nosync), so sitedrift's --dir can never
-// drift from where Astro actually wrote — the bug that left a stale `dist` and
-// misled post-build audits. The --live origin and --brand come from the instance
+// sitedrift. The output directory comes from src/lib/build-output.mjs — the
+// same module astro.config.mjs uses — so sitedrift's --dir can never drift
+// from where Astro actually wrote (the bug that left a stale `dist` and
+// misled post-build audits). The --live origin and --brand come from the instance
 // identity in site-config.mjs, not hardcoded strings.
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
+import { buildOutDir } from '../src/lib/build-output.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outDir = process.env.CF_PAGES ? 'dist' : 'dist.nosync';
+const outDir = buildOutDir();
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 const sitedrift = path.join(siteRoot, 'node_modules/sitedrift/sitedrift.mjs');
 

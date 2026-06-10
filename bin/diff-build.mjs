@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildOutDir } from '../src/lib/build-output.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baselineRef = process.argv[2] || 'HEAD';
@@ -66,13 +67,13 @@ const realNodeModules = fs.realpathSync(path.join(siteRoot, 'node_modules'));
 try {
   console.log(`Building current working tree...`);
   run(path.join(siteRoot, 'node_modules/.bin/astro'), ['build'], siteRoot);
-  const current = collect(path.join(siteRoot, 'dist.nosync'));
+  const current = collect(path.join(siteRoot, buildOutDir()));
 
   console.log(`\nBuilding baseline (${baselineRef}) in an isolated worktree...`);
   run('git', ['worktree', 'add', '--detach', worktree, baselineRef], siteRoot);
   fs.symlinkSync(realNodeModules, path.join(worktree, 'node_modules'), 'dir');
   run(path.join(siteRoot, 'node_modules/.bin/astro'), ['build'], worktree);
-  const baseline = collect(path.join(worktree, 'dist.nosync'));
+  const baseline = collect(path.join(worktree, buildOutDir()));
 
   const onlyBaseline = [...baseline.keys()].filter((f) => !current.has(f)).sort();
   const onlyCurrent = [...current.keys()].filter((f) => !baseline.has(f)).sort();

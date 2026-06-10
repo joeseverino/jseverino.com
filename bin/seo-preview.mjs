@@ -4,9 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
 import { escapeRegExp } from '../src/lib/escape-regexp.mjs';
+import { buildOutDir } from '../src/lib/build-output.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const distRoot = path.join(siteRoot, 'dist.nosync');
+const distRoot = path.join(siteRoot, buildOutDir());
 const siteUrl = `https://${SITE.domain}`;
 const siteHost = new URL(siteUrl).hostname;
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;

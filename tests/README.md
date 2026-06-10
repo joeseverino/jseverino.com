@@ -38,7 +38,22 @@ graph LR
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
 | `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
 
-`npm run diagnose` runs everything at once without stopping at the first failure.
+### The one-stop gate: `npm run diagnose`
+
+The single source of truth for "is the codebase okay?". It runs **every** check
+in the registry without stopping at the first failure, so one pass surfaces
+every problem in the worktree:
+
+- **Green** prints one summary line. There is nothing else to read.
+- **Red** writes `.validation-report.md` — one row per failure, a concrete
+  remediation, and the exact command to rerun that one check. Long output is
+  clipped; the rerun command is the path to the full thing.
+- **`--json`** emits a single machine-readable document (per-check status,
+  durations, rerun + fix for each failure) instead of console output — the
+  contract for agents and CI, no prose parsing.
+- `--fast` runs only the static checks (~7s); `--no-tests` skips the browser
+  suite.
+
 See [the gate ladder](./ARCHITECTURE.md#1-the-gate-ladder) for the full breakdown.
 
 ## The three layers
@@ -108,7 +123,7 @@ npm run help                     # grouped list of every script by role
 npm run publish:check            # local build gate
 npm run publish:check:ci         # the same gate under CI conditions (scratch keyring, CI=1)
 npm run release:check            # full gate incl. Playwright + visual (macOS)
-npm run diagnose                 # everything, no short-circuit
+npm run diagnose                 # everything, no short-circuit (--fast | --no-tests | --json)
 
 npm run test:unit                # unit suite: DSL, functions, harness, registry (fast, no browser)
 npm run test:e2e                 # functional specs across Chromium, Firefox, WebKit

@@ -8,38 +8,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { SITE } from '../../src/lib/site-config.mjs';
+import { builtHtmlPages } from './lib.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const distDir = ['dist.nosync', 'dist']
-  .map((dir) => path.join(siteRoot, dir))
-  .find((dir) => fs.existsSync(dir));
-
-if (!distDir) {
-  console.error('check-links: no build output found. Run `astro build` first.');
-  process.exit(1);
-}
+const { distDir, pages } = builtHtmlPages('check-links');
 
 // Routes served by Cloudflare Pages functions, not by emitted files.
 const DYNAMIC_ROUTE_PREFIXES = ['/api/', '/__sitedrift/', '/cdn-cgi/'];
 const origin = `https://${SITE.domain}`;
-
-function walk(dir, files = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(full, files);
-    else if (entry.name.endsWith('.html')) files.push(full);
-  }
-  return files;
-}
-
-const pages = walk(distDir);
-
-if (pages.length === 0) {
-  console.error(`check-links: no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
-  process.exit(1);
-}
 
 // Normalize a reference to a root-relative pathname, or null when it is out
 // of scope (external origin, mailto:, data:, fragment-only, …).

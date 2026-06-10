@@ -206,6 +206,8 @@ The personal `site` CLI wraps these commands for day-to-day publishing, but the 
 
 Every change is verified across four layers: local Node audits that assert invariants about the source, unit tests for the pure logic (the markdown DSL, the Cloudflare Pages functions, the gate harness itself), Playwright specs that drive the built site in a real browser, and post-push probes that re-check the live deploy. Together they cover signed security metadata, WCAG contrast, schema parity, serverless request handling, internal link integrity, page-weight budgets, cross-browser functional flows, pixel baselines, and live header/CSP checks.
 
+The everyday entry point is **`npm run diagnose`** — the collect-all gate. It runs every check in the inventory without stopping at the first failure: a green run prints a single line, a red run writes `.validation-report.md` with each failure, its remediation, and the exact command to rerun that one check. `--fast` runs only the static checks, `--no-tests` skips the browser suite, and `--json` emits a machine-readable result for agents and CI.
+
 Start with the tour in [`tests/README.md`](./tests/README.md); the full reference, with every script, spec, code example, and the troubleshooting tree, is [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
 ```mermaid

@@ -5,6 +5,7 @@ import { loadEnv } from 'vite';
 import sitemap from '@astrojs/sitemap';
 import matter from 'gray-matter';
 import { SITE } from './src/lib/site-config.mjs';
+import { buildOutDir } from './src/lib/build-output.mjs';
 
 const origin = `https://${SITE.domain}`;
 
@@ -19,10 +20,7 @@ const devAllowedHosts = env.DEV_ALLOWED_HOSTS ? env.DEV_ALLOWED_HOSTS.split(',')
 const devHost = env.DEV_HOST === 'true' || env.DEV_HOST === '1';
 const devPort = env.DEV_PORT ? Number(env.DEV_PORT) : undefined;
 
-// Build output goes to `dist/` on Cloudflare Pages (it sets CF_PAGES=1) and to
-// `dist.nosync/` locally. The `.nosync` suffix keeps iCloud Drive from syncing
-// and evicting build output — without it, every local build and clean crawls.
-const outDir = process.env.CF_PAGES ? './dist' : './dist.nosync';
+const outDir = `./${buildOutDir()}`;
 
 // Per-writeup last_reviewed from synced frontmatter so Google has a recrawl
 // hint for individual portfolio pages. All other URLs fall back to the build
