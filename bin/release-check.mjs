@@ -2,17 +2,16 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { auditsFor } from '../tests/audits/registry.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function run(label, command, args, options = {}) {
   console.log(`\n==> ${label}`);
-  const env = { ...process.env, ...(options.env ?? {}) };
-  for (const name of options.unsetEnv ?? []) delete env[name];
   const result = spawnSync(command, args, {
     cwd: siteRoot,
-    env,
+    env: { ...process.env, ...(options.env ?? {}) },
     stdio: 'inherit',
   });
 
@@ -40,31 +39,17 @@ if (process.platform !== 'darwin') {
   process.exit(1);
 }
 
+// The fast local build gate (its audits come from the shared registry).
 run('publish checks', npm, ['run', '-s', 'publish:check']);
-run('repository policy', process.execPath, ['tests/audits/check-repository-policy.mjs']);
 
-run(
-  'functional and visual browser tests',
-  npm,
-  [
-    'run',
-    '-s',
-    'test:e2e',
-    '--',
-    '--reporter=dot',
-  ],
-  {
-    env: {
-      CI: '1',
-      ASTRO_TELEMETRY_DISABLED: '1',
-      VISUAL: '1',
-    },
-    unsetEnv: ['NO_COLOR', 'FORCE_COLOR'],
-  },
-);
+// The release-only audits — repository policy, whitespace/conflict markers, and
+// the cross-browser + visual suite — also come from the registry, so this gate
+// can never drift out of sync with what `diagnose` considers complete.
+for (const audit of auditsFor('release')) {
+  run(audit.name, audit.exec.cmd, audit.exec.args, { env: audit.exec.env });
+}
 
-run('whitespace and conflict-marker check', 'git', ['diff', '--check']);
-
+// Idempotence: nothing above may have changed tracked or untracked state.
 const finalStatus = gitStatus();
 if (finalStatus !== initialStatus) {
   console.error(

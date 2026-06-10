@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { auditsFor } from '../tests/audits/registry.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
@@ -9,7 +10,6 @@ const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 // could drag in unrelated vault drift). Use it when you haven't touched content.
 const noSync = process.argv.includes('--no-sync');
 const node = process.execPath;
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 
 function stripAnsi(value) {
@@ -37,7 +37,32 @@ function run(label, command, args, options = {}) {
 }
 
 function status(label, detail) {
-  console.log(`${label.padEnd(10)} ${detail}`);
+  console.log(`${label.padEnd(12)} ${detail}`);
+}
+
+// Terse one-line summary for an audit's output, per its registry `summary` kind.
+function summarize(audit, output) {
+  if (audit.summary === 'silent') return 'passed';
+  if (audit.summary === 'astro') {
+    return /Result \([^)]+\):\s*\n- 0 errors\s*\n- 0 warnings/.test(output) ? '0 errors, 0 warnings' : 'passed';
+  }
+  if (audit.summary === 'assets') {
+    const lines = output.split('\n').map((l) => l.trim()).filter(Boolean);
+    return [
+      lines.find((l) => l.startsWith('Images:')),
+      lines.find((l) => l.startsWith('Total image weight:')),
+      lines.find((l) => l.startsWith('No images over')),
+    ].filter(Boolean).join('; ') || 'passed';
+  }
+  // Audits print their summary as an aligned `ok␣␣…` line (two+ spaces),
+  // distinct from per-item `ok <detail>` lines.
+  const ok = output.split('\n').find((l) => /^ok\s{2,}/.test(l));
+  return ok ? ok.replace(/^ok\s+/, '').trim() : 'passed';
+}
+
+function runAudit(audit) {
+  const { output } = run(audit.name, audit.exec.cmd, audit.exec.args, { env: audit.exec.env });
+  status(audit.label, summarize(audit, output));
 }
 
 function contentSlug(file) {
@@ -110,86 +135,31 @@ function summarizeContentChanges() {
   status('content', summary || 'no content changes');
 }
 
-const security = run('security.txt', node, ['tests/audits/check-security-txt.mjs']);
-const securityLine = security.output.split('\n').find((line) => line.startsWith('ok'));
-status('security', securityLine ? securityLine.replace(/^ok\s+/, '').trim() : 'passed');
-
-const contrast = run('contrast pairs', node, ['tests/audits/check-contrast.mjs']);
-const contrastLine = contrast.output.split('\n').find((line) => line.startsWith('ok       '));
-status('contrast', contrastLine ? contrastLine.replace(/^ok\s+/, '').trim() : 'passed');
-
-const parity = run('vault/MCP parity', node, ['tests/audits/check-vault-mcp-parity.mjs']);
-const parityLine = parity.output.split('\n').find((line) => line.startsWith('ok'));
-status('parity', parityLine ? parityLine.replace(/^ok\s+/, '').trim() : 'passed');
-
-const preview = run('sitedrift preview guard', node, ['tests/audits/check-sitedrift-preview.mjs']);
-const previewLine = preview.output.split('\n').find((line) => line.startsWith('ok'));
-status('preview', previewLine ? previewLine.replace(/^ok\s+/, '').trim() : 'passed');
-
-const docs = run('docs integrity', node, ['tests/audits/check-docs.mjs']);
-const docsLine = docs.output.split('\n').find((line) => line.startsWith('ok'));
-status('docs', docsLine ? docsLine.replace(/^ok\s+/, '').trim() : 'passed');
-
+// 1. Clean caches and resolve any iCloud conflict copies.
 const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
-  if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) {
-    status('clean', line.trim());
-  }
+  if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) status('clean', line.trim());
 }
 
+// 2. Sync the public content snapshot from the vault (unless --no-sync).
 if (noSync) {
   status('sync', 'skipped (--no-sync)');
 } else {
   run('sync content', node, ['bin/sync-content.mjs']);
   status('sync', 'content snapshot updated');
 }
-
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 summarizeContentChanges();
 
-run('CSS lint', npm, ['run', '-s', 'lint:css']);
-run('CSS custom property audit', npm, ['run', '-s', 'check:css']);
-status('css', 'lint and custom property audit passed');
+// 3. Pre-build audits (source + synced content). astro-check needs the sync,
+//    so all pre-build audits run after it.
+for (const audit of auditsFor('publish', 'pre-build')) runAudit(audit);
 
-const check = run(
-  'astro check',
-  astro,
-  ['check', '--minimumSeverity', 'warning'],
-  {
-    env: {
-      ASTRO_TELEMETRY_DISABLED: '1',
-      NODE_OPTIONS: '--max-old-space-size=4096',
-    },
-  },
-);
-
-const checkResult = check.output.match(/Result \([^)]+\):\s*\n- 0 errors\s*\n- 0 warnings/);
-status('check', checkResult ? '0 errors, 0 warnings' : 'passed');
-
-const build = run('astro build', astro, ['build'], {
-  env: { ASTRO_TELEMETRY_DISABLED: '1' },
-});
-
+// 4. Production build.
+const build = run('astro build', astro, ['build'], { env: { ASTRO_TELEMETRY_DISABLED: '1' } });
 const pageCount = build.output.match(/\[build\] (\d+) page\(s\) built/);
 status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
-
 run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 
-const audit = run('audit assets', node, ['tests/audits/audit-assets.mjs']);
-const auditLines = audit.output
-  .split('\n')
-  .map((line) => line.trim())
-  .filter(Boolean);
-const imageCount = auditLines.find((line) => line.startsWith('Images:'));
-const totalWeight = auditLines.find((line) => line.startsWith('Total image weight:'));
-const oversized = auditLines.find((line) => line.startsWith('No images over'));
-status(
-  'assets',
-  [imageCount, totalWeight, oversized]
-    .filter(Boolean)
-    .join('; '),
-);
-
-const seo = run('seo metadata', node, ['tests/audits/check-seo.mjs']);
-const seoLine = seo.output.split('\n').find((line) => line.startsWith('ok'));
-status('seo', seoLine ? seoLine.replace(/^ok\s+/, '').trim() : 'passed');
+// 5. Post-build audits (operate on the emitted dist/).
+for (const audit of auditsFor('publish', 'post-build')) runAudit(audit);

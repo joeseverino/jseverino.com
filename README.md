@@ -162,32 +162,39 @@ Dynamic behavior is intentionally narrow:
 
 ## Local Commands
 
+`npm run help` prints this full list grouped by role; run it any time you are
+unsure what to reach for. The essentials, by role:
+
 ```sh
+# Daily — the ones you actually run
+npm run dev                # Start the Astro dev server
+npm run dev:drafts         # Sync drafts locally, then start the dev server
 npm run sync:content       # Sync published vault content into the repo
-npm run dev                # Start Astro dev server
-npm run dev:drafts         # Sync drafts locally, then start dev server
-npm run check              # CSS lint/audit plus Astro type/content diagnostics
-npm run lint:css           # Stylelint validation for authored CSS
-npm run check:css          # Fail on defined-but-unused CSS custom properties
-npm run build:static       # Build static output to dist.nosync locally
-npm run check:preview      # Prove preview wrapping and the main production guard
-npm run seo:preview -- /   # Preview Google-style metadata from built HTML
+npm run diagnose           # Run every check; writes .validation-report.md on failure
+npm run diff:build         # Build HEAD vs the working tree and report any change to shipped output
+
+# Release
+npm run publish:check      # Fast local build gate: security + contrast + parity + sync + build + audits
+npm run publish:check -- --no-sync   # Same gate without the vault sync (for code/refactor changes)
+npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
+npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
+
+# Occasional
 npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key
+npm run seo:preview -- /   # Preview Google-style metadata from built HTML
+npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim frontmatter
+npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
+npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
+npm audit --omit=dev       # Check known dependency advisories
+npm outdated               # Check direct dependency freshness
+
+# Individual audits (the gates run these via tests/audits/registry.mjs; handy for targeted runs)
+npm run check              # CSS lint/audit plus Astro type/content diagnostics
 npm run check:security     # Verify the signature, required fields, Expires, and WKD file
 npm run check:contrast     # Compute WCAG ratios for every text/background pair in base.css
 npm run check:parity       # Assert vault Frontmatter Schema, Zod, and MCP agree on writeup fields
 npm run check:repo         # Enforce Node, lockfile, tracked-file, conflict-copy, and action-pin policy
-npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim frontmatter
-npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
-npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
-npm run publish:check      # security + contrast + parity + sync + check + build + audit assets
-npm run publish:check -- --no-sync   # Same gate without the vault sync (for code/refactor changes)
-npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
-npm run diagnose           # Run all validations and E2E checks, generating .validation-report.md on fail
-npm run diff:build         # Build HEAD vs the working tree and report any change to shipped output
-npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
-npm audit --omit=dev       # Check known dependency advisories
-npm outdated               # Check direct dependency freshness
+npm run check:preview      # Prove preview wrapping and the main production guard
 ```
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).

@@ -14,12 +14,29 @@ them:
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the **built** site (`dist/` via the preview server). | `playwright test` |
 | [`bin/`](../bin/) | Gate runners (`publish-check`, `release-check`, `diagnose`) and the post-push `deploy-verify`. | `npm run publish:check`, etc. |
 
+### Single source of truth: the audit registry
+
+Which audits exist, what each runs, its phase (before/after the build), and which
+gates run it are all defined once in [`tests/audits/registry.mjs`](./audits/registry.mjs).
+Every gate derives its check list from that one module:
+
+- **`publish:check`** runs the `publish` audits (the fast build gate).
+- **`diagnose`** runs the `diagnose` audits (everything — the complete gate).
+- **`release:check`** runs `publish:check` plus the `release` audits.
+
+So a check added to the registry is automatically picked up by every gate that
+claims it; a check can never live in one gate but be silently missing from
+another. Each gate keeps its own *orchestration* (ordering around sync/build,
+fail-fast vs. collect-all, the report) — the registry is the inventory, not the
+run logic. The tables below describe what each check *asserts*; the registry is
+the authoritative list of what *runs*.
+
 ## Naming: `audit-` vs `check-`
 
 The prefix in `tests/audits/` is meaningful, not decorative:
 
 - **`check-*`** asserts a binary invariant and **exits non-zero on violation**. These are gates.
-- **`audit-*`** walks and **measures**, printing a report and only warning. There is exactly one (`audit-assets.mjs`), and it fails the build only when `STRICT_ASSET_AUDIT=1`.
+- **`audit-*`** walks and **measures**, printing a report. There is exactly one (`audit-assets.mjs`); the gates run it with `STRICT_ASSET_AUDIT=1`, so an image over 1.5 MB fails the gate. Run it bare (`node tests/audits/audit-assets.mjs`) for a warn-only report.
 
 ---
 
@@ -41,7 +58,7 @@ graph TD
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
         B6["astro check + build"]
-        B7["asset weight report"]
+        B7["asset weight (strict) + SEO"]
     end
 
     subgraph release ["Release Check (Final Local Gate)"]
@@ -94,7 +111,7 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
-| Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; warns past 1.5 MB (fails only when strict). |
+| Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; the gates run it strict, so an image past 1.5 MB fails. |
 | Policy | [repository policy](#check-repository-policymjs) | `tests/audits/check-repository-policy.mjs` | `.nvmrc` match, lockfile alignment, no committed secrets/build output/conflict copies, all Actions SHA-pinned. |
 | Docs | [documentation integrity](#check-docsmjs) | `tests/audits/check-docs.mjs` | Every relative link and `npm run` reference in the engineering docs resolves to a real file or script. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Every URL in the sitemap returns 200; console stays clean; hero and header behave. |
@@ -143,7 +160,7 @@ Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'mai
 Scans `src/styles/**/*.css` for `--variable: …` declarations and `var(--variable)` usages, and fails listing any custom property that is defined but never consumed. (Hard check — hence the `check-` prefix despite the historical "audit" name.)
 
 ### `audit-assets.mjs`
-Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). It only fails the build when `STRICT_ASSET_AUDIT=1`. This is the one true *audit*: it measures and reports rather than gating.
+Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). The registry runs it with `STRICT_ASSET_AUDIT=1`, so an oversized image fails `publish:check`/`diagnose`; run it bare (`node tests/audits/audit-assets.mjs`) for a warn-only report. It is still the one *audit* by construction (it measures and reports), but the gates opt into strict so weight regressions can't slip through.
 
 ### `check-repository-policy.mjs`
 Structural health:

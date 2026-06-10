@@ -58,19 +58,28 @@ the cross-browser functional suite, the macOS Chromium visual suite,
 repository policy, `git diff --check`, and an idempotence check that proves
 validation did not change repository state.
 
-A clean release should report:
+A clean release runs `publish:check` (its audits come from
+[`tests/audits/registry.mjs`](../tests/audits/registry.mjs)) and should report:
 
 ```text
-security   signed, 5 fields present, expires in <n>d, WKD file present
-contrast   <n> pairs measured, all >= 4.5:1
-parity     schema/Zod/MCP agree on writeup fields: ...
-sync       content snapshot updated
-css        lint and custom property audit passed
-check      0 errors, 0 warnings
-build      <n> pages built
-assets     Images: <n>; Total image weight: <n>; No images over 1.5 MB.
-preview    feature branch wrapped; main unchanged
+sync         content snapshot updated
+content      no content changes
+security     signed, 5 fields present, expires in <n>d, WKD file present
+contrast     <n> pairs measured, all >= 4.5:1
+parity       schema/Zod/MCP agree on writeup fields: ...
+preview      preview wrapped; main unchanged
+docs         <n> docs, <n> local links, <n> script refs resolve
+css-lint     passed
+css-vars     passed
+check        0 errors, 0 warnings
+build        <n> pages built
+assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
+seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 ```
+
+then the `release`-only audits (repository policy, `git diff --check`, the
+cross-browser + visual Playwright suite) and the idempotence snapshot, ending in
+`ok release-ready`.
 
 `release:check` snapshots the worktree before validation and fails if sync,
 cleanup, generation, or testing changes repository state. A pass therefore

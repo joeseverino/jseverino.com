@@ -13,8 +13,13 @@ into gates.
 ```
 tests/
 ├── audits/        Node verifiers — assert an invariant, exit non-zero on failure
+│   └── registry.mjs   single source of truth: which audits exist + which gate runs each
 └── playwright/    Browser specs — drive dist/ through a preview server
 ```
+
+Every gate (`publish:check`, `diagnose`, `release:check`) derives its check list
+from [`audits/registry.mjs`](./audits/registry.mjs), so a new audit is picked up
+everywhere at once and no gate can silently fall out of sync.
 
 ## How it fits together
 
@@ -60,7 +65,9 @@ engine-agnostic [`*.single`](./ARCHITECTURE.md#4-testsplaywright--browser-specs)
 checks for endpoints/404, image-variant resolution, and `rel=noopener`.
 
 > The `audit-` vs `check-` prefix is meaningful: `check-*` gates (fail), `audit-*`
-> measures (warns). [Why →](./ARCHITECTURE.md#naming-audit--vs-check-)
+> measures and reports — though the gates run the one `audit-*` (`audit-assets`)
+> with `STRICT_ASSET_AUDIT=1`, so an oversized image fails too.
+> [Why →](./ARCHITECTURE.md#naming-audit--vs-check-)
 
 ## What it catches
 
@@ -83,6 +90,8 @@ The full baseline gallery and more diff/failure examples are in
 ## Run it
 
 ```sh
+npm run help                     # grouped list of every script by role
+
 npm run publish:check            # local build gate
 npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit
