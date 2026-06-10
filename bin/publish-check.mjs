@@ -145,7 +145,7 @@ if (noSync) {
   await run('sync content', node, ['bin/sync-content.mjs']);
   status('sync', 'content snapshot updated');
 }
-await run('clean conflict copies', node, ['bin/clean-generated.mjs']);
+await run('clean conflict copies', node, ['bin/clean-generated.mjs', '--conflicts']);
 await summarizeContentChanges();
 
 // 3. Pre-build audits (source + synced content). astro-check needs the sync,
@@ -159,7 +159,7 @@ const build = await run('astro build', astro, ['build'], {
 });
 const pageCount = build.output.match(/\[build\] (\d+) page\(s\) built/);
 status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
-await run('clean conflict copies', node, ['bin/clean-generated.mjs']);
+await run('clean conflict copies', node, ['bin/clean-generated.mjs', '--conflicts']);
 
 // 5. Post-build audits (operate on the emitted dist/).
 for (const audit of auditsFor('publish', 'post-build')) await runAudit(audit);

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
-import { tableWriteup } from './writeups.ts';
+import { tableWriteup } from './helpers/writeups.ts';
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');

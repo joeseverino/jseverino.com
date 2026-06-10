@@ -138,7 +138,7 @@ async function diagnose() {
   if (cleanAll.code !== 0) setupFailure('Cache Clean (bin/clean-generated.mjs --all)', cleanAll);
   const sync = await runCommand('node', ['bin/sync-content.mjs']);
   if (sync.code !== 0) setupFailure('Content Synchronization (sync:content)', sync);
-  const cleanConflicts = await runCommand('node', ['bin/clean-generated.mjs']);
+  const cleanConflicts = await runCommand('node', ['bin/clean-generated.mjs', '--conflicts']);
   if (cleanConflicts.code !== 0) setupFailure('Conflict Cleanup (bin/clean-generated.mjs)', cleanConflicts);
   say('✓ Caches cleared & content synced.\n');
 

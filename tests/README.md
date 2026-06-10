@@ -70,7 +70,7 @@ Node's native test runner via type stripping — no extra dependency.
 **[`tests/playwright/`](./playwright/)** — specs against the compiled site. The
 [smoke suite](./ARCHITECTURE.md#smokespects) pulls every URL from the sitemap and
 200-checks it, so new writeups are covered automatically. Others drive the
-[mobile drawer](./ARCHITECTURE.md#mobile-menuspects),
+[mobile drawer](./ARCHITECTURE.md#menumobilespects),
 [accessibility and motion](./ARCHITECTURE.md#css-qualityspects), the
 [Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
 backend), [private-link tooltips](./ARCHITECTURE.md#tooltipsspects), and the

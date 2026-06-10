@@ -4,7 +4,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const removeBuildOutput = process.argv.includes('--all');
+
+// The mode is explicit — no implicit default, so neither "this also deleted my
+// build output" nor "this silently skipped the caches" can happen by accident.
+const mode = process.argv[2];
+if (!['--all', '--conflicts'].includes(mode)) {
+  console.error('usage: node bin/clean-generated.mjs --conflicts | --all');
+  console.error('  --conflicts  resolve iCloud conflict copies only');
+  console.error('  --all        also remove build output and caches first');
+  process.exit(2);
+}
+const removeBuildOutput = mode === '--all';
 
 // Directories that sync-content fully regenerates and that ship in the build.
 // The repo lives in an iCloud-synced folder, so iCloud spawns numbered conflict

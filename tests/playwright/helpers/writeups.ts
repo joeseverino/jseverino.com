@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const writeupsDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../src/content/writeups',
+  '../../../src/content/writeups',
 );
 
 const slugs = fs

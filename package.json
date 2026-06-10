@@ -40,7 +40,7 @@
     "test:e2e:visual": "VISUAL=1 playwright test tests/playwright/visual.spec.ts",
     "test:e2e:visual:update": "VISUAL=1 playwright test tests/playwright/visual.spec.ts --update-snapshots",
     "clean:generated": "node bin/clean-generated.mjs --all",
-    "clean:conflicts": "node bin/clean-generated.mjs",
+    "clean:conflicts": "node bin/clean-generated.mjs --conflicts",
 
     "check": "npm run -s lint:css && npm run -s check:css && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "build:static": "node bin/build-static.mjs",

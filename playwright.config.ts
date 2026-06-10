@@ -18,32 +18,32 @@ export default defineConfig({
     {
       name: 'chromium-desktop',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /.*mobile.*\.spec\.ts/,
+      testIgnore: /\.mobile\.spec\.ts$/,
     },
     {
       name: 'chromium-mobile',
       use: { ...devices['Pixel 5'] },
-      testMatch: /.*mobile.*\.spec\.ts/,
+      testMatch: /\.mobile\.spec\.ts$/,
     },
     {
       name: 'firefox-desktop',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: [/.*mobile.*\.spec\.ts/, /.*\.single\.spec\.ts/],
+      testIgnore: [/\.mobile\.spec\.ts$/, /\.single\.spec\.ts$/],
     },
     {
       name: 'firefox-mobile',
       use: { ...devices['Desktop Firefox'], viewport: { width: 393, height: 851 } },
-      testMatch: /.*mobile.*\.spec\.ts/,
+      testMatch: /\.mobile\.spec\.ts$/,
     },
     {
       name: 'webkit-desktop',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: [/.*mobile.*\.spec\.ts/, /.*\.single\.spec\.ts/],
+      testIgnore: [/\.mobile\.spec\.ts$/, /\.single\.spec\.ts$/],
     },
     {
       name: 'webkit-mobile',
       use: { ...devices['iPhone 13'] },
-      testMatch: /.*mobile.*\.spec\.ts/,
+      testMatch: /\.mobile\.spec\.ts$/,
     },
   ],
   webServer: {

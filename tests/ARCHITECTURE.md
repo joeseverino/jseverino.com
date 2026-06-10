@@ -134,7 +134,7 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Policy | [repository policy](#check-repository-policymjs) | `tests/audits/check-repository-policy.mjs` | `.nvmrc` major.minor match, lockfile alignment, no committed secrets/build output/conflict copies, all Actions SHA-pinned. |
 | Docs | [documentation integrity](#check-docsmjs) | `tests/audits/check-docs.mjs` | Every relative link and `npm run` reference in the engineering docs resolves to a real file or script. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Every URL in the sitemap returns 200; console stays clean; hero and header behave. |
-| E2E | [mobile menu](#mobile-menuspects) | `tests/playwright/mobile-menu.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
+| E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
 | E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
 | E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
 | E2E | [private tooltips](#tooltipsspects) | `tests/playwright/tooltips.spec.ts` | Tailnet-link tooltips mount on click and dismiss on Escape / outside click. |
@@ -232,9 +232,9 @@ The specs double as executable documentation of the block grammar: each case pai
 
 ## 4. `tests/playwright/` — browser specs
 
-The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`playwright.config.ts`](../playwright.config.ts); `*mobile*` specs run on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
+The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`playwright.config.ts`](../playwright.config.ts); routing is by filename suffix, so a spec's project matrix is always an explicit choice: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
 
-The functional specs do not pin writeup slugs. [`writeups.ts`](./playwright/writeups.ts) resolves URLs from the synced content snapshot by capability — the writeup with a private link, with a table, with the most images — so renaming a writeup in the vault cannot break the code gates. The one exception is the visual suite: its committed baselines protect specific pages, so it pins slugs on purpose (a rename there means re-pinning and re-baselining deliberately).
+The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability — the writeup with a private link, with a table, with the most images — so renaming a writeup in the vault cannot break the code gates. The one exception is the visual suite: its committed baselines protect specific pages, so it pins slugs on purpose (a rename there means re-pinning and re-baselining deliberately).
 
 ### `smoke.spec.ts`
 - **Sitemap route health** — parses `sitemap-index.xml`, follows each sub-sitemap, and asserts a `200` for every `<loc>`. New writeups get coverage automatically.
@@ -262,7 +262,7 @@ test('every sitemap page returns 200', async ({ request }) => {
 });
 ```
 
-### `mobile-menu.spec.ts`
+### `menu.mobile.spec.ts`
 - **Overlay logic** — the popover toggles open/closed, locks body overflow, and closes on `Escape`, on link navigation, or on a backdrop click.
 - **Tap highlights** — touch targets suppress the title-only tap highlight on WebKit/Blink.
 

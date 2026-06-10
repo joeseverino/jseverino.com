@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { privateLinkWriteup } from './writeups.ts';
+import { privateLinkWriteup } from './helpers/writeups.ts';
 
 test.describe('Private Tooltip Interactive Verification', () => {
   test('renders, positions, and dismisses tooltips correctly', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { anyWriteup } from './writeups.ts';
+import { anyWriteup } from './helpers/writeups.ts';
 
 test('home page loads with hero heading', async ({ page }) => {
   await page.goto('/');

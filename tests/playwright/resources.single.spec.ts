@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { imageHeavyWriteup } from './writeups.ts';
+import { imageHeavyWriteup } from './helpers/writeups.ts';
 
 // Guards the responsive-image pipeline: a broken AVIF/WebP/fallback variant would
 // slip past the sitemap smoke test. Collects every image URL the page references
