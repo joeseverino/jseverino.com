@@ -21,6 +21,7 @@
     "diff:build": "node bin/diff-build.mjs",
 
     "publish:check": "node bin/publish-check.mjs",
+    "publish:check:ci": "node bin/ci-rehearsal.mjs",
     "release:check": "node bin/release-check.mjs",
     "deploy:verify": "node bin/deploy-verify.mjs",
     "build": "npm run -s check && npm run -s build:static",

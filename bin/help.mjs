@@ -26,6 +26,7 @@ const GROUPS = [
     title: 'Release',
     items: {
       'publish:check': 'Fast local build gate (add `-- --no-sync` for code-only changes)',
+      'publish:check:ci': 'Rehearse the CI gate: CI=1 + scratch keyring, before pushing workflow-affecting changes',
       'release:check': 'Full gate: publish:check + browser/visual/policy + idempotence (macOS)',
       'deploy:verify': 'After pushing: verify remote CI + the live production deploy',
       'build': 'Type-check, then produce the static build',

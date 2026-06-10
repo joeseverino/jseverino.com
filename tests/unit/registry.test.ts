@@ -66,6 +66,26 @@ describe('audit registry', () => {
     }
   });
 
+  test('every audit script is documented in tests/ARCHITECTURE.md', () => {
+    const architecture = fs.readFileSync(path.join(root, 'tests/ARCHITECTURE.md'), 'utf8');
+    for (const audit of AUDITS) {
+      const script = audit.exec.args.find((arg) => arg.startsWith('tests/audits/'));
+      if (!script) continue;
+      const name = path.basename(script);
+      assert.ok(architecture.includes(name), `${audit.id}: ${name} never appears in tests/ARCHITECTURE.md`);
+    }
+  });
+
+  test('the release-checklist expected output covers every publish-gate label', () => {
+    const checklist = fs.readFileSync(path.join(root, 'docs/Release-Checklist.md'), 'utf8');
+    for (const audit of auditsFor('publish')) {
+      assert.ok(
+        new RegExp(`^${audit.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s`, 'm').test(checklist),
+        `${audit.id}: label "${audit.label}" is missing from the expected gate output in docs/Release-Checklist.md`,
+      );
+    }
+  });
+
   test('auditsFor filters by gate and phase', () => {
     const publishPre = auditsFor('publish', 'pre-build');
     assert.ok(publishPre.length > 0);

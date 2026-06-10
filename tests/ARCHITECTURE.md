@@ -45,6 +45,17 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 - **`check-*`** asserts a binary invariant and **exits non-zero on violation**. These are gates.
 - **`audit-*`** walks and **measures**, printing a report. There is exactly one (`audit-assets.mjs`); the gates run it with `STRICT_ASSET_AUDIT=1`, so an image over 1.5 MB fails the gate. Run it bare (`node tests/audits/audit-assets.mjs`) for a warn-only report.
 
+## Adding a new audit
+
+The fan-out is six steps; the gates enforce most of them, so a missed step fails loudly rather than silently:
+
+1. **Write the script** in `tests/audits/check-<thing>.mjs`. Resolve paths from the module's own location (`fileURLToPath(import.meta.url)`), never the cwd. Exit non-zero on violation. On success print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>` — `publish:check` extracts the first `ok` + two-or-more-spaces line as its terse status (see `summarize()` in [`bin/publish-check.mjs`](../bin/publish-check.mjs)).
+2. **Register it** in [`registry.mjs`](./audits/registry.mjs): id, label, name, phase (`pre-build`/`post-build`), exec, gates, one-line `fix`. The unit suite ([`registry.test.ts`](./unit/registry.test.ts)) validates the entry shape and that the exec target exists; every gate picks the audit up from here automatically.
+3. **Add the npm script** (`check:<thing>`) in `package.json` for targeted runs.
+4. **Add the help line** in [`bin/help.mjs`](../bin/help.mjs) — an uncategorized script shows under "Other" with a nudge until you do.
+5. **Document it here**: a row in the validation matrix and a `### check-<thing>.mjs` section. The registry/docs parity test fails if the script is never mentioned in this file.
+6. **Run `npm run diagnose -- --fast`** — `check-docs` verifies the new links and script references, and the unit suite verifies the registry entry.
+
 ---
 
 ## 1. The gate ladder
@@ -96,6 +107,8 @@ graph TD
 ### The three gates
 
 1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
+
+   `npm run publish:check:ci` ([`bin/ci-rehearsal.mjs`](../bin/ci-rehearsal.mjs)) rehearses the runner's conditions locally — `CI=1` plus a scratch GPG keyring seeded only from the committed WKD key — so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
 3. **`npm run diagnose`** — runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).

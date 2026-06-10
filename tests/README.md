@@ -106,6 +106,7 @@ The full baseline gallery and more diff/failure examples are in
 npm run help                     # grouped list of every script by role
 
 npm run publish:check            # local build gate
+npm run publish:check:ci         # the same gate under CI conditions (scratch keyring, CI=1)
 npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit
 
