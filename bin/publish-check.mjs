@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditsFor } from '../tests/audits/registry.mjs';
+import { run as spawnRun, status } from './lib/run.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
@@ -12,32 +12,22 @@ const noSync = process.argv.includes('--no-sync');
 const node = process.execPath;
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 
-function stripAnsi(value) {
-  return value.replace(/\x1b\[[0-9;]*m/g, '');
-}
-
-function run(label, command, args, options = {}) {
-  const result = spawnSync(command, args, {
+// Fail-fast wrapper: this gate stops at the first broken check.
+async function run(label, command, args, options = {}) {
+  const result = await spawnRun(command, args, {
     cwd: siteRoot,
-    env: { ...process.env, ...(options.env ?? {}) },
-    encoding: 'utf8',
+    env: options.env,
+    timeout: options.timeout,
   });
 
-  const stdout = result.stdout ?? '';
-  const stderr = result.stderr ?? '';
-
-  if (result.status !== 0) {
+  if (result.code !== 0) {
     console.error(`\nfailed: ${label}`);
-    if (stdout.trim()) console.error(`\nstdout:\n${stdout.trimEnd()}`);
-    if (stderr.trim()) console.error(`\nstderr:\n${stderr.trimEnd()}`);
-    process.exit(result.status ?? 1);
+    if (result.stdout.trim()) console.error(`\nstdout:\n${result.stdout.trimEnd()}`);
+    if (result.stderr.trim()) console.error(`\nstderr:\n${result.stderr.trimEnd()}`);
+    process.exit(result.code);
   }
 
-  return { stdout, stderr, output: stripAnsi(`${stdout}\n${stderr}`) };
-}
-
-function status(label, detail) {
-  console.log(`${label.padEnd(12)} ${detail}`);
+  return result;
 }
 
 // Terse one-line summary for an audit's output, per its registry `summary` kind.
@@ -60,8 +50,11 @@ function summarize(audit, output) {
   return ok ? ok.replace(/^ok\s+/, '').trim() : 'passed';
 }
 
-function runAudit(audit) {
-  const { output } = run(audit.name, audit.exec.cmd, audit.exec.args, { env: audit.exec.env });
+async function runAudit(audit) {
+  const { output } = await run(audit.name, audit.exec.cmd, audit.exec.args, {
+    env: audit.exec.env,
+    timeout: audit.timeout,
+  });
   status(audit.label, summarize(audit, output));
 }
 
@@ -99,8 +92,8 @@ function contentChangeKind(file, rawStatus) {
   return 'edited';
 }
 
-function summarizeContentChanges() {
-  const statusResult = run(
+async function summarizeContentChanges() {
+  const statusResult = await run(
     'inspect content diff',
     'git',
     ['status', '--porcelain=v1', '--', 'src/content', 'public/assets'],
@@ -136,7 +129,7 @@ function summarizeContentChanges() {
 }
 
 // 1. Clean caches and resolve any iCloud conflict copies.
-const cleanGenerated = run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
+const cleanGenerated = await run('clean generated output', node, ['bin/clean-generated.mjs', '--all']);
 for (const line of cleanGenerated.output.split('\n')) {
   if (/Removed .*conflict copy|Resolved \d+ iCloud conflict/.test(line)) status('clean', line.trim());
 }
@@ -145,21 +138,24 @@ for (const line of cleanGenerated.output.split('\n')) {
 if (noSync) {
   status('sync', 'skipped (--no-sync)');
 } else {
-  run('sync content', node, ['bin/sync-content.mjs']);
+  await run('sync content', node, ['bin/sync-content.mjs']);
   status('sync', 'content snapshot updated');
 }
-run('clean conflict copies', node, ['bin/clean-generated.mjs']);
-summarizeContentChanges();
+await run('clean conflict copies', node, ['bin/clean-generated.mjs']);
+await summarizeContentChanges();
 
 // 3. Pre-build audits (source + synced content). astro-check needs the sync,
 //    so all pre-build audits run after it.
-for (const audit of auditsFor('publish', 'pre-build')) runAudit(audit);
+for (const audit of auditsFor('publish', 'pre-build')) await runAudit(audit);
 
 // 4. Production build.
-const build = run('astro build', astro, ['build'], { env: { ASTRO_TELEMETRY_DISABLED: '1' } });
+const build = await run('astro build', astro, ['build'], {
+  env: { ASTRO_TELEMETRY_DISABLED: '1' },
+  timeout: 10 * 60_000,
+});
 const pageCount = build.output.match(/\[build\] (\d+) page\(s\) built/);
 status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
-run('clean conflict copies', node, ['bin/clean-generated.mjs']);
+await run('clean conflict copies', node, ['bin/clean-generated.mjs']);
 
 // 5. Post-build audits (operate on the emitted dist/).
-for (const audit of auditsFor('publish', 'post-build')) runAudit(audit);
+for (const audit of auditsFor('publish', 'post-build')) await runAudit(audit);

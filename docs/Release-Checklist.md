@@ -65,15 +65,18 @@ A clean release runs `publish:check` (its audits come from
 sync         content snapshot updated
 content      no content changes
 security     signed, 5 fields present, expires in <n>d, WKD file present
-contrast     <n> pairs measured, all >= 4.5:1
+contrast     <ratio>:1  body text on background (<fg> on <bg>)
 parity       schema/Zod/MCP agree on writeup fields: ...
-preview      preview wrapped; main unchanged
+preview      passed
+unit         passed
 docs         <n> docs, <n> local links, <n> script refs resolve
 css-lint     passed
 css-vars     passed
 check        0 errors, 0 warnings
 build        <n> pages built
 assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
+links        <n> pages, <n> internal references (<n> unique) resolve
+weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75KB, JS <n>KB/25KB
 seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 ```
 
@@ -92,7 +95,7 @@ To run all codebase validations and E2E browser tests without short-circuiting o
 npm run diagnose
 ```
 
-If any check fails, it writes a detailed `.validation-report.md` in the project root with the exact commands needed to fix the issues. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`.
+If any check fails, it writes a detailed `.validation-report.md` in the project root with the exact commands needed to fix the issues. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`. For machine-readable results (agents, CI), `npm run -s diagnose -- --json` emits a single JSON document with per-check status and the rerun command for each failure.
 
 For a focused frontend check without the complete release gate, run:
 

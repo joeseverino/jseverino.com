@@ -52,7 +52,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`functions/__sitedrift/[[path]].ts`](./functions/__sitedrift/[[path]].ts) | Read-only preview-review proxy scoped to `/__sitedrift/*`. |
 | [`db/schema.sql`](./db/schema.sql) | D1 schema for contact submissions and CSP reports. |
 | [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
-| [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, check, build, and asset audit. |
+| [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, the registry audits, build, and the post-build checks (assets, links, page weight, SEO). Also run by CI on every push. |
 
 ## Content Model
 
@@ -195,13 +195,15 @@ npm run check:contrast     # Compute WCAG ratios for every text/background pair 
 npm run check:parity       # Assert vault Frontmatter Schema, Zod, and MCP agree on writeup fields
 npm run check:repo         # Enforce Node, lockfile, tracked-file, conflict-copy, and action-pin policy
 npm run check:preview      # Prove preview wrapping and the main production guard
+npm run check:links        # Every internal link and asset reference in the built site resolves
+npm run check:weight       # Per-page HTML and total CSS/JS stay inside their byte budgets
 ```
 
 The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
 ## Validation & Testing
 
-Every change is verified across three gates: local Node audits that assert invariants about the source, Playwright specs that drive the built site in a real browser, and post-push probes that re-check the live deploy. Together they cover signed security metadata, WCAG contrast, schema parity, cross-browser functional flows, pixel baselines, and live header/CSP checks.
+Every change is verified across four layers: local Node audits that assert invariants about the source, unit tests for the pure logic (the markdown DSL, the Cloudflare Pages functions, the gate harness itself), Playwright specs that drive the built site in a real browser, and post-push probes that re-check the live deploy. Together they cover signed security metadata, WCAG contrast, schema parity, serverless request handling, internal link integrity, page-weight budgets, cross-browser functional flows, pixel baselines, and live header/CSP checks.
 
 Start with the tour in [`tests/README.md`](./tests/README.md); the full reference, with every script, spec, code example, and the troubleshooting tree, is [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
@@ -217,7 +219,7 @@ In addition to local pre-commit checks, continuous security and build audits are
 
 | Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`build`](./.github/workflows/build.yml) | Compiles static assets in a clean container environment. | Successful Astro build & CycloneDX SBOM artifact. |
+| [`build`](./.github/workflows/build.yml) | Runs the full registry publish gate (`publish:check --no-sync`) in a clean container — the committed tree must pass everything the local gate passes. | Green gate on the committed tree & CycloneDX SBOM artifact. |
 | [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript source files for semantic vulnerabilities. | Clean GitHub code scanning dashboard (zero open alerts). |
 | [`dependency review`](./.github/workflows/dependency-review.yml) | Audits manifest package updates for high-severity advisories. | Pull request status validation. |
 | [`scorecard`](./.github/workflows/scorecard.yml) | Computes OpenSSF security scorecard health metrics. | Weekly SARIF supply-chain reports. |

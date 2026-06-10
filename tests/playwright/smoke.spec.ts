@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { anyWriteup } from './writeups.ts';
 
 test('home page loads with hero heading', async ({ page }) => {
   await page.goto('/');
@@ -17,7 +18,7 @@ test('primary navigation links resolve', async ({ page }) => {
 });
 
 test('writeup page renders article and prose body', async ({ page }) => {
-  await page.goto('/portfolio/building-a-custom-mcp-layer/');
+  await page.goto(anyWriteup());
   await expect(page.locator('.article-title')).toBeVisible();
   await expect(page.locator('.prose h2').first()).toBeVisible();
   await expect(page.locator('.prose')).not.toBeEmpty();

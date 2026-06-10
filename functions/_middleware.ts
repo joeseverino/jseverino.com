@@ -54,8 +54,14 @@ function cspReportOnly(): string {
   ].join('; ');
 }
 
+// No TS parameter properties here: the unit suite imports this file under
+// Node's type stripping, which only erases types and cannot transform them.
 class ScriptNonceHandler {
-  constructor(private readonly nonce: string) {}
+  private readonly nonce: string;
+
+  constructor(nonce: string) {
+    this.nonce = nonce;
+  }
 
   element(element: { setAttribute(name: string, value: string): void }): void {
     element.setAttribute('nonce', this.nonce);

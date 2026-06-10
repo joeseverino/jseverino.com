@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+// Unlike the functional specs (which resolve writeup URLs from the content
+// snapshot via ./writeups.ts), this suite pins slugs on purpose: each committed
+// baseline protects a specific page. Renaming one of these writeups means
+// re-pinning the slug here and re-baselining that screenshot deliberately.
+
 const SHOULD_RUN = process.env.VISUAL === '1';
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 } as const;

@@ -412,16 +412,7 @@ The site is then served at `http://localhost:8788` with the middleware and Funct
 
 ## 14. Release Gate
 
-[`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It runs:
-
-1. `security.txt` verification ([`tests/audits/check-security-txt.mjs`](../tests/audits/check-security-txt.mjs)) — fails early if the file is unsigned, expired, or its `Encryption` URL no longer resolves to a local WKD file;
-2. generated output cleanup;
-3. content sync;
-4. iCloud conflict-copy cleanup;
-5. CSS lint and unused custom-property audit;
-6. Astro check;
-7. Astro build;
-8. image weight audit.
+[`bin/publish-check.mjs`](../bin/publish-check.mjs) is the local publish gate. It cleans generated output, syncs content from the vault (skippable with `--no-sync`), resolves iCloud conflict copies, then runs every `publish`-gated audit from the single-source inventory in [`tests/audits/registry.mjs`](../tests/audits/registry.mjs) — the signed `security.txt`, WCAG contrast, vault/Zod/MCP parity, the sitedrift preview guard, the unit test suite, docs link integrity, CSS lint and the unused custom-property audit, and `astro check` — followed by the production build and the post-build audits (image weight, internal link integrity, the page-weight budget, and SEO metadata). All gates share one process harness ([`bin/lib/run.mjs`](../bin/lib/run.mjs)) that enforces per-check timeouts and surfaces spawn failures instead of hanging.
 
 The iCloud conflict-copy cleanup step in [`bin/clean-generated.mjs`](../bin/clean-generated.mjs) prefers the canonical (un-numbered) path when it exists and only restores from a numbered conflict copy if the canonical path was renamed away. This prevents the previous behavior where a freshly-synced canonical file could be replaced by an older numbered copy that iCloud touched more recently.
 
@@ -447,7 +438,7 @@ alerts.
 
 GitHub Actions provide the remote quality gate:
 
-- [`build`](../.github/workflows/build.yml) runs `npm ci`, `npm run build`, and uploads a CycloneDX SBOM artifact.
+- [`build`](../.github/workflows/build.yml) runs the full registry publish gate (`npm run publish:check -- --no-sync`) on a clean runner and uploads a CycloneDX SBOM artifact, so the committed tree must pass everything the local gate passes.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.

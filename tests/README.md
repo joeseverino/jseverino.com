@@ -14,7 +14,7 @@ first three; [`bin/`](../bin/) sequences them into gates.
 tests/
 ├── audits/        Node verifiers — assert an invariant, exit non-zero on failure
 │   └── registry.mjs   single source of truth: which audits exist + which gate runs each
-├── unit/          node:test specs for pure library logic (the Markdown DSL)
+├── unit/          node:test specs for pure logic (Markdown DSL, CF functions, gate harness, registry)
 └── playwright/    Browser specs — drive dist/ through a preview server
 ```
 
@@ -34,7 +34,7 @@ graph LR
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, Markdown DSL unit tests, preview guard, CSS, `astro check` + build, asset weight |
+| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page-weight budget — also run by CI on every push |
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
 | `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
 
@@ -53,15 +53,19 @@ across the vault YAML, the Zod config, and the Python MCP server, no
 build output, and unpinned Actions out of git,
 [documentation integrity](./ARCHITECTURE.md#check-docsmjs) so every link and `npm run`
 reference in the docs resolves, and (post-build)
+[internal link integrity](./ARCHITECTURE.md#check-linksmjs) across every built page,
+a [page-weight budget](./ARCHITECTURE.md#check-page-weightmjs), and
 [SEO metadata](./ARCHITECTURE.md#check-seomjs) on every rendered page.
 
-**[`tests/unit/`](./unit/)** — `node:test` specs for the pure Markdown DSL in
-[`src/lib/markdown.ts`](../src/lib/markdown.ts): markdown in, HTML out, no browser
-and no build. Each [custom block and inline rewrite](./ARCHITECTURE.md#markdown-dsl-unit-tests)
-(`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`,
-`::hero`) is pinned to the exact HTML it must produce, so a parser change keeps the
-contract or fails loudly. Runs on Node's native test runner via type stripping —
-no extra dependency.
+**[`tests/unit/`](./unit/)** — `node:test` specs for pure logic, no browser and no
+build. The [Markdown DSL](./ARCHITECTURE.md#the-unit-layer) in
+[`src/lib/markdown.ts`](../src/lib/markdown.ts) is pinned block-by-block to the
+exact HTML it must produce. The [Cloudflare Pages functions](./ARCHITECTURE.md#the-unit-layer)
+(contact API, CSP report endpoint, header middleware) run request-in/response-out
+with D1 and Turnstile stubbed — production serverless code verified before it
+ships, not after. The [gate harness and the audit registry](./ARCHITECTURE.md#the-unit-layer)
+are tested too, so the machinery the gates stand on can't rot silently. Runs on
+Node's native test runner via type stripping — no extra dependency.
 
 **[`tests/playwright/`](./playwright/)** — specs against the compiled site. The
 [smoke suite](./ARCHITECTURE.md#smokespects) pulls every URL from the sitemap and
@@ -105,7 +109,7 @@ npm run publish:check            # local build gate
 npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit
 
-npm run test:unit                # markdown DSL unit tests (fast, no browser)
+npm run test:unit                # unit suite: DSL, functions, harness, registry (fast, no browser)
 npm run test:e2e                 # functional specs across Chromium, Firefox, WebKit
 npm run test:e2e:visual          # visual regression (macOS Chromium)
 npm run test:e2e:visual:update   # re-baseline after an intentional design change

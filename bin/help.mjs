@@ -64,6 +64,8 @@ const GROUPS = [
       'check:parity': 'Individual audit (gates run it via tests/audits/registry.mjs)',
       'check:preview': 'Individual audit (gates run it via tests/audits/registry.mjs)',
       'check:docs': 'Individual audit (gates run it via tests/audits/registry.mjs)',
+      'check:links': 'Individual audit (gates run it via tests/audits/registry.mjs)',
+      'check:weight': 'Individual audit (gates run it via tests/audits/registry.mjs)',
       'check:seo': 'Individual audit (gates run it via tests/audits/registry.mjs)',
       'check:repo': 'Individual audit (gates run it via tests/audits/registry.mjs)',
       'audit:assets': 'Individual audit (gates run it via tests/audits/registry.mjs)',

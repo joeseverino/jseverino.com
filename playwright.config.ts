@@ -47,7 +47,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build:static && npm run preview -- --host 127.0.0.1 --port ${PORT}`,
+    // PREBUILT is set by bin/diagnose.mjs after its own build-static run, so
+    // the suite serves that artifact instead of rebuilding it.
+    command: [
+      process.env.PREBUILT ? null : 'npm run build:static',
+      `npm run preview -- --host 127.0.0.1 --port ${PORT}`,
+    ].filter(Boolean).join(' && '),
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

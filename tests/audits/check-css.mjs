@@ -1,11 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const stylesDir = path.resolve('src/styles');
-const cssFiles = fs
-  .readdirSync(stylesDir, { recursive: true, withFileTypes: true })
-  .filter((entry) => entry.isFile() && entry.name.endsWith('.css'))
+const srcDir = path.resolve('src');
+const listFiles = (dir, pattern) => fs
+  .readdirSync(dir, { recursive: true, withFileTypes: true })
+  .filter((entry) => entry.isFile() && pattern.test(entry.name))
   .map((entry) => path.join(entry.parentPath, entry.name));
+
+// Definitions come from the stylesheets; usages can live anywhere in src/ —
+// a var(--x) in an .astro template or a JS string still justifies the token.
+const cssFiles = listFiles(path.join(srcDir, 'styles'), /\.css$/);
+const codeFiles = listFiles(srcDir, /\.(astro|ts|js|mjs)$/);
 
 const definitions = new Map();
 const usages = new Set();
@@ -19,8 +24,11 @@ for (const file of cssFiles) {
     locations.push(`${path.relative(process.cwd(), file)}:${line}`);
     definitions.set(match[1], locations);
   }
+}
 
-  for (const match of css.matchAll(/var\(\s*(--[\w-]+)/g)) {
+for (const file of [...cssFiles, ...codeFiles]) {
+  const source = fs.readFileSync(file, 'utf8');
+  for (const match of source.matchAll(/var\(\s*(--[\w-]+)/g)) {
     usages.add(match[1]);
   }
 }

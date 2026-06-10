@@ -140,6 +140,12 @@ single-purpose, and layered:
 | **Parameterized SQL** | The D1 insert uses bound parameters (`.bind(...)`) on a prepared statement. User input is never concatenated into SQL — no injection path. |
 | **Minimal error disclosure** | Failures return short, generic messages. Internal detail goes to server logs, not the client. |
 
+Every control in that table is unit-tested
+([`tests/unit/contact-api.test.ts`](./tests/unit/contact-api.test.ts)): the
+validation ladder, honeypot, Turnstile verification, per-IP rate limit, and
+D1 failure paths all run request-in/response-out on every gate and CI run,
+with D1 and the `siteverify` call stubbed.
+
 **No email notifications.** Submissions are written to a Cloudflare D1
 database and reviewed in a separate private operations app. There is no SMTP
 integration, which removes an entire category of risk (email header/content
@@ -290,6 +296,12 @@ structured-data block — which is data, not executable code, but still
 receives a nonce. There is no inline executable JavaScript shipped to
 visitors, which lets `script-src` enforce the policy on every script
 the browser actually sees.
+
+The middleware's behavior — fresh nonce per request, the header set it emits,
+and the pass-through rules for non-HTML responses — is pinned by unit tests
+([`tests/unit/middleware.test.ts`](./tests/unit/middleware.test.ts)), as is the
+report receiver's normalization and noise filtering
+([`tests/unit/csp-report-api.test.ts`](./tests/unit/csp-report-api.test.ts)).
 
 [`public/_headers`](./public/_headers) carries the other security headers
 (`X-Content-Type-Options`, `X-Frame-Options`, `X-Permitted-Cross-Domain-Policies`,

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
 
-const root = new URL('..', import.meta.url).pathname;
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = `${SITE.github}/${SITE.domain}`;
 const origin = `https://${SITE.domain}`;
 const requiredChecks = new Set([
@@ -134,7 +136,7 @@ async function verifyHeaders(pathname) {
   );
 }
 
-async function verifyLiveRoutes() {
+async function collectSitemapUrls() {
   const indexResponse = await fetchChecked(`${origin}/sitemap-index.xml`);
   if (indexResponse.status !== 200) {
     throw new Error(`live sitemap index returned ${indexResponse.status}`);
@@ -154,6 +156,11 @@ async function verifyLiveRoutes() {
     );
   }
 
+  if (publicUrls.length === 0) throw new Error('live sitemap lists zero URLs');
+  return publicUrls;
+}
+
+async function verifyLiveRoutes(publicUrls) {
   const failures = [];
   for (let index = 0; index < publicUrls.length; index += 8) {
     const batch = publicUrls.slice(index, index + 8);
@@ -194,9 +201,18 @@ async function main() {
 
   await waitForChecks(sha);
 
+  // Headers are checked on the root page and on one deep writeup page, taken
+  // from the live sitemap rather than a pinned slug so renaming a writeup
+  // can't break deploy verification.
+  const publicUrls = await collectSitemapUrls();
+  const writeupPath = publicUrls
+    .map((url) => new URL(url).pathname)
+    .find((pathname) => /^\/portfolio\/[^/]+\/?$/.test(pathname));
+  if (!writeupPath) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
+
   await verifyHeaders('/');
-  await verifyHeaders('/portfolio/zero-trust-private-infrastructure/');
-  status('headers', 'CSP, reporting, HSTS, nosniff, and referrer policy passed');
+  await verifyHeaders(writeupPath);
+  status('headers', `CSP, reporting, HSTS, nosniff, and referrer policy passed (/ and ${writeupPath})`);
 
   const sitedrift = await fetchChecked(`${origin}/__sitedrift/config.json`);
   if (sitedrift.status !== 404) {
@@ -204,7 +220,7 @@ async function main() {
   }
   status('production', 'sitedrift route is absent');
 
-  await verifyLiveRoutes();
+  await verifyLiveRoutes(publicUrls);
 
   const alerts = JSON.parse(
     command('gh', [

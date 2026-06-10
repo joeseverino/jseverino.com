@@ -27,10 +27,13 @@ function fail(message) {
   failures.push(message);
 }
 
+// Major.minor must match .nvmrc; patch drift is allowed so a Node security
+// patch doesn't block every gate until the pin is bumped.
 const expectedNode = read('.nvmrc').trim().replace(/^v/, '');
 const actualNode = process.versions.node;
-if (actualNode !== expectedNode) {
-  fail(`Node ${actualNode} does not match .nvmrc (${expectedNode})`);
+const majorMinor = (version) => version.split('.').slice(0, 2).join('.');
+if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
+  fail(`Node ${actualNode} does not match .nvmrc (${expectedNode}; major.minor must agree)`);
 }
 
 const packageJson = JSON.parse(read('package.json'));

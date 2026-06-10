@@ -30,6 +30,8 @@ on failure and deletes it on success. See ../../ARCHITECTURE.md#1-the-gate-ladde
 
 **Action Item**: A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target.
 
+**Rerun**: `node tests/audits/check-docs.mjs`
+
 **Error Output**:
 ```text
 check-docs: documentation references that do not resolve:
@@ -39,6 +41,8 @@ check-docs: documentation references that do not resolve:
 ### ❌ Unused CSS variables (`css-check`)
 
 **Action Item**: Remove declared CSS custom properties in `src/styles/` that are never referenced with `var(...)`.
+
+**Rerun**: `node tests/audits/check-css.mjs`
 
 **Error Output**:
 ```text

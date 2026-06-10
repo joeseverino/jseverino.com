@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { imageHeavyWriteup } from './writeups.ts';
 
 // Guards the responsive-image pipeline: a broken AVIF/WebP/fallback variant would
 // slip past the sitemap smoke test. Collects every image URL the page references
@@ -6,7 +7,7 @@ import { test, expect } from '@playwright/test';
 // variants) and asserts each one resolves, so a missing variant fails the build.
 // Engine-independent, so *.single.
 
-const pages = ['/', '/portfolio/building-a-homelab/'];
+const pages = ['/', imageHeavyWriteup()];
 
 for (const path of pages) {
   test(`all image sources resolve on ${path}`, async ({ page, request }) => {

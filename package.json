@@ -51,6 +51,8 @@
     "check:parity": "node tests/audits/check-vault-mcp-parity.mjs",
     "check:preview": "node tests/audits/check-sitedrift-preview.mjs",
     "check:docs": "node tests/audits/check-docs.mjs",
+    "check:links": "node tests/audits/check-links.mjs",
+    "check:weight": "node tests/audits/check-page-weight.mjs",
     "check:seo": "node tests/audits/check-seo.mjs",
     "check:repo": "node tests/audits/check-repository-policy.mjs",
     "audit:assets": "node tests/audits/audit-assets.mjs"

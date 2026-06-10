@@ -24,6 +24,7 @@
 //   summary     publish-check terse line: 'ok' (default, first `ok …` line),
 //               'astro' (errors/warnings), 'assets' (image report), or 'silent'
 //   macosOnly   skip when not on darwin (committed visual baselines are macOS)
+//   timeout     ms before the gate kills a hung check (default in bin/lib/run.mjs)
 
 export const AUDITS = [
   {
@@ -51,10 +52,10 @@ export const AUDITS = [
     fix: 'Check `tests/audits/check-sitedrift-preview.mjs`. SiteDrift proxy wrapping must be active on feature branches and absent on main.',
   },
   {
-    id: 'unit-tests', label: 'unit', name: 'Markdown DSL Unit Tests', phase: 'pre-build',
+    id: 'unit-tests', label: 'unit', name: 'Unit Test Suite', phase: 'pre-build',
     exec: { cmd: 'node', args: ['--disable-warning=ExperimentalWarning', '--experimental-strip-types', '--test', 'tests/unit/**/*.test.ts'] },
     gates: ['publish', 'diagnose'], summary: 'silent',
-    fix: 'A markdown DSL transform in `src/lib/markdown.ts` changed its HTML output. Run `npm run test:unit`, then reconcile the parser or the expected HTML in `tests/unit/`.',
+    fix: 'A unit spec failed: the markdown DSL, a Cloudflare Pages function, the gate harness, or the registry shape. Run `npm run test:unit` and reconcile the code or the expected behavior in `tests/unit/`.',
   },
   {
     id: 'docs-check', label: 'docs', name: 'Docs Link Integrity', phase: 'pre-build',
@@ -102,6 +103,18 @@ export const AUDITS = [
     fix: 'Optimize images in `public/assets/` to ensure none exceed 1.5MB. Set `STRICT_ASSET_AUDIT=0` if override is necessary.',
   },
   {
+    id: 'links-check', label: 'links', name: 'Internal Link Integrity', phase: 'post-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-links.mjs'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'A built page references an internal URL or asset the build did not emit. Fix the link at the reported page, or restore the missing target.',
+  },
+  {
+    id: 'weight-check', label: 'weight', name: 'Page Weight Budget', phase: 'post-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-page-weight.mjs'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'A page or bundle exceeded its byte budget (per-page HTML, total CSS, total JS). Slim the regression, or consciously raise the budget in `tests/audits/check-page-weight.mjs`.',
+  },
+  {
     id: 'seo-check', label: 'seo', name: 'SEO Metadata', phase: 'post-build',
     exec: { cmd: 'node', args: ['tests/audits/check-seo.mjs'] },
     gates: ['publish', 'diagnose'],
@@ -113,7 +126,7 @@ export const AUDITS = [
       cmd: 'npx', args: ['playwright', 'test', '--reporter=line'],
       env: { CI: '1', ASTRO_TELEMETRY_DISABLED: '1', VISUAL: '1' },
     },
-    gates: ['diagnose', 'release'], macosOnly: true,
+    gates: ['diagnose', 'release'], macosOnly: true, timeout: 15 * 60_000,
     fix: 'Run `npx playwright test --ui` to debug functional specs. If a layout change was intentional, update baselines with `npm run test:e2e:visual:update`.',
   },
 ];

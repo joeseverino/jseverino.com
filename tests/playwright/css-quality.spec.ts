@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
+import { tableWriteup } from './writeups.ts';
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
@@ -149,7 +150,7 @@ test('cover images fill their fixed media boxes', async ({ page }) => {
 
 test('tables stay contained at narrow widths', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto('/portfolio/building-a-custom-mcp-layer/');
+  await page.goto(tableWriteup());
 
   const table = page.locator('.table-figure').first();
   await expect(table).toHaveCSS('overflow-x', 'auto');

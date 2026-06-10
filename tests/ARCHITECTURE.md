@@ -32,6 +32,12 @@ fail-fast vs. collect-all, the report) — the registry is the inventory, not th
 run logic. The tables below describe what each check *asserts*; the registry is
 the authoritative list of what *runs*.
 
+The gates also share one process harness, [`bin/lib/run.mjs`](../bin/lib/run.mjs):
+every spawned check gets a timeout (a hung Playwright run fails instead of
+stalling the gate forever; per-check overrides live in the registry's `timeout`
+field), a missing binary surfaces as a failed check rather than a hang, and
+output is either captured for terse summaries or streamed live.
+
 ## Naming: `audit-` vs `check-`
 
 The prefix in `tests/audits/` is meaningful, not decorative:
@@ -56,11 +62,11 @@ graph TD
         B1["security.txt signature"]
         B2["WCAG contrast"]
         B3["vault / Zod / MCP parity"]
-        B8["markdown DSL unit tests"]
+        B8["unit suite: DSL + functions + harness"]
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
         B6["astro check + build"]
-        B7["asset weight (strict) + SEO"]
+        B7["asset weight + links + page weight + SEO"]
     end
 
     subgraph release ["Release Check (Final Local Gate)"]
@@ -89,18 +95,23 @@ graph TD
 
 ### The three gates
 
-1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the Markdown DSL unit tests, the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks built-page SEO metadata.
+1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
 3. **`npm run diagnose`** — runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
    - `npm run diagnose -- --no-tests` runs static checks and the build, skipping the browser tests.
+   - `npm run -s diagnose -- --json` emits a single JSON document (per-check status, durations, rerun commands for failures) instead of console output, for agents and CI to consume without parsing prose.
+
+   `diagnose` builds once via `build:static` and passes `PREBUILT=1` to the
+   Playwright suite, so the browser tests serve that artifact instead of
+   rebuilding it inside `playwright.config.ts`'s `webServer`.
 
 ### What you actually read
 
 The design goal: a green run gives you nothing to read, and a red run gives you nothing *but* what to fix.
 
 - **On success**, `diagnose` prints a terse list of `[PASS]` lines and deletes any stale report. There is nothing to act on. See a real run in [`examples/diagnose-pass.txt`](./audits/examples/diagnose-pass.txt): one command, the full surface (static audits, build, `check-seo`, the Playwright matrix including visual baselines, and an idempotence check), about 60 seconds.
-- **On failure**, it does not stop at the first problem. It runs every check, then writes [`.validation-report.md`](./audits/examples/validation-report.md) with one row per failure and a concrete remediation action for each. The only output you ever read is the thing you need to fix.
+- **On failure**, it does not stop at the first problem. It runs every check, then writes [`.validation-report.md`](./audits/examples/validation-report.md) with one row per failure, a concrete remediation action, and the exact command to rerun that check alone. Long failure output (a cross-browser Playwright run can produce thousands of lines) is clipped to its head and tail in the report — the rerun command is the path to the full output. The only output you ever read is the thing you need to fix.
 
 ---
 
@@ -111,11 +122,16 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Security | [security.txt signature](#check-security-txtmjs) | `tests/audits/check-security-txt.mjs` | `security.txt` is PGP-signed, has required RFC 9116 fields, is not near expiry, and its `Encryption` URL resolves to a local WKD file. |
 | Design | [color contrast](#check-contrastmjs) | `tests/audits/check-contrast.mjs` | Every text/background `--color-*` pairing meets WCAG AA (>= 4.5:1). |
 | Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. |
-| Logic | [markdown DSL](#markdown-dsl-unit-tests) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
+| Logic | [markdown DSL](#the-unit-layer) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
+| Logic | [contact API](#the-unit-layer) | `tests/unit/contact-api.test.ts` | The contact function's validation ladder, honeypot, Turnstile verification, rate limit, and D1 persistence paths behave, with D1 and siteverify stubbed. |
+| Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
+| Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, report-only policy, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
+| Logic | [gate harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
+| Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
 | Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; the gates run it strict, so an image past 1.5 MB fails. |
-| Policy | [repository policy](#check-repository-policymjs) | `tests/audits/check-repository-policy.mjs` | `.nvmrc` match, lockfile alignment, no committed secrets/build output/conflict copies, all Actions SHA-pinned. |
+| Policy | [repository policy](#check-repository-policymjs) | `tests/audits/check-repository-policy.mjs` | `.nvmrc` major.minor match, lockfile alignment, no committed secrets/build output/conflict copies, all Actions SHA-pinned. |
 | Docs | [documentation integrity](#check-docsmjs) | `tests/audits/check-docs.mjs` | Every relative link and `npm run` reference in the engineering docs resolves to a real file or script. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Every URL in the sitemap returns 200; console stays clean; hero and header behave. |
 | E2E | [mobile menu](#mobile-menuspects) | `tests/playwright/mobile-menu.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
@@ -125,6 +141,8 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Routes | [endpoints + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | `robots.txt`, `feed.xml`, and unknown-route 404 behavior the sitemap smoke test can't reach. |
 | Images | [image resolution](#resourcessinglespects) | `tests/playwright/resources.single.spec.ts` | Every `<img>`/`<source>` variant (AVIF/WebP/fallback) on key pages resolves. |
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
+| Links | [internal link integrity](#check-linksmjs) | `tests/audits/check-links.mjs` | Every internal `href`/`src`/`srcset` reference in the built HTML resolves to an emitted file (or a known function route). |
+| Perf | [page weight budget](#check-page-weightmjs) | `tests/audits/check-page-weight.mjs` | Per-page HTML, total CSS, and total JS stay within their byte budgets. |
 | SEO | [page metadata](#check-seomjs) | `tests/audits/check-seo.mjs` | Every built page has title, canonical, og:title, og:image, and valid JSON-LD. |
 | Visual | [visual regression](#5-visual-regression) | `tests/playwright/visual.spec.ts` | Page and component screenshots match committed macOS Chromium baselines. |
 | Post-push | [deploy verification](#6-post-push-deploy-verification) | `bin/deploy-verify.mjs` | Remote CI status, prod dependency audit, live headers, live sitemap 200s, open CodeQL alerts. |
@@ -160,14 +178,14 @@ Any drift fails, so the authoring workflow can never silently desync.
 Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'main'` and that production builds (`main`) ship as untampered Astro pages with `/__sitedrift` returning 404.
 
 ### `check-css.mjs`
-Scans `src/styles/**/*.css` for `--variable: …` declarations and `var(--variable)` usages, and fails listing any custom property that is defined but never consumed. (Hard check — hence the `check-` prefix despite the historical "audit" name.)
+Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--variable)` usages from the stylesheets **and** from every `.astro`/`.ts`/`.js`/`.mjs` file under `src/` (a token consumed only in a template or script still counts), and fails listing any custom property that is defined but never consumed. (Hard check — hence the `check-` prefix despite the historical "audit" name.)
 
 ### `audit-assets.mjs`
 Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). The registry runs it with `STRICT_ASSET_AUDIT=1`, so an oversized image fails `publish:check`/`diagnose`; run it bare (`node tests/audits/audit-assets.mjs`) for a warn-only report. It is still the one *audit* by construction (it measures and reports), but the gates opt into strict so weight regressions can't slip through.
 
 ### `check-repository-policy.mjs`
 Structural health:
-- **Node version** matches [`.nvmrc`](../.nvmrc).
+- **Node version** matches [`.nvmrc`](../.nvmrc) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates).
 - **Lockfile** dependencies/versions align with `package.json`.
 - **Clean tree** — no committed `.env` / `.dev.vars`, no `dist/` or `playwright-report/`, no iCloud conflict copies.
 - **Action pinning** — every third-party GitHub Action is pinned to an immutable commit SHA, not a mutable tag.
@@ -180,12 +198,25 @@ Asserts internal documentation integrity across the engineering docs (`README.md
 
 Links inside fenced code blocks are treated as example syntax and skipped, so authoring examples like `![alt](./images/x.png)` do not trip it; `npm run` references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, not repo files). This is the check that catches a renamed script or moved file the moment a doc still points at the old name.
 
+### `check-links.mjs`
+Runs **after the build**. The sitemap smoke test proves every page exists; this proves every internal reference *inside* the pages resolves. It walks the emitted HTML, collects `href`/`src`/`poster`/`srcset` references (including same-origin absolute URLs like the canonical link), and asserts each one maps to a file the build emitted. Routes served by Pages functions (`/api/…`, `/cdn-cgi/…`) are allowlisted. A typo'd in-content link fails here, before deploy, instead of surfacing in the live traversal after.
+
+### `check-page-weight.mjs`
+Runs **after the build** — the deterministic, flake-free complement to the CI Lighthouse run. Three byte budgets over the emitted output: per-page HTML (150 KB), total CSS (75 KB), and total JS (25 KB), set from the measured baseline (~80 KB worst page, ~25 KB CSS, ~2.5 KB JS) with generous headroom. A failure means a real regression — a runaway page, a style explosion, or a framework bundle sneaking into a no-framework site. Budgets may be raised, but only as a conscious commit to `tests/audits/check-page-weight.mjs`.
+
 ### `check-seo.mjs`
 Runs **after the build**, over the emitted HTML in the local outDir (`dist.nosync`) or the CI outDir (`dist`). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, `og:image`, and only valid JSON-LD. Redirect stubs (`Astro.redirect`, detected by their `meta http-equiv="refresh"`) are skipped, since they are not indexable content. It also **fails on zero pages** — an empty or stale outDir is treated as a broken build, not a pass. Wired into `publish:check` after the build and into `diagnose`'s post-build phase.
 
-### Markdown DSL unit tests
+### The unit layer
 
-Not an audit and not a browser spec, but a third pre-build layer: [`tests/unit/markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts) exercises the custom Markdown renderer in [`src/lib/markdown.ts`](../src/lib/markdown.ts) directly — markdown in, HTML out, no browser and no build.
+Not audits and not browser specs, but a third pre-build layer: `node:test` suites under [`tests/unit/`](./unit/) that exercise pure logic directly — input in, output out, no browser and no build. The suite covers five surfaces:
+
+- **The markdown DSL** ([`markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts)) — the original suite, described below.
+- **The Cloudflare Pages functions** — the only production code that otherwise runs untested until it is live. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. [`middleware.test.ts`](./unit/middleware.test.ts) verifies per-request CSP nonce generation, header rewriting, and the pass-through rules, with a recording stub standing in for Cloudflare's `HTMLRewriter`.
+- **The gate harness** ([`run-harness.test.ts`](./unit/run-harness.test.ts)) — the failure modes a green run never exercises: non-zero exits, missing binaries, and hung commands must all resolve as failed results, never hang the gate.
+- **The registry itself** ([`registry.test.ts`](./unit/registry.test.ts)) — the inventory every gate trusts blindly: unique ids, known gate/phase values, exec targets that exist on disk, and every audit visible to `diagnose`.
+
+[`tests/unit/markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts) exercises the custom Markdown renderer in [`src/lib/markdown.ts`](../src/lib/markdown.ts) directly — markdown in, HTML out, no browser and no build.
 
 That module is the pure, Astro-free half of the content layer: the block DSL (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`, `::hero`) and the inline rewrites (private-link tooltips, standalone-link buttons, image directives, writeup chrome stripping). It depends only on `markdown-it`, so a `node:test` suite can import it and assert the exact HTML for each block. [`content.ts`](../src/lib/content.ts) keeps the Astro-coupled glue (content collections, slug/asset resolution, `<picture>` enhancement) and imports `renderPageHtml`/`renderWriteupHtml` from it.
 
@@ -202,6 +233,8 @@ The specs double as executable documentation of the block grammar: each case pai
 ## 4. `tests/playwright/` — browser specs
 
 The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`playwright.config.ts`](../playwright.config.ts); `*mobile*` specs run on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
+
+The functional specs do not pin writeup slugs. [`writeups.ts`](./playwright/writeups.ts) resolves URLs from the synced content snapshot by capability — the writeup with a private link, with a table, with the most images — so renaming a writeup in the vault cannot break the code gates. The one exception is the visual suite: its committed baselines protect specific pages, so it pins slugs on purpose (a rename there means re-pinning and re-baselining deliberately).
 
 ### `smoke.spec.ts`
 - **Sitemap route health** — parses `sitemap-index.xml`, follows each sub-sitemap, and asserts a `200` for every `<loc>`. New writeups get coverage automatically.
@@ -418,7 +451,7 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 1. **Repo state** — local branch is `main`, clean, fully pushed.
 2. **Production dependency audit** — `npm audit --omit=dev --audit-level=high`.
 3. **Remote checks** — polls the GitHub API until `build`, `e2e`, `visual`, CodeQL, and Cloudflare Pages report success.
-4. **Live response audit** against `https://jseverino.com/`:
+4. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source,
    - `reporting-endpoints` / `report-uri` routed to `/api/csp-report`,
@@ -432,6 +465,7 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 | Workflow | Trigger | Enforces |
 | :--- | :--- | :--- |
+| `build.yml` | push/PR to `main` | The full registry publish gate (`publish:check --no-sync`) on a clean runner — the committed tree must pass everything the local gate passes — plus a CycloneDX SBOM artifact. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning. |
