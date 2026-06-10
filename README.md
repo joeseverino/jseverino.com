@@ -219,7 +219,7 @@ In addition to local pre-commit checks, continuous security and build audits are
 
 | Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`build`](./.github/workflows/build.yml) | Runs the full registry publish gate (`publish:check --no-sync`) in a clean container — the committed tree must pass everything the local gate passes. | Green gate on the committed tree & CycloneDX SBOM artifact. |
+| [`build`](./.github/workflows/build.yml) | Runs the registry publish gate (`publish:check --no-sync`) in a clean container — the committed tree must pass everything the local gate passes, minus the vault parity check (its sources live only on the authoring machine). | Green gate on the committed tree & CycloneDX SBOM artifact. |
 | [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript source files for semantic vulnerabilities. | Clean GitHub code scanning dashboard (zero open alerts). |
 | [`dependency review`](./.github/workflows/dependency-review.yml) | Audits manifest package updates for high-severity advisories. | Pull request status validation. |
 | [`scorecard`](./.github/workflows/scorecard.yml) | Computes OpenSSF security scorecard health metrics. | Weekly SARIF supply-chain reports. |

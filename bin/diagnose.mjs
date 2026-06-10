@@ -45,6 +45,9 @@ async function runAudit(audit, extraEnv) {
   if (audit.macosOnly && process.platform !== 'darwin') {
     return { id: audit.id, name: audit.name, code: 0, stdout: '', stderr: `Skipped: ${audit.name} requires macOS.`, duration: 0, skipped: true, rerun: rerunFor(audit) };
   }
+  if (audit.localOnly && process.env.CI) {
+    return { id: audit.id, name: audit.name, code: 0, stdout: '', stderr: `Skipped: ${audit.name} verifies sources that only exist on the authoring machine.`, duration: 0, skipped: true, rerun: rerunFor(audit) };
+  }
   const env = extraEnv ? { ...audit.exec.env, ...extraEnv } : audit.exec.env;
   const result = await runCommand(audit.exec.cmd, audit.exec.args, { env, timeout: audit.timeout });
   return { id: audit.id, name: audit.name, skipped: false, rerun: rerunFor(audit), ...result };

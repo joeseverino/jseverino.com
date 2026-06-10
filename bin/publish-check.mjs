@@ -51,6 +51,10 @@ function summarize(audit, output) {
 }
 
 async function runAudit(audit) {
+  if (audit.localOnly && process.env.CI) {
+    status(audit.label, 'skipped (verifies sources that only exist on the authoring machine)');
+    return;
+  }
   const { output } = await run(audit.name, audit.exec.cmd, audit.exec.args, {
     env: audit.exec.env,
     timeout: audit.timeout,

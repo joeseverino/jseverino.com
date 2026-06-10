@@ -24,6 +24,9 @@
 //   summary     publish-check terse line: 'ok' (default, first `ok …` line),
 //               'astro' (errors/warnings), 'assets' (image report), or 'silent'
 //   macosOnly   skip when not on darwin (committed visual baselines are macOS)
+//   localOnly   skip when CI is set — the check verifies sources that live
+//               outside the repo (the vault, the MCP server) and only exist
+//               on the authoring machine
 //   timeout     ms before the gate kills a hung check (default in bin/lib/run.mjs)
 
 export const AUDITS = [
@@ -42,7 +45,7 @@ export const AUDITS = [
   {
     id: 'parity-check', label: 'parity', name: 'Vault/MCP/Code Parity', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-vault-mcp-parity.mjs'] },
-    gates: ['publish', 'diagnose'],
+    gates: ['publish', 'diagnose'], localOnly: true,
     fix: 'Ensure the vault frontmatter schema (`Frontmatter Schema.md`), Zod schema (`src/content.config.ts`), and the Python MCP server parameters agree on all fields.',
   },
   {

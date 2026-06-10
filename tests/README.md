@@ -34,7 +34,7 @@ graph LR
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page-weight budget — also run by CI on every push |
+| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page-weight budget — also run by CI on every push (minus the local-only parity check) |
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
 | `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
 

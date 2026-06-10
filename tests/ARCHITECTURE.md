@@ -95,7 +95,7 @@ graph TD
 
 ### The three gates
 
-1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves.
+1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
 3. **`npm run diagnose`** — runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
@@ -121,7 +121,7 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | :--- | :--- | :--- | :--- |
 | Security | [security.txt signature](#check-security-txtmjs) | `tests/audits/check-security-txt.mjs` | `security.txt` is PGP-signed, has required RFC 9116 fields, is not near expiry, and its `Encryption` URL resolves to a local WKD file. |
 | Design | [color contrast](#check-contrastmjs) | `tests/audits/check-contrast.mjs` | Every text/background `--color-*` pairing meets WCAG AA (>= 4.5:1). |
-| Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. |
+| Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. Local-only: those sources exist only on the authoring machine, so CI skips it. |
 | Logic | [markdown DSL](#the-unit-layer) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
 | Logic | [contact API](#the-unit-layer) | `tests/unit/contact-api.test.ts` | The contact function's validation ladder, honeypot, Turnstile verification, rate limit, and D1 persistence paths behave, with D1 and siteverify stubbed. |
 | Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
@@ -465,7 +465,7 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 | Workflow | Trigger | Enforces |
 | :--- | :--- | :--- |
-| `build.yml` | push/PR to `main` | The full registry publish gate (`publish:check --no-sync`) on a clean runner — the committed tree must pass everything the local gate passes — plus a CycloneDX SBOM artifact. |
+| `build.yml` | push/PR to `main` | The registry publish gate (`publish:check --no-sync`) on a clean runner — the committed tree must pass everything the local gate passes except the local-only vault parity check — plus a CycloneDX SBOM artifact. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning. |

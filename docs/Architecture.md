@@ -438,7 +438,7 @@ alerts.
 
 GitHub Actions provide the remote quality gate:
 
-- [`build`](../.github/workflows/build.yml) runs the full registry publish gate (`npm run publish:check -- --no-sync`) on a clean runner and uploads a CycloneDX SBOM artifact, so the committed tree must pass everything the local gate passes.
+- [`build`](../.github/workflows/build.yml) runs the registry publish gate (`npm run publish:check -- --no-sync`) on a clean runner and uploads a CycloneDX SBOM artifact, so the committed tree must pass everything the local gate passes except the local-only vault parity check.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
