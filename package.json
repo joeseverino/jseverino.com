@@ -34,6 +34,7 @@
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",
     "sign:security": "node bin/sign-security.mjs",
     "seo:preview": "node bin/seo-preview.mjs",
+    "test:unit": "node --disable-warning=ExperimentalWarning --experimental-strip-types --test 'tests/unit/**/*.test.ts'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:visual": "VISUAL=1 playwright test tests/playwright/visual.spec.ts",
