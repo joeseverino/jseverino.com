@@ -217,8 +217,7 @@ function rewritePageAssetPaths(markdown, slug) {
 function rewriteWriteupAssetPaths(markdown, slug) {
   return markdown
     .replaceAll('./images/', `/assets/writeups/${slug}/images/`)
-    .replaceAll('](images/', `](/assets/writeups/${slug}/images/`)
-    .replace(/^```\s*(?:wp-block-code|source-code-block|cli-block)$/gm, '```text');
+    .replaceAll('](images/', `](/assets/writeups/${slug}/images/`);
 }
 
 function stripHtmlTags(value) {

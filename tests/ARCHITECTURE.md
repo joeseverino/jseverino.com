@@ -5,12 +5,13 @@ visual tour start with [`tests/README.md`](./README.md); come here when you need
 the exact assertion a check makes, the command that runs it, or how to fix a
 failure.
 
-Verification lives in two directories, plus orchestrators in `bin/` that sequence
+Verification lives in three directories, plus orchestrators in `bin/` that sequence
 them:
 
 | Directory | What it holds | How it runs |
 | :--- | :--- | :--- |
 | [`tests/audits/`](./audits/) | Node scripts that read the source tree and assert invariants. No browser. | `node tests/audits/<name>.mjs` |
+| [`tests/unit/`](./unit/) | `node:test` specs for pure library logic (the Markdown DSL). No browser, no build. | `npm run test:unit` |
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the **built** site (`dist/` via the preview server). | `playwright test` |
 | [`bin/`](../bin/) | Gate runners (`publish-check`, `release-check`, `diagnose`) and the post-push `deploy-verify`. | `npm run publish:check`, etc. |
 
@@ -55,6 +56,7 @@ graph TD
         B1["security.txt signature"]
         B2["WCAG contrast"]
         B3["vault / Zod / MCP parity"]
+        B8["markdown DSL unit tests"]
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
         B6["astro check + build"]
@@ -78,7 +80,7 @@ graph TD
     end
 
     %% Force vertical layout nesting
-    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
+    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
     B7 ~~~ C
     C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
     C4 ~~~ D
@@ -87,7 +89,7 @@ graph TD
 
 ### The three gates
 
-1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks built-page SEO metadata.
+1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the Markdown DSL unit tests, the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks built-page SEO metadata.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
 3. **`npm run diagnose`** — runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
@@ -109,6 +111,7 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Security | [security.txt signature](#check-security-txtmjs) | `tests/audits/check-security-txt.mjs` | `security.txt` is PGP-signed, has required RFC 9116 fields, is not near expiry, and its `Encryption` URL resolves to a local WKD file. |
 | Design | [color contrast](#check-contrastmjs) | `tests/audits/check-contrast.mjs` | Every text/background `--color-*` pairing meets WCAG AA (>= 4.5:1). |
 | Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. |
+| Logic | [markdown DSL](#markdown-dsl-unit-tests) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
 | Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; the gates run it strict, so an image past 1.5 MB fails. |
@@ -179,6 +182,20 @@ Links inside fenced code blocks are treated as example syntax and skipped, so au
 
 ### `check-seo.mjs`
 Runs **after the build**, over the emitted HTML in the local outDir (`dist.nosync`) or the CI outDir (`dist`). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, `og:image`, and only valid JSON-LD. Redirect stubs (`Astro.redirect`, detected by their `meta http-equiv="refresh"`) are skipped, since they are not indexable content. It also **fails on zero pages** — an empty or stale outDir is treated as a broken build, not a pass. Wired into `publish:check` after the build and into `diagnose`'s post-build phase.
+
+### Markdown DSL unit tests
+
+Not an audit and not a browser spec, but a third pre-build layer: [`tests/unit/markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts) exercises the custom Markdown renderer in [`src/lib/markdown.ts`](../src/lib/markdown.ts) directly — markdown in, HTML out, no browser and no build.
+
+That module is the pure, Astro-free half of the content layer: the block DSL (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`, `::hero`) and the inline rewrites (private-link tooltips, standalone-link buttons, image directives, writeup chrome stripping). It depends only on `markdown-it`, so a `node:test` suite can import it and assert the exact HTML for each block. [`content.ts`](../src/lib/content.ts) keeps the Astro-coupled glue (content collections, slug/asset resolution, `<picture>` enhancement) and imports `renderPageHtml`/`renderWriteupHtml` from it.
+
+Runs natively on Node's test runner via type stripping — no extra dependency:
+
+```sh
+npm run test:unit
+```
+
+The specs double as executable documentation of the block grammar: each case pairs a markdown input with the HTML it must produce, so a parser change either keeps the contract or fails loudly. Registered in the audit registry as a `pre-build` gate, so `publish:check` and `diagnose` run it automatically.
 
 ---
 

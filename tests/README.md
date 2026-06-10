@@ -1,10 +1,10 @@
 # Tests & Validation
 
 Every change to this site passes through layered verification before it ships:
-Node audits that assert invariants about the source, Playwright specs that drive a
-real browser against the **built** output, and post-push probes that re-check the
-live site. This directory holds the first two; [`bin/`](../bin/) sequences them
-into gates.
+Node audits that assert invariants about the source, unit tests for the pure
+library logic, Playwright specs that drive a real browser against the **built**
+output, and post-push probes that re-check the live site. This directory holds the
+first three; [`bin/`](../bin/) sequences them into gates.
 
 > **Looking for detail?** This file is the tour. The exact assertions, every
 > script, the code examples, and the troubleshooting tree live in the full
@@ -14,6 +14,7 @@ into gates.
 tests/
 ├── audits/        Node verifiers — assert an invariant, exit non-zero on failure
 │   └── registry.mjs   single source of truth: which audits exist + which gate runs each
+├── unit/          node:test specs for pure library logic (the Markdown DSL)
 └── playwright/    Browser specs — drive dist/ through a preview server
 ```
 
@@ -33,14 +34,14 @@ graph LR
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, preview guard, CSS, `astro check` + build, asset weight |
+| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, Markdown DSL unit tests, preview guard, CSS, `astro check` + build, asset weight |
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
 | `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
 
 `npm run diagnose` runs everything at once without stopping at the first failure.
 See [the gate ladder](./ARCHITECTURE.md#1-the-gate-ladder) for the full breakdown.
 
-## The two layers
+## The three layers
 
 **[`tests/audits/`](./audits/)** — fast Node checks with no browser. They prove
 things the build itself won't catch: a [PGP-signed `security.txt`](./ARCHITECTURE.md#check-security-txtmjs)
@@ -53,6 +54,14 @@ build output, and unpinned Actions out of git,
 [documentation integrity](./ARCHITECTURE.md#check-docsmjs) so every link and `npm run`
 reference in the docs resolves, and (post-build)
 [SEO metadata](./ARCHITECTURE.md#check-seomjs) on every rendered page.
+
+**[`tests/unit/`](./unit/)** — `node:test` specs for the pure Markdown DSL in
+[`src/lib/markdown.ts`](../src/lib/markdown.ts): markdown in, HTML out, no browser
+and no build. Each [custom block and inline rewrite](./ARCHITECTURE.md#markdown-dsl-unit-tests)
+(`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`,
+`::hero`) is pinned to the exact HTML it must produce, so a parser change keeps the
+contract or fails loudly. Runs on Node's native test runner via type stripping —
+no extra dependency.
 
 **[`tests/playwright/`](./playwright/)** — specs against the compiled site. The
 [smoke suite](./ARCHITECTURE.md#smokespects) pulls every URL from the sitemap and
@@ -96,6 +105,7 @@ npm run publish:check            # local build gate
 npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit
 
+npm run test:unit                # markdown DSL unit tests (fast, no browser)
 npm run test:e2e                 # functional specs across Chromium, Firefox, WebKit
 npm run test:e2e:visual          # visual regression (macOS Chromium)
 npm run test:e2e:visual:update   # re-baseline after an intentional design change

@@ -43,6 +43,7 @@ const GROUPS = [
       'sign:security': 'Re-sign public/.well-known/security.txt',
       'seo:preview': 'Preview a page Google snippet + metadata from built HTML',
       'preview': 'Serve the built site locally',
+      'test:unit': 'Unit-test the markdown DSL (gates run it too via the registry)',
       'test:e2e': 'Run Playwright functional specs',
       'test:e2e:ui': 'Playwright in interactive UI mode',
       'test:e2e:visual': 'Run visual-regression snapshots',

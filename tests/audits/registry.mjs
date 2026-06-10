@@ -51,6 +51,12 @@ export const AUDITS = [
     fix: 'Check `tests/audits/check-sitedrift-preview.mjs`. SiteDrift proxy wrapping must be active on feature branches and absent on main.',
   },
   {
+    id: 'unit-tests', label: 'unit', name: 'Markdown DSL Unit Tests', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['--disable-warning=ExperimentalWarning', '--experimental-strip-types', '--test', 'tests/unit/**/*.test.ts'] },
+    gates: ['publish', 'diagnose'], summary: 'silent',
+    fix: 'A markdown DSL transform in `src/lib/markdown.ts` changed its HTML output. Run `npm run test:unit`, then reconcile the parser or the expected HTML in `tests/unit/`.',
+  },
+  {
     id: 'docs-check', label: 'docs', name: 'Docs Link Integrity', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-docs.mjs'] },
     gates: ['publish', 'diagnose'],
