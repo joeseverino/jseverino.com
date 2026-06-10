@@ -145,7 +145,7 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit 
 
 Playwright exercises the current bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. This is the compatibility contract enforced by CI; no CSS transpilation or legacy polyfill bundle is shipped.
 
-`stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
+`stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css-vars` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
 
 ### Sticky-header shadow
 

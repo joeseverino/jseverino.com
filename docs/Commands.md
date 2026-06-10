@@ -64,12 +64,12 @@ behind the scripts.
 | `npm run check:edge` | Contact handler, OpenAPI schema, and D1 schema agree |
 | `npm run check:preview` | Sitedrift wrapping on previews, absent on main |
 | `npm run check:docs` | Every doc link and `npm run` reference resolves |
-| `npm run check:css` | No CSS custom property is defined but never used |
+| `npm run check:css-vars` | No CSS custom property is defined but never used |
 | `npm run check:links` | Every internal reference in the built site resolves |
 | `npm run check:weight` | Per-page HTML and total CSS/JS stay inside their byte budgets |
 | `npm run check:html` | No duplicate ids; every image carries alt |
 | `npm run check:seo` | Title, canonical, og:title, og:image, valid JSON-LD on every page |
-| `npm run check:repo` | Node pin, lockfile alignment, clean tree, SHA-pinned Actions |
+| `npm run check:repo-policy` | Node pin, lockfile alignment, clean tree, SHA-pinned Actions |
 | `npm run audit:assets` | Image count + weight report (the gates run it strict) |
 | `npm run help` | Print the live grouped list of all of the above |
 

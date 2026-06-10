@@ -39,10 +39,10 @@
     "test:e2e:visual:update": "VISUAL=1 playwright test tests/playwright/visual.spec.ts --update-snapshots",
     "clean:generated": "node bin/clean-generated.mjs --all",
     "clean:conflicts": "node bin/clean-generated.mjs --conflicts",
-    "check": "npm run -s lint:css && npm run -s check:css && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
+    "check": "npm run -s lint:css && npm run -s check:css-vars && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "build:static": "node bin/build-static.mjs",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
-    "check:css": "node tests/audits/check-css.mjs",
+    "check:css-vars": "node tests/audits/check-css.mjs",
     "check:security": "node tests/audits/check-security-txt.mjs",
     "check:contrast": "node tests/audits/check-contrast.mjs",
     "check:parity": "node tests/audits/check-vault-mcp-parity.mjs",
@@ -54,7 +54,7 @@
     "check:links": "node tests/audits/check-links.mjs",
     "check:weight": "node tests/audits/check-page-weight.mjs",
     "check:seo": "node tests/audits/check-seo.mjs",
-    "check:repo": "node tests/audits/check-repository-policy.mjs",
+    "check:repo-policy": "node tests/audits/check-repository-policy.mjs",
     "audit:assets": "node tests/audits/audit-assets.mjs"
   },
   "dependencies": {

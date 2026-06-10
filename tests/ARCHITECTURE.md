@@ -10,7 +10,7 @@ them:
 | Directory | What it holds | How it runs |
 | :--- | :--- | :--- |
 | [`tests/audits/`](./audits/) | Node scripts that read the source tree and assert invariants. No browser. | `node tests/audits/<name>.mjs` |
-| [`tests/unit/`](./unit/) | `node:test` specs for pure library logic (the Markdown DSL). No browser, no build. | `npm run test:unit` |
+| [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Cloudflare functions, the gate harness, registry shape, and registry/docs parity. No browser, no build. | `npm run test:unit` |
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the **built** site (`dist/` via the preview server). | `playwright test` |
 | [`bin/`](../bin/) | Gate runners (`publish-check`, `release-check`, `diagnose`) and the post-push `deploy-verify`. | `npm run publish:check`, etc. |
 
@@ -50,9 +50,9 @@ The fan-out is six steps; the gates enforce most of them, so a missed step fails
 
 1. **Write the script** in `tests/audits/check-<thing>.mjs`. Resolve paths from the module's own location (`fileURLToPath(import.meta.url)`), never the cwd. Post-build audits get the built tree from [`lib.mjs`](./audits/lib.mjs) (`builtHtmlPages()` / `walkFiles()`) rather than re-resolving the outDir — the outDir decision itself is single-sourced in [`src/lib/build-output.mjs`](../src/lib/build-output.mjs). Exit non-zero on violation. On success print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>` — `publish:check` extracts the first `ok` + two-or-more-spaces line as its terse status (see `summarize()` in [`bin/publish-check.mjs`](../bin/publish-check.mjs)).
 2. **Register it** in [`registry.mjs`](./audits/registry.mjs): id, label, name, phase (`pre-build`/`post-build`), exec, gates, one-line `fix`. The unit suite ([`registry.test.ts`](./unit/registry.test.ts)) validates the entry shape and that the exec target exists; every gate picks the audit up from here automatically.
-3. **Add the npm script** (`check:<thing>`) in `package.json` for targeted runs.
+3. **Add the npm script** in `package.json` for targeted runs. The naming rule: the script suffix matches the registry `label` (`check:<label>` — e.g. label `edge` → `check:edge`), while the file name stays long and descriptive (`check-functions-parity.mjs`).
 4. **Add the help line** in [`bin/help.mjs`](../bin/help.mjs) — an uncategorized script shows under "Other" with a nudge until it is categorized.
-5. **Document it here**: a row in the validation matrix and a `### check-<thing>.mjs` section. The registry/docs parity test fails if the script is never mentioned in this file.
+5. **Document it here**: a row in the validation matrix and a `### check-<thing>.mjs` section. [`docs-parity.test.ts`](./unit/docs-parity.test.ts) fails if the script is never mentioned in this file or the label is missing from the release checklist's expected output.
 6. **Run `npm run diagnose -- --fast`** — `check-docs` verifies the new links and script references, and the unit suite verifies the registry entry.
 
 ---
@@ -141,6 +141,7 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, report-only policy, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
 | Logic | [gate harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
 | Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
+| Docs | [registry/docs parity](#the-unit-layer) | `tests/unit/docs-parity.test.ts` | Every audit is documented here, every publish label appears in the release checklist, every script in `docs/Commands.md`, every gate command in the README. |
 | Types | [functions type check](#functions-type-check) | `tsc -p functions` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
 | Parity | [functions/schema parity](#check-functions-paritymjs) | `tests/audits/check-functions-parity.mjs` | The contact handler, the API Shield OpenAPI schema, and the D1 schema agree on fields, limits, and INSERT columns. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
@@ -243,6 +244,7 @@ Not audits and not browser specs, but a third pre-build layer: `node:test` suite
 - **The Cloudflare Pages functions** — the only production code that otherwise runs untested until it is live. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. [`middleware.test.ts`](./unit/middleware.test.ts) verifies per-request CSP nonce generation, header rewriting, and the pass-through rules, with a recording stub standing in for Cloudflare's `HTMLRewriter`.
 - **The gate harness** ([`run-harness.test.ts`](./unit/run-harness.test.ts)) — the failure modes a green run never exercises: non-zero exits, missing binaries, and hung commands must all resolve as failed results, never hang the gate.
 - **The registry itself** ([`registry.test.ts`](./unit/registry.test.ts)) — the inventory every gate trusts blindly: unique ids, known gate/phase values, exec targets that exist on disk, and every audit visible to `diagnose`.
+- **Registry/docs parity** ([`docs-parity.test.ts`](./unit/docs-parity.test.ts)) — coverage between the machine inventory and the hand-written docs: every audit appears in this file, every publish label in the release checklist's expected output, every script in [`docs/Commands.md`](../docs/Commands.md), every gate command in the README. Prose accuracy stays human; coverage is enforced.
 
 [`tests/unit/markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts) exercises the custom Markdown renderer in [`src/lib/markdown.ts`](../src/lib/markdown.ts) directly — markdown in, HTML out, no browser and no build.
 
@@ -515,7 +517,7 @@ A CSS variable change dropped a text/background ratio below 4.5:1. Adjust the to
 ### Parity check fails (`npm run check:parity`)
 A frontmatter field changed in `src/content.config.ts` but not in the vault schema or the MCP server. Update the vault's `Frontmatter Schema.md` and the `update_writeup_frontmatter` signature. Never hand-edit synced frontmatter in `src/content/`.
 
-### `check:css` fails
+### `check:css-vars` fails
 A `--custom-property` is defined but never used. Remove the declaration, or add the `var(--…)` usage that justifies it.
 
 ### `check:security` fails
