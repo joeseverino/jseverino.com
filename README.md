@@ -162,45 +162,29 @@ Dynamic behavior is intentionally narrow:
 
 ## Local Commands
 
-`npm run help` prints this full list grouped by role; run it any time you are
-unsure what to reach for. The essentials, by role:
+The ones that matter day to day:
 
 ```sh
-# Daily — the ones you actually run
+# Daily
 npm run dev                # Start the Astro dev server
-npm run dev:drafts         # Sync drafts locally, then start the dev server
 npm run sync:content       # Sync published vault content into the repo
 npm run diagnose           # Run every check; writes .validation-report.md on failure
 npm run diff:build         # Build HEAD vs the working tree and report any change to shipped output
 
 # Release
-npm run publish:check      # Fast local build gate: security + contrast + parity + sync + build + audits
-npm run publish:check -- --no-sync   # Same gate without the vault sync (for code/refactor changes)
+npm run publish:check      # Fast local build gate (add -- --no-sync for code-only changes)
 npm run publish:check:ci   # Rehearse the CI gate: CI=1 + a scratch keyring, before pushing workflow changes
 npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
 npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
-
-# Occasional
-npm run sign:security      # Clear-sign public/.well-known/security.txt with the security@ key
-npm run seo:preview -- /   # Preview Google-style metadata from built HTML
-npm run scaffold:primer    # Scaffold a new 04 Reference/ primer with slim frontmatter
-npm run scaffold:writeup-field   # Patch every layer needed for a new writeup field (dry-run by default)
-npm run draft:cover-alt    # Use Claude API to draft cover_alt for one or every writeup
-npm audit --omit=dev       # Check known dependency advisories
-npm outdated               # Check direct dependency freshness
-
-# Individual audits (the gates run these via tests/audits/registry.mjs; handy for targeted runs)
-npm run check              # CSS lint/audit plus Astro type/content diagnostics
-npm run check:security     # Verify the signature, required fields, Expires, and WKD file
-npm run check:contrast     # Compute WCAG ratios for every text/background pair in base.css
-npm run check:parity       # Assert vault Frontmatter Schema, Zod, and MCP agree on writeup fields
-npm run check:repo         # Enforce Node, lockfile, tracked-file, conflict-copy, and action-pin policy
-npm run check:preview      # Prove preview wrapping and the main production guard
-npm run check:links        # Every internal link and asset reference in the built site resolves
-npm run check:weight       # Per-page HTML and total CSS/JS stay inside their byte budgets
 ```
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. `site seo [--result] <url|path|slug>` calls the same SEO preview script after a local build; `--result` prints only the Google-style snippet mockup. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
+Every other script — asset generation, scaffolding, the individual audits the
+gates compose — is in [`docs/Commands.md`](./docs/Commands.md), an overview by
+role followed by the detail per command. `npm run help` prints the live
+grouped list straight from `package.json`, and a unit test asserts the
+reference covers every script, so neither can drift.
+
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
 ## Validation & Testing
 
@@ -214,6 +198,8 @@ Start with the tour in [`tests/README.md`](./tests/README.md); the full referenc
 %%{init: { "htmlLabels": false } }%%
 graph LR
     A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
+    G["npm run diagnose — every check, one pass, any time"] -.-> B
+    G -.-> C
 ```
 
 ### GitHub Actions Continuous Integration
@@ -284,6 +270,7 @@ Do not commit:
 - [`docs/Vault-Workflow.md`](./docs/Vault-Workflow.md) explains the private-to-public sync contract.
 - [`docs/Blueprint-Setup.md`](./docs/Blueprint-Setup.md) inventories every instance-specific value (identity, brand, edge config, dashboard) for reuse as a blueprint.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
+- [`docs/Commands.md`](./docs/Commands.md) is the full command reference — every npm script by role, with detail per command.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
 - [`docs/Deployment-Preview-Review.md`](./docs/Deployment-Preview-Review.md) documents the sitedrift-powered Cloudflare preview review workflow and production guard.
 - [`docs/Accessibility.md`](./docs/Accessibility.md) documents landmarks, skip navigation, alt text, focus behavior, reduced motion, keyboard coverage, and contrast posture.

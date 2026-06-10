@@ -103,6 +103,13 @@ Never update snapshots only to make CI green. A manual keyboard pass through
 the home, a portfolio article, the portfolio listing, and the contact form
 remains useful before large interaction changes.
 
+Three layers of this posture are machine-enforced on every gate run: static
+WCAG contrast math over the color tokens (`npm run check:contrast`),
+structural HTML over every built page — unique ids, alt on every image
+(`npm run check:html`) — and an axe-core WCAG A/AA sweep over the key page
+archetypes in a real browser
+([`tests/playwright/a11y.single.spec.ts`](../tests/playwright/a11y.single.spec.ts)).
+
 ## Related Docs
 
 - [`docs/SEO.md`](./SEO.md) — heading hierarchy and image alt strategy

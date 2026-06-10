@@ -97,6 +97,14 @@ describe('audit registry', () => {
     }
   });
 
+  test('docs/Commands.md covers every script in package.json', () => {
+    const commands = fs.readFileSync(path.join(root, 'docs/Commands.md'), 'utf8');
+    const { scripts } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    for (const name of Object.keys(scripts)) {
+      assert.ok(commands.includes(`npm run ${name}`), `"${name}" is missing from docs/Commands.md`);
+    }
+  });
+
   test('auditsFor filters by gate and phase', () => {
     const publishPre = auditsFor('publish', 'pre-build');
     assert.ok(publishPre.length > 0);

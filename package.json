@@ -48,7 +48,7 @@
     "check:parity": "node tests/audits/check-vault-mcp-parity.mjs",
     "check:preview": "node tests/audits/check-sitedrift-preview.mjs",
     "check:docs": "node tests/audits/check-docs.mjs",
-    "check:types": "tsc -p tsconfig.functions.json",
+    "check:types": "tsc -p functions",
     "check:edge": "node tests/audits/check-functions-parity.mjs",
     "check:html": "node tests/audits/check-html.mjs",
     "check:links": "node tests/audits/check-links.mjs",

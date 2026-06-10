@@ -50,7 +50,7 @@ export const AUDITS = [
   },
   {
     id: 'functions-types', label: 'types', name: 'Functions Type Check', phase: 'pre-build',
-    exec: { cmd: 'npx', args: ['tsc', '-p', 'tsconfig.functions.json'] },
+    exec: { cmd: 'npx', args: ['tsc', '-p', 'functions/tsconfig.json'] },
     gates: ['publish', 'diagnose'], summary: 'silent',
     fix: 'TypeScript errors in `functions/*.ts` (the only TS excluded from `astro check`). Run `npm run check:types`; Cloudflare-runtime globals are declared in `functions/cloudflare.d.ts`.',
   },

@@ -73,6 +73,7 @@ graph TD
         B1["security.txt signature"]
         B2["WCAG contrast"]
         B3["vault / Zod / MCP parity"]
+        B9["functions types + edge parity"]
         B8["unit suite: DSL + functions + harness"]
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
@@ -97,7 +98,7 @@ graph TD
     end
 
     %% Force vertical layout nesting
-    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
+    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B9 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
     B7 ~~~ C
     C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
     C4 ~~~ D
@@ -141,7 +142,7 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, report-only policy, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
 | Logic | [gate harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
 | Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
-| Types | [functions type check](#functions-type-check) | `tsc -p tsconfig.functions.json` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
+| Types | [functions type check](#functions-type-check) | `tsc -p functions` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
 | Parity | [functions/schema parity](#check-functions-paritymjs) | `tests/audits/check-functions-parity.mjs` | The contact handler, the API Shield OpenAPI schema, and the D1 schema agree on fields, limits, and INSERT columns. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
@@ -193,7 +194,7 @@ Any drift fails, so the authoring workflow can never silently desync.
 
 ### Functions type check
 
-`tsc -p tsconfig.functions.json` (`npm run check:types`). The Cloudflare Pages functions are excluded from `astro check` (they are bundled by the Pages pipeline, not Astro), which made them the only production TypeScript nothing type-checked. This audit compiles them under strict mode with the `WebWorker` lib; the Cloudflare-runtime globals the lib doesn't know (`HTMLRewriter`, the sitedrift module) are declared in [`functions/cloudflare.d.ts`](../functions/cloudflare.d.ts) — deliberately narrower than `@cloudflare/workers-types`, so the gate carries zero extra dependencies.
+`tsc -p functions` (`npm run check:types`). The Cloudflare Pages functions are excluded from `astro check` (they are bundled by the Pages pipeline, not Astro), which made them the only production TypeScript nothing type-checked. This audit compiles them under strict mode with the `WebWorker` lib; the Cloudflare-runtime globals the lib doesn't know (`HTMLRewriter`, the sitedrift module) are declared in [`functions/cloudflare.d.ts`](../functions/cloudflare.d.ts) — deliberately narrower than `@cloudflare/workers-types`, so the gate carries zero extra dependencies.
 
 ### `check-functions-parity.mjs`
 

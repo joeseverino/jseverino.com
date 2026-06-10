@@ -30,6 +30,8 @@ Three gates run in order. The first two are local; the third runs after the push
 %%{init: { "htmlLabels": false } }%%
 graph LR
     A["change"] --> B["publish:check"] --> C["release:check"] --> D["git push"] --> E["deploy:verify"]
+    G["diagnose — all of it, one pass, any time"] -.-> B
+    G -.-> C
 ```
 
 | Gate | Runs | Covers |
