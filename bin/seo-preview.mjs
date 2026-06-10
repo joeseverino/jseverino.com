@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
+import { escapeRegExp } from '../src/lib/escape-regexp.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const distRoot = path.join(siteRoot, 'dist.nosync');
@@ -91,7 +92,7 @@ function decodeEntities(value) {
 }
 
 function attr(html, selector, attrName = 'content') {
-  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escaped = escapeRegExp(selector);
   const pattern = new RegExp(`<meta\\s+[^>]*${escaped}[^>]*>`, 'i');
   const tag = html.match(pattern)?.[0];
   if (!tag) return '';

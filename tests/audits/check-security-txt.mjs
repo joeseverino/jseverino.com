@@ -12,9 +12,10 @@ import {
   stripSignature,
 } from '../../src/lib/security-txt.mjs';
 import { SITE } from '../../src/lib/site-config.mjs';
+import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
 
 const wkdEncryptionRe = new RegExp(
-  `^https://${SITE.domain.replace(/\./g, '\\.')}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
+  `^https://${escapeRegExp(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
 );
 
 const expiresWarnDays = 30;
