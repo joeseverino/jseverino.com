@@ -86,6 +86,17 @@ describe('audit registry', () => {
     }
   });
 
+  test('every gate command is listed in the README command reference', () => {
+    const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+    const { scripts } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    const gateScripts = Object.keys(scripts).filter((name) =>
+      /^(publish:|release:|deploy:|diagnose$)/.test(name),
+    );
+    for (const name of gateScripts) {
+      assert.ok(readme.includes(`npm run ${name}`), `gate command "${name}" is missing from README.md`);
+    }
+  });
+
   test('auditsFor filters by gate and phase', () => {
     const publishPre = auditsFor('publish', 'pre-build');
     assert.ok(publishPre.length > 0);

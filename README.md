@@ -176,6 +176,7 @@ npm run diff:build         # Build HEAD vs the working tree and report any chang
 # Release
 npm run publish:check      # Fast local build gate: security + contrast + parity + sync + build + audits
 npm run publish:check -- --no-sync   # Same gate without the vault sync (for code/refactor changes)
+npm run publish:check:ci   # Rehearse the CI gate: CI=1 + a scratch keyring, before pushing workflow changes
 npm run release:check      # Trusted deterministic gate; also fails if validation changes repo state
 npm run deploy:verify      # After push: verify remote checks and the deployed production artifact
 
