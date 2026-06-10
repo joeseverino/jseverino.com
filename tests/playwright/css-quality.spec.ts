@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
@@ -105,7 +106,7 @@ test('buttons and cards keep a stable click target through press and release', a
   await page.mouse.down();
   expect(await cardLink.boundingBox()).toEqual(raisedCardBox);
   await page.mouse.up();
-  await expect(page).toHaveURL(new RegExp(`${href!.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`));
+  await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href!)}$`));
 });
 
 test('reduced motion disables smooth scrolling and transitions', async ({ page }) => {
