@@ -27,6 +27,11 @@ const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
 
 const VARIANT_WIDTHS = [512, 1024, 1600];
 const imageManifest = {};
+// Every file written under the managed content/asset roots this run. Sync writes
+// in place and prunes only files NOT in this set at the very end — so a partial
+// or flaky pass (this repo lives in iCloud) can never delete committed assets;
+// deletions happen once, after a complete pass, and only for true orphans.
+const writtenFiles = new Set();
 let syncManifest = {};
 
 try {
@@ -37,14 +42,10 @@ try {
 
 const today = new Date().toISOString().slice(0, 10);
 
-async function emptyDir(dir) {
-  await fsPromises.rm(dir, { recursive: true, force: true });
-  await fsPromises.mkdir(dir, { recursive: true });
-}
-
 async function copyFile(source, target) {
   await fsPromises.mkdir(path.dirname(target), { recursive: true });
   await fsPromises.copyFile(source, target);
+  writtenFiles.add(target);
 }
 
 function normalizeLocalAssetRef(ref) {
@@ -117,6 +118,7 @@ async function optimizeImage(source, target, url) {
         await fsPromises.writeFile(outFile, encoded);
         await fsPromises.copyFile(outFile, cacheFile);
       }
+      writtenFiles.add(outFile);
     };
 
     const avif = [];
@@ -284,8 +286,8 @@ function stripRepeatedDescription(markdown, description) {
 
 async function syncPages() {
   const entries = await fsPromises.readdir(sourcePages, { withFileTypes: true });
-  await emptyDir(targetPages);
-  await emptyDir(targetPageAssets);
+  await fsPromises.mkdir(targetPages, { recursive: true });
+  await fsPromises.mkdir(targetPageAssets, { recursive: true });
 
   for (const entry of entries) {
     if (entry.isFile() && entry.name === '_technology-groups.md') {
@@ -312,7 +314,9 @@ async function syncPages() {
     const synced = matter.stringify(rewrittenBody, publicPageData(parsed.data));
 
     await fsPromises.mkdir(targetPages, { recursive: true });
-    await fsPromises.writeFile(path.join(targetPages, `${slug}.md`), synced);
+    const pageTarget = path.join(targetPages, `${slug}.md`);
+    await fsPromises.writeFile(pageTarget, synced);
+    writtenFiles.add(pageTarget);
 
     await processReferencedAssets(
       refs,
@@ -325,8 +329,8 @@ async function syncPages() {
 
 async function syncWriteups() {
   const entries = await fsPromises.readdir(sourceWriteups, { withFileTypes: true });
-  await emptyDir(targetWriteups);
-  await emptyDir(targetWriteupAssets);
+  await fsPromises.mkdir(targetWriteups, { recursive: true });
+  await fsPromises.mkdir(targetWriteupAssets, { recursive: true });
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -359,7 +363,9 @@ async function syncWriteups() {
 
     const targetDir = path.join(targetWriteups, slug);
     await fsPromises.mkdir(targetDir, { recursive: true });
-    await fsPromises.writeFile(path.join(targetDir, 'index.md'), syncedMarkdown);
+    const writeupTarget = path.join(targetDir, 'index.md');
+    await fsPromises.writeFile(writeupTarget, syncedMarkdown);
+    writtenFiles.add(writeupTarget);
 
     await processReferencedAssets(
       refs,
@@ -370,9 +376,33 @@ async function syncWriteups() {
   }
 }
 
+// Remove files under the managed roots that were NOT written this run — true
+// orphans: unreferenced assets, unpublished pages/writeups, or stale variants
+// from a changed source. Runs only after both passes complete, so an aborted or
+// flaky run (iCloud) never deletes committed content; deletions happen once, at
+// the end, and only for files no longer produced.
+async function pruneOrphans(roots) {
+  for (const root of roots) {
+    if (!fs.existsSync(root)) continue;
+    const walk = async (dir) => {
+      for (const entry of await fsPromises.readdir(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(full);
+          if ((await fsPromises.readdir(full)).length === 0) await fsPromises.rmdir(full);
+        } else if (!writtenFiles.has(full)) {
+          await fsPromises.rm(full, { force: true });
+        }
+      }
+    };
+    await walk(root);
+  }
+}
+
 await fsPromises.mkdir(imageCacheDir, { recursive: true });
 await syncPages();
 await syncWriteups();
+await pruneOrphans([targetPages, targetPageAssets, targetWriteups, targetWriteupAssets]);
 
 const sortedManifest = Object.fromEntries(
   Object.keys(imageManifest)
