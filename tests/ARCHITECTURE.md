@@ -77,7 +77,7 @@ graph TD
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
         B6["astro check + build"]
-        B7["asset weight + links + page weight + SEO"]
+        B7["asset weight + links + page weight + HTML + SEO"]
     end
 
     subgraph release ["Release Check (Final Local Gate)"]
@@ -106,7 +106,7 @@ graph TD
 
 ### The three gates
 
-1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
+1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the functions type check and the functions/schema (edge) parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, structural HTML, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
 
    `npm run publish:check:ci` ([`bin/ci-rehearsal.mjs`](../bin/ci-rehearsal.mjs)) rehearses the runner's conditions locally — `CI=1` plus a scratch GPG keyring seeded only from the committed WKD key — so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
@@ -141,6 +141,8 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, report-only policy, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
 | Logic | [gate harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
 | Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
+| Types | [functions type check](#functions-type-check) | `tsc -p tsconfig.functions.json` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
+| Parity | [functions/schema parity](#check-functions-paritymjs) | `tests/audits/check-functions-parity.mjs` | The contact handler, the API Shield OpenAPI schema, and the D1 schema agree on fields, limits, and INSERT columns. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
 | Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; the gates run it strict, so an image past 1.5 MB fails. |
@@ -154,6 +156,8 @@ The design goal: a green run gives you nothing to read, and a red run gives you 
 | Routes | [endpoints + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | `robots.txt`, `feed.xml`, and unknown-route 404 behavior the sitemap smoke test can't reach. |
 | Images | [image resolution](#resourcessinglespects) | `tests/playwright/resources.single.spec.ts` | Every `<img>`/`<source>` variant (AVIF/WebP/fallback) on key pages resolves. |
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
+| Structure | [structural HTML](#check-htmlmjs) | `tests/audits/check-html.mjs` | No page repeats an `id`; every `<img>` carries an `alt` attribute. All pages, statically. |
+| A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser. |
 | Links | [internal link integrity](#check-linksmjs) | `tests/audits/check-links.mjs` | Every internal `href`/`src`/`srcset` reference in the built HTML resolves to an emitted file (or a known function route). |
 | Perf | [page weight budget](#check-page-weightmjs) | `tests/audits/check-page-weight.mjs` | Per-page HTML, total CSS, and total JS stay within their byte budgets. |
 | SEO | [page metadata](#check-seomjs) | `tests/audits/check-seo.mjs` | Every built page has title, canonical, og:title, og:image, and valid JSON-LD. |
@@ -187,6 +191,14 @@ Asserts writeup frontmatter fields agree across three sources of truth:
 
 Any drift fails, so the authoring workflow can never silently desync.
 
+### Functions type check
+
+`tsc -p tsconfig.functions.json` (`npm run check:types`). The Cloudflare Pages functions are excluded from `astro check` (they are bundled by the Pages pipeline, not Astro), which made them the only production TypeScript nothing type-checked. This audit compiles them under strict mode with the `WebWorker` lib; the Cloudflare-runtime globals the lib doesn't know (`HTMLRewriter`, the sitedrift module) are declared in [`functions/cloudflare.d.ts`](../functions/cloudflare.d.ts) — deliberately narrower than `@cloudflare/workers-types`, so the gate carries zero extra dependencies.
+
+### `check-functions-parity.mjs`
+
+The deploy-side sibling of the vault parity check. The same shape is declared in three places nothing else keeps aligned: [`db/contact-openapi.json`](../db/contact-openapi.json) (the API Shield schema Cloudflare enforces at the edge), the handlers' payload fields and limits in `functions/api/`, and the D1 tables in [`db/schema.sql`](../db/schema.sql). It asserts the payload field set, required list, and length limits match the OpenAPI schema, and that every handler `INSERT` names only columns the D1 schema defines with matching bind counts. A field added to the handler but not the schema gets blocked at the edge once API Shield moves to Block mode; this fails first.
+
 ### `check-sitedrift-preview.mjs`
 Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'main'` and that production builds (`main`) ship as untampered Astro pages with `/__sitedrift` returning 404.
 
@@ -216,6 +228,9 @@ Runs **after the build**. The sitemap smoke test proves every page exists; this 
 
 ### `check-page-weight.mjs`
 Runs **after the build** — the deterministic, flake-free complement to the CI Lighthouse run. Three byte budgets over the emitted output: per-page HTML (150 KB), total CSS (75 KB), and total JS (25 KB), set from the measured baseline (~80 KB worst page, ~25 KB CSS, ~2.5 KB JS) with generous headroom. A failure means a real regression — a runaway page, a style explosion, or a framework bundle sneaking into a no-framework site. Budgets may be raised, but only as a conscious commit to `tests/audits/check-page-weight.mjs`.
+
+### `check-html.mjs`
+Runs **after the build**. Structural assertions over every emitted page, statically: no `id` value appears twice on a page (duplicate ids silently break fragment links, label association, and `aria-*` references), and every `<img>` carries an `alt` attribute (empty `alt` is valid — it marks a decorative image — but a missing attribute is always an authoring bug). The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
 
 ### `check-seo.mjs`
 Runs **after the build**, over the emitted HTML in the local outDir (`dist.nosync`) or the CI outDir (`dist`). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, `og:image`, and only valid JSON-LD. Redirect stubs (`Astro.redirect`, detected by their `meta http-equiv="refresh"`) are skipped, since they are not indexable content. It also **fails on zero pages** — an empty or stale outDir is treated as a broken build, not a pass. Wired into `publish:check` after the build and into `diagnose`'s post-build phase.
@@ -364,6 +379,9 @@ test('renders, positions, and dismisses tooltips correctly', async ({ page }) =>
   await expect(page.locator('.private-tooltip')).toHaveCount(0);
 });
 ```
+
+### `a11y.single.spec.ts`
+Runs axe-core's full WCAG A/AA ruleset (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`) against the key page archetypes — home, the portfolio listing, a writeup (resolved via `helpers/writeups.ts`), the contact form, and the resume. This is where label association, landmark structure, and *computed* color contrast actually resolve; the static audits cover the cheap structural rules on every page, this covers the deep rules on the representative ones. Failures print the rule id, impact, and an offending node.
 
 ### `routes.single.spec.ts`
 The endpoint and error routes the sitemap smoke test can't reach: `robots.txt` (200, plain text, contains the `Sitemap:` line), `feed.xml` (200, XML, valid RSS with at least one `<item>`), and an unknown route (returns a real `404` status and renders the not-found page).

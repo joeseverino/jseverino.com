@@ -49,6 +49,18 @@ export const AUDITS = [
     fix: 'Ensure the vault frontmatter schema (`Frontmatter Schema.md`), Zod schema (`src/content.config.ts`), and the Python MCP server parameters agree on all fields.',
   },
   {
+    id: 'functions-types', label: 'types', name: 'Functions Type Check', phase: 'pre-build',
+    exec: { cmd: 'npx', args: ['tsc', '-p', 'tsconfig.functions.json'] },
+    gates: ['publish', 'diagnose'], summary: 'silent',
+    fix: 'TypeScript errors in `functions/*.ts` (the only TS excluded from `astro check`). Run `npm run check:types`; Cloudflare-runtime globals are declared in `functions/cloudflare.d.ts`.',
+  },
+  {
+    id: 'functions-parity', label: 'edge', name: 'Functions/Schema Parity', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-functions-parity.mjs'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'The contact handler, `db/contact-openapi.json` (API Shield), and `db/schema.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together.',
+  },
+  {
     id: 'preview-check', label: 'preview', name: 'Sitedrift Preview Guard', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-sitedrift-preview.mjs'] },
     gates: ['publish', 'diagnose'],
@@ -116,6 +128,12 @@ export const AUDITS = [
     exec: { cmd: 'node', args: ['tests/audits/check-page-weight.mjs'] },
     gates: ['publish', 'diagnose'],
     fix: 'A page or bundle exceeded its byte budget (per-page HTML, total CSS, total JS). Slim the regression, or consciously raise the budget in `tests/audits/check-page-weight.mjs`.',
+  },
+  {
+    id: 'html-check', label: 'html', name: 'Structural HTML', phase: 'post-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-html.mjs'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'A built page repeats an id attribute or ships an <img> without alt. Fix the component or content at the reported page; decorative images use alt="", never a missing attribute.',
   },
   {
     id: 'seo-check', label: 'seo', name: 'SEO Metadata', phase: 'post-build',

@@ -34,7 +34,7 @@ graph LR
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run publish:check` | local, pre-build | signatures, contrast, schema parity, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page-weight budget — also run by CI on every push (minus the local-only parity check) |
+| `npm run publish:check` | local, pre-build | signatures, contrast, schema + edge parity, functions types, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page weight, structural HTML — also run by CI on every push (minus the local-only vault parity check) |
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
 | `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
 
@@ -67,9 +67,13 @@ across the vault YAML, the Zod config, and the Python MCP server, no
 [repository policy](./ARCHITECTURE.md#check-repository-policymjs) that keeps secrets,
 build output, and unpinned Actions out of git,
 [documentation integrity](./ARCHITECTURE.md#check-docsmjs) so every link and `npm run`
-reference in the docs resolves, and (post-build)
+reference in the docs resolves, [functions/schema parity](./ARCHITECTURE.md#check-functions-paritymjs)
+so the contact handler, the API Shield schema, and the D1 tables can't drift apart,
+a [strict type check](./ARCHITECTURE.md#functions-type-check) over the Cloudflare
+functions, and (post-build)
 [internal link integrity](./ARCHITECTURE.md#check-linksmjs) across every built page,
-a [page-weight budget](./ARCHITECTURE.md#check-page-weightmjs), and
+a [page-weight budget](./ARCHITECTURE.md#check-page-weightmjs),
+[structural HTML](./ARCHITECTURE.md#check-htmlmjs) (unique ids, alt on every image), and
 [SEO metadata](./ARCHITECTURE.md#check-seomjs) on every rendered page.
 
 **[`tests/unit/`](./unit/)** — `node:test` specs for pure logic, no browser and no
@@ -90,7 +94,9 @@ Node's native test runner via type stripping — no extra dependency.
 [Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
 backend), [private-link tooltips](./ARCHITECTURE.md#tooltipsspects), and the
 engine-agnostic [`*.single`](./ARCHITECTURE.md#4-testsplaywright--browser-specs)
-checks for endpoints/404, image-variant resolution, and `rel=noopener`.
+checks for endpoints/404, image-variant resolution, `rel=noopener`, and an
+[axe-core WCAG A/AA sweep](./ARCHITECTURE.md#a11ysinglespects) over the key
+page archetypes.
 
 > The `audit-` vs `check-` prefix is meaningful: `check-*` gates (fail), `audit-*`
 > measures and reports — though the gates run the one `audit-*` (`audit-assets`)

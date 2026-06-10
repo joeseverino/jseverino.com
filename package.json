@@ -13,20 +13,17 @@
   "type": "module",
   "scripts": {
     "help": "node bin/help.mjs",
-
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "sync:content": "node bin/sync-content.mjs",
     "diagnose": "node bin/diagnose.mjs",
     "diff:build": "node bin/diff-build.mjs",
-
     "publish:check": "node bin/publish-check.mjs",
     "publish:check:ci": "node bin/ci-rehearsal.mjs",
     "release:check": "node bin/release-check.mjs",
     "deploy:verify": "node bin/deploy-verify.mjs",
     "build": "npm run -s check && npm run -s build:static",
     "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
-
     "make:icons": "node bin/make-icons.mjs",
     "make:og": "node bin/make-og-image.mjs",
     "make:social": "node bin/make-github-social.mjs",
@@ -42,7 +39,6 @@
     "test:e2e:visual:update": "VISUAL=1 playwright test tests/playwright/visual.spec.ts --update-snapshots",
     "clean:generated": "node bin/clean-generated.mjs --all",
     "clean:conflicts": "node bin/clean-generated.mjs --conflicts",
-
     "check": "npm run -s lint:css && npm run -s check:css && NODE_OPTIONS=--max-old-space-size=4096 ASTRO_TELEMETRY_DISABLED=1 astro check --minimumSeverity warning",
     "build:static": "node bin/build-static.mjs",
     "lint:css": "stylelint \"src/styles/**/*.css\"",
@@ -52,6 +48,9 @@
     "check:parity": "node tests/audits/check-vault-mcp-parity.mjs",
     "check:preview": "node tests/audits/check-sitedrift-preview.mjs",
     "check:docs": "node tests/audits/check-docs.mjs",
+    "check:types": "tsc -p tsconfig.functions.json",
+    "check:edge": "node tests/audits/check-functions-parity.mjs",
+    "check:html": "node tests/audits/check-html.mjs",
     "check:links": "node tests/audits/check-links.mjs",
     "check:weight": "node tests/audits/check-page-weight.mjs",
     "check:seo": "node tests/audits/check-seo.mjs",
@@ -75,6 +74,7 @@
     "branding-engine": "^0.2.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
     "playwright": "^1.60.0",
     "sitedrift": "^0.3.11",

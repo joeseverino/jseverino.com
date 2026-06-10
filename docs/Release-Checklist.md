@@ -67,6 +67,8 @@ content      no content changes
 security     signed, 5 fields present, expires in <n>d, WKD file present
 contrast     <ratio>:1  body text on background (<fg> on <bg>)
 parity       schema/Zod/MCP agree on writeup fields: ...
+types        passed
+edge         OpenAPI fields/limits and <n> D1 inserts agree with the handlers
 preview      passed
 unit         passed
 docs         <n> docs, <n> local links, <n> script refs resolve
@@ -77,6 +79,7 @@ build        <n> pages built
 assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
 links        <n> pages, <n> internal references (<n> unique) resolve
 weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75KB, JS <n>KB/25KB
+html         <n> pages: <n> ids unique per page, <n> images all carry alt
 seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 ```
 
