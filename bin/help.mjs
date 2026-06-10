@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// `npm run help` — a grouped, role-labeled view of the npm scripts so you never
-// have to scan a flat list to find what to run. It reads package.json at runtime,
+// `npm run help` — a grouped, role-labeled view of the npm scripts so finding
+// the right one never means scanning a flat list. It reads package.json at runtime,
 // so it can't go stale: a script removed from package.json drops out here, and a
 // new one that isn't curated below still shows under "Other" (with a nudge to
 // categorize it) — nothing is ever hidden.
@@ -13,12 +13,12 @@ const { scripts } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 
 
 const GROUPS = [
   {
-    title: 'Daily — the ones you actually run',
+    title: 'Daily — the everyday workflow',
     items: {
       'dev': 'Start the local dev server',
       'dev:drafts': 'Dev server including unpublished drafts',
       'sync:content': 'Pull published content from the vault into the repo',
-      'diagnose': 'Run every check and report what is wrong — your "is it okay?" button',
+      'diagnose': 'Run every check and report what is wrong — the "is it okay?" button',
       'diff:build': 'Build HEAD vs the working tree; show what changed in the shipped site',
     },
   },
@@ -54,7 +54,7 @@ const GROUPS = [
     },
   },
   {
-    title: 'Internal — run by the commands above; you rarely type these',
+    title: 'Internal — run by the commands above; rarely typed directly',
     items: {
       'check': 'Used by build — CSS lint + unused-var + astro type/content check',
       'build:static': 'Used by build — astro build + sitedrift wrap',

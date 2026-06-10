@@ -10,11 +10,11 @@ patched away after the fact.
 
 ## Reporting a vulnerability
 
-If you find a security issue in this site — the build output, the contact-form
-function, the response headers, or anything else in this repository — please
-report it privately rather than opening a public issue.
+Security issues in this site — the build output, the contact-form function,
+the response headers, or anything else in this repository — should be
+reported privately rather than through a public issue.
 
-- Use the contact form at <https://jseverino.com/contact/> and start your
+- Use the contact form at <https://jseverino.com/contact/> and start the
   message with **"Security:"**.
 - Include enough detail to reproduce: the URL or endpoint, the request, and
   the observed vs. expected behavior.
@@ -104,7 +104,7 @@ trust boundary between private notes and the public site:
   resolving outside is refused with an error.
 
 Because the published snapshot is committed to the repo, the public surface is
-fully auditable in git history — you can see exactly what shipped and when. Detailed in the [Vault-as-CMS Workflow](./docs/Vault-Workflow.md).
+fully auditable in git history — the log shows exactly what shipped and when. Detailed in the [Vault-as-CMS Workflow](./docs/Vault-Workflow.md).
 
 ### The build needs no secrets and no private access
 
@@ -157,8 +157,8 @@ two-letter country code, and the page the form was submitted from. The
 non-message fields support abuse review and basic context. Records live
 only in the private D1 database and are not exposed on the public site.
 There is no automated retention or deletion — records are kept indefinitely
-until the site owner removes them. To request a copy of, or deletion of,
-your submission, send a follow-up through the contact form and start the
+until the site owner removes them. To request a copy or deletion of a
+submission, send a follow-up through the contact form and start the
 message with **"Data request"** so it can be triaged correctly.
 
 **Privacy notice.** A plain-English version of what's collected, why,

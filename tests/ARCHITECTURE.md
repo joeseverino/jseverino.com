@@ -1,9 +1,8 @@
 # Validation Architecture (Full Reference)
 
 This is the complete reference for how `jseverino.com` is verified. For a short,
-visual tour start with [`tests/README.md`](./README.md); come here when you need
-the exact assertion a check makes, the command that runs it, or how to fix a
-failure.
+visual tour start with [`tests/README.md`](./README.md); come here for the exact
+assertion a check makes, the command that runs it, or how to fix a failure.
 
 Verification lives in three directories, plus orchestrators in `bin/` that sequence
 them:
@@ -52,7 +51,7 @@ The fan-out is six steps; the gates enforce most of them, so a missed step fails
 1. **Write the script** in `tests/audits/check-<thing>.mjs`. Resolve paths from the module's own location (`fileURLToPath(import.meta.url)`), never the cwd. Post-build audits get the built tree from [`lib.mjs`](./audits/lib.mjs) (`builtHtmlPages()` / `walkFiles()`) rather than re-resolving the outDir — the outDir decision itself is single-sourced in [`src/lib/build-output.mjs`](../src/lib/build-output.mjs). Exit non-zero on violation. On success print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>` — `publish:check` extracts the first `ok` + two-or-more-spaces line as its terse status (see `summarize()` in [`bin/publish-check.mjs`](../bin/publish-check.mjs)).
 2. **Register it** in [`registry.mjs`](./audits/registry.mjs): id, label, name, phase (`pre-build`/`post-build`), exec, gates, one-line `fix`. The unit suite ([`registry.test.ts`](./unit/registry.test.ts)) validates the entry shape and that the exec target exists; every gate picks the audit up from here automatically.
 3. **Add the npm script** (`check:<thing>`) in `package.json` for targeted runs.
-4. **Add the help line** in [`bin/help.mjs`](../bin/help.mjs) — an uncategorized script shows under "Other" with a nudge until you do.
+4. **Add the help line** in [`bin/help.mjs`](../bin/help.mjs) — an uncategorized script shows under "Other" with a nudge until it is categorized.
 5. **Document it here**: a row in the validation matrix and a `### check-<thing>.mjs` section. The registry/docs parity test fails if the script is never mentioned in this file.
 6. **Run `npm run diagnose -- --fast`** — `check-docs` verifies the new links and script references, and the unit suite verifies the registry entry.
 
@@ -120,12 +119,12 @@ graph TD
    Playwright suite, so the browser tests serve that artifact instead of
    rebuilding it inside `playwright.config.ts`'s `webServer`.
 
-### What you actually read
+### What there is to read
 
-The design goal: a green run gives you nothing to read, and a red run gives you nothing *but* what to fix.
+The design goal: a green run leaves nothing to read, and a red run leaves nothing *but* what to fix.
 
 - **On success**, `diagnose` prints a terse list of `[PASS]` lines and deletes any stale report. There is nothing to act on. See a real run in [`examples/diagnose-pass.txt`](./audits/examples/diagnose-pass.txt): one command, the full surface (static audits, build, `check-seo`, the Playwright matrix including visual baselines, and an idempotence check), about 60 seconds.
-- **On failure**, it does not stop at the first problem. It runs every check, then writes [`.validation-report.md`](./audits/examples/validation-report.md) with one row per failure, a concrete remediation action, and the exact command to rerun that check alone. Long failure output (a cross-browser Playwright run can produce thousands of lines) is clipped to its head and tail in the report — the rerun command is the path to the full output. The only output you ever read is the thing you need to fix.
+- **On failure**, it does not stop at the first problem. It runs every check, then writes [`.validation-report.md`](./audits/examples/validation-report.md) with one row per failure, a concrete remediation action, and the exact command to rerun that check alone. Long failure output (a cross-browser Playwright run can produce thousands of lines) is clipped to its head and tail in the report — the rerun command is the path to the full output. The only output ever worth reading is the thing that needs fixing.
 
 ---
 

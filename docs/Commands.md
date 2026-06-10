@@ -9,7 +9,7 @@ behind the scripts.
 
 ## Overview
 
-### Daily — the ones you actually run
+### Daily — the everyday workflow
 
 | Command | Does |
 | :--- | :--- |

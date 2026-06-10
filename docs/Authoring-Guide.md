@@ -119,7 +119,7 @@ Wraps the home-page hero in a centered `<header>`. Use once, at the top of the h
 
 Role • Credentials
 
-<p class="hero-summary">One-line summary of what you build.</p>
+<p class="hero-summary">One-line summary of the work.</p>
 
 <p class="hero-location">City, State</p>
 

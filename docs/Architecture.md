@@ -343,7 +343,7 @@ The image *variants* emitted by the image pipeline (AVIF/WebP at multiple widths
 ### When to add a new bucket
 
 The convention scales by adding a new top-level bucket under `public/assets/`. Examples:
-- A `videos/` bucket if you start hosting MP4/WebM downloads.
+- A `videos/` bucket if MP4/WebM downloads ever ship.
 - A `data/` bucket for JSON exports or downloadable datasets.
 
 Avoid using existing buckets for unrelated content (e.g., putting a video under `docs/`) — the bucket name is the convention contract.

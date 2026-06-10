@@ -21,8 +21,8 @@ the logo, the way the purple was just the accent.
 So the site had two brand colors, and they had nothing to do with each other.
 The theme was purple by inheritance and the logo was yellow by mystery. Neither
 was deliberate, and the two never matched. That mismatch is what started all of
-this: once you notice that your theme color and your logo are different colors
-that you never actually picked, you cannot un-notice it.
+this: once it becomes obvious the theme color and the logo are two different
+colors that nobody ever actually picked, it cannot be un-noticed.
 
 ## Choosing A Real Color
 
