@@ -1716,302 +1716,302 @@
     ],
     "fallback": "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings.png": {
+  "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings.png": {
     "w": 3024,
     "h": 1898,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-cloudflare-doh-upstream-dns-settings.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png": {
+  "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover.png": {
     "w": 2920,
     "h": 1980,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-home-docker-dns-cover.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites.png": {
+  "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites.png": {
     "w": 2920,
     "h": 1980,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-homelab-dns-rewrites.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix.png": {
+  "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix.png": {
     "w": 3024,
     "h": 1898,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-samsung-tv-netflix.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof.png": {
+  "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof.png": {
     "w": 3024,
     "h": 1898,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/adguard-query-log-test-domain-proof.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running.png": {
+  "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running.png": {
     "w": 2424,
     "h": 1388,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/docker-adguard-containers-running.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png": {
+  "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online.png": {
     "w": 2920,
     "h": 1980,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/nginx-proxy-manager-homelab-hosts-online.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation.png": {
+  "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation.png": {
     "w": 1702,
     "h": 1170,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/offline-ca-admin-homelab-cert-generation.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation.png"
   },
-  "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver.png": {
+  "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver.png": {
     "w": 2920,
     "h": 1980,
     "avif": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-512.avif"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-512.avif"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1024.avif"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-1024.avif"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1600.avif"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-512.webp"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-512.webp"
       ],
       [
         1024,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1024.webp"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-1024.webp"
       ],
       [
         1600,
-        "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver-1600.webp"
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/images/tailscale-adguard-global-dns-nameserver.png"
+    "fallback": "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver.png"
   },
   "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection.png": {
     "w": 2664,

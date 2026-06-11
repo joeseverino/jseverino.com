@@ -11,3 +11,7 @@
 
 # WordPress legacy taxonomy URL — the old /category/portfolio/ archive is now /portfolio/.
 /category/portfolio/   /portfolio/                       301
+
+# Renamed writeup slug (2026-06-10) — keep the old URL and its assets alive.
+/portfolio/building-local-dns-filtering-with-adguard-home-and-docker-engine/    /portfolio/building-local-dns-filtering/    301
+/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/*    /assets/writeups/building-local-dns-filtering/:splat    301
