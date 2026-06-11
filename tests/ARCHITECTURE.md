@@ -134,7 +134,7 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | :--- | :--- | :--- | :--- |
 | Security | [security.txt signature](#check-security-txtmjs) | `tests/audits/check-security-txt.mjs` | `security.txt` is PGP-signed, has required RFC 9116 fields, is not near expiry, and its `Encryption` URL resolves to a local WKD file. |
 | Design | [color contrast](#check-contrastmjs) | `tests/audits/check-contrast.mjs` | Every text/background `--color-*` pairing meets WCAG AA (>= 4.5:1). |
-| Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, and the MCP server. Local-only: those sources exist only on the authoring machine, so CI skips it. |
+| Parity | [schema parity](#check-vault-mcp-paritymjs) | `tests/audits/check-vault-mcp-parity.mjs` | Writeup frontmatter fields match across the vault schema, the Zod config, the MCP server, and the `site manage` TUI. Local-only: those sources exist only on the authoring machine, so CI skips it. |
 | Logic | [markdown DSL](#the-unit-layer) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
 | Logic | [contact API](#the-unit-layer) | `tests/unit/contact-api.test.ts` | The contact function's validation ladder, honeypot, Turnstile verification, rate limit, and D1 persistence paths behave, with D1 and siteverify stubbed. |
 | Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
@@ -185,12 +185,18 @@ Signing is a **separate** tool, [`bin/sign-security.mjs`](../bin/sign-security.m
 Reads `--color-*` declarations from [`src/styles/base.css`](../src/styles/base.css), computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
 
 ### `check-vault-mcp-parity.mjs`
-Asserts writeup frontmatter fields agree across three sources of truth:
+Asserts writeup frontmatter fields agree across four sources of truth:
 1. the vault's `Frontmatter Schema.md`,
 2. the Zod schema in [`src/content.config.ts`](../src/content.config.ts),
-3. the `update_writeup_frontmatter` signature in the Python MCP server.
+3. the `update_writeup_frontmatter` signature in the Python MCP server,
+4. the `FIELDS` table the `site manage` TUI edits (tools repo,
+   `lib/site/manage-tui.mjs`; see [`docs/Site-CLI.md`](../docs/Site-CLI.md)).
 
-Any drift fails, so the authoring workflow can never silently desync.
+`published`, `featured`, and `featured_order` are exempt from the TUI layer —
+the TUI manages them through dedicated interactions (the `p` key and list
+reordering) rather than editable field rows. Any drift fails, so the
+authoring workflow can never silently desync — including a scaffolded field
+every backend accepts but the interactive editor can't touch.
 
 ### Functions type check
 

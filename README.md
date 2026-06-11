@@ -184,7 +184,11 @@ role followed by the detail per command. `npm run help` prints the live
 grouped list straight from `package.json`, and a unit test asserts the
 reference covers every script, so neither can drift.
 
-The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
+The personal `site` CLI wraps these commands for day-to-day publishing, but the npm scripts are the canonical repo-local interface. Its `site manage` TUI puts the whole surface on one screen — the featured order and publish state of every writeup on one tab, and an operations dashboard (servers, git, build, security signature, live-site probe, publish-gate summary) with the doctor/diagnose/build/test/publish commands runnable in place on the other. See [`docs/Site-CLI.md`](./docs/Site-CLI.md).
+
+![site manage Site tab: status dashboard with the dev server running, content counts, and the inline action list](./docs/images/site-cli/manage-site-tab-dev-running.png)
+
+The testing suite, local quality audits, repository policies, and visual baselines are toured in [`tests/README.md`](./tests/README.md) and documented in full in [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
 ## Validation & Testing
 
@@ -271,6 +275,7 @@ Do not commit:
 - [`docs/Blueprint-Setup.md`](./docs/Blueprint-Setup.md) inventories every instance-specific value (identity, brand, edge config, dashboard) for reuse as a blueprint.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/Commands.md`](./docs/Commands.md) is the full command reference — every npm script by role, with detail per command.
+- [`docs/Site-CLI.md`](./docs/Site-CLI.md) documents the personal `site` CLI and the `site manage` TUI that drive publishing day to day.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
 - [`docs/Deployment-Preview-Review.md`](./docs/Deployment-Preview-Review.md) documents the sitedrift-powered Cloudflare preview review workflow and production guard.
 - [`docs/Accessibility.md`](./docs/Accessibility.md) documents landmarks, skip navigation, alt text, focus behavior, reduced motion, keyboard coverage, and contrast posture.

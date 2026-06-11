@@ -59,7 +59,7 @@ behind the scripts.
 | `npm run lint:css` | Stylelint over `src/styles/` |
 | `npm run check:security` | security.txt signature, required fields, expiry, WKD file |
 | `npm run check:contrast` | WCAG ratios for every text/background pair in `base.css` |
-| `npm run check:parity` | Vault schema, Zod config, and MCP server agree on writeup fields |
+| `npm run check:parity` | Vault schema, Zod config, MCP server, and the `site manage` TUI agree on writeup fields |
 | `npm run check:types` | Strict TypeScript over `functions/` |
 | `npm run check:edge` | Contact handler, OpenAPI schema, and D1 schema agree |
 | `npm run check:preview` | Sitedrift wrapping on previews, absent on main |
@@ -185,5 +185,7 @@ conflict copies; `--conflicts` only resolves the conflict copies.
 `npm audit --omit=dev` checks production dependency advisories (also enforced
 post-push by `deploy:verify`), and `npm outdated` reports direct dependency
 freshness. The personal `site` CLI wraps the publishing commands for
-day-to-day use, but the npm scripts above are the canonical repo-local
-interface.
+day-to-day use — including `site manage`, a full-screen TUI over the writeup
+and operations surface — but the npm scripts above are the canonical
+repo-local interface. The CLI and the TUI are documented in
+[`Site-CLI.md`](./Site-CLI.md).

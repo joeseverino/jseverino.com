@@ -158,6 +158,9 @@ console.log(
   `  - Map entry.data.${fieldName} → writeup.${camelName} inside getWriteups() in src/lib/content.ts`,
 );
 console.log(`  - Surface ${camelName} in any component that should render it`);
+console.log(
+  `  - Add a '${fieldName}' row to FIELDS in the site manage TUI (tools repo, lib/site/manage-tui.mjs) — check:parity fails until it can edit the field`,
+);
 console.log('  - Update docs/SEO.md, docs/Vault-Workflow.md, docs/Architecture.md field lists');
 console.log('  - Update MCP README, CHANGELOG, docs/ai-safety-security.md tool descriptions');
 console.log('  - cd ~/Documents/Code/Assets/severino-vault-mcp && uv tool install --reinstall .');
