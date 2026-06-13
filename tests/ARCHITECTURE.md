@@ -59,50 +59,10 @@ The fan-out is six steps; the gates enforce most of them, so a missed step fails
 
 ## 1. The gate ladder
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph TD
-    A["Source change"] --> B
-    B --> C
-    C --> D["git push origin main"]
-    D --> E
+![The full publish, release, and deployment verification gate ladder](../docs/diagrams/gate-ladder.png)
 
-    subgraph publish ["Publish Check (Local Build Gate)"]
-        B["npm run publish:check"]
-        B1["security.txt signature"]
-        B2["WCAG contrast"]
-        B3["vault / Zod / MCP parity"]
-        B9["functions types + edge parity"]
-        B8["unit suite: DSL + functions + harness"]
-        B4["sitedrift preview guard"]
-        B5["CSS lint + unused-var check"]
-        B6["astro check + build"]
-        B7["asset weight + links + page weight + HTML + SEO"]
-    end
-
-    subgraph release ["Release Check (Final Local Gate)"]
-        C["npm run release:check"]
-        C1["Playwright E2E + visual"]
-        C2["repository policy"]
-        C3["git diff --check (whitespace/markers)"]
-        C4["worktree left clean"]
-    end
-
-    subgraph deploy ["Deploy Verification (Post-Push)"]
-        E["npm run deploy:verify"]
-        E1["remote CI green"]
-        E2["live HSTS / CSP headers"]
-        E3["live sitemap 200s"]
-        E4["open CodeQL alerts"]
-    end
-
-    %% Force vertical layout nesting
-    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B9 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
-    B7 ~~~ C
-    C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
-    C4 ~~~ D
-    E ~~~ E1 ~~~ E2 ~~~ E3 ~~~ E4
-```
+<sup>Diagram source: [`docs/diagrams/gate-ladder.mmd`](../docs/diagrams/gate-ladder.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 ### The three gates
 

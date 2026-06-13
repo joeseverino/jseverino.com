@@ -1,0 +1,22 @@
+%%{init: { "htmlLabels": false } }%%
+graph TD
+    subgraph Vault ["Private Obsidian Vault"]
+        VW["05 Writeups/"]
+        VP["06 Pages/"]
+    end
+
+    subgraph Repo ["Public Git Repository"]
+        SC["src/content/"]
+        PA["public/assets/"]
+        ZOD["src/content.config.ts (Zod Validation)"]
+    end
+
+    subgraph Edge ["Cloudflare Pages Edge"]
+        CF["Cloudflare CDN & Functions"]
+    end
+
+    VP --> SC
+    VW --> SC
+    VW --> PA
+    SC --> ZOD
+    ZOD --> CF

@@ -6,29 +6,17 @@ This document explains how `jseverino.com` is built, where data enters the syste
 
 The site is a static Astro build deployed to Cloudflare Pages.
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph LR
-    Vault["Obsidian Vault"] --> Sync["1. npm run sync:content"] --> Repo["Git Repo Snapshot"] --> Build["2. npm run build:static"] --> CF["Cloudflare Pages CDN"]
-```
+![The Obsidian vault syncs into a Git snapshot that builds into the Cloudflare Pages CDN](./diagrams/system-shape.png)
+
+<sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./diagrams/system-shape.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 The public serving layer is static by default. The request-time execution and data boundary is managed on the edge:
 
-```mermaid
-%%{init: { "sequence": { "mirrorActors": false } } }%%
-sequenceDiagram
-    autonumber
-    actor Client as Browser Client
-    participant Edge as Cloudflare Edge
-    participant Static as CDN Static Assets
-    participant D1 as D1 Database
+![Browser requests pass through the Cloudflare edge to static assets and parameterized D1 writes](./diagrams/edge-request-flow.png)
 
-    Client->>Edge: Request Page
-    Edge->>Client: Inject Nonce & Issue CSP
-    Client->>Static: Fetch Assets
-    Client->>Edge: Submit Contact / CSP reports
-    Edge->>D1: Parameterized SQL Write
-```
+<sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 
 The public serving layer is static by default. The only request-time code is Cloudflare Pages Functions:
