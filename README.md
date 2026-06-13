@@ -51,7 +51,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 | [`functions/api/csp-report.ts`](./functions/api/csp-report.ts) | CSP violation report receiver with noise filtering and D1 storage. |
 | [`functions/__sitedrift/[[path]].ts`](./functions/__sitedrift/[[path]].ts) | Read-only preview-review proxy scoped to `/__sitedrift/*`. |
 | [`db/schema.sql`](./db/schema.sql) | D1 schema for contact submissions and CSP reports. |
-| [`public/schemas/tools-describe-v4.json`](./public/schemas/tools-describe-v4.json) | Hosted JSON Schema for the severino-tools `describe` contract, served at `/schemas/` (its `$id`). Published copy; canonical source lives in the tools repo. |
+| [`public/schemas/cordon-v4.json`](./public/schemas/cordon-v4.json) | Hosted JSON Schema for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract, served at `/schemas/` (its `$id`). Published copy; canonical source lives in the cordon repo. |
 | [`bin/sync-content.mjs`](./bin/sync-content.mjs) | Vault-to-repo sync, metadata allowlisting, asset copy, image optimization, and manifest generation. |
 | [`bin/publish-check.mjs`](./bin/publish-check.mjs) | Local release gate: clean, sync, the registry audits, build, and the post-build checks (assets, links, page weight, SEO). Also run by CI on every push. |
 
