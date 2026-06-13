@@ -221,7 +221,7 @@ The contact function applies:
 
 ### Edge schema validation
 
-Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`db/contact-openapi.json`](../db/contact-openapi.json) — alongside [`db/schema.sql`](../db/schema.sql), the other machine-readable schema this site declares — and is uploaded to the Cloudflare dashboard (Security → Web assets → Schema validation). It is not consumed by the build.
+Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`db/contact-openapi.json`](../db/contact-openapi.json) — alongside [`db/schema.sql`](../db/schema.sql) and the hosted [`public/schemas/tools-describe-v4.json`](../public/schemas/tools-describe-v4.json) (served at `/schemas/`, its `$id`, for the severino-tools `describe` contract), the machine-readable schemas this repo declares — and is uploaded to the Cloudflare dashboard (Security → Web assets → Schema validation). It is not consumed by the build.
 
 Coverage:
 
