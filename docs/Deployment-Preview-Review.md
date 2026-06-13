@@ -139,20 +139,10 @@ export { onRequest } from 'sitedrift/cloudflare';
 
 ## Preview Build Flow
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph TD
-    Push["Feature Branch Push"] --> CF["Cloudflare Pages Build (CF_PAGES=1)"]
-    CF --> Astro["Astro Build (writes output to dist/)"]
-    Astro --> SD_Preserve["sitedrift preserves raw HTML under dist/"]
-    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML with review shell"]
+![A feature branch build is transformed into the sitedrift review shell with preview and live routes](./diagrams/preview-build-flow.png)
 
-    subgraph Serving Edge Runtime
-        SD_Replace --> Edge_Shell["/ serves sitedrift review shell"]
-        SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview"]
-        SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production"]
-    end
-```
+<sup>Diagram source: [`docs/diagrams/preview-build-flow.mmd`](./diagrams/preview-build-flow.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 The branch alias and immutable deployment URL expose the same review interface.
 The immutable URL is preferred for verification because it cannot move to a

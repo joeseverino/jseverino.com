@@ -26,13 +26,10 @@ everywhere at once and no gate can silently fall out of sync.
 
 Three gates run in order. The first two are local; the third runs after the push.
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph LR
-    A["change"] --> B["publish:check"] --> C["release:check"] --> D["git push"] --> E["deploy:verify"]
-    G["diagnose — all of it, one pass, any time"] -.-> B
-    G -.-> C
-```
+![Testing gates run from local publish and release checks through post-push deployment verification](../docs/diagrams/testing-gates.png)
+
+<sup>Diagram source: [`docs/diagrams/testing-gates.mmd`](../docs/diagrams/testing-gates.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |

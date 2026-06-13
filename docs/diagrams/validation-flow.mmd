@@ -1,0 +1,5 @@
+%%{init: { "htmlLabels": false } }%%
+graph LR
+    A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
+    G["npm run diagnose — every check, one pass, any time"] -.-> B
+    G -.-> C

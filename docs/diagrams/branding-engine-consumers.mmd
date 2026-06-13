@@ -1,0 +1,10 @@
+%%{init: { "htmlLabels": false } }%%
+graph TD
+    BE["branding-engine (public: npm + GitHub)"]
+    JS["jseverino.com (npm optionalDep)"]
+    SB["severino-brand (npm dependency)"]
+    TB["tools/brand (local checkout)"]
+
+    JS --> BE
+    SB --> BE
+    TB --> BE

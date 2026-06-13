@@ -199,13 +199,10 @@ The everyday entry point is **`npm run diagnose`** — the collect-all gate. It 
 
 Start with the tour in [`tests/README.md`](./tests/README.md); the full reference, with every script, spec, code example, and the troubleshooting tree, is [`tests/ARCHITECTURE.md`](./tests/ARCHITECTURE.md).
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph LR
-    A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
-    G["npm run diagnose — every check, one pass, any time"] -.-> B
-    G -.-> C
-```
+![Validation flow from source change through local gates, push, and deployment verification](./docs/diagrams/validation-flow.png)
+
+<sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](./docs/diagrams/validation-flow.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 ### GitHub Actions Continuous Integration
 

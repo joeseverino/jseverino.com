@@ -88,18 +88,10 @@ redrawing the logo.
 
 The result is one engine with several consumers:
 
-```mermaid
-%%{init: { "htmlLabels": false } }%%
-graph TD
-    BE["branding-engine (public: npm + GitHub)"]
-    JS["jseverino.com (npm optionalDep)"]
-    SB["severino-brand (npm dependency)"]
-    TB["tools/brand (local checkout)"]
+![The site, brand kit, and local brand tool all consume the shared branding engine](./diagrams/branding-engine-consumers.png)
 
-    JS --> BE
-    SB --> BE
-    TB --> BE
-```
+<sup>Diagram source: [`docs/diagrams/branding-engine-consumers.mmd`](./diagrams/branding-engine-consumers.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 - **The site** depends on the engine to regenerate its favicons, social cards, and
   header wordmark, and commits the output. Its production build never runs the
