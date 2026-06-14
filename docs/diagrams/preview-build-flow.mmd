@@ -1,16 +1,21 @@
 %%{init: { "htmlLabels": false } }%%
-graph TD
-    Push["Feature Branch Push"] --> CF["Cloudflare Pages Build (CF_PAGES=1)"]
-    CF --> Astro["Astro Build (writes output to dist/)"]
-    Astro --> SD_Preserve["sitedrift preserves raw HTML under dist/"]
-    SD_Preserve --> SD_Replace["sitedrift replaces preview HTML with review shell"]
-
-    subgraph Serving Edge Runtime
-        SD_Replace --> Edge_Shell["/ serves sitedrift review shell"]
-        SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview"]
-        SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production"]
+flowchart TB
+    subgraph Build["Preview build"]
+        direction LR
+        Push["Feature branch push"] --> CF["Cloudflare Pages"]
+        CF --> Astro["Astro writes dist/"]
+        Astro --> Wrap["sitedrift wraps the preview"]
     end
 
-    %% the transform hub every serving route fans out from
+    subgraph Review["Deployed review environment"]
+        direction LR
+        Shell["/ review shell"]
+        Shell --> Dev["DEV: preserved branch preview"]
+        Shell --> Live["LIVE: production proxy"]
+    end
+
+    Wrap ==> Shell
+
+    %% the transform pivot — styled by .anchor in the shared theme
     classDef anchor stroke-width:2px;
-    class SD_Replace anchor;
+    class Wrap anchor;
