@@ -3,3 +3,7 @@ graph LR
     A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
     G["npm run diagnose — every check, one pass, any time"] -.-> B
     G -.-> C
+
+    %% the irreversible pivot — local gates before, live after
+    classDef anchor stroke-width:2px;
+    class D anchor;
