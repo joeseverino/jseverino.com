@@ -1,3 +1,7 @@
 %%{init: { "htmlLabels": false } }%%
 graph LR
     Vault["Obsidian Vault"] --> Sync["1. npm run sync:content"] --> Repo["Git Repo Snapshot"] --> Build["2. npm run build:static"] --> CF["Cloudflare Pages CDN"]
+
+    %% the published destination — styled by .anchor in the shared theme
+    classDef anchor stroke-width:2px;
+    class CF anchor;

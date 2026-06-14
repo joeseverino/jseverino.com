@@ -10,3 +10,7 @@ graph TD
         SD_Replace --> Edge_Dev["/__sitedrift/dev/* serves raw preview"]
         SD_Replace --> Edge_Live["/__sitedrift/live/* proxies live production"]
     end
+
+    %% the transform hub every serving route fans out from
+    classDef anchor stroke-width:2px;
+    class SD_Replace anchor;
