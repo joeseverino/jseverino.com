@@ -16,6 +16,7 @@ behind the scripts.
 | `npm run dev` | Start the local dev server |
 | `npm run dev:drafts` | Dev server including unpublished drafts |
 | `npm run sync:content` | Pull published content from the vault into the repo |
+| `npm run sync:tokens` | Pull design + brand tokens from `severino-brand` into the repo |
 | `npm run diagnose` | Run every check and report what is wrong — the "is it okay?" button |
 | `npm run diff:build` | Build HEAD vs the working tree; show what changed in the shipped site |
 
@@ -90,6 +91,14 @@ Obsidian vault into `src/content/` and their assets into `public/assets/`.
 The synced snapshot is committed, so the public repo never depends on the
 private vault. Never edit the synced files by hand — the next sync wipes
 them. See [`Vault-Workflow.md`](./Vault-Workflow.md).
+
+**`npm run sync:tokens`** — regenerates the committed token artifacts from
+`severino-brand/brand/tokens.json` (the upstream source of truth): the `:root`
+block in `src/styles/base.css` and the `BRAND` export in `src/lib/brand.mjs`,
+each rewritten between `tokens:start`/`tokens:end` markers. Like `sync:content`,
+it is the only thing that reads the kit — the build never does, so CI stays
+self-sufficient. Edit tokens upstream, not the marked regions, then sync. See
+[`Brand-System.md`](./Brand-System.md).
 
 **`npm run diagnose`** — the one-stop gate. Runs every check in the registry
 without stopping at the first failure: green prints one line; red writes

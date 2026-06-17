@@ -10,6 +10,7 @@
   src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
 }
 
+/* tokens:start — generated from severino-brand/brand/tokens.json by `npm run sync:tokens`. Edit tokens there, not here. */
 :root {
   --color-bg: #ffffff;
   --color-text: #0b0620;
@@ -17,54 +18,57 @@
   --color-soft: #eff3fb;
   --color-muted: #6E6B7C;
   --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
-
   --color-border-faint: rgb(0 0 0 / 5%);
   --color-fill-faint: rgb(0 0 0 / 4%);
   --color-fill-faint-strong: rgb(0 0 0 / 8%);
-
   --color-code-bg: #f8fafc;
   --color-code-text: #0f172a;
   --color-code-border: rgb(15 23 42 / 14%);
   --color-field-border: rgb(15 23 42 / 18%);
-  --color-table-line: #f0f0f0;
+  --color-table-stripe: color-mix(in oklch, var(--color-primary) 5%, transparent);
+  --color-table-head: color-mix(in oklch, var(--color-primary) 9%, transparent);
   --color-caption: #555;
-
+  --code-bg: #020617;
+  --code-fg: #d1d5db;
+  --term-bg: #0b1220;
+  --term-fg: #e2e8f0;
+  --term-bar-bg: #111827;
+  --term-bar-fg: #94a3b8;
+  --term-border: rgb(148 163 184 / 12%);
+  --term-prompt: #38bdf8;
+  --term-cmd: #f8fafc;
+  --term-out: #4ade80;
+  --term-dot-red: #ef4444;
+  --term-dot-amber: #f59e0b;
+  --term-dot-green: #22c55e;
   --color-success: #166534;
   --color-success-bg: rgb(22 101 52 / 10%);
   --color-error: #991b1b;
   --color-error-bg: rgb(153 27 27 / 10%);
-
   --shadow-sm: 0 6px 10px rgb(0 0 0 / 18%);
   --shadow-md: 0 10px 16px rgb(0 0 0 / 22%);
-
   --blur-chrome: 12px;
-
   --motion-duration-instant: 120ms;
   --motion-duration-fast: 150ms;
   --motion-duration-standard: 200ms;
   --motion-duration-deliberate: 220ms;
   --motion-stagger-step: 55ms;
   --motion-ease-standard: ease;
-
   --radius-sm: 10px;
   --radius-md: 12px;
   --radius-pill: 999px;
   --radius-button: 2rem;
-
   --content: 42rem;
   --wide: 80rem;
   --cards: 1100px;
   --gutter: clamp(1.5rem, 6vw, 2rem);
   --w-constrained: min(var(--content), calc(100% - (var(--gutter) * 2)));
   --w-wide: min(var(--wide), calc(100% - (var(--gutter) * 2)));
-
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
   --space-20: 1rem;
   --space-30: clamp(1.5rem, 6vw, 2rem);
   --space-40: clamp(2rem, 8vw, 3rem);
   --space-50: clamp(2.5rem, 8vw, 4rem);
-
   --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
   --font-sm: 1rem;
   --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
@@ -72,12 +76,11 @@
   --font-lg: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.833), 1.75rem);
   --font-xl: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
   --font-xxl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
-
   --font-prose-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
   --font-prose-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
-
   --header-height: 3.6rem;
 }
+/* tokens:end */
 
 @media (width <= 768px) {
   :root {
@@ -228,7 +231,8 @@ table {
   display: block;
   margin-block: 1.5rem;
   overflow-x: auto;
-  border-block-end: 1px solid var(--color-table-line);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 
   & table {
     inline-size: 100%;
@@ -237,8 +241,12 @@ table {
 
   & .table-fixed { table-layout: fixed; }
 
-  & thead { border-block-end: 3px solid currentColor; }
-  & tfoot { border-block-start: 3px solid currentColor; }
+  & thead {
+    background: var(--color-table-head);
+    border-block-end: 2px solid var(--color-primary);
+  }
+
+  & tfoot { border-block-start: 2px solid var(--color-primary); }
 
   & th,
   & td {
@@ -252,9 +260,12 @@ table {
 
   & th { font-weight: 600; }
 
-  & tbody tr:nth-child(odd) { background-color: var(--color-table-line); }
+  & tbody tr:nth-child(odd) { background-color: var(--color-table-stripe); }
 
   & figcaption {
+    padding-block: 0.6rem;
+    padding-inline: 0.75rem;
+    border-block-start: 1px solid var(--color-border);
     color: var(--color-caption);
     font-size: 13px;
     text-align: center;
@@ -265,8 +276,8 @@ pre {
   margin: 0;
   padding: 1rem;
   border-radius: var(--radius-sm);
-  background: #020617;
-  color: #d1d5db;
+  background: var(--code-bg);
+  color: var(--code-fg);
   font-family: var(--font-mono);
   font-size: 0.92rem;
   line-height: 1.65;
@@ -277,16 +288,16 @@ pre {
   margin-block: 1.75rem;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #0b1220;
+  background: var(--term-bg);
   box-shadow: var(--shadow-md);
-  border: 1px solid rgb(148 163 184 / 12%);
+  border: 1px solid var(--term-border);
 
   & pre {
     margin: 0;
     padding: 1.1rem 1.4rem;
     background: transparent;
     border-radius: 0;
-    color: #e2e8f0;
+    color: var(--term-fg);
     line-height: 1.85;
   }
 
@@ -296,9 +307,9 @@ pre {
     overflow-wrap: anywhere;
   }
 
-  & .prompt { color: #38bdf8; user-select: none; }
-  & .cmd { color: #f8fafc; }
-  & .line.out { color: #4ade80; }
+  & .prompt { color: var(--term-prompt); user-select: none; }
+  & .cmd { color: var(--term-cmd); }
+  & .line.out { color: var(--term-out); }
 }
 
 .terminal-bar {
@@ -307,13 +318,13 @@ pre {
   gap: 0.75rem;
   padding-block: 0.6rem;
   padding-inline: 1rem;
-  background: #111827;
-  border-block-end: 1px solid rgb(148 163 184 / 12%);
+  background: var(--term-bar-bg);
+  border-block-end: 1px solid var(--term-border);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--term-bar-fg);
 }
 
 .terminal-dots {
@@ -329,10 +340,10 @@ pre {
     inset: 0 auto 0 0;
     inline-size: 0.65rem;
     border-radius: 50%;
-    background: #ef4444;
+    background: var(--term-dot-red);
     box-shadow:
-      1rem 0 0 #f59e0b,
-      2rem 0 0 #22c55e;
+      1rem 0 0 var(--term-dot-amber),
+      2rem 0 0 var(--term-dot-green);
   }
 }
 
@@ -736,7 +747,7 @@ main > * + * {
     margin-block-start: 0;
     padding-block: 6px;
     padding-inline: 10px;
-    border: 1px solid rgb(0 0 0 / 7%);
+    border: 1px solid var(--color-border-faint);
     border-radius: var(--radius-pill);
     background: var(--color-soft);
     font-size: 14px;
@@ -1042,7 +1053,7 @@ figure {
 .article-hero {
   margin-block: 40px 20px;
   overflow: hidden;
-  border: 2px solid rgb(0 0 0 / 10%);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   aspect-ratio: 16 / 9;
 
@@ -1452,7 +1463,7 @@ figure {
 
   & li {
     inline-size: 100%;
-    border-block-end: 1px solid rgb(0 0 0 / 6%);
+    border-block-end: 1px solid var(--color-border-faint);
     opacity: 1;
     translate: 0 0;
     transition:
