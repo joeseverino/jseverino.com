@@ -152,11 +152,11 @@ test('tables stay contained at narrow widths', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto(tableWriteup());
 
-  const table = page.locator('.table-figure').first();
-  await expect(table).toHaveCSS('overflow-x', 'auto');
-  const box = await table.boundingBox();
+  // The table fits within the viewport by wrapping, never a horizontal scrollbar.
+  const box = await page.locator('.table-box').first().boundingBox();
   expect(box).not.toBeNull();
   expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+  await expect(page.locator('.table-box').first()).not.toHaveCSS('overflow-x', 'auto');
 });
 
 test('sticky resume action remains fixed and centered', async ({ page }) => {

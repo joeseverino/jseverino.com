@@ -149,16 +149,23 @@ reviewable without becoming the site's active design.
 
 ## How The Site Consumes It
 
-The site keeps its identity local and borrows only the rendering:
+The site keeps its tokens local and borrows only the rendering:
 
-- `src/lib/brand.mjs` stays here. It is the site's identity (navy, glyph), and the
-  generators pass it to the engine explicitly. The engine is generic; the site
-  supplies the color.
+- `severino-brand/brand/tokens.json` is the upstream source of truth — both the
+  brand identity (`brand`: navy, glyph) and the design system (`designSystem`: the
+  `:root` custom properties). The site never reads it at build time.
+- `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) vendors it
+  into two committed files, rewriting only the region between
+  `tokens:start`/`tokens:end` markers: the `BRAND` export in `src/lib/brand.mjs`
+  (from `brand`) and the `:root` block in `src/styles/base.css` (from
+  `designSystem`). Same pattern as `sync:content` — an external source of truth,
+  vendored to a committed artifact, so the build stays self-sufficient.
 - `bin/make-icons.mjs`, `bin/make-og-image.mjs`, and `bin/make-github-social.mjs`
-  import `markSvg` / `renderCard` from `branding-engine` instead of a local copy.
+  import `markSvg` / `renderCard` from `branding-engine` instead of a local copy,
+  and pass it the synced `BRAND`. The engine is generic; the tokens supply the color.
 - The generated assets in `public/assets/` are committed. To restyle the brand,
-  change `BRAND.navy` in `src/lib/brand.mjs` (and the mirrored `--color-primary`),
-  re-run the generators, and commit the new assets.
+  edit `tokens.json` upstream, run `npm run sync:tokens`, re-run the generators,
+  and commit the new tokens + assets together.
 
 The engine is an `optionalDependency`, pinned to a published, provenance-attested
 `branding-engine` npm version (`^0.2.2`).

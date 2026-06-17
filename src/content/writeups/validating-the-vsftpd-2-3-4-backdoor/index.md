@@ -31,7 +31,7 @@ This mini lab is the first in the Mini Series focused on the exposed FTP service
 ## Lab Architecture
 
 ::figure
-![Diagram of the isolated VMware lab with Kali Linux and Metasploitable 2](/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2.png)
+![Diagram of the isolated VMware lab with Kali Linux and Metasploitable 2](/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology.png)
 
 Isolated VMware host-only lab showing Kali Linux and Metasploitable 2.
 ::

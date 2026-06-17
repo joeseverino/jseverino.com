@@ -119,7 +119,7 @@ describe('::figure (writeup)', () => {
 describe('::table (writeup)', () => {
   test('wraps the table in a table-figure and renders the trailing caption', () => {
     const html = renderWriteupHtml('::table\n| A | B |\n| - | - |\n| 1 | 2 |\nTable caption\n::', 'demo');
-    assert.match(html, /<figure class="table-figure"><table class="table-fixed">/);
+    assert.match(html, /<figure class="table-figure"><div class="table-box"><table>/);
     assert.match(html, /<th>A<\/th>/);
     assert.match(html, /<figcaption>Table caption<\/figcaption>/);
   });
