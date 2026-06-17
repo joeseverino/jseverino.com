@@ -27,7 +27,6 @@
   --color-field-border: rgb(15 23 42 / 18%);
   --color-table-stripe: color-mix(in oklch, var(--color-primary) 5%, transparent);
   --color-table-head: color-mix(in oklch, var(--color-primary) 9%, transparent);
-  --color-caption: #555;
   --code-bg: #020617;
   --code-fg: #d1d5db;
   --term-bg: #0b1220;
@@ -230,16 +229,20 @@ table {
 .table-figure {
   display: block;
   margin-block: 1.5rem;
-  overflow-x: auto;
+}
+
+/* The rounded border lives on the inner box, not the figure, so the figcaption
+   sits below it as a normal caption (matching unattached figure captions). */
+.table-box {
+  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 
   & table {
     inline-size: 100%;
     background: transparent;
+    table-layout: fixed;
   }
-
-  & .table-fixed { table-layout: fixed; }
 
   & thead {
     background: var(--color-table-head);
@@ -250,26 +253,17 @@ table {
 
   & th,
   & td {
-    padding: 0.5em;
+    padding-block: 0.5em;
+    padding-inline: 0.5em;
     border: 1px solid transparent;
     text-align: center;
     vertical-align: middle;
-    word-break: normal;
     overflow-wrap: anywhere;
   }
 
   & th { font-weight: 600; }
 
   & tbody tr:nth-child(odd) { background-color: var(--color-table-stripe); }
-
-  & figcaption {
-    padding-block: 0.6rem;
-    padding-inline: 0.75rem;
-    border-block-start: 1px solid var(--color-border);
-    color: var(--color-caption);
-    font-size: 13px;
-    text-align: center;
-  }
 }
 
 pre {

@@ -21,9 +21,40 @@ function createMarkdownRenderer() {
 const md = createMarkdownRenderer();
 const fragmentMd = createMarkdownRenderer();
 
+// Let separator-delimited values (IPs, MACs) wrap at their separators instead of
+// mid-token, so a narrow table column breaks `00:00:00:00:` / `02:1e`, never
+// `00:00:00:00:0` / `2:1e`. <wbr> is invisible and only adds break opportunities.
+const breakAtSeparators = (html: string): string =>
+  html.replace(/([\p{L}\p{N}])([.:])(?=[\p{L}\p{N}])/gu, '$1$2<wbr>');
+
+function addCellBreaks(renderer: MarkdownIt, onlyInTables: boolean): void {
+  const state = { inTable: false };
+  const open = renderer.renderer.rules.table_open;
+  renderer.renderer.rules.table_open = (...args) => {
+    state.inTable = true;
+    return open ? open(...args) : '<table>';
+  };
+  const close = renderer.renderer.rules.table_close;
+  renderer.renderer.rules.table_close = (...args) => {
+    state.inTable = false;
+    return close ? close(...args) : '</table>';
+  };
+  const text = renderer.renderer.rules.text;
+  renderer.renderer.rules.text = (tokens, idx, options, env, self) => {
+    const out = text
+      ? text(tokens, idx, options, env, self)
+      : renderer.utils.escapeHtml(tokens[idx].content);
+    return !onlyInTables || state.inTable ? breakAtSeparators(out) : out;
+  };
+}
+
 md.renderer.rules.table_open = () =>
-  '<figure class="table-figure"><table class="table-fixed">';
-md.renderer.rules.table_close = () => '</table></figure>';
+  '<figure class="table-figure"><div class="table-box"><table>';
+md.renderer.rules.table_close = () => '</table></div></figure>';
+
+// fragmentMd renders only ::table bodies, so every cell is fair game.
+addCellBreaks(md, true);
+addCellBreaks(fragmentMd, false);
 
 function stripArticleChrome(markdown: string): string {
   return markdown
@@ -110,16 +141,13 @@ function renderTableBlocks(markdown: string): string {
 
     if (tableLines.length === 0) return md.render(content.trim());
 
-    const table = fragmentMd
-      .render(tableLines.join('\n'))
-      .trim()
-      .replace('<table>', '<table class="table-fixed">');
+    const table = fragmentMd.render(tableLines.join('\n')).trim();
     const captionMarkdown = captionLines.join('\n').trim();
     const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
 
     return [
       '<figure class="table-figure">',
-      table,
+      `<div class="table-box">${table}</div>`,
       caption ? `<figcaption>${caption}</figcaption>` : '',
       '</figure>',
     ]
