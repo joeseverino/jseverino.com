@@ -1444,18 +1444,34 @@
     "fallback": "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png"
   },
   "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture.png": {
-    "w": 236,
-    "h": 251,
+    "w": 3200,
+    "h": 990,
     "avif": [
       [
-        236,
-        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-236.avif"
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-1600.avif"
       ]
     ],
     "webp": [
       [
-        236,
-        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-236.webp"
+        512,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-1600.webp"
       ]
     ],
     "fallback": "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture.png"
@@ -2592,18 +2608,34 @@
     "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status.png"
   },
   "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png": {
-    "w": 361,
-    "h": 362,
+    "w": 3200,
+    "h": 990,
     "avif": [
       [
-        361,
-        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-361.avif"
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-1600.avif"
       ]
     ],
     "webp": [
       [
-        361,
-        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-361.webp"
+        512,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-1600.webp"
       ]
     ],
     "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture.png"
@@ -2807,30 +2839,38 @@
     ],
     "fallback": "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat.png"
   },
-  "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2.png": {
-    "w": 860,
-    "h": 329,
+  "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology.png": {
+    "w": 3200,
+    "h": 996,
     "avif": [
       [
         512,
-        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-512.avif"
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-512.avif"
       ],
       [
-        860,
-        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-860.avif"
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-512.webp"
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-512.webp"
       ],
       [
-        860,
-        "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2-860.webp"
+        1024,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/PHP-Injection-Diagram-2.png"
+    "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology.png"
   },
   "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output.png": {
     "w": 1920,
@@ -3155,8 +3195,8 @@
     "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream.png"
   },
   "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png": {
-    "w": 1536,
-    "h": 737,
+    "w": 3200,
+    "h": 1800,
     "avif": [
       [
         512,
@@ -3167,8 +3207,8 @@
         "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1024.avif"
       ],
       [
-        1536,
-        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1536.avif"
+        1600,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1600.avif"
       ]
     ],
     "webp": [
@@ -3181,8 +3221,8 @@
         "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1024.webp"
       ],
       [
-        1536,
-        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1536.webp"
+        1600,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1600.webp"
       ]
     ],
     "fallback": "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png"
@@ -4286,16 +4326,20 @@
     "fallback": "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config.png"
   },
   "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png": {
-    "w": 911,
-    "h": 1019,
+    "w": 3000,
+    "h": 2000,
     "avif": [
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.avif"
       ],
       [
-        911,
-        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-911.avif"
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-1600.avif"
       ]
     ],
     "webp": [
@@ -4304,8 +4348,12 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.webp"
       ],
       [
-        911,
-        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-911.webp"
+        1024,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-1600.webp"
       ]
     ],
     "fallback": "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology.png"
@@ -4574,30 +4622,38 @@
     ],
     "fallback": "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture.png"
   },
-  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2.png": {
-    "w": 860,
-    "h": 329,
+  "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology.png": {
+    "w": 3200,
+    "h": 996,
     "avif": [
       [
         512,
-        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-512.avif"
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-512.avif"
       ],
       [
-        860,
-        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-860.avif"
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-1600.avif"
       ]
     ],
     "webp": [
       [
         512,
-        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-512.webp"
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-512.webp"
       ],
       [
-        860,
-        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2-860.webp"
+        1024,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-1600.webp"
       ]
     ],
-    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/PHP-Injection-Diagram-2.png"
+    "fallback": "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology.png"
   },
   "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo.png": {
     "w": 1920,
