@@ -63,7 +63,7 @@
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.5.1",
     "@types/markdown-it": "^14.1.2",
-    "astro": "^6.4.2",
+    "astro": "^6.4.8",
     "gray-matter": "^4.0.3",
     "markdown-it": "^14.1.0",
     "typescript": "^6.0.3"
