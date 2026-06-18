@@ -20,8 +20,7 @@ technologies:
   - webauthn
   - wordpress
   - zero-trust
-featured: true
-featured_order: 6
+featured: false
 ---
 
 # Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication
