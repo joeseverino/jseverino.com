@@ -38,13 +38,12 @@ test.describe('figure lightbox', () => {
 
     await img.click();
     await expect(dialog).toBeVisible();
-    await page.locator('[data-lightbox-close]').click();
+    await page.getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toBeHidden();
 
     await img.click();
     await expect(dialog).toBeVisible();
-    // The centered dialog leaves the viewport corner as backdrop; a click there
-    // targets the dialog element itself, which closes.
+    // A click anywhere in the overlay outside the caption dismisses it.
     await page.mouse.click(5, 5);
     await expect(dialog).toBeHidden();
   });

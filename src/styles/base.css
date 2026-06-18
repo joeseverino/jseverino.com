@@ -1626,10 +1626,6 @@ body:has(.mobile-nav:popover-open) {
 .lightbox-caption {
   max-inline-size: min(92vw, 1400px);
   margin: 0;
-  padding-block: var(--space-5);
-  padding-inline: var(--space-15);
-  border-radius: var(--radius-sm);
-  background: color-mix(in oklch, var(--color-bg) 88%, transparent);
   color: var(--color-text);
   font-size: var(--font-2xs);
   line-height: 1.5;
