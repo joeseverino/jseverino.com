@@ -1419,12 +1419,6 @@ figure {
   color: inherit;
   overflow-y: auto;
 
-  opacity: 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
-
   &::before {
     content: '';
     position: absolute;
@@ -1437,11 +1431,6 @@ figure {
 
   &:popover-open {
     display: flex;
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
   }
 
   /* Appearance (blur + dim + fade) is shared with .lightbox::backdrop below;
@@ -1451,14 +1440,6 @@ figure {
     inset-block-start: var(--header-height, 3.6rem);
     inset-inline: 0;
     inset-block-end: 0;
-  }
-
-  &:popover-open::backdrop {
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
   }
 }
 
@@ -1546,12 +1527,17 @@ figure {
   }
 }
 
-body:has(.mobile-nav:popover-open) {
-  overflow: hidden;
+/* Shared overlay behavior: one fade + backdrop treatment for the mobile nav and
+   image lightbox. The nav adds its own header-offset inset above. */
+.mobile-nav,
+.lightbox {
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+    display var(--motion-duration-deliberate) allow-discrete,
+    overlay var(--motion-duration-deliberate) allow-discrete;
 }
 
-/* Shared overlay backdrop: one blur + dim + fade for the mobile nav and the
-   image lightbox. The nav adds its own header-offset inset above. */
 .mobile-nav::backdrop,
 .lightbox::backdrop {
   background: color-mix(in oklch, var(--color-bg) 72%, transparent);
@@ -1562,6 +1548,17 @@ body:has(.mobile-nav:popover-open) {
     opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
     display var(--motion-duration-deliberate) allow-discrete,
     overlay var(--motion-duration-deliberate) allow-discrete;
+}
+
+.mobile-nav:popover-open,
+.lightbox[open],
+.mobile-nav:popover-open::backdrop,
+.lightbox[open]::backdrop {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
 }
 
 /* Image lightbox: native <dialog> opened with showModal() for a real modal
@@ -1590,30 +1587,8 @@ body:has(.mobile-nav:popover-open) {
   color: var(--color-text);
   overflow: visible;
 
-  opacity: 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
-
   &:focus {
     outline: none;
-  }
-
-  &[open] {
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
-  }
-
-  &[open]::backdrop {
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
   }
 }
 
@@ -1678,17 +1653,9 @@ body:has(.mobile-nav:popover-open) {
   }
 }
 
+body:has(.mobile-nav:popover-open),
 body:has(.lightbox[open]) {
   overflow: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lightbox,
-  .lightbox::backdrop,
-  .lightbox[open],
-  .lightbox[open]::backdrop {
-    transition: none;
-  }
 }
 
 @media (width <= 599px) {
@@ -1736,7 +1703,8 @@ body:has(.lightbox[open]) {
   }
 
   .site-header::before,
-  .mobile-nav::backdrop {
+  .mobile-nav::backdrop,
+  .lightbox::backdrop {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
