@@ -1419,12 +1419,6 @@ figure {
   color: inherit;
   overflow-y: auto;
 
-  opacity: 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
-
   &::before {
     content: '';
     position: absolute;
@@ -1437,34 +1431,15 @@ figure {
 
   &:popover-open {
     display: flex;
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
   }
 
+  /* Appearance (blur + dim + fade) is shared with .lightbox::backdrop below;
+     only the header-offset inset is nav-specific. */
   &::backdrop {
     position: fixed;
     inset-block-start: var(--header-height, 3.6rem);
     inset-inline: 0;
     inset-block-end: 0;
-    background: color-mix(in oklch, var(--color-bg) 72%, transparent);
-    backdrop-filter: blur(var(--blur-chrome));
-    -webkit-backdrop-filter: blur(var(--blur-chrome));
-    opacity: 0;
-    transition:
-      opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-      display var(--motion-duration-deliberate) allow-discrete,
-      overlay var(--motion-duration-deliberate) allow-discrete;
-  }
-
-  &:popover-open::backdrop {
-    opacity: 1;
-
-    @starting-style {
-      opacity: 0;
-    }
   }
 }
 
@@ -1552,7 +1527,134 @@ figure {
   }
 }
 
-body:has(.mobile-nav:popover-open) {
+/* Shared overlay behavior: one fade + backdrop treatment for the mobile nav and
+   image lightbox. The nav adds its own header-offset inset above. */
+.mobile-nav,
+.lightbox {
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+    display var(--motion-duration-deliberate) allow-discrete,
+    overlay var(--motion-duration-deliberate) allow-discrete;
+}
+
+.mobile-nav::backdrop,
+.lightbox::backdrop {
+  background: color-mix(in oklch, var(--color-bg) 72%, transparent);
+  backdrop-filter: blur(var(--blur-chrome));
+  -webkit-backdrop-filter: blur(var(--blur-chrome));
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+    display var(--motion-duration-deliberate) allow-discrete,
+    overlay var(--motion-duration-deliberate) allow-discrete;
+}
+
+.mobile-nav:popover-open,
+.lightbox[open],
+.mobile-nav:popover-open::backdrop,
+.lightbox[open]::backdrop {
+  opacity: 1;
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+/* Image lightbox: native <dialog> opened with showModal() for a real modal
+   (focus trap, Escape, focus return). */
+.prose img.zoomable {
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+}
+
+.lightbox {
+  max-inline-size: min(92vw, 1400px);
+  max-block-size: 92vh;
+  margin: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+  overflow: visible;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.lightbox-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-15);
+}
+
+.lightbox-img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 82vh;
+  inline-size: auto;
+  block-size: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  cursor: zoom-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lightbox-caption {
+  max-inline-size: min(92vw, 1400px);
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-2xs);
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.lightbox-close {
+  position: fixed;
+  inset-block-start: var(--space-20);
+  inset-inline-end: var(--space-20);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-text) 78%, transparent);
+  color: var(--color-bg);
+  font-size: var(--font-md);
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-text);
+  }
+}
+
+body:has(.mobile-nav:popover-open),
+body:has(.lightbox[open]) {
   overflow: hidden;
 }
 
@@ -1601,7 +1703,8 @@ body:has(.mobile-nav:popover-open) {
   }
 
   .site-header::before,
-  .mobile-nav::backdrop {
+  .mobile-nav::backdrop,
+  .lightbox::backdrop {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

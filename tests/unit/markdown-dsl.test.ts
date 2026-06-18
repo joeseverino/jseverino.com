@@ -114,6 +114,11 @@ describe('::figure (writeup)', () => {
     assert.match(html, /<p>not an image line<\/p>/);
     assert.doesNotMatch(html, /<figure>/);
   });
+
+  test('honors a |nozoom modifier on the figure image', () => {
+    const html = renderWriteupHtml('::figure\n![A cat|nozoom](cat.png)\nA caption here\n::', 'demo');
+    assert.match(html, /<figure><img src="cat\.png" alt="A cat" data-no-zoom><figcaption>A caption here<\/figcaption><\/figure>/);
+  });
 });
 
 describe('::table (writeup)', () => {
@@ -152,6 +157,11 @@ describe('image directives (writeup)', () => {
   test('`nocap` with empty alt flags data-nocap only', () => {
     const html = renderWriteupHtml('![|nocap](photo.png)', 'demo');
     assert.match(html, /<img src="photo\.png" alt="" data-nocap>/);
+  });
+
+  test('`nozoom` flags data-no-zoom so the image opts out of the lightbox', () => {
+    const html = renderWriteupHtml('![A cat|nozoom](photo.png)', 'demo');
+    assert.match(html, /<img src="photo\.png" alt="A cat" data-no-zoom data-has-alt-caption>/);
   });
 });
 
