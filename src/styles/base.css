@@ -167,6 +167,10 @@ img {
   max-inline-size: 100%;
   block-size: auto;
   vertical-align: bottom;
+  /* Photos aren't text: keep them out of select-all and drag-ghosting. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 picture {
