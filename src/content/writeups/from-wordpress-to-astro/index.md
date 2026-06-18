@@ -104,9 +104,7 @@ Or I skip the commands. The same workflow is a terminal app, where the dev serve
 The same steps as one-key actions: live status up top, then the audit gate, the test suite, and a publish that builds, ships, and verifies production.
 ::
 
-::button
-- [View tools on GitHub](https://github.com/joeseverino/tools)
-::
+[View tools on GitHub](https://github.com/joeseverino/tools)
 ## What's Next
 
 The migration is finished, so the project now is the system itself rather than a CMS to maintain. The work from here is making the path from a draft to a verified deploy shorter, and keeping the gate that guards it tight as the site grows.
@@ -115,6 +113,4 @@ Two tools that came out of building this site have become their own npm packages
 
 WordPress still earns its place on a site that genuinely needs a CMS. This one does not, and I do not see that changing. Static files plus this toolchain already beat it here on speed, safety, and how little I have to think about.
 
-::button
-- [View the source on GitHub](https://github.com/joeseverino/jseverino.com)
-::
+[View the source on GitHub](https://github.com/joeseverino/jseverino.com)

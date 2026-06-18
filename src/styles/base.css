@@ -899,6 +899,9 @@ main > * + * {
   font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.3;
+  overflow-wrap: normal;
+  text-wrap: wrap;
+  word-break: normal;
 
   & a {
     &:hover,
