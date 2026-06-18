@@ -6,10 +6,11 @@ const WRITEUP = imageHeavyWriteup();
 test.describe('figure lightbox', () => {
   test('clicking a body figure opens the modal and locks scroll', async ({ page }) => {
     await page.goto(WRITEUP);
-    const img = page.locator('.prose img.zoomable').first();
-    await expect(img).toHaveAttribute('role', 'button');
+    const trigger = page.locator('.prose .image-zoom').first();
+    await expect(trigger).toHaveAttribute('type', 'button');
+    await expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 
-    await img.click();
+    await trigger.click();
 
     const dialog = page.locator('dialog.lightbox');
     await expect(dialog).toBeVisible();
@@ -19,8 +20,8 @@ test.describe('figure lightbox', () => {
 
   test('pointer open and close do not leave visible focus outlines', async ({ page }) => {
     await page.goto(WRITEUP);
-    const img = page.locator('.prose img.zoomable').first();
-    await img.click();
+    const trigger = page.locator('.prose .image-zoom').first();
+    await trigger.click();
 
     const dialog = page.locator('dialog.lightbox');
     await expect(dialog).toBeVisible();
@@ -30,13 +31,13 @@ test.describe('figure lightbox', () => {
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
-    await expect(img).not.toBeFocused();
+    await expect(trigger).not.toBeFocused();
   });
 
   test('keyboard close returns focus to the trigger', async ({ page }) => {
     await page.goto(WRITEUP);
-    const img = page.locator('.prose img.zoomable').first();
-    await img.focus();
+    const trigger = page.locator('.prose .image-zoom').first();
+    await trigger.focus();
     await page.keyboard.press('Enter');
 
     const dialog = page.locator('dialog.lightbox');
@@ -44,20 +45,20 @@ test.describe('figure lightbox', () => {
 
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
-    await expect(img).toBeFocused();
+    await expect(trigger).toBeFocused();
   });
 
   test('closes via the close button and the backdrop', async ({ page }) => {
     await page.goto(WRITEUP);
-    const img = page.locator('.prose img.zoomable').first();
+    const trigger = page.locator('.prose .image-zoom').first();
     const dialog = page.locator('dialog.lightbox');
 
-    await img.click();
+    await trigger.click();
     await expect(dialog).toBeVisible();
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toBeHidden();
 
-    await img.click();
+    await trigger.click();
     await expect(dialog).toBeVisible();
     // A click anywhere in the overlay outside the caption dismisses it.
     await page.mouse.click(5, 5);
@@ -66,8 +67,8 @@ test.describe('figure lightbox', () => {
 
   test('opens via the keyboard on a focused figure', async ({ page }) => {
     await page.goto(WRITEUP);
-    const img = page.locator('.prose img.zoomable').first();
-    await img.focus();
+    const trigger = page.locator('.prose .image-zoom').first();
+    await trigger.focus();
     await page.keyboard.press('Enter');
 
     await expect(page.locator('dialog.lightbox')).toBeVisible();

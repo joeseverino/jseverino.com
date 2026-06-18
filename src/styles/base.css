@@ -1563,9 +1563,15 @@ figure {
 
 /* Image lightbox: native <dialog> opened with showModal() for a real modal
    (focus trap, Escape, focus return). */
-.prose img.zoomable {
+.prose .image-zoom {
+  display: block;
+  max-inline-size: 100%;
+  margin-inline: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
   cursor: zoom-in;
-  -webkit-tap-highlight-color: transparent;
 
   &:focus:not(:focus-visible) {
     outline: none;
@@ -1575,6 +1581,12 @@ figure {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
   }
+}
+
+.prose .image-zoom,
+.lightbox-img,
+.lightbox-close {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lightbox {
@@ -1602,27 +1614,21 @@ figure {
 
 .lightbox-img {
   display: block;
-  max-inline-size: 100%;
   max-block-size: 82vh;
-  inline-size: auto;
-  block-size: auto;
   object-fit: contain;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   cursor: zoom-out;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .lightbox-caption {
-  max-inline-size: min(92vw, 1400px);
+  max-inline-size: 100%;
   margin: 0;
   color: var(--color-text);
   font-size: var(--font-2xs);
   line-height: 1.5;
   text-align: center;
   text-wrap: balance;
-  -webkit-user-select: text;
-  user-select: text;
 }
 
 .lightbox-close {
@@ -1642,7 +1648,6 @@ figure {
   font-size: var(--font-md);
   line-height: 1;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
   transition: background var(--motion-duration-fast) var(--motion-ease-standard);
