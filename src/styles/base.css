@@ -1558,6 +1558,9 @@ body:has(.mobile-nav:popover-open) {
    (focus trap, Escape, focus return). */
 .prose img.zoomable {
   cursor: zoom-in;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .lightbox {
@@ -1611,12 +1614,19 @@ body:has(.mobile-nav:popover-open) {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   cursor: zoom-out;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .lightbox-caption {
   max-inline-size: min(92vw, 1400px);
   margin: 0;
-  color: var(--color-bg);
+  padding-block: var(--space-5);
+  padding-inline: var(--space-15);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--color-bg) 88%, transparent);
+  color: var(--color-text);
   font-size: var(--font-2xs);
   line-height: 1.5;
   text-align: center;

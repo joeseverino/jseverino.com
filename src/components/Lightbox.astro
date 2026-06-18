@@ -33,8 +33,9 @@
 
     const open = (img: HTMLImageElement) => {
       lastTrigger = img;
-      // The <img> src is the full-resolution fallback, fetched only now.
-      view.src = img.src;
+      // Reuse the variant the browser already rendered and cached (currentSrc),
+      // so the modal is instant rather than re-fetching the full-size fallback.
+      view.src = img.currentSrc || img.src;
       view.alt = img.alt;
 
       const figcaption = img.closest('figure')?.querySelector('figcaption');
