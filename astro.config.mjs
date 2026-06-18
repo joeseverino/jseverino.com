@@ -3,7 +3,7 @@ import path from 'node:path';
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
 import sitemap from '@astrojs/sitemap';
-import matter from 'gray-matter';
+import { parseFrontmatter } from './src/lib/frontmatter.mjs';
 import { SITE } from './src/lib/site-config.mjs';
 import { buildOutDir } from './src/lib/build-output.mjs';
 
@@ -33,7 +33,7 @@ function buildLastmodMap() {
     const file = path.join(dir, slug, 'index.md');
     if (!fs.existsSync(file)) continue;
     try {
-      const { data } = matter(fs.readFileSync(file, 'utf8'));
+      const { data } = parseFrontmatter(fs.readFileSync(file, 'utf8'));
       const stamp = data.last_reviewed || data.published_at;
       if (stamp) map.set(`${origin}/portfolio/${slug}/`, new Date(stamp).toISOString());
     } catch {

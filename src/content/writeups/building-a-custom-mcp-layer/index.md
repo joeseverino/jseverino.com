@@ -23,7 +23,7 @@ technologies:
   - tailscale
   - yaml
 featured: true
-featured_order: 1
+featured_order: 2
 ---
 
 # Building a Custom MCP Layer for My Technical Vault and Workflow

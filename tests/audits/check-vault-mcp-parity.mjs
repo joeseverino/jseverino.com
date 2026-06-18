@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Assert that the writeup frontmatter schema documented in the vault matches
 // the fields the vault MCP's `update_writeup_frontmatter` tool accepts, the
-// flags its `update-writeup` CLI subcommand forwards, what
+// flags its `update-writeup` CLI subcommand declares, what
 // `src/content.config.ts` (Zod) accepts, and what the `site manage` TUI
 // (tools repo) exposes for editing. Fails on drift.
 //
@@ -34,7 +34,7 @@ const toolsRoot =
 const schemaDoc = path.join(vaultRoot, '02 Infrastructure/Severino HQ/Frontmatter Schema.md');
 const zodConfig = path.join(siteRoot, 'src/content.config.ts');
 const mcpServer = path.join(mcpRoot, 'src/severino_vault_mcp/server.py');
-const mcpCli = path.join(mcpRoot, 'src/severino_vault_mcp/__main__.py');
+const mcpCli = path.join(mcpRoot, 'src/severino_vault_mcp/cli.py');
 const tuiSource = path.join(toolsRoot, 'lib/site/manage-tui.mjs');
 
 // Fields that intentionally aren't user-settable through the per-field MCP
@@ -112,7 +112,7 @@ function parseMcpUpdateFields(text) {
 
 function parseCliUpdateFlags(text) {
   const start = text.indexOf('"update-writeup"');
-  if (start === -1) fail('MCP __main__.py is missing the update-writeup subcommand');
+  if (start === -1) fail('MCP cli.py is missing the update-writeup subcommand');
   const end = text.indexOf('args = parser.parse_args()', start);
   const block = text.slice(start, end === -1 ? text.length : end);
   const fields = new Set();
@@ -122,7 +122,7 @@ function parseCliUpdateFlags(text) {
     if (MCP_EXCLUDED.has(name)) continue;
     fields.add(name);
   }
-  if (fields.size === 0) fail('MCP __main__.py update-writeup parsed to zero field flags');
+  if (fields.size === 0) fail('MCP cli.py update-writeup parsed to zero field flags');
   return fields;
 }
 
@@ -164,7 +164,7 @@ const expectedForTui = new Set([...expectedForMcp].filter((f) => !TUI_MANAGED.ha
 const zodGap = diff('Zod schema (src/content.config.ts)', expectedForZod, zodFields);
 const mcpGap = diff('MCP update_writeup_frontmatter', expectedForMcp, mcpFields);
 const expectedForCli = new Set([...expectedForMcp].filter((f) => !CLI_MANAGED.has(f)));
-const cliGap = diff('MCP update-writeup CLI flags (__main__.py)', expectedForCli, cliFields);
+const cliGap = diff('MCP update-writeup CLI flags (cli.py)', expectedForCli, cliFields);
 const tuiGap = diff('site manage TUI editable fields (tools repo)', expectedForTui, tuiFields.editable);
 
 let failed = false;

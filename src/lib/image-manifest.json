@@ -3194,6 +3194,171 @@
     ],
     "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream.png"
   },
+  "/assets/writeups/from-wordpress-to-astro/images/before-after.png": {
+    "w": 3200,
+    "h": 1800,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-wordpress-to-astro/images/before-after.png"
+  },
+  "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover.png": {
+    "w": 2226,
+    "h": 1252,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover.png"
+  },
+  "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro.png": {
+    "w": 2960,
+    "h": 1340,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro.png"
+  },
+  "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui.png": {
+    "w": 2204,
+    "h": 1358,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui.png"
+  },
+  "/assets/writeups/from-wordpress-to-astro/images/validation-gate.png": {
+    "w": 1896,
+    "h": 1418,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-512.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-512.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-wordpress-to-astro/images/validation-gate.png"
+  },
   "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png": {
     "w": 3200,
     "h": 1800,

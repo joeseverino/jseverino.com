@@ -1,5 +1,5 @@
 ---
-title: 'Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication'
+title: Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication
 description: >-
   A WordPress hardening project that combines Cloudflare edge security, a custom
   security plugin, browser-enforced policies, reduced default exposure, and a
@@ -20,8 +20,7 @@ technologies:
   - webauthn
   - wordpress
   - zero-trust
-featured: true
-featured_order: 6
+featured: false
 ---
 
 # Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication

@@ -4,8 +4,8 @@ import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import matter from 'gray-matter';
 import sharp from 'sharp';
+import { parseFrontmatter, stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = process.env.VAULT_DIR
@@ -305,12 +305,12 @@ async function syncPages() {
     }
 
     const raw = await fsPromises.readFile(sourceIndex, 'utf8');
-    const parsed = matter(raw);
+    const parsed = parseFrontmatter(raw);
     if (!includeDrafts && parsed.data.published !== true) continue;
 
     const refs = collectMarkdownAssetRefs(parsed.content);
     const rewrittenBody = rewritePageAssetPaths(parsed.content, slug);
-    const synced = matter.stringify(rewrittenBody, publicPageData(parsed.data));
+    const synced = stringifyFrontmatter(rewrittenBody, publicPageData(parsed.data));
 
     await fsPromises.mkdir(targetPages, { recursive: true });
     const pageTarget = path.join(targetPages, `${slug}.md`);
@@ -344,7 +344,7 @@ async function syncWriteups() {
     }
 
     const raw = await fsPromises.readFile(sourceIndex, 'utf8');
-    const parsed = matter(raw);
+    const parsed = parseFrontmatter(raw);
     if (!includeDrafts && parsed.data.published !== true) continue;
 
     const content = stripRepeatedDescription(parsed.content, parsed.data.description);
@@ -355,7 +355,7 @@ async function syncWriteups() {
     if (coverRef) refs.add(coverRef);
 
     const rewrittenContent = rewriteWriteupAssetPaths(content, slug);
-    const syncedMarkdown = matter.stringify(
+    const syncedMarkdown = stringifyFrontmatter(
       rewrittenContent,
       publicWriteupData(parsed.data, contentHash, slug),
     );

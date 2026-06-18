@@ -39,6 +39,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 
 | Slug | Label | Featured |
 | --- | --- | --- |
+| astro | Astro | yes |
 | claude-code | Claude Code | yes |
 | django | Django |  |
 | git | Git |  |
@@ -57,8 +58,10 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | html | HTML |  |
 | javascript | JavaScript | yes |
 | json | JSON |  |
+| markdown | Markdown |  |
 | php | PHP | yes |
 | python | Python | yes |
+| typescript | TypeScript | yes |
 | yaml | YAML |  |
 | zsh | zsh | yes |
 
@@ -84,6 +87,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | Slug | Label | Featured |
 | --- | --- | --- |
 | cloudflare | Cloudflare | yes |
+| cloudflare-pages | Cloudflare Pages |  |
 | debian | Debian |  |
 | digitalocean | DigitalOcean | yes |
 | docker | Docker | yes |
