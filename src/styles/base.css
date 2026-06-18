@@ -129,6 +129,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Brand-navy selection; text flips to the page bg (white) for contrast. */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -161,6 +167,10 @@ img {
   max-inline-size: 100%;
   block-size: auto;
   vertical-align: bottom;
+  /* Photos aren't text: keep them out of select-all and drag-ghosting. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 picture {

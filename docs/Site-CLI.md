@@ -34,8 +34,9 @@ never touch the vault except through `sync:content`'s one-way snapshot.
 | `site featured [<slug> <slot\|up\|down\|top\|bottom\|off>]` | Show or reorder the home-page featured list |
 | `site doctor` | Pre-flight health: security, contrast, parity, types, dependency audit — no build |
 | `site diagnose [--fast\|--json]` | The collect-all gate (wraps `npm run diagnose`) |
-| `site publish [--no-push]` | The ship command: gate every published writeup → build + audits → auto-commit + push → verify live |
-| `site verify <slug>` | Post-publish live checks: page status, og:image, tag pages, home placement |
+| `site publish [--no-push]` | Open the PR: gate every published writeup → build + audits → commit the content snapshot → push the branch → open/update the PR to main |
+| `site land [<slug>]` | After CI and the Cloudflare preview are green: squash-merge the PR → wait for the deploy → verify live |
+| `site verify <slug>` | Post-deploy live checks: page status, og:image, tag pages, home placement |
 | `site manage` | The interactive manager — everything below on one screen |
 
 `site -h` lists the rest (`seo`, `compare`, `test`, `release`, `tech`,
