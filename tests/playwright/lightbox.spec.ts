@@ -17,7 +17,7 @@ test.describe('figure lightbox', () => {
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   });
 
-  test('closes on Escape and returns focus to the trigger', async ({ page }) => {
+  test('pointer close does not leave a visible focus outline', async ({ page }) => {
     await page.goto(WRITEUP);
     const img = page.locator('.prose img.zoomable').first();
     await img.click();
@@ -25,9 +25,24 @@ test.describe('figure lightbox', () => {
     const dialog = page.locator('dialog.lightbox');
     await expect(dialog).toBeVisible();
 
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
+    await expect(img).toBeFocused();
+    await expect(img).toHaveCSS('outline-style', 'none');
+  });
+
+  test('keyboard close returns focus to the trigger', async ({ page }) => {
+    await page.goto(WRITEUP);
+    const img = page.locator('.prose img.zoomable').first();
+    await img.focus();
+    await page.keyboard.press('Enter');
+
+    const dialog = page.locator('dialog.lightbox');
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
     await expect(img).toBeFocused();
   });
 

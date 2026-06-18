@@ -77,8 +77,7 @@
     });
 
     dialog.addEventListener('close', () => {
-      view.removeAttribute('src');
-      lastTrigger?.focus();
+      lastTrigger?.focus({ preventScroll: true });
     });
   }
 </script>

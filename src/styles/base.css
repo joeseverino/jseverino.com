@@ -1568,6 +1568,16 @@ body:has(.mobile-nav:popover-open) {
    (focus trap, Escape, focus return). */
 .prose img.zoomable {
   cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
 }
 
 .lightbox {
@@ -1621,6 +1631,7 @@ body:has(.mobile-nav:popover-open) {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   cursor: zoom-out;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lightbox-caption {
@@ -1631,6 +1642,8 @@ body:has(.mobile-nav:popover-open) {
   line-height: 1.5;
   text-align: center;
   text-wrap: balance;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .lightbox-close {
@@ -1650,6 +1663,9 @@ body:has(.mobile-nav:popover-open) {
   font-size: var(--font-md);
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
   transition: background var(--motion-duration-fast) var(--motion-ease-standard);
 
   &:hover,
