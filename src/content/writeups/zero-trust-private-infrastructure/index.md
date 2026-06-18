@@ -1,5 +1,5 @@
 ---
-title: 'Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls'
+title: Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls
 description: >-
   A private cloud and homelab architecture using Tailscale, Caddy, private DNS,
   browser-trusted TLS, nftables, and DOCKER-USER filtering to keep internal
@@ -28,7 +28,7 @@ technologies:
   - wireguard
   - zero-trust
 featured: true
-featured_order: 2
+featured_order: 3
 ---
 
 # Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls

@@ -1,5 +1,5 @@
 ---
-title: 'Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA'
+title: Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA
 description: >-
   A retired Dell OptiPlex turned into an always-on private homelab for remote
   LAN access, containerized services, reverse proxying, and trusted internal
@@ -26,7 +26,7 @@ technologies:
   - windows-11-pro
   - wireguard
 featured: true
-featured_order: 4
+featured_order: 5
 ---
 
 # Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA
