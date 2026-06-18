@@ -1568,9 +1568,6 @@ body:has(.mobile-nav:popover-open) {
    (focus trap, Escape, focus return). */
 .prose img.zoomable {
   cursor: zoom-in;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
 .lightbox {
@@ -1624,9 +1621,6 @@ body:has(.mobile-nav:popover-open) {
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
   cursor: zoom-out;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
 .lightbox-caption {
