@@ -1596,6 +1596,10 @@ body:has(.mobile-nav:popover-open) {
     display var(--motion-duration-deliberate) allow-discrete,
     overlay var(--motion-duration-deliberate) allow-discrete;
 
+  &:focus {
+    outline: none;
+  }
+
   &[open] {
     opacity: 1;
 

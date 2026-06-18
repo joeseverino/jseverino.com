@@ -17,19 +17,20 @@ test.describe('figure lightbox', () => {
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   });
 
-  test('pointer close does not leave a visible focus outline', async ({ page }) => {
+  test('pointer open and close do not leave visible focus outlines', async ({ page }) => {
     await page.goto(WRITEUP);
     const img = page.locator('.prose img.zoomable').first();
     await img.click();
 
     const dialog = page.locator('dialog.lightbox');
     await expect(dialog).toBeVisible();
+    await expect(dialog).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Close' })).not.toBeFocused();
 
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
-    await expect(img).toBeFocused();
-    await expect(img).toHaveCSS('outline-style', 'none');
+    await expect(img).not.toBeFocused();
   });
 
   test('keyboard close returns focus to the trigger', async ({ page }) => {

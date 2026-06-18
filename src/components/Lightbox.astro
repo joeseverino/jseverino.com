@@ -4,7 +4,7 @@
 // triggers for this single modal <dialog>. Styles live in base.css.
 ---
 
-<dialog class="lightbox" aria-label="Image viewer">
+<dialog class="lightbox" aria-label="Image viewer" tabindex="-1">
   <button class="lightbox-close" type="button" aria-label="Close">×</button>
   <figure class="lightbox-figure">
     <img class="lightbox-img" alt="" />
@@ -19,6 +19,7 @@
     const view = dialog.querySelector<HTMLImageElement>('.lightbox-img')!;
     const caption = dialog.querySelector<HTMLElement>('.lightbox-caption')!;
     let lastTrigger: HTMLElement | null = null;
+    let restoreFocusOnClose = false;
 
     // Mark eligible images once. The .zoomable class (added only when JS runs)
     // is both the cursor affordance and the activation hook, so no-JS images
@@ -31,8 +32,9 @@
       img.setAttribute('aria-haspopup', 'dialog');
     }
 
-    const open = (img: HTMLImageElement) => {
+    const open = (img: HTMLImageElement, restoreFocus: boolean) => {
       lastTrigger = img;
+      restoreFocusOnClose = restoreFocus;
       // Reuse the variant the browser already rendered and cached (currentSrc),
       // so the modal is instant rather than re-fetching the full-size fallback.
       view.src = img.currentSrc || img.src;
@@ -51,13 +53,14 @@
       }
 
       dialog.showModal();
+      dialog.focus({ preventScroll: true });
     };
 
     document.addEventListener('click', (event) => {
       const target = event.target as HTMLElement;
       const trigger = target.closest<HTMLImageElement>('.prose img.zoomable');
       if (trigger) {
-        open(trigger);
+        open(trigger, false);
         return;
       }
       // Once open, any click in the overlay dismisses it (backdrop, the
@@ -73,11 +76,17 @@
       const target = event.target as HTMLElement;
       if (!target.matches('.prose img.zoomable')) return;
       event.preventDefault();
-      open(target as HTMLImageElement);
+      open(target as HTMLImageElement, true);
     });
 
     dialog.addEventListener('close', () => {
-      lastTrigger?.focus({ preventScroll: true });
+      const trigger = lastTrigger;
+      if (restoreFocusOnClose) {
+        trigger?.focus({ preventScroll: true });
+      } else if (trigger && document.activeElement === trigger) {
+        trigger.blur();
+      }
+      restoreFocusOnClose = false;
     });
   }
 </script>
