@@ -37,7 +37,7 @@ for (const path of pages) {
 
 test('axe finds no WCAG A/AA violations with the lightbox open', async ({ page }) => {
   await page.goto(imageHeavyWriteup(), { waitUntil: 'load' });
-  await page.locator('.prose img.zoomable').first().click();
+  await page.locator('.prose .image-zoom').first().click();
   await expect(page.locator('dialog.lightbox')).toBeVisible();
 
   expect(summarize(await scan(page))).toEqual([]);
