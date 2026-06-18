@@ -5,7 +5,7 @@ description: >-
   pages, less attack surface, and a one-command publish flow behind a full test
   gate.
 published: true
-published_at: 2026-06-01T00:00:00.000Z
+published_at: 2026-06-17T00:00:00.000Z
 last_reviewed: 2026-06-17T00:00:00.000Z
 cover_image: ./images/pagespeed-perfect-scores-cover.png
 cover_alt: >-
