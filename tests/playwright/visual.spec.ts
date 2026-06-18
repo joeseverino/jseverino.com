@@ -56,6 +56,22 @@ test.describe('visual regression', () => {
     await expect(page).toHaveScreenshot('contact-desktop.png', SCREENSHOT_OPTIONS);
   });
 
+  test('portfolio archive open (desktop)', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/portfolio/');
+    await page.waitForLoadState('networkidle');
+    await page.locator('.archive-section summary').click();
+    await expect(page.locator('.archive-taxonomy')).toBeVisible();
+    await expect(page).toHaveScreenshot('portfolio-archive-open.png', SCREENSHOT_OPTIONS);
+  });
+
+  test('tag page (desktop)', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/tag/docker/');
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveScreenshot('tag-docker-desktop.png', SCREENSHOT_OPTIONS);
+  });
+
   test('table block', async ({ page }) => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto('/portfolio/building-a-custom-mcp-layer/');
