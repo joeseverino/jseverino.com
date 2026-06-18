@@ -129,6 +129,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Selection tints with the JS navy so it stays readable over any background. */
+::selection {
+  background: color-mix(in oklch, var(--color-primary) 25%, transparent);
+}
+
 a {
   color: inherit;
   text-decoration: none;
