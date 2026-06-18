@@ -73,19 +73,22 @@ function preprocessImageDirectives(markdown: string): string {
       let alt = parts[0] ?? '';
       let width: string | null = null;
       let nocap = false;
+      let nozoom = false;
 
       for (const part of parts.slice(1)) {
         if (/^\d+$/.test(part)) width = part;
         else if (part.toLowerCase() === 'nocap' || part.toLowerCase() === 'nocaption') nocap = true;
+        else if (part.toLowerCase() === 'nozoom') nozoom = true;
       }
 
-      if (!width && !nocap && alt === altRaw) return match;
+      if (!width && !nocap && !nozoom && alt === altRaw) return match;
 
       const attrs = [
         `src="${url}"`,
         `alt="${alt.replace(/"/g, '&quot;')}"`,
         width ? `width="${width}"` : '',
         nocap ? 'data-nocap' : '',
+        nozoom ? 'data-no-zoom' : '',
         alt ? 'data-has-alt-caption' : '',
       ]
         .filter(Boolean)
@@ -103,20 +106,26 @@ function renderFigureBlocks(markdown: string): string {
     if (imageIndex === -1) return '';
 
     const imageLine = lines[imageIndex].trim();
-    const image = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
-    if (!image) return md.render(content.trim());
+    // preprocessImageDirectives runs before this, so an image carrying a
+    // modifier (|width, |nocap, |nozoom) arrives already as an <img> tag, while
+    // a plain image is still ![alt](src). Support both so the explicit caption
+    // composes with either.
+    const markdownImage = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
+    let imgTag: string;
+    if (markdownImage) {
+      const [, altRaw, src] = markdownImage;
+      imgTag = `<img src="${src}" alt="${altRaw.replace(/"/g, '&quot;')}">`;
+    } else if (/^<img\b[^>]*>$/.test(imageLine)) {
+      // The figure's own caption line supersedes the alt-derived one.
+      imgTag = imageLine.replace(/\s*data-has-alt-caption\b/, '');
+    } else {
+      return md.render(content.trim());
+    }
 
-    const [, altRaw, src] = image;
     const captionMarkdown = lines.slice(imageIndex + 1).join('\n').trim();
-    const alt = altRaw.replace(/"/g, '&quot;');
     const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
 
-    return [
-      '<figure>',
-      `<img src="${src}" alt="${alt}">`,
-      caption ? `<figcaption>${caption}</figcaption>` : '',
-      '</figure>',
-    ]
+    return ['<figure>', imgTag, caption ? `<figcaption>${caption}</figcaption>` : '', '</figure>']
       .filter(Boolean)
       .join('');
   });

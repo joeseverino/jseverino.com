@@ -1434,19 +1434,13 @@ figure {
     }
   }
 
+  /* Appearance (blur + dim + fade) is shared with .lightbox::backdrop below;
+     only the header-offset inset is nav-specific. */
   &::backdrop {
     position: fixed;
     inset-block-start: var(--header-height, 3.6rem);
     inset-inline: 0;
     inset-block-end: 0;
-    background: color-mix(in oklch, var(--color-bg) 72%, transparent);
-    backdrop-filter: blur(var(--blur-chrome));
-    -webkit-backdrop-filter: blur(var(--blur-chrome));
-    opacity: 0;
-    transition:
-      opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-      display var(--motion-duration-deliberate) allow-discrete,
-      overlay var(--motion-duration-deliberate) allow-discrete;
   }
 
   &:popover-open::backdrop {
@@ -1544,6 +1538,127 @@ figure {
 
 body:has(.mobile-nav:popover-open) {
   overflow: hidden;
+}
+
+/* Shared overlay backdrop: one blur + dim + fade for the mobile nav and the
+   image lightbox. The nav adds its own header-offset inset above. */
+.mobile-nav::backdrop,
+.lightbox::backdrop {
+  background: color-mix(in oklch, var(--color-bg) 72%, transparent);
+  backdrop-filter: blur(var(--blur-chrome));
+  -webkit-backdrop-filter: blur(var(--blur-chrome));
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+    display var(--motion-duration-deliberate) allow-discrete,
+    overlay var(--motion-duration-deliberate) allow-discrete;
+}
+
+/* Image lightbox: native <dialog> opened with showModal() for a real modal
+   (focus trap, Escape, focus return). */
+.prose img.zoomable {
+  cursor: zoom-in;
+}
+
+.lightbox {
+  max-inline-size: min(92vw, 1400px);
+  max-block-size: 92vh;
+  margin: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text);
+  overflow: visible;
+
+  opacity: 0;
+  transition:
+    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+    display var(--motion-duration-deliberate) allow-discrete,
+    overlay var(--motion-duration-deliberate) allow-discrete;
+
+  &[open] {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  &[open]::backdrop {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+}
+
+.lightbox-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-15);
+}
+
+.lightbox-img {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 82vh;
+  inline-size: auto;
+  block-size: auto;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  cursor: zoom-out;
+}
+
+.lightbox-caption {
+  max-inline-size: min(92vw, 1400px);
+  margin: 0;
+  color: var(--color-bg);
+  font-size: var(--font-2xs);
+  line-height: 1.5;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.lightbox-close {
+  position: fixed;
+  inset-block-start: var(--space-20);
+  inset-inline-end: var(--space-20);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-text) 78%, transparent);
+  color: var(--color-bg);
+  font-size: var(--font-md);
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-text);
+  }
+}
+
+body:has(.lightbox[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox,
+  .lightbox::backdrop,
+  .lightbox[open],
+  .lightbox[open]::backdrop {
+    transition: none;
+  }
 }
 
 @media (width <= 599px) {

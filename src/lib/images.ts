@@ -44,6 +44,8 @@ export type PictureOptions = {
   fetchpriority?: 'high' | 'low' | 'auto';
   /** Author display-width override (markdown `![alt|400](...)`). */
   width?: number | string;
+  /** Opt this image out of the figure lightbox (markdown `![alt|nozoom](...)`). */
+  noZoom?: boolean;
 };
 
 const esc = (value: string): string => value.replace(/"/g, '&quot;');
@@ -56,10 +58,11 @@ export function buildPicture(opts: PictureOptions): string {
   const cls = opts.class ? ` class="${esc(opts.class)}"` : '';
   const fp = fetchpriority ? ` fetchpriority="${fetchpriority}"` : '';
   const altAttr = ` alt="${esc(String(alt))}"`;
+  const nz = opts.noZoom ? ' data-no-zoom' : '';
   const entry = manifest()[src];
 
   if (!entry) {
-    return `<img src="${src}"${altAttr}${cls} loading="${loading}" decoding="async"${fp}>`;
+    return `<img src="${src}"${altAttr}${cls} loading="${loading}" decoding="async"${fp}${nz}>`;
   }
 
   // Emit width/height so the browser reserves the box (no layout shift).
@@ -81,7 +84,7 @@ export function buildPicture(opts: PictureOptions): string {
     `<source type="image/avif" srcset="${srcset(entry.avif)}" sizes="${sizes}">` +
     `<source type="image/webp" srcset="${srcset(entry.webp)}" sizes="${sizes}">` +
     `<img src="${entry.fallback}"${altAttr} width="${w}" height="${h}" ` +
-    `loading="${loading}" decoding="async"${fp}${cls}>` +
+    `loading="${loading}" decoding="async"${fp}${cls}${nz}>` +
     '</picture>'
   );
 }
@@ -117,6 +120,7 @@ export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 1
       sizes,
       loading: attrs.loading === 'eager' ? 'eager' : 'lazy',
       fetchpriority: attrs.fetchpriority === 'high' ? 'high' : undefined,
+      noZoom: 'data-no-zoom' in attrs,
     });
   });
 }

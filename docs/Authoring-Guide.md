@@ -36,6 +36,16 @@ No visible caption:
 ![Joe Severino portrait|nocap](./images/portrait.jpg)
 ```
 
+Opt out of the zoom view:
+
+```md
+![Decorative divider|nozoom](./images/divider.svg)
+```
+
+Every image in the article body opens an enlarged zoom view on click or tap by
+default. Add `|nozoom` to keep a specific image static; it still renders
+normally. The `|nozoom` modifier also works inside `::figure` blocks.
+
 The sync pipeline generates responsive variants. `Picture.astro` renders AVIF, WebP, and fallback sources with stable dimensions.
 
 ## Terminal Blocks

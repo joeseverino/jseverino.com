@@ -1,0 +1,82 @@
+---
+// Tap-to-zoom for article figures. Progressive enhancement: with no JS the
+// images stay plain images; the script upgrades in-scope .prose images into
+// triggers for this single modal <dialog>. Styles live in base.css.
+---
+
+<dialog class="lightbox" aria-label="Image viewer">
+  <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close">×</button>
+  <figure class="lightbox-figure">
+    <img class="lightbox-img" alt="" />
+    <figcaption class="lightbox-caption" hidden></figcaption>
+  </figure>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('dialog.lightbox');
+
+  if (dialog && typeof dialog.showModal === 'function') {
+    const view = dialog.querySelector<HTMLImageElement>('.lightbox-img')!;
+    const caption = dialog.querySelector<HTMLElement>('.lightbox-caption')!;
+    let lastTrigger: HTMLElement | null = null;
+
+    // Mark eligible images once. The .zoomable class (added only when JS runs)
+    // is both the cursor affordance and the activation hook, so no-JS images
+    // never look or behave clickable. Skip anything opted out via data-no-zoom.
+    for (const img of document.querySelectorAll<HTMLImageElement>('.prose img')) {
+      if (img.closest('[data-no-zoom]')) continue;
+      img.classList.add('zoomable');
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-haspopup', 'dialog');
+    }
+
+    const open = (img: HTMLImageElement) => {
+      lastTrigger = img;
+      // The <img> src is the full-resolution fallback, fetched only now.
+      view.src = img.src;
+      view.alt = img.alt;
+
+      const figcaption = img.closest('figure')?.querySelector('figcaption');
+      if (figcaption) {
+        caption.innerHTML = figcaption.innerHTML;
+        caption.hidden = false;
+      } else if (img.alt) {
+        caption.textContent = img.alt;
+        caption.hidden = false;
+      } else {
+        caption.textContent = '';
+        caption.hidden = true;
+      }
+
+      dialog.showModal();
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const trigger = target.closest<HTMLImageElement>('.prose img.zoomable');
+      if (trigger) {
+        open(trigger);
+        return;
+      }
+      if (!dialog.open) return;
+      // Backdrop, the enlarged image (zoom-out), or the close button all close.
+      if (target === dialog || target.classList.contains('lightbox-img') || target.closest('[data-lightbox-close]')) {
+        dialog.close();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target as HTMLElement;
+      if (!target.matches('.prose img.zoomable')) return;
+      event.preventDefault();
+      open(target as HTMLImageElement);
+    });
+
+    dialog.addEventListener('close', () => {
+      view.removeAttribute('src');
+      lastTrigger?.focus();
+    });
+  }
+</script>
