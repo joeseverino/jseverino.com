@@ -159,7 +159,11 @@ The site keeps its tokens local and borrows only the rendering:
   `tokens:start`/`tokens:end` markers: the `BRAND` export in `src/lib/brand.mjs`
   (from `brand`) and the `:root` block in `src/styles/base.css` (from
   `designSystem`). Same pattern as `sync:content` — an external source of truth,
-  vendored to a committed artifact, so the build stays self-sufficient.
+  vendored to a committed artifact, so the build stays self-sufficient. The read
+  + marker-splice + render primitives live upstream in
+  `severino-brand/brand/sync.mjs` and are shared with the vault's Obsidian theme
+  generator, so the projection logic isn't reimplemented per consumer — only the
+  list of targets differs.
 - `bin/make-icons.mjs`, `bin/make-og-image.mjs`, and `bin/make-github-social.mjs`
   import `markSvg` / `renderCard` from `branding-engine` instead of a local copy,
   and pass it the synced `BRAND`. The engine is generic; the tokens supply the color.
