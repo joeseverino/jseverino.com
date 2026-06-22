@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import { BRAND } from '@lib/brand.mjs';
+import { brandVarsCss } from '@lib/brand.mjs';
 
+// The /brand.css endpoint is the brand-identity surface that loads alongside
+// base.css. The CSS it emits is owned by brandVarsCss() so embedders (the
+// Obsidian plugin preview) consume the same definition, not a copy.
 export const GET: APIRoute = () =>
-  new Response(
-    `:root{--color-primary:${BRAND.navy};--color-primary-deep:${BRAND.navyDeep}}`,
-    {
-      headers: {
-        'Content-Type': 'text/css; charset=utf-8',
-      },
+  new Response(brandVarsCss(), {
+    headers: {
+      'Content-Type': 'text/css; charset=utf-8',
     },
-  );
+  });

@@ -177,6 +177,41 @@ Because the rendered assets are committed, the deploy never needs the engine: if
 CI cannot fetch it, the install skips it (non-fatal) and the static build runs
 unchanged. The engine is only ever invoked locally, on demand, to regenerate.
 
+## Embedding The Styles Elsewhere: The "Load Both" Contract
+
+The site loads its writeup styling as **two** global stylesheets, and anything
+that renders writeup HTML outside the site must load both — this is the single
+contract that, left implicit, cost a debugging session.
+
+- **`src/styles/base.css`** is the design system: prose, tables, links, buttons,
+  zebra striping, the header underline. It is stable.
+- **`/brand.css`** ([`src/pages/brand.css.ts`](../src/pages/brand.css.ts)) is the
+  brand identity: `--color-primary` / `--color-primary-deep`. It is swappable (the
+  sitedrift demo changes one token and regenerates everything).
+
+They are kept apart on purpose: brand identity (`brand` in `tokens.json`) is
+swappable, the design system (`designSystem`) is stable, so collapsing them would
+break the "change one brand value, regenerate" model. The catch is that
+**base.css's tinted tables, links, and buttons all read `--color-primary`**, so
+base.css loaded *alone* renders dead. You need both.
+
+To keep an embedder from re-deriving that, the assembly is owned once:
+
+- [`src/lib/brand.mjs`](../src/lib/brand.mjs) exports **`brandVarsCss()`** — the
+  `:root` brand-vars string. `/brand.css` emits exactly this, so the endpoint and
+  any embedder share one definition.
+- [`src/lib/web-styles.mjs`](../src/lib/web-styles.mjs) exports
+  **`previewStyles({ baseCss, fontUrl })`** — base.css + the brand vars + a
+  resolvable Inter `@font-face`, as one `<style>` blob. An embedder calls this one
+  function and *cannot forget the brand vars*. `baseCss` and `fontUrl` are passed
+  in because each embedder obtains them its own way (esbuild text/dataurl import,
+  a fetch, a file read); only the assembly is shared.
+
+The `severino-obsidian` plugin's preview pane is the first consumer: it imports
+`previewStyles` (via an esbuild `@site/web-styles` alias) and hands it the
+esbuild-inlined `base.css` and Inter woff2. That replaced a hand-rolled
+`--color-primary` injection that had silently gone dead.
+
 ## Related Docs
 
 - [`docs/Architecture.md`](./Architecture.md)
