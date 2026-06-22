@@ -5,7 +5,8 @@
 // Plain .mjs so both the Astro site and the node asset generators can import it.
 // Consumers:
 //   - src/layouts/BaseLayout.astro  → theme color
-//   - src/pages/brand.css.ts        → CSS brand custom properties (navy → --color-primary, navyDeep → --color-primary-deep)
+//   - src/pages/brand.css.ts        → CSS brand custom properties (via brandVarsCss)
+//   - src/lib/web-styles.mjs        → the base.css + brand vars + font bundle for embedders
 //   - bin/make-icons.mjs            → the brand mark (favicon, HD marks)
 //   - bin/make-og-image / make-github-social → social-card palette
 // The rendering logic lives in the branding-engine dependency; this file is the
@@ -23,3 +24,13 @@ export const BRAND = {
   glyph: 'JS',
 };
 // tokens:end
+
+// The brand custom properties every site surface AND every embedder needs
+// ALONGSIDE base.css. They are deliberately NOT in base.css: --color-primary is
+// brand identity (swappable), base.css is the design system (stable). Owned here
+// so /brand.css (src/pages/brand.css.ts) and the Obsidian plugin's preview don't
+// each re-derive them — the re-derivation that once left --color-primary dead in
+// the preview, killing base.css's tinted tables, links, and buttons.
+export function brandVarsCss() {
+  return `:root{--color-primary:${BRAND.navy};--color-primary-deep:${BRAND.navyDeep}}`;
+}
