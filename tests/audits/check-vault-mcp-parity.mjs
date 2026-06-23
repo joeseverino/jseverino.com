@@ -113,7 +113,11 @@ function parseMcpUpdateFields(text) {
 function parseCliUpdateFlags(text) {
   const start = text.indexOf('"update-writeup"');
   if (start === -1) fail('MCP cli.py is missing the update-writeup subcommand');
-  const end = text.indexOf('args = parser.parse_args()', start);
+  // Bound the scan to this one subparser — stop at the next `.add_parser(`.
+  // (cli.py builds the parser but never calls parse_args(); that lives in
+  // __main__.py, so anchoring on `args = parser.parse_args()` ran the slice to
+  // EOF and swept up every later subcommand's flags.)
+  const end = text.indexOf('.add_parser(', start + 1);
   const block = text.slice(start, end === -1 ? text.length : end);
   const fields = new Set();
   for (const match of block.matchAll(/add_argument\("--([a-z][a-z-]*)"/g)) {
