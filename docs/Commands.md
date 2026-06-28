@@ -37,6 +37,7 @@ behind the scripts.
 | `npm run make:icons` | Regenerate favicons + brand marks |
 | `npm run make:og` | Regenerate the Open Graph card |
 | `npm run make:social` | Regenerate the GitHub social preview |
+| `npm run snapshot:github` | Refresh the committed GitHub repo snapshot the portfolio Software list falls back to |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
 | `npm run scaffold:writeup-field` | Add a writeup frontmatter field across every layer |
 | `npm run draft:cover-alt` | Draft writeup cover alt text via the Claude API |

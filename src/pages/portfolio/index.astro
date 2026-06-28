@@ -2,11 +2,17 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
+import SoftwareCard from '@components/SoftwareCard.astro';
+import SoftwareListItem from '@components/SoftwareListItem.astro';
 import TagIndex from '@components/TagIndex.astro';
 import { getAllTags, getPage, getWriteups } from '@lib/content';
+import { getFeaturedSoftware, getMoreSoftware, getSoftware } from '@lib/software';
 
 const page = await getPage('portfolio');
 const writeups = await getWriteups();
+const software = await getSoftware();
+const featuredSoftware = getFeaturedSoftware(software);
+const moreSoftware = getMoreSoftware(software);
 const tags = await getAllTags();
 const tagCount = tags.length;
 ---
@@ -25,16 +31,180 @@ const tagCount = tags.length;
 >
   <main id="main" class="wide section">
     <PageHero title={page.title} description={page.intro ?? page.description} />
+
+    <div class="tabs-wrap">
+      <div class="portfolio-tabs" role="tablist" aria-label="Portfolio sections" data-portfolio-tabs>
+        <button
+          class="portfolio-tab"
+          type="button"
+          role="tab"
+          id="tab-writeups"
+          aria-controls="panel-writeups"
+          aria-selected="true"
+          data-tab="writeups"
+        >Writeups</button>
+        <button
+          class="portfolio-tab"
+          type="button"
+          role="tab"
+          id="tab-software"
+          aria-controls="panel-software"
+          aria-selected="false"
+          data-tab="software"
+        >Software</button>
+      </div>
+    </div>
+
     <hr class="page-divider" />
-    <ul class="project-grid">
-      {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
-    </ul>
-    <details class="archive-section">
-      <summary>
-        <span>Browse by technology</span>
-        <span>{tagCount} tags</span>
-      </summary>
-      <TagIndex />
-    </details>
+
+    <section
+      id="panel-writeups"
+      class="portfolio-panel"
+      role="tabpanel"
+      aria-labelledby="tab-writeups"
+      data-panel="writeups"
+    >
+      <ul class="project-grid">
+        {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+      </ul>
+      <details class="archive-section">
+        <summary>
+          <span>Browse by technology</span>
+          <span>{tagCount} tags</span>
+        </summary>
+        <TagIndex />
+      </details>
+    </section>
+
+    <section
+      id="panel-software"
+      class="portfolio-panel"
+      role="tabpanel"
+      aria-labelledby="tab-software"
+      data-panel="software"
+    >
+      <ul class="project-grid">
+        {featuredSoftware.map((entry) => <SoftwareCard entry={entry} />)}
+      </ul>
+
+      {moreSoftware.length > 0 && (
+        <div class="software-more">
+          <h3 class="software-more-title">More projects</h3>
+          <ul class="software-list">
+            {moreSoftware.map((entry) => <SoftwareListItem entry={entry} />)}
+          </ul>
+        </div>
+      )}
+    </section>
   </main>
 </BaseLayout>
+
+<style>
+  .tabs-wrap {
+    text-align: center;
+  }
+
+  .portfolio-tabs {
+    display: inline-flex;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--color-border-faint);
+    border-radius: var(--radius-pill);
+    background: var(--color-fill-faint);
+  }
+
+  .portfolio-tab {
+    padding-block: 0.5rem;
+    padding-inline: 1.1rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  .portfolio-tab:hover {
+    color: var(--color-text);
+  }
+
+  .portfolio-tab[aria-selected='true'] {
+    color: var(--color-bg);
+    background: var(--color-primary);
+  }
+
+  .software-more {
+    max-inline-size: var(--cards);
+    margin-inline: auto;
+    margin-block-start: var(--space-50);
+  }
+
+  .software-more-title {
+    margin-block-end: var(--space-10);
+    color: var(--color-muted);
+    font-size: var(--font-2xs);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .software-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-block-start: 1px solid var(--color-border-faint);
+  }
+
+  /* Both panels render for no-JS / SEO; the script hides the inactive one. */
+  .portfolio-panel[hidden] {
+    display: none;
+  }
+
+  .portfolio-panel + .portfolio-panel {
+    margin-block-start: var(--space-40);
+  }
+</style>
+
+<script>
+  function initPortfolioTabs(): void {
+    const root = document.querySelector<HTMLElement>('[data-portfolio-tabs]');
+    if (!root) return;
+
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panelFor = (name: string) =>
+      document.querySelector<HTMLElement>(`[data-panel="${name}"]`);
+
+    function activate(name: string, updateHash: boolean): void {
+      tabs.forEach((tab) => {
+        const on = tab.dataset.tab === name;
+        tab.setAttribute('aria-selected', String(on));
+        tab.tabIndex = on ? 0 : -1;
+        const panel = panelFor(tab.dataset.tab ?? '');
+        if (panel) panel.hidden = !on;
+      });
+      if (updateHash) {
+        const url = name === 'software' ? '#software' : window.location.pathname;
+        history.replaceState(null, '', url);
+      }
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => activate(tab.dataset.tab ?? '', true));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const next = tabs[(i + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        next.focus();
+        activate(next.dataset.tab ?? '', true);
+      });
+    });
+
+    activate(window.location.hash === '#software' ? 'software' : 'writeups', false);
+  }
+
+  initPortfolioTabs();
+  document.addEventListener('astro:after-swap', initPortfolioTabs);
+</script>

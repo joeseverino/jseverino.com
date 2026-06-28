@@ -45,6 +45,27 @@ Synced public source files:
 
 Cloudflare Pages builds from the committed snapshot. It does not need vault access.
 
+### Portfolio Software list
+
+The Software tab of `/portfolio` is *not* vault-synced. Its repo facts — which
+repos, description, primary language, last push — come from the **GitHub**
+account's public repos, which are the source of truth for that data: edit a
+repo's GitHub description and the card copy follows on the next build. The list
+is derived at build time, never hand-keyed:
+
+- [`src/lib/github.ts`](../src/lib/github.ts) fetches the public repos (build
+  time only, so CSP never applies). It falls back to the committed snapshot
+  [`src/data/github-repos.json`](../src/data/github-repos.json) if GitHub is
+  unreachable, so a hiccup or rate limit cannot break a deploy.
+- [`src/lib/software.config.ts`](../src/lib/software.config.ts) is the only
+  hand-maintained input: the skip list, featured set, order, writeup
+  cross-links, and the PyPI/npm package mappings GitHub cannot know.
+- [`src/lib/software.ts`](../src/lib/software.ts) composes those with live
+  PyPI/npm version and download counts.
+
+Refresh the snapshot fallback with `npm run snapshot:github` after editing repo
+descriptions or adding repos.
+
 ## 3. Sync Pipeline
 
 [`bin/sync-content.mjs`](../bin/sync-content.mjs) performs the private-to-public sync.
@@ -378,8 +399,11 @@ This is the secret half of the Cloudflare Turnstile keypair. It must never appea
 | Variable | Scope | Used by |
 |---|---|---|
 | `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
+| `GITHUB_TOKEN` | Build (Node `process.env`) | [`src/lib/github.ts`](../src/lib/github.ts) |
 
-This is the public half of the Turnstile keypair — it is safe to ship in HTML. It is set as a build environment variable in the Pages project so the static build can embed it into the contact form. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair — it is safe to ship in HTML. It is set as a build environment variable in the Pages project so the static build can embed it into the contact form. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+
+`GITHUB_TOKEN` is **optional** — a fine-grained PAT with public-repository read access, set as an encrypted build variable in the Pages project. It only raises the GitHub API rate limit (60 → 5,000 requests/hour) so the Software-list fetch is reliable on Cloudflare's shared CI IPs. The build works without it (local builds run unauthenticated; one request per build, well under the anonymous limit) and falls back to the committed snapshot on failure. Never grant it more than public read.
 
 ### No `wrangler.toml`
 
