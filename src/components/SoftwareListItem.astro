@@ -1,0 +1,131 @@
+---
+import { metaLine, type SoftwareEntry } from '@lib/software';
+
+type Props = { entry: SoftwareEntry };
+const { entry } = Astro.props;
+
+const meta = metaLine(entry);
+const titleHref = entry.repoUrl ?? entry.package?.url;
+---
+
+<li class="sli">
+  <div class="sli-body">
+    <h3 class="sli-title">
+      {titleHref ? (
+        <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+      ) : (
+        entry.title
+      )}
+      {entry.selfHosted && <span class="sli-flag">Self-hosted</span>}
+    </h3>
+    <p class="sli-desc">{entry.description}</p>
+  </div>
+
+  <div class="sli-aside">
+    {meta && <p class="sli-meta">{meta}</p>}
+    <div class="sli-links">
+      {entry.repoUrl && (
+        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      )}
+      {entry.writeupSlug && (
+        <a class="sli-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Writeup →</a>
+      )}
+    </div>
+  </div>
+</li>
+
+<style>
+  .sli {
+    display: flex;
+    gap: var(--space-30);
+    align-items: start;
+    justify-content: space-between;
+    padding-block: var(--space-20);
+    border-block-end: 1px solid var(--color-border-faint);
+  }
+
+  .sli-body {
+    min-inline-size: 0;
+  }
+
+  .sli-title {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-10);
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .sli-title a:hover,
+  .sli-title a:focus {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .sli-flag {
+    color: var(--color-muted);
+    font-family: var(--font-sans, inherit);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .sli-desc {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .sli-aside {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    text-align: right;
+  }
+
+  .sli-meta {
+    margin: 0;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .sli-links {
+    display: flex;
+    gap: var(--space-15);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .sli-links a:hover,
+  .sli-links a:focus {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .sli-writeup {
+    color: var(--color-text-alt);
+  }
+
+  @media (max-width: 640px) {
+    .sli {
+      flex-direction: column;
+      gap: var(--space-10);
+    }
+
+    .sli-aside {
+      align-items: flex-start;
+      text-align: start;
+    }
+  }
+</style>

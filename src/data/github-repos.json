@@ -1,0 +1,254 @@
+[
+  {
+    "archived": false,
+    "description": "",
+    "fork": true,
+    "language": "Python",
+    "name": "AdGuardHome_DNSQueryAnalyzer",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/AdGuardHome_DNSQueryAnalyzer"
+  },
+  {
+    "archived": false,
+    "description": "A networking security lab that simulates ARP spoofing in Mininet, analyzes packet captures in Wireshark, and demonstrates enterprise mitigations using DHCP Snooping and Dynamic Arp Inspection in Cisco Packet Tracer.",
+    "fork": false,
+    "language": "Python",
+    "name": "arp-spoofing-mininet-lab",
+    "pushedAt": "2026-03",
+    "url": "https://github.com/joeseverino/arp-spoofing-mininet-lab"
+  },
+  {
+    "archived": false,
+    "description": "OS-enforced isolation demo for bounded local AI: an agent reaches a private vault only through the severino-vault-mcp sensitivity gate, with no filesystem bypass.",
+    "fork": false,
+    "language": "Shell",
+    "name": "bounded-local-ai-demo",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/bounded-local-ai-demo"
+  },
+  {
+    "archived": false,
+    "description": "Generate a complete brand system from one color and a monogram: favicons, vector marks, wordmarks, social cards, brand sheets, and web tokens. The generated brand source behind jseverino.com.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "branding-engine",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/branding-engine"
+  },
+  {
+    "archived": false,
+    "description": "CLI for managing Caddy reverse-proxy sites: add, remove, and list sites with automatic TLS snippet detection and config backup.",
+    "fork": false,
+    "language": "Shell",
+    "name": "caddy-manager",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/caddy-manager"
+  },
+  {
+    "archived": false,
+    "description": "Issues TLS certificates signed by a private root CA kept on an offline VM. The CA key never touches a networked machine.",
+    "fork": false,
+    "language": "Shell",
+    "name": "cert-generator",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/cert-generator"
+  },
+  {
+    "archived": false,
+    "description": "Language-agnostic command-surface contract: declare a tool once, render every view from it, and carry each command's blast radius so agents can risk-gate before they act.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "cordon",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/cordon"
+  },
+  {
+    "archived": false,
+    "description": "Opinionated repo scaffold with the cornerstones already wired: the Cordon contract, green-gating CI, and branch-to-PR-to-review governance.",
+    "fork": false,
+    "language": "Shell",
+    "name": "cordon-starter",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/cordon-starter"
+  },
+  {
+    "archived": false,
+    "description": "Object-oriented Python project that simulates American football games. Team objects track records while games generate realistic scores.",
+    "fork": false,
+    "language": "Python",
+    "name": "football-score-simulator",
+    "pushedAt": "2025-08",
+    "url": "https://github.com/joeseverino/football-score-simulator"
+  },
+  {
+    "archived": false,
+    "description": "GitHub profile page",
+    "fork": false,
+    "language": null,
+    "name": "joeseverino",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/joeseverino"
+  },
+  {
+    "archived": false,
+    "description": "Public Astro portfolio on Cloudflare Pages, built from a private Obsidian vault: vault-to-content sync, CSP hardening, and a D1-backed contact form protected by Turnstile.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "jseverino.com",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/jseverino.com"
+  },
+  {
+    "archived": false,
+    "description": "Archived predecessor of jseverino.com — the WordPress→static mirror that proved Cloudflare Pages before the Astro rebuild.",
+    "fork": false,
+    "language": "HTML",
+    "name": "jseverino.com-legacy",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/jseverino.com-legacy"
+  },
+  {
+    "archived": false,
+    "description": "Interactive Python CLI math quiz with multiple difficulty levels, a scoring system, and retry logic.",
+    "fork": false,
+    "language": "Python",
+    "name": "math-quiz-game",
+    "pushedAt": "2025-08",
+    "url": "https://github.com/joeseverino/math-quiz-game"
+  },
+  {
+    "archived": false,
+    "description": "A lightweight Zsh CLI helper that recursively checks PHP files for syntax errors while skipping dependency folders.",
+    "fork": false,
+    "language": "Shell",
+    "name": "phptest",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/phptest"
+  },
+  {
+    "archived": false,
+    "description": "Command-line tool to track risks with auto-incrementing IDs.",
+    "fork": false,
+    "language": "Python",
+    "name": "risk-register",
+    "pushedAt": "2025-08",
+    "url": "https://github.com/joeseverino/risk-register"
+  },
+  {
+    "archived": false,
+    "description": "Joe Severino's brand kit: the brand as data, rendered by branding-engine.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "severino-brand",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/severino-brand"
+  },
+  {
+    "archived": false,
+    "description": "Education-profile MCP server on the same engine: course notes, assignments, and a task ledger for a Georgia Tech vault. The engine's second consumer.",
+    "fork": false,
+    "language": "Python",
+    "name": "severino-edu-mcp",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/severino-edu-mcp"
+  },
+  {
+    "archived": false,
+    "description": "Tailscale-only Django ops app: a schema-validated docs index synced from an Obsidian vault, plus projects, assets, expenses, and an audit log. Gated CI/CD to a homelab.",
+    "fork": false,
+    "language": "Python",
+    "name": "severino-hq",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/severino-hq"
+  },
+  {
+    "archived": false,
+    "description": "Custom WordPress security layer: application hardening, file integrity monitoring, security event logging, and passkey-first login.",
+    "fork": false,
+    "language": "PHP",
+    "name": "severino-labs-security-layer",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/severino-labs-security-layer"
+  },
+  {
+    "archived": false,
+    "description": "WordPress block theme (full-site editing) for jseverino.com; its CSS design system was later carried into the site's non-WordPress rebuild.",
+    "fork": false,
+    "language": "CSS",
+    "name": "severino-labs-theme",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/severino-labs-theme"
+  },
+  {
+    "archived": false,
+    "description": "Obsidian plugin for the Severino Labs vault: a backlog cockpit, task capture, project launchers, and a site-accurate writeup preview.",
+    "fork": false,
+    "language": "TypeScript",
+    "name": "severino-obsidian",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/severino-obsidian"
+  },
+  {
+    "archived": false,
+    "description": "Local-first MCP server that gives AI tools safe, sensitivity-gated access to a Git-backed Obsidian ops vault: runbooks, infrastructure inventories, and a task ledger, served over stdio from local files only.",
+    "fork": false,
+    "language": "Python",
+    "name": "severino-vault-mcp",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/severino-vault-mcp"
+  },
+  {
+    "archived": false,
+    "description": "Visual review for local and Cloudflare preview deploys. Compare DEV against LIVE with split, overlay/diff, synced navigation, response deltas, and SEO checks, plus a Pages addon and an MCP interface.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "sitedrift",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/sitedrift"
+  },
+  {
+    "archived": false,
+    "description": "A quiz game that loads a JSON deck so you can quiz yourself and track progress, making sure every card comes up at least once before any repeats.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "study-quiz",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/study-quiz"
+  },
+  {
+    "archived": false,
+    "description": "Automates Let's Encrypt wildcard certificate renewal and deployment to cPanel using Cloudflare DNS validation.",
+    "fork": false,
+    "language": "Shell",
+    "name": "tls-cert-renewal-automation",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/tls-cert-renewal-automation"
+  },
+  {
+    "archived": false,
+    "description": "Personal macOS CLI suite: age file crypt with Keychain-cached unlock, vault sync, dotfile backup, DNS latency diagnostics, and a one-command vault-to-docs bridge. One spec per tool renders its help, JSON, and TUI.",
+    "fork": false,
+    "language": "Shell",
+    "name": "tools",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/tools"
+  },
+  {
+    "archived": false,
+    "description": "Domain-agnostic vault-governance engine: schema profiles, indexing, ranked search, a task ledger, atomic writes, and a composable MCP core. The reusable core that powers severino-vault-mcp and severino-edu-mcp.",
+    "fork": false,
+    "language": "Python",
+    "name": "vault-engine",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/vault-engine"
+  },
+  {
+    "archived": false,
+    "description": "Zero-dependency Git deploy pipeline for solo devs. One command stages, commits, pushes, and deploys. No CI, no YAML, no dashboards.",
+    "fork": false,
+    "language": "Shell",
+    "name": "zsh-git-deploy-workflow",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/zsh-git-deploy-workflow"
+  }
+]

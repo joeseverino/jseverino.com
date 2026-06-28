@@ -17,6 +17,7 @@
     "dev:drafts": "node bin/sync-content.mjs --drafts && ASTRO_TELEMETRY_DISABLED=1 astro dev",
     "sync:content": "node bin/sync-content.mjs",
     "sync:tokens": "node bin/sync-tokens.mjs",
+    "snapshot:github": "node bin/snapshot-github.mjs",
     "diagnose": "node bin/diagnose.mjs",
     "diff:build": "node bin/diff-build.mjs",
     "publish:check": "node bin/publish-check.mjs",

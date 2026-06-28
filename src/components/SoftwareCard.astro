@@ -1,0 +1,290 @@
+---
+import { metaLine, type SoftwareEntry } from '@lib/software';
+
+type Props = { entry: SoftwareEntry };
+const { entry } = Astro.props;
+const meta = metaLine(entry);
+const pkg = entry.package;
+
+function formatDownloads(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+}
+
+const registryLabel = pkg ? (pkg.registry === 'pypi' ? 'PyPI' : 'npm') : null;
+const titleHref = entry.repoUrl ?? pkg?.url;
+---
+
+<li class="software-card">
+  <div class="software-card-head">
+    <h3 class="software-card-title">
+      {titleHref ? (
+        <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+      ) : (
+        entry.title
+      )}
+    </h3>
+    {(pkg || entry.selfHosted) && (
+      <div class="software-badges">
+        {pkg && (
+          <span class={`badge badge--${pkg.registry}`}>
+            {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
+          </span>
+        )}
+        {pkg?.downloadsPerMonth != null && (
+          <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+        )}
+        {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+      </div>
+    )}
+  </div>
+
+  <p class="software-card-summary">{entry.description}</p>
+
+  {pkg && (
+    <div class="terminal-block software-install">
+      <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
+      <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
+        <span class="copy-label">Copy</span>
+      </button>
+    </div>
+  )}
+
+  {meta && <p class="software-meta">{meta}</p>}
+
+  <div class="software-links">
+    {entry.repoUrl && (
+      <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+    )}
+    {pkg && (
+      <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
+    )}
+    {entry.writeupSlug && (
+      <a class="software-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Read the writeup →</a>
+    )}
+  </div>
+</li>
+
+<style>
+  .software-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-15);
+    padding: var(--space-20);
+    border: 1px solid var(--color-border-faint);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      translate var(--motion-duration-fast) var(--motion-ease-standard),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .software-card:hover {
+      translate: 0 -6px;
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  /* Eyebrow + title + badges each on their own row so heads are uniform. */
+  .software-card-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .software-card-title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .software-card-title a:hover,
+  .software-card-title a:focus {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .software-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 3px;
+    padding-inline: 8px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .badge--pypi {
+    color: #1e40af;
+    background: rgb(59 130 246 / 12%);
+    border: 1px solid rgb(59 130 246 / 28%);
+  }
+
+  .badge--npm {
+    color: #9a1c1c;
+    background: rgb(203 56 55 / 12%);
+    border: 1px solid rgb(203 56 55 / 28%);
+  }
+
+  .badge--muted {
+    color: var(--color-muted);
+    background: var(--color-fill-faint);
+    border: 1px solid var(--color-border-faint);
+  }
+
+  .badge--self-hosted {
+    color: var(--color-muted);
+    background: var(--color-fill-faint);
+    border: 1px dashed var(--color-field-border);
+  }
+
+  /* Fixed height so the install line / links align across cards in a tier. */
+  .software-card-summary {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    min-block-size: 6.2em; /* 4 lines @ 1.55 line-height */
+    margin: 0;
+    overflow: hidden;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  /* Reuse the global .terminal-block chrome (bg/radius/border); lay out the
+     command and the copy button as one flex row. */
+  .software-install {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-10);
+    margin-block: 0;
+    padding-block: 0.5rem;
+    padding-inline: 0.85rem;
+  }
+
+  .software-install-cmd {
+    flex: 1;
+    min-inline-size: 0;
+    color: var(--term-cmd);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    /* Wrap the full command instead of clipping it — an install snippet must be
+       readable in full, even in a narrow card. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .software-install-cmd .prompt {
+    color: var(--term-prompt);
+    user-select: none;
+  }
+
+  .software-copy {
+    flex: 0 0 auto;
+    padding-block: 3px;
+    padding-inline: 9px;
+    border: 1px solid var(--term-border);
+    border-radius: var(--radius-sm);
+    background: rgb(255 255 255 / 6%);
+    color: var(--term-bar-fg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-standard),
+      color var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  .software-copy:hover,
+  .software-copy:focus-visible {
+    background: rgb(255 255 255 / 12%);
+    color: var(--term-cmd);
+  }
+
+  .software-copy.is-copied {
+    color: var(--term-out);
+    border-color: color-mix(in oklch, var(--term-out) 50%, transparent);
+  }
+
+  .software-tags {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .software-meta {
+    margin: 0;
+    margin-block-start: auto;
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .software-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-20);
+    padding-block-start: var(--space-10);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .software-links a:hover,
+  .software-links a:focus {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .software-writeup {
+    margin-inline-start: auto;
+    color: var(--color-text-alt);
+  }
+</style>
+
+<script>
+  function initSoftwareCopy(): void {
+    document.querySelectorAll<HTMLButtonElement>('.software-copy').forEach((btn) => {
+      if (btn.dataset.wired) return;
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', async () => {
+        const text = btn.getAttribute('data-copy') ?? '';
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          return; // clipboard unavailable; command is still visible to copy by hand
+        }
+        const label = btn.querySelector('.copy-label');
+        if (!label) return;
+        const prev = label.textContent;
+        label.textContent = 'Copied';
+        btn.classList.add('is-copied');
+        window.setTimeout(() => {
+          label.textContent = prev;
+          btn.classList.remove('is-copied');
+        }, 1400);
+      });
+    });
+  }
+
+  initSoftwareCopy();
+  document.addEventListener('astro:after-swap', initSoftwareCopy);
+</script>
