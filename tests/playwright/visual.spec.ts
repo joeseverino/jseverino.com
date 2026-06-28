@@ -65,6 +65,36 @@ test.describe('visual regression', () => {
     await expect(page).toHaveScreenshot('portfolio-archive-open.png', SCREENSHOT_OPTIONS);
   });
 
+  // Mask build-time-variable values (registry versions, download counts, and
+  // last-pushed dates) so the baseline pins layout, not live numbers. Full-page
+  // so the featured cards AND the compact "More projects" list are covered.
+  function softwareShot(page: import('@playwright/test').Page, name: string) {
+    return expect(page).toHaveScreenshot(name, {
+      ...SCREENSHOT_OPTIONS,
+      fullPage: true,
+      mask: [
+        page.locator('.badge--pypi, .badge--npm, .badge--muted'),
+        page.locator('.software-meta, .sli-meta'),
+      ],
+    });
+  }
+
+  test('portfolio software tab (desktop)', async ({ page }) => {
+    await page.setViewportSize(DESKTOP_VIEWPORT);
+    await page.goto('/portfolio/#software');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('[data-panel="software"]')).toBeVisible();
+    await softwareShot(page, 'portfolio-software-desktop.png');
+  });
+
+  test('portfolio software tab (mobile)', async ({ page }) => {
+    await page.setViewportSize(MOBILE_VIEWPORT);
+    await page.goto('/portfolio/#software');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('[data-panel="software"]')).toBeVisible();
+    await softwareShot(page, 'portfolio-software-mobile.png');
+  });
+
   test('tag page (desktop)', async ({ page }) => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto('/tag/docker/');

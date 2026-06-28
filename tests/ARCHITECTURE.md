@@ -114,6 +114,7 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
 | E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
 | E2E | [private tooltips](#tooltipsspects) | `tests/playwright/tooltips.spec.ts` | Tailnet-link tooltips mount on click and dismiss on Escape / outside click. |
+| E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
 | Routes | [endpoints + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | `robots.txt`, `feed.xml`, and unknown-route 404 behavior the sitemap smoke test can't reach. |
 | Images | [image resolution](#resourcessinglespects) | `tests/playwright/resources.single.spec.ts` | Every `<img>`/`<source>` variant (AVIF/WebP/fallback) on key pages resolves. |
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
@@ -360,6 +361,9 @@ Guards the responsive-image pipeline. On an image-light and an image-heavy page 
 ### `security.single.spec.ts`
 Asserts every `target="_blank"` link across the key pages carries `rel="noopener"`, so an opened tab cannot reach back through `window.opener`.
 
+### `portfolio-software.single.spec.ts`
+Covers the Software tab of `/portfolio`. Asserts the tab toggle behaviour — defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps **both** panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
+
 ### Running the suite
 
 ```sh
@@ -391,6 +395,7 @@ The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/v
 | Contact (desktop) | Form layout, field spacing, labels, copy, submit control. |
 | Table / terminal block | High-risk authored blocks isolated so a page change can't hide block regressions. |
 | Resume action | The fixed, centered resume action relative to page content. |
+| Portfolio Software (desktop / mobile) | Full-page Software tab: featured cards, install lines, the More-projects list, and mobile stacking. Live versions, downloads, and dates are masked so the baseline pins layout, not numbers. |
 
 ### Committed baselines
 
@@ -421,6 +426,12 @@ These are the PNGs that ship in the repo and that every run is measured against.
 **Resume action** — the fixed, centered action relative to page content:
 
 <img src="./playwright/visual.spec.ts-snapshots/resume-sticky-action-chromium-desktop-darwin.png" alt="Resume sticky action baseline" width="560">
+
+**Portfolio Software tab — desktop and mobile** (full page; live versions, downloads, and dates are masked so the baseline pins layout, not numbers):
+
+<img src="./playwright/visual.spec.ts-snapshots/portfolio-software-desktop-chromium-desktop-darwin.png" alt="Portfolio Software desktop baseline" width="560">
+
+<img src="./playwright/visual.spec.ts-snapshots/portfolio-software-mobile-chromium-desktop-darwin.png" alt="Portfolio Software mobile baseline" width="280">
 
 ### Diff example: header height shift
 Triggered by changing the header height (e.g. `3.6rem` → `8rem`), pushing the whole layout down:

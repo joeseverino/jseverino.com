@@ -172,7 +172,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
      command and the copy button as one flex row. */
   .software-install {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--space-10);
     margin-block: 0;
     padding-block: 0.5rem;
@@ -182,16 +182,14 @@ const titleHref = entry.repoUrl ?? pkg?.url;
   .software-install-cmd {
     flex: 1;
     min-inline-size: 0;
-    overflow-x: auto;
     color: var(--term-cmd);
     font-family: var(--font-mono);
     font-size: 12.5px;
-    white-space: nowrap;
-    scrollbar-width: none;
-  }
-
-  .software-install-cmd::-webkit-scrollbar {
-    display: none;
+    line-height: 1.5;
+    /* Wrap the full command instead of clipping it — an install snippet must be
+       readable in full, even in a narrow card. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .software-install-cmd .prompt {
