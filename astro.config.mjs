@@ -77,6 +77,12 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
+      // Astro 7 / Vite 8 default the CSS minifier to lightningcss, which folds
+      // `animation-timeline: scroll()` into the `animation` shorthand
+      // (`animation: … name scroll()`) — invalid syntax the browser drops,
+      // killing the scroll-driven header shadow. esbuild (Vite 7's default)
+      // leaves it alone, so pin it back and keep the rest of the CSS stable.
+      cssMinify: 'esbuild',
     },
     server: {
       allowedHosts: devAllowedHosts,
