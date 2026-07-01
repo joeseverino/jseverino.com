@@ -120,9 +120,11 @@ async function build(): Promise<SoftwareEntry[]> {
 
   await Promise.all(entries.map((entry) => (entry.package ? enrich(entry.package) : undefined)));
 
-  return entries.sort(
-    (a, b) => a.order - b.order || (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''),
-  );
+  // Deterministic: explicit order first, then alphabetical by title. Crucially
+  // NOT by last-pushed — that depends on GitHub's volatile push ordering, so any
+  // repo push (including merging this site) would reorder the list and break the
+  // visual baseline. Stable order keeps the snapshot valid across pushes.
+  return entries.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 }
 
 export function getFeaturedSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
