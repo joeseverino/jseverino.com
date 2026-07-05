@@ -72,6 +72,7 @@ edge         OpenAPI fields/limits and <n> D1 inserts agree with the handlers
 preview      passed
 unit         passed
 docs         <n> docs, <n> local links, <n> script refs resolve
+embed        embed bundle current (public/embed/bundle.css)
 css-lint     passed
 css-vars     passed
 check        0 errors, 0 warnings

@@ -79,6 +79,12 @@ export const AUDITS = [
     fix: 'A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target.',
   },
   {
+    id: 'embed-bundle', label: 'embed', name: 'Embed Bundle Freshness', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['bin/make-embed-bundle.mjs', '--check'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'public/embed/bundle.css lags its sources (base.css / brand vars / the Inter woff2). Regenerate: npm run -s make:embed, then commit it.',
+  },
+  {
     id: 'css-lint', label: 'css-lint', name: 'Stylelint CSS Check', phase: 'pre-build',
     exec: { cmd: 'npx', args: ['stylelint', 'src/styles/**/*.css'] },
     gates: ['publish', 'diagnose'], summary: 'silent',
