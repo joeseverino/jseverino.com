@@ -33,7 +33,9 @@ const toolsRoot =
 
 const schemaDoc = path.join(vaultRoot, '02 Infrastructure/Severino HQ/Frontmatter Schema.md');
 const zodConfig = path.join(siteRoot, 'src/content.config.ts');
-const mcpServer = path.join(mcpRoot, 'src/severino_vault_mcp/server.py');
+// update_writeup_frontmatter moved out of server.py in the MCP's tool-module
+// split — read the module that owns it now.
+const mcpServer = path.join(mcpRoot, 'src/severino_vault_mcp/tools/writeups.py');
 const mcpCli = path.join(mcpRoot, 'src/severino_vault_mcp/cli.py');
 const tuiSource = path.join(toolsRoot, 'lib/site/manage-tui.mjs');
 
@@ -97,7 +99,7 @@ function parseZodWriteupFields(text) {
 
 function parseMcpUpdateFields(text) {
   const start = text.indexOf('def update_writeup_frontmatter(');
-  if (start === -1) fail('MCP server.py missing update_writeup_frontmatter');
+  if (start === -1) fail('MCP tools/writeups.py missing update_writeup_frontmatter');
   const sigEnd = text.indexOf(')', start);
   const signature = text.slice(start, sigEnd + 1);
   const fields = new Set();

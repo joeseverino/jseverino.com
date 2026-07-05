@@ -35,7 +35,9 @@ for (const file of htmlFiles) {
   }
 }
 
-const totalCss = sum(files.filter((file) => file.endsWith('.css')));
+// public/embed/bundle.css is the embeddable distribution artifact (font
+// inlined); no page loads it, so it stays out of the page CSS budget.
+const totalCss = sum(files.filter((file) => file.endsWith('.css') && !file.includes('/embed/')));
 if (totalCss > BUDGET.totalCssBytes) {
   failures.push(`total CSS ${kb(totalCss)} exceeds the ${kb(BUDGET.totalCssBytes)} budget`);
 }

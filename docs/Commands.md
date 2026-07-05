@@ -36,6 +36,7 @@ behind the scripts.
 | :--- | :--- |
 | `npm run make:icons` | Regenerate favicons + brand marks |
 | `npm run make:og` | Regenerate the Open Graph card |
+| `npm run make:embed` | Regenerate `public/embed/bundle.css` — the one embeddable stylesheet (brand vars + base.css + inlined Inter) |
 | `npm run make:social` | Regenerate the GitHub social preview |
 | `npm run snapshot:github` | Refresh the committed GitHub repo snapshot the portfolio Software list falls back to |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
@@ -70,6 +71,7 @@ behind the scripts.
 | `npm run check:links` | Every internal reference in the built site resolves |
 | `npm run check:weight` | Per-page HTML and total CSS/JS stay inside their byte budgets |
 | `npm run check:html` | No duplicate ids; every image carries alt |
+| `npm run check:embed` | `public/embed/bundle.css` matches its sources (regenerate with `make:embed`) |
 | `npm run check:seo` | Title, canonical, og:title, og:image, valid JSON-LD on every page |
 | `npm run check:repo-policy` | Node pin, lockfile alignment, clean tree, SHA-pinned Actions |
 | `npm run audit:assets` | Image count + weight report (the gates run it strict) |
