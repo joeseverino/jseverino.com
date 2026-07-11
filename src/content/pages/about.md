@@ -1,8 +1,9 @@
 ---
 title: About Me
 description: >-
-  The path Joe Severino took into cybersecurity — from tinkering with the web as
-  a kid to hands-on network defense, infrastructure, and detection work.
+  How Joe Severino got into cybersecurity: web tinkering as a kid, a fascination
+  with cryptography, a certification plan that led to Georgia Tech, and network
+  security work at World Wide Technology today.
 intro: >-
   How I got into security, infrastructure, and the habit of writing things down
   as I build.
@@ -30,7 +31,21 @@ Around that same period, I had started experimenting with Cloudflare because I w
 
 First Cloudflare setup, 2014.
 
-Today, my focus is network security and the systems behind it. I still approach projects the same way, but I take the time to write everything out as I go so I understand what I built and can come back to it later.
+Cryptography is what really got me into cybersecurity. Learning how encryption actually works made me want to understand the rest of security the same way.
+
+I've always been security minded. I've used two-factor authentication since 2015, a generated unique password for every account, and a unique email alias for every service I sign up for.
+
+So I made a plan: the Google Cybersecurity Certificate, then ISC2 CC, then Security+, then apply to Georgia Tech for the M.S. in Cybersecurity. I worked through each step in order, and I got in.
+
+While preparing for Georgia Tech I took Harvard's CS50x and CS50P and rediscovered a technical aptitude I'd let drift for a while. I wanted to go deeper on networking, so I had ChatGPT draft me a [September-to-Christmas roadmap](/assets/docs/ccna-christmas-roadmap.pdf) for the CCNA (daily Anki flashcards, Packet Tracer labs, and lectures with notes), ran it alongside my first Georgia Tech course, and passed the exam in December.
+
+![Anki reviews for my CCNA deck, 2025: 20,480 reviews, 188 cards per studied day.](/assets/pages/about/images/anki-ccna-reviews-2025.png)
+
+Anki reviews for my CCNA deck, 2025: 20,480 reviews, 188 cards per studied day.
+
+I started documenting my projects and turning them into this portfolio: the site kept getting more advanced, I built a security plugin for WordPress, and I stood up a homelab to run real infrastructure the same way I'd deploy anything else. Writing everything out as I go is how I make sure I understand what I built and can come back to it later.
+
+Today I'm a Technical Solutions Engineer in World Wide Technology's Advanced Technology Center, and my focus is network security and the systems behind it.
 
 Outside of tech, I spend a lot of time running and staying active. It helps me stay consistent and clear my head when I’m deep into a project. I’m working toward running a marathon.
 

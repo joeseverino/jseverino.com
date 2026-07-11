@@ -32,6 +32,39 @@
     ],
     "fallback": "/assets/pages/about/images/000webhost-breach.png"
   },
+  "/assets/pages/about/images/anki-ccna-reviews-2025.png": {
+    "w": 2372,
+    "h": 1692,
+    "avif": [
+      [
+        512,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-512.avif"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-512.webp"
+      ],
+      [
+        1024,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/pages/about/images/anki-ccna-reviews-2025.png"
+  },
   "/assets/pages/about/images/first-cloudflare-setup.png": {
     "w": 1774,
     "h": 1470,
