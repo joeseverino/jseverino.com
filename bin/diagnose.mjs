@@ -49,7 +49,15 @@ async function runAudit(audit, extraEnv) {
     return { id: audit.id, name: audit.name, code: 0, stdout: '', stderr: `Skipped: ${audit.name} verifies sources that only exist on the authoring machine.`, duration: 0, skipped: true, rerun: rerunFor(audit) };
   }
   const env = extraEnv ? { ...audit.exec.env, ...extraEnv } : audit.exec.env;
-  const result = await runCommand(audit.exec.cmd, audit.exec.args, { env, timeout: audit.timeout });
+  const heartbeatOptions = audit.id === 'browser-tests' && !jsonMode
+    ? {
+        heartbeatMs: 30_000,
+        onHeartbeat: (elapsed) => say(COLOR.dim(`  [WAIT] Playwright still running (${Math.round(elapsed / 1000)}s)`)),
+      }
+    : {};
+  const result = await runCommand(audit.exec.cmd, audit.exec.args, {
+    env, timeout: audit.timeout, ...heartbeatOptions,
+  });
   return { id: audit.id, name: audit.name, skipped: false, rerun: rerunFor(audit), ...result };
 }
 
@@ -140,7 +148,16 @@ async function diagnose() {
   if (sync.code !== 0) setupFailure('Content Synchronization (sync:content)', sync);
   const cleanConflicts = await runCommand('node', ['bin/clean-generated.mjs', '--conflicts']);
   if (cleanConflicts.code !== 0) setupFailure('Conflict Cleanup (bin/clean-generated.mjs)', cleanConflicts);
-  say('✓ Caches cleared & content synced.\n');
+  const postSyncGitStatus = await getGitStatus();
+  if (postSyncGitStatus !== initialGitStatus) {
+    const before = new Set(initialGitStatus.split('\n').filter(Boolean));
+    const drift = postSyncGitStatus.split('\n').filter((line) => line && !before.has(line));
+    say(COLOR.yellow(`Vault drift detected: ${drift.length} synced path${drift.length === 1 ? '' : 's'} changed before validation.`));
+    for (const line of drift) say(`  ${line}`);
+    say('Review with `git diff -- src/content public/assets` or publish the synced snapshot.\n');
+  } else {
+    say('✓ Caches cleared & content synced.\n');
+  }
 
   const checks = [];
 

@@ -108,6 +108,7 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
 | Assets | [asset weight](#audit-assetsmjs) | `tests/audits/audit-assets.mjs` | Reports image count and total weight; the gates run it strict, so an image past 1.5 MB fails. |
 | Policy | [repository policy](#check-repository-policymjs) | `tests/audits/check-repository-policy.mjs` | `.nvmrc` major.minor match, lockfile alignment, no committed secrets/build output/conflict copies, all Actions SHA-pinned. |
+| Browser setup | [Playwright revisions](#check-playwright-browsersmjs) | `tests/audits/check-playwright-browsers.mjs` | Chromium, Firefox, and WebKit executables match the installed Playwright package before the expensive E2E phase starts. |
 | Docs | [documentation integrity](#check-docsmjs) | `tests/audits/check-docs.mjs` | Every relative link and `npm run` reference in the engineering docs resolves to a real file or script. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Every URL in the sitemap returns 200; console stays clean; hero and header behave. |
 | E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
@@ -180,6 +181,10 @@ Structural health:
 - **Node version** matches [`.nvmrc`](../.nvmrc) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates).
 - **Lockfile** dependencies/versions align with `package.json`.
 - **Clean tree** — no committed `.env` / `.dev.vars`, no `dist/` or `playwright-report/`, no iCloud conflict copies.
+
+### `check-playwright-browsers.mjs`
+
+Fails before the build and browser matrix when any Playwright executable path is missing. The remediation installs the lockfile-matched Chromium, Firefox, and WebKit revisions once instead of discovering the mismatch after a long partial run.
 - **Action pinning** — every third-party GitHub Action is pinned to an immutable commit SHA, not a mutable tag.
 - **No ambiguous module siblings** — no two tracked files share a basename with both a JS-like (`.mjs`/`.js`) and a TS-like (`.ts`/`.mts`) extension. Such a pair resolves differently in Vite (which tries `.mjs` first) than in the TS compiler (which tries `.ts` first), so a build can break while `astro check` passes. Declaration files (`foo.d.ts`) keep a distinct stem and are fine.
 
@@ -230,7 +235,7 @@ The specs double as executable documentation of the block grammar: each case pai
 
 The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`playwright.config.ts`](../playwright.config.ts); routing is by filename suffix, so a spec's project matrix is always an explicit choice: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
 
-The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability — the writeup with a private link, with a table, with the most images — so renaming a writeup in the vault cannot break the code gates. The one exception is the visual suite: its committed baselines protect specific pages, so it pins slugs on purpose (a rename there means re-pinning and re-baselining deliberately).
+The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability — for example, the writeup with a table or the most images — so renaming a writeup in the vault cannot break the code gates. The one exception is the visual suite: its committed baselines protect specific pages, so it pins slugs on purpose (a rename there means re-pinning and re-baselining deliberately).
 
 ### `smoke.spec.ts`
 - **Sitemap route health** — parses `sitemap-index.xml`, follows each sub-sitemap, and asserts a `200` for every `<loc>`. New writeups get coverage automatically.

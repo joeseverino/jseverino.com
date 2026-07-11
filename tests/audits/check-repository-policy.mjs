@@ -113,6 +113,23 @@ if (transitionHooks.length > 0) {
   fail(`Astro View Transition hooks are not used by this site: ${transitionHooks.join(', ')}`);
 }
 
+// Deprecated private-link markers and internal service URLs must never enter
+// the public content snapshot or generated site source.
+const publicSources = existingTracked.filter(
+  (file) => file.startsWith('src/content/') || file.startsWith('src/pages/') || file.startsWith('src/components/'),
+);
+const sensitivePatterns = [
+  { pattern: /title=["']private:/i, label: 'private-link title marker' },
+  { pattern: /data-private-tooltip/i, label: 'private tooltip attribute' },
+  { pattern: /https:\/\/hq\.jseverino\.com/i, label: 'private HQ hostname' },
+];
+for (const file of publicSources) {
+  const source = read(file);
+  for (const { pattern, label } of sensitivePatterns) {
+    if (pattern.test(source)) fail(`${file} exposes deprecated ${label}`);
+  }
+}
+
 // Same-basename JS/TS module siblings (e.g. site.mjs + site.ts in one dir)
 // resolve ambiguously: Vite/Astro try .mjs before .ts, the TS compiler does the
 // reverse. So `astro check` and the bundler disagree and a build can break while

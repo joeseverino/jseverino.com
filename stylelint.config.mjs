@@ -19,5 +19,10 @@ export default {
     // Existing semantic class names and case-sensitive font family names are intentional.
     'selector-class-pattern': null,
     'value-keyword-case': null,
+
+    // Structural leanness: repeated selectors and empty rules add cascade
+    // ambiguity without adding behavior.
+    'no-duplicate-selectors': true,
+    'block-no-empty': true,
   },
 };
