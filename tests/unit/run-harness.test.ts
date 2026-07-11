@@ -49,6 +49,16 @@ describe('run()', () => {
     assert.match(result.output, /green/);
     assert.doesNotMatch(result.output, /\x1b/);
   });
+
+  test('emits heartbeats while a captured command is quiet', async () => {
+    const beats: number[] = [];
+    const result = await run(process.execPath, ['-e', 'setTimeout(() => {}, 80)'], {
+      heartbeatMs: 20,
+      onHeartbeat: (elapsed: number) => beats.push(elapsed),
+    });
+    assert.equal(result.code, 0);
+    assert.ok(beats.length >= 2);
+  });
 });
 
 describe('stripAnsi()', () => {

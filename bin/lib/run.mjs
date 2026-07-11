@@ -31,10 +31,14 @@ export function status(label, detail) {
 // code is non-zero whenever the command failed for any reason — non-zero exit,
 // signal kill, timeout, or failure to spawn at all.
 // options: cwd, env (merged over process.env), timeout (ms, 0 disables),
+// heartbeatMs + onHeartbeat(elapsedMs) for quiet long-running captures,
 // stdio: 'capture' (default) buffers stdout/stderr; 'inherit' streams to the
 // terminal (stdout/stderr come back empty).
 export function run(cmd, args, options = {}) {
-  const { cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture' } = options;
+  const {
+    cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture',
+    heartbeatMs = 0, onHeartbeat = () => {},
+  } = options;
 
   return new Promise((resolve) => {
     const start = Date.now();
@@ -55,6 +59,7 @@ export function run(cmd, args, options = {}) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      clearInterval(heartbeat);
       if (timedOut) stderr += `${stderr ? '\n' : ''}[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`;
       if (spawnError) stderr += `${stderr ? '\n' : ''}[failed to start: ${spawnError.message}]`;
       const finalCode = spawnError || timedOut ? (code || 1) : (code ?? 1);
@@ -76,6 +81,10 @@ export function run(cmd, args, options = {}) {
           setTimeout(() => { if (!settled) child.kill('SIGKILL'); }, 5_000).unref();
         }, timeout)
       : null;
+    const heartbeat = heartbeatMs > 0
+      ? setInterval(() => onHeartbeat(Date.now() - start), heartbeatMs)
+      : null;
+    heartbeat?.unref();
 
     if (!inherit) {
       child.stdout.on('data', (data) => { stdout += data.toString(); });

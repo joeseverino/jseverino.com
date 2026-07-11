@@ -112,6 +112,12 @@ export const AUDITS = [
     fix: 'Align Node version (.nvmrc), lockfile dependencies, commit hashes for GitHub Actions, or run `npm run clean:conflicts` to remove iCloud conflict copies.',
   },
   {
+    id: 'playwright-browsers', label: 'browsers', name: 'Playwright Browser Revisions', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-playwright-browsers.mjs'] },
+    gates: ['diagnose', 'release'], macosOnly: true,
+    fix: 'Install the browser revisions required by the lockfile with `npx playwright install chromium firefox webkit`.',
+  },
+  {
     id: 'git-diff-check', label: 'git-diff', name: 'Git Formatting/Conflicts', phase: 'pre-build',
     exec: { cmd: 'git', args: ['diff', '--check'] },
     gates: ['diagnose', 'release'], summary: 'silent',
