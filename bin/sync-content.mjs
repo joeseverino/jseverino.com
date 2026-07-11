@@ -14,8 +14,13 @@ const vaultRoot = process.env.VAULT_DIR
 
 const includeDrafts = process.argv.includes('--drafts');
 
+const lifeVaultRoot = process.env.LIFE_VAULT_DIR
+  ? path.resolve(process.env.LIFE_VAULT_DIR)
+  : path.resolve(siteRoot, '../../../Life');
+
 const sourcePages = path.join(vaultRoot, '06 Pages');
 const sourceWriteups = path.join(vaultRoot, '05 Writeups');
+const sourceResume = path.join(lifeVaultRoot, 'Career', 'resume.md');
 const targetPages = path.join(siteRoot, 'src/content/pages');
 const targetTechnologyGroups = path.join(siteRoot, 'src/content/technology-groups.md');
 const targetWriteups = path.join(siteRoot, 'src/content/writeups');
@@ -326,6 +331,31 @@ async function syncPages() {
   }
 }
 
+// The resume page is the one page whose canonical lives outside the Labs
+// vault: the Life vault's Career/resume.md is the single source that also
+// drives the PDF/markdown artifacts (severino-resume's generate-resumes).
+// The canonical is a superset with per-line surface markers: <!--site-only-->
+// lines stay here with the marker stripped (no comment bytes ship), and
+// <!--pdf-only--> lines are dropped — they belong to the PDF alone. The
+// frontmatter whitelist in publicPageData keeps contact fields (phone) out
+// of this public repo.
+async function syncResume() {
+  const raw = await fsPromises.readFile(sourceResume, 'utf8');
+  const parsed = parseFrontmatter(raw);
+  if (!includeDrafts && parsed.data.published !== true) return;
+
+  const content = parsed.content
+    .split('\n')
+    .filter((line) => !line.includes('<!--pdf-only-->'))
+    .map((line) => line.replace(/\s*<!--site-only-->/g, ''))
+    .join('\n');
+
+  const synced = stringifyFrontmatter(content, publicPageData(parsed.data));
+  const pageTarget = path.join(targetPages, 'resume.md');
+  await fsPromises.writeFile(pageTarget, synced);
+  writtenFiles.add(pageTarget);
+}
+
 async function syncWriteups() {
   const entries = await fsPromises.readdir(sourceWriteups, { withFileTypes: true });
   await fsPromises.mkdir(targetWriteups, { recursive: true });
@@ -400,6 +430,7 @@ async function pruneOrphans(roots) {
 
 await fsPromises.mkdir(imageCacheDir, { recursive: true });
 await syncPages();
+await syncResume();
 await syncWriteups();
 await pruneOrphans([targetPages, targetPageAssets, targetWriteups, targetWriteupAssets]);
 

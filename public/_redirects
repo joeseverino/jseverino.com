@@ -15,3 +15,6 @@
 # Renamed writeup slug (2026-06-10) — keep the old URL and its assets alive.
 /portfolio/building-local-dns-filtering-with-adguard-home-and-docker-engine/    /portfolio/building-local-dns-filtering/    301
 /assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/*    /assets/writeups/building-local-dns-filtering/:splat    301
+
+# Resume PDF moved to kebab-case; single-source pipeline renders it (2026-07-11).
+/assets/docs/Joseph_Severino_Resume.pdf  /assets/docs/joseph-severino-resume.pdf  301

@@ -67,13 +67,14 @@ The private vault is organized as:
   contact/index.md
   portfolio/index.md
   privacy/index.md
-  resume/index.md
 
 05 Writeups/
   project-slug/
     index.md
     images/
 ```
+
+The resume page is the one page sourced from a second private vault: its canonical (`Career/resume.md`) carries the contact identity in frontmatter and per-line surface markers (`<!--site-only-->` / `<!--pdf-only-->`), so the web page and the PDF artifacts curate differently from one source. The downloadable PDF at `public/assets/docs/joseph-severino-resume.pdf` is rendered from the same canonical by the public [resume-engine](https://github.com/joeseverino/resume-engine) pipeline; the sync strips the markers and whitelists frontmatter so contact fields never enter this repo.
 
 [`bin/sync-content.mjs`](./bin/sync-content.mjs) copies only published content and only allowed frontmatter fields. Vault-only fields such as internal IDs, systems, related projects, sensitivity, and operator notes are dropped by omission. Local assets are resolved against their source directory and refused if they escape that directory.
 
