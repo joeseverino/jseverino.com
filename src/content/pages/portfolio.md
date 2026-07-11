@@ -1,9 +1,9 @@
 ---
 title: Portfolio
-description: Writeups, tools, and packages by Joe Severino across infrastructure, security engineering, detection, and developer tooling.
+description: Cybersecurity, infrastructure, and software project writeups by Joe Severino.
 intro: >-
-  Writeups, plus the tools and packages I build and ship, across
-  infrastructure, security engineering, detection, and developer tooling.
+  Practical writeups across infrastructure, security engineering, detection, and
+  software systems.
 path: /portfolio/
 published: true
 ---

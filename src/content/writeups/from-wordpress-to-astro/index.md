@@ -52,13 +52,13 @@ Astro builds every page to a file ahead of time, and Cloudflare serves those fil
 
 ## Why It's Better
 
-| | WordPress | Astro (static) |
-| --- | --- | --- |
-| Public runtime | PHP, MySQL, theme, plugins | Static files on the edge |
-| Admin surface | A login to defend | None |
-| A heavy article | 20.2 MB, 34 requests | 1.3 MB, 29 requests |
-| Maintenance | Core and plugin updates | None |
-| Rolling back | Restore the database | `git revert` |
+|                 | WordPress                  | Astro (static)           |
+| --------------- | -------------------------- | ------------------------ |
+| Public runtime  | PHP, MySQL, theme, plugins | Static files on the edge |
+| Admin surface   | A login to defend          | None                     |
+| A heavy article | 20.2 MB, 34 requests       | 1.3 MB, 29 requests      |
+| Maintenance     | Core and plugin updates    | None                     |
+| Rolling back    | Restore the database       | `git revert`             |
 
 **It is faster and a lot lighter.** Loading the same Custom Detection Engine writeup in a browser pulled 20.2 MB over the wire on WordPress. On Astro it transfers 1.3 MB, roughly 15 times lighter, almost all of the difference being images. Time to first byte fell too, from about 0.96 s to 0.34 s on an article page and 0.83 s to 0.26 s on the homepage. PageSpeed Insights scores the site 100 across Performance, Accessibility, Best Practices, and SEO on desktop, and within a point of that on mobile.
 

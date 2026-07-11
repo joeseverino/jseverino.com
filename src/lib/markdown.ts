@@ -1,6 +1,6 @@
 // The pure Markdown → HTML layer: the custom block DSL (::terminal, ::figure,
 // ::table, ::split, ::buttons, ::center, ::hero) plus the inline rewrites
-// (private-link tooltips, standalone-link buttons, figure restoration).
+// (standalone-link buttons, figure restoration).
 //
 // Everything here is a deterministic string → string transform whose only
 // dependency is markdown-it, so it carries no Astro coupling and can be unit
@@ -198,18 +198,6 @@ function promoteStandaloneLinks(html: string): string {
   );
 }
 
-// Repurpose markdown link titles prefixed with `private: ` as click-tooltip
-// anchors: `[Text](url "private: message")` becomes
-// `<a href="url" data-private-tooltip="message">Text</a>`. Behavior is wired
-// up in src/layouts/BaseLayout.astro; styling in src/styles/base.css.
-function rewritePrivateLinks(html: string): string {
-  return html.replace(
-    /<a\b([^>]*?)\stitle="private:\s*([^"]*)"/gi,
-    (_match, before: string, message: string) =>
-      `<a${before} data-private-tooltip="${message}"`,
-  );
-}
-
 function renderButton(match: string, classes = ''): string {
   const link = match.match(/\[([^\]]+)\]\(([^)]+)\)/);
   if (!link) return '';
@@ -311,7 +299,7 @@ function preprocessPageMarkdown(markdown: string): string {
 // Render a page's markdown body to HTML, applying the inline directives and the
 // block DSL. Image <picture> enhancement is layered on by content.ts.
 export function renderPageHtml(markdown: string): string {
-  return rewritePrivateLinks(restoreFigures(md.render(preprocessPageMarkdown(markdown))));
+  return restoreFigures(md.render(preprocessPageMarkdown(markdown)));
 }
 
 // Render a writeup's markdown body to HTML: strip the duplicated H1/lede/hero,
@@ -320,7 +308,7 @@ export function renderPageHtml(markdown: string): string {
 export function renderWriteupHtml(markdown: string, slug: string): string {
   const prepared = renderTableBlocks(renderFigureBlocks(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown)))));
   const html = md.render(prepared);
-  return promoteStandaloneLinks(rewritePrivateLinks(restoreFigures(html)))
+  return promoteStandaloneLinks(restoreFigures(html))
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
     .replaceAll('src="images/', `src="/assets/writeups/${slug}/images/`);
 }

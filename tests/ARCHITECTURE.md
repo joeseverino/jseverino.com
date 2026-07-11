@@ -113,7 +113,6 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
 | E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
 | E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
-| E2E | [private tooltips](#tooltipsspects) | `tests/playwright/tooltips.spec.ts` | Tailnet-link tooltips mount on click and dismiss on Escape / outside click. |
 | E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
 | Routes | [endpoints + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | `robots.txt`, `feed.xml`, and unknown-route 404 behavior the sitemap smoke test can't reach. |
 | Images | [image resolution](#resourcessinglespects) | `tests/playwright/resources.single.spec.ts` | Every `<img>`/`<source>` variant (AVIF/WebP/fallback) on key pages resolves. |
@@ -215,7 +214,7 @@ Not audits and not browser specs, but a third pre-build layer: `node:test` suite
 
 [`tests/unit/markdown-dsl.test.ts`](./unit/markdown-dsl.test.ts) exercises the custom Markdown renderer in [`src/lib/markdown.ts`](../src/lib/markdown.ts) directly — markdown in, HTML out, no browser and no build.
 
-That module is the pure, Astro-free half of the content layer: the block DSL (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`, `::hero`) and the inline rewrites (private-link tooltips, standalone-link buttons, image directives, writeup chrome stripping). It depends only on `markdown-it`, so a `node:test` suite can import it and assert the exact HTML for each block. [`content.ts`](../src/lib/content.ts) keeps the Astro-coupled glue (content collections, slug/asset resolution, `<picture>` enhancement) and imports `renderPageHtml`/`renderWriteupHtml` from it.
+That module is the pure, Astro-free half of the content layer: the block DSL (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`, `::hero`) and the inline rewrites (standalone-link buttons, image directives, writeup chrome stripping). It depends only on `markdown-it`, so a `node:test` suite can import it and assert the exact HTML for each block. [`content.ts`](../src/lib/content.ts) keeps the Astro-coupled glue (content collections, slug/asset resolution, `<picture>` enhancement) and imports `renderPageHtml`/`renderWriteupHtml` from it.
 
 Runs natively on Node's test runner via type stripping — no extra dependency:
 
@@ -328,24 +327,6 @@ test('submits successfully with simulated turnstile and mocked api', async ({ pa
   await expect(status).toHaveAttribute('data-kind', 'success');
   await expect(status).toContainText('Thanks, your message has been sent');
   await expect(page.locator('#contact-name')).toHaveValue('');
-});
-```
-
-### `tooltips.spec.ts`
-Verifies the private-link tooltips used for tailnet-only services. Clicking a `[data-private-tooltip]` trigger mounts a `.private-tooltip` (`role="status"`) into the DOM; `Escape` and an outside click each remove it:
-
-```ts
-test('renders, positions, and dismisses tooltips correctly', async ({ page }) => {
-  await page.goto('/portfolio/building-a-custom-mcp-layer/');
-  const trigger = page.locator('[data-private-tooltip]');
-
-  await expect(page.locator('.private-tooltip')).toHaveCount(0);
-  await trigger.click();
-  await expect(page.locator('.private-tooltip')).toBeVisible();
-  await expect(page.locator('.private-tooltip')).toContainText('this site only works on my tailnet');
-
-  await page.keyboard.press('Escape');
-  await expect(page.locator('.private-tooltip')).toHaveCount(0);
 });
 ```
 

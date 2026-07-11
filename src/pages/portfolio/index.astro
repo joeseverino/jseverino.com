@@ -99,75 +99,6 @@ const tagCount = tags.length;
   </main>
 </BaseLayout>
 
-<style>
-  .tabs-wrap {
-    text-align: center;
-  }
-
-  .portfolio-tabs {
-    display: inline-flex;
-    gap: var(--space-5);
-    padding: var(--space-5);
-    border: 1px solid var(--color-border-faint);
-    border-radius: var(--radius-pill);
-    background: var(--color-fill-faint);
-  }
-
-  .portfolio-tab {
-    padding-block: 0.5rem;
-    padding-inline: 1.1rem;
-    border: 0;
-    border-radius: var(--radius-pill);
-    background: transparent;
-    color: var(--color-muted);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1;
-    cursor: pointer;
-    transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .portfolio-tab:hover {
-    color: var(--color-text);
-  }
-
-  .portfolio-tab[aria-selected='true'] {
-    color: var(--color-bg);
-    background: var(--color-primary);
-  }
-
-  .software-more {
-    max-inline-size: var(--cards);
-    margin-inline: auto;
-    margin-block-start: var(--space-50);
-  }
-
-  .software-more-title {
-    margin-block-end: var(--space-10);
-    color: var(--color-muted);
-    font-size: var(--font-2xs);
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .software-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border-block-start: 1px solid var(--color-border-faint);
-  }
-
-  /* Both panels render for no-JS / SEO; the script hides the inactive one. */
-  .portfolio-panel[hidden] {
-    display: none;
-  }
-
-  .portfolio-panel + .portfolio-panel {
-    margin-block-start: var(--space-40);
-  }
-</style>
-
 <script>
   function initPortfolioTabs(): void {
     const root = document.querySelector<HTMLElement>('[data-portfolio-tabs]');
@@ -206,5 +137,4 @@ const tagCount = tags.length;
   }
 
   initPortfolioTabs();
-  document.addEventListener('astro:after-swap', initPortfolioTabs);
 </script>
