@@ -2,7 +2,7 @@
 //
 // These run without a browser or a build: markdown in, HTML out. They double as
 // executable documentation of the block grammar (::terminal, ::figure, ::table,
-// ::split, ::buttons, ::center, ::hero) and the inline rewrites (private-link
+// ::split, ::buttons, ::center, ::hero) and the inline rewrites (standalone-link
 // tooltips, standalone-link buttons, image directives, writeup chrome stripping).
 //
 //   npm run test:unit
@@ -95,11 +95,10 @@ describe('::center and ::hero', () => {
   });
 });
 
-describe('private-link tooltips', () => {
-  test('rewrites a `private:` link title into a data-private-tooltip attribute', () => {
-    const html = renderPageHtml('[HQ](https://hq.example "private: tailnet only")');
-    assert.match(html, /data-private-tooltip="tailnet only"/);
-    assert.doesNotMatch(html, /title="private:/);
+describe('external links', () => {
+  test('renders the public HQ repository normally', () => {
+    const html = renderPageHtml('[Severino HQ](https://github.com/joeseverino/severino-hq)');
+    assert.match(html, /href="https:\/\/github\.com\/joeseverino\/severino-hq"/);
   });
 });
 

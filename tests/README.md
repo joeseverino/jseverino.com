@@ -91,7 +91,7 @@ Node's native test runner via type stripping — no extra dependency.
 [mobile drawer](./ARCHITECTURE.md#menumobilespects),
 [accessibility and motion](./ARCHITECTURE.md#css-qualityspects), the
 [Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
-backend), [private-link tooltips](./ARCHITECTURE.md#tooltipsspects), and the
+backend), portfolio interactions, and the
 engine-agnostic [`*.single`](./ARCHITECTURE.md#4-testsplaywright--browser-specs)
 checks for endpoints/404, image-variant resolution, `rel=noopener`, and an
 [axe-core WCAG A/AA sweep](./ARCHITECTURE.md#a11ysinglespects) over the key

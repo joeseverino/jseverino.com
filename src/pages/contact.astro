@@ -2,14 +2,12 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ContactForm from '@components/ContactForm.astro';
 import PageHero from '@components/PageHero.astro';
-import PrivateTooltip from '@components/PrivateTooltip.astro';
 import { getPage, renderPageMarkdown } from '@lib/content';
 
 const page = await getPage('contact');
 const blocks = page.body
   .split(/(::contact-form\s*::)/g)
   .filter((block) => block.trim().length > 0);
-const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
 ---
 
 <BaseLayout
@@ -38,5 +36,4 @@ const usesPrivateLinks = page.bodyHtml.includes('data-private-tooltip');
       }
     </div>
   </main>
-  {usesPrivateLinks && <PrivateTooltip />}
 </BaseLayout>

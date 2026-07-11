@@ -40,8 +40,6 @@ function writeupWhere(predicate: (body: string) => boolean, description: string)
 
 export const anyWriteup = () => writeupWhere(() => true, 'exists');
 
-export const privateLinkWriteup = () =>
-  writeupWhere((text) => text.includes('"private:'), 'with a private-link tooltip');
 
 export const tableWriteup = () =>
   writeupWhere((text) => /^::table/m.test(text) || /^\|.+\|$/m.test(text), 'with a table block');

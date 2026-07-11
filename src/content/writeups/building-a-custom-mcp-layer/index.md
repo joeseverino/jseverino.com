@@ -176,7 +176,7 @@ The `find_runbook` and `read_doc` calls show up in the tool panel on the right. 
 
 ## Severino HQ: The Browser View
 
-The MCP makes the vault legible to an assistant. [Severino HQ](https://hq.jseverino.com "private: this site only works on my tailnet") is what makes it legible to me at a browser tab. HQ is a private Django app running in Docker on my homelab server, reachable only over Tailscale through Nginx Proxy Manager. It reads the same vault frontmatter and turns it into structured records.
+The MCP makes the vault legible to an assistant. [Severino HQ](https://github.com/joeseverino/severino-hq) is what makes it legible to me at a browser tab. HQ is a private Django app running in Docker on my homelab server, reachable only over Tailscale through Nginx Proxy Manager. It reads the same vault frontmatter and turns it into structured records.
 
 ::figure
 ![](/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard.png)

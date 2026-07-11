@@ -52,6 +52,7 @@ for (const field of ['dependencies', 'devDependencies', 'optionalDependencies'])
 }
 
 const tracked = git(['ls-files']).split('\n').filter(Boolean);
+const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, file)));
 const forbiddenTracked = tracked.filter(
   (file) =>
     (/(^|\/)\.env(?:\.|$)/.test(file) && !file.endsWith('.env.example')) ||
@@ -82,6 +83,34 @@ for (const base of ['src/content', 'public/assets']) {
 }
 if (conflictCopies.length > 0) {
   fail(`iCloud conflict copies remain: ${conflictCopies.sort().join(', ')}`);
+}
+
+// The public stylesheet is deliberately centralized: component-scoped styles
+// fragment the cascade and bypass the token/color audits that guard base.css.
+const componentStyles = existingTracked.filter(
+  (file) => file.startsWith('src/') && file.endsWith('.astro') && /<style(?:\s|>)/.test(read(file)),
+);
+if (componentStyles.length > 0) {
+  fail(`Astro component styles must live in src/styles/base.css: ${componentStyles.join(', ')}`);
+}
+
+// Literal colors are allowed only inside the generated token block. Component
+// rules must name a token or derive a variant from one with color-mix().
+const stylesheet = read('src/styles/base.css');
+const tokenEnd = stylesheet.indexOf('/* tokens:end */');
+const authoredStyles = tokenEnd >= 0 ? stylesheet.slice(tokenEnd) : stylesheet;
+const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;
+if (literalColor.test(authoredStyles)) {
+  fail('src/styles/base.css contains a literal color outside the generated token block');
+}
+
+// View Transitions are intentionally not part of this site. Keeping lifecycle
+// listeners for them adds dead client code and obscures the navigation model.
+const transitionHooks = existingTracked.filter(
+  (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) && read(file).includes('astro:after-swap'),
+);
+if (transitionHooks.length > 0) {
+  fail(`Astro View Transition hooks are not used by this site: ${transitionHooks.join(', ')}`);
 }
 
 // Same-basename JS/TS module siblings (e.g. site.mjs + site.ts in one dir)
@@ -125,5 +154,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `ok Node ${actualNode}; lockfile aligned; no forbidden files or conflict copies; actions pinned`,
+  `ok Node ${actualNode}; lockfile aligned; stylesheet architecture clean; no forbidden files or conflict copies; actions pinned`,
 );
