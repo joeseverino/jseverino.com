@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { parseFrontmatter, stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
 
@@ -332,22 +332,68 @@ async function syncPages() {
 }
 
 // The resume page is the one page whose canonical lives outside the Labs
-// vault: the Life vault's Career/resume.md is the single source that also
-// drives the PDF/markdown artifacts (severino-resume's generate-resumes).
-// The canonical is a superset with per-line surface markers: <!--site-only-->
-// lines stay here with the marker stripped (no comment bytes ship), and
-// <!--pdf-only--> lines are dropped — they belong to the PDF alone. The
-// frontmatter whitelist in publicPageData keeps contact fields (phone) out
-// of this public repo.
+// vault: the Life vault's Career/resume.md also drives the PDF/markdown
+// artifacts. The line grammar, surface-marker semantics, and tenure-span
+// math live in resume-engine's lib/grammar.mjs, imported here so the two
+// renderers can never drift (local-only: CI runs publish:check --no-sync).
+// The frontmatter whitelist in publicPageData keeps contact fields (the
+// phone number) out of this public repo.
+const resumeEngineRoot = process.env.RESUME_ENGINE_DIR
+  ? path.resolve(process.env.RESUME_ENGINE_DIR)
+  : path.resolve(siteRoot, '../../Assets/resume-engine');
+
+// Multi-role orgs carry a summarized tenure span on the org row, matching
+// the PDF's date column; the location tucks under it.
+function orgRow(grammar, lines, index, org) {
+  const dates = [];
+  for (let j = index + 1; j < lines.length; j += 1) {
+    if (/^#{2,3} /.test(lines[j])) break;
+    const role = grammar.matchRole(lines[j]);
+    if (role) dates.push(role.dates);
+  }
+  const meta =
+    dates.length > 1
+      ? `<span class="resume-org-meta"><span class="resume-dates">${grammar.tenureSpan(dates)}</span><span class="resume-loc">${org.location}</span></span>`
+      : `<span class="resume-loc">${org.location}</span>`;
+  return `<h3 class="resume-org"><span>${org.name}</span>${meta}</h3>`;
+}
+
+function resumeRow(grammar, line) {
+  const role = grammar.matchRole(line);
+  if (role) {
+    return `<p class="resume-role"><strong>${role.title}</strong><span class="resume-dates">${role.dates}</span></p>`;
+  }
+
+  const cert = line.startsWith('- ') ? grammar.matchCert(line.slice(2)) : null;
+  if (cert) {
+    return `<p class="resume-cert"><a href="${cert.url}">${cert.name}</a><span class="resume-issuer">${cert.issuer}</span><span class="resume-dates">${cert.date}</span></p>`;
+  }
+
+  const projectMeta = grammar.matchProjectMeta(line);
+  if (projectMeta) {
+    return `<p class="resume-projmeta"><a href="${projectMeta.href}">${projectMeta.label}</a><span class="resume-dates">${projectMeta.date}</span></p>`;
+  }
+
+  return line;
+}
+
 async function syncResume() {
+  const grammarPath = path.join(resumeEngineRoot, 'lib', 'grammar.mjs');
+  if (!fs.existsSync(grammarPath)) {
+    throw new Error(`resume grammar not found: ${grammarPath} (clone resume-engine or set RESUME_ENGINE_DIR)`);
+  }
+  const grammar = await import(pathToFileURL(grammarPath).href);
+
   const raw = await fsPromises.readFile(sourceResume, 'utf8');
   const parsed = parseFrontmatter(raw);
   if (!includeDrafts && parsed.data.published !== true) return;
 
-  const content = parsed.content
-    .split('\n')
-    .filter((line) => !line.includes('<!--pdf-only-->'))
-    .map((line) => line.replace(/\s*<!--site-only-->/g, ''))
+  const lines = grammar.linesForSite(parsed.content.split('\n'));
+  const content = lines
+    .map((line, index) => {
+      const org = grammar.matchOrg(line);
+      return org ? orgRow(grammar, lines, index, org) : resumeRow(grammar, line);
+    })
     .join('\n');
 
   const synced = stringifyFrontmatter(content, publicPageData(parsed.data));
