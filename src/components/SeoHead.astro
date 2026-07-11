@@ -58,6 +58,7 @@ const person = {
   url: site.url,
   image: personImage,
   jobTitle: site.jobTitle,
+  worksFor: { '@type': 'Organization', name: site.employer },
   description: site.summary,
   knowsAbout: site.skills,
   sameAs: site.socialLinks.map((link) => link.href),

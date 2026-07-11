@@ -5,7 +5,7 @@ import { SITE } from './site-config.mjs';
 // editorial chrome that used to live in the vault-synced src/content/site.md.
 const url = `https://${SITE.domain}`;
 const summary =
-  'Joe Severino is a cybersecurity professional and Delivery Operations Analyst focused on infrastructure, detection engineering, and secure operations.';
+  'Joe Severino is a Technical Solutions Engineer at World Wide Technology focused on infrastructure, detection engineering, and secure operations.';
 
 export const site = {
   name: SITE.owner,
@@ -16,7 +16,8 @@ export const site = {
   defaultOgImage: '/assets/og/og-default.png',
   defaultOgImageWidth: 1200,
   defaultOgImageHeight: 630,
-  jobTitle: 'Delivery Operations Analyst',
+  jobTitle: 'Technical Solutions Engineer',
+  employer: 'World Wide Technology',
   summary,
   skills: ['Cybersecurity', 'Network Security', 'Infrastructure', 'Detection Engineering', 'Homelab', 'Linux'],
   socialLinks: [

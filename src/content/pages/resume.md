@@ -60,11 +60,13 @@ published: true
 
 ### World Wide Technology — _Maryland Heights, MO_
 
-**Delivery Operations Analyst (June 2023 – Present)**
+**Technical Solutions Engineer (July 2026 – Present)**
 
+**Delivery Operations Analyst (June 2023 – July 2026)**
+
+- Rebuilt a daily Excel-based dashboard as a containerized OpenShift application on WWT's citizen-developer platform; adopted by senior leadership in its first week and advanced into IT's test environment under a principal engineer.
+- Selected for the TD&E AI Core Team on a PPM platform modernization initiative, contributing through daily standups, task refinement, and stakeholder progress demos alongside product owners, engineers, and senior leadership.
 - Automated PMO reporting workflows using PowerShell, generating a daily dashboard distributed to 200+ stakeholders and standardizing data processing across 9 recurring reports.
-- Built an Outlook-based automation combining VBA and PowerShell for project win intake that standardizes file naming and organization across multiple systems, adopted by teammates.
-- Contribute to the PMO Practice Team supporting the West and Public regions, improving financial accuracy through cost tracking, revenue forecasting, and project analysis.
 
 **Program Management Intern (May 2022 – May 2023)**
 
