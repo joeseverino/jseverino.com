@@ -76,6 +76,13 @@ published: true
 
 ## TECHNICAL PROJECTS
 
+### Astro/TypeScript Publishing Platform
+
+<p class="resume-projmeta"><a href="/portfolio/from-wordpress-to-astro/">jseverino.com/portfolio/from-wordpress-to-astro</a><span class="resume-dates">June 2026</span></p>
+
+- Built and maintain a static publishing system sourced from a private Obsidian vault, with Node-based content sync, image optimization, responsive asset manifests, SEO metadata, sitemap/RSS generation, and Cloudflare Pages deployment.
+- Implemented automated quality gates across unit tests, Playwright browser tests, visual regression baselines, link checks, page-weight budgets, security-header validation, deploy verification, and CI/CD workflows so releases are deterministic.
+
 ### Zero Trust Homelab & Private Infrastructure
 
 <p class="resume-projmeta"><a href="/portfolio/zero-trust-private-infrastructure/">jseverino.com/portfolio/zero-trust-private-infrastructure</a><span class="resume-dates">May 2026</span></p>
