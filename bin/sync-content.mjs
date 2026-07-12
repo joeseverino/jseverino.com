@@ -345,12 +345,7 @@ const resumeEngineRoot = process.env.RESUME_ENGINE_DIR
 // Multi-role orgs carry a summarized tenure span on the org row, matching
 // the PDF's date column; the location tucks under it.
 function orgRow(grammar, lines, index, org) {
-  const dates = [];
-  for (let j = index + 1; j < lines.length; j += 1) {
-    if (/^#{2,3} /.test(lines[j])) break;
-    const role = grammar.matchRole(lines[j]);
-    if (role) dates.push(role.dates);
-  }
+  const dates = grammar.orgRoleDates(lines, index);
   const meta =
     dates.length > 1
       ? `<span class="resume-org-meta"><span class="resume-dates">${grammar.tenureSpan(dates)}</span><span class="resume-loc">${org.location}</span></span>`
