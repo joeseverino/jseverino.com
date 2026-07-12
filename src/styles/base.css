@@ -1142,7 +1142,7 @@ figure {
 
 /* ── Resume page (rows emitted by syncResume) ───────────────────────── */
 
-.resume-page .prose {
+:is(.resume-page, .document-page) .prose {
   & hr { display: none; }
 
   & h2 {
@@ -1166,6 +1166,12 @@ figure {
   & .resume-role + ul { margin-block-start: 6px; }
 
   & .resume-org + .resume-role { margin-block-start: 10px; }
+
+  & .resume-org a {
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
 
   & .resume-cert {
     margin-block-start: 0;

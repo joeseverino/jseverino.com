@@ -90,23 +90,39 @@ function collectionSlug(id: string): string {
   return id.replace(/\/index\.md$/, '').replace(/\.md$/, '');
 }
 
-export async function getPage(slug: string): Promise<PageContent> {
+function loadPages(): Promise<CollectionEntry<'pages'>[]> {
   // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
-  const pages = await pagesCache.getAsync(() =>
+  return pagesCache.getAsync(() =>
     getCollection('pages', (page) => import.meta.env.DEV || page.data.published),
   );
-  const page = pages.find((entry) => collectionSlug(entry.id) === slug);
-  if (!page) throw new Error(`Missing page content: ${slug}`);
+}
 
+function toPageContent(entry: CollectionEntry<'pages'>): PageContent {
+  const slug = collectionSlug(entry.id);
   return {
     slug,
-    title: page.data.title,
-    description: page.data.description ?? '',
-    intro: page.data.intro,
-    path: page.data.path || (slug === 'home' ? '/' : `/${slug}/`),
-    body: page.body ?? '',
-    bodyHtml: renderPageMarkdown(page.body ?? ''),
+    title: entry.data.title,
+    description: entry.data.description ?? '',
+    intro: entry.data.intro,
+    path: entry.data.path || (slug === 'home' ? '/' : `/${slug}/`),
+    body: entry.body ?? '',
+    bodyHtml: renderPageMarkdown(entry.body ?? ''),
   };
+}
+
+export async function getPage(slug: string): Promise<PageContent> {
+  const page = (await loadPages()).find((entry) => collectionSlug(entry.id) === slug);
+  if (!page) throw new Error(`Missing page content: ${slug}`);
+  return toPageContent(page);
+}
+
+// Institution detail pages generated under `education/` by sync-content,
+// one per Education-vault institution joined to the resume canonical.
+export async function getEducationInstitutions(): Promise<PageContent[]> {
+  const pages = await loadPages();
+  return pages
+    .filter((entry) => collectionSlug(entry.id).startsWith('education/'))
+    .map(toPageContent);
 }
 
 export function getTechnologyGroups(): TechnologyGroup[] {
