@@ -1144,6 +1144,108 @@ figure {
   }
 }
 
+/* ── Resume page (rows emitted by syncResume) ───────────────────────── */
+
+:is(.resume-page, .document-page) .prose {
+  & hr { display: none; }
+
+  & h2 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary-deep);
+    border-block-end: 1px solid color-mix(in oklch, var(--color-primary) 35%, var(--color-border));
+    padding-block-end: 8px;
+    margin-block-start: var(--space-40);
+  }
+
+  & h3 { font-size: 1.1rem; }
+
+  & ul { margin-block-start: 8px; }
+
+  & li + li { margin-block-start: 4px; }
+
+  & li::marker { color: var(--color-text-alt); }
+
+  & .resume-role + ul { margin-block-start: 6px; }
+
+  & .resume-org + .resume-role { margin-block-start: 10px; }
+
+  & .resume-org a {
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  & .resume-cert {
+    margin-block-start: 0;
+    padding-block: 10px;
+    border-block-end: 1px solid var(--color-border-faint);
+
+    & a {
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  & .resume-projmeta {
+    margin-block-start: 4px;
+
+    & a {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-decoration: none;
+      color: var(--color-text-alt);
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+}
+
+.resume-org,
+.resume-role,
+.resume-projmeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2px 24px;
+}
+
+.resume-cert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+}
+
+.resume-role strong { font-weight: 650; }
+
+.resume-org-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.resume-loc,
+.resume-issuer {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.resume-issuer { margin-inline-end: auto; }
+
+.resume-dates {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
 /* ── Contact form ───────────────────────────────────────────────────── */
 
 .contact-intake {

@@ -25,7 +25,7 @@ published: true
 
 - Supported the PMO Practice Team across the West and Public regions, improving financial accuracy through cost tracking, revenue forecasting, and project analysis.
 - Automated PMO reporting workflows using PowerShell, generating a daily dashboard distributed to 200+ stakeholders and standardizing data processing across 9 recurring reports.
-- Rebuilt the daily PMO reporting dashboard as a containerized application on WWT's citizen-developer OpenShift platform; senior leadership adopted it in its first week and it advanced into IT's test environment.
+- Rebuilt the daily PMO reporting dashboard as a containerized application on WWT's citizen-developer OpenShift platform; used by PMO leadership within its first week and advanced into IT's test environment.
 - Contributed on the TD&E AI Core Team for a PPM platform modernization initiative, working through daily standups, task refinement, and stakeholder progress demos with product owners, engineers, and senior leadership.
 
 <p class="resume-role"><strong>Program Management Intern</strong><span class="resume-dates">May 2022 – May 2023</span></p>
@@ -49,7 +49,7 @@ published: true
 
 ## EDUCATION
 
-<h3 class="resume-org"><span>Georgia Institute of Technology</span><span class="resume-loc">Atlanta, GA</span></h3>
+<h3 class="resume-org"><span><a href="/education/georgia-tech/">Georgia Institute of Technology</a></span><span class="resume-loc">Atlanta, GA</span></h3>
 
 <p class="resume-role"><strong>Master of Science, Cybersecurity</strong><span class="resume-dates">Expected: August 2025 – December 2027</span></p>
 
