@@ -32,7 +32,7 @@
     "fork": false,
     "language": "JavaScript",
     "name": "branding-engine",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/branding-engine"
   },
   {
@@ -59,7 +59,7 @@
     "fork": false,
     "language": "JavaScript",
     "name": "cordon",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/cordon"
   },
   {
@@ -68,7 +68,7 @@
     "fork": false,
     "language": "Shell",
     "name": "cordon-starter",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/cordon-starter"
   },
   {
@@ -84,18 +84,18 @@
     "archived": false,
     "description": "GitHub profile page",
     "fork": false,
-    "language": null,
+    "language": "Shell",
     "name": "joeseverino",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/joeseverino"
   },
   {
     "archived": false,
     "description": "Public Astro portfolio on Cloudflare Pages, built from a private Obsidian vault: vault-to-content sync, CSP hardening, and a D1-backed contact form protected by Turnstile.",
     "fork": false,
-    "language": "JavaScript",
+    "language": "CSS",
     "name": "jseverino.com",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/jseverino.com"
   },
   {
@@ -127,6 +127,15 @@
   },
   {
     "archived": false,
+    "description": "Single-source resume pipeline: one markdown canonical renders a typeset one-page PDF, a redacted public PDF, and a markdown resume.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "resume-engine",
+    "pushedAt": "2026-07",
+    "url": "https://github.com/joeseverino/resume-engine"
+  },
+  {
+    "archived": false,
     "description": "Command-line tool to track risks with auto-incrementing IDs.",
     "fork": false,
     "language": "Python",
@@ -140,7 +149,7 @@
     "fork": false,
     "language": "JavaScript",
     "name": "severino-brand",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/severino-brand"
   },
   {
@@ -149,7 +158,7 @@
     "fork": false,
     "language": "Python",
     "name": "severino-edu-mcp",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/severino-edu-mcp"
   },
   {
@@ -158,7 +167,7 @@
     "fork": false,
     "language": "Python",
     "name": "severino-hq",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/severino-hq"
   },
   {
@@ -185,7 +194,7 @@
     "fork": false,
     "language": "TypeScript",
     "name": "severino-obsidian",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/severino-obsidian"
   },
   {
@@ -194,7 +203,7 @@
     "fork": false,
     "language": "Python",
     "name": "severino-vault-mcp",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/severino-vault-mcp"
   },
   {
@@ -221,7 +230,7 @@
     "fork": false,
     "language": "Shell",
     "name": "tls-cert-renewal-automation",
-    "pushedAt": "2026-05",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/tls-cert-renewal-automation"
   },
   {
@@ -230,7 +239,7 @@
     "fork": false,
     "language": "Shell",
     "name": "tools",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/tools"
   },
   {
@@ -239,7 +248,7 @@
     "fork": false,
     "language": "Python",
     "name": "vault-engine",
-    "pushedAt": "2026-06",
+    "pushedAt": "2026-07",
     "url": "https://github.com/joeseverino/vault-engine"
   },
   {
