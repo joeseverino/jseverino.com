@@ -38,10 +38,15 @@ jobs:
         uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2
         with:
           output: lychee/public-content.md
+          # Self-domain links are excluded: a PR that introduces a page and
+          # links to it would 404 against live until it deploys. Internal
+          # references are audited against the built output by publish-check
+          # in CI; this step owns external links only.
           args: >-
             --no-progress
             --verbose
             --base-url https://jseverino.com
+            --exclude '^https://jseverino\.com'
             --accept 200,204,206,301,302,303,307,308,403,429,999
             src/content/**/*.md
           fail: true

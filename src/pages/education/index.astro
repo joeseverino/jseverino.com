@@ -1,0 +1,26 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
+import { getPage } from '@lib/content';
+
+const page = await getPage('education');
+---
+
+<BaseLayout
+  seo={{
+    title: page.title,
+    description: page.description,
+    path: page.path,
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: page.title, url: page.path },
+    ],
+  }}
+>
+  <main id="main" class="content-page document-page">
+    <div class="content-flow">
+      <PageHero title={page.title} description={page.intro ?? page.description} />
+      <div class="prose" set:html={page.bodyHtml} />
+    </div>
+  </main>
+</BaseLayout>

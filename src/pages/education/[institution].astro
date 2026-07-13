@@ -1,0 +1,34 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
+import { getEducationInstitutions } from '@lib/content';
+
+export async function getStaticPaths() {
+  return (await getEducationInstitutions()).map((page) => ({
+    params: { institution: page.slug.replace(/^education\//, '') },
+    props: { page },
+  }));
+}
+
+const { page } = Astro.props;
+---
+
+<BaseLayout
+  seo={{
+    title: page.title,
+    description: page.description,
+    path: page.path,
+    breadcrumbs: [
+      { name: 'Home', url: '/' },
+      { name: 'Education', url: '/education/' },
+      { name: page.title, url: page.path },
+    ],
+  }}
+>
+  <main id="main" class="content-page document-page">
+    <div class="content-flow">
+      <PageHero title={page.title} description={page.intro ?? page.description} />
+      <div class="prose" set:html={page.bodyHtml} />
+    </div>
+  </main>
+</BaseLayout>

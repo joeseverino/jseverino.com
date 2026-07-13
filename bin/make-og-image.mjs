@@ -21,7 +21,7 @@ try {
     eyebrow: 'Cybersecurity • Networking',
     name: SITE.owner,
     tagline: 'Hands-on security & infrastructure projects',
-    meta: 'CCNA • Security+ • ISC2 CC',
+    meta: 'Technical Solutions Engineer • CCNA • Security+',
     url: SITE.domain,
     photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
     outPath: path.join(root, 'public/assets/og/og-default.png'),
