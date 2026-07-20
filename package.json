@@ -70,7 +70,7 @@
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.2.0",
     "markdown-it": "^14.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "yaml": "^2.9.0",
@@ -79,7 +79,7 @@
     "js-yaml": "^4.2.0"
   },
   "optionalDependencies": {
-    "branding-engine": "^0.3.0"
+    "branding-engine": "^0.6.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
