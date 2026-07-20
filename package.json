@@ -86,7 +86,7 @@
     "@playwright/test": "^1.61.1",
     "playwright": "^1.60.0",
     "sitedrift": "^0.3.11",
-    "stylelint": "^17.14.0",
+    "stylelint": "^17.14.1",
     "stylelint-config-standard": "^40.0.0"
   }
 }
