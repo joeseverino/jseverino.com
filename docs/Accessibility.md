@@ -52,27 +52,55 @@ Verified flows:
 - Contact form → submit triggers via Enter; status region announces result to screen readers.
 - Tag pills on writeup footers → focusable, declare destination via link text.
 - Mobile nav links → close the popover on activation so focus continues into the destination page.
+- Theme control in the footer → each segment is a real `<button>`, reachable by tab and activated by Enter or Space.
 
 Nothing on the site requires a pointer to operate.
 
+## Color Theme
+
+The site renders in light or dark. Both come from one set of dual-valued tokens in [`src/styles/base.css`](../src/styles/base.css): `:root` declares `color-scheme: light dark`, and each themeable token holds a `light-dark(light, dark)` pair. There is no dark stylesheet and no `[data-theme]` cascade to keep in sync.
+
+Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against the OS preference on its own. A visitor who never touches the control gets a working dark theme from `prefers-color-scheme` alone.
+
+The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) exists only to override that. Auto, Light, and Dark are offered rather than a light/dark pair so that an explicit choice can be released back to the OS. Details:
+
+- The control is a `role="group"` of three buttons, each carrying `aria-label` and `aria-pressed`. Segments are 28x24 CSS px, above the WCAG 2.2 target-size minimum (2.5.8).
+- An explicit choice sets `color-scheme` on `<html>` and persists to `localStorage`; auto clears both.
+- A blocking inline script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) applies a stored choice before first paint, so an overridden theme never flashes the OS theme first. It also stamps `data-theme-mode` on `<html>`, which is what reveals the control.
+- `<meta name="color-scheme" content="light dark">` sits in the head alongside that script. It duplicates the `color-scheme` in `base.css` deliberately: the stylesheet governs only once it has loaded, and until then the document scheme is `normal`, so the browser paints a white canvas with light scrollbars and form controls even on a dark-mode OS. The meta is parsed first, so the very first frame is already dark.
+- With JavaScript off, the control does not render at all, because it could not do anything. Auto is unaffected.
+- `<meta name="theme-color">` ships as a light and a dark pair scoped by `prefers-color-scheme`, carrying the page background for each theme (`SURFACE` in [`src/lib/brand.mjs`](../src/lib/brand.mjs), projected from `--color-bg`) so the browser toolbar blends into the page. The metas sit above the boot script in the head, and the script re-points them for an explicit choice: browsers sample `theme-color` while parsing the head, so a deferred fixup lands after it has already been read. Safari on macOS samples once per load and does not re-read on an in-place toggle; the tint corrects on the next navigation.
+- The code-block and terminal palette (`--code-*`, `--term-*`) stays dark in both themes by design. It represents a real terminal, not a themeable surface.
+
 ## Color Contrast
 
-The primary palette is documented in CSS custom properties at the top of [`src/styles/base.css`](../src/styles/base.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text).
+The palette is documented in CSS custom properties at the top of [`src/styles/base.css`](../src/styles/base.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
-Spot-checked combinations on the live palette:
+`npm run check:contrast` measures every pair below once per theme and fails the gate under 4.5:1. Measuring only the light arm was the specific regression this guards: dark values are easy to author by eye and easy to get wrong.
 
-- `--color-text` on `--color-bg` (default body text): ≈ 18:1
-- `--color-muted` on `--color-bg` (card metadata, captions, dates): ≈ 5.2:1
-- `--color-text` on `--color-soft` (hero chip, card media surface): ≈ 17:1
-- Terminal label `#94a3b8` on `#111827`: ≈ 6.4:1
-- Success status `#166534` on `rgba(22,101,52,0.1)` over white: ≈ 6:1
+| Pair | Light | Dark |
+|---|---|---|
+| `--color-text` on `--color-bg` (body text) | 19.8:1 | 14.7:1 |
+| `--color-muted` on `--color-bg` (metadata, captions, dates) | 5.2:1 | 7.5:1 |
+| `--color-text-alt` on `--color-bg` | 5.8:1 | 8.4:1 |
+| `--color-primary` on `--color-bg` (links, kickers) | 10.4:1 | 6.5:1 |
+| `--color-text` on `--color-surface` (cards, fields) | 19.8:1 | 13.5:1 |
+| `--color-muted` on `--color-surface` | 5.2:1 | 6.8:1 |
+| `--color-text` on `--color-soft` (hero chip, card media) | 17.8:1 | 12.7:1 |
+| `--color-muted` on `--color-soft` | 4.7:1 | 6.5:1 |
+| `--color-primary` on `--color-soft` (active pills) | 9.3:1 | 5.6:1 |
+| `--color-bg` on `--color-primary` (button label) | 10.4:1 | 6.5:1 |
+| `--color-code-text` on `--color-code-bg` (inline code) | 17.1:1 | 12.5:1 |
 
-All current pairs meet AA. Update this list when a new component introduces a novel color-on-color combination.
+Terminal label `#94a3b8` on `#111827` is ≈ 6.4:1 and identical in both themes, since that group does not recolor.
+
+All current pairs meet AA. Add new ones to the `pairs` array in [`tests/audits/check-contrast.mjs`](../tests/audits/check-contrast.mjs) and to this table together when a component introduces a novel color-on-color combination.
 
 ## What's Intentionally Not Done
 
 - **No accessibility statement page.** This is a personal portfolio, not a public service; the documentation in this file is the statement.
-- **No high-contrast theme toggle.** The single light palette is the design intent. OS-level inversion remains browser-controlled, while the explicit `forced-colors: active` rules preserve control boundaries and focus.
+- **No separate high-contrast theme.** Light and dark both clear AA on every measured pair, so a third palette would add a surface to maintain without adding headroom. The explicit `forced-colors: active` rules preserve control boundaries and focus for users who need system-level contrast.
+- **No per-theme imagery.** Writeup screenshots keep their original light or dark chrome in both themes. Swapping them would mean maintaining two of every image for a cosmetic gain.
 - **No font-size scaler.** Browsers handle zoom and reflow; the layout is responsive down to 320px without horizontal scroll.
 
 ## Validation

@@ -12,21 +12,23 @@
 
 /* tokens:start — generated from severino-brand/brand/tokens.json by `npm run sync:tokens`. Edit tokens there, not here. */
 :root {
-  --color-bg: #ffffff;
-  --color-text: #0b0620;
-  --color-text-alt: #4C63A0;
-  --color-soft: #eff3fb;
-  --color-muted: #6E6B7C;
+  color-scheme: light dark;
+  --color-bg: light-dark(#ffffff, #131826);
+  --color-surface: light-dark(#ffffff, #1a2032);
+  --color-text: light-dark(#0b0620, #e8eaf2);
+  --color-text-alt: light-dark(#4C63A0, #9db2e6);
+  --color-soft: light-dark(#eff3fb, #1e2537);
+  --color-muted: light-dark(#6E6B7C, #a2a8bd);
   --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
-  --color-border-faint: rgb(0 0 0 / 5%);
-  --color-fill-faint: rgb(0 0 0 / 4%);
-  --color-fill-faint-strong: rgb(0 0 0 / 8%);
-  --color-code-bg: #f8fafc;
-  --color-code-text: #0f172a;
-  --color-code-border: rgb(15 23 42 / 14%);
-  --color-field-border: rgb(15 23 42 / 18%);
-  --color-table-stripe: color-mix(in oklch, var(--color-primary) 5%, transparent);
-  --color-table-head: color-mix(in oklch, var(--color-primary) 9%, transparent);
+  --color-border-faint: light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%));
+  --color-fill-faint: light-dark(rgb(0 0 0 / 4%), rgb(255 255 255 / 6%));
+  --color-fill-faint-strong: light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 12%));
+  --color-code-bg: light-dark(#f8fafc, #1e2438);
+  --color-code-text: light-dark(#0f172a, #e2e8f0);
+  --color-code-border: light-dark(rgb(15 23 42 / 14%), rgb(226 232 240 / 18%));
+  --color-field-border: light-dark(rgb(15 23 42 / 18%), rgb(226 232 240 / 24%));
+  --color-table-stripe: light-dark(color-mix(in oklch, var(--color-primary) 5%, transparent), color-mix(in oklch, var(--color-primary) 10%, transparent));
+  --color-table-head: light-dark(color-mix(in oklch, var(--color-primary) 9%, transparent), color-mix(in oklch, var(--color-primary) 16%, transparent));
   --code-bg: #020617;
   --code-fg: #d1d5db;
   --term-bg: #0b1220;
@@ -40,13 +42,15 @@
   --term-dot-red: #ef4444;
   --term-dot-amber: #f59e0b;
   --term-dot-green: #22c55e;
-  --color-success: #166534;
-  --color-success-bg: rgb(22 101 52 / 10%);
-  --color-error: #991b1b;
-  --color-error-bg: rgb(153 27 27 / 10%);
-  --shadow-sm: 0 6px 10px rgb(0 0 0 / 18%);
-  --shadow-md: 0 10px 16px rgb(0 0 0 / 22%);
-  --shadow-chrome: 0 4px 10px rgb(0 0 0 / 8%);
+  --color-success: light-dark(#166534, #4ade80);
+  --color-success-bg: light-dark(rgb(22 101 52 / 10%), rgb(74 222 128 / 12%));
+  --color-error: light-dark(#991b1b, #fca5a5);
+  --color-error-bg: light-dark(rgb(153 27 27 / 10%), rgb(252 165 165 / 12%));
+  --shadow-color-sm: light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%));
+  --shadow-color-md: light-dark(rgb(0 0 0 / 22%), rgb(0 0 0 / 65%));
+  --shadow-color-chrome: light-dark(rgb(0 0 0 / 8%), rgb(0 0 0 / 50%));
+  --shadow-sm: 0 6px 10px var(--shadow-color-sm);
+  --shadow-md: 0 10px 16px var(--shadow-color-md);
   --blur-chrome: 12px;
   --motion-duration-instant: 120ms;
   --motion-duration-fast: 150ms;
@@ -474,7 +478,7 @@ main > * + * {
   min-block-size: 34px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
-  background: var(--color-bg);
+  background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.875rem;
   font-weight: 600;
@@ -604,6 +608,17 @@ main > * + * {
 
 /* ── Site header ────────────────────────────────────────────────────── */
 
+/* Scroll progress as a number, so the two paths below (scroll-driven animation,
+   class + transition fallback) each set ONE value and the colors are composed in
+   a single place. A keyframe holding var() colors would resolve them once and
+   keep serving the stale pair after a theme switch, leaving a white scrim over a
+   dark page until the next reload — in Chromium and WebKit alike. */
+@property --header-scroll {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 .site-header {
   position: sticky;
   inset-block-start: 0;
@@ -616,17 +631,20 @@ main > * + * {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: color-mix(in oklch, var(--color-bg) 70%, transparent);
+    background: color-mix(
+      in oklch,
+      var(--color-bg) calc(70% + (15% * var(--header-scroll))),
+      transparent
+    );
+    box-shadow: 0 4px 10px
+      color-mix(in oklch, var(--shadow-color-chrome) calc(var(--header-scroll) * 100%), transparent);
     backdrop-filter: blur(var(--blur-chrome));
     -webkit-backdrop-filter: blur(var(--blur-chrome));
-    transition:
-      box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
-      background var(--motion-duration-standard) var(--motion-ease-standard);
+    transition: --header-scroll var(--motion-duration-standard) var(--motion-ease-standard);
   }
 
   &.scrolled::before {
-    background: color-mix(in oklch, var(--color-bg) 85%, transparent);
-    box-shadow: var(--shadow-chrome);
+    --header-scroll: 1;
   }
 }
 
@@ -640,8 +658,7 @@ main > * + * {
 
   @keyframes site-header-scroll-state {
     to {
-      background: color-mix(in oklch, var(--color-bg) 85%, transparent);
-      box-shadow: var(--shadow-chrome);
+      --header-scroll: 1;
     }
   }
 }
@@ -787,6 +804,9 @@ main > * + * {
 }
 
 .button {
+  --button-lift: 2px;
+
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -807,9 +827,17 @@ main > * + * {
     box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
+  /* Same hover-lift backfill as the cards above, at the button's own distance. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 100% calc(var(--button-lift) * -1);
+    inset-inline: 0;
+  }
+
   &:hover,
   &:focus {
-    translate: 0 -2px;
+    translate: 0 calc(var(--button-lift) * -1);
     background: var(--color-primary-deep);
     color: var(--color-bg);
     text-decoration: none;
@@ -846,7 +874,7 @@ main > * + * {
   &:hover,
   &:focus,
   &:active {
-    translate: -50% -2px;
+    translate: -50% calc(var(--button-lift) * -1);
   }
 }
 
@@ -870,7 +898,7 @@ main > * + * {
   gap: var(--space-15);
   border: 1px solid var(--color-border-faint);
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   transition:
     translate var(--motion-duration-fast) var(--motion-ease-standard),
@@ -878,16 +906,33 @@ main > * + * {
 
 }
 
+/* Lifting a card on hover moves its hit box out from under the cursor, which
+   un-hovers it, which drops it back under the cursor — an infinite oscillation
+   along the bottom edge ("doom flicker"). The pseudo backfills exactly the strip
+   the card vacates, so the pointer never leaves the element. It covers only that
+   strip, not the card, so it can't intercept a click meant for the card link.
+   Both the lift and the backfill read one custom property and cannot drift. */
 @media (hover: hover) and (pointer: fine) {
-  :where(.project-card, .software-card):hover {
-    translate: 0 -6px;
-    box-shadow: var(--shadow-md);
+  :where(.project-card, .software-card) {
+    --card-lift: 6px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-block: 100% calc(var(--card-lift) * -1);
+      inset-inline: 0;
+    }
+
+    &:hover {
+      translate: 0 calc(var(--card-lift) * -1);
+      box-shadow: var(--shadow-md);
+    }
   }
 }
 
+/* No `overflow: hidden`: the media sits below the title, so it never meets the
+   card's rounded corners, and clipping would eat the hover backfill above. */
 .project-card {
-  overflow: hidden;
-
   &:has(.project-card-title a:active) {
     box-shadow: none;
   }
@@ -1273,7 +1318,7 @@ figure {
     padding-inline: 1rem;
     border: 1px solid var(--color-field-border);
     border-radius: var(--radius-sm);
-    background: var(--color-bg);
+    background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.95rem;
     line-height: 1.5;
@@ -1352,8 +1397,10 @@ figure {
 
 .footer-inner {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-15) var(--space-20);
   inline-size: min(var(--wide), 100%);
   margin-inline: auto;
 }
@@ -1376,6 +1423,64 @@ figure {
 
   &:active {
     color: var(--color-primary);
+  }
+}
+
+/* Hidden until the boot script marks :root, because with JS off the segments
+   cannot do anything — auto already works on its own. */
+.theme-toggle {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+:root[data-theme-mode] .theme-toggle {
+  display: inline-flex;
+}
+
+.theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    scale var(--motion-duration-instant) var(--motion-ease-standard);
+
+  & svg {
+    inline-size: 15px;
+    block-size: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-soft);
+    color: var(--color-primary);
+  }
+
+  &:active {
+    scale: 0.94;
+    color: var(--color-primary-deep);
   }
 }
 
@@ -2090,8 +2195,14 @@ body:has(.lightbox[open]) {
   .archive-tag,
   .nav-toggle,
   .project-card,
-  .article-hero {
+  .article-hero,
+  .theme-toggle {
     border: 1px solid ButtonText;
+  }
+
+  .theme-choice[aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
   }
 
   .contact-field input:focus,

@@ -27,13 +27,22 @@ const { loadTokens, renderDesignSystemRoot, toJs, syncTargets } = await import(
 
 const { tokens, tokensPath } = loadTokens(brandRoot);
 
-// designSystem → :root block; brand → BRAND export.
-const rootBlock = renderDesignSystemRoot(tokens.designSystem);
+// designSystem (+ its dark overrides) → :root block; brand → BRAND export.
+const rootBlock = renderDesignSystemRoot(tokens.designSystem, { dark: tokens.designSystemDark });
 const brandBlock = `export const BRAND = ${toJs(tokens.brand)};`;
+
+// The browser-chrome tint needs the page background as a JS value, and --color-bg
+// is the design system's, not the brand's. Projected from the same token so the
+// meta and the CSS can't drift apart.
+const surfaceBlock = `export const SURFACE = ${toJs({
+  light: tokens.designSystem['--color-bg'],
+  dark: tokens.designSystemDark['--color-bg'],
+})};`;
 
 const targets = [
   { file: path.join(siteRoot, 'src/styles/base.css'), label: '/* tokens', inner: rootBlock },
   { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// tokens', inner: brandBlock },
+  { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// surfaces', inner: surfaceBlock },
 ];
 
 const changed = syncTargets(targets, { root: siteRoot });
