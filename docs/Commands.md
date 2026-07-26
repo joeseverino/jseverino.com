@@ -37,6 +37,7 @@ behind the scripts.
 | `npm run make:icons` | Regenerate favicons + brand marks |
 | `npm run make:og` | Regenerate the Open Graph card |
 | `npm run make:embed` | Regenerate `public/embed/bundle.css` — the one embeddable stylesheet (brand vars + base.css + inlined Inter) |
+| `npm run make:content-index` | Emit the published-writeup JSON projection consumed by Severino HQ |
 | `npm run make:social` | Regenerate the GitHub social preview |
 | `npm run snapshot:github` | Refresh the committed GitHub repo snapshot the portfolio Software list falls back to |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
@@ -157,6 +158,12 @@ instead, which includes everything this does.
 assets (favicons + marks, the Open Graph card, the GitHub social preview)
 from the brand engine. Generated output is committed, so these only run when
 the brand changes. See [`Brand-System.md`](./Brand-System.md).
+
+**`npm run make:content-index`** — emits `public/content-index.json` from the
+validated, published writeup snapshot. The static build invokes it
+automatically. The generated file is deliberately uncommitted: the site build
+is the single projection boundary, and Severino HQ consumes the deployed JSON
+without re-reading vault or repository internals.
 
 **`npm run scaffold:primer`** — scaffolds a new reference primer in the
 vault's `04 Reference/` with the slim frontmatter the MCP expects.
