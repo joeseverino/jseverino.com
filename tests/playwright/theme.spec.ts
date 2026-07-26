@@ -1,11 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// Dark mode is `light-dark()` tokens resolved by `color-scheme`, so there is no
-// dark stylesheet and no [data-theme] cascade to assert against. What matters is
-// the resolved paint: auto tracks the OS with no JS at all, an explicit choice
-// overrides it, and that choice survives a reload without a flash of the wrong
-// scheme. Runs on every desktop engine because light-dark() support is the load-
-// bearing assumption of the whole approach.
+// Neutral tokens use light-dark(); brand tokens use deterministic selectors from
+// the shared brand emitter. What matters here is the resolved paint: auto tracks
+// the OS with no JS, an explicit choice overrides it, and that choice survives a
+// reload without a flash of the wrong scheme. Runs on every desktop engine.
 
 const LIGHT_BG = 'rgb(255, 255, 255)';
 const DARK_BG = 'rgb(19, 24, 38)';
