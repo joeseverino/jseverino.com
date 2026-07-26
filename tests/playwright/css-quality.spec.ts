@@ -15,23 +15,25 @@ test('focus exposes the skip link', async ({ page }) => {
 test('brand tokens drive document chrome and interactive states', async ({ page }) => {
   await page.goto('/portfolio/');
 
-  const brand = '#1e3a8a';
-  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', /#1E3A8A/i);
+  // Chrome tint tracks the page background per theme, not the brand navy, so the
+  // browser toolbar blends into the page instead of staying dark in both themes.
+  await expect(page.locator('meta[name="theme-color"][data-scheme="light"]')).toHaveAttribute('content', /#ffffff/i);
+  await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', /#131826/i);
   await expect(page.locator('link[rel="stylesheet"][href="/brand.css"]')).toHaveCount(1);
-  expect(
-    await page
+
+  // Both brand tokens are dual-valued, so the declared value carries both arms
+  // and the resolved paint is asserted further down.
+  const declared = (property: string) =>
+    page
       .locator('html')
-      .evaluate((element) =>
-        getComputedStyle(element).getPropertyValue('--color-primary').trim().toLowerCase(),
-      ),
-  ).toBe(brand);
-  expect(
-    await page
-      .locator('html')
-      .evaluate((element) =>
-        getComputedStyle(element).getPropertyValue('--color-primary-deep').trim().toLowerCase(),
-      ),
-  ).toBe('#14245c');
+      .evaluate(
+        (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
+        property,
+      );
+
+  // Matched loosely: engines normalize whitespace inside light-dark() differently.
+  expect(await declared('--color-primary')).toMatch(/^light-dark\(\s*#1e3a8a\s*,\s*#7c9ce0\s*\)$/);
+  expect(await declared('--color-primary-deep')).toMatch(/^light-dark\(\s*#14245c\s*,\s*#a8c0f0\s*\)$/);
 
   const cardLink = page.locator('.project-card-title a').first();
   await cardLink.focus();
@@ -109,6 +111,43 @@ test('buttons and cards keep a stable click target through press and release', a
   await page.mouse.up();
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href!)}$`));
 });
+
+// Lifting an element on hover moves its hit box off the cursor, so a pointer
+// resting near the bottom edge lands in the strip it just vacated: un-hover,
+// drop back under the cursor, re-hover, forever ("doom flicker"). A transparent
+// ::after backfills that strip so the pointer never leaves.
+//
+// This asserts the GEOMETRY, not the behavior: the oscillation needs a real
+// compositor and does not reproduce under Playwright's synthetic mouse, so a
+// behavioral test here would pass with the fix deleted. What is checkable, and
+// what actually prevents the bug, is that the backfill exists and is exactly as
+// tall as the lift — the two are driven by one custom property and must not drift.
+for (const { name, selector, path } of [
+  { name: 'card', selector: '.project-card', path: '/portfolio/' },
+  { name: 'button', selector: '.button', path: '/404.html' },
+]) {
+  test(`${name} backfills the strip its hover lift vacates`, async ({ page }) => {
+    await page.goto(path);
+
+    const target = page.locator(selector).first();
+    await target.scrollIntoViewIfNeeded();
+
+    const backfillHeight = await target.evaluate(
+      (element) => getComputedStyle(element, '::after').height,
+    );
+    const box = await target.boundingBox();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    // Let the lift transition settle; sampling mid-flight reads a partial offset.
+    await expect(target).toHaveCSS('translate', /^0px -\d/);
+    await page.waitForTimeout(300);
+
+    const lift = await target.evaluate((element) => getComputedStyle(element).translate);
+    const liftPx = Math.abs(Number.parseFloat(lift.split(' ')[1] ?? '0'));
+
+    expect(liftPx).toBeGreaterThan(0);
+    expect(Number.parseFloat(backfillHeight)).toBe(liftPx);
+  });
+}
 
 test('reduced motion disables smooth scrolling and transitions', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });

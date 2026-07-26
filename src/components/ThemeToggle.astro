@@ -1,0 +1,92 @@
+---
+// Auto is the default and needs no JS: `color-scheme: light dark` on :root makes
+// every light-dark() token follow the OS on its own. This control only exists to
+// override that, so it stays hidden until the inline boot script in BaseLayout
+// marks :root with data-theme-mode.
+const CHOICES = [
+  { mode: 'auto', label: 'Match system theme' },
+  { mode: 'light', label: 'Light theme' },
+  { mode: 'dark', label: 'Dark theme' },
+] as const;
+---
+
+<div class="theme-toggle" role="group" aria-label="Color theme" data-theme-toggle>
+  {
+    CHOICES.map(({ mode, label }) => (
+      <button
+        type="button"
+        class="theme-choice"
+        data-theme-choice={mode}
+        aria-label={label}
+        aria-pressed={mode === 'auto' ? 'true' : 'false'}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          {mode === 'auto' && (
+            <Fragment>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none" />
+            </Fragment>
+          )}
+          {mode === 'light' && (
+            <Fragment>
+              <circle cx="12" cy="12" r="4.25" />
+              <path d="M12 2.5v2.2M12 19.3v2.2M4.28 4.28l1.56 1.56M18.16 18.16l1.56 1.56M2.5 12h2.2M19.3 12h2.2M4.28 19.72l1.56-1.56M18.16 5.84l1.56-1.56" />
+            </Fragment>
+          )}
+          {mode === 'dark' && <path d="M20.5 14.6A8.7 8.7 0 0 1 9.4 3.5a8.7 8.7 0 1 0 11.1 11.1Z" />}
+        </svg>
+      </button>
+    ))
+  }
+</div>
+
+<script>
+  type Mode = 'auto' | 'light' | 'dark';
+
+  const STORAGE_KEY = 'theme';
+  const root = document.documentElement;
+  const group = document.querySelector<HTMLElement>('[data-theme-toggle]');
+  const choices = document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]');
+  const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
+
+  function apply(mode: Mode) {
+    root.dataset.themeMode = mode;
+    root.style.colorScheme = mode === 'auto' ? '' : mode;
+
+    // Auto hands the mobile browser chrome back to the media queries; an explicit
+    // choice pins the matching meta on and switches the other off.
+    metas.forEach((meta) => {
+      const scheme = meta.dataset.scheme;
+      meta.media =
+        mode === 'auto'
+          ? `(prefers-color-scheme: ${scheme})`
+          : scheme === mode
+            ? 'all'
+            : 'not all';
+    });
+
+    choices.forEach((choice) => {
+      choice.setAttribute('aria-pressed', String(choice.dataset.themeChoice === mode));
+    });
+  }
+
+  if (group) {
+    apply((root.dataset.themeMode as Mode) || 'auto');
+
+    group.addEventListener('click', (event) => {
+      const choice = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-theme-choice]');
+      if (!choice) return;
+
+      const mode = choice.dataset.themeChoice as Mode;
+      apply(mode);
+
+      try {
+        if (mode === 'auto') localStorage.removeItem(STORAGE_KEY);
+        else localStorage.setItem(STORAGE_KEY, mode);
+      } catch {
+        // Storage blocked (private mode, cookies off) — the choice still applies
+        // for this page view, it just won't survive navigation.
+      }
+    });
+  }
+</script>

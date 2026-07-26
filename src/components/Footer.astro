@@ -1,6 +1,7 @@
 ---
 import { site } from '@lib/site';
 import SocialLinks from '@components/SocialLinks.astro';
+import ThemeToggle from '@components/ThemeToggle.astro';
 
 const { socialLinks } = site;
 ---
@@ -8,6 +9,7 @@ const { socialLinks } = site;
 <footer class="site-footer">
   <div class="footer-inner">
     <a href={site.repoUrl} class="source-link">&lt;/&gt; View Source</a>
+    <ThemeToggle />
     <SocialLinks links={socialLinks} />
   </div>
 </footer>

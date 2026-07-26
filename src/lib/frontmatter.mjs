@@ -1,14 +1,14 @@
 import matter from 'gray-matter';
-import yaml from 'js-yaml';
+import { dump, load } from 'js-yaml';
 
 const matterOptions = {
   engines: {
     yaml: {
       parse(value) {
-        return yaml.load(value) ?? {};
+        return load(value) ?? {};
       },
       stringify(value) {
-        return yaml.dump(value);
+        return dump(value);
       },
     },
   },

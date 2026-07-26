@@ -151,9 +151,10 @@ reviewable without becoming the site's active design.
 
 The site keeps its tokens local and borrows only the rendering:
 
-- `severino-brand/brand/tokens.json` is the upstream source of truth — both the
-  brand identity (`brand`: navy, glyph) and the design system (`designSystem`: the
-  `:root` custom properties). The site never reads it at build time.
+- `severino-brand/brand/tokens.json` is the upstream source of truth — the brand
+  identity (`brand`: navy, glyph), the design system (`designSystem`: the `:root`
+  custom properties), and the dark values for the themeable subset of those
+  properties (`designSystemDark`). The site never reads it at build time.
 - `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) vendors it
   into two committed files, rewriting only the region between
   `tokens:start`/`tokens:end` markers: the `BRAND` export in `src/lib/brand.mjs`
@@ -170,6 +171,43 @@ The site keeps its tokens local and borrows only the rendering:
 - The generated assets in `public/assets/` are committed. To restyle the brand,
   edit `tokens.json` upstream, run `npm run sync:tokens`, re-run the generators,
   and commit the new tokens + assets together.
+
+### Light And Dark From One Token Block
+
+`designSystemDark` lists only the tokens whose value changes in dark. The renderer
+folds the two maps together into a single `:root` block where each themeable token
+holds both values at once:
+
+```css
+:root {
+  color-scheme: light dark;
+  --color-bg: light-dark(#ffffff, #131826);
+  --color-text: light-dark(#0b0620, #e8eaf2);
+  --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
+}
+```
+
+This is why there is no dark stylesheet, no `[data-theme]` selector duplicating a
+2,000-line file, and no per-component dark override. Three consequences worth
+knowing:
+
+- **Derived tokens adapt for free.** `--color-border` is a `color-mix()` over
+  `--color-text`, so it has no dark entry — it inherits the flip. Anything
+  expressible as a mix of an already-themeable token should stay derived.
+- **`light-dark()` only accepts colors.** `--shadow-sm` is geometry plus a color,
+  so the color half was split into `--shadow-color-sm` and the shadow composes it.
+  Apply the same split to any future token that isn't a bare color.
+- **A dark key with no light counterpart throws.** `mergeThemes` in
+  `severino-brand/brand/sync.mjs` refuses to emit a token that exists only in the
+  dark map, since a typo there would otherwise vanish silently from the output.
+
+The terminal group (`--code-*`, `--term-*`) has no dark entries on purpose: it
+represents a real terminal and stays dark in both themes. `--color-primary` is
+dual-valued too, but from `brand.onDark` in `brandVarsCss()` rather than the
+design-system block, since it is brand identity and lives in `/brand.css`. Navy is
+unreadable on a dark page; `onDark.primary` is the readable counterpart, and
+`onDark.primaryDeep` is *lighter* than it, because "deep" means more emphasis and
+emphasis moves toward the far end of the page's contrast range in either theme.
 
 The engine is an `optionalDependency`, pinned to a published, provenance-attested
 `branding-engine` npm version (`^0.2.2`).

@@ -33,6 +33,10 @@ const syncManifestPath = path.join(siteRoot, 'node_modules/.cache/jseverino-sync
 const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
 
 const VARIANT_WIDTHS = [512, 1024, 1600];
+// Encoded bytes depend on the native image toolchain as well as the source.
+// Include that lineage in every cache key so a sharp/libvips security upgrade
+// cannot silently restore artifacts produced by an older vulnerable encoder.
+const IMAGE_ENCODER_LINEAGE = `sharp-${sharp.versions.sharp}-vips-${sharp.versions.vips}`;
 const imageManifest = {};
 // Every file written under the managed content/asset roots this run. Sync writes
 // in place and prunes only files NOT in this set at the very end — so a partial
@@ -116,7 +120,8 @@ async function optimizeImage(source, target, url) {
 
     const emit = async (outName, cacheName, encode) => {
       const outFile = path.join(dir, outName);
-      const cacheFile = path.join(imageCacheDir, cacheName);
+      const cacheFile = path.join(imageCacheDir, IMAGE_ENCODER_LINEAGE, cacheName);
+      await fsPromises.mkdir(path.dirname(cacheFile), { recursive: true });
       try {
         await fsPromises.access(cacheFile);
         await fsPromises.copyFile(cacheFile, outFile);

@@ -330,9 +330,12 @@ appears same-origin. This adds operational visibility without adding
 `require-trusted-types-for 'script'`. Trusted Types defends against
 DOM-XSS by blocking dangerous sinks (`innerHTML`, `outerHTML`,
 `insertAdjacentHTML`, `document.write`, …) unless they are routed
-through an explicit `TrustedTypePolicy`. The site ships no inline script
-and Astro emits no client-side DOM-sink usage, so for first-party code
-this directive runs clean. Promotion to enforced is blocked by
+through an explicit `TrustedTypePolicy`. The handful of first-party inline
+scripts (the header scroll fallback, the theme bootstrap) touch only
+`classList`, `dataset`, and `style`, and Astro emits no client-side
+DOM-sink usage, so for first-party code this directive runs clean. Every
+one of them is covered by the per-request nonce, which the middleware
+attaches by rewriting each `<script>` element. Promotion to enforced is blocked by
 Cloudflare-injected scripts that aren't TT-compliant: the JS Detections
 fingerprint at `/cdn-cgi/challenge-platform/scripts/jsd/main.js` assigns
 to `innerHTML`, and the RUM beacon hits `/cdn-cgi/rum`. Disabling those
