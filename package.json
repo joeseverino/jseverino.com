@@ -30,6 +30,7 @@
     "make:og": "node bin/make-og-image.mjs",
     "make:embed": "node bin/make-embed-bundle.mjs",
     "make:social": "node bin/make-github-social.mjs",
+    "make:content-index": "node bin/make-content-index.mjs",
     "scaffold:primer": "node bin/scaffold-primer.mjs",
     "scaffold:writeup-field": "node bin/scaffold-writeup-field.mjs",
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",

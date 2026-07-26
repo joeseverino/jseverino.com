@@ -25,6 +25,9 @@ function run(command, args) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
+// Emit the HQ content index into public/ before the build so Astro copies it
+// into the deploy output (served at /content-index.json, gated by Access).
+run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.mjs')]);
 run(astro, ['build']);
 run(process.execPath, [
   sitedrift,
