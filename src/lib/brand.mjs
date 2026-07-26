@@ -45,12 +45,24 @@ export const SURFACE = {
 // each re-derive them — the re-derivation that once left --color-primary dead in
 // the preview, killing base.css's tinted tables, links, and buttons.
 //
-// Both are dual-valued: navy is unreadable on a dark page, so the dark arm uses
-// the onDark pair. `deep` means "more emphasis", which is DARKER on a light page
-// and LIGHTER on a dark one — hover states read the same either way. The
-// `color-scheme: light dark` that resolves these lives in base.css's token block.
+// Navy is unreadable on a dark page, so dark mode uses the onDark pair. `deep`
+// means "more emphasis", which is DARKER on a light page and LIGHTER on a dark
+// one — hover states read the same either way.
+//
+// Do not put light-dark() inside these custom properties. Safari can preserve
+// the light arm when a separately loaded stylesheet defines the variable before
+// the page's color-scheme settles. Emit explicit selectors instead: this is the
+// one theme contract consumed by /brand.css and every generated embed bundle.
 export function brandVarsCss() {
-  const primary = `light-dark(${BRAND.navy},${BRAND.onDark.primary})`;
-  const deep = `light-dark(${BRAND.navyDeep},${BRAND.onDark.primaryDeep})`;
-  return `:root{--color-primary:${primary};--color-primary-deep:${deep}}`;
+  const declarations = (primary, deep) =>
+    `--color-primary:${primary};--color-primary-deep:${deep}`;
+  const light = declarations(BRAND.navy, BRAND.navyDeep);
+  const dark = declarations(BRAND.onDark.primary, BRAND.onDark.primaryDeep);
+
+  return [
+    `:root{${light}}`,
+    `@media(prefers-color-scheme:dark){:root:not([data-theme-mode="light"]){${dark}}}`,
+    `:root[data-theme-mode="dark"]{${dark}}`,
+    `:root[data-theme-mode="light"]{${light}}`,
+  ].join('');
 }

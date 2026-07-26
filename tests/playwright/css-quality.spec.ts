@@ -21,8 +21,7 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
   await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', /#131826/i);
   await expect(page.locator('link[rel="stylesheet"][href="/brand.css"]')).toHaveCount(1);
 
-  // Both brand tokens are dual-valued, so the declared value carries both arms
-  // and the resolved paint is asserted further down.
+  // The shared brand emitter resolves the light palette explicitly.
   const declared = (property: string) =>
     page
       .locator('html')
@@ -31,9 +30,8 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
         property,
       );
 
-  // Matched loosely: engines normalize whitespace inside light-dark() differently.
-  expect(await declared('--color-primary')).toMatch(/^light-dark\(\s*#1e3a8a\s*,\s*#7c9ce0\s*\)$/);
-  expect(await declared('--color-primary-deep')).toMatch(/^light-dark\(\s*#14245c\s*,\s*#a8c0f0\s*\)$/);
+  expect(await declared('--color-primary')).toBe('#1e3a8a');
+  expect(await declared('--color-primary-deep')).toBe('#14245c');
 
   const cardLink = page.locator('.project-card-title a').first();
   await cardLink.focus();
@@ -43,6 +41,34 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
   await sourceLink.focus();
   await expect(sourceLink).toHaveCSS('color', 'rgb(20, 36, 92)');
   expect(await sourceLink.evaluate((element) => getComputedStyle(element).fontFamily)).toContain('Inter');
+});
+
+test('dark brand paint stays legible in links, navigation, and primary actions', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+
+  const declared = (property: string) =>
+    page.locator('html').evaluate(
+      (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
+      property,
+    );
+
+  expect(await declared('--color-primary')).toBe('#7c9ce0');
+  expect(await declared('--color-primary-deep')).toBe('#a8c0f0');
+
+  const button = page.locator('.button').first();
+  await expect(button).toHaveCSS('background-color', 'rgb(124, 156, 224)');
+  await expect(button).toHaveCSS('color', 'rgb(19, 24, 38)');
+
+  const cardLink = page.locator('.project-card-title a').first();
+  await cardLink.focus();
+  await expect(cardLink).toHaveCSS('color', 'rgb(124, 156, 224)');
+
+  await page.goto('/resume/');
+  await expect(page.locator('.nav-link[aria-current="page"]')).toHaveCSS(
+    'color',
+    'rgb(124, 156, 224)',
+  );
 });
 
 test('motion tokens drive stable pressed feedback', async ({ page }) => {
