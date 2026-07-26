@@ -3,7 +3,7 @@ import SeoHead from '@components/SeoHead.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import SocialIconsDefs from '@components/SocialIconsDefs.astro';
-import { BRAND } from '@lib/brand.mjs';
+import { SURFACE } from '@lib/brand.mjs';
 import '@styles/base.css';
 
 type Props = {
@@ -26,6 +26,34 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Duplicates the `color-scheme` in base.css on purpose. The stylesheet only
+        applies once it has loaded, and until then the document scheme is
+        `normal`, so the browser paints a white canvas, light scrollbars, and
+        light form controls even on a dark-mode OS. This is parsed first and
+        gets the paint right from the very first frame. */}
+    <meta name="color-scheme" content="light dark" />
+    {/* Browser-chrome tint. Media-scoped so it works with JS off, but the scopes
+        follow the OS, not an explicit override — so the script below re-points
+        them. They sit ABOVE that script on purpose: browsers sample theme-color
+        while parsing the head, so a deferred fixup lands too late to be read. */}
+    <meta name="theme-color" data-scheme="light" media="(prefers-color-scheme: light)" content={SURFACE.light} />
+    <meta name="theme-color" data-scheme="dark" media="(prefers-color-scheme: dark)" content={SURFACE.dark} />
+    <script is:inline>
+      (() => {
+        let mode = 'auto';
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored === 'light' || stored === 'dark') mode = stored;
+        } catch {}
+        const root = document.documentElement;
+        root.dataset.themeMode = mode;
+        if (mode === 'auto') return;
+        root.style.colorScheme = mode;
+        for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
+          meta.media = meta.dataset.scheme === mode ? 'all' : 'not all';
+        }
+      })();
+    </script>
     {preconnectOrigins.map((origin) => <link rel="preconnect" href={origin} crossorigin />)}
     <link
       rel="preload"
@@ -37,7 +65,6 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
     <link rel="stylesheet" href="/brand.css" />
     <SeoHead {...seo} />
     <link rel="alternate" type="application/rss+xml" title="Joe Severino — Portfolio" href="/feed.xml" />
-    <meta name="theme-color" content={BRAND.navy} />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" />

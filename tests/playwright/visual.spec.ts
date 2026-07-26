@@ -49,7 +49,15 @@ test.describe('visual regression', () => {
     await expect(page).toHaveScreenshot('writeup-desktop.png', SCREENSHOT_OPTIONS);
   });
 
+  // The Turnstile widget renders on its own schedule and changes height when it
+  // does, shifting everything below it. Aborting the challenge script the same
+  // way a11y.single.spec.ts does leaves the reserved 65px box empty, so the
+  // baseline pins this site's layout instead of Cloudflare's render timing.
+  const withoutTurnstile = (page: import('@playwright/test').Page) =>
+    page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+
   test('contact page (desktop)', async ({ page }) => {
+    await withoutTurnstile(page);
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto('/contact/');
     await expect(page.locator('.contact-intake-form')).toBeVisible();
@@ -118,5 +126,56 @@ test.describe('visual regression', () => {
     await page.setViewportSize(DESKTOP_VIEWPORT);
     await page.goto('/resume/');
     await expect(page).toHaveScreenshot('resume-sticky-action.png', SCREENSHOT_OPTIONS);
+  });
+
+  // Dark is a token flip, not a second stylesheet, so these baselines are less
+  // about layout (identical by construction) than about the resolved palette:
+  // a dark value that lands wrong shows up here and nowhere else. The archetypes
+  // are chosen for coverage of the surfaces that recolor independently — page
+  // and raised surface, tinted table, form fields, and the terminal group that
+  // deliberately does not recolor.
+  test.describe('dark', () => {
+    test.use({ colorScheme: 'dark' });
+
+    test('home page (dark)', async ({ page }) => {
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
+      await expect(page).toHaveScreenshot('home-desktop-dark.png', SCREENSHOT_OPTIONS);
+    });
+
+    test('writeup page (dark)', async ({ page }) => {
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/portfolio/building-a-custom-mcp-layer/');
+      await page.waitForLoadState('networkidle');
+      await expect(page).toHaveScreenshot('writeup-desktop-dark.png', SCREENSHOT_OPTIONS);
+    });
+
+    test('contact page (dark)', async ({ page }) => {
+      await withoutTurnstile(page);
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/contact/');
+      await expect(page.locator('.contact-intake-form')).toBeVisible();
+      await expect(page).toHaveScreenshot('contact-desktop-dark.png', SCREENSHOT_OPTIONS);
+    });
+
+    test('table block (dark)', async ({ page }) => {
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/portfolio/building-a-custom-mcp-layer/');
+      await expect(page.locator('.table-figure').first()).toHaveScreenshot('table-block-dark.png', SCREENSHOT_OPTIONS);
+    });
+
+    test('terminal block (dark)', async ({ page }) => {
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/portfolio/building-study-quiz/');
+      await expect(page.locator('.terminal-block').first()).toHaveScreenshot('terminal-block-dark.png', SCREENSHOT_OPTIONS);
+    });
+
+    test('footer theme control (dark)', async ({ page }) => {
+      await page.setViewportSize(DESKTOP_VIEWPORT);
+      await page.goto('/');
+      await page.locator('.site-footer').scrollIntoViewIfNeeded();
+      await expect(page.locator('.footer-inner')).toHaveScreenshot('footer-dark.png', SCREENSHOT_OPTIONS);
+    });
   });
 });

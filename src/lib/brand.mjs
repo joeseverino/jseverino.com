@@ -21,9 +21,22 @@ export const BRAND = {
     accent: '#5B82D6',
     textSoft: '#DDE6FB',
   },
+  onDark: {
+    primary: '#7C9CE0',
+    primaryDeep: '#A8C0F0',
+  },
   glyph: 'JS',
 };
 // tokens:end
+
+// The page background per theme, mirrored from the design system's --color-bg so
+// the browser-chrome tint in BaseLayout tracks the page without restating a hex.
+// surfaces:start
+export const SURFACE = {
+  light: '#ffffff',
+  dark: '#131826',
+};
+// surfaces:end
 
 // The brand custom properties every site surface AND every embedder needs
 // ALONGSIDE base.css. They are deliberately NOT in base.css: --color-primary is
@@ -31,6 +44,13 @@ export const BRAND = {
 // so /brand.css (src/pages/brand.css.ts) and the Obsidian plugin's preview don't
 // each re-derive them — the re-derivation that once left --color-primary dead in
 // the preview, killing base.css's tinted tables, links, and buttons.
+//
+// Both are dual-valued: navy is unreadable on a dark page, so the dark arm uses
+// the onDark pair. `deep` means "more emphasis", which is DARKER on a light page
+// and LIGHTER on a dark one — hover states read the same either way. The
+// `color-scheme: light dark` that resolves these lives in base.css's token block.
 export function brandVarsCss() {
-  return `:root{--color-primary:${BRAND.navy};--color-primary-deep:${BRAND.navyDeep}}`;
+  const primary = `light-dark(${BRAND.navy},${BRAND.onDark.primary})`;
+  const deep = `light-dark(${BRAND.navyDeep},${BRAND.onDark.primaryDeep})`;
+  return `:root{--color-primary:${primary};--color-primary-deep:${deep}}`;
 }
