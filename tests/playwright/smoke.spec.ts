@@ -81,8 +81,8 @@ test('representative routes emit no browser warnings or errors', async ({ page }
     }
   });
   for (const route of ['/', '/portfolio/', '/resume/', '/contact/']) {
-    await page.goto(route);
-    await page.waitForLoadState('networkidle');
+    await page.goto(route, { waitUntil: 'load' });
+    await page.waitForTimeout(500);
   }
   expect(diagnostics, diagnostics.join('\n')).toHaveLength(0);
 });

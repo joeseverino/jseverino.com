@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AUDITS, auditsFor } from '../tests/audits/registry.mjs';
+import { browserTestEnv } from '../tests/browser-test-env.mjs';
 import { COLOR, run } from './lib/run.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -170,7 +171,10 @@ async function diagnose() {
   // build-static (astro build + sitedrift wrap), not a bare astro build.
   if (runBuild) {
     say(COLOR.blue('Phase 3: Compiling Production Build...'));
-    const buildResult = await runCommand('node', ['bin/build-static.mjs'], { timeout: 10 * 60_000 });
+    const buildResult = await runCommand('node', ['bin/build-static.mjs'], {
+      env: browserTestEnv,
+      timeout: 10 * 60_000,
+    });
     const buildSuccess = buildResult.code === 0;
     say(`  ${(buildSuccess ? COLOR.green('[PASS]') : COLOR.red('[FAIL]')).padEnd(15)} Static Site Build (${buildResult.duration}ms)\n`);
     checks.push({
