@@ -73,7 +73,7 @@
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.3.0",
     "markdown-it": "^14.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "overrides": {
     "yaml": "^2.9.0",
