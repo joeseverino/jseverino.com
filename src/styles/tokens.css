@@ -1,0 +1,106 @@
+@layer tokens {
+
+@font-face {
+  font-family: Inter;
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
+}
+
+/* tokens:start — generated from severino-brand/brand/tokens.json by `npm run sync:tokens`. Edit tokens there, not here. */
+:root {
+  color-scheme: light dark;
+  --color-bg: light-dark(#ffffff, #131826);
+  --color-surface: light-dark(#ffffff, #1a2032);
+  --color-text: light-dark(#0b0620, #e8eaf2);
+  --color-text-alt: light-dark(#4C63A0, #9db2e6);
+  --color-soft: light-dark(#eff3fb, #1e2537);
+  --color-muted: light-dark(#6E6B7C, #a2a8bd);
+  --color-border: color-mix(in oklch, var(--color-text) 8%, transparent);
+  --color-border-faint: light-dark(rgb(0 0 0 / 5%), rgb(255 255 255 / 8%));
+  --color-fill-faint: light-dark(rgb(0 0 0 / 4%), rgb(255 255 255 / 6%));
+  --color-fill-faint-strong: light-dark(rgb(0 0 0 / 8%), rgb(255 255 255 / 12%));
+  --color-code-bg: light-dark(#f8fafc, #1e2438);
+  --color-code-text: light-dark(#0f172a, #e2e8f0);
+  --color-code-border: light-dark(rgb(15 23 42 / 14%), rgb(226 232 240 / 18%));
+  --color-field-border: light-dark(rgb(15 23 42 / 18%), rgb(226 232 240 / 24%));
+  --color-table-stripe: light-dark(color-mix(in oklch, var(--color-primary) 5%, transparent), color-mix(in oklch, var(--color-primary) 10%, transparent));
+  --color-table-head: light-dark(color-mix(in oklch, var(--color-primary) 9%, transparent), color-mix(in oklch, var(--color-primary) 16%, transparent));
+  --code-bg: #020617;
+  --code-fg: #d1d5db;
+  --term-bg: #0b1220;
+  --term-fg: #e2e8f0;
+  --term-bar-bg: #111827;
+  --term-bar-fg: #94a3b8;
+  --term-border: rgb(148 163 184 / 12%);
+  --term-prompt: #38bdf8;
+  --term-cmd: #f8fafc;
+  --term-out: #4ade80;
+  --term-dot-red: #ef4444;
+  --term-dot-amber: #f59e0b;
+  --term-dot-green: #22c55e;
+  --color-success: light-dark(#166534, #4ade80);
+  --color-success-bg: light-dark(rgb(22 101 52 / 10%), rgb(74 222 128 / 12%));
+  --color-error: light-dark(#991b1b, #fca5a5);
+  --color-error-bg: light-dark(rgb(153 27 27 / 10%), rgb(252 165 165 / 12%));
+  --shadow-color-sm: light-dark(rgb(0 0 0 / 18%), rgb(0 0 0 / 55%));
+  --shadow-color-md: light-dark(rgb(0 0 0 / 22%), rgb(0 0 0 / 65%));
+  --shadow-color-chrome: light-dark(rgb(0 0 0 / 8%), rgb(0 0 0 / 50%));
+  --shadow-sm: 0 6px 10px var(--shadow-color-sm);
+  --shadow-md: 0 10px 16px var(--shadow-color-md);
+  --blur-chrome: 12px;
+  --motion-duration-instant: 120ms;
+  --motion-duration-fast: 150ms;
+  --motion-duration-standard: 200ms;
+  --motion-duration-deliberate: 220ms;
+  --motion-stagger-step: 55ms;
+  --motion-ease-standard: ease;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+  --radius-button: 2rem;
+  --content: 42rem;
+  --wide: 80rem;
+  --cards: 1100px;
+  --gutter: clamp(1.5rem, 6vw, 2rem);
+  --w-constrained: min(var(--content), calc(100% - (var(--gutter) * 2)));
+  --w-wide: min(var(--wide), calc(100% - (var(--gutter) * 2)));
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --space-5: 0.25rem;
+  --space-10: 0.5rem;
+  --space-15: 0.75rem;
+  --space-20: 1rem;
+  --space-25: 1.25rem;
+  --space-30: clamp(1.5rem, 6vw, 2rem);
+  --space-40: clamp(2rem, 8vw, 3rem);
+  --space-50: clamp(2.5rem, 8vw, 4rem);
+  --font-2xs: 0.75rem;
+  --font-xs: clamp(14px, 0.875rem + ((1vw - 3.2px) * 0.208), 16px);
+  --font-sm: 1rem;
+  --font-base: clamp(0.875rem, 0.875rem + ((1vw - 0.2rem) * 0.417), 1.125rem);
+  --font-md: 1.25rem;
+  --font-lg: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.833), 1.75rem);
+  --font-xl: clamp(1.39rem, 1.39rem + ((1vw - 0.2rem) * 1.433), 2.25rem);
+  --font-xxl: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 2.5), 3rem);
+  --font-prose-sm: clamp(1.25rem, 1.25rem + ((1vw - 0.2rem) * 0.417), 1.5rem);
+  --font-prose-md: clamp(1.5rem, 1.5rem + ((1vw - 0.2rem) * 0.625), 1.875rem);
+  --track-label: 0.1em;
+  --weight-label: 700;
+  --header-height: 3.6rem;
+}
+/* tokens:end */
+
+@media (width <= 768px) {
+  :root {
+    --radius-md: 10px;
+  }
+}
+
+@media (width <= 599px) {
+  :root {
+    --header-height: 3.8rem;
+  }
+}
+
+}

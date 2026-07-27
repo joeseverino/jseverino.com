@@ -103,6 +103,8 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
 | Docs | [registry/docs parity](#the-unit-layer) | `tests/unit/docs-parity.test.ts` | Every audit is documented here, every publish label appears in the release checklist, every script in `docs/Commands.md`, every gate command in the README. |
 | Types | [functions type check](#functions-type-check) | `tsc -p functions` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
+| Source | [source integrity](#check-source-integritymjs) | `tests/audits/check-source-integrity.mjs` | JavaScript/TypeScript parses and has no duplicate top-level function declarations. |
+| Contracts | [generated projections](#check-contract-projectionsmjs) | `tests/audits/check-contract-projections.mjs` | Generated API, typed content schema, and embeddable CSS exactly match canonical sources. |
 | Parity | [functions/schema parity](#check-functions-paritymjs) | `tests/audits/check-functions-parity.mjs` | The contact handler, the API Shield OpenAPI schema, and the D1 schema agree on fields, limits, and INSERT columns. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
@@ -143,21 +145,14 @@ Verifies `public/.well-known/security.txt`:
 Signing is a **separate** tool, [`bin/sign-security.mjs`](../bin/sign-security.mjs) (`npm run sign:security`), because it *writes* the file — verifiers never mutate. Both share the canonical strip/parse logic in [`src/lib/security-txt.mjs`](../src/lib/security-txt.mjs) so the signer and the checker can never disagree on what the signed body is.
 
 ### `check-contrast.mjs`
-Reads `--color-*` declarations from [`src/styles/base.css`](../src/styles/base.css), computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
+Expands the ordered [`src/styles/base.css`](../src/styles/base.css) entrypoint, reads its `--color-*` declarations, computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
 
 ### `check-vault-mcp-parity.mjs`
-Asserts writeup frontmatter fields agree across four sources of truth:
-1. the vault's `Frontmatter Schema.md`,
-2. the Zod schema in [`src/content.config.ts`](../src/content.config.ts),
-3. the `update_writeup_frontmatter` signature in the Python MCP server,
-4. the `FIELDS` table the `site manage` TUI edits (tools repo,
-   `lib/site/manage-tui.mjs`; see [`docs/Site-CLI.md`](../docs/Site-CLI.md)).
-
-`published`, `featured`, and `featured_order` are exempt from the TUI layer —
-the TUI manages them through dedicated interactions (the `p` key and list
-reordering) rather than editable field rows. Any drift fails, so the
-authoring workflow can never silently desync — including a scaffolded field
-every backend accepts but the interactive editor can't touch.
+Asserts that [`contracts/content.v1.json`](../contracts/content.v1.json) is the
+one content-field definition and that its generated Astro schema, MCP package
+projection, contract-derived CLI/tool schemas, and Tools TUI consumer agree on
+the same fingerprint and capabilities. Any stale projection or reintroduced
+hardcoded field table fails the gate.
 
 ### Functions type check
 
@@ -165,7 +160,13 @@ every backend accepts but the interactive editor can't touch.
 
 ### `check-functions-parity.mjs`
 
-The deploy-side sibling of the vault parity check. The same shape is declared in three places nothing else keeps aligned: [`db/contact-openapi.json`](../db/contact-openapi.json) (the API Shield schema Cloudflare enforces at the edge), the handlers' payload fields and limits in `functions/api/`, and the D1 tables in [`db/schema.sql`](../db/schema.sql). It asserts the payload field set, required list, and length limits match the OpenAPI schema, and that every handler `INSERT` names only columns the D1 schema defines with matching bind counts. A field added to the handler but not the schema gets blocked at the edge once API Shield moves to Block mode; this fails first.
+The deploy-side sibling of the content parity check. It verifies that
+[`contracts/contact.v1.json`](../contracts/contact.v1.json) exactly projects to
+[`db/contact-openapi.json`](../db/contact-openapi.json), that the Pages Function
+consumes the contract rather than restating its fields and limits, and that
+every handler `INSERT` names only columns the D1 schema defines with matching
+bind counts. A stale API Shield document or persistence mismatch fails before
+deployment.
 
 ### `check-sitedrift-preview.mjs`
 Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'main'` and that production builds (`main`) ship as untampered Astro pages with `/__sitedrift` returning 404.
@@ -475,10 +476,10 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 ## 8. Troubleshooting
 
 ### Contrast check fails (`npm run check:contrast`)
-A CSS variable change dropped a text/background ratio below 4.5:1. Adjust the tokens in `src/styles/base.css`, or register an intentional new pair in the `pairs` array of `tests/audits/check-contrast.mjs`.
+A CSS variable change dropped a text/background ratio below 4.5:1. Adjust the tokens in `src/styles/tokens.css`, or register an intentional new pair in the `pairs` array of `tests/audits/check-contrast.mjs`.
 
 ### Parity check fails (`npm run check:parity`)
-A frontmatter field changed in `src/content.config.ts` but not in the vault schema or the MCP server. Update the vault's `Frontmatter Schema.md` and the `update_writeup_frontmatter` signature. Never hand-edit synced frontmatter in `src/content/`.
+The canonical content contract and one of its projections disagree. Edit `contracts/content.v1.json`, run `npm run sync:contract`, and commit every generated projection together. Never hand-edit synced frontmatter in `src/content/` or recreate field lists in MCP/Tools.
 
 ### `check:css-vars` fails
 A `--custom-property` is defined but never used. Remove the declaration, or add the `var(--…)` usage that justifies it.

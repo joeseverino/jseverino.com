@@ -85,23 +85,28 @@ if (conflictCopies.length > 0) {
   fail(`iCloud conflict copies remain: ${conflictCopies.sort().join(', ')}`);
 }
 
-// The public stylesheet is deliberately centralized: component-scoped styles
-// fragment the cascade and bypass the token/color audits that guard base.css.
+// The public stylesheet has one entry and concern-based source modules;
+// component-scoped styles would fragment that audited cascade.
 const componentStyles = existingTracked.filter(
   (file) => file.startsWith('src/') && file.endsWith('.astro') && /<style(?:\s|>)/.test(read(file)),
 );
 if (componentStyles.length > 0) {
-  fail(`Astro component styles must live in src/styles/base.css: ${componentStyles.join(', ')}`);
+  fail(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
 }
 
 // Literal colors are allowed only inside the generated token block. Component
 // rules must name a token or derive a variant from one with color-mix().
-const stylesheet = read('src/styles/base.css');
-const tokenEnd = stylesheet.indexOf('/* tokens:end */');
-const authoredStyles = tokenEnd >= 0 ? stylesheet.slice(tokenEnd) : stylesheet;
+const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/') && file.endsWith('.css'));
+const authoredStyles = styleFiles
+  .map((file) => {
+    const stylesheet = read(file);
+    const tokenEnd = stylesheet.indexOf('/* tokens:end */');
+    return tokenEnd >= 0 ? stylesheet.slice(tokenEnd) : stylesheet;
+  })
+  .join('\n');
 const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;
 if (literalColor.test(authoredStyles)) {
-  fail('src/styles/base.css contains a literal color outside the generated token block');
+  fail('src/styles contains a literal color outside the generated token block');
 }
 
 // View Transitions are intentionally not part of this site. Keeping lifecycle

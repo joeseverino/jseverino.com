@@ -1,0 +1,541 @@
+@layer components {
+/* ── Home content (page bodies wrapped by index.astro) ──────────────── */
+
+.home-content {
+  inline-size: var(--w-constrained);
+  margin-inline: auto;
+
+  & > * { margin-block-start: var(--space-30); }
+  & > :first-child { margin-block-start: 0; }
+}
+
+/* ── Hero (::hero block on the home page) ───────────────────────────── */
+
+.hero {
+  text-align: center;
+
+  & > * { margin-block-start: var(--space-30); }
+  & > :first-child { margin-block-start: 0; }
+
+  & > .hero-eyebrow { font-size: var(--font-xs); }
+  & > h1 { margin-block-start: 0.4rem; }
+  & > .hero-summary { margin-block: var(--space-20); }
+
+  & > .hero-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    margin-block-start: 0;
+    padding-block: 6px;
+    padding-inline: 10px;
+    border: 1px solid var(--color-border-faint);
+    border-radius: var(--radius-pill);
+    background: var(--color-soft);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  & > .actions { margin-block-start: 1.4rem; }
+}
+
+/* ── Buttons + action rows ──────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-block-start: var(--space-30);
+}
+
+.prose .actions {
+  justify-content: flex-start;
+  margin-block: 1.5rem;
+}
+
+.button {
+  --button-lift: 2px;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: calc((1em * 1.6) + (0.667em * 2) + 4px);
+  padding-block: calc(0.667em + 2px);
+  padding-inline: calc(1.333em + 2px);
+  border: 0;
+  border-radius: var(--radius-button);
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition:
+    translate var(--motion-duration-standard) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+
+  /* Same hover-lift backfill as the cards above, at the button's own distance. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 100% calc(var(--button-lift) * -1);
+    inset-inline: 0;
+  }
+
+  &:hover,
+  &:focus {
+    translate: 0 calc(var(--button-lift) * -1);
+    background: var(--color-primary-deep);
+    color: var(--color-bg);
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active {
+    box-shadow: none;
+  }
+
+  &.secondary {
+    background: transparent;
+    border: 2px solid currentColor;
+    color: var(--color-primary);
+    padding-block: 0.667em;
+    padding-inline: 1.33em;
+
+    &:hover,
+    &:focus {
+      background: var(--color-primary-deep);
+      color: var(--color-bg);
+      border-color: var(--color-primary-deep);
+    }
+  }
+}
+
+.sticky-button {
+  position: fixed;
+  inset-inline-start: 50%;
+  inset-block-end: var(--space-25);
+  z-index: 9999;
+  translate: -50% 0;
+
+  &:hover,
+  &:focus,
+  &:active {
+    translate: -50% calc(var(--button-lift) * -1);
+  }
+}
+
+/* ── Project cards ──────────────────────────────────────────────────── */
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  max-inline-size: var(--cards);
+  margin-inline: auto;
+  padding: 0;
+  list-style: none;
+}
+
+.project-card,
+.software-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-15);
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  transition:
+    translate var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+
+}
+
+/* Lifting a card on hover moves its hit box out from under the cursor, which
+   un-hovers it, which drops it back under the cursor — an infinite oscillation
+   along the bottom edge ("doom flicker"). The pseudo backfills exactly the strip
+   the card vacates, so the pointer never leaves the element. It covers only that
+   strip, not the card, so it can't intercept a click meant for the card link.
+   Both the lift and the backfill read one custom property and cannot drift. */
+@media (hover: hover) and (pointer: fine) {
+  :where(.project-card, .software-card) {
+    --card-lift: 6px;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-block: 100% calc(var(--card-lift) * -1);
+      inset-inline: 0;
+    }
+
+    &:hover {
+      translate: 0 calc(var(--card-lift) * -1);
+      box-shadow: var(--shadow-md);
+    }
+  }
+}
+
+/* No `overflow: hidden`: the media sits below the title, so it never meets the
+   card's rounded corners, and clipping would eat the hover backfill above. */
+.project-card {
+  &:has(.project-card-title a:active) {
+    box-shadow: none;
+  }
+}
+
+.project-card-media {
+  block-size: 180px;
+  overflow: hidden;
+  background: var(--color-soft);
+
+  & img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
+
+.project-card-title {
+  display: flex;
+  align-items: center;
+  min-block-size: 4.4em;
+  padding-inline: 14px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: normal;
+  text-wrap: wrap;
+  word-break: normal;
+
+  & a {
+    &:hover,
+    &:focus {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+  }
+}
+
+.project-card-summary,
+.software-card-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.project-card-summary {
+  min-block-size: 6em;
+  padding-inline: 14px;
+  line-height: 1.5;
+}
+
+.project-card-date {
+  padding-block-end: 14px;
+  padding-inline: 14px;
+  color: var(--color-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* ── Split / 2-column ───────────────────────────────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-30);
+  align-items: center;
+
+  & img {
+    border-radius: var(--radius-md);
+  }
+
+  & > div {
+    & > * { margin-block-start: var(--space-30); }
+    & > :first-child { margin-block-start: 0; }
+  }
+}
+
+/* ── Figures / images / captions (shared across home, prose, content-flow) ── */
+
+figure {
+  margin: 0;
+}
+
+.home-content figure,
+.prose figure,
+.content-flow figure {
+  margin-inline: auto;
+
+  & img { border-radius: var(--radius-sm); }
+
+  & figcaption {
+    margin-block-start: 0.5rem;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    text-align: center;
+  }
+}
+
+.home-content p:has(img) + p,
+.prose p:has(img) + p {
+  margin-block-start: 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── Tag pills (writeup tags + grouped tag cloud) ───────────────────── */
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-10);
+}
+
+.tag,
+.tech-pills a {
+  display: inline-block;
+  padding-block: 6px;
+  padding-inline: 10px;
+  border: 1px solid var(--color-border-faint);
+  border-radius: var(--radius-pill);
+  background: var(--color-fill-faint);
+  color: var(--color-text);
+  font-size: 12px;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:hover,
+  &:focus {
+    background: var(--color-fill-faint-strong);
+    text-decoration: none;
+  }
+
+  &:active {
+    background: var(--color-border-faint);
+  }
+}
+
+.tag-group-title {
+  margin: 0 0 0.6rem;
+  color: var(--color-muted);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.tag-groups {
+  display: grid;
+  gap: 1.5rem;
+  margin-block-end: var(--space-50);
+}
+
+/* ── Writeup article ────────────────────────────────────────────────── */
+
+.article {
+  inline-size: var(--w-constrained);
+  margin-inline: auto;
+
+  & > * + * {
+    margin-block-start: 2rem;
+  }
+}
+
+.article-title {
+  margin-block: 10px 6px;
+}
+
+.article-date {
+  margin-block-end: 18px;
+  color: var(--color-muted);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.article-hero {
+  margin-block: 40px 20px;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  aspect-ratio: 16 / 9;
+
+  & img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+}
+
+.article-tags {
+  & > * + * { margin-block-start: 1.2rem; }
+
+  & h3 {
+    font-size: var(--font-prose-md);
+    letter-spacing: normal;
+  }
+}
+
+.tech-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+
+  & a { margin-block: var(--space-5); margin-inline: 0 var(--space-10); }
+}
+
+.article-separator {
+  margin-block-start: var(--space-30);
+}
+
+/* ── Prose (writeup body) ───────────────────────────────────────────── */
+
+.prose {
+  line-height: 1.65;
+
+  & > * + * { margin-block-start: var(--space-30); }
+
+  & h2 { font-size: var(--font-prose-md); }
+
+  /* h3/h4 demotion is shared with the base h5/h6 rules. */
+
+  & a:not(.button) { text-decoration: underline; }
+
+  & img {
+    display: block;
+    margin-inline: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  & p {
+    text-wrap: pretty;
+
+    &:has(img) {
+      margin-block-start: 18px;
+
+      & + p { margin-block-start: 0.5rem; }
+    }
+  }
+}
+
+/* ── Resume page (rows emitted by syncResume) ───────────────────────── */
+
+:is(.resume-page, .document-page) .prose {
+  & hr { display: none; }
+
+  & h2 {
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary-deep);
+    border-block-end: 1px solid color-mix(in oklch, var(--color-primary) 35%, var(--color-border));
+    padding-block-end: 8px;
+    margin-block-start: var(--space-40);
+  }
+
+  & h3 { font-size: 1.1rem; }
+
+  & ul { margin-block-start: 8px; }
+
+  & li + li { margin-block-start: 4px; }
+
+  & li::marker { color: var(--color-text-alt); }
+
+  & .resume-role + ul { margin-block-start: 6px; }
+
+  & .resume-org + .resume-role { margin-block-start: 10px; }
+
+  & .resume-org a {
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+
+  & .resume-cert {
+    margin-block-start: 0;
+    padding-block: 10px;
+    border-block-end: 1px solid var(--color-border-faint);
+
+    & a {
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+
+  & .resume-projmeta {
+    margin-block-start: 4px;
+
+    & a {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-decoration: none;
+      color: var(--color-text-alt);
+
+      &:hover { text-decoration: underline; }
+    }
+  }
+}
+
+.resume-org,
+.resume-role,
+.resume-projmeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2px 24px;
+}
+
+.resume-cert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+}
+
+.resume-role strong { font-weight: 650; }
+
+.resume-org-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.resume-loc,
+.resume-issuer {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.resume-issuer { margin-inline-end: auto; }
+
+.resume-dates {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Compute WCAG 2.1 contrast ratios for every color-on-background pair the
-// site CSS actually renders. Reads `--color-*` tokens from base.css, parses
+// site CSS actually renders. Expands base.css and reads `--color-*` tokens, parses
 // rules that set `color:` and `background:` (or `background-color:`), and
 // reports pass/fail against WCAG AA (4.5:1 normal text, 3:1 large text).
 //
@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BRAND } from '../../src/lib/brand.mjs';
+import { readCssEntry } from '../../bin/lib/css-entry.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const cssPath = path.join(siteRoot, 'src/styles/base.css');
@@ -56,7 +57,7 @@ function contrastRatio(hexA, hexB) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-const css = fs.readFileSync(cssPath, 'utf8');
+const css = readCssEntry(cssPath);
 
 // Scoped to the generated token block: that is the only place --color-* is
 // declared, and scoping means a later override elsewhere can't silently shadow

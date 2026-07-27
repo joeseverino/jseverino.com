@@ -37,7 +37,7 @@
             }
           },
           "400": {
-            "description": "Malformed JSON, missing required fields, invalid email, or failed Turnstile verification.",
+            "description": "Malformed or invalid submission.",
             "content": {
               "application/json": {
                 "schema": {
@@ -93,6 +93,7 @@
   "components": {
     "schemas": {
       "ContactSubmission": {
+        "title": "ContactSubmission",
         "type": "object",
         "additionalProperties": false,
         "required": [
@@ -121,16 +122,19 @@
           "company": {
             "type": "string",
             "maxLength": 190,
-            "description": "Optional honeypot field. Human submissions leave this empty."
+            "description": "Honeypot; human submissions leave this empty.",
+            "x-purpose": "honeypot"
           },
           "sourceUrl": {
             "type": "string",
             "format": "uri",
-            "maxLength": 2048
+            "maxLength": 2048,
+            "x-purpose": "request-context"
           },
           "turnstileToken": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "x-purpose": "verification"
           }
         }
       },

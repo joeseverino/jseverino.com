@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { browserTestEnv } from './tests/browser-test-env.mjs';
 
 const PORT = 4321;
 
@@ -58,8 +59,6 @@ export default defineConfig({
     timeout: 120_000,
     stdout: 'ignore',
     stderr: 'pipe',
-    env: {
-      PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
-    },
+    env: browserTestEnv,
   },
 });

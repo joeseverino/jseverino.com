@@ -3,7 +3,7 @@
 //
 // Upstream source of truth: severino-brand/brand/tokens.json
 //   - `brand`        → src/lib/brand.mjs   (the BRAND export)
-//   - `designSystem` → src/styles/base.css (the :root token block)
+//   - `designSystem` → src/styles/tokens.css (the :root token block)
 //
 // Run on demand (`npm run sync:tokens`), review the diff, commit. This is the
 // only thing that touches severino-brand — the build never does, so CI stays
@@ -40,7 +40,7 @@ const surfaceBlock = `export const SURFACE = ${toJs({
 })};`;
 
 const targets = [
-  { file: path.join(siteRoot, 'src/styles/base.css'), label: '/* tokens', inner: rootBlock },
+  { file: path.join(siteRoot, 'src/styles/tokens.css'), label: '/* tokens', inner: rootBlock },
   { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// tokens', inner: brandBlock },
   { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// surfaces', inner: surfaceBlock },
 ];

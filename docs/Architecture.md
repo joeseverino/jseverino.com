@@ -45,6 +45,19 @@ Synced public source files:
 
 Cloudflare Pages builds from the committed snapshot. It does not need vault access.
 
+Schema is single-sourced separately from content. [`contracts/content.v1.json`](../contracts/content.v1.json)
+is the canonical, versioned description of page and writeup fields, including
+visibility, defaults, ownership, editability, and CLI flags. From that one input,
+[`bin/sync-content-contract.mjs`](../bin/sync-content-contract.mjs) generates the
+typed Astro schema and the public contract projection consumed by the MCP and
+Tools surfaces. Those consumers do not maintain a second field list.
+
+The contact boundary follows the same pattern. [`contracts/contact.v1.json`](../contracts/contact.v1.json)
+owns request fields, limits, formats, and runtime ceilings. The browser form,
+Cloudflare Pages Function, and generated API Shield OpenAPI document consume or
+derive from that contract. Contract-projection audits fail when any generated
+surface becomes stale.
+
 ### Portfolio Software list
 
 The Software tab of `/portfolio` is *not* vault-synced. Its repo facts — which
@@ -68,7 +81,10 @@ descriptions or adding repos.
 
 ## 3. Sync Pipeline
 
-[`bin/sync-content.mjs`](../bin/sync-content.mjs) performs the private-to-public sync.
+[`bin/sync-content.mjs`](../bin/sync-content.mjs) orchestrates the private-to-public sync.
+It delegates source-specific parsing to [`bin/content-sync/source-adapters.mjs`](../bin/content-sync/source-adapters.mjs)
+and public sanitization to [`bin/content-sync/public-projection.mjs`](../bin/content-sync/public-projection.mjs).
+This keeps acquisition, policy, and orchestration as separate responsibilities.
 
 Main responsibilities:
 
@@ -86,7 +102,11 @@ The sync manifest lives under `node_modules/.cache`. It is a local acceleration 
 
 ## 4. Content Collections
 
-Astro content collections are defined in [`src/content.config.ts`](../src/content.config.ts).
+Astro content collections are registered in [`src/content.config.ts`](../src/content.config.ts).
+Their field validators come from the committed generated module
+[`src/generated/content-schema.ts`](../src/generated/content-schema.ts), which is
+derived from the canonical content contract and checked for freshness in every
+diagnosis.
 
 Pages:
 
@@ -109,6 +129,10 @@ Writeups:
 - optional `featured_order`
 
 Generated pages are filtered so drafts render in local dev but do not render in production builds.
+
+To add or change a writeup field, edit only the canonical contract and run
+`npm run sync:contract`. The scaffold command can make that edit safely; it no
+longer patches Astro, MCP, CLI, and TUI implementations independently.
 
 ## 5. Markdown Rendering
 
@@ -332,7 +356,7 @@ Favicons, social cards, and HD brand marks are all generated from one place:
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
 - `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
 
-The design tokens follow the same model. `severino-brand/brand/tokens.json` is the upstream source of truth for both the brand identity (`brand`) and the design system (`designSystem` — the `:root` custom properties). `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) regenerates two committed files between `tokens:start`/`tokens:end` markers: the `:root` block in [`src/styles/base.css`](../src/styles/base.css) and the `BRAND` export in `src/lib/brand.mjs`. The build never reads the brand kit, mirroring the `sync:content` model — edit tokens upstream, not the marked regions.
+The design tokens follow the same model. `severino-brand/brand/tokens.json` is the upstream source of truth for both the brand identity (`brand`) and the design system (`designSystem` — the `:root` custom properties). `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) regenerates two committed files between `tokens:start`/`tokens:end` markers: the `:root` block in [`src/styles/tokens.css`](../src/styles/tokens.css) and the `BRAND` export in `src/lib/brand.mjs`. [`src/styles/base.css`](../src/styles/base.css) is the single ordered entrypoint over concern-based modules; Vite still emits one lean production stylesheet. The build never reads the brand kit, mirroring the `sync:content` model — edit tokens upstream, not the marked regions.
 
 To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` are emitted at runtime by `brand.css.ts` from `BRAND.navy`/`navyDeep`).
 

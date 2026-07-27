@@ -1,15 +1,7 @@
 #!/usr/bin/env node
-// Parity across the serverless boundary — the deploy-side sibling of
-// check-vault-mcp-parity. The same shape is declared in three places that
-// nothing else keeps aligned:
-//
-//   1. db/contact-openapi.json   — the API Shield schema Cloudflare enforces
-//   2. functions/api/*.ts        — the handlers' payload fields and limits
-//   3. db/schema.sql             — the D1 tables the handlers INSERT into
-//
-// A field added to the handler but not the OpenAPI schema gets blocked at the
-// edge once API Shield moves to Block mode; an INSERT column missing from the
-// schema fails at runtime in production. Both drift classes fail here instead.
+// Contract lineage across the serverless boundary. The request shape is
+// declared once in contracts/contact.v1.json; OpenAPI and the handler derive
+// from it. D1 remains a persistence contract and is checked against INSERTs.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,45 +13,23 @@ const read = (file) => fs.readFileSync(path.join(siteRoot, file), 'utf8');
 const failures = [];
 const fail = (message) => failures.push(message);
 
-// --- 1. OpenAPI schema <-> contact handler ---------------------------------
+// --- 1. Canonical request contract -> OpenAPI + handler ---------------------
 
+const contract = JSON.parse(read('contracts/contact.v1.json'));
 const openapi = JSON.parse(read('db/contact-openapi.json'));
 const submission = openapi.components?.schemas?.ContactSubmission;
 if (!submission) {
   fail('db/contact-openapi.json has no components.schemas.ContactSubmission');
 } else {
+  if (JSON.stringify(submission) !== JSON.stringify(contract.request)) {
+    fail('OpenAPI ContactSubmission is stale; run npm run sync:contact-openapi');
+  }
   const contactSrc = read('functions/api/contact.ts');
-
-  const payloadBlock = contactSrc.match(/interface ContactPayload \{([\s\S]*?)\}/)?.[1] ?? '';
-  const handlerFields = [...payloadBlock.matchAll(/^\s*(\w+)\?:/gm)].map((m) => m[1]).sort();
-  const schemaFields = Object.keys(submission.properties ?? {}).sort();
-  if (handlerFields.join() !== schemaFields.join()) {
-    fail(`payload fields differ: handler has [${handlerFields}], OpenAPI schema has [${schemaFields}]`);
+  if (!contactSrc.includes('validateContactPayload(payload)')) {
+    fail('contact handler does not validate through the canonical contract adapter');
   }
-
-  const schemaRequired = [...(submission.required ?? [])].sort();
-  const expectedRequired = ['email', 'message', 'name', 'turnstileToken'];
-  if (schemaRequired.join() !== expectedRequired.join()) {
-    fail(`OpenAPI required fields are [${schemaRequired}], expected [${expectedRequired}]`);
-  }
-  if (!/!name \|\| !email \|\| !message/.test(contactSrc) || !/!turnstileToken/.test(contactSrc)) {
-    fail('contact.ts no longer rejects the required fields the OpenAPI schema declares');
-  }
-
-  const handlerLimit = (field) =>
-    Number(contactSrc.match(new RegExp(`${field}\\.length > (\\d+)`))?.[1]);
-  const schemaMax = (field) => submission.properties?.[field]?.maxLength;
-  for (const field of ['name', 'email', 'message']) {
-    if (handlerLimit(field) !== schemaMax(field)) {
-      fail(`${field} maxLength differs: handler caps at ${handlerLimit(field)}, OpenAPI says ${schemaMax(field)}`);
-    }
-  }
-
-  const sourceUrlCap = Number(
-    contactSrc.match(/MAX_SOURCE_URL_LENGTH = ([\d_]+)/)?.[1]?.replaceAll('_', ''),
-  );
-  if (sourceUrlCap !== schemaMax('sourceUrl')) {
-    fail(`sourceUrl cap differs: handler truncates at ${sourceUrlCap}, OpenAPI says ${schemaMax('sourceUrl')}`);
+  if (/interface ContactPayload|MAX_SOURCE_URL_LENGTH|name\.length\s*>/.test(contactSrc)) {
+    fail('contact handler has reintroduced a second request schema or field limit');
   }
 }
 
@@ -110,4 +80,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`ok       OpenAPI fields/limits and ${insertCount} D1 inserts agree with the handlers`);
+console.log(`ok       contact contract drives OpenAPI/handler; ${insertCount} D1 inserts match storage`);

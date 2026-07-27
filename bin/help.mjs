@@ -39,7 +39,7 @@ const GROUPS = [
       'make:og': 'Regenerate the Open Graph card',
       'make:social': 'Regenerate the GitHub social preview',
       'scaffold:primer': 'Scaffold a new reference primer',
-      'scaffold:writeup-field': 'Add a writeup frontmatter field across every layer',
+      'scaffold:writeup-field': 'Add a field once to the canonical writeup contract',
       'draft:cover-alt': 'Draft writeup cover alt text via the Claude API',
       'sign:security': 'Re-sign public/.well-known/security.txt',
       'seo:preview': 'Preview a page Google snippet + metadata from built HTML',

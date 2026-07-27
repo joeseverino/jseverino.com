@@ -10,7 +10,7 @@ This site treats accessibility as a property of the rendered HTML and CSS, not a
 
 ## Skip Link
 
-`BaseLayout.astro` renders a `<a class="skip-link" href="#main">` as the first focusable element on every page. The element is visually translated off-screen by default and slides into view when it receives focus, satisfying WCAG 2.4.1 (Bypass Blocks) without permanently consuming layout. Style in [`src/styles/base.css`](../src/styles/base.css) under `.skip-link`.
+`BaseLayout.astro` renders a `<a class="skip-link" href="#main">` as the first focusable element on every page. The element is visually translated off-screen by default and slides into view when it receives focus, satisfying WCAG 2.4.1 (Bypass Blocks) without permanently consuming layout. Its style lives in [`src/styles/accessibility.css`](../src/styles/accessibility.css) under `.skip-link`.
 
 ## Landmarks And ARIA
 
@@ -30,13 +30,13 @@ Decorative-only images should use `alt=""`, never omit the attribute. Currently 
 
 ## Focus Management
 
-Visible focus is preserved on every interactive element. Custom focus styles live next to their components in [`src/styles/base.css`](../src/styles/base.css): `.skip-link`, `.brand`, `.nav-link`, `.archive-tag`, `.page-actions a`, and others. The site uses `:focus` rather than `:focus-visible`, meaning focus rings render on mouse interaction as well as keyboard — intentional, since the cost is cosmetic and the benefit is that low-vision mouse users still see the focused control.
+Visible focus is preserved on every interactive element. Shared focus and assistive styles live in [`src/styles/accessibility.css`](../src/styles/accessibility.css); component-specific selectors remain in their concern modules. The site uses `:focus` rather than `:focus-visible`, meaning focus rings render on mouse interaction as well as keyboard — intentional, since the cost is cosmetic and the benefit is that low-vision mouse users still see the focused control.
 
 Mobile navigation uses the native `popover` API. The browser handles focus restoration when the popover closes, eliminating a class of bugs around losing focus to an unmounted element.
 
 ## Reduced Motion
 
-A `@media (prefers-reduced-motion: reduce)` block at the bottom of [`src/styles/base.css`](../src/styles/base.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. These declarations use `!important` so component-level transition selectors cannot override the user preference. Users who set the OS preference get static visuals without per-element opt-outs.
+A `@media (prefers-reduced-motion: reduce)` block in [`src/styles/accessibility.css`](../src/styles/accessibility.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. These declarations use `!important` so component-level transition selectors cannot override the user preference. Users who set the OS preference get static visuals without per-element opt-outs.
 
 ## Forced Colors
 
@@ -58,7 +58,7 @@ Nothing on the site requires a pointer to operate.
 
 ## Color Theme
 
-The site renders in light or dark. Both come from one set of dual-valued tokens in [`src/styles/base.css`](../src/styles/base.css): `:root` declares `color-scheme: light dark`, and each themeable token holds a `light-dark(light, dark)` pair. There is no dark stylesheet and no `[data-theme]` cascade to keep in sync.
+The site renders in light or dark. Both come from one set of dual-valued tokens in [`src/styles/tokens.css`](../src/styles/tokens.css): `:root` declares `color-scheme: light dark`, and each themeable token holds a `light-dark(light, dark)` pair. There is no dark stylesheet and no `[data-theme]` cascade to keep in sync.
 
 Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against the OS preference on its own. A visitor who never touches the control gets a working dark theme from `prefers-color-scheme` alone.
 
@@ -74,7 +74,7 @@ The three-state control in the footer ([`src/components/ThemeToggle.astro`](../s
 
 ## Color Contrast
 
-The palette is documented in CSS custom properties at the top of [`src/styles/base.css`](../src/styles/base.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
+The palette is documented in CSS custom properties in [`src/styles/tokens.css`](../src/styles/tokens.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
 `npm run check:contrast` measures every pair below once per theme and fails the gate under 4.5:1. Measuring only the light arm was the specific regression this guards: dark values are easy to author by eye and easy to get wrong.
 

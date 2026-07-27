@@ -1,5 +1,6 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { pagesSchema, writeupsSchema } from './generated/content-schema';
 
 // The repo lives in an iCloud-synced folder, so iCloud spawns numbered conflict
 // copies ("home 4.md", "building-a-homelab 2/") whenever sync-content rewrites
@@ -11,13 +12,7 @@ const pages = defineCollection({
     pattern: ['**/*.md', ...ignoreConflictCopies],
     base: './src/content/pages',
   }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    intro: z.string().optional(),
-    path: z.string().optional(),
-    published: z.boolean().default(true),
-  }),
+  schema: pagesSchema,
 });
 
 const writeups = defineCollection({
@@ -25,18 +20,7 @@ const writeups = defineCollection({
     pattern: ['**/*.md', ...ignoreConflictCopies],
     base: './src/content/writeups',
   }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string().optional(),
-    published: z.boolean().default(false),
-    published_at: z.coerce.date().optional(),
-    last_reviewed: z.coerce.date().optional(),
-    cover_image: z.string().optional(),
-    cover_alt: z.string().optional(),
-    technologies: z.array(z.string()).default([]),
-    featured: z.boolean().default(false),
-    featured_order: z.number().int().optional(),
-  }),
+  schema: writeupsSchema,
 });
 
 export const collections = { pages, writeups };

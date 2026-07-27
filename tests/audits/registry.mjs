@@ -31,6 +31,18 @@
 
 export const AUDITS = [
   {
+    id: 'source-integrity', label: 'source', name: 'Source Integrity', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-source-integrity.mjs'] },
+    gates: ['publish', 'diagnose', 'release'],
+    fix: 'Fix the reported parse error or duplicate top-level declaration; this gate catches valid-JavaScript redeclarations that node --check cannot.',
+  },
+  {
+    id: 'contract-projections', label: 'contracts', name: 'Generated Contract Projections', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['tests/audits/check-contract-projections.mjs'] },
+    gates: ['publish', 'diagnose', 'release'],
+    fix: 'Regenerate the stale projection with `npm run sync:contact-openapi` or `npm run make:embed`; generated artifacts must exactly match their canonical inputs.',
+  },
+  {
     id: 'security-check', label: 'security', name: 'Security Signatures', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-security-txt.mjs'] },
     gates: ['publish', 'diagnose'],
@@ -40,7 +52,7 @@ export const AUDITS = [
     id: 'contrast-check', label: 'contrast', name: 'WCAG Color Contrast', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-contrast.mjs'] },
     gates: ['publish', 'diagnose'],
-    fix: 'Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.mjs`.',
+    fix: 'Adjust colors in `src/styles/tokens.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.mjs`.',
   },
   {
     id: 'parity-check', label: 'parity', name: 'Vault/MCP/Code Parity', phase: 'pre-build',

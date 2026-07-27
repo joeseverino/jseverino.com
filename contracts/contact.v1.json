@@ -1,0 +1,23 @@
+{
+  "contract": "com.jseverino.site.contact-request",
+  "version": 1,
+  "request": {
+    "title": "ContactSubmission",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["name", "email", "message", "turnstileToken"],
+    "properties": {
+      "name": { "type": "string", "minLength": 1, "maxLength": 190 },
+      "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 190 },
+      "message": { "type": "string", "minLength": 1, "maxLength": 5000 },
+      "company": { "type": "string", "maxLength": 190, "description": "Honeypot; human submissions leave this empty.", "x-purpose": "honeypot" },
+      "sourceUrl": { "type": "string", "format": "uri", "maxLength": 2048, "x-purpose": "request-context" },
+      "turnstileToken": { "type": "string", "minLength": 1, "x-purpose": "verification" }
+    }
+  },
+  "runtime": {
+    "maxBodyBytes": 8192,
+    "maxPerIpPerHour": 5,
+    "maxUserAgentLength": 512
+  }
+}

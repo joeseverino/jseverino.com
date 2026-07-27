@@ -158,7 +158,7 @@ The site keeps its tokens local and borrows only the rendering:
 - `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) vendors it
   into two committed files, rewriting only the region between
   `tokens:start`/`tokens:end` markers: the `BRAND` export in `src/lib/brand.mjs`
-  (from `brand`) and the `:root` block in `src/styles/base.css` (from
+  (from `brand`) and the `:root` block in `src/styles/tokens.css` (from
   `designSystem`). Same pattern as `sync:content` — an external source of truth,
   vendored to a committed artifact, so the build stays self-sufficient. The read
   + marker-splice + render primitives live upstream in
@@ -221,8 +221,10 @@ The site loads its writeup styling as **two** global stylesheets, and anything
 that renders writeup HTML outside the site must load both — this is the single
 contract that, left implicit, cost a debugging session.
 
-- **`src/styles/base.css`** is the design system: prose, tables, links, buttons,
-  zebra striping, the header underline. It is stable.
+- **`src/styles/base.css`** is the ordered design-system entrypoint. It imports
+  concern-based modules for tokens, foundation, layout, content, forms,
+  responsive behavior, software, and accessibility; Vite still emits one
+  production stylesheet.
 - **`/brand.css`** ([`src/pages/brand.css.ts`](../src/pages/brand.css.ts)) is the
   brand identity: `--color-primary` / `--color-primary-deep`. It is swappable (the
   sitedrift demo changes one token and regenerates everything).
@@ -230,7 +232,7 @@ contract that, left implicit, cost a debugging session.
 They are kept apart on purpose: brand identity (`brand` in `tokens.json`) is
 swappable, the design system (`designSystem`) is stable, so collapsing them would
 break the "change one brand value, regenerate" model. The catch is that
-**base.css's tinted tables, links, and buttons all read `--color-primary`**, so
+**The entrypoint's tinted tables, links, and buttons all read `--color-primary`**, so
 base.css loaded *alone* renders dead. You need both.
 
 To keep an embedder from re-deriving that, the assembly is owned once:
@@ -239,7 +241,7 @@ To keep an embedder from re-deriving that, the assembly is owned once:
   `:root` brand-vars string. `/brand.css` emits exactly this, so the endpoint and
   any embedder share one definition.
 - [`src/lib/web-styles.mjs`](../src/lib/web-styles.mjs) exports
-  **`previewStyles({ baseCss, fontUrl })`** — base.css + the brand vars + a
+  **`previewStyles({ baseCss, fontUrl })`** — the expanded CSS entrypoint + the brand vars + a
   resolvable Inter `@font-face`, as one `<style>` blob. An embedder calls this one
   function and *cannot forget the brand vars*. `baseCss` and `fontUrl` are passed
   in because each embedder obtains them its own way (esbuild text/dataurl import,

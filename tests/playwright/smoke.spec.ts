@@ -1,5 +1,24 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type ConsoleMessage } from '@playwright/test';
 import { anyWriteup } from './helpers/writeups.ts';
+
+const turnstileFeaturePolicyWarnings = new Set([
+  'autoplay',
+  'cross-origin-isolated',
+  'keyboard-map',
+  'xr-spatial-tracking',
+]);
+
+function isKnownTurnstileWarning(message: ConsoleMessage): boolean {
+  const text = message.text();
+  const match = text.match(/Feature Policy: Skipping unsupported feature name [“"]([^"”]+)[”"]\./);
+  const sourceUrl = message.location().url;
+  const isTurnstileSource = sourceUrl.startsWith('https://challenges.cloudflare.com/turnstile/')
+    || /^\[JavaScript Warning: ".+" \{file: "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js" line: \d+\}\]$/.test(text);
+  return message.type() === 'warning'
+    && isTurnstileSource
+    && match !== null
+    && turnstileFeaturePolicyWarnings.has(match[1]);
+}
 
 test('home page loads with hero heading', async ({ page }) => {
   await page.goto('/');
@@ -49,17 +68,23 @@ test('every sitemap page returns 200', async ({ request }) => {
   }
 });
 
-test('no console errors on home', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('pageerror', (err) => errors.push(err.message));
+test('representative routes emit no browser warnings or errors', async ({ page }) => {
+  const diagnostics: string[] = [];
+  page.on('pageerror', (err) => diagnostics.push(`pageerror: ${err.message}`));
   page.on('console', (msg) => {
-    if (msg.type() === 'error' && !msg.text().startsWith('Failed to preconnect to ')) {
-      errors.push(msg.text());
+    if (
+      ['warning', 'error'].includes(msg.type())
+      && !msg.text().startsWith('Failed to preconnect to ')
+      && !isKnownTurnstileWarning(msg)
+    ) {
+      diagnostics.push(`${msg.type()}: ${msg.text()}`);
     }
   });
-  await page.goto('/');
-  await page.waitForLoadState('networkidle');
-  expect(errors, errors.join('\n')).toHaveLength(0);
+  for (const route of ['/', '/portfolio/', '/resume/', '/contact/']) {
+    await page.goto(route, { waitUntil: 'load' });
+    await page.waitForTimeout(500);
+  }
+  expect(diagnostics, diagnostics.join('\n')).toHaveLength(0);
 });
 
 test('sticky header gains a shadow after scrolling', async ({ page }) => {

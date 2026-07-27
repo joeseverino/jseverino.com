@@ -1,0 +1,52 @@
+@layer components {
+/* ── Forced colors ──────────────────────────────────────────────────── */
+
+@media (forced-colors: active) {
+  :where(a, button, input, textarea, summary):focus {
+    outline: 2px solid Highlight !important;
+    outline-offset: 2px !important;
+  }
+
+  .button,
+  .tag,
+  .tech-pills a,
+  .page-actions a,
+  .archive-tag,
+  .nav-toggle,
+  .project-card,
+  .article-hero,
+  .theme-toggle {
+    border: 1px solid ButtonText;
+  }
+
+  .theme-choice[aria-pressed='true'] {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .contact-field input:focus,
+  .contact-field textarea:focus {
+    box-shadow: none;
+  }
+
+  .site-header::before,
+  .mobile-nav::backdrop,
+  .lightbox::backdrop {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+}

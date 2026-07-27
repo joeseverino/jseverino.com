@@ -16,6 +16,8 @@ behind the scripts.
 | `npm run dev` | Start the local dev server |
 | `npm run dev:drafts` | Dev server including unpublished drafts |
 | `npm run sync:content` | Pull published content from the vault into the repo |
+| `npm run sync:contract` | Regenerate typed content-contract projections |
+| `npm run sync:contact-openapi` | Regenerate contact OpenAPI from its request contract |
 | `npm run sync:tokens` | Pull design + brand tokens from `severino-brand` into the repo |
 | `npm run diagnose` | Run every check and report what is wrong — the "is it okay?" button |
 | `npm run diff:build` | Build HEAD vs the working tree; show what changed in the shipped site |
@@ -41,7 +43,7 @@ behind the scripts.
 | `npm run make:social` | Regenerate the GitHub social preview |
 | `npm run snapshot:github` | Refresh the committed GitHub repo snapshot the portfolio Software list falls back to |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
-| `npm run scaffold:writeup-field` | Add a writeup frontmatter field across every layer |
+| `npm run scaffold:writeup-field` | Add a field once to the canonical writeup contract |
 | `npm run draft:cover-alt` | Draft writeup cover alt text via the Claude API |
 | `npm run sign:security` | Re-sign `public/.well-known/security.txt` |
 | `npm run seo:preview` | Preview a page's Google snippet + metadata from built HTML |
@@ -168,10 +170,10 @@ without re-reading vault or repository internals.
 **`npm run scaffold:primer`** — scaffolds a new reference primer in the
 vault's `04 Reference/` with the slim frontmatter the MCP expects.
 
-**`npm run scaffold:writeup-field`** — adds a new writeup frontmatter field
-across every layer that must agree on it (vault schema, Zod config, MCP
-server). Dry-run by default; the parity audit holds the layers together
-afterward.
+**`npm run scaffold:writeup-field`** — adds a field only to
+`contracts/content.v1.json`, the canonical writeup contract. Dry-run by
+default. After `--apply`, run `npm run sync:contract`; the typed Astro schema,
+MCP projection, CLI/tool schemas, and Tools TUI derive from that one contract.
 
 **`npm run draft:cover-alt`** — drafts `cover_alt` text for one or every
 writeup via the Claude API, for human review before it lands in the vault.
