@@ -1,0 +1,256 @@
+@layer components {
+/* ── Contact form ───────────────────────────────────────────────────── */
+
+.contact-intake {
+  max-inline-size: 720px;
+  margin-block-start: var(--space-30);
+  margin-inline: auto;
+}
+
+.contact-intake-form {
+  display: grid;
+  gap: var(--space-25);
+}
+
+.contact-field {
+  display: grid;
+  gap: 0.45rem;
+
+  & label {
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  & input,
+  & textarea {
+    inline-size: 100%;
+    padding-block: 0.85rem;
+    padding-inline: 1rem;
+    border: 1px solid var(--color-field-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    transition:
+      border-color var(--motion-duration-fast) var(--motion-ease-standard),
+      box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+
+    &:focus {
+      border-color: var(--color-primary);
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-primary) 12%, transparent);
+    }
+  }
+
+  & textarea {
+    min-block-size: 180px;
+    resize: vertical;
+  }
+}
+
+.hidden-field {
+  position: absolute;
+  inset-inline-start: -9999px;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+}
+
+.contact-submit {
+  justify-self: start;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: progress;
+  }
+}
+
+.cf-turnstile {
+  min-block-size: 65px;
+}
+
+.contact-privacy {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+
+  & .privacy-link { text-decoration: underline; }
+}
+
+.contact-status {
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  line-height: 1.45;
+
+  &[data-kind='success'] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+  }
+
+  &[data-kind='error'] {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.site-footer {
+  margin-block-start: var(--space-50);
+  padding-block: var(--space-30);
+  padding-inline: var(--gutter);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-15) var(--space-20);
+  inline-size: min(var(--wide), 100%);
+  margin-inline: auto;
+}
+
+.source-link {
+  display: flex;
+  align-items: center;
+  block-size: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary-deep);
+    text-decoration: none;
+  }
+
+  &:active {
+    color: var(--color-primary);
+  }
+}
+
+/* Hidden until the boot script marks :root, because with JS off the segments
+   cannot do anything — auto already works on its own. */
+.theme-toggle {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+:root[data-theme-mode] .theme-toggle {
+  display: inline-flex;
+}
+
+.theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    scale var(--motion-duration-instant) var(--motion-ease-standard);
+
+  & svg {
+    inline-size: 15px;
+    block-size: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-soft);
+    color: var(--color-primary);
+  }
+
+  &:active {
+    scale: 0.94;
+    color: var(--color-primary-deep);
+  }
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+
+  & li a {
+    display: flex;
+    align-items: center;
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    &:active {
+      color: var(--color-primary-deep);
+    }
+  }
+
+  & svg {
+    inline-size: 24px;
+    block-size: 24px;
+    fill: currentColor;
+  }
+}
+
+.svg-defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 10000;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-weight: 600;
+  border-radius: 0 0 var(--radius-sm) 0;
+  translate: 0 -100%;
+  transition: translate var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:focus {
+    translate: 0 0;
+    outline: 2px solid var(--color-bg);
+    outline-offset: -2px;
+    text-decoration: none;
+  }
+}
+}

@@ -3,11 +3,16 @@ import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
-import { parseFrontmatter, stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
+import { stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
+import { createEducationSource, createResumeSource, createVaultSource } from './content-sync/source-adapters.mjs';
+import {
+  createPublicProjection,
+  rewritePageAssetPaths,
+  rewriteWriteupAssetPaths,
+  stripRepeatedDescription,
+} from './content-sync/public-projection.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = process.env.VAULT_DIR
@@ -20,9 +25,9 @@ const lifeVaultRoot = process.env.LIFE_VAULT_DIR
   ? path.resolve(process.env.LIFE_VAULT_DIR)
   : path.resolve(siteRoot, '../../../Life');
 
-const sourcePages = path.join(vaultRoot, '06 Pages');
-const sourceWriteups = path.join(vaultRoot, '05 Writeups');
-const sourceResume = path.join(lifeVaultRoot, 'Career', 'resume.md');
+const vaultSource = createVaultSource({ vaultRoot, includeDrafts });
+const resumeSource = createResumeSource({ lifeVaultRoot, includeDrafts });
+const educationSource = createEducationSource();
 const targetPages = path.join(siteRoot, 'src/content/pages');
 const targetTechnologyGroups = path.join(siteRoot, 'src/content/technology-groups.md');
 const targetWriteups = path.join(siteRoot, 'src/content/writeups');
@@ -52,6 +57,7 @@ try {
 }
 
 const today = new Date().toISOString().slice(0, 10);
+const publicProjection = createPublicProjection({ syncManifest, today });
 
 async function copyFile(source, target) {
   await fsPromises.mkdir(path.dirname(target), { recursive: true });
@@ -187,138 +193,12 @@ async function processReferencedAssets(refs, sourceDir, targetDir, urlPrefix) {
   }
 }
 
-function publicWriteupData(data, contentHash, slug) {
-  const previousHash = syncManifest[slug];
-  const isChanged = typeof previousHash === 'string' && previousHash !== contentHash;
-  const lastReviewed = isChanged ? today : data.last_reviewed || data.published_at || today;
-
-  syncManifest[slug] = contentHash;
-
-  return {
-    title: data.title,
-    description: data.description,
-    published: data.published === true,
-    ...(data.published_at ? { published_at: data.published_at } : {}),
-    last_reviewed: lastReviewed,
-    ...(data.cover_image ? { cover_image: data.cover_image } : {}),
-    ...(data.cover_alt ? { cover_alt: data.cover_alt } : {}),
-    technologies: Array.isArray(data.technologies) ? data.technologies : [],
-    featured: Boolean(data.featured),
-    ...(Number.isInteger(data.featured_order) ? { featured_order: data.featured_order } : {}),
-  };
-}
-
-function publicPageData(data) {
-  return {
-    title: data.title,
-    ...(data.description ? { description: data.description } : {}),
-    ...(data.intro ? { intro: data.intro } : {}),
-    ...(data.path ? { path: data.path } : {}),
-    published: data.published === true,
-  };
-}
-
-function rewritePageAssetPaths(markdown, slug) {
-  return markdown
-    .replaceAll('./images/', `/assets/pages/${slug}/images/`)
-    .replaceAll('](images/', `](/assets/pages/${slug}/images/`)
-    .replaceAll('src="./images/', `src="/assets/pages/${slug}/images/`)
-    .replaceAll('src="images/', `src="/assets/pages/${slug}/images/`);
-}
-
-function rewriteWriteupAssetPaths(markdown, slug) {
-  return markdown
-    .replaceAll('./images/', `/assets/writeups/${slug}/images/`)
-    .replaceAll('](images/', `](/assets/writeups/${slug}/images/`);
-}
-
-function stripHtmlTags(value) {
-  let current = value;
-  let previous;
-  do {
-    previous = current;
-    current = current.replace(/<[^>]+>/g, '');
-  } while (current !== previous);
-  return current;
-}
-
-function normalizeDescription(text) {
-  const withoutMarkdownLinks = text
-    .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
-
-  return stripHtmlTags(withoutMarkdownLinks)
-    .replace(/\\$/gm, ' ')
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function stripRepeatedDescription(markdown, description) {
-  if (typeof description !== 'string' || !description.trim()) return markdown;
-
-  const expected = normalizeDescription(description);
-  const lines = markdown.split(/\r?\n/);
-  const output = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index];
-    const trimmed = line.trim();
-    const isCandidate =
-      (trimmed.startsWith('>') || trimmed.startsWith('[') || /^[A-Z0-9]/.test(trimmed)) &&
-      output.some((previous) => /^#\s+/.test(previous.trim()));
-
-    if (!isCandidate) {
-      output.push(line);
-      index += 1;
-      continue;
-    }
-
-    const start = index;
-    const candidate = [];
-    while (index < lines.length && lines[index].trim() !== '') {
-      candidate.push(lines[index]);
-      index += 1;
-    }
-
-    const text = normalizeDescription(candidate.join(' ').replace(/^>\s?/gm, ''));
-    if (text === expected) {
-      while (index < lines.length && lines[index].trim() === '') index += 1;
-      continue;
-    }
-
-    output.push(...lines.slice(start, index));
-  }
-
-  return output.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
-}
-
 async function syncPages() {
-  const entries = await fsPromises.readdir(sourcePages, { withFileTypes: true });
   await fsPromises.mkdir(targetPages, { recursive: true });
   await fsPromises.mkdir(targetPageAssets, { recursive: true });
+  await copyFile(vaultSource.technologyGroups, targetTechnologyGroups);
 
-  for (const entry of entries) {
-    if (entry.isFile() && entry.name === '_technology-groups.md') {
-      await copyFile(path.join(sourcePages, entry.name), targetTechnologyGroups);
-      continue;
-    }
-    if (entry.isFile() || entry.name.startsWith('_') || entry.name.startsWith('.')) continue;
-
-    const slug = entry.name;
-    const sourceDir = path.join(sourcePages, slug);
-    const sourceIndex = path.join(sourceDir, 'index.md');
-    try {
-      await fsPromises.access(sourceIndex);
-    } catch {
-      continue;
-    }
-
-    const raw = await fsPromises.readFile(sourceIndex, 'utf8');
-    const parsed = parseFrontmatter(raw);
-    if (!includeDrafts && parsed.data.published !== true) continue;
+  for (const { slug, sourceDir, parsed } of await vaultSource.pages()) {
 
     if (parsed.data.education_index) {
       await syncEducation(parsed);
@@ -330,7 +210,7 @@ async function syncPages() {
     if (parsed.data.document_layout) {
       rewrittenBody = renderDocumentRows(await loadResumeGrammar(), rewrittenBody);
     }
-    const synced = stringifyFrontmatter(rewrittenBody, publicPageData(parsed.data));
+    const synced = stringifyFrontmatter(rewrittenBody, publicProjection.page(parsed.data));
 
     await fsPromises.mkdir(targetPages, { recursive: true });
     const pageTarget = path.join(targetPages, `${slug}.md`);
@@ -414,19 +294,17 @@ async function loadResumeGrammar() {
   return cachedGrammar;
 }
 
-let cachedResume;
 async function loadResume() {
-  cachedResume ??= parseFrontmatter(await fsPromises.readFile(sourceResume, 'utf8'));
-  return cachedResume;
+  return resumeSource.load();
 }
 
 async function syncResume() {
   const grammar = await loadResumeGrammar();
   const parsed = await loadResume();
-  if (!includeDrafts && parsed.data.published !== true) return;
+  if (!parsed) return;
 
   const content = renderDocumentRows(grammar, parsed.content);
-  const synced = stringifyFrontmatter(content, publicPageData(parsed.data));
+  const synced = stringifyFrontmatter(content, publicProjection.page(parsed.data));
   const pageTarget = path.join(targetPages, 'resume.md');
   await fsPromises.writeFile(pageTarget, synced);
   writtenFiles.add(pageTarget);
@@ -453,30 +331,6 @@ async function syncResume() {
 // `education_index: true` is the /education/ shell (title, description,
 // intro, optional lead prose); its published flag gates the whole tree.
 // Resume-only institutions with no vault presence stay off /education/.
-const execFileAsync = promisify(execFile);
-
-let cachedEducationDataset;
-async function loadEducationDataset() {
-  if (cachedEducationDataset) return cachedEducationDataset;
-  let stdout;
-  try {
-    ({ stdout } = await execFileAsync('severino-edu-mcp', ['export']));
-  } catch (error) {
-    let detail;
-    try {
-      detail = JSON.parse(error.stdout).errors?.join('\n  ');
-    } catch {
-      detail = error.stderr?.trim() || error.message;
-    }
-    throw new Error(
-      `education export failed (severino-edu-mcp export):\n  ${detail}\n` +
-        'Install/update with: uv tool install --reinstall ~/Documents/Code/Assets/severino-edu-mcp',
-    );
-  }
-  cachedEducationDataset = JSON.parse(stdout);
-  return cachedEducationDataset;
-}
-
 const SITE_COURSE_STATUSES = new Set(['active', 'completed']);
 
 function publishableCourses(institution) {
@@ -532,7 +386,7 @@ function courseProgress(courses) {
 async function syncEducation(shell) {
   const grammar = await loadResumeGrammar();
   const resume = await loadResume();
-  const dataset = await loadEducationDataset();
+  const dataset = await educationSource.load();
   const vaultInstitutions = new Map(
     dataset.institutions.map((entry) => [entry.institution, entry]),
   );
@@ -549,7 +403,7 @@ async function syncEducation(shell) {
       .join('\n\n');
     const detail = stringifyFrontmatter(
       renderDocumentRows(grammar, detailBody),
-      publicPageData({
+      publicProjection.page({
         title: org.name,
         description: institution.description,
         intro: [org.degree?.title, org.location, org.degree?.dates].filter(Boolean).join(' · '),
@@ -582,33 +436,17 @@ async function syncEducation(shell) {
     );
   }
 
-  const index = stringifyFrontmatter(rows.join('\n\n'), publicPageData(shell.data));
+  const index = stringifyFrontmatter(rows.join('\n\n'), publicProjection.page(shell.data));
   const indexTarget = path.join(targetPages, 'education.md');
   await fsPromises.writeFile(indexTarget, index);
   writtenFiles.add(indexTarget);
 }
 
 async function syncWriteups() {
-  const entries = await fsPromises.readdir(sourceWriteups, { withFileTypes: true });
   await fsPromises.mkdir(targetWriteups, { recursive: true });
   await fsPromises.mkdir(targetWriteupAssets, { recursive: true });
 
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
-    const slug = entry.name;
-    const sourceDir = path.join(sourceWriteups, slug);
-    const sourceIndex = path.join(sourceDir, 'index.md');
-    try {
-      await fsPromises.access(sourceIndex);
-    } catch {
-      continue;
-    }
-
-    const raw = await fsPromises.readFile(sourceIndex, 'utf8');
-    const parsed = parseFrontmatter(raw);
-    if (!includeDrafts && parsed.data.published !== true) continue;
-
+  for (const { slug, sourceDir, parsed } of await vaultSource.writeups()) {
     const content = stripRepeatedDescription(parsed.content, parsed.data.description);
     const contentHash = crypto.createHash('sha256').update(content).digest('hex');
 
@@ -619,7 +457,7 @@ async function syncWriteups() {
     const rewrittenContent = rewriteWriteupAssetPaths(content, slug);
     const syncedMarkdown = stringifyFrontmatter(
       rewrittenContent,
-      publicWriteupData(parsed.data, contentHash, slug),
+      publicProjection.writeup(parsed.data, contentHash, slug),
     );
 
     const targetDir = path.join(targetWriteups, slug);
@@ -676,8 +514,8 @@ await fsPromises.mkdir(path.dirname(syncManifestPath), { recursive: true });
 await fsPromises.writeFile(targetImageManifest, `${JSON.stringify(sortedManifest, null, 2)}\n`);
 await fsPromises.writeFile(syncManifestPath, JSON.stringify(syncManifest, null, 2));
 
-console.log(`Synced pages from ${sourcePages}`);
-console.log(`Synced public writeups from ${sourceWriteups}`);
+console.log(`Synced pages from ${vaultSource.pagesRoot}`);
+console.log(`Synced public writeups from ${vaultSource.writeupsRoot}`);
 console.log(
   `Optimized ${Object.keys(imageManifest).length} images → ${path.relative(siteRoot, targetImageManifest)}`,
 );

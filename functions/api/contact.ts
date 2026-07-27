@@ -8,6 +8,12 @@
 // Bundled by the Cloudflare Pages pipeline; this directory is excluded from
 // `astro check` (see tsconfig.json).
 
+import {
+  CONTACT_PROPERTIES,
+  CONTACT_RUNTIME,
+  validateContactPayload,
+} from '../lib/contact-contract.ts';
+
 interface D1Result {
   success: boolean;
 }
@@ -27,20 +33,6 @@ interface Env {
   TURNSTILE_SECRET_KEY: string;
 }
 
-interface ContactPayload {
-  name?: unknown;
-  email?: unknown;
-  message?: unknown;
-  company?: unknown; // honeypot
-  sourceUrl?: unknown;
-  turnstileToken?: unknown;
-}
-
-const MAX_PER_IP_PER_HOUR = 5;
-const MAX_BODY_BYTES = 8_192;
-const MAX_USER_AGENT_LENGTH = 512;
-const MAX_SOURCE_URL_LENGTH = 2_048;
-
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -49,10 +41,6 @@ function json(data: unknown, status = 200): Response {
       'Cache-Control': 'no-store',
     },
   });
-}
-
-function asString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
 }
 
 function truncate(value: string, max: number): string {
@@ -105,43 +93,39 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   }
 
   const contentLength = Number(request.headers.get('Content-Length') ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+  if (Number.isFinite(contentLength) && contentLength > CONTACT_RUNTIME.maxBodyBytes) {
     return json({ ok: false, error: 'Request is too large.' }, 413);
   }
 
-  let payload: ContactPayload;
+  let payload: unknown;
   try {
     const body = await request.text();
-    if (body.length > MAX_BODY_BYTES) {
+    if (body.length > CONTACT_RUNTIME.maxBodyBytes) {
       return json({ ok: false, error: 'Request is too large.' }, 413);
     }
-    payload = JSON.parse(body) as ContactPayload;
+    payload = JSON.parse(body);
   } catch {
     return json({ ok: false, error: 'Invalid request.' }, 400);
   }
 
+  const validation = validateContactPayload(payload);
+  if (!validation.ok) {
+    if (validation.reason === 'missing' && validation.field === 'turnstileToken') {
+      return json({ ok: false, error: 'Please complete the verification challenge.' }, 400);
+    }
+    const error = {
+      missing: 'Please fill in your name, email, and message.',
+      too_long: 'One of the fields is too long.',
+      email: 'Please enter a valid email address.',
+      uri: 'Invalid request.',
+      invalid: 'Invalid request.',
+    }[validation.reason];
+    return json({ ok: false, error }, 400);
+  }
+  const { name, email, message, company, sourceUrl: submittedSourceUrl, turnstileToken } = validation.value;
+
   // Honeypot — bots fill the hidden "company" field. Pretend success, store nothing.
-  if (asString(payload.company) !== '') {
-    return json({ ok: true });
-  }
-
-  const name = asString(payload.name);
-  const email = asString(payload.email);
-  const message = asString(payload.message);
-  const turnstileToken = asString(payload.turnstileToken);
-
-  if (!name || !email || !message) {
-    return json({ ok: false, error: 'Please fill in your name, email, and message.' }, 400);
-  }
-  if (name.length > 190 || email.length > 190 || message.length > 5000) {
-    return json({ ok: false, error: 'One of the fields is too long.' }, 400);
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return json({ ok: false, error: 'Please enter a valid email address.' }, 400);
-  }
-  if (!turnstileToken) {
-    return json({ ok: false, error: 'Please complete the verification challenge.' }, 400);
-  }
+  if (company !== '') return json({ ok: true });
 
   const ip = request.headers.get('CF-Connecting-IP') ?? '';
 
@@ -157,15 +141,18 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     )
       .bind(ip)
       .first<{ n: number }>();
-    if (recent && recent.n >= MAX_PER_IP_PER_HOUR) {
+    if (recent && recent.n >= CONTACT_RUNTIME.maxPerIpPerHour) {
       return json({ ok: false, error: 'Too many messages from this network. Please try again later.' }, 429);
     }
   }
 
-  const userAgent = truncate(request.headers.get('User-Agent') ?? '', MAX_USER_AGENT_LENGTH);
+  const userAgent = truncate(
+    request.headers.get('User-Agent') ?? '',
+    CONTACT_RUNTIME.maxUserAgentLength,
+  );
   const sourceUrl = truncate(
-    asString(payload.sourceUrl) || (request.headers.get('Referer') ?? ''),
-    MAX_SOURCE_URL_LENGTH,
+    submittedSourceUrl || (request.headers.get('Referer') ?? ''),
+    CONTACT_PROPERTIES.sourceUrl.maxLength ?? 0,
   );
   const country = truncate(request.headers.get('CF-IPCountry') ?? '', 2);
 

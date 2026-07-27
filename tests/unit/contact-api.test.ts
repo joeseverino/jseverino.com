@@ -82,6 +82,16 @@ describe('request validation', () => {
     assert.equal(response.status, 400);
   });
 
+  test('rejects unknown fields because the request contract is closed', async () => {
+    const response = await call(contactRequest({ ...validPayload, unexpected: 'value' }));
+    assert.equal(response.status, 400);
+  });
+
+  test('rejects non-http source URLs', async () => {
+    const response = await call(contactRequest({ ...validPayload, sourceUrl: 'file:///etc/passwd' }));
+    assert.equal(response.status, 400);
+  });
+
   test('rejects a missing turnstile token with 400', async () => {
     const response = await call(contactRequest({ ...validPayload, turnstileToken: '' }));
     assert.equal(response.status, 400);

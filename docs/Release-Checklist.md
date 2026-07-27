@@ -64,6 +64,8 @@ A clean release runs `publish:check` (its audits come from
 ```text
 sync         content snapshot updated
 content      no content changes
+source       source files parse and top-level declarations are unique
+contracts    generated API/schema/CSS projections match canonical sources
 security     signed, 5 fields present, expires in <n>d, WKD file present
 contrast     <ratio>:1  body text on background (<fg> on <bg>)
 parity       schema/Zod/MCP agree on writeup fields: ...

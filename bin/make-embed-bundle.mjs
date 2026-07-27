@@ -18,11 +18,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { brandVarsCss } from '../src/lib/brand.mjs';
+import { readCssEntry } from './lib/css-entry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outPath = path.join(root, 'public', 'embed', 'bundle.css');
 
-const baseCss = fs.readFileSync(path.join(root, 'src', 'styles', 'base.css'), 'utf8');
+const baseCss = readCssEntry(path.join(root, 'src', 'styles', 'base.css'));
 const font = fs.readFileSync(
   path.join(root, 'public', 'assets', 'fonts', 'inter', 'inter-variable-latin.woff2'),
 );

@@ -1,0 +1,352 @@
+@layer components {
+/* ── Layout ─────────────────────────────────────────────────────────── */
+
+.page-shell {
+  min-block-size: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  inline-size: var(--w-constrained);
+  margin-inline: auto;
+}
+
+.wide {
+  inline-size: var(--w-wide);
+  margin-inline: auto;
+}
+
+main > * + * {
+  margin-block-start: var(--space-30);
+}
+
+.content-flow {
+  inline-size: var(--w-constrained);
+  margin-inline: auto;
+
+  & > * + * {
+    margin-block-start: var(--space-30);
+  }
+}
+
+.section-title {
+  margin-block-end: var(--space-30);
+}
+
+.page-hero {
+  max-inline-size: 760px;
+  margin-inline: auto;
+  text-align: center;
+
+  & > * + * {
+    margin-block-start: var(--space-15);
+  }
+}
+
+.page-hero--tag {
+  max-inline-size: 820px;
+}
+
+.page-kicker {
+  color: var(--color-primary);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-label);
+  letter-spacing: var(--track-label);
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.page-intro {
+  max-inline-size: 650px;
+  margin-inline: auto;
+  color: var(--color-muted);
+  font-size: clamp(1rem, 0.95rem + 0.18vw, 1.08rem);
+  line-height: 1.65;
+  text-wrap: balance;
+}
+
+.page-actions,
+.archive-taxonomy-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-10);
+}
+
+.page-actions a,
+.archive-tag {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 34px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.page-actions a {
+  padding-inline: 14px;
+}
+
+.archive-tag {
+  gap: 7px;
+  min-block-size: 32px;
+  padding-inline: 10px;
+}
+
+.page-actions a:hover,
+.page-actions a:focus,
+.archive-tag:hover,
+.archive-tag:focus {
+  border-color: color-mix(in oklch, var(--color-primary) 45%, var(--color-border));
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.page-actions a:active,
+.archive-tag:active {
+  border-color: var(--color-primary-deep);
+  background: var(--color-soft);
+  color: var(--color-primary-deep);
+}
+
+.archive-section {
+  max-inline-size: var(--cards);
+  margin-inline: auto;
+  padding-block-start: var(--space-20);
+
+  & summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-block: 18px;
+    border-block: 1px solid var(--color-border);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: var(--font-prose-sm);
+    font-weight: 600;
+    list-style: none;
+    transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+
+    &::-webkit-details-marker { display: none; }
+
+    & span:last-child {
+      color: var(--color-muted);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary);
+    }
+
+    &:active {
+      color: var(--color-primary-deep);
+    }
+  }
+}
+
+.archive-taxonomy {
+  display: grid;
+  gap: 0;
+  padding-block-start: var(--space-10);
+}
+
+.archive-taxonomy-group {
+  display: grid;
+  grid-template-columns: minmax(145px, 0.24fr) 1fr;
+  gap: var(--space-15) var(--space-25);
+  align-items: start;
+  padding-block: 18px;
+  border-block-start: 1px solid var(--color-border);
+
+  &:first-child { border-block-start: 0; }
+}
+
+.archive-taxonomy-title {
+  color: var(--color-muted);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-label);
+  letter-spacing: var(--track-label);
+  line-height: 1.35;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.archive-taxonomy-list {
+  justify-content: flex-start;
+}
+
+.archive-tag-count {
+  color: var(--color-muted);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-label);
+}
+
+.page-divider,
+.article-separator {
+  border: 0;
+  border-block-start: 2px solid var(--color-text);
+  opacity: 0.4;
+}
+
+.page-divider {
+  margin-block: var(--space-30) 25px;
+}
+
+.center-text {
+  text-align: center;
+}
+
+/* ── Site header ────────────────────────────────────────────────────── */
+
+/* Scroll progress as a number, so the two paths below (scroll-driven animation,
+   class + transition fallback) each set ONE value and the colors are composed in
+   a single place. A keyframe holding var() colors would resolve them once and
+   keep serving the stale pair after a theme switch, leaving a white scrim over a
+   dark page until the next reload — in Chromium and WebKit alike. */
+@property --header-scroll {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1000;
+
+  /* Backdrop lives on ::before so the box-shadow can transition independently
+     without the Safari sticky-pointer-events bug. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: color-mix(
+      in oklch,
+      var(--color-bg) calc(70% + (15% * var(--header-scroll))),
+      transparent
+    );
+    box-shadow: 0 4px 10px
+      color-mix(in oklch, var(--shadow-color-chrome) calc(var(--header-scroll) * 100%), transparent);
+    backdrop-filter: blur(var(--blur-chrome));
+    -webkit-backdrop-filter: blur(var(--blur-chrome));
+    transition: --header-scroll var(--motion-duration-standard) var(--motion-ease-standard);
+  }
+
+  &.scrolled::before {
+    --header-scroll: 1;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .site-header::before {
+    animation: site-header-scroll-state linear both;
+    animation-timeline: scroll();
+    animation-range: 0 60px;
+    transition: none;
+  }
+
+  @keyframes site-header-scroll-state {
+    to {
+      --header-scroll: 1;
+    }
+  }
+}
+
+.scroll-sentinel {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  inline-size: 1px;
+  block-size: 1px;
+  visibility: hidden;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-20);
+  min-block-size: 3.6rem;
+  padding-block: 0.65rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+
+  & svg {
+    /* Canvas is 352 tall with a 192-unit em, so the wordmark renders at the
+       old text brand's size (--font-md). currentColor drives the glyph fill. */
+    display: block;
+    block-size: calc(var(--font-md) * 352 / 192);
+    inline-size: auto;
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary);
+  }
+
+  &:active {
+    color: var(--color-primary-deep);
+  }
+}
+
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-30);
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0;
+    inset-block-end: -3px;
+    inline-size: 0;
+    block-size: 1.5px;
+    background: var(--color-primary);
+    transition: width var(--motion-duration-standard) var(--motion-ease-standard);
+  }
+
+  &:hover,
+  &:focus,
+  &[aria-current='page'] {
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &::after {
+      inline-size: 100%;
+    }
+  }
+
+  &:active {
+    color: var(--color-primary-deep);
+  }
+}
+}

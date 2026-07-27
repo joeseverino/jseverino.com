@@ -16,7 +16,7 @@ Private Obsidian vault -> sanitized repo snapshot -> Astro build -> Cloudflare P
 
 ## What This Repo Does
 
-- Builds a static personal site with Astro 6.4.
+- Builds a static personal site with Astro 7.
 - Syncs public pages, portfolio writeups, and technology taxonomy from a private vault.
 - Rewrites local image references into public asset paths.
 - Generates AVIF, WebP, and optimized fallback image variants.
@@ -78,7 +78,7 @@ The resume page is the one page sourced from a second private vault: its canonic
 
 The education pages extend the pattern to a third private vault, read only through its governed face: `/education/` and its per-institution pages derive from the [severino-edu-mcp](https://github.com/joeseverino/severino-edu-mcp) `export` CLI (institutions and courses with their public bullets, validated against that vault's schema profile before anything builds), joined to the resume canonical's EDUCATION section, which stays the single owner of institution identity. The sync never parses that vault itself. A course publishes once it is active or completed and carries public bullets, and the resume page links an institution only while its education page is actually emitted, so an unpublished education tree can never leave a dead link.
 
-[`bin/sync-content.mjs`](./bin/sync-content.mjs) copies only published content and only allowed frontmatter fields. Vault-only fields such as internal IDs, systems, related projects, sensitivity, and operator notes are dropped by omission. Local assets are resolved against their source directory and refused if they escape that directory.
+[`bin/sync-content.mjs`](./bin/sync-content.mjs) orchestrates explicit Vault, Life-resume, and Education-export adapters, then sends each record through one public projection. [`contracts/content.v1.json`](./contracts/content.v1.json) owns the field contract; `sync:contract` generates Astro's typed Zod schema and the MCP projection. Vault-only fields such as internal IDs, systems, related projects, sensitivity, and operator notes are dropped by declared policy, not by a second hand-maintained list. Local assets are resolved against their source directory and refused if they escape that directory.
 
 Page frontmatter may include an explicit `path`. If omitted, the site falls back to `/` for `home` and `/<slug>/` for other pages. Writeup URLs come from their folder slug. An optional `intro` field renders as the on-page subtitle below the H1; pages without one fall back to `description`, so SEO meta and visible subtitle stay coupled by default.
 

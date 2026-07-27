@@ -1,0 +1,286 @@
+@layer base {
+
+/* ── Reset + element defaults ───────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: var(--font-base);
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Brand-navy selection; text flips to the page bg (white) for contrast. */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.25ch;
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+a:hover,
+a:focus {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .brand,
+  .project-card a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Form controls don't inherit font by default — make them match the site. */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+img {
+  max-inline-size: 100%;
+  block-size: auto;
+  vertical-align: bottom;
+  /* Photos aren't text: keep them out of select-all and drag-ghosting. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+picture {
+  display: contents;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: var(--font-xxl); }
+h2 { font-size: var(--font-xl); }
+h3 { font-size: var(--font-lg); }
+h4 { font-size: var(--font-prose-md); }
+
+/* h5/h6 double as the demoted heading levels inside .prose. */
+h5,
+.prose h3 {
+  font-size: var(--font-prose-sm);
+  font-weight: 500;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+h6,
+.prose h4 {
+  font-size: var(--font-base);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-inline-start: 1.4rem;
+}
+
+.prose li + li,
+.content-flow li + li {
+  margin-block-start: 0.35rem;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+.table-figure {
+  display: block;
+  margin-block: 1.5rem;
+}
+
+/* The rounded border lives on the inner box, not the figure, so the figcaption
+   sits below it as a normal caption (matching unattached figure captions). */
+.table-box {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  & table {
+    inline-size: 100%;
+    background: transparent;
+    table-layout: fixed;
+  }
+
+  & thead {
+    background: var(--color-table-head);
+    border-block-end: 2px solid var(--color-primary);
+  }
+
+  & tfoot { border-block-start: 2px solid var(--color-primary); }
+
+  & th,
+  & td {
+    padding-block: 0.5em;
+    padding-inline: 0.5em;
+    border: 1px solid transparent;
+    text-align: center;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+  }
+
+  & th { font-weight: 600; }
+
+  & tbody tr:nth-child(odd) { background-color: var(--color-table-stripe); }
+}
+
+pre {
+  margin: 0;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--code-bg);
+  color: var(--code-fg);
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.65;
+  overflow-x: auto;
+}
+
+.terminal-block {
+  margin-block: 1.75rem;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--term-bg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--term-border);
+
+  & pre {
+    margin: 0;
+    padding: 1.1rem 1.4rem;
+    background: transparent;
+    border-radius: 0;
+    color: var(--term-fg);
+    line-height: 1.85;
+  }
+
+  & .line {
+    display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  & .prompt { color: var(--term-prompt); user-select: none; }
+  & .cmd { color: var(--term-cmd); }
+  & .line.out { color: var(--term-out); }
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.6rem;
+  padding-inline: 1rem;
+  background: var(--term-bar-bg);
+  border-block-end: 1px solid var(--term-border);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--term-bar-fg);
+}
+
+.terminal-dots {
+  position: relative;
+  display: inline-block;
+  inline-size: 2.65rem;
+  block-size: 0.65rem;
+  flex: 0 0 auto;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    inline-size: 0.65rem;
+    border-radius: 50%;
+    background: var(--term-dot-red);
+    box-shadow:
+      1rem 0 0 var(--term-dot-amber),
+      2rem 0 0 var(--term-dot-green);
+  }
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
+p > code,
+li > code,
+figcaption > code,
+h1 > code,
+h2 > code,
+h3 > code,
+h4 > code {
+  padding-block: 0.1em;
+  padding-inline: 0.42em;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+hr {
+  margin-block: var(--space-40);
+  border: 0;
+  border-block-start: 1px solid var(--color-border);
+}
+
+}
