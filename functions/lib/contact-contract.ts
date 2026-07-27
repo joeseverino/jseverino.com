@@ -1,4 +1,4 @@
-import contract from '../../contracts/contact.v1.json' with { type: 'json' };
+import { contactContract as contract } from '../generated/contact-contract.ts';
 
 type ContractProperty = {
   type: string;
