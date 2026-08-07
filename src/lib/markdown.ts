@@ -8,7 +8,7 @@
 // content collections, slug/asset resolution, and <picture> enhancement — lives
 // in content.ts, which imports renderPageHtml / renderWriteupHtml from here.
 
-import MarkdownIt from 'markdown-it';
+import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 
 function createMarkdownRenderer() {
   return new MarkdownIt({
@@ -27,7 +27,7 @@ const fragmentMd = createMarkdownRenderer();
 const breakAtSeparators = (html: string): string =>
   html.replace(/([\p{L}\p{N}])([.:])(?=[\p{L}\p{N}])/gu, '$1$2<wbr>');
 
-function addCellBreaks(renderer: MarkdownIt, onlyInTables: boolean): void {
+function addCellBreaks(renderer: MarkdownItInstance, onlyInTables: boolean): void {
   const state = { inTable: false };
   const open = renderer.renderer.rules.table_open;
   renderer.renderer.rules.table_open = (...args) => {

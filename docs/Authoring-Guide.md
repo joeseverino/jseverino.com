@@ -123,7 +123,7 @@ Wraps the home-page hero in a centered `<header>`. Use once, at the top of the h
 
 ```md
 ::hero
-<p class="hero-eyebrow">Cybersecurity • Networking</p>
+<p class="hero-eyebrow">Cybersecurity • Networking • AI</p>
 
 # Hi, I'm Joe Severino
 

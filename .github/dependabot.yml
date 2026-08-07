@@ -11,15 +11,31 @@ updates:
         patterns:
           - astro
           - "@astrojs/*"
+        update-types:
+          - minor
+          - patch
       dev-dependencies:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
       production:
         dependency-type: production
         exclude-patterns:
           - astro
           - "@astrojs/*"
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
