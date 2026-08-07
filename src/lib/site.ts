@@ -11,7 +11,7 @@ export const site = {
   name: SITE.owner,
   url,
   repoUrl: `https://github.com/${SITE.github}/${SITE.domain}`,
-  defaultTitle: `${SITE.owner} | Cybersecurity and Networking`,
+  defaultTitle: `${SITE.owner} | Cybersecurity, Networking, and AI`,
   defaultDescription: summary,
   defaultOgImage: '/assets/og/og-default.png',
   defaultOgImageWidth: 1200,

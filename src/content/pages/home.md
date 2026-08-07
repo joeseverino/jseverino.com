@@ -1,5 +1,5 @@
 ---
-title: Joe Severino | Cybersecurity and Networking
+title: Joe Severino | Cybersecurity, Networking, and AI
 description: >-
   Joe Severino is a Technical Solutions Engineer at World Wide Technology with
   CCNA and Security+, pursuing an M.S. in Cybersecurity at Georgia Tech.
@@ -8,7 +8,7 @@ published: true
 ---
 
 ::hero
-<p class="hero-eyebrow">Cybersecurity • Networking</p>
+<p class="hero-eyebrow">Cybersecurity • Networking • AI</p>
 
 # Hi, I'm Joe Severino
 
