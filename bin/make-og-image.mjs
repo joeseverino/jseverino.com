@@ -3,29 +3,24 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCard, launchBrowser } from 'branding-engine';
-import { BRAND } from '../src/lib/brand.mjs';
+import { brandCardColors } from '../src/lib/brand.mjs';
 import { SITE } from '../src/lib/site-config.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const colors = {
-  panel: BRAND.navy, panelDeep: BRAND.navyDeep, onPanel: BRAND.onNavy,
-  accent: BRAND.card.accent, textSoft: BRAND.card.textSoft, textMuted: BRAND.card.textMuted,
-};
-
 const browser = await launchBrowser();
 try {
   await renderCard(browser, {
     width: 1200,
     height: 630,
     photoWidth: 462,
-    eyebrow: 'Cybersecurity • Networking',
+    eyebrow: SITE.focus.join(' • '),
     name: SITE.owner,
     tagline: 'Hands-on security & infrastructure projects',
     meta: 'Technical Solutions Engineer • CCNA • Security+',
     url: SITE.domain,
     photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
     outPath: path.join(root, 'public/assets/og/og-default.png'),
-    colors,
+    colors: brandCardColors(),
   });
 } finally {
   await browser.close();

@@ -38,6 +38,20 @@ export const SURFACE = {
 };
 // surfaces:end
 
+// branding-engine's card renderer consumes semantic roles, while the source
+// brand contract stores identity tokens. Keep that projection here so every
+// generated card receives the same mapping.
+export function brandCardColors() {
+  return {
+    panel: BRAND.navy,
+    panelDeep: BRAND.navyDeep,
+    onPanel: BRAND.onNavy,
+    accent: BRAND.card.accent,
+    textSoft: BRAND.card.textSoft,
+    textMuted: BRAND.card.textMuted,
+  };
+}
+
 // The brand custom properties every site surface AND every embedder needs
 // ALONGSIDE base.css. They are deliberately NOT in base.css: --color-primary is
 // brand identity (swappable), base.css is the design system (stable). Owned here

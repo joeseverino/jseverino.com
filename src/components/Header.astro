@@ -10,7 +10,7 @@ const wordmarkInner = wordmark.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/,
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
-const { name, navItems, socialLinks } = site;
+const { name, navItems, socialLinks, focusLabel } = site;
 const navigation = navItems.map((item) => ({
   ...item,
   current: normalize(current) === normalize(item.href),
@@ -62,7 +62,7 @@ const navigation = navItems.map((item) => ({
       linkDataAttribute="data-mobile-nav-link"
     />
     <div class="mobile-nav-footer">
-      <p class="page-kicker">Cybersecurity • Networking • AI</p>
+      <p class="page-kicker">{focusLabel}</p>
       <SocialLinks links={socialLinks} class="mobile-nav-social" />
     </div>
   </nav>
