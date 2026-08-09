@@ -2,7 +2,7 @@
 // make this repo "jseverino.com" rather than the framework underneath it.
 // Plain .mjs so both the Astro site and the node scripts in bin/ can import it
 // (the same reason brand.mjs is .mjs). For a new site built from this blueprint,
-// these four fields plus the residue listed in docs/Blueprint-Setup.md are the
+// these identity fields plus the residue listed in docs/Blueprint-Setup.md are the
 // only things that change.
 //
 // Consumers:
@@ -17,4 +17,5 @@ export const SITE = {
   owner: 'Joe Severino',
   github: 'joeseverino',
   d1: 'jseverino-contact',
+  focus: ['Cybersecurity', 'Networking', 'AI'],
 };
