@@ -1,5 +1,5 @@
 // Brand identity the site builds from — a vendored mirror of
-// severino-brand/brand/tokens.json (`brand`). Regenerate with `npm run sync:tokens`;
+// the lockfile-pinned severino-brand contract. Regenerate with `npm run sync:tokens`;
 // edit the values upstream, never here. Committed so the build stays self-sufficient.
 //
 // Plain .mjs so both the Astro site and the node asset generators can import it.
@@ -12,6 +12,11 @@
 // The rendering logic lives in the branding-engine dependency; this file is the
 // identity the site hands to it.
 // tokens:start
+export const BRAND_CONTRACT = {
+  schema: 1,
+  digest: 'sha256-2deb0e032c8114c28d4ea6c472a3dbe18024a096cbc50a352e425e0e76e58ab8',
+};
+
 export const BRAND = {
   navy: '#1E3A8A',
   navyDeep: '#14245C',
@@ -26,6 +31,26 @@ export const BRAND = {
     primaryDeep: '#A8C0F0',
   },
   glyph: 'JS',
+};
+
+export const CARD_COLORS = {
+  panel: '#1E3A8A',
+  panelDeep: '#14245C',
+  onPanel: '#ffffff',
+  accent: '#5B82D6',
+  textSoft: '#DDE6FB',
+  textMuted: '#A9C0E8',
+};
+
+export const PRIMARY_BY_THEME = {
+  light: {
+    primary: '#1E3A8A',
+    deep: '#14245C',
+  },
+  dark: {
+    primary: '#7C9CE0',
+    deep: '#A8C0F0',
+  },
 };
 // tokens:end
 
@@ -42,14 +67,7 @@ export const SURFACE = {
 // brand contract stores identity tokens. Keep that projection here so every
 // generated card receives the same mapping.
 export function brandCardColors() {
-  return {
-    panel: BRAND.navy,
-    panelDeep: BRAND.navyDeep,
-    onPanel: BRAND.onNavy,
-    accent: BRAND.card.accent,
-    textSoft: BRAND.card.textSoft,
-    textMuted: BRAND.card.textMuted,
-  };
+  return { ...CARD_COLORS };
 }
 
 // The brand custom properties every site surface AND every embedder needs
@@ -70,8 +88,8 @@ export function brandCardColors() {
 export function brandVarsCss() {
   const declarations = (primary, deep) =>
     `--color-primary:${primary};--color-primary-deep:${deep}`;
-  const light = declarations(BRAND.navy, BRAND.navyDeep);
-  const dark = declarations(BRAND.onDark.primary, BRAND.onDark.primaryDeep);
+  const light = declarations(PRIMARY_BY_THEME.light.primary, PRIMARY_BY_THEME.light.deep);
+  const dark = declarations(PRIMARY_BY_THEME.dark.primary, PRIMARY_BY_THEME.dark.deep);
 
   return [
     `:root{${light}}`,

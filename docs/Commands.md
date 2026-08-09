@@ -64,6 +64,7 @@ behind the scripts.
 | `npm run build:static` | `astro build` + sitedrift wrap (used by `build` and the gates) |
 | `npm run lint:css` | Stylelint over `src/styles/` |
 | `npm run check:security` | security.txt signature, required fields, expiry, WKD file |
+| `npm run check:tokens` | Committed brand projections match the lockfile-pinned upstream contract |
 | `npm run check:contrast` | WCAG ratios for every text/background pair in `base.css` |
 | `npm run check:parity` | Vault schema, Zod config, MCP server, and the `site manage` TUI agree on writeup fields |
 | `npm run check:types` | Strict TypeScript over `functions/` |
@@ -98,12 +99,14 @@ The synced snapshot is committed, so the public repo never depends on the
 private vault. Never edit the synced files by hand — the next sync wipes
 them. See [`Vault-Workflow.md`](./Vault-Workflow.md).
 
-**`npm run sync:tokens`** — regenerates the committed token artifacts from
-`severino-brand/brand/tokens.json` (the upstream source of truth): the `:root`
-block in `src/styles/base.css` and the `BRAND` export in `src/lib/brand.mjs`,
-each rewritten between `tokens:start`/`tokens:end` markers. Like `sync:content`,
-it is the only thing that reads the kit — the build never does, so CI stays
-self-sufficient. Edit tokens upstream, not the marked regions, then sync. See
+**`npm run sync:tokens`** — serializes the lockfile-pinned `severino-brand`
+web contract into committed build inputs: the `:root` block in
+`src/styles/tokens.css` plus identity, surface, card, and theme-role exports in
+`src/lib/brand.mjs`. The package derives those semantic mappings once from its
+canonical `tokens.json`; this repository only declares output targets. The
+embedded SHA-256 digest records the exact upstream token source. Like
+`sync:content`, deployment consumes the committed projection and stays
+self-contained. `npm run check:tokens` fails CI on drift. See
 [`Brand-System.md`](./Brand-System.md).
 
 **`npm run diagnose`** — the one-stop gate. Runs every check in the registry
