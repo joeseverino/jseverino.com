@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 
 const checks = [
+  ['brand tokens', ['bin/sync-tokens.mjs', '--check']],
   ['contact OpenAPI', ['bin/sync-contact-openapi.mjs', '--check']],
   ['content schemas', ['bin/sync-content-contract.mjs', '--check']],
   ['embed CSS projection', ['bin/make-embed-bundle.mjs', '--check']],
@@ -13,4 +14,4 @@ for (const [name, args] of checks) {
     process.exit(1);
   }
 }
-console.log('ok       generated API and CSS projections match their canonical sources');
+console.log('ok       generated brand, API, schema, and CSS projections match their canonical sources');

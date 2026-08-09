@@ -8,7 +8,7 @@
   src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
 }
 
-/* tokens:start — generated from severino-brand/brand/tokens.json by `npm run sync:tokens`. Edit tokens there, not here. */
+/* tokens:start — generated from the lockfile-pinned severino-brand contract by `npm run sync:tokens`. Edit tokens upstream, not here. */
 :root {
   color-scheme: light dark;
   --color-bg: light-dark(#ffffff, #131826);

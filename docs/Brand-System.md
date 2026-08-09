@@ -149,22 +149,22 @@ reviewable without becoming the site's active design.
 
 ## How The Site Consumes It
 
-The site keeps its tokens local and borrows only the rendering:
+The site keeps self-contained generated inputs while consuming one versioned
+upstream contract:
 
-- `severino-brand/brand/tokens.json` is the upstream source of truth — the brand
+- `severino-brand/brand/tokens.json` is the sole editable source — the brand
   identity (`brand`: navy, glyph), the design system (`designSystem`: the `:root`
   custom properties), and the dark values for the themeable subset of those
-  properties (`designSystemDark`). The site never reads it at build time.
-- `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) vendors it
-  into two committed files, rewriting only the region between
-  `tokens:start`/`tokens:end` markers: the `BRAND` export in `src/lib/brand.mjs`
-  (from `brand`) and the `:root` block in `src/styles/tokens.css` (from
-  `designSystem`). Same pattern as `sync:content` — an external source of truth,
-  vendored to a committed artifact, so the build stays self-sufficient. The read
-  + marker-splice + render primitives live upstream in
-  `severino-brand/brand/sync.mjs` and are shared with the vault's Obsidian theme
-  generator, so the projection logic isn't reimplemented per consumer — only the
-  list of targets differs.
+  properties (`designSystemDark`). `brand/contract.mjs` validates that data and
+  derives the semantic web contract—surface, card, theme, and CSS roles—once.
+- The signed `severino-brand` release is pinned by tag and resolved commit in
+  `package-lock.json`; no neighboring checkout or mutable filesystem convention
+  participates in synchronization or CI.
+- `npm run sync:tokens` ([`bin/sync-tokens.mjs`](../bin/sync-tokens.mjs)) only
+  serializes that normalized contract into `src/lib/brand.mjs` and
+  `src/styles/tokens.css`. `npm run check:tokens` performs the same projection
+  without writing and fails on drift. Each projection embeds the upstream token
+  SHA-256 digest for provenance.
 - `bin/make-icons.mjs`, `bin/make-og-image.mjs`, and `bin/make-github-social.mjs`
   import `markSvg` / `renderCard` from `branding-engine` instead of a local copy,
   and pass it the synced `BRAND`. The engine is generic; the tokens supply the color.
@@ -197,8 +197,8 @@ knowing:
 - **`light-dark()` only accepts colors.** `--shadow-sm` is geometry plus a color,
   so the color half was split into `--shadow-color-sm` and the shadow composes it.
   Apply the same split to any future token that isn't a bare color.
-- **A dark key with no light counterpart throws.** `mergeThemes` in
-  `severino-brand/brand/sync.mjs` refuses to emit a token that exists only in the
+- **A dark key with no light counterpart throws.** `mergeThemes` in the
+  versioned `severino-brand` contract refuses to emit a token that exists only in the
   dark map, since a typo there would otherwise vanish silently from the output.
 
 The terminal group (`--code-*`, `--term-*`) has no dark entries on purpose: it
