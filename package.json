@@ -89,7 +89,7 @@
     "branding-engine": "^0.7.0"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "playwright": "^1.62.1",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v1.0.2/severino-brand-1.0.2.tgz",
