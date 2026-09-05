@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  enable:
+  auto-merge:
     # Only PRs Dependabot authored, only on pushes Dependabot itself made (a
     # human commit onto its branch must not re-arm auto-merge), and never on a
     # fork of this repository.

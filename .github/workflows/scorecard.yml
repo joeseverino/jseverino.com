@@ -30,10 +30,29 @@ jobs:
         with:
           sarif_file: scorecard.sarif
 
-      - name: Upload Scorecard report
+      # The SARIF above lists only the checks with findings. A second pass in
+      # JSON carries every check and the aggregate, which is what the summary
+      # shows.
+      - name: Run OpenSSF Scorecard for the summary
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: scorecard.json
+          results_format: json
+          publish_results: false
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Summarize
+        run: node bin/scorecard-summary.mjs scorecard.json
+
+      - name: Upload Scorecard reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: scorecard-sarif
-          path: scorecard.sarif
+          name: scorecard-reports
+          path: |
+            scorecard.sarif
+            scorecard.json
           if-no-files-found: error

@@ -219,19 +219,19 @@ In addition to local pre-commit checks, continuous security and build audits are
 | [`scorecard`](./.github/workflows/scorecard.yml) | Computes OpenSSF security scorecard health metrics. | Weekly SARIF supply-chain reports. |
 | [`workflow lint`](./.github/workflows/workflow-lint.yml) | Lints GitHub Action runner steps using actionlint. | PR/push syntax validation. |
 | [`link check`](./.github/workflows/link-check.yml) | Audits all Markdown documentation and public links via Lychee. | Detailed connectivity report artifacts. |
-| [`lighthouse`](./.github/workflows/lighthouse.yml) | Benchmarks performance, accessibility, and SEO using Lighthouse CI. | 100/100/100/100 score compliance. |
+| [`lighthouse`](./.github/workflows/lighthouse.yml) | Weekly Lighthouse run (the lockfile's Lighthouse, the same generation PageSpeed Insights scores with) against the live homepage and a deep writeup page. | Fails below accessibility 95 or SEO 90; warns below performance 85 or best practices 70. Scores in the job summary, reports as artifacts. Best practices reads in the 70s from any client Cloudflare distrusts, because Bot Fight Mode's injected detection script uses deprecated browser APIs; PageSpeed Insights is not served that script and reports 100. |
 | [`dependabot auto-merge`](./.github/workflows/dependabot-auto-merge.yml) | Enables squash auto-merge on Dependabot's minor and patch PRs; GitHub merges once every required check passes. | Dependency updates land without waiting on a manual merge. |
 | [`dependabot stale`](./.github/workflows/dependabot-stale.yml) | Weekly: opens an issue listing Dependabot PRs open longer than seven days, so a wedged auto-merge is never silent. | Self-closing issue labelled `dependabot-stale`. |
 
 Workflow dependencies are pinned to immutable SHAs or container digests. Every workflow declares a top-level `permissions: contents: read`; any wider scope (`security-events: write` for SARIF upload, `contents` and `pull-requests: write` for auto-merge, `pull-requests: write` for the PR summary comment, `issues: write` for self-closing alerts) is granted only to the specific job that needs it. Dependabot checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml), ignores semver-major updates on both, and its minor and patch PRs auto-merge once the required checks pass.
 
-The GitHub code-scanning dashboard is kept at zero open alerts. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (Branch-Protection, Code-Review, Fuzzing, CII-Best-Practices, Maintained until the repo turns 90 days old) are dismissed with a "won't fix — solo personal repo" reason and an inline explanation. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29) — failing checks are structural to a one-person project and are not real security gaps.
+The GitHub code-scanning dashboard is kept at zero open alerts. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (Branch-Protection, Code-Review, Fuzzing, CII-Best-Practices) are dismissed with a "won't fix — solo personal repo" reason and an inline explanation. The Scorecard aggregate is **7.7 / 10** (2026-09-05); every check below maximum (Branch-Protection, Code-Review, Fuzzing, CII-Best-Practices, Contributors) is structural to a one-person project rather than a security gap, and Vulnerabilities, Maintained, Pinned-Dependencies, SAST, Token-Permissions, and Dangerous-Workflow all score 10.
 
 Preview deployments (`*.pages.dev`) carry an `X-Robots-Tag: noindex` from [`public/_headers`](./public/_headers) so only the canonical custom domain ever lands in search results.
 
 ## Current PageSpeed Snapshot
 
-Google PageSpeed Insights reported a clean 100 across every scored category for the live homepage on May 27, 2026 at 9:14 PM CDT.
+Google PageSpeed Insights reported 100 across every scored category for the live homepage on desktop, and 99 / 100 / 100 / 100 on mobile, on September 5, 2026 at 9:30 AM CDT.
 
 | Mode | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS | Speed Index |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |

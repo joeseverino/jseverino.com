@@ -10,6 +10,12 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same pull request supersedes the run in flight. Pushes to
+# main are never cancelled: each one deploys and deserves its own record.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Cheap invariants first: an unpinned action or a misaligned lockfile should
   # fail in under a minute, not after three runners have installed browsers.
