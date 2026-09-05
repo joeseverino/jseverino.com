@@ -40,6 +40,39 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
+  # Cloudflare Pages builds the commit on its own infrastructure, triggered by
+  # the push rather than by this workflow, and reports back as a check-run.
+  # This job gives that deployment a node in the graph and a summary, and
+  # holds verify until the build is live.
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Wait for Cloudflare Pages
+        run: node bin/deploy-wait.mjs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-deploy.md
+
+      - name: Keep the summary for the PR comment
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: summary-deploy
+          path: ${{ runner.temp }}/summary-deploy.md
+          retention-days: 1
+          if-no-files-found: ignore
+
   build:
     needs: gate
     runs-on: ubuntu-latest
@@ -84,10 +117,32 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
-  e2e:
+  # One job, two legs. `name` keeps the check-run names `e2e` and `visual`, so
+  # the ruleset's required checks match unchanged; the run graph groups the
+  # legs as one matrix.
+  playwright:
+    name: ${{ matrix.suite }}
     needs: gate
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: e2e
+            title: Cross-browser suite
+            os: ubuntu-latest
+            cache: ~/.cache/ms-playwright
+            install: npx playwright install --with-deps chromium firefox webkit
+            install-deps: npx playwright install-deps chromium firefox webkit
+            command: npm run test:e2e
+          - suite: visual
+            title: Visual baselines
+            os: macos-latest
+            cache: ~/Library/Caches/ms-playwright
+            install: npx playwright install chromium
+            install-deps: 'true'
+            command: npm run test:e2e:visual -- --project=chromium-desktop
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -108,91 +163,36 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: browsers
         with:
-          path: ~/.cache/ms-playwright
+          path: ${{ matrix.cache }}
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
-      - name: Install browsers and system dependencies
+      # System dependencies are a Linux concern; the macOS leg's install-deps
+      # is a no-op.
+      - name: Install browsers
         if: steps.browsers.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium firefox webkit
+        run: ${{ matrix.install }}
 
       - name: Install system dependencies for cached browsers
         if: steps.browsers.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium firefox webkit
+        run: ${{ matrix.install-deps }}
 
-      - name: Cross-browser suite
-        run: npm run test:e2e
+      - name: ${{ matrix.title }}
+        run: ${{ matrix.command }}
         env:
           CI: '1'
           ASTRO_TELEMETRY_DISABLED: '1'
 
       - name: Summarize results
         if: always()
-        run: node bin/playwright-summary.mjs "Cross-browser suite"
+        run: node bin/playwright-summary.mjs "$TITLE"
         env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-e2e.md
+          TITLE: ${{ matrix.title }}
+          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Keep the summary for the PR comment
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: summary-e2e
-          path: ${{ runner.temp }}/summary-e2e.md
-          retention-days: 1
-          if-no-files-found: ignore
-
-  visual:
-    needs: gate
-    runs-on: macos-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - run: npm ci
-
-      - name: Read Playwright version
-        id: playwright
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Restore cached browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: browsers
-        with:
-          path: ~/Library/Caches/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-
-      - name: Install Chromium
-        if: steps.browsers.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
-
-      - name: Visual baselines
-        run: npm run test:e2e:visual -- --project=chromium-desktop
-        env:
-          CI: '1'
-          ASTRO_TELEMETRY_DISABLED: '1'
-
-      - name: Summarize results
-        if: always()
-        run: node bin/playwright-summary.mjs "Visual baselines"
-        env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-visual.md
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: playwright-visual-report
+          name: playwright-${{ matrix.suite }}-report
           path: |
             playwright-report/
             test-results/
@@ -203,8 +203,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: summary-visual
-          path: ${{ runner.temp }}/summary-visual.md
+          name: summary-${{ matrix.suite }}
+          path: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
           retention-days: 1
           if-no-files-found: ignore
 
@@ -212,7 +212,7 @@ jobs:
   # every gate above. Skipped on pull requests: there is nothing live to probe.
   verify:
     if: github.event_name != 'pull_request'
-    needs: [build, e2e, visual]
+    needs: [build, playwright, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -309,7 +309,7 @@ jobs:
   # in place on each push. Pull requests only: a push to main has no thread.
   report:
     if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    needs: [gate, build, e2e, visual]
+    needs: [gate, build, playwright, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -333,26 +333,31 @@ jobs:
             const fs = require('node:fs');
             const path = require('node:path');
             const marker = '<!-- ci-summary -->';
-            const order = ['gate', 'build', 'e2e', 'visual'];
+            // [summary file, job the outcome comes from]
+            const sections = [['gate', 'gate'], ['build', 'build'], ['e2e', 'playwright'], ['visual', 'playwright'], ['deploy', 'deploy']];
             const results = JSON.parse(process.env.RESULTS);
             const pull = context.payload.pull_request;
             const sha = pull.head.sha.slice(0, 12);
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const outcome = (job) => results[job]?.result ?? 'unknown';
 
-            const sections = order.map((job) => {
-              const file = path.join('summaries', `summary-${job}.md`);
-              if (!fs.existsSync(file)) return `### ${job}\n\n${outcome(job)}: no summary was produced.`;
+            const rendered = sections.map(([name, job]) => {
+              const file = path.join('summaries', `summary-${name}.md`);
+              if (!fs.existsSync(file)) return `### ${name}\n\n${outcome(job)}: no summary was produced.`;
               return fs.readFileSync(file, 'utf8').trim().replace(/^## /gm, '### ');
             });
+
+            const status = [...new Set(sections.map(([, job]) => job))]
+              .map((job) => `\`${job}\` ${outcome(job)}`)
+              .join(' · ');
 
             const body = [
               marker,
               `## CI for \`${sha}\``,
               '',
-              `${order.map((job) => `\`${job}\` ${outcome(job)}`).join(' · ')} · [run](${runUrl})`,
+              `${status} · [run](${runUrl})`,
               '',
-              ...sections.flatMap((section) => [section, '']),
+              ...rendered.flatMap((section) => [section, '']),
             ].join('\n');
 
             const comments = await github.paginate(github.rest.issues.listComments, {
