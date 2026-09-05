@@ -8,6 +8,10 @@
         "/assets/pages/about/images/000webhost-breach-512.avif"
       ],
       [
+        768,
+        "/assets/pages/about/images/000webhost-breach-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/about/images/000webhost-breach-1024.avif"
       ],
@@ -20,6 +24,10 @@
       [
         512,
         "/assets/pages/about/images/000webhost-breach-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/about/images/000webhost-breach-768.webp"
       ],
       [
         1024,
@@ -41,6 +49,10 @@
         "/assets/pages/about/images/anki-ccna-reviews-2025-512.avif"
       ],
       [
+        768,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/about/images/anki-ccna-reviews-2025-1024.avif"
       ],
@@ -53,6 +65,10 @@
       [
         512,
         "/assets/pages/about/images/anki-ccna-reviews-2025-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/about/images/anki-ccna-reviews-2025-768.webp"
       ],
       [
         1024,
@@ -74,6 +90,10 @@
         "/assets/pages/about/images/first-cloudflare-setup-512.avif"
       ],
       [
+        768,
+        "/assets/pages/about/images/first-cloudflare-setup-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/about/images/first-cloudflare-setup-1024.avif"
       ],
@@ -86,6 +106,10 @@
       [
         512,
         "/assets/pages/about/images/first-cloudflare-setup-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/about/images/first-cloudflare-setup-768.webp"
       ],
       [
         1024,
@@ -107,6 +131,10 @@
         "/assets/pages/about/images/welcome-plaintext-password-512.avif"
       ],
       [
+        768,
+        "/assets/pages/about/images/welcome-plaintext-password-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/about/images/welcome-plaintext-password-1024.avif"
       ],
@@ -119,6 +147,10 @@
       [
         512,
         "/assets/pages/about/images/welcome-plaintext-password-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/about/images/welcome-plaintext-password-768.webp"
       ],
       [
         1024,
@@ -140,6 +172,10 @@
         "/assets/pages/about/images/winterfest-5k-2025-512.avif"
       ],
       [
+        768,
+        "/assets/pages/about/images/winterfest-5k-2025-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/about/images/winterfest-5k-2025-1024.avif"
       ],
@@ -152,6 +188,10 @@
       [
         512,
         "/assets/pages/about/images/winterfest-5k-2025-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/about/images/winterfest-5k-2025-768.webp"
       ],
       [
         1024,
@@ -173,6 +213,10 @@
         "/assets/pages/home/images/portrait-512.avif"
       ],
       [
+        768,
+        "/assets/pages/home/images/portrait-768.avif"
+      ],
+      [
         1024,
         "/assets/pages/home/images/portrait-1024.avif"
       ],
@@ -185,6 +229,10 @@
       [
         512,
         "/assets/pages/home/images/portrait-512.webp"
+      ],
+      [
+        768,
+        "/assets/pages/home/images/portrait-768.webp"
       ],
       [
         1024,
@@ -206,6 +254,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-1024.avif"
       ],
@@ -218,6 +270,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-device-posture-rule-768.webp"
       ],
       [
         1024,
@@ -239,6 +295,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-1024.avif"
       ],
@@ -251,6 +311,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/cloudflare-zero-trust-test-site-access-768.webp"
       ],
       [
         1024,
@@ -272,6 +336,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-1024.avif"
       ],
@@ -284,6 +352,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/custom-wordpress-detection-engine-cover-768.webp"
       ],
       [
         1024,
@@ -305,6 +377,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-1024.avif"
       ],
@@ -317,6 +393,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-hash-baseline-768.webp"
       ],
       [
         1024,
@@ -338,6 +418,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-1024.avif"
       ],
@@ -350,6 +434,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-modified-file-alert-768.webp"
       ],
       [
         1024,
@@ -371,6 +459,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-1024.avif"
       ],
@@ -383,6 +475,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-overview-768.webp"
       ],
       [
         1024,
@@ -404,6 +500,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-1024.avif"
       ],
@@ -416,6 +516,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/file-integrity-monitoring-scheduled-checks-768.webp"
       ],
       [
         1024,
@@ -437,6 +541,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-1024.avif"
       ],
@@ -449,6 +557,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/github-vigilant-mode-verified-release-768.webp"
       ],
       [
         1024,
@@ -470,6 +582,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-1024.avif"
       ],
@@ -482,6 +598,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/php-syntax-check-helper-768.webp"
       ],
       [
         1024,
@@ -503,6 +623,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-1024.avif"
       ],
@@ -515,6 +639,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-event-log-table-768.webp"
       ],
       [
         1024,
@@ -536,6 +664,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-1024.avif"
       ],
@@ -548,6 +680,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-hardening-hook-768.webp"
       ],
       [
         1024,
@@ -569,6 +705,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-1024.avif"
       ],
@@ -581,6 +721,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-event-monitoring-overview-768.webp"
       ],
       [
         1024,
@@ -602,6 +746,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-1024.avif"
       ],
@@ -614,6 +762,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-admin-overview-dashboard-768.webp"
       ],
       [
         1024,
@@ -635,6 +787,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-1024.avif"
       ],
@@ -647,6 +803,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-daily-email-report-768.webp"
       ],
       [
         1024,
@@ -668,6 +828,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-1024.avif"
       ],
@@ -680,6 +844,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-dashboard-overview-768.webp"
       ],
       [
         1024,
@@ -701,6 +869,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-1024.avif"
       ],
@@ -713,6 +885,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-github-repository-768.webp"
       ],
       [
         1024,
@@ -734,6 +910,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-1024.avif"
       ],
@@ -746,6 +926,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-health-score-768.webp"
       ],
       [
         1024,
@@ -767,6 +951,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-1024.avif"
       ],
@@ -779,6 +967,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-main-plugin-file-768.webp"
       ],
       [
         1024,
@@ -825,6 +1017,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-1024.avif"
       ],
@@ -837,6 +1033,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-runtime-data-gitignore-768.webp"
       ],
       [
         1024,
@@ -858,6 +1058,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-1024.avif"
       ],
@@ -870,6 +1074,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/security-layer-test-site-first-run-dashboard-768.webp"
       ],
       [
         1024,
@@ -891,6 +1099,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-1024.avif"
       ],
@@ -903,6 +1115,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/wordpress-plugin-test-install-768.webp"
       ],
       [
         1024,
@@ -924,6 +1140,10 @@
         "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-1024.avif"
       ],
@@ -936,6 +1156,10 @@
       [
         512,
         "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/architecting-a-custom-detection-engine/images/zsh-git-deploy-slpush-workflow-768.webp"
       ],
       [
         1024,
@@ -957,6 +1181,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-1024.avif"
       ],
@@ -969,6 +1197,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/dns-rewrite-local-model-768.webp"
       ],
       [
         1024,
@@ -990,6 +1222,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-1024.avif"
       ],
@@ -1002,6 +1238,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-content-768.webp"
       ],
       [
         1024,
@@ -1023,6 +1263,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-1024.avif"
       ],
@@ -1035,6 +1279,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/hq-dashboard-768.webp"
       ],
       [
         1024,
@@ -1056,6 +1304,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/inbox-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/inbox-1024.avif"
       ],
@@ -1068,6 +1320,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/inbox-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/inbox-768.webp"
       ],
       [
         1024,
@@ -1089,6 +1345,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-1024.avif"
       ],
@@ -1101,6 +1361,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/infrastructure-768.webp"
       ],
       [
         1024,
@@ -1122,6 +1386,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-1024.avif"
       ],
@@ -1134,6 +1402,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-call-768.webp"
       ],
       [
         1024,
@@ -1155,6 +1427,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-1024.avif"
       ],
@@ -1167,6 +1443,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/mcp-cover-768.webp"
       ],
       [
         1024,
@@ -1188,6 +1468,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/projects-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/projects-1024.avif"
       ],
@@ -1200,6 +1484,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/projects-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/projects-768.webp"
       ],
       [
         1024,
@@ -1221,6 +1509,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/reference-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/reference-1024.avif"
       ],
@@ -1233,6 +1525,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/reference-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/reference-768.webp"
       ],
       [
         1024,
@@ -1254,6 +1550,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/runbook-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/runbook-1024.avif"
       ],
@@ -1266,6 +1566,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/runbook-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/runbook-768.webp"
       ],
       [
         1024,
@@ -1287,6 +1591,10 @@
         "/assets/writeups/building-a-custom-mcp-layer/images/template-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-custom-mcp-layer/images/template-1024.avif"
       ],
@@ -1299,6 +1607,10 @@
       [
         512,
         "/assets/writeups/building-a-custom-mcp-layer/images/template-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-custom-mcp-layer/images/template-768.webp"
       ],
       [
         1024,
@@ -1320,6 +1632,10 @@
         "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-1024.avif"
       ],
@@ -1332,6 +1648,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/dell-optiplex-7050-homelab-server-768.webp"
       ],
       [
         1024,
@@ -1353,6 +1673,10 @@
         "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-1024.avif"
       ],
@@ -1365,6 +1689,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/docker-desktop-homelab-containers-768.webp"
       ],
       [
         1024,
@@ -1386,6 +1714,10 @@
         "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-1024.avif"
       ],
@@ -1398,6 +1730,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-certificate-chain-untrusted-768.webp"
       ],
       [
         1024,
@@ -1419,6 +1755,10 @@
         "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-1024.avif"
       ],
@@ -1431,6 +1771,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-page-over-tailscale-768.webp"
       ],
       [
         1024,
@@ -1452,6 +1796,10 @@
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-1024.avif"
       ],
@@ -1464,6 +1812,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover-768.webp"
       ],
       [
         1024,
@@ -1485,6 +1837,10 @@
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-1024.avif"
       ],
@@ -1497,6 +1853,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-tailscale-docker-https-architecture-768.webp"
       ],
       [
         1024,
@@ -1518,6 +1878,10 @@
         "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-1024.avif"
       ],
@@ -1530,6 +1894,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/homelab-trusted-certificate-valid-768.webp"
       ],
       [
         1024,
@@ -1551,6 +1919,10 @@
         "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-1024.avif"
       ],
@@ -1563,6 +1935,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/hp-laserjet-airprint-printer-settings-768.webp"
       ],
       [
         1024,
@@ -1584,6 +1960,10 @@
         "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-1024.avif"
       ],
@@ -1596,6 +1976,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/nginx-proxy-manager-homelab-host-768.webp"
       ],
       [
         1024,
@@ -1617,6 +2001,10 @@
         "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-1024.avif"
       ],
@@ -1629,6 +2017,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/openssl-homelab-certificate-signing-768.webp"
       ],
       [
         1024,
@@ -1650,6 +2042,10 @@
         "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-768.avif"
+      ],
+      [
         979,
         "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-979.avif"
       ]
@@ -1658,6 +2054,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/powershell-firewall-restrict-tailscale-768.webp"
       ],
       [
         979,
@@ -1675,6 +2075,10 @@
         "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-1024.avif"
       ],
@@ -1687,6 +2091,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/tailscale-subnet-route-exit-node-settings-768.webp"
       ],
       [
         1024,
@@ -1708,6 +2116,10 @@
         "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-1024.avif"
       ],
@@ -1720,6 +2132,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/travel-router-ethernet-edited-2-scaled-768.webp"
       ],
       [
         1024,
@@ -1741,6 +2157,10 @@
         "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-1024.avif"
       ],
@@ -1753,6 +2173,10 @@
       [
         512,
         "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-a-homelab/images/utm-offline-root-ca-vm-summary-768.webp"
       ],
       [
         1024,
@@ -1774,6 +2198,10 @@
         "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-1024.avif"
       ],
@@ -1786,6 +2214,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-cloudflare-doh-upstream-dns-settings-768.webp"
       ],
       [
         1024,
@@ -1807,6 +2239,10 @@
         "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-1024.avif"
       ],
@@ -1819,6 +2255,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover-768.webp"
       ],
       [
         1024,
@@ -1840,6 +2280,10 @@
         "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-1024.avif"
       ],
@@ -1852,6 +2296,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-homelab-dns-rewrites-768.webp"
       ],
       [
         1024,
@@ -1873,6 +2321,10 @@
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-1024.avif"
       ],
@@ -1885,6 +2337,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-samsung-tv-netflix-768.webp"
       ],
       [
         1024,
@@ -1906,6 +2362,10 @@
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-1024.avif"
       ],
@@ -1918,6 +2378,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/adguard-query-log-test-domain-proof-768.webp"
       ],
       [
         1024,
@@ -1939,6 +2403,10 @@
         "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-1024.avif"
       ],
@@ -1951,6 +2419,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/docker-adguard-containers-running-768.webp"
       ],
       [
         1024,
@@ -1972,6 +2444,10 @@
         "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-1024.avif"
       ],
@@ -1984,6 +2460,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/nginx-proxy-manager-homelab-hosts-online-768.webp"
       ],
       [
         1024,
@@ -2005,6 +2485,10 @@
         "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-1024.avif"
       ],
@@ -2017,6 +2501,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/offline-ca-admin-homelab-cert-generation-768.webp"
       ],
       [
         1024,
@@ -2038,6 +2526,10 @@
         "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-1024.avif"
       ],
@@ -2050,6 +2542,10 @@
       [
         512,
         "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-local-dns-filtering/images/tailscale-adguard-global-dns-nameserver-768.webp"
       ],
       [
         1024,
@@ -2071,6 +2567,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-1024.avif"
       ],
@@ -2083,6 +2583,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-browser-network-inspection-768.webp"
       ],
       [
         1024,
@@ -2104,6 +2608,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-1024.avif"
       ],
@@ -2116,6 +2624,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-deck-library-import-flow-768.webp"
       ],
       [
         1024,
@@ -2137,6 +2649,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-1024.avif"
       ],
@@ -2149,6 +2665,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-local-first-app-dashboard-768.webp"
       ],
       [
         1024,
@@ -2170,6 +2690,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-1024.avif"
       ],
@@ -2182,6 +2706,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-public-app-private-question-bank-768.webp"
       ],
       [
         1024,
@@ -2203,6 +2731,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-1024.avif"
       ],
@@ -2215,6 +2747,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-question-answer-workflow-768.webp"
       ],
       [
         1024,
@@ -2236,6 +2772,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-1024.avif"
       ],
@@ -2248,6 +2788,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-session-recap-results-768.webp"
       ],
       [
         1024,
@@ -2269,6 +2813,10 @@
         "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-1024.avif"
       ],
@@ -2281,6 +2829,10 @@
       [
         512,
         "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/building-study-quiz/images/study-quiz-weak-question-review-768.webp"
       ],
       [
         1024,
@@ -2302,6 +2854,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-1024.avif"
       ],
@@ -2314,6 +2870,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/restart-wazuh-agent-service-768.webp"
       ],
       [
         1024,
@@ -2335,6 +2895,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-1024.avif"
       ],
@@ -2347,6 +2911,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-admin-login-768.webp"
       ],
       [
         1024,
@@ -2385,6 +2953,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-1024.avif"
       ],
@@ -2397,6 +2969,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-dashboard-alerts-after-test-threat-768.webp"
       ],
       [
         1024,
@@ -2418,6 +2994,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-1024.avif"
       ],
@@ -2430,6 +3010,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-email-alert-notification-768.webp"
       ],
       [
         1024,
@@ -2451,6 +3035,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-1024.avif"
       ],
@@ -2463,6 +3051,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-endpoint-overview-768.webp"
       ],
       [
         1024,
@@ -2484,6 +3076,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-1024.avif"
       ],
@@ -2496,6 +3092,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-after-remediation-768.webp"
       ],
       [
         1024,
@@ -2517,6 +3117,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-1024.avif"
       ],
@@ -2529,6 +3133,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-high-severity-vulnerability-before-remediation-768.webp"
       ],
       [
         1024,
@@ -2550,6 +3158,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-1024.avif"
       ],
@@ -2562,6 +3174,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-installation-successful-768.webp"
       ],
       [
         1024,
@@ -2583,6 +3199,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-1024.avif"
       ],
@@ -2595,6 +3215,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-managed-endpoints-768.webp"
       ],
       [
         1024,
@@ -2616,6 +3240,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-1024.avif"
       ],
@@ -2628,6 +3256,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-service-status-768.webp"
       ],
       [
         1024,
@@ -2649,6 +3281,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-1024.avif"
       ],
@@ -2661,6 +3297,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-architecture-768.webp"
       ],
       [
         1024,
@@ -2682,6 +3322,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-1024.avif"
       ],
@@ -2694,6 +3338,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-siem-lab-cover-768.webp"
       ],
       [
         1024,
@@ -2715,6 +3363,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-1024.avif"
       ],
@@ -2727,6 +3379,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-threat-event-details-768.webp"
       ],
       [
         1024,
@@ -2773,6 +3429,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-1024.avif"
       ],
@@ -2785,6 +3445,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/wazuh-vulnerability-details-768.webp"
       ],
       [
         1024,
@@ -2823,6 +3487,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-768.avif"
+      ],
+      [
         983,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-983.avif"
       ]
@@ -2831,6 +3499,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-endpoint-python-update-768.webp"
       ],
       [
         983,
@@ -2848,6 +3520,10 @@
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-1024.avif"
       ],
@@ -2860,6 +3536,10 @@
       [
         512,
         "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/deploying-a-wazuh-siem-lab/images/windows-protection-history-blocked-threat-768.webp"
       ],
       [
         1024,
@@ -2881,6 +3561,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-1024.avif"
       ],
@@ -2893,6 +3577,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/isolated-vmware-lab-topology-768.webp"
       ],
       [
         1024,
@@ -2914,6 +3602,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-1024.avif"
       ],
@@ -2926,6 +3618,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-http-version-output-768.webp"
       ],
       [
         1024,
@@ -2947,6 +3643,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-1024.avif"
       ],
@@ -2959,6 +3659,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/kali-sysinfo-meterpreter-768.webp"
       ],
       [
         1024,
@@ -2980,6 +3684,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-768.avif"
+      ],
+      [
         876,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-876.avif"
       ]
@@ -2988,6 +3696,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/meta-ifconfig-768.webp"
       ],
       [
         876,
@@ -3005,6 +3717,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-1024.avif"
       ],
@@ -3017,6 +3733,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-kali-network-config-768.webp"
       ],
       [
         1024,
@@ -3038,6 +3758,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-1024.avif"
       ],
@@ -3050,6 +3774,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-metasploit-module-options-768.webp"
       ],
       [
         1024,
@@ -3071,6 +3799,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-1024.avif"
       ],
@@ -3083,6 +3815,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-meterpreter-sysinfo-session-768.webp"
       ],
       [
         1024,
@@ -3104,6 +3840,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-1024.avif"
       ],
@@ -3116,6 +3856,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-nmap-port-scan-768.webp"
       ],
       [
         1024,
@@ -3137,6 +3881,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-1024.avif"
       ],
@@ -3149,6 +3897,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-searchsploit-results-768.webp"
       ],
       [
         1024,
@@ -3170,6 +3922,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-1024.avif"
       ],
@@ -3182,6 +3938,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-http-exploit-request-768.webp"
       ],
       [
         1024,
@@ -3203,6 +3963,10 @@
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-1024.avif"
       ],
@@ -3215,6 +3979,10 @@
       [
         512,
         "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream-768.webp"
       ],
       [
         1024,
@@ -3236,6 +4004,10 @@
         "/assets/writeups/from-wordpress-to-astro/images/before-after-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/from-wordpress-to-astro/images/before-after-1024.avif"
       ],
@@ -3248,6 +4020,10 @@
       [
         512,
         "/assets/writeups/from-wordpress-to-astro/images/before-after-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/before-after-768.webp"
       ],
       [
         1024,
@@ -3269,6 +4045,10 @@
         "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-1024.avif"
       ],
@@ -3281,6 +4061,10 @@
       [
         512,
         "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover-768.webp"
       ],
       [
         1024,
@@ -3302,6 +4086,10 @@
         "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-1024.avif"
       ],
@@ -3314,6 +4102,10 @@
       [
         512,
         "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/payload-wordpress-vs-astro-768.webp"
       ],
       [
         1024,
@@ -3335,6 +4127,10 @@
         "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-1024.avif"
       ],
@@ -3347,6 +4143,10 @@
       [
         512,
         "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/site-manage-tui-768.webp"
       ],
       [
         1024,
@@ -3368,6 +4168,10 @@
         "/assets/writeups/from-wordpress-to-astro/images/validation-gate-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/from-wordpress-to-astro/images/validation-gate-1024.avif"
       ],
@@ -3380,6 +4184,10 @@
       [
         512,
         "/assets/writeups/from-wordpress-to-astro/images/validation-gate-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-wordpress-to-astro/images/validation-gate-768.webp"
       ],
       [
         1024,
@@ -3401,6 +4209,10 @@
         "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-1024.avif"
       ],
@@ -3413,6 +4225,10 @@
       [
         512,
         "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model-768.webp"
       ],
       [
         1024,
@@ -3434,6 +4250,10 @@
         "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-768.avif"
+      ],
+      [
         1020,
         "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-1020.avif"
       ]
@@ -3442,6 +4262,10 @@
       [
         512,
         "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/math-quiz-game/images/math-quiz-game-home-screen-768.webp"
       ],
       [
         1020,
@@ -3459,6 +4283,10 @@
         "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-768.avif"
+      ],
+      [
         1020,
         "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-1020.avif"
       ]
@@ -3467,6 +4295,10 @@
       [
         512,
         "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/oop-football-score-simulator/images/oop-football-score-simulator-output-768.webp"
       ],
       [
         1020,
@@ -3484,6 +4316,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-1024.avif"
       ],
@@ -3496,6 +4332,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-device-posture-policy-768.webp"
       ],
       [
         1024,
@@ -3517,6 +4357,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-1024.avif"
       ],
@@ -3529,6 +4373,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-forbidden-page-768.webp"
       ],
       [
         1024,
@@ -3550,6 +4398,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-1024.avif"
       ],
@@ -3562,6 +4414,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-access-wordpress-admin-application-768.webp"
       ],
       [
         1024,
@@ -3583,6 +4439,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-768.avif"
+      ],
+      [
         1012,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-1012.avif"
       ]
@@ -3591,6 +4451,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-hsts-settings-768.webp"
       ],
       [
         1012,
@@ -3608,6 +4472,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-1024.avif"
       ],
@@ -3620,6 +4488,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-security-header-rule-768.webp"
       ],
       [
         1024,
@@ -3641,6 +4513,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-1024.avif"
       ],
@@ -3653,6 +4529,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-dns-records-768.webp"
       ],
       [
         1024,
@@ -3674,6 +4554,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-1024.avif"
       ],
@@ -3686,6 +4570,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-log-768.webp"
       ],
       [
         1024,
@@ -3707,6 +4595,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-1024.avif"
       ],
@@ -3719,6 +4611,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-security-rules-768.webp"
       ],
       [
         1024,
@@ -3740,6 +4636,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-1024.avif"
       ],
@@ -3752,6 +4652,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-wordpress-traffic-dashboard-768.webp"
       ],
       [
         1024,
@@ -3773,6 +4677,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-1024.avif"
       ],
@@ -3785,6 +4693,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cloudflare-zero-trust-enrolled-devices-768.webp"
       ],
       [
         1024,
@@ -3806,6 +4718,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-1024.avif"
       ],
@@ -3818,6 +4734,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/cpanel-two-factor-authentication-login-768.webp"
       ],
       [
         1024,
@@ -3839,6 +4759,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-1024.avif"
       ],
@@ -3851,6 +4775,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/custom-wordpress-passkey-login-768.webp"
       ],
       [
         1024,
@@ -3872,6 +4800,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-1024.avif"
       ],
@@ -3884,6 +4816,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/mozilla-observatory-security-report-768.webp"
       ],
       [
         1024,
@@ -3905,6 +4841,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-1024.avif"
       ],
@@ -3917,6 +4857,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/phpmyadmin-webauthn-database-table-768.webp"
       ],
       [
         1024,
@@ -3938,6 +4882,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-1024.avif"
       ],
@@ -3950,6 +4898,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-cloudflare-security-cover-768.webp"
       ],
       [
         1024,
@@ -3971,6 +4923,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-1024.avif"
       ],
@@ -3983,6 +4939,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-header-curl-tests-768.webp"
       ],
       [
         1024,
@@ -4004,6 +4964,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-1024.avif"
       ],
@@ -4016,6 +4980,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-headers-curl-response-768.webp"
       ],
       [
         1024,
@@ -4037,6 +5005,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-1024.avif"
       ],
@@ -4049,6 +5021,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-log-terminal-768.webp"
       ],
       [
         1024,
@@ -4070,6 +5046,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-1024.avif"
       ],
@@ -4082,6 +5062,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-code-over-ssh-768.webp"
       ],
       [
         1024,
@@ -4103,6 +5087,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-1024.avif"
       ],
@@ -4115,6 +5103,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-security-plugin-list-768.webp"
       ],
       [
         1024,
@@ -4136,6 +5128,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-1024.avif"
       ],
@@ -4148,6 +5144,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-customization-screen-768.webp"
       ],
       [
         1024,
@@ -4169,6 +5169,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-1024.avif"
       ],
@@ -4181,6 +5185,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-theme-file-editor-code-768.webp"
       ],
       [
         1024,
@@ -4202,6 +5210,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-1024.avif"
       ],
@@ -4214,6 +5226,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-admin-ajax-response-768.webp"
       ],
       [
         1024,
@@ -4235,6 +5251,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-1024.avif"
       ],
@@ -4247,6 +5267,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-config-code-768.webp"
       ],
       [
         1024,
@@ -4268,6 +5292,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-1024.avif"
       ],
@@ -4280,6 +5308,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-php-code-768.webp"
       ],
       [
         1024,
@@ -4301,6 +5333,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-1024.avif"
       ],
@@ -4313,6 +5349,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-webauthn-registration-success-768.webp"
       ],
       [
         1024,
@@ -4334,6 +5374,10 @@
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-1024.avif"
       ],
@@ -4346,6 +5390,10 @@
       [
         512,
         "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/securing-my-wordpress-site/images/wordpress-xmlrpc-access-blocked-768.webp"
       ],
       [
         1024,
@@ -4367,6 +5415,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-1024.avif"
       ],
@@ -4379,6 +5431,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/arp-spoofing-lab-cover-768.webp"
       ],
       [
         1024,
@@ -4400,6 +5456,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-1024.avif"
       ],
@@ -4412,6 +5472,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/arpspoof-attack-startup-768.webp"
       ],
       [
         1024,
@@ -4433,6 +5497,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-1024.avif"
       ],
@@ -4445,6 +5513,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-packet-tracer-arp-spoofing-topology-768.webp"
       ],
       [
         1024,
@@ -4466,6 +5538,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-1024.avif"
       ],
@@ -4478,6 +5554,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-router-arp-spoofing-config-768.webp"
       ],
       [
         1024,
@@ -4499,6 +5579,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-1024.avif"
       ],
@@ -4511,6 +5595,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/cisco-switch-arp-spoofing-config-768.webp"
       ],
       [
         1024,
@@ -4532,6 +5620,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-1024.avif"
       ],
@@ -4544,6 +5636,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-arp-spoofing-topology-768.webp"
       ],
       [
         1024,
@@ -4565,6 +5661,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-1024.avif"
       ],
@@ -4577,6 +5677,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-controller-connected-768.webp"
       ],
       [
         1024,
@@ -4598,6 +5702,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-1024.avif"
       ],
@@ -4610,6 +5718,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-intercepted-traffic-768.webp"
       ],
       [
         1024,
@@ -4631,6 +5743,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-1024.avif"
       ],
@@ -4643,6 +5759,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-host-curl-normal-traffic-768.webp"
       ],
       [
         1024,
@@ -4664,6 +5784,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-1024.avif"
       ],
@@ -4676,6 +5800,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/mininet-network-startup-768.webp"
       ],
       [
         1024,
@@ -4697,6 +5825,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-1024.avif"
       ],
@@ -4709,6 +5841,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/python-http-server-startup-768.webp"
       ],
       [
         1024,
@@ -4730,6 +5866,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-1024.avif"
       ],
@@ -4742,6 +5882,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-intercepted-tcp-traffic-768.webp"
       ],
       [
         1024,
@@ -4763,6 +5907,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-1024.avif"
       ],
@@ -4775,6 +5923,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-packet-capture-startup-768.webp"
       ],
       [
         1024,
@@ -4796,6 +5948,10 @@
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-1024.avif"
       ],
@@ -4808,6 +5964,10 @@
       [
         512,
         "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/simulating-arp-spoofing/images/wireshark-spoofed-arp-reply-capture-768.webp"
       ],
       [
         1024,
@@ -4829,6 +5989,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-1024.avif"
       ],
@@ -4841,6 +6005,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/isolated-vmware-lab-topology-768.webp"
       ],
       [
         1024,
@@ -4862,6 +6030,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-1024.avif"
       ],
@@ -4874,6 +6046,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo-768.webp"
       ],
       [
         1024,
@@ -4895,6 +6071,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-1024.avif"
       ],
@@ -4907,6 +6087,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-backdoor-trigger-packet-capture-768.webp"
       ],
       [
         1024,
@@ -4928,6 +6112,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-1024.avif"
       ],
@@ -4940,6 +6128,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-full-packet-capture-768.webp"
       ],
       [
         1024,
@@ -4961,6 +6153,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-1024.avif"
       ],
@@ -4973,6 +6169,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-meterpreter-sysinfo-session-768.webp"
       ],
       [
         1024,
@@ -4994,6 +6194,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-1024.avif"
       ],
@@ -5006,6 +6210,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-nmap-service-scan-768.webp"
       ],
       [
         1024,
@@ -5027,6 +6235,10 @@
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-1024.avif"
       ],
@@ -5039,6 +6251,10 @@
       [
         512,
         "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/vsftpd-searchsploit-results-768.webp"
       ],
       [
         1024,
@@ -5060,6 +6276,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-1024.avif"
       ],
@@ -5072,6 +6292,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/adguard-vps-subdomain-dns-rewrites-768.webp"
       ],
       [
         1024,
@@ -5093,6 +6317,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-1024.avif"
       ],
@@ -5105,6 +6333,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/nmap-vps-all-ports-filtered-768.webp"
       ],
       [
         1024,
@@ -5126,6 +6358,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-1024.avif"
       ],
@@ -5138,6 +6374,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/offline-ca-vm-ssh-session-768.webp"
       ],
       [
         1024,
@@ -5159,6 +6399,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-1024.avif"
       ],
@@ -5171,6 +6415,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/portainer-two-environments-connected-768.webp"
       ],
       [
         1024,
@@ -5192,6 +6440,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-1024.avif"
       ],
@@ -5204,6 +6456,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/resolvectl-dns-over-tls-confirmed-768.webp"
       ],
       [
         1024,
@@ -5225,6 +6481,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-1024.avif"
       ],
@@ -5237,6 +6497,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/systemd-resolved-cloudflare-dot-config-768.webp"
       ],
       [
         1024,
@@ -5258,6 +6522,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-1024.avif"
       ],
@@ -5270,6 +6538,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-admin-exit-node-approved-768.webp"
       ],
       [
         1024,
@@ -5291,6 +6563,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-1024.avif"
       ],
@@ -5303,6 +6579,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/tailscale-lock-subnet-route-ping-768.webp"
       ],
       [
         1024,
@@ -5324,6 +6604,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-1024.avif"
       ],
@@ -5336,6 +6620,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/ubuntu-vm-nftables-ssh-restriction-768.webp"
       ],
       [
         1024,
@@ -5357,6 +6645,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-1024.avif"
       ],
@@ -5369,6 +6661,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/uptime-kuma-all-monitors-green-768.webp"
       ],
       [
         1024,
@@ -5390,6 +6686,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-1024.avif"
       ],
@@ -5402,6 +6702,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/vps-nftables-firewall-config-768.webp"
       ],
       [
         1024,
@@ -5423,6 +6727,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-1024.avif"
       ],
@@ -5435,6 +6743,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/windows-firewall-ssh-tailscale-cgnat-only-768.webp"
       ],
       [
         1024,
@@ -5456,6 +6768,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-1024.avif"
       ],
@@ -5468,6 +6784,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-dns-over-tls-after-dot-768.webp"
       ],
       [
         1024,
@@ -5489,6 +6809,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-1024.avif"
       ],
@@ -5501,6 +6825,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/wireshark-plaintext-dns-before-dot-768.webp"
       ],
       [
         1024,
@@ -5522,6 +6850,10 @@
         "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-512.avif"
       ],
       [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-768.avif"
+      ],
+      [
         1024,
         "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-1024.avif"
       ],
@@ -5534,6 +6866,10 @@
       [
         512,
         "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/zero-trust-private-infrastructure/images/zero-trust-private-infrastructure-cover-768.webp"
       ],
       [
         1024,
