@@ -21,11 +21,20 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Import disclosure public key
+        run: gpg --import public/.well-known/openpgpkey/hu/*
+
       - name: Check security.txt Expires
         id: check
         run: |
-          set -e
-          DAYS_REMAINING=$(node tests/audits/check-security-txt.mjs 2>&1 | grep -oE 'expires in [0-9]+d' | grep -oE '[0-9]+' || echo "0")
+          set -euo pipefail
+          OUTPUT=$(node tests/audits/check-security-txt.mjs 2>&1) || {
+            echo "$OUTPUT"
+            echo "::error::check-security-txt.mjs failed; expiry not evaluated."
+            exit 1
+          }
+          echo "$OUTPUT"
+          DAYS_REMAINING=$(printf '%s\n' "$OUTPUT" | grep -oE 'expires in [0-9]+d' | grep -oE '[0-9]+')
           echo "days_remaining=$DAYS_REMAINING" >> "$GITHUB_OUTPUT"
           if [ "$DAYS_REMAINING" -lt 60 ]; then
             echo "expires_soon=true" >> "$GITHUB_OUTPUT"
