@@ -486,19 +486,24 @@ GitHub Actions provide the remote quality gate:
   runs the registry publish gate (`npm run publish:check -- --no-sync`) on a
   clean runner and uploads a CycloneDX SBOM artifact, so the committed tree
   must pass everything the local gate passes except the local-only vault
-  parity check; `e2e`, which builds the site, serves it with `astro preview`,
-  and runs functional checks across Chromium, Firefox, and WebKit; and
-  `visual`, a dedicated macOS Chromium visual-regression job. Browser binaries
+  parity check; and a `playwright` matrix whose `e2e` leg builds the site,
+  serves it with `astro preview`, and runs functional checks across Chromium,
+  Firefox, and WebKit, and whose `visual` leg is a macOS Chromium
+  visual-regression run. A `deploy` job starts alongside `gate` and waits for
+  Cloudflare Pages to finish deploying the same commit (a preview on a pull
+  request, production on `main`), so the deployment has a node in the graph
+  and `verify` cannot start before it is live. Browser binaries
   are cached by Playwright version rather than lockfile hash, so Dependabot's
   lockfile rewrites still hit the cache. The visual job uses committed PNG
   baselines and uploads the HTML report plus `test-results/` so expected,
   actual, and diff images are retained on failure. Approved baseline PNG
   changes are committed with the frontend change, giving GitHub a durable
-  version-to-version image audit trail. On a push to `main` the three converge
-  on `verify`, which runs `bin/deploy-verify.mjs` against production. Every
-  job writes its own summary to the run page: the gate's audit table, the
-  publish gate's step table, per-browser Playwright results, and `verify`'s
-  per-check production table. On a pull request, `report` gathers those
+  version-to-version image audit trail. On a push to `main`, `build`,
+  `playwright`, and `deploy` converge on `verify`, which runs
+  `bin/deploy-verify.mjs` against production. Every job writes its own
+  summary to the run page: the gate's audit table, the publish gate's step
+  table, per-browser Playwright results, the Cloudflare Pages deployment, and
+  `verify`'s per-check production table. On a pull request, `report` gathers those
   summaries and posts them as one comment that updates in place on each
   push, so the tables are readable without opening the run. A failed probe
   opens an issue that closes itself on the next clean run.
