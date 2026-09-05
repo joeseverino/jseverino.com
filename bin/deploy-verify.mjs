@@ -13,6 +13,7 @@ const requiredChecks = new Set([
   'build',
   'e2e',
   'visual',
+  'edge',
   'analyze javascript-typescript',
   'Cloudflare Pages',
 ]);

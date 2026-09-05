@@ -190,7 +190,7 @@ async function diagnose() {
       say(COLOR.blue('Phase 4: Running Post-Build Audits and Browser Tests...'));
       const postAudits = auditsFor('diagnose', 'post-build').filter((a) => runTests || a.id !== 'browser-tests');
       const postResults = await Promise.all(
-        postAudits.map((audit) => runAudit(audit, audit.id === 'browser-tests' ? { PREBUILT: '1' } : undefined)),
+        postAudits.map((audit) => runAudit(audit, ['browser-tests', 'edge-tests'].includes(audit.id) ? { PREBUILT: '1' } : undefined)),
       );
       checks.push(...postResults);
       postResults.forEach(printResult);

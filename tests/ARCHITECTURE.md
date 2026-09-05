@@ -69,15 +69,15 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the functions type check and the functions/schema (edge) parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, structural HTML, and built-page SEO metadata. The same gate runs in CI on every push (the `build` job in `ci.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
 
    `npm run publish:check:ci` ([`bin/ci-rehearsal.mjs`](../bin/ci-rehearsal.mjs)) rehearses the runner's conditions locally — `CI=1` plus a scratch GPG keyring seeded only from the committed WKD key — so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
-2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
+2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the edge runtime suite (`tests/edge/`, served through `wrangler pages dev`), the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
 3. **`npm run diagnose`** — runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
    - `npm run diagnose -- --no-tests` runs static checks and the build, skipping the browser tests.
    - `npm run -s diagnose -- --json` emits a single JSON document (per-check status, durations, rerun commands for failures) instead of console output, for agents and CI to consume without parsing prose.
 
    `diagnose` builds once via `build:static` and passes `PREBUILT=1` to the
-   Playwright suite, so the browser tests serve that artifact instead of
-   rebuilding it inside `playwright.config.ts`'s `webServer`.
+   Playwright and edge suites, so both serve that artifact instead of
+   rebuilding it inside their `webServer`.
 
 ### What there is to read
 
@@ -126,7 +126,8 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Perf | [page weight budget](#check-page-weightmjs) | `tests/audits/check-page-weight.mjs` | Per-page HTML, total CSS, and total JS stay within their byte budgets. |
 | SEO | [page metadata](#check-seomjs) | `tests/audits/check-seo.mjs` | Every built page has title, canonical, og:title, og:image, and valid JSON-LD. |
 | Visual | [visual regression](#5-visual-regression) | `tests/playwright/visual.spec.ts` | Page and component screenshots match committed macOS Chromium baselines. |
-| Post-push | [deploy verification](#6-post-push-deploy-verification) | `bin/deploy-verify.mjs` | Remote CI status, prod dependency audit, live headers, live sitemap 200s, open CodeQL alerts. |
+| Edge runtime | [edge suite](#the-edge-runtime-suite-testsedge) | `tests/edge/runtime.spec.ts` | Served through `wrangler pages dev` before deploy: the CSP nonce on every script tag and rotating per request, the `_headers` security and cache rules, a real 404, the contact function's refusals, byte-exact `security.txt`, the WKD key's content type. |
+| Post-push | [deploy verification](#post-push-deploy-verification) | `bin/deploy-verify.mjs` | Remote CI status, prod dependency audit, live headers, live sitemap 200s, open CodeQL alerts. |
 | CI | CodeQL | `.github/workflows/codeql.yml` | Semantic JS/TS scanning for injection, XSS, prototype pollution. |
 | CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
 | CI | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Supply-chain posture: branch protection, pinned actions, token scope. |
@@ -441,13 +442,48 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 ---
 
-## 6. Post-push deploy verification
+## 6. Edge runtime and post-push verification
 
-`bin/deploy-verify.mjs` (`npm run deploy:verify`) runs after a push to `main` and confirms the live deploy matches the local gate:
+### The edge runtime suite (`tests/edge/`)
+
+`astro preview` serves static files only. The CSP middleware
+([`functions/_middleware.ts`](../functions/_middleware.ts)), the Pages Functions,
+and the [`public/_headers`](../public/_headers) rules exist only on Cloudflare's
+runtime, so the browser suite cannot see them. The edge suite serves the built
+output through `wrangler pages dev` (Cloudflare's `workerd`, bundled with the
+`wrangler` devDependency; no account or token involved) and asserts the served
+responses. Config lives in [`playwright.edge.config.ts`](../playwright.edge.config.ts);
+the port and the compatibility date live in
+[`browser-test-env.mjs`](./browser-test-env.mjs), and the date must match the
+Pages project's runtime setting. The specs use Playwright's request fixture
+only, so no browser is launched.
+
+[`runtime.spec.ts`](./edge/runtime.spec.ts) asserts, against `/` and one writeup
+page picked from the build rather than a pinned slug:
+
+- the per-request CSP carries a nonce, `default-src 'none'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, the `report-to` / `report-uri` pair, and no `'unsafe-inline'` script source; the Trusted Types report-only policy and `Reporting-Endpoints` are present;
+- every `<script>` tag carries the header nonce, and the nonce rotates between requests;
+- the static security headers from `public/_headers` are present and no CORS header leaks onto HTML;
+- fingerprinted `/_astro/` assets are `immutable` for a year while chrome assets under `/assets/icons/` are short-lived and never immutable;
+- an unknown route returns a real `404`, and the sitedrift review proxy is absent from a production build;
+- `POST /api/contact` refuses a submission without a Turnstile token, a non-JSON body (`415`), malformed JSON, and fields outside the contract, all before Turnstile or D1 are touched;
+- `security.txt` is served byte-for-byte from the committed, signed file, and the WKD key is served as `application/octet-stream`.
+
+```sh
+npm run test:edge      # build, serve through wrangler pages dev, run the suite
+npm run edge:serve     # the same runtime on http://127.0.0.1:8788, for checks by hand
+```
+
+CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
+`release:check` and `diagnose` through the registry (`edge-tests`).
+
+### Post-push deploy verification
+
+`bin/deploy-verify.mjs` (`npm run deploy:verify`) runs after a push to `main`, from a residential IP, and confirms the live deploy matches the local gate. It is not run from CI: Cloudflare Bot Fight Mode challenges GitHub-hosted runners, and the edge suite above covers the runtime behaviour before deploy instead.
 
 1. **Repo state** — local branch is `main`, clean, fully pushed.
 2. **Production dependency audit** — `npm audit --omit=dev --audit-level=high`.
-3. **Remote checks** — polls the GitHub API until `build`, `e2e`, `visual`, CodeQL, and Cloudflare Pages report success.
+3. **Remote checks** — polls the GitHub API until `build`, `e2e`, `visual`, `edge`, CodeQL, and Cloudflare Pages report success.
 4. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source,
@@ -462,7 +498,7 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 | Workflow | Trigger | Enforces |
 | :--- | :--- | :--- |
-| `ci.yml` | push/PR to `main` | One dependency graph: `gate` (source integrity, repository policy, docs integrity, stylesheet lint) → `build` (the registry publish gate on a clean runner, plus a CycloneDX SBOM) / `playwright` matrix (`e2e`, `visual`), alongside `deploy` (waits for Cloudflare Pages to finish deploying the same commit) → `verify`. `verify` runs on a push to `main` only: required checks and Cloudflare Pages green, then live probes for headers, nonce rotation and script parity, sitemap 200s, a real 404, the contact Turnstile gate, `security.txt` parity, and zero code-scanning alerts. Every job writes a summary (gate audits, publish-gate steps, per-browser Playwright results, the Cloudflare Pages deployment, the production check table); on a pull request `report` posts them as one comment that updates in place; a failed probe opens a self-closing issue. |
+| `ci.yml` | push/PR to `main` | One dependency graph: `gate` (source integrity, repository policy, docs integrity, stylesheet lint) → `build` (the registry publish gate on a clean runner, plus a CycloneDX SBOM) / `playwright` matrix (`e2e`, `visual`, and `edge`, which serves the build through `wrangler pages dev` and asserts the CSP nonce, `_headers` rules, real 404, contact refusals, and `security.txt` parity), alongside `deploy` (waits for Cloudflare Pages to finish deploying the same commit). Every job writes a summary (gate audits, publish-gate steps, per-suite Playwright results, the Cloudflare Pages deployment); on a pull request `report` posts them as one comment that updates in place. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning. |

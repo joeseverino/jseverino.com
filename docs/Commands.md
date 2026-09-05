@@ -30,7 +30,7 @@ behind the scripts.
 | `npm run publish:check:ci` | The same gate under CI conditions: `CI=1` + a scratch keyring |
 | `npm run release:check` | Full gate: publish:check + browser/visual/policy + idempotence (macOS) |
 | `npm run gate:check` | CI's first job: the registry's fast pre-build audits, collect-all, before build, e2e, and visual start |
-| `npm run deploy:verify` | After pushing: verify remote CI + the live production deploy (CI runs the same script on every push to `main`) |
+| `npm run deploy:verify` | After pushing, from a residential IP: verify remote CI + the live production deploy |
 | `npm run build` | Type-check, then produce the static build (what CI's `build` job wraps) |
 
 ### Occasional — run when the specific need comes up
@@ -54,6 +54,8 @@ behind the scripts.
 | `npm run test:e2e:ui` | Playwright in interactive UI mode |
 | `npm run test:e2e:visual` | Visual-regression snapshots (macOS Chromium) |
 | `npm run test:e2e:visual:update` | Re-baseline visual snapshots after an intentional design change |
+| `npm run test:edge` | Serve the build through the Cloudflare runtime and assert headers, CSP nonces, cache rules, and the functions |
+| `npm run edge:serve` | Serve the build through `wrangler pages dev` for by-hand checks (middleware + functions active) |
 | `npm run clean:generated` | Remove build output + caches, then resolve conflict copies |
 | `npm run clean:conflicts` | Resolve iCloud conflict copies only |
 
@@ -154,18 +156,29 @@ names every broken invariant. Cheap on purpose: it finishes in under a minute
 so an unpinned action or a misaligned lockfile fails before `build`, `e2e`,
 and `visual` install anything. In CI the results land in the job summary.
 
-**`npm run deploy:verify`** — run after pushing `main`, and run automatically
-by CI on every push to `main` (the `verify` job in `ci.yml`). Confirms the local HEAD
-matches origin, audits production dependencies, polls the GitHub API until
-every required check (build, e2e, visual, CodeQL, Cloudflare Pages) is green,
+**`npm run test:edge`** — the edge runtime suite (`tests/edge/`). Builds, serves
+the output through `wrangler pages dev` with the compatibility date declared in
+`tests/browser-test-env.mjs`, and asserts what only Cloudflare's runtime
+produces: the per-request CSP nonce stamped on every script tag and rotating
+between requests, the `public/_headers` security and cache rules, a real 404,
+the contact function's refusals (no Turnstile token, wrong content type,
+malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
+WKD key's content type. CI's `edge` leg and the local `release:check` and
+`diagnose` gates run it. **`npm run edge:serve`** starts the same runtime on
+`http://127.0.0.1:8788` for by-hand checks.
+
+**`npm run deploy:verify`** — run after pushing `main`, from a residential IP;
+Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run
+it. Confirms the local HEAD matches origin, audits production dependencies,
+polls the GitHub API until every required check (build, e2e, visual, edge,
+CodeQL, Cloudflare Pages) is green,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
 is absent in production, the CSP nonce is stamped on every script tag and
 rotates between requests, an unknown route returns a real 404, `POST
 /api/contact` without a Turnstile token is refused, the live `security.txt`
 matches the committed file, and zero open code-scanning alerts. Every check
-runs even after an earlier one fails; in CI the per-check table lands in the
-job summary.
+runs even after an earlier one fails.
 
 **`npm run build`** — `check` + `build:static`; the plain compile pipeline
 without the audit gates. CI's `build` job runs the full `publish:check`
