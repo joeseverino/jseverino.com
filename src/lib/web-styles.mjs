@@ -4,11 +4,12 @@
 // Obsidian plugin's preview pane, any future tool) needs THREE things TOGETHER:
 //
 //   1. base.css           — the design system (tables, links, buttons, prose)
-//   2. the brand vars      — --color-primary / --color-primary-deep. These are
-//                            NOT in base.css; the site loads them from /brand.css.
-//                            base.css's tinted tables, zebra stripes, header
-//                            underline, links, and buttons all read --color-primary,
-//                            so base.css ALONE renders dead without them.
+//   2. the brand vars      — --color-primary / --color-primary-deep. base.css
+//                            imports them from src/styles/brand.css, so an
+//                            embedder that expands the imports (readCssEntry)
+//                            already has them; one that pastes base.css raw
+//                            does not, and its tinted tables, zebra stripes,
+//                            header underline, links, and buttons render dead.
 //   3. the Inter @font-face — base.css references Inter by name; the embedder must
 //                             supply a resolvable font URL (an inlined data URI in
 //                             an iframe, an absolute URL on the site).
@@ -24,6 +25,6 @@ export function previewStyles({ baseCss, fontUrl }) {
   return [
     `<style>${brandVarsCss()}</style>`,
     `<style>${baseCss}</style>`,
-    `<style>@font-face{font-family:Inter;font-weight:100 900;font-style:normal;font-display:swap;src:url(${fontUrl}) format('woff2')}</style>`,
+    `<style>@font-face{font-family:Inter;font-weight:400 700;font-style:normal;font-display:swap;src:url(${fontUrl}) format('woff2')}</style>`,
   ].join('\n');
 }

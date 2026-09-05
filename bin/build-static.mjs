@@ -7,11 +7,10 @@
 // identity in site-config.mjs, not hardcoded strings.
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
 import { buildOutDir } from '../src/lib/build-output.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = buildOutDir();
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 const sitedrift = path.join(siteRoot, 'node_modules/sitedrift/sitedrift.mjs');

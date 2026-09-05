@@ -10,10 +10,10 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AUDITS, auditsFor } from '../../tests/audits/registry.mjs';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = siteRoot;
 const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
 const VALID_PHASES = ['pre-build', 'post-build'];
 

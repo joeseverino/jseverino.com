@@ -33,7 +33,6 @@
   .mobile-nav::backdrop,
   .lightbox::backdrop {
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 }
 

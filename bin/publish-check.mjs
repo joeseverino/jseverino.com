@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { auditsFor } from '../tests/audits/registry.mjs';
 import { firstFailureLine, summarize } from './lib/audit-summary.mjs';
 import { run as spawnRun, status as printStatus } from './lib/run.mjs';
 import { annotate, appendSummary, outcome, table } from './lib/step-summary.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
 // be verified without sync-content rewriting src/content from the vault (which
 // could drag in unrelated vault drift). Use it when you haven't touched content.

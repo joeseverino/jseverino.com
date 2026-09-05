@@ -2,21 +2,16 @@
 // single-source decision in src/lib/build-output.mjs, walk its files, and
 // enforce the zero-pages floor — an empty or stale outDir is a broken build,
 // not a pass, so it exits non-zero instead of green-lighting "ok 0 pages".
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { resolveBuiltDir } from '../../src/lib/build-output.mjs';
+import { siteRoot } from '../../src/lib/site-root.mjs';
+import { walkFiles as walkTree } from '../../src/lib/walk.mjs';
 
-export const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+export { siteRoot };
 
-export function walkFiles(dir, predicate = () => true, files = []) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkFiles(full, predicate, files);
-    else if (predicate(entry.name)) files.push(full);
-  }
-  return files;
-}
+// The audits select built files by basename.
+export const walkFiles = (dir, predicate = () => true) =>
+  walkTree(dir, { filter: (_file, entry) => predicate(entry.name) });
 
 export function builtHtmlPages(auditName) {
   const distDir = resolveBuiltDir(siteRoot);

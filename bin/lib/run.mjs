@@ -4,7 +4,7 @@
 // unattended run forever), spawn failures (missing binary) surface as a failed
 // result instead of an unresolved promise, and output handling is either
 // captured for terse summaries or streamed live — never silently dropped.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 export const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 
@@ -24,6 +24,19 @@ export function stripAnsi(value) {
 
 export function status(label, detail) {
   console.log(`${label.padEnd(12)} ${detail}`);
+}
+
+export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Synchronous companion to run(): the trimmed stdout of a command that must
+// succeed, or an error carrying its stderr. For short git/npm queries whose
+// output is an input to the next step.
+export function runSync(cmd, args, { cwd } = {}) {
+  const result = spawnSync(cmd, args, { cwd, encoding: 'utf8' });
+  if (result.status !== 0) {
+    throw new Error(result.stderr.trim() || `${cmd} ${args.join(' ')} failed`);
+  }
+  return result.stdout.trim();
 }
 
 // Spawn `cmd args` and always resolve (never reject) with:

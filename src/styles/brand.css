@@ -1,0 +1,7 @@
+@layer tokens {
+
+/* brand:start — generated from the lockfile-pinned severino-brand contract by `npm run sync:tokens` (brandVarsCss in src/lib/brand.mjs). Edit tokens upstream, not here. */
+:root{--color-primary:#1E3A8A;--color-primary-deep:#14245C}@media(prefers-color-scheme:dark){:root:not([data-theme-mode="light"]){--color-primary:#7C9CE0;--color-primary-deep:#A8C0F0}}:root[data-theme-mode="dark"]{--color-primary:#7C9CE0;--color-primary-deep:#A8C0F0}:root[data-theme-mode="light"]{--color-primary:#1E3A8A;--color-primary-deep:#14245C}
+/* brand:end */
+
+}

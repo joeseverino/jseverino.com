@@ -81,9 +81,15 @@ export const AUDITS = [
   },
   {
     id: 'unit-tests', label: 'unit', name: 'Unit Test Suite', phase: 'pre-build',
-    exec: { cmd: 'node', args: ['--disable-warning=ExperimentalWarning', '--experimental-strip-types', '--test', 'tests/unit/**/*.test.ts'] },
+    exec: { cmd: 'node', args: ['--test', 'tests/unit/**/*.test.ts'] },
     gates: ['publish', 'diagnose'], summary: 'silent',
     fix: 'A unit spec failed: the markdown DSL, a Cloudflare Pages function, the gate harness, or the registry shape. Run `npm run test:unit` and reconcile the code or the expected behavior in `tests/unit/`.',
+  },
+  {
+    id: 'docs-projection', label: 'docs-sync', name: 'Generated Documentation Blocks', phase: 'pre-build',
+    exec: { cmd: 'node', args: ['bin/sync-docs.mjs', '--check'] },
+    gates: ['gate', 'publish', 'diagnose'],
+    fix: 'A generated block in docs/Commands.md or tests/ARCHITECTURE.md lags its source (the groups in bin/help.mjs, the gates in tests/audits/registry.mjs). Run `npm run sync:docs` and commit the result.',
   },
   {
     id: 'docs-check', label: 'docs', name: 'Docs Link Integrity', phase: 'pre-build',

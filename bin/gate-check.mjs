@@ -4,14 +4,12 @@
 // stylesheet lint) that should fail before build, e2e, and visual spend three
 // runners. Collect-all, so one report names every broken invariant, with the
 // same one-line summaries publish:check prints for the same audits.
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { auditsFor } from '../tests/audits/registry.mjs';
 import { firstFailureLine, summarize } from './lib/audit-summary.mjs';
 import { run, status } from './lib/run.mjs';
 import { annotate, appendSummary, endGroup, group, inActions, outcome, table } from './lib/step-summary.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rows = [];
 
 for (const audit of auditsFor('gate')) {

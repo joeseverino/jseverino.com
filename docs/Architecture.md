@@ -233,10 +233,12 @@ For every HTML response, [`functions/_middleware.ts`](../functions/_middleware.t
 
 1. **Skips bodyless responses.** It immediately returns the original response for `304 Not Modified` and `204 No Content` statuses, preventing broken caching behavior or empty documents.
 2. Generates a per-request nonce.
-3. Uses `HTMLRewriter` to attach the nonce to every `<script>` tag in the response body.
+3. Uses `HTMLRewriter` to attach the nonce to every `<script>` and `<style>` tag in the response body. The site stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request and `style-src` stays nonce-strict.
 4. **Strips decompression headers.** `HTMLRewriter` decompresses the response stream but does not automatically remove the `Content-Encoding` or `Content-Length` headers. The middleware explicitly deletes these headers after transformation to ensure the browser correctly parses the uncompressed HTML, preventing intermittent blank page errors.
 5. Emits a `Content-Security-Policy` response header containing that same nonce.
-6. Emits `Reporting-Endpoints` plus CSP `report-to` / `report-uri` directives pointing at `/api/csp-report`.
+6. Emits `Reporting-Endpoints` plus the CSP `report-to` directive pointing at `/api/csp-report` (the deprecated `report-uri` is not sent), and a report-only companion policy that stages `'strict-dynamic'` and Trusted Types under the same nonce.
+
+The origin and report endpoint the middleware and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.mjs`](../src/lib/site-config.mjs) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); the contract-projections audit fails when it is stale.
 
 Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block — which is data, not executable code, but still receives a nonce. This means CSP enforcement applies to every script the browser sees, and there is no inline executable JavaScript on the page at all.
 
@@ -332,7 +334,7 @@ Resource hints are advisory: a browser may skip them under tight CPU/memory budg
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
 | `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
-| `public/assets/fonts/` | Repo | Subset web fonts (Inter variable WOFF2) | Hand-edited in the repo |
+| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `npm run make:font` ([`bin/make-font.mjs`](../bin/make-font.mjs); re-subsets the committed file, or an upstream Inter release via `--source`) |
 | `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `npm run make:icons` |
 | `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `npm run make:icons` (marks) / headshot hand-added |
 | `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `npm run make:og` |
@@ -358,7 +360,7 @@ Favicons, social cards, and HD brand marks are all generated from one place:
 
 The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `npm run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.mjs`; `npm run check:tokens` is the non-mutating CI drift gate. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
 
-To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` are emitted at runtime by `brand.css.ts` from `BRAND.navy`/`navyDeep`).
+To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
 
 For the full story (how the brand went from an inherited WordPress purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
 

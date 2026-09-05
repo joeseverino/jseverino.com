@@ -9,12 +9,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../../src/lib/site-root.mjs';
 
-const writeupsDir = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../../src/content/writeups',
-);
+const writeupsDir = path.join(siteRoot, 'src/content/writeups');
 
 const slugs = fs
   .readdirSync(writeupsDir, { withFileTypes: true })

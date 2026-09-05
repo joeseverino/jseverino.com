@@ -1,21 +1,11 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../src/lib/site-root.mjs';
+import { walkFiles } from '../../src/lib/walk.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const assetsRoot = path.join(siteRoot, 'public/assets');
 const warnBytes = Number(process.env.ASSET_WARN_MB ?? 1.5) * 1024 * 1024;
-
-function walk(dir, files = []) {
-  if (!fs.existsSync(dir)) return files;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(fullPath, files);
-    if (entry.isFile()) files.push(fullPath);
-  }
-  return files;
-}
 
 function formatBytes(bytes) {
   if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -23,8 +13,7 @@ function formatBytes(bytes) {
   return `${bytes} B`;
 }
 
-const images = walk(assetsRoot)
-  .filter((file) => /\.(?:png|jpe?g|webp|gif|svg)$/i.test(file))
+const images = walkFiles(assetsRoot, { filter: (file) => /\.(?:png|jpe?g|webp|gif|svg)$/i.test(file) })
   .map((file) => ({
     file,
     relative: path.relative(siteRoot, file),

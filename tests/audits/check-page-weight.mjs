@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Deterministic performance budget over the built output — the local, flake-free
 // complement to the CI Lighthouse run. Three budgets, checked in bytes on disk:
-// per-page HTML, total shipped CSS, and total shipped JS. The numbers are set
-// from the measured baseline (~80 KB worst page, ~25 KB CSS, ~2.5 KB JS) with
-// generous headroom, so a failure means a real regression — a runaway page, a
-// style explosion, or a framework bundle sneaking into a no-framework site.
-// Raising a budget is allowed, but it should be a conscious commit, not drift.
+// per-page HTML, the stylesheet every page inlines, and total shipped JS. The
+// numbers are set from the measured baseline (~115 KB worst page with the
+// ~36 KB stylesheet inlined, ~5 KB JS) with headroom, so a failure means a
+// real regression — a runaway page, a style explosion, or a framework bundle
+// sneaking into a no-framework site. Raising a budget is allowed, but it
+// should be a conscious commit, not drift.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,9 +36,15 @@ for (const file of htmlFiles) {
   }
 }
 
-// public/embed/bundle.css is the embeddable distribution artifact (font
-// inlined); no page loads it, so it stays out of the page CSS budget.
-const totalCss = sum(files.filter((file) => file.endsWith('.css') && !file.includes('/embed/')));
+// Astro inlines the one site stylesheet into every page (build.inlineStylesheets),
+// so the CSS budget is the largest <style> block any page carries. Any external
+// .css still counts too, except public/embed/bundle.css: that is the embeddable
+// distribution artifact (font inlined) and no page loads it.
+const inlineCss = Math.max(
+  0,
+  ...htmlFiles.map((file) => (fs.readFileSync(file, 'utf8').match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '').length),
+);
+const totalCss = inlineCss + sum(files.filter((file) => file.endsWith('.css') && !file.includes('/embed/')));
 if (totalCss > BUDGET.totalCssBytes) {
   failures.push(`total CSS ${kb(totalCss)} exceeds the ${kb(BUDGET.totalCssBytes)} budget`);
 }

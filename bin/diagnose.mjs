@@ -4,12 +4,12 @@
 // with a clipped excerpt of each failure plus the exact command to rerun it.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AUDITS, auditsFor } from '../tests/audits/registry.mjs';
 import { browserTestEnv } from '../tests/browser-test-env.mjs';
 import { COLOR, run } from './lib/run.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const reportPath = path.join(root, '.validation-report.md');
 
 // Remediation text comes from the registry; orchestration-only checks (build,

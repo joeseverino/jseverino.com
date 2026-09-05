@@ -6,11 +6,11 @@
 // compatibility date have one home (tests/browser-test-env.mjs).
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { buildOutDir } from '../src/lib/build-output.mjs';
 import { edgeRuntime } from '../tests/browser-test-env.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 
 const child = spawn(
   path.join(root, 'node_modules/.bin/wrangler'),

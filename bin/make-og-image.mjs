@@ -1,12 +1,12 @@
 // Generates the 1200x630 Open Graph social card at public/assets/og/og-default.png.
 // Run with: node bin/make-og-image.mjs
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { brandCardColors } from '../src/lib/brand.mjs';
 import { SITE } from '../src/lib/site-config.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const browser = await launchBrowser();
 try {
   await renderCard(browser, {

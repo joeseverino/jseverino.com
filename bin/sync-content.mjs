@@ -3,10 +3,11 @@ import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import { stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
 import { createEducationSource, createResumeSource, createVaultSource } from './content-sync/source-adapters.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 import {
   createPublicProjection,
   rewritePageAssetPaths,
@@ -14,7 +15,6 @@ import {
   stripRepeatedDescription,
 } from './content-sync/public-projection.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot = process.env.VAULT_DIR
   ? path.resolve(process.env.VAULT_DIR)
   : path.resolve(siteRoot, '../../Severino Labs');

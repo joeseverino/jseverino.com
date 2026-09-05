@@ -9,10 +9,9 @@
 import fs from 'node:fs';
 import fsPromises from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '../src/lib/frontmatter.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const writeupsDir = path.join(siteRoot, 'src/content/writeups');
 const outFile = path.join(siteRoot, 'public/content-index.json');
 const SITE_ORIGIN = 'https://jseverino.com';

@@ -279,14 +279,14 @@ allowlists only the third-party origins the site uses: Cloudflare Turnstile
 (`static.cloudflareinsights.com`).
 
 Production HTML uses a per-request nonce. The Pages middleware ([`functions/_middleware.ts`](./functions/_middleware.ts)) generates the
-nonce, attaches it to every `<script>` in the HTML response with
+nonce, attaches it to every `<script>` and `<style>` in the HTML response with
 `HTMLRewriter`, and emits a CSP containing that nonce. Cloudflare JavaScript
 Detections and the Web Analytics beacon also receive or match the production
 policy, so the site keeps a strict `script-src` without adding
-`'unsafe-inline'`. `style-src` is equally strict (`'self'` only, no
-`'unsafe-inline'`): Astro hoists every component style to fingerprinted
-external CSS in `/_astro/`, and no inline `<style>` blocks or
-`style="..."` attributes are emitted in production HTML.
+`'unsafe-inline'`. `style-src` is equally strict (`'self'` plus the same
+nonce, no `'unsafe-inline'`): Astro inlines the one site stylesheet as a single
+`<style>` block that carries the nonce, and no `style="..."` attributes are
+emitted in production HTML.
 
 Component scripts are emitted as external `/_astro/*.js` bundles
 (via `vite.build.assetsInlineLimit: 0` in
@@ -312,8 +312,12 @@ CSP is issued per-request by the middleware.
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
 
-The enforced policy also includes `report-to csp-endpoint` and the legacy
-fallback `report-uri https://jseverino.com/api/csp-report`. The report receiver
+The enforced policy reports through `report-to csp-endpoint` and the
+`Reporting-Endpoints` header only; the CSP3-deprecated `report-uri` is not
+sent. A report-only companion policy stages what the enforced policy will
+become: `'strict-dynamic'` under the same nonce (so trust flows from the nonced
+scripts rather than a host allowlist) plus `require-trusted-types-for 'script'`.
+It is promoted once the report log shows it blocks nothing real. The report receiver
 ([`functions/api/csp-report.ts`](./functions/api/csp-report.ts)) accepts both
 legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
 payload size, filters reports to `https://jseverino.com` documents, drops common

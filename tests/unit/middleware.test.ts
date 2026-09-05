@@ -71,14 +71,19 @@ describe('pass-through rules', () => {
 });
 
 describe('HTML responses', () => {
-  test('sets the enforced CSP, report-only policy, and reporting endpoints', async () => {
+  test('sets the enforced CSP, the staged report-only policy, and reporting endpoints', async () => {
     const response = await call(htmlResponse());
     const csp = response.headers.get('Content-Security-Policy') ?? '';
     assert.match(csp, /default-src 'none'/);
     assert.match(csp, /script-src 'self' 'nonce-/);
-    assert.match(csp, /report-uri https:\/\/jseverino\.com\/api\/csp-report/);
+    assert.match(csp, /report-to csp-endpoint/);
+    assert.doesNotMatch(csp, /report-uri/, 'report-uri is deprecated in CSP3');
     assert.doesNotMatch(csp, /unsafe-inline/);
-    assert.match(response.headers.get('Content-Security-Policy-Report-Only') ?? '', /require-trusted-types-for 'script'/);
+
+    const reportOnly = response.headers.get('Content-Security-Policy-Report-Only') ?? '';
+    assert.match(reportOnly, /require-trusted-types-for 'script'/);
+    assert.match(reportOnly, /'strict-dynamic'/);
+    assert.ok(reportOnly.includes(`'nonce-${nonceFrom(response)}'`), 'the report-only policy carries the enforced nonce');
     assert.equal(
       response.headers.get('Reporting-Endpoints'),
       'csp-endpoint="https://jseverino.com/api/csp-report"',
@@ -98,18 +103,18 @@ describe('HTML responses', () => {
     assert.notEqual(first, second);
   });
 
-  test('applies the same nonce from the CSP header to every script element', async () => {
+  test('applies the same nonce from the CSP header to every script and style element', async () => {
     const response = await call(htmlResponse());
     const nonce = nonceFrom(response);
+    assert.match(response.headers.get('Content-Security-Policy') ?? '', new RegExp(`style-src 'self' 'nonce-${nonce.replace(/[+/=]/g, '\\$&')}'`));
 
     assert.ok(lastRewriter, 'middleware ran the rewriter');
-    assert.equal(lastRewriter.handlers.length, 1);
-    assert.equal(lastRewriter.handlers[0].selector, 'script');
+    assert.deepEqual(lastRewriter.handlers.map((entry) => entry.selector), ['script', 'style']);
 
-    const attributes = new Map<string, string>();
-    lastRewriter.handlers[0].handler.element({
-      setAttribute: (name, value) => attributes.set(name, value),
-    });
-    assert.equal(attributes.get('nonce'), nonce);
+    for (const { handler } of lastRewriter.handlers) {
+      const attributes = new Map<string, string>();
+      handler.element({ setAttribute: (name, value) => attributes.set(name, value) });
+      assert.equal(attributes.get('nonce'), nonce);
+    }
   });
 });

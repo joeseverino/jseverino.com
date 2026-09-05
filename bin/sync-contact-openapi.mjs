@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const contract = JSON.parse(fs.readFileSync(path.join(root, 'contracts/contact.v1.json'), 'utf8'));
 const target = path.join(root, 'db/contact-openapi.json');
 const moduleTarget = path.join(root, 'functions/generated/contact-contract.ts');

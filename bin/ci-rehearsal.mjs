@@ -9,10 +9,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { run, status } from './lib/run.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const wkdDir = path.join(siteRoot, 'public/.well-known/openpgpkey/hu');
 
 const gnupgHome = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-rehearsal-gnupg-'));

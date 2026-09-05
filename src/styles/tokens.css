@@ -1,9 +1,12 @@
 @layer tokens {
 
+/* The file is subset by `npm run make:font` to the site's characters and this
+   weight range; declaring the same range keeps the browser from synthesizing
+   weights the font no longer carries. */
 @font-face {
   font-family: Inter;
   font-style: normal;
-  font-weight: 200 900;
+  font-weight: 400 700;
   font-display: swap;
   src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
 }
