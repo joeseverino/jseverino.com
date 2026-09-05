@@ -501,10 +501,10 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 | `ci.yml` | push/PR to `main` | One dependency graph: `gate` (source integrity, repository policy, docs integrity, stylesheet lint) → `build` (the registry publish gate on a clean runner, plus a CycloneDX SBOM) / `playwright` matrix (`e2e`, `visual`, and `edge`, which serves the build through `wrangler pages dev` and asserts the CSP nonce, `_headers` rules, real 404, contact refusals, and `security.txt` parity), alongside `deploy` (waits for Cloudflare Pages to finish deploying the same commit). Every job writes a summary (gate audits, publish-gate steps, per-suite Playwright results, the Cloudflare Pages deployment); on a pull request `report` posts them as one comment that updates in place. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. |
-| `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning. |
+| `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning, and a JSON pass rendered by `bin/scorecard-summary.mjs` into the job summary: the aggregate plus every check with Scorecard's reason. |
 | `workflow-lint.yml` | workflow changes | `actionlint` on Action YAML; also gates SHA-pinning. |
-| `link-check.yml` | docs changes | `lychee` audits internal/external markdown links. |
-| `lighthouse.yml` | key routes | Performance / a11y / SEO / best-practice baselines. |
+| `link-check.yml` | docs changes, weekly | `lychee` audits repository documentation links and public content links (self-domain links excluded; 403/429/999 accepted as answered) and writes both reports into the job summary. |
+| `lighthouse.yml` | weekly | `bin/lighthouse-check.mjs` runs the lockfile's Lighthouse against the URLs in `.lighthouserc.json` with its thresholds (accessibility 95 and SEO 90 fail; performance 85 and best practices 70 warn), writes the per-page scores to the job summary, and uploads the reports. |
 | `security-txt-expires.yml` | schedule | Opens an issue when `security.txt` nears expiry (runs `check-security-txt.mjs`). |
 | `dependabot-auto-merge.yml` | Dependabot PRs | Enables squash auto-merge for non-major updates; GitHub merges after every required check passes. |
 | `dependabot-stale.yml` | weekly | Opens a self-closing issue listing Dependabot PRs open past seven days. |

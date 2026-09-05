@@ -42,6 +42,7 @@ const GROUPS = [
       'scaffold:writeup-field': 'Add a field once to the canonical writeup contract',
       'draft:cover-alt': 'Draft writeup cover alt text via the Claude API',
       'sign:security': 'Re-sign public/.well-known/security.txt',
+      'check:lighthouse': 'Lighthouse against the live site with the thresholds in .lighthouserc.json (needs Chrome; CI runs it weekly)',
       'seo:preview': 'Preview a page Google snippet + metadata from built HTML',
       'preview': 'Serve the built site locally',
       'test:unit': 'Unit-test the markdown DSL (gates run it too via the registry)',

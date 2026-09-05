@@ -21,6 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # 403, 429, and 999 are accepted on purpose: they come from targets that
+      # wall off automated clients (LinkedIn, some vendor docs, rate limiters),
+      # and a link that answers at all is not a dead link. A real 404 or a
+      # connection failure still fails the run.
       - name: Check repository documentation links
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
         with:
@@ -50,6 +54,18 @@ jobs:
             --accept 200,204,206,301,302,303,307,308,403,429,999
             src/content/**/*.md
           fail: true
+
+      - name: Summarize link checks
+        if: always()
+        run: |
+          for report in lychee/repository-documentation.md lychee/public-content.md; do
+            [ -f "$report" ] || continue
+            {
+              printf '## %s\n\n' "$(basename "$report" .md | tr '-' ' ')"
+              cat "$report"
+              printf '\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - name: Upload link check reports
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

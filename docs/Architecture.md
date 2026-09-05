@@ -514,9 +514,9 @@ GitHub Actions provide the remote quality gate:
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
-- [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, then uploads lychee reports.
-- [`lighthouse`](../.github/workflows/lighthouse.yml) runs Lighthouse CI against selected live URLs and uploads the generated reports.
-- [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard and uploads SARIF to GitHub code scanning plus an artifact copy.
+- [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, writes both lychee reports into the job summary, and uploads them.
+- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `.lighthouserc.json` through `bin/lighthouse-check.mjs`, writes the per-page scores to the job summary, and uploads the reports.
+- [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
 

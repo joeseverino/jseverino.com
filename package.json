@@ -66,6 +66,7 @@
     "check:weight": "node tests/audits/check-page-weight.mjs",
     "check:seo": "node tests/audits/check-seo.mjs",
     "check:repo-policy": "node tests/audits/check-repository-policy.mjs",
+    "check:lighthouse": "node bin/lighthouse-check.mjs",
     "audit:assets": "node tests/audits/audit-assets.mjs"
   },
   "dependencies": {
@@ -94,6 +95,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
+    "lighthouse": "^13.4.1",
     "playwright": "^1.62.1",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v1.0.2/severino-brand-1.0.2.tgz",
     "sharp": "^0.35.4",

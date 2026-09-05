@@ -56,6 +56,7 @@ behind the scripts.
 | `npm run test:e2e:visual:update` | Re-baseline visual snapshots after an intentional design change |
 | `npm run test:edge` | Serve the build through the Cloudflare runtime and assert headers, CSP nonces, cache rules, and the functions |
 | `npm run edge:serve` | Serve the build through `wrangler pages dev` for by-hand checks (middleware + functions active) |
+| `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `.lighthouserc.json` (needs Chrome; CI runs it weekly) |
 | `npm run clean:generated` | Remove build output + caches, then resolve conflict copies |
 | `npm run clean:conflicts` | Resolve iCloud conflict copies only |
 
@@ -166,6 +167,15 @@ malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
 WKD key's content type. CI's `edge` leg and the local `release:check` and
 `diagnose` gates run it. **`npm run edge:serve`** starts the same runtime on
 `http://127.0.0.1:8788` for by-hand checks.
+
+**`npm run check:lighthouse`** — Lighthouse against the live site, using the
+lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
+URLs, device preset, and thresholds declared in `.lighthouserc.json`. Prints a
+score line per page, writes the table to the job summary in CI, and exits
+non-zero only on an `error`-level threshold. Needs Chrome. Expect best
+practices in the 70s from any client Cloudflare distrusts: Bot Fight Mode's
+injected detection script uses deprecated browser APIs, and PageSpeed Insights
+is not served that script.
 
 **`npm run deploy:verify`** — run after pushing `main`, from a residential IP;
 Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run

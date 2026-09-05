@@ -57,3 +57,6 @@ pnpm-debug.log*
 
 # Generated at build from src/content/writeups (see bin/make-content-index.mjs)
 public/content-index.json
+
+# Lighthouse output from bin/lighthouse-check.mjs
+lighthouse-reports/
