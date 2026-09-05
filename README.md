@@ -283,6 +283,7 @@ Do not commit:
 - [`docs/WordPress-To-Astro-Migration.md`](./docs/WordPress-To-Astro-Migration.md) documents the platform migration decision and performance comparison.
 - [`docs/Release-Checklist.md`](./docs/Release-Checklist.md) documents preflight, publish, signed tag, deploy, header, SEO, and accessibility checks.
 - [`SECURITY.md`](./SECURITY.md) documents the security posture and vulnerability reporting process.
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) documents how to report bugs, the verification gates a change passes, and the policy for adding tests.
 - [`LICENSE`](./LICENSE) covers the original source code, written content, and images in this repository. The repo is published for transparency and review; no rights are granted to copy, modify, or redistribute without prior written permission.
 
 ## History
