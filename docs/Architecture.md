@@ -498,8 +498,10 @@ GitHub Actions provide the remote quality gate:
   on `verify`, which runs `bin/deploy-verify.mjs` against production. Every
   job writes its own summary to the run page: the gate's audit table, the
   publish gate's step table, per-browser Playwright results, and `verify`'s
-  per-check production table. A failed probe opens an issue that closes
-  itself on the next clean run.
+  per-check production table. On a pull request, `report` gathers those
+  summaries and posts them as one comment that updates in place on each
+  push, so the tables are readable without opening the run. A failed probe
+  opens an issue that closes itself on the next clean run.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
@@ -509,7 +511,7 @@ GitHub Actions provide the remote quality gate:
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, and `issues: write` for the self-closing alerts (`verify`, `dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`verify`, `dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
 
 The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29); the failing checks are structural to a one-person project and are not real security gaps. The release checklist in [`docs/Release-Checklist.md`](./Release-Checklist.md#4-commit-and-push) documents the `gh api` query for confirming the dashboard is clean after any workflow or build-script change.
 

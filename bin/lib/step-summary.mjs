@@ -42,10 +42,12 @@ export function table(headers, rows) {
 }
 
 // Returns false outside Actions so callers can skip work that only feeds the
-// summary.
+// summary. JOB_SUMMARY_FILE receives a second copy: the step summary file is
+// private to its step, so a job that wants to hand its summary to a later job
+// (the PR comment) needs one it can upload.
 export function appendSummary(markdown) {
-  const file = process.env.GITHUB_STEP_SUMMARY;
-  if (!file) return false;
-  fs.appendFileSync(file, `${markdown}\n\n`);
+  const targets = [process.env.GITHUB_STEP_SUMMARY, process.env.JOB_SUMMARY_FILE].filter(Boolean);
+  if (targets.length === 0) return false;
+  for (const file of targets) fs.appendFileSync(file, `${markdown}\n\n`);
   return true;
 }
