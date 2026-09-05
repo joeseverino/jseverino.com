@@ -35,7 +35,7 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 | :--- | :--- | :--- |
 | `npm run publish:check` | local, pre-build | signatures, contrast, schema + edge parity, functions types, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page weight, structural HTML — also run by CI on every push (minus the local-only vault parity check) |
 | `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
-| `npm run deploy:verify` | after push | remote CI status, live HSTS/CSP headers, live sitemap 200s, open CodeQL alerts |
+| `npm run deploy:verify` | after push; CI runs it on every push to `main` | remote CI status, live HSTS/CSP headers, nonce rotation and script parity, sitemap 200s, real 404, contact Turnstile gate, `security.txt` parity, open CodeQL alerts |
 
 ### The one-stop gate: `npm run diagnose`
 

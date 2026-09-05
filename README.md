@@ -1,6 +1,6 @@
 # jseverino.com
 
-[![build](https://github.com/joeseverino/jseverino.com/actions/workflows/build.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/build.yml)
+[![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
 [![codeql](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
 [![dependency review](https://github.com/joeseverino/jseverino.com/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/dependency-review.yml)
 [![scorecard](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
@@ -213,15 +213,17 @@ In addition to local pre-commit checks, continuous security and build audits are
 
 | Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`build`](./.github/workflows/build.yml) | Runs the registry publish gate (`publish:check --no-sync`) in a clean container — the committed tree must pass everything the local gate passes, minus the vault parity check (its sources live only on the authoring machine). | Green gate on the committed tree & CycloneDX SBOM artifact. |
+| [`ci`](./.github/workflows/ci.yml) | One pipeline drawn as a dependency graph. `gate` (repository policy, documentation integrity, stylesheet lint) fans out to `build` (the registry publish gate `publish:check --no-sync` in a clean container, plus a CycloneDX SBOM), `e2e` (cross-browser Playwright), and `visual` (macOS Chromium baselines). On a push to `main` those converge on `verify`, which runs `deploy:verify` against production: required checks and the Cloudflare Pages build, then security headers, per-request CSP nonces, sitemap routes, a real 404, the contact form's Turnstile gate, and `security.txt` parity. | Green graph on the committed tree, SBOM artifact, and a per-check production table in the `verify` job summary; a failed probe opens an issue that closes on the next clean run. |
 | [`codeql`](./.github/workflows/codeql.yml) | Scans JavaScript and TypeScript source files for semantic vulnerabilities. | Clean GitHub code scanning dashboard (zero open alerts). |
 | [`dependency review`](./.github/workflows/dependency-review.yml) | Audits manifest package updates for high-severity advisories. | Pull request status validation. |
 | [`scorecard`](./.github/workflows/scorecard.yml) | Computes OpenSSF security scorecard health metrics. | Weekly SARIF supply-chain reports. |
 | [`workflow lint`](./.github/workflows/workflow-lint.yml) | Lints GitHub Action runner steps using actionlint. | PR/push syntax validation. |
 | [`link check`](./.github/workflows/link-check.yml) | Audits all Markdown documentation and public links via Lychee. | Detailed connectivity report artifacts. |
 | [`lighthouse`](./.github/workflows/lighthouse.yml) | Benchmarks performance, accessibility, and SEO using Lighthouse CI. | 100/100/100/100 score compliance. |
+| [`dependabot auto-merge`](./.github/workflows/dependabot-auto-merge.yml) | Enables squash auto-merge on Dependabot's minor and patch PRs; GitHub merges once every required check passes. | Dependency updates land without waiting on a manual merge. |
+| [`dependabot stale`](./.github/workflows/dependabot-stale.yml) | Weekly: opens an issue listing Dependabot PRs open longer than seven days, so a wedged auto-merge is never silent. | Self-closing issue labelled `dependabot-stale`. |
 
-Workflow dependencies are pinned to immutable SHAs or container digests. Every workflow declares a top-level `permissions: contents: read` and scopes any `security-events: write` to the specific job that uploads SARIF. Dependabot still checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml).
+Workflow dependencies are pinned to immutable SHAs or container digests. Every workflow declares a top-level `permissions: contents: read`; any wider scope (`security-events: write` for SARIF upload, `contents` and `pull-requests: write` for auto-merge, `issues: write` for self-closing alerts) is granted only to the specific job that needs it. Dependabot checks npm weekly and GitHub Actions monthly via [`.github/dependabot.yml`](./.github/dependabot.yml), ignores semver-major updates on both, and its minor and patch PRs auto-merge once the required checks pass.
 
 The GitHub code-scanning dashboard is kept at zero open alerts. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (Branch-Protection, Code-Review, Fuzzing, CII-Best-Practices, Maintained until the repo turns 90 days old) are dismissed with a "won't fix — solo personal repo" reason and an inline explanation. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29) — failing checks are structural to a one-person project and are not real security gaps.
 
