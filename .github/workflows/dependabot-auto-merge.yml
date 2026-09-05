@@ -1,0 +1,35 @@
+name: dependabot auto-merge
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  enable:
+    # Only PRs Dependabot authored, only on pushes Dependabot itself made (a
+    # human commit onto its branch must not re-arm auto-merge), and never on a
+    # fork of this repository.
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]' && github.repository == 'joeseverino/jseverino.com'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Read update metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        id: metadata
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # dependabot.yml already ignores semver-major updates; this guard keeps a
+      # major from auto-merging if that ignore is ever loosened. The PR still
+      # waits on every required check before GitHub performs the merge.
+      - name: Enable auto-merge
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

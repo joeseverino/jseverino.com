@@ -28,7 +28,7 @@ const GROUPS = [
       'publish:check': 'Fast local build gate (add `-- --no-sync` for code-only changes)',
       'publish:check:ci': 'Rehearse the CI gate: CI=1 + scratch keyring, before pushing workflow-affecting changes',
       'release:check': 'Full gate: publish:check + browser/visual/policy + idempotence (macOS)',
-      'deploy:verify': 'After pushing: verify remote CI + the live production deploy',
+      'deploy:verify': 'After pushing: verify remote CI + the live production deploy (CI runs it on every push to main)',
       'build': 'Type-check, then produce the static build',
     },
   },
@@ -56,6 +56,7 @@ const GROUPS = [
   {
     title: 'Internal — run by the commands above; rarely typed directly',
     items: {
+      'gate:check': "CI's first job — the registry's fast pre-build audits, collect-all, before build/e2e/visual start",
       'check': 'Used by build — CSS lint + unused-var + astro type/content check',
       'build:static': 'Used by build — astro build + sitedrift wrap',
       'lint:css': 'Individual audit (gates run it via tests/audits/registry.mjs)',

@@ -478,22 +478,40 @@ alerts.
 
 GitHub Actions provide the remote quality gate:
 
-- [`build`](../.github/workflows/build.yml) runs the registry publish gate (`npm run publish:check -- --no-sync`) on a clean runner and uploads a CycloneDX SBOM artifact, so the committed tree must pass everything the local gate passes except the local-only vault parity check.
+- [`ci`](../.github/workflows/ci.yml) is one pipeline drawn as a dependency
+  graph. `gate` runs the registry audits that claim the `gate` gate (source
+  integrity, repository policy, documentation integrity, stylesheet lint)
+  first, so an unpinned action or a misaligned lockfile fails before any
+  runner installs a browser. It fans out to `build`, which
+  runs the registry publish gate (`npm run publish:check -- --no-sync`) on a
+  clean runner and uploads a CycloneDX SBOM artifact, so the committed tree
+  must pass everything the local gate passes except the local-only vault
+  parity check; `e2e`, which builds the site, serves it with `astro preview`,
+  and runs functional checks across Chromium, Firefox, and WebKit; and
+  `visual`, a dedicated macOS Chromium visual-regression job. Browser binaries
+  are cached by Playwright version rather than lockfile hash, so Dependabot's
+  lockfile rewrites still hit the cache. The visual job uses committed PNG
+  baselines and uploads the HTML report plus `test-results/` so expected,
+  actual, and diff images are retained on failure. Approved baseline PNG
+  changes are committed with the frontend change, giving GitHub a durable
+  version-to-version image audit trail. On a push to `main` the three converge
+  on `verify`, which runs `bin/deploy-verify.mjs` against production. Every
+  job writes its own summary to the run page: the gate's audit table, the
+  publish gate's step table, per-browser Playwright results, and `verify`'s
+  per-check production table. On a pull request, `report` gathers those
+  summaries and posts them as one comment that updates in place on each
+  push, so the tables are readable without opening the run. A failed probe
+  opens an issue that closes itself on the next clean run.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
 - [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, then uploads lychee reports.
 - [`lighthouse`](../.github/workflows/lighthouse.yml) runs Lighthouse CI against selected live URLs and uploads the generated reports.
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard and uploads SARIF to GitHub code scanning plus an artifact copy.
-- [`playwright`](../.github/workflows/playwright.yml) builds the site, serves it
-  with `astro preview`, and runs functional checks across Chromium, Firefox, and
-  WebKit plus a dedicated macOS Chromium visual-regression job. The visual job
-  uses committed PNG baselines and uploads the HTML report plus `test-results/`
-  so expected, actual, and diff images are retained on failure. Approved
-  baseline PNG changes are committed with the frontend change, giving GitHub a
-  durable version-to-version image audit trail.
+- [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
+- [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
 
-Every workflow declares a top-level `permissions: contents: read`. Workflows that need to write SARIF to code scanning (`codeql`, `scorecard`) scope `security-events: write` at the **job** level only, so unrelated steps in the same workflow cannot inherit the elevated scope. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`verify`, `dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
 
 The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29); the failing checks are structural to a one-person project and are not real security gaps. The release checklist in [`docs/Release-Checklist.md`](./Release-Checklist.md#4-commit-and-push) documents the `gh api` query for confirming the dashboard is clean after any workflow or build-script change.
 

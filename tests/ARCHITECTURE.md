@@ -66,7 +66,7 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 
 ### The three gates
 
-1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the functions type check and the functions/schema (edge) parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, structural HTML, and built-page SEO metadata. The same gate runs in CI on every push (`build.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
+1. **`npm run publish:check`** — local build gate. Verifies content sync, CSS lint and the unused-variable check, design-token contrast, the signed `security.txt`, vault/Zod/MCP schema parity, the functions type check and the functions/schema (edge) parity, the unit test suite (markdown DSL, Cloudflare functions, gate harness, registry shape), the sitedrift preview guard, internal documentation integrity, then runs `astro check` and the production build, reports asset weight, and checks internal link integrity, the page-weight budget, structural HTML, and built-page SEO metadata. The same gate runs in CI on every push (the `build` job in `ci.yml`), so the green badge proves what a green local run proves — except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
 
    `npm run publish:check:ci` ([`bin/ci-rehearsal.mjs`](../bin/ci-rehearsal.mjs)) rehearses the runner's conditions locally — `CI=1` plus a scratch GPG keyring seeded only from the committed WKD key — so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
 2. **`npm run release:check`** — final local gate. Runs the cross-browser Playwright suite, the visual-regression snapshots, the repository-policy audit, and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
@@ -462,7 +462,7 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 | Workflow | Trigger | Enforces |
 | :--- | :--- | :--- |
-| `build.yml` | push/PR to `main` | The registry publish gate (`publish:check --no-sync`) on a clean runner — the committed tree must pass everything the local gate passes except the local-only vault parity check — plus a CycloneDX SBOM artifact. |
+| `ci.yml` | push/PR to `main` | One dependency graph: `gate` (repository policy, docs integrity, stylesheet lint) → `build` (the registry publish gate on a clean runner, plus a CycloneDX SBOM) / `e2e` / `visual` → `verify`. `verify` runs on a push to `main` only: required checks and Cloudflare Pages green, then live probes for headers, nonce rotation and script parity, sitemap 200s, a real 404, the contact Turnstile gate, `security.txt` parity, and zero code-scanning alerts. Every job writes a summary (gate audits, publish-gate steps, per-browser Playwright results, the production check table); on a pull request `report` posts them as one comment that updates in place; a failed probe opens a self-closing issue. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning. |
@@ -470,6 +470,8 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 | `link-check.yml` | docs changes | `lychee` audits internal/external markdown links. |
 | `lighthouse.yml` | key routes | Performance / a11y / SEO / best-practice baselines. |
 | `security-txt-expires.yml` | schedule | Opens an issue when `security.txt` nears expiry (runs `check-security-txt.mjs`). |
+| `dependabot-auto-merge.yml` | Dependabot PRs | Enables squash auto-merge for non-major updates; GitHub merges after every required check passes. |
+| `dependabot-stale.yml` | weekly | Opens a self-closing issue listing Dependabot PRs open past seven days. |
 
 ---
 

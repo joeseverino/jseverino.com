@@ -29,7 +29,8 @@ behind the scripts.
 | `npm run publish:check` | Fast local build gate (`-- --no-sync` for code-only changes) |
 | `npm run publish:check:ci` | The same gate under CI conditions: `CI=1` + a scratch keyring |
 | `npm run release:check` | Full gate: publish:check + browser/visual/policy + idempotence (macOS) |
-| `npm run deploy:verify` | After pushing: verify remote CI + the live production deploy |
+| `npm run gate:check` | CI's first job: the registry's fast pre-build audits, collect-all, before build, e2e, and visual start |
+| `npm run deploy:verify` | After pushing: verify remote CI + the live production deploy (CI runs the same script on every push to `main`) |
 | `npm run build` | Type-check, then produce the static build (what CI's `build` job wraps) |
 
 ### Occasional — run when the specific need comes up
@@ -146,12 +147,25 @@ on authoring-machine state, it fails here instead of after a push.
 fails if any of it mutated the worktree. Requires macOS because the committed
 visual baselines are macOS Chromium renders.
 
-**`npm run deploy:verify`** — run after pushing `main`. Confirms the local
-HEAD matches origin, audits production dependencies, polls the GitHub API
-until every required check (build, e2e, visual, CodeQL, Cloudflare Pages) is
-green, then probes the live site: security headers on `/` and a deep writeup
-page picked from the live sitemap, every sitemap URL returns 200, the preview
-proxy is absent in production, and zero open code-scanning alerts.
+**`npm run gate:check`** — the `gate` job in `ci.yml`. Runs the registry
+audits that claim the `gate` gate (source integrity, repository policy, docs
+link integrity, stylesheet lint) and keeps going after a failure so one report
+names every broken invariant. Cheap on purpose: it finishes in under a minute
+so an unpinned action or a misaligned lockfile fails before `build`, `e2e`,
+and `visual` install anything. In CI the results land in the job summary.
+
+**`npm run deploy:verify`** — run after pushing `main`, and run automatically
+by CI on every push to `main` (the `verify` job in `ci.yml`). Confirms the local HEAD
+matches origin, audits production dependencies, polls the GitHub API until
+every required check (build, e2e, visual, CodeQL, Cloudflare Pages) is green,
+then probes the live site: security headers on `/` and a deep writeup page
+picked from the live sitemap, every sitemap URL returns 200, the preview proxy
+is absent in production, the CSP nonce is stamped on every script tag and
+rotates between requests, an unknown route returns a real 404, `POST
+/api/contact` without a Turnstile token is refused, the live `security.txt`
+matches the committed file, and zero open code-scanning alerts. Every check
+runs even after an earlier one fails; in CI the per-check table lands in the
+job summary.
 
 **`npm run build`** — `check` + `build:static`; the plain compile pipeline
 without the audit gates. CI's `build` job runs the full `publish:check`

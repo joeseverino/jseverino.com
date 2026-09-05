@@ -2,7 +2,9 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { auditsFor } from '../tests/audits/registry.mjs';
-import { run as spawnRun, status } from './lib/run.mjs';
+import { firstFailureLine, summarize } from './lib/audit-summary.mjs';
+import { run as spawnRun, status as printStatus } from './lib/run.mjs';
+import { annotate, appendSummary, outcome, table } from './lib/step-summary.mjs';
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
@@ -11,6 +13,25 @@ const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 const noSync = process.argv.includes('--no-sync');
 const node = process.execPath;
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
+
+// Every status line also becomes a row of the job summary in CI.
+const rows = [];
+
+function status(label, detail) {
+  rows.push([label, true, detail]);
+  printStatus(label, detail);
+}
+
+function writeSummary() {
+  const failed = rows.filter(([, ok]) => ok === false).length;
+  appendSummary([
+    '## Publish gate',
+    '',
+    failed === 0 ? `All ${rows.length} steps passed.` : `Stopped at the first failure after ${rows.length} steps.`,
+    '',
+    table(['Step', 'Result', 'Detail'], rows.map(([label, ok, detail]) => [`\`${label}\``, outcome(ok), detail])),
+  ].join('\n'));
+}
 
 // Fail-fast wrapper: this gate stops at the first broken check.
 async function run(label, command, args, options = {}) {
@@ -21,6 +42,10 @@ async function run(label, command, args, options = {}) {
   });
 
   if (result.code !== 0) {
+    const reason = firstFailureLine(result.output);
+    rows.push([label, false, reason]);
+    annotate('error', `publish-check: ${label}`, reason);
+    writeSummary();
     console.error(`\nfailed: ${label}`);
     if (result.stdout.trim()) console.error(`\nstdout:\n${result.stdout.trimEnd()}`);
     if (result.stderr.trim()) console.error(`\nstderr:\n${result.stderr.trimEnd()}`);
@@ -30,32 +55,12 @@ async function run(label, command, args, options = {}) {
   return result;
 }
 
-// Terse one-line summary for an audit's output, per its registry `summary` kind.
-function summarize(audit, output) {
-  if (audit.summary === 'silent') return 'passed';
-  if (audit.summary === 'astro') {
-    return /Result \([^)]+\):\s*\n- 0 errors\s*\n- 0 warnings/.test(output) ? '0 errors, 0 warnings' : 'passed';
-  }
-  if (audit.summary === 'assets') {
-    const lines = output.split('\n').map((l) => l.trim()).filter(Boolean);
-    return [
-      lines.find((l) => l.startsWith('Images:')),
-      lines.find((l) => l.startsWith('Total image weight:')),
-      lines.find((l) => l.startsWith('No images over')),
-    ].filter(Boolean).join('; ') || 'passed';
-  }
-  // Audits print their summary as an aligned `ok␣␣…` line (two+ spaces),
-  // distinct from per-item `ok <detail>` lines.
-  const ok = output.split('\n').find((l) => /^ok\s{2,}/.test(l));
-  return ok ? ok.replace(/^ok\s+/, '').trim() : 'passed';
-}
-
 async function runAudit(audit) {
   if (audit.localOnly && process.env.CI) {
     status(audit.label, 'skipped (verifies sources that only exist on the authoring machine)');
     return;
   }
-  const { output } = await run(audit.name, audit.exec.cmd, audit.exec.args, {
+  const { output } = await run(audit.label, audit.exec.cmd, audit.exec.args, {
     env: audit.exec.env,
     timeout: audit.timeout,
   });
@@ -163,3 +168,5 @@ await run('clean conflict copies', node, ['bin/clean-generated.mjs', '--conflict
 
 // 5. Post-build audits (operate on the emitted dist/).
 for (const audit of auditsFor('publish', 'post-build')) await runAudit(audit);
+
+writeSummary();

@@ -1,0 +1,94 @@
+name: dependabot stale
+
+on:
+  schedule:
+    # Thursdays at 14:00 UTC: after Monday's npm run and Wednesday's Scorecard.
+    - cron: '0 14 * * 4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: write
+    steps:
+      - name: Report Dependabot PRs open longer than seven days
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const label = 'dependabot-stale';
+            const maxAgeDays = 7;
+            const now = Date.now();
+
+            const pulls = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const stale = pulls
+              .filter((pull) => pull.user.login === 'dependabot[bot]')
+              .map((pull) => ({
+                number: pull.number,
+                title: pull.title,
+                url: pull.html_url,
+                days: Math.floor((now - Date.parse(pull.created_at)) / 86_400_000),
+              }))
+              .filter((pull) => pull.days > maxAgeDays)
+              .sort((a, b) => b.days - a.days);
+
+            core.info(`${pulls.length} open PRs; ${stale.length} Dependabot PRs older than ${maxAgeDays} days`);
+
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: label,
+            });
+
+            if (stale.length === 0) {
+              for (const issue of open.data) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                });
+              }
+              return;
+            }
+
+            const rows = stale.map((pull) => `| #${pull.number} | ${pull.days} | [${pull.title}](${pull.url}) |`);
+            const body = [
+              `${stale.length} Dependabot pull request(s) have been open longer than ${maxAgeDays} days.`,
+              '',
+              'Auto-merge should have landed each of these once its required checks passed, so a row here means something is wedged: a failing or cancelled required check, a merge conflict Dependabot could not rebase, or auto-merge disabled on the repository.',
+              '',
+              '| PR | Days open | Title |',
+              '| :--- | ---: | :--- |',
+              ...rows,
+              '',
+              'This issue closes itself once no Dependabot PR is older than the threshold.',
+            ].join('\n');
+
+            if (open.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `${stale.length} Dependabot PR(s) stuck open past ${maxAgeDays} days`,
+                body,
+                labels: [label],
+              });
+            } else {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open.data[0].number,
+                title: `${stale.length} Dependabot PR(s) stuck open past ${maxAgeDays} days`,
+                body,
+              });
+            }

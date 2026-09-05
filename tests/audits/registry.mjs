@@ -5,6 +5,7 @@
 // claim it, and a check can never exist in one gate but silently be missing
 // from another:
 //
+//   • gate:check     runs gates.includes('gate')     (CI's first job: fast pre-build invariants, collect-all)
 //   • publish:check  runs gates.includes('publish')  (fast local build gate)
 //   • diagnose       runs gates.includes('diagnose') (the complete, run-all gate)
 //   • release:check  runs publish:check (subprocess) + gates.includes('release')
@@ -19,7 +20,7 @@
 //   name        human title for the diagnose report
 //   phase       'pre-build' (source/synced-content checks) | 'post-build' (need dist/)
 //   exec        { cmd, args, env? } spawned from the repo root
-//   gates       subset of ['publish','diagnose','release']
+//   gates       subset of ['gate','publish','diagnose','release']
 //   fix         one-line remediation (diagnose troubleshooting + report)
 //   summary     publish-check terse line: 'ok' (default, first `ok …` line),
 //               'astro' (errors/warnings), 'assets' (image report), or 'silent'
@@ -33,7 +34,7 @@ export const AUDITS = [
   {
     id: 'source-integrity', label: 'source', name: 'Source Integrity', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-source-integrity.mjs'] },
-    gates: ['publish', 'diagnose', 'release'],
+    gates: ['gate', 'publish', 'diagnose', 'release'],
     fix: 'Fix the reported parse error or duplicate top-level declaration; this gate catches valid-JavaScript redeclarations that node --check cannot.',
   },
   {
@@ -87,7 +88,7 @@ export const AUDITS = [
   {
     id: 'docs-check', label: 'docs', name: 'Docs Link Integrity', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-docs.mjs'] },
-    gates: ['publish', 'diagnose'],
+    gates: ['gate', 'publish', 'diagnose'],
     fix: 'A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target.',
   },
   {
@@ -99,7 +100,7 @@ export const AUDITS = [
   {
     id: 'css-lint', label: 'css-lint', name: 'Stylelint CSS Check', phase: 'pre-build',
     exec: { cmd: 'npx', args: ['stylelint', 'src/styles/**/*.css'] },
-    gates: ['publish', 'diagnose'], summary: 'silent',
+    gates: ['gate', 'publish', 'diagnose'], summary: 'silent',
     fix: 'Fix syntax and rule violations in your CSS files located under `src/styles/`.',
   },
   {
@@ -120,7 +121,7 @@ export const AUDITS = [
   {
     id: 'repo-policy', label: 'repo-policy', name: 'Repository Policy', phase: 'pre-build',
     exec: { cmd: 'node', args: ['tests/audits/check-repository-policy.mjs'] },
-    gates: ['diagnose', 'release'],
+    gates: ['gate', 'diagnose', 'release'],
     fix: 'Align Node version (.nvmrc), lockfile dependencies, commit hashes for GitHub Actions, or run `npm run clean:conflicts` to remove iCloud conflict copies.',
   },
   {
