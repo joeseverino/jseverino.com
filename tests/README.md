@@ -18,7 +18,7 @@ tests/
 └── playwright/    Browser specs — drive dist/ through a preview server
 ```
 
-Every gate (`publish:check`, `diagnose`, `release:check`) derives its check list
+Every gate (`gate:check`, `publish:check`, `diagnose`, `release:check`) derives its check list
 from [`audits/registry.mjs`](./audits/registry.mjs), so a new audit is picked up
 everywhere at once and no gate can silently fall out of sync.
 

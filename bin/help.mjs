@@ -56,6 +56,7 @@ const GROUPS = [
   {
     title: 'Internal — run by the commands above; rarely typed directly',
     items: {
+      'gate:check': "CI's first job — the registry's fast pre-build audits, collect-all, before build/e2e/visual start",
       'check': 'Used by build — CSS lint + unused-var + astro type/content check',
       'build:static': 'Used by build — astro build + sitedrift wrap',
       'lint:css': 'Individual audit (gates run it via tests/audits/registry.mjs)',

@@ -29,6 +29,7 @@ behind the scripts.
 | `npm run publish:check` | Fast local build gate (`-- --no-sync` for code-only changes) |
 | `npm run publish:check:ci` | The same gate under CI conditions: `CI=1` + a scratch keyring |
 | `npm run release:check` | Full gate: publish:check + browser/visual/policy + idempotence (macOS) |
+| `npm run gate:check` | CI's first job: the registry's fast pre-build audits, collect-all, before build, e2e, and visual start |
 | `npm run deploy:verify` | After pushing: verify remote CI + the live production deploy (CI runs the same script on every push to `main`) |
 | `npm run build` | Type-check, then produce the static build (what CI's `build` job wraps) |
 
@@ -145,6 +146,13 @@ on authoring-machine state, it fails here instead of after a push.
 `git diff --check`, the full cross-browser + visual Playwright suite), and
 fails if any of it mutated the worktree. Requires macOS because the committed
 visual baselines are macOS Chromium renders.
+
+**`npm run gate:check`** — the `gate` job in `ci.yml`. Runs the registry
+audits that claim the `gate` gate (source integrity, repository policy, docs
+link integrity, stylesheet lint) and keeps going after a failure so one report
+names every broken invariant. Cheap on purpose: it finishes in under a minute
+so an unpinned action or a misaligned lockfile fails before `build`, `e2e`,
+and `visual` install anything. In CI the results land in the job summary.
 
 **`npm run deploy:verify`** — run after pushing `main`, and run automatically
 by CI on every push to `main` (the `verify` job in `ci.yml`). Confirms the local HEAD

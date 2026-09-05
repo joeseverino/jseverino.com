@@ -479,9 +479,10 @@ alerts.
 GitHub Actions provide the remote quality gate:
 
 - [`ci`](../.github/workflows/ci.yml) is one pipeline drawn as a dependency
-  graph. `gate` runs the repository policy, documentation integrity, and
-  stylesheet lint audits first, so an unpinned action or a misaligned lockfile
-  fails before any runner installs a browser. It fans out to `build`, which
+  graph. `gate` runs the registry audits that claim the `gate` gate (source
+  integrity, repository policy, documentation integrity, stylesheet lint)
+  first, so an unpinned action or a misaligned lockfile fails before any
+  runner installs a browser. It fans out to `build`, which
   runs the registry publish gate (`npm run publish:check -- --no-sync`) on a
   clean runner and uploads a CycloneDX SBOM artifact, so the committed tree
   must pass everything the local gate passes except the local-only vault
@@ -494,9 +495,11 @@ GitHub Actions provide the remote quality gate:
   actual, and diff images are retained on failure. Approved baseline PNG
   changes are committed with the frontend change, giving GitHub a durable
   version-to-version image audit trail. On a push to `main` the three converge
-  on `verify`, which runs `bin/deploy-verify.mjs` against production and
-  writes a per-check table to the job summary; a failed probe opens an issue
-  that closes itself on the next clean run.
+  on `verify`, which runs `bin/deploy-verify.mjs` against production. Every
+  job writes its own summary to the run page: the gate's audit table, the
+  publish gate's step table, per-browser Playwright results, and `verify`'s
+  per-check production table. A failed probe opens an issue that closes
+  itself on the next clean run.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.

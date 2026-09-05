@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
+import { annotate, appendSummary, endGroup, group, outcome, table } from './lib/step-summary.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = `${SITE.github}/${SITE.domain}`;
@@ -17,7 +18,6 @@ const requiredChecks = new Set([
 ]);
 
 const results = [];
-const inActions = process.env.GITHUB_ACTIONS === 'true';
 
 function command(name, args) {
   const result = spawnSync(name, args, {
@@ -32,19 +32,6 @@ function command(name, args) {
 
 function status(label, detail) {
   console.log(`${label.padEnd(12)} ${detail}`);
-}
-
-// Workflow commands are inert outside Actions, so local runs stay plain text.
-function annotate(kind, title, message) {
-  if (inActions) console.log(`::${kind} title=${title}::${message}`);
-}
-
-function group(title) {
-  if (inActions) console.log(`::group::${title}`);
-}
-
-function endGroup() {
-  if (inActions) console.log('::endgroup::');
 }
 
 function sleep(ms) {
@@ -329,35 +316,20 @@ function skip(name, reason) {
   status(name, `skipped: ${reason}`);
 }
 
-// Backslashes first, then pipes, then newlines: a detail string must not be
-// able to escape its own table cell.
-export function cell(text) {
-  return String(text)
-    .replace(/\\/g, '\\\\')
-    .replace(/\|/g, '\\|')
-    .replace(/\r?\n/g, ' ');
-}
-
 function writeSummary(sha) {
-  const file = process.env.GITHUB_STEP_SUMMARY;
-  if (!file) return;
-  const icon = (ok) => (ok === true ? 'pass' : ok === false ? '**FAIL**' : 'skipped');
   const failed = results.filter((result) => result.ok === false).length;
-  const lines = [
+  appendSummary([
     `## Deploy verification for \`${sha.slice(0, 12)}\``,
     '',
     failed === 0
       ? `All ${results.length} checks passed against ${origin}.`
       : `${failed} of ${results.length} checks failed against ${origin}.`,
     '',
-    '| Check | Result | Detail |',
-    '| :--- | :--- | :--- |',
-    ...results.map(
-      (result) => `| \`${result.name}\` | ${icon(result.ok)} | ${cell(result.detail)} |`,
+    table(
+      ['Check', 'Result', 'Detail'],
+      results.map((result) => [`\`${result.name}\``, outcome(result.ok), result.detail]),
     ),
-    '',
-  ];
-  fs.appendFileSync(file, lines.join('\n'));
+  ].join('\n'));
 }
 
 async function main() {

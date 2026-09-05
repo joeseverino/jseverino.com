@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { AUDITS, auditsFor } from '../../tests/audits/registry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const VALID_GATES = ['publish', 'diagnose', 'release'];
+const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
 const VALID_PHASES = ['pre-build', 'post-build'];
 
 describe('audit registry', () => {
