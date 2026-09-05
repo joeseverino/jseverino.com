@@ -37,7 +37,12 @@ const targetImageManifest = path.join(siteRoot, 'src/lib/image-manifest.json');
 const syncManifestPath = path.join(siteRoot, 'node_modules/.cache/jseverino-sync-manifest.json');
 const imageCacheDir = path.join(siteRoot, 'node_modules/.cache/jseverino-img');
 
-const VARIANT_WIDTHS = [512, 1024, 1600];
+// 768 exists because the common CSS box for a page/writeup image (a split
+// column, a project card at high device-pixel-ratio) needs 600-720px of real
+// pixels: the 512 tier undersizes it and the 1024 tier ships roughly double
+// the bytes for no visible gain. Confirmed against PageSpeed Insights'
+// "Improve image delivery" audit, which was flagging exactly that jump.
+const VARIANT_WIDTHS = [512, 768, 1024, 1600];
 // Encoded bytes depend on the native image toolchain as well as the source.
 // Include that lineage in every cache key so a sharp/libvips security upgrade
 // cannot silently restore artifacts produced by an older vulnerable encoder.

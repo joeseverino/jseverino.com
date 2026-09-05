@@ -38,7 +38,7 @@ M.S. Cybersecurity (in progress), Georgia Tech
 ## About Me
 
 ::split
-![Joe Severino](/assets/pages/home/images/portrait.jpg)
+![Joe Severino|340](/assets/pages/home/images/portrait.jpg)
 :::
 I started building things on the web early, long before I understood the systems behind what I was setting up. Over time, that curiosity turned into a deeper interest in how networks, infrastructure, and security actually work.
 
