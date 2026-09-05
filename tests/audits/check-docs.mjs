@@ -4,9 +4,9 @@
 // that actually exists. Catches the drift that creeps in when a file is renamed
 // or a script is removed but a doc still points at the old name.
 //
-// Scope is the engineering docs only (README, SECURITY, docs/, tests/*.md, and
-// AGENTS.md when present). Site content under src/content is excluded: it links
-// to live routes and external URLs, not repo files.
+// Scope is the engineering docs only (README, SECURITY, CONTRIBUTING, docs/,
+// tests/*.md, and AGENTS.md when present). Site content under src/content is
+// excluded: it links to live routes and external URLs, not repo files.
 //
 // Links inside fenced code blocks are treated as example syntax and skipped.
 // `npm run` references are validated everywhere, since command blocks are real.
@@ -34,7 +34,7 @@ function walk(dir, files = []) {
   return files;
 }
 
-const rootDocs = ['README.md', 'SECURITY.md', 'AGENTS.md'].filter((file) =>
+const rootDocs = ['README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'AGENTS.md'].filter((file) =>
   fs.existsSync(path.join(siteRoot, file)),
 );
 const docs = [...rootDocs, ...walk('docs'), ...walk('tests')];
