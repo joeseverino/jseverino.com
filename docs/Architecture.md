@@ -441,14 +441,15 @@ This repo intentionally has no `wrangler.toml`. Pages projects with both dashboa
 the middleware (CSP nonces/reporting), `/api/contact`, `/api/csp-report`, and
 the hosted sitedrift proxy are inactive locally.
 
-To exercise the edge runtime locally, build first and run `wrangler pages dev`:
+To exercise the edge runtime locally, build first and serve the output through
+`wrangler pages dev`:
 
 ```sh
 npm run build:static
-npx wrangler pages dev dist.nosync
+npm run edge:serve
 ```
 
-The site is then served at `http://localhost:8788` with the middleware and Functions active. `curl -sI http://localhost:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the canonical pre-deploy CSP/reporting check.
+The site is then served at `http://127.0.0.1:8788` with the middleware and Functions active, using the compatibility date declared in [`tests/browser-test-env.mjs`](../tests/browser-test-env.mjs), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge test suite (`tests/edge/`), which is what CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` remains the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -486,27 +487,30 @@ GitHub Actions provide the remote quality gate:
   runs the registry publish gate (`npm run publish:check -- --no-sync`) on a
   clean runner and uploads a CycloneDX SBOM artifact, so the committed tree
   must pass everything the local gate passes except the local-only vault
-  parity check; and a `playwright` matrix whose `e2e` leg builds the site,
+  parity check; and a `playwright` matrix. Its `e2e` leg builds the site,
   serves it with `astro preview`, and runs functional checks across Chromium,
-  Firefox, and WebKit, and whose `visual` leg is a macOS Chromium
-  visual-regression run. A `deploy` job starts alongside `gate` and waits for
+  Firefox, and WebKit; its `visual` leg is a macOS Chromium visual-regression
+  run; and its `edge` leg serves the same build through the Cloudflare runtime
+  with `wrangler pages dev` and asserts what only that runtime produces: the
+  per-request CSP nonce on every script tag, the `public/_headers` security and
+  cache rules, a real 404, the contact function's refusals, and byte-exact
+  `security.txt`. A `deploy` job starts alongside `gate` and waits for
   Cloudflare Pages to finish deploying the same commit (a preview on a pull
-  request, production on `main`), so the deployment has a node in the graph
-  and `verify` cannot start before it is live. Browser binaries
+  request, production on `main`), so the deployment has a node in the graph.
+  Browser binaries
   are cached by Playwright version rather than lockfile hash, so Dependabot's
   lockfile rewrites still hit the cache. The visual job uses committed PNG
   baselines and uploads the HTML report plus `test-results/` so expected,
   actual, and diff images are retained on failure. Approved baseline PNG
   changes are committed with the frontend change, giving GitHub a durable
-  version-to-version image audit trail. On a push to `main`, `build`,
-  `playwright`, and `deploy` converge on `verify`, which runs
-  `bin/deploy-verify.mjs` against production. Every job writes its own
-  summary to the run page: the gate's audit table, the publish gate's step
-  table, per-browser Playwright results, the Cloudflare Pages deployment, and
-  `verify`'s per-check production table. On a pull request, `report` gathers those
-  summaries and posts them as one comment that updates in place on each
-  push, so the tables are readable without opening the run. A failed probe
-  opens an issue that closes itself on the next clean run.
+  version-to-version image audit trail. Every job writes its own summary to
+  the run page: the gate's audit table, the publish gate's step table,
+  per-suite Playwright results, and the Cloudflare Pages deployment. On a pull
+  request, `report` gathers those summaries and posts them as one comment
+  that updates in place on each push, so the tables are readable without
+  opening the run. Production itself is not probed from CI: Cloudflare Bot
+  Fight Mode challenges GitHub-hosted runners, so `npm run deploy:verify`
+  remains the release-time confirmation from a residential IP.
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
@@ -516,7 +520,7 @@ GitHub Actions provide the remote quality gate:
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`verify`, `dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
 
 The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29); the failing checks are structural to a one-person project and are not real security gaps. The release checklist in [`docs/Release-Checklist.md`](./Release-Checklist.md#4-commit-and-push) documents the `gh api` query for confirming the dashboard is clean after any workflow or build-script change.
 

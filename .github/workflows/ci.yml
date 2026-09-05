@@ -42,8 +42,7 @@ jobs:
 
   # Cloudflare Pages builds the commit on its own infrastructure, triggered by
   # the push rather than by this workflow, and reports back as a check-run.
-  # This job gives that deployment a node in the graph and a summary, and
-  # holds verify until the build is live.
+  # This job gives that deployment a node in the graph and a summary.
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -117,9 +116,10 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
-  # One job, two legs. `name` keeps the check-run names `e2e` and `visual`, so
-  # the ruleset's required checks match unchanged; the run graph groups the
-  # legs as one matrix.
+  # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, and
+  # `edge`, so the ruleset's required checks match by name; the run graph
+  # groups the legs as one matrix. The edge leg serves the build through the
+  # Cloudflare runtime (wrangler) and needs no browser.
   playwright:
     name: ${{ matrix.suite }}
     needs: gate
@@ -143,6 +143,13 @@ jobs:
             install: npx playwright install chromium
             install-deps: 'true'
             command: npm run test:e2e:visual -- --project=chromium-desktop
+          - suite: edge
+            title: Edge runtime
+            os: ubuntu-latest
+            cache: ''
+            install: 'true'
+            install-deps: 'true'
+            command: npm run test:edge
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -156,10 +163,12 @@ jobs:
       # Cache the browser binaries by Playwright version, not by lockfile hash:
       # every Dependabot PR rewrites the lockfile and would otherwise miss.
       - name: Read Playwright version
+        if: matrix.cache != ''
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Restore cached browsers
+        if: matrix.cache != ''
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: browsers
         with:
@@ -169,11 +178,11 @@ jobs:
       # System dependencies are a Linux concern; the macOS leg's install-deps
       # is a no-op.
       - name: Install browsers
-        if: steps.browsers.outputs.cache-hit != 'true'
+        if: matrix.cache != '' && steps.browsers.outputs.cache-hit != 'true'
         run: ${{ matrix.install }}
 
       - name: Install system dependencies for cached browsers
-        if: steps.browsers.outputs.cache-hit == 'true'
+        if: matrix.cache != '' && steps.browsers.outputs.cache-hit == 'true'
         run: ${{ matrix.install-deps }}
 
       - name: ${{ matrix.title }}
@@ -208,103 +217,6 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
-  # Probes the production deployment once the code that produced it has passed
-  # every gate above. Skipped on pull requests: there is nothing live to probe.
-  verify:
-    if: github.event_name != 'pull_request'
-    needs: [build, playwright, deploy]
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    permissions:
-      contents: read
-      checks: read
-      security-events: read
-      issues: write
-    # Only the newest push to main is worth verifying; an older run would probe
-    # a production deployment that has already been replaced.
-    concurrency:
-      group: deploy-verify
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .nvmrc
-
-      # No npm ci: the script imports only repo files, and npm audit reads the
-      # lockfile. Keeps install scripts out of a job that can read alerts.
-      - name: Verify the production deployment
-        run: node bin/deploy-verify.mjs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Open or close the verification issue
-        if: always()
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          OUTCOME: ${{ job.status }}
-        with:
-          script: |
-            const label = 'deploy-verify';
-            const failed = process.env.OUTCOME !== 'success';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const sha = context.sha.slice(0, 12);
-
-            const open = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: label,
-            });
-
-            if (!failed) {
-              for (const issue of open.data) {
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  body: `Production verified clean at \`${sha}\`: ${runUrl}`,
-                });
-                await github.rest.issues.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  state: 'closed',
-                });
-              }
-              return;
-            }
-
-            const title = 'Production deployment failed post-deploy verification';
-            const body = [
-              `\`bin/deploy-verify.mjs\` failed against the live site after \`${sha}\` landed on \`main\`.`,
-              '',
-              `Run with the per-check table: ${runUrl}`,
-              '',
-              'Cloudflare Pages keeps serving the last successful build, so a failed *build* is not an outage.',
-              'A failing check on a *successful* build is: roll back the Pages deployment in the dashboard if the site is affected, then fix forward.',
-              '',
-              'This issue closes itself when a later verification run passes.',
-            ].join('\n');
-
-            if (open.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                body,
-                labels: [label],
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: open.data[0].number,
-                body: `Still failing at \`${sha}\`: ${runUrl}`,
-              });
-            }
-
   # Stitches every job's summary into one comment on the pull request, updated
   # in place on each push. Pull requests only: a push to main has no thread.
   report:
@@ -334,7 +246,7 @@ jobs:
             const path = require('node:path');
             const marker = '<!-- ci-summary -->';
             // [summary file, job the outcome comes from]
-            const sections = [['gate', 'gate'], ['build', 'build'], ['e2e', 'playwright'], ['visual', 'playwright'], ['deploy', 'deploy']];
+            const sections = [['gate', 'gate'], ['build', 'build'], ['e2e', 'playwright'], ['visual', 'playwright'], ['edge', 'playwright'], ['deploy', 'deploy']];
             const results = JSON.parse(process.env.RESULTS);
             const pull = context.payload.pull_request;
             const sha = pull.head.sha.slice(0, 12);

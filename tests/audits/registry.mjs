@@ -167,6 +167,15 @@ export const AUDITS = [
     fix: 'A built page is missing a `<title>`, canonical link, og:title/og:image, or has invalid JSON-LD. Check `src/components/SeoHead.astro` and the page frontmatter.',
   },
   {
+    id: 'edge-tests', label: 'edge-runtime', name: 'Edge Runtime Tests', phase: 'post-build',
+    exec: {
+      cmd: 'npx', args: ['playwright', 'test', '-c', 'playwright.edge.config.ts', '--reporter=line'],
+      env: { CI: '1', ASTRO_TELEMETRY_DISABLED: '1' },
+    },
+    gates: ['diagnose', 'release'], timeout: 10 * 60_000,
+    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP middleware, or a Pages Function regressed. Run `npm run test:edge`; `npx wrangler pages dev dist.nosync` reproduces the served responses by hand.',
+  },
+  {
     id: 'browser-tests', label: 'e2e', name: 'Playwright Browser Tests', phase: 'post-build',
     exec: {
       cmd: 'npx', args: ['playwright', 'test', '--reporter=line'],

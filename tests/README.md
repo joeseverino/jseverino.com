@@ -15,6 +15,7 @@ tests/
 ├── audits/        Node verifiers — assert an invariant, exit non-zero on failure
 │   └── registry.mjs   single source of truth: which audits exist + which gate runs each
 ├── unit/          node:test specs for pure logic (Markdown DSL, CF functions, gate harness, registry)
+├── edge/          Runtime specs — serve dist/ through wrangler pages dev (middleware, functions, _headers) and assert the responses
 └── playwright/    Browser specs — drive dist/ through a preview server
 ```
 
@@ -34,8 +35,8 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
 | `npm run publish:check` | local, pre-build | signatures, contrast, schema + edge parity, functions types, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page weight, structural HTML — also run by CI on every push (minus the local-only vault parity check) |
-| `npm run release:check` | local, macOS | Playwright E2E + visual baselines, repository policy, clean-worktree check |
-| `npm run deploy:verify` | after push; CI runs it on every push to `main` | remote CI status, live HSTS/CSP headers, nonce rotation and script parity, sitemap 200s, real 404, contact Turnstile gate, `security.txt` parity, open CodeQL alerts |
+| `npm run release:check` | local, macOS | Playwright E2E + visual baselines, the edge runtime suite, repository policy, clean-worktree check |
+| `npm run deploy:verify` | after push, from a residential IP | remote CI status, live HSTS/CSP headers, nonce rotation and script parity, sitemap 200s, real 404, contact Turnstile gate, `security.txt` parity, open CodeQL alerts |
 
 ### The one-stop gate: `npm run diagnose`
 

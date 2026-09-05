@@ -8,3 +8,11 @@ export const browserTestEnv = Object.freeze({
   ASTRO_PREVIEW_BACKGROUND: '1',
   PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
 });
+
+// The Cloudflare runtime the edge suite serves the build through. The
+// compatibility date must match the Pages project (Settings > Runtime in the
+// Cloudflare dashboard) so local semantics are production semantics.
+export const edgeRuntime = Object.freeze({
+  port: 8788,
+  compatibilityDate: '2026-06-02',
+});
