@@ -1,10 +1,8 @@
 #!/usr/bin/env node
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { auditsFor } from '../tests/audits/registry.mjs';
 import { run as spawnRun } from './lib/run.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 // Streams output live (this gate is watched, not parsed) and fails fast.

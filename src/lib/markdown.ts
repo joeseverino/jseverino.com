@@ -2,6 +2,11 @@
 // ::table, ::split, ::buttons, ::center, ::hero) plus the inline rewrites
 // (standalone-link buttons, figure restoration).
 //
+// Every directive is one entry in a table: its name and a renderer from the
+// block's inner text to HTML. The page and writeup pipelines are ordered
+// lists of those entries, so adding a directive is one line, and the two
+// pipelines cannot drift in how they recognize a block.
+//
 // Everything here is a deterministic string → string transform whose only
 // dependency is markdown-it, so it carries no Astro coupling and can be unit
 // tested directly (`tests/unit/markdown-dsl.test.ts`). The Astro-aware glue —
@@ -56,6 +61,42 @@ md.renderer.rules.table_close = () => '</table></div></figure>';
 addCellBreaks(md, true);
 addCellBreaks(fragmentMd, false);
 
+// ---------------------------------------------------------------------------
+// Directive grammar
+// ---------------------------------------------------------------------------
+
+// A block directive opens with `::name` on its own line and closes with `::`
+// on its own line; the renderer receives the text between.
+type BlockRenderer = (content: string) => string;
+type BlockDirective = readonly [name: string, render: BlockRenderer];
+
+const blockClose = String.raw`\n::(?=\r?\n|$)`;
+const blockRe = (name: string) => new RegExp(String.raw`::${name}\n([\s\S]*?)${blockClose}`, 'g');
+
+function applyBlockDirectives(markdown: string, directives: readonly BlockDirective[]): string {
+  return directives.reduce(
+    (text, [name, render]) => text.replace(blockRe(name), (_, content: string) => render(content)),
+    markdown,
+  );
+}
+
+// An inline directive is `::name ::` anywhere in the text, replaced verbatim.
+type InlineDirective = readonly [name: string, replacement: string];
+
+const inlineRe = (name: string) => new RegExp(String.raw`::${name}\s*::`, 'g');
+
+function applyInlineDirectives(markdown: string, directives: readonly InlineDirective[]): string {
+  return directives.reduce((text, [name, replacement]) => text.replace(inlineRe(name), replacement), markdown);
+}
+
+// The body renders as markdown and sits inside one wrapping element.
+const wrapRendered = (open: string, close: string): BlockRenderer => (content) =>
+  `\n\n${open}${restoreFigures(md.render(content.trim()))}${close}\n\n`;
+
+// ---------------------------------------------------------------------------
+// Writeup preprocessing
+// ---------------------------------------------------------------------------
+
 function stripArticleChrome(markdown: string): string {
   return markdown
     .trimStart()
@@ -99,71 +140,135 @@ function preprocessImageDirectives(markdown: string): string {
   );
 }
 
-function renderFigureBlocks(markdown: string): string {
-  return markdown.replace(blockRe('figure'), (_match, content: string) => {
-    const lines = content.trim().split(/\r?\n/);
-    const imageIndex = lines.findIndex((line) => line.trim() !== '');
-    if (imageIndex === -1) return '';
+// ---------------------------------------------------------------------------
+// Block renderers
+// ---------------------------------------------------------------------------
 
-    const imageLine = lines[imageIndex].trim();
-    // preprocessImageDirectives runs before this, so an image carrying a
-    // modifier (|width, |nocap, |nozoom) arrives already as an <img> tag, while
-    // a plain image is still ![alt](src). Support both so the explicit caption
-    // composes with either.
-    const markdownImage = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
-    let imgTag: string;
-    if (markdownImage) {
-      const [, altRaw, src] = markdownImage;
-      imgTag = `<img src="${src}" alt="${altRaw.replace(/"/g, '&quot;')}">`;
-    } else if (/^<img\b[^>]*>$/.test(imageLine)) {
-      // The figure's own caption line supersedes the alt-derived one.
-      imgTag = imageLine.replace(/\s*data-has-alt-caption\b/, '');
-    } else {
-      return md.render(content.trim());
-    }
+function renderFigure(content: string): string {
+  const lines = content.trim().split(/\r?\n/);
+  const imageIndex = lines.findIndex((line) => line.trim() !== '');
+  if (imageIndex === -1) return '';
 
-    const captionMarkdown = lines.slice(imageIndex + 1).join('\n').trim();
-    const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
+  const imageLine = lines[imageIndex].trim();
+  // preprocessImageDirectives runs before this, so an image carrying a
+  // modifier (|width, |nocap, |nozoom) arrives already as an <img> tag, while
+  // a plain image is still ![alt](src). Support both so the explicit caption
+  // composes with either.
+  const markdownImage = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
+  let imgTag: string;
+  if (markdownImage) {
+    const [, altRaw, src] = markdownImage;
+    imgTag = `<img src="${src}" alt="${altRaw.replace(/"/g, '&quot;')}">`;
+  } else if (/^<img\b[^>]*>$/.test(imageLine)) {
+    // The figure's own caption line supersedes the alt-derived one.
+    imgTag = imageLine.replace(/\s*data-has-alt-caption\b/, '');
+  } else {
+    return md.render(content.trim());
+  }
 
-    return ['<figure>', imgTag, caption ? `<figcaption>${caption}</figcaption>` : '', '</figure>']
-      .filter(Boolean)
-      .join('');
-  });
+  const captionMarkdown = lines.slice(imageIndex + 1).join('\n').trim();
+  const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
+
+  return ['<figure>', imgTag, caption ? `<figcaption>${caption}</figcaption>` : '', '</figure>']
+    .filter(Boolean)
+    .join('');
 }
 
-function renderTableBlocks(markdown: string): string {
-  return markdown.replace(blockRe('table'), (_match, content: string) => {
-    const lines = content.trim().split(/\r?\n/);
-    const tableLines = [];
-    const captionLines = [];
-    let inCaption = false;
+function renderTable(content: string): string {
+  const lines = content.trim().split(/\r?\n/);
+  const tableLines = [];
+  const captionLines = [];
+  let inCaption = false;
 
-    for (const line of lines) {
-      if (!inCaption && line.trim() !== '' && line.trim().startsWith('|')) {
-        tableLines.push(line);
-        continue;
+  for (const line of lines) {
+    if (!inCaption && line.trim() !== '' && line.trim().startsWith('|')) {
+      tableLines.push(line);
+      continue;
+    }
+
+    if (line.trim() !== '') inCaption = true;
+    if (inCaption) captionLines.push(line);
+  }
+
+  if (tableLines.length === 0) return md.render(content.trim());
+
+  const table = fragmentMd.render(tableLines.join('\n')).trim();
+  const captionMarkdown = captionLines.join('\n').trim();
+  const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
+
+  return [
+    '<figure class="table-figure">',
+    `<div class="table-box">${table}</div>`,
+    caption ? `<figcaption>${caption}</figcaption>` : '',
+    '</figure>',
+  ]
+    .filter(Boolean)
+    .join('');
+}
+
+function renderButton(content: string, classes = ''): string {
+  const link = content.match(/\[([^\]]+)\]\(([^)]+)\)/);
+  if (!link) return '';
+  const className = `button ${classes}`.trim();
+  return `<div class="actions"><a class="${className}" href="${link[2]}">${link[1]}</a></div>`;
+}
+
+function renderButtons(content: string): string {
+  const buttons = [...content.matchAll(/- \[([^\]]+)\]\(([^)]+)\)/g)]
+    .map((match, index) => {
+      const className = index === 0 ? 'button' : 'button secondary';
+      return `<a class="${className}" href="${match[2]}">${match[1]}</a>`;
+    })
+    .join('\n');
+  return `<div class="actions">${buttons}</div>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderTerminal(content: string): string {
+  const lines = content.replace(/\r?\n$/, '').split(/\r?\n/);
+  const rendered = lines
+    .map((line) => {
+      if (line === '') return '';
+      if (/^\$\s?/.test(line)) {
+        const cmd = line.replace(/^\$\s?/, '');
+        return `<span class="line"><span class="prompt">$</span> <span class="cmd">${escapeHtml(cmd)}</span></span>`;
       }
-
-      if (line.trim() !== '') inCaption = true;
-      if (inCaption) captionLines.push(line);
-    }
-
-    if (tableLines.length === 0) return md.render(content.trim());
-
-    const table = fragmentMd.render(tableLines.join('\n')).trim();
-    const captionMarkdown = captionLines.join('\n').trim();
-    const caption = captionMarkdown ? md.renderInline(captionMarkdown) : '';
-
-    return [
-      '<figure class="table-figure">',
-      `<div class="table-box">${table}</div>`,
-      caption ? `<figcaption>${caption}</figcaption>` : '',
-      '</figure>',
-    ]
-      .filter(Boolean)
-      .join('');
-  });
+      return `<span class="line out">${escapeHtml(line)}</span>`;
+    })
+    .join('\n');
+  return `\n\n<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"></span><span class="terminal-label">TERMINAL</span></div><pre><code>${rendered}</code></pre></div>\n\n`;
 }
+
+// A side whose entire content is a single image markdown line renders
+// inline, so enhanceImages can wrap it as <picture> without a surrounding <p>.
+function renderSplitSide(text: string): string {
+  const trimmed = text.trim();
+  if (/^!\[[^\]]*\]\([^)]+\)$/.test(trimmed)) {
+    return md.renderInline(trimmed);
+  }
+  return restoreFigures(md.render(trimmed));
+}
+
+function renderSplit(content: string): string {
+  const parts = content.split(/^:::\s*$/m);
+  if (parts.length < 2) {
+    return `\n\n<div class="split">${renderSplitSide(content)}</div>\n\n`;
+  }
+  const [left, ...rest] = parts;
+  const right = rest.join(':::');
+  return `\n\n<div class="split"><div>${renderSplitSide(left)}</div><div>${renderSplitSide(right)}</div></div>\n\n`;
+}
+
+// ---------------------------------------------------------------------------
+// HTML post-passes
+// ---------------------------------------------------------------------------
 
 function restoreFigures(html: string): string {
   // Pass 1: image with explicit caption from alt text → figure, drop next-paragraph absorption.
@@ -198,115 +303,45 @@ function promoteStandaloneLinks(html: string): string {
   );
 }
 
-function renderButton(match: string, classes = ''): string {
-  const link = match.match(/\[([^\]]+)\]\(([^)]+)\)/);
-  if (!link) return '';
-  const className = `button ${classes}`.trim();
-  return `<div class="actions"><a class="${className}" href="${link[2]}">${link[1]}</a></div>`;
-}
+// ---------------------------------------------------------------------------
+// Pipelines
+// ---------------------------------------------------------------------------
 
-const blockClose = String.raw`\n::(?=\r?\n|$)`;
-const blockRe = (name: string) => new RegExp(String.raw`::${name}\n([\s\S]*?)${blockClose}`, 'g');
+const pageInlineDirectives: readonly InlineDirective[] = [
+  // ::cta expands to a ::buttons block, so it precedes the block pass.
+  ['cta', '\n\n::buttons\n- [View Portfolio](/portfolio/)\n- [Get in Touch](/contact/)\n::\n\n'],
+  ['featured-projects', '<div data-content-block="featured-projects"></div>'],
+  ['technology-cloud', '<div data-content-block="technology-cloud"></div>'],
+];
 
-function renderButtons(markdown: string): string {
-  return markdown.replace(blockRe('buttons'), (_, links: string) => {
-    const buttons = [...links.matchAll(/- \[([^\]]+)\]\(([^)]+)\)/g)]
-      .map((match, index) => {
-        const className = index === 0 ? 'button' : 'button secondary';
-        return `<a class="${className}" href="${match[2]}">${match[1]}</a>`;
-      })
-      .join('\n');
-    return `<div class="actions">${buttons}</div>`;
-  });
-}
+const pageBlockDirectives: readonly BlockDirective[] = [
+  ['buttons', renderButtons],
+  ['button sticky', (content) => renderButton(content, 'sticky-button')],
+  ['button', (content) => renderButton(content)],
+  ['terminal', renderTerminal],
+  ['center', wrapRendered('<div class="center-text">', '</div>')],
+  ['split', renderSplit],
+  ['hero', wrapRendered('<header class="hero">', '</header>')],
+];
 
-function renderCenter(markdown: string): string {
-  return markdown.replace(blockRe('center'), (_, content: string) => {
-    const inner = restoreFigures(md.render(content.trim()));
-    return `\n\n<div class="center-text">${inner}</div>\n\n`;
-  });
-}
-
-function renderHero(markdown: string): string {
-  return markdown.replace(blockRe('hero'), (_, content: string) => {
-    const inner = restoreFigures(md.render(content.trim()));
-    return `\n\n<header class="hero">${inner}</header>\n\n`;
-  });
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function renderTerminal(markdown: string): string {
-  return markdown.replace(blockRe('terminal'), (_, content: string) => {
-    const lines = content.replace(/\r?\n$/, '').split(/\r?\n/);
-    const rendered = lines
-      .map((line) => {
-        if (line === '') return '';
-        if (/^\$\s?/.test(line)) {
-          const cmd = line.replace(/^\$\s?/, '');
-          return `<span class="line"><span class="prompt">$</span> <span class="cmd">${escapeHtml(cmd)}</span></span>`;
-        }
-        return `<span class="line out">${escapeHtml(line)}</span>`;
-      })
-      .join('\n');
-    return `\n\n<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"></span><span class="terminal-label">TERMINAL</span></div><pre><code>${rendered}</code></pre></div>\n\n`;
-  });
-}
-
-// A side whose entire content is a single image markdown line renders
-// inline, so enhanceImages can wrap it as <picture> without a surrounding <p>.
-function renderSplitSide(text: string): string {
-  const trimmed = text.trim();
-  if (/^!\[[^\]]*\]\([^)]+\)$/.test(trimmed)) {
-    return md.renderInline(trimmed);
-  }
-  return restoreFigures(md.render(trimmed));
-}
-
-function renderSplit(markdown: string): string {
-  return markdown.replace(blockRe('split'), (_, content: string) => {
-    const parts = content.split(/^:::\s*$/m);
-    if (parts.length < 2) {
-      return `\n\n<div class="split">${renderSplitSide(content)}</div>\n\n`;
-    }
-    const [left, ...rest] = parts;
-    const right = rest.join(':::');
-    return `\n\n<div class="split"><div>${renderSplitSide(left)}</div><div>${renderSplitSide(right)}</div></div>\n\n`;
-  });
-}
-
-function preprocessPageMarkdown(markdown: string): string {
-  // ::cta expands to a ::buttons block, so it has to run before renderButtons.
-  const withCta = markdown.replace(
-    /::cta\s*::/g,
-    '\n\n::buttons\n- [View Portfolio](/portfolio/)\n- [Get in Touch](/contact/)\n::\n\n',
-  );
-  const withInlineDirectives = renderButtons(withCta)
-    .replace(/::featured-projects\s*::/g, '<div data-content-block="featured-projects"></div>')
-    .replace(/::technology-cloud\s*::/g, '<div data-content-block="technology-cloud"></div>')
-    .replace(blockRe('button sticky'), (_, button: string) => renderButton(button, 'sticky-button'))
-    .replace(blockRe('button'), (_, button: string) => renderButton(button));
-
-  return renderHero(renderSplit(renderCenter(renderTerminal(withInlineDirectives))));
-}
+const writeupBlockDirectives: readonly BlockDirective[] = [
+  ['terminal', renderTerminal],
+  ['figure', renderFigure],
+  ['table', renderTable],
+];
 
 // Render a page's markdown body to HTML, applying the inline directives and the
 // block DSL. Image <picture> enhancement is layered on by content.ts.
 export function renderPageHtml(markdown: string): string {
-  return restoreFigures(md.render(preprocessPageMarkdown(markdown)));
+  const prepared = applyBlockDirectives(applyInlineDirectives(markdown, pageInlineDirectives), pageBlockDirectives);
+  return restoreFigures(md.render(prepared));
 }
 
 // Render a writeup's markdown body to HTML: strip the duplicated H1/lede/hero,
 // expand the block DSL, then rewrite relative image paths to the writeup's
 // published asset folder. Image <picture> enhancement is layered on by content.ts.
 export function renderWriteupHtml(markdown: string, slug: string): string {
-  const prepared = renderTableBlocks(renderFigureBlocks(renderTerminal(preprocessImageDirectives(stripArticleChrome(markdown)))));
+  const prepared = applyBlockDirectives(preprocessImageDirectives(stripArticleChrome(markdown)), writeupBlockDirectives);
   const html = md.render(prepared);
   return promoteStandaloneLinks(restoreFigures(html))
     .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)

@@ -1,13 +1,15 @@
 # Command Reference
 
 Every npm script in the repository, grouped by role — first as a scannable
-overview, then with the detail that doesn't fit a one-liner. `npm run help`
-prints the live version of the overview straight from `package.json`, so it
-can never go stale; this document adds the depth. A unit test asserts every
-script in `package.json` appears here, so the reference cannot silently fall
-behind the scripts.
+overview, then with the detail that doesn't fit a one-liner. The overview is
+rendered by `npm run sync:docs` from the same table `npm run help` prints, and
+the gate refuses a stale copy; a unit test asserts every script in
+`package.json` appears here, so the reference cannot silently fall behind the
+scripts. This document adds the depth.
 
 ## Overview
+
+<!-- generated:start command-overview (npm run sync:docs) -->
 
 ### Daily — the everyday workflow
 
@@ -19,6 +21,8 @@ behind the scripts.
 | `npm run sync:contract` | Regenerate typed content-contract projections |
 | `npm run sync:contact-openapi` | Regenerate contact OpenAPI from its request contract |
 | `npm run sync:tokens` | Pull design + brand tokens from `severino-brand` into the repo |
+| `npm run sync:edge-site` | Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`) |
+| `npm run sync:docs` | Regenerate the generated blocks in `docs/Commands.md` and `tests/ARCHITECTURE.md` |
 | `npm run diagnose` | Run every check and report what is wrong — the "is it okay?" button |
 | `npm run diff:build` | Build HEAD vs the working tree; show what changed in the shipped site |
 
@@ -42,6 +46,7 @@ behind the scripts.
 | `npm run make:embed` | Regenerate `public/embed/bundle.css` — the one embeddable stylesheet (brand vars + base.css + inlined Inter) |
 | `npm run make:content-index` | Emit the published-writeup JSON projection consumed by Severino HQ |
 | `npm run make:social` | Regenerate the GitHub social preview |
+| `npm run make:font` | Re-subset the Inter webfont to the site's characters and weights (needs python3 + fontTools) |
 | `npm run snapshot:github` | Refresh the committed GitHub repo snapshot the portfolio Software list falls back to |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
 | `npm run scaffold:writeup-field` | Add a field once to the canonical writeup contract |
@@ -85,6 +90,8 @@ behind the scripts.
 | `npm run audit:assets` | Image count + weight report (the gates run it strict) |
 | `npm run help` | Print the live grouped list of all of the above |
 
+<!-- generated:end command-overview -->
+
 What each audit asserts, and how to fix it when it fails, is documented
 check-by-check in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md).
 
@@ -112,6 +119,21 @@ embedded SHA-256 digest records the exact upstream token source. Like
 `sync:content`, deployment consumes the committed projection and stays
 self-contained. `npm run check:tokens` fails CI on drift. See
 [`Brand-System.md`](./Brand-System.md).
+
+**`npm run sync:edge-site`** — writes `functions/generated/site.ts`, the edge
+runtime's copy of the site identity in `src/lib/site-config.mjs` (domain,
+origin, CSP report endpoint). Cloudflare bundles `functions/` on its own, so
+the middleware and the report receiver cannot import `src/lib`; they import
+the projection instead. `check:contracts` (inside every gate) fails when it is
+stale.
+
+**`npm run sync:docs`** — rewrites the generated blocks between
+`<!-- generated:start … -->` markers: the overview tables above, from the
+groups in `bin/help.mjs`, and the gate-coverage table in
+[`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md), from the audit registry.
+The `docs-sync` audit runs it with `--check` inside every gate, so a
+description or a gate assignment is written once, in code, and the docs
+follow.
 
 **`npm run diagnose`** — the one-stop gate. Runs every check in the registry
 without stopping at the first failure: green prints one line; red writes
@@ -200,6 +222,15 @@ instead, which includes everything this does.
 assets (favicons + marks, the Open Graph card, the GitHub social preview)
 from the brand engine. Generated output is committed, so these only run when
 the brand changes. See [`Brand-System.md`](./Brand-System.md).
+
+**`npm run make:font`** — re-subsets the one webfont,
+`public/assets/fonts/inter/inter-variable-latin.woff2`, to the characters the
+content uses and the 400–700 weight range the stylesheet declares, keeping
+Inter's optical-size axis. The character list and range live in
+[`bin/make-font.mjs`](../bin/make-font.mjs); widen them there, then rerun with
+`--source <InterVariable.woff2>` from an upstream Inter release (the committed
+file is already a subset, so it can only shrink further). Needs `python3` with
+`fontTools` and `brotli`.
 
 **`npm run make:content-index`** — emits `public/content-index.json` from the
 validated, published writeup snapshot. The static build invokes it

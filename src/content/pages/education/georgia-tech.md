@@ -23,6 +23,6 @@ published: true
 
 - Wrote an analysis on the EU AI Act's strengths and enforcement gaps, and a [Marks & Spencer Diamond Model analysis](/portfolio/marks-spencer-cyberattack-diamond-model-analysis/) for this course.
 
-<p class="resume-role"><strong>PUBP 6501 — Information Policy & Management</strong><span class="resume-dates">Summer 2026 · in progress</span></p>
+<p class="resume-role"><strong>PUBP 6501 — Information Policy & Management</strong><span class="resume-dates">Summer 2026</span></p>
 
-- Working on a research study analyzing how Home Depot processes information and knowledge.
+- Conducted a research study analyzing how Home Depot processes information and knowledge.

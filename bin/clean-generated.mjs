@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { siteRoot } from '../src/lib/site-root.mjs';
 
 // The mode is explicit — no implicit default, so neither "this also deleted my
 // build output" nor "this silently skipped the caches" can happen by accident.

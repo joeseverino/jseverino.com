@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 
-const srcDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../src');
+const srcDir = path.join(siteRoot, 'src');
 const listFiles = (dir, pattern) => fs
   .readdirSync(dir, { recursive: true, withFileTypes: true })
   .filter((entry) => entry.isFile() && pattern.test(entry.name))

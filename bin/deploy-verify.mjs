@@ -1,14 +1,30 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
+// Post-push production verification, run from a residential IP (Bot Fight
+// Mode challenges GitHub's runners). The response expectations come from
+// src/lib/edge-expectations.mjs, the same functions tests/edge asserts before
+// a deploy, so "correct" means one thing on both sides of the release.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { SITE } from '../src/lib/site-config.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
+import {
+  cacheRuleFindings,
+  contactRefusalFindings,
+  cspFindings,
+  headersToRecord,
+  hstsFindings,
+  nonceFromCsp,
+  nonceParityFindings,
+  scriptTagCount,
+  siteOrigin as origin,
+  staticHeaderFindings,
+} from '../src/lib/edge-expectations.mjs';
+import { checkRuns, openCodeScanningAlerts } from './lib/github.mjs';
+import { runSync, sleep, status } from './lib/run.mjs';
 import { annotate, appendSummary, endGroup, group, outcome, table } from './lib/step-summary.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = `${SITE.github}/${SITE.domain}`;
-const origin = `https://${SITE.domain}`;
 const requiredChecks = new Set([
   'build',
   'e2e',
@@ -20,32 +36,18 @@ const requiredChecks = new Set([
 
 const results = [];
 
-function command(name, args) {
-  const result = spawnSync(name, args, {
-    cwd: root,
-    encoding: 'utf8',
-  });
-  if (result.status !== 0) {
-    throw new Error(result.stderr.trim() || `${name} ${args.join(' ')} failed`);
-  }
-  return result.stdout.trim();
-}
+const git = (...args) => runSync('git', args, { cwd: siteRoot });
 
-function status(label, detail) {
-  console.log(`${label.padEnd(12)} ${detail}`);
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function fetchChecked(url, options = {}) {
-  const response = await fetch(url, {
+function fetchChecked(url, options = {}) {
+  return fetch(url, {
     redirect: 'manual',
     signal: AbortSignal.timeout(20_000),
     ...options,
   });
-  return response;
+}
+
+function assertClean(findings, context) {
+  if (findings.length > 0) throw new Error(`${context}: ${findings.join('; ')}`);
 }
 
 async function waitForChecks(sha) {
@@ -69,17 +71,7 @@ async function waitForChecks(sha) {
 
 async function pollChecks(sha, deadline, started, report) {
   while (Date.now() < deadline) {
-    const payload = JSON.parse(
-      command('gh', [
-        'api',
-        `repos/${repository}/commits/${sha}/check-runs`,
-        '--method',
-        'GET',
-        '-f',
-        'per_page=100',
-      ]),
-    );
-    const checks = new Map(payload.check_runs.map((check) => [check.name, check]));
+    const checks = new Map(checkRuns(repository, sha).map((check) => [check.name, check]));
     const missing = [...requiredChecks].filter((name) => !checks.has(name));
     const pending = [...requiredChecks].filter(
       (name) => checks.get(name)?.status !== 'completed',
@@ -108,52 +100,13 @@ async function pollChecks(sha, deadline, started, report) {
   throw new Error('timed out waiting for required GitHub and Cloudflare checks');
 }
 
-function assertHeader(headers, name, predicate, expected) {
-  const value = headers.get(name) ?? '';
-  if (!predicate(value)) {
-    throw new Error(`${name} failed for live origin; expected ${expected}, received ${value || '<missing>'}`);
-  }
-}
-
 async function verifyHeaders(pathname) {
   const response = await fetchChecked(`${origin}${pathname}`, { method: 'HEAD' });
   if (response.status !== 200) {
     throw new Error(`${pathname} returned ${response.status}, expected 200`);
   }
-
-  assertHeader(
-    response.headers,
-    'content-security-policy',
-    (value) =>
-      value.includes('report-to csp-endpoint') &&
-      value.includes(`report-uri ${origin}/api/csp-report`) &&
-      !/script-src[^;]*'unsafe-inline'/.test(value),
-    'report-to/report-uri and no unsafe-inline in script-src',
-  );
-  assertHeader(
-    response.headers,
-    'reporting-endpoints',
-    (value) => value.includes('/api/csp-report'),
-    '/api/csp-report endpoint',
-  );
-  assertHeader(
-    response.headers,
-    'strict-transport-security',
-    (value) => /includesubdomains/i.test(value),
-    'includeSubDomains',
-  );
-  assertHeader(
-    response.headers,
-    'x-content-type-options',
-    (value) => value.toLowerCase() === 'nosniff',
-    'nosniff',
-  );
-  assertHeader(
-    response.headers,
-    'referrer-policy',
-    (value) => value.toLowerCase() === 'strict-origin-when-cross-origin',
-    'strict-origin-when-cross-origin',
-  );
+  const headers = headersToRecord(response.headers);
+  assertClean([...cspFindings(headers), ...staticHeaderFindings(headers), ...hstsFindings(headers)], pathname);
 }
 
 async function collectSitemapUrls() {
@@ -200,31 +153,39 @@ async function verifyLiveRoutes(publicUrls) {
   return `${publicUrls.length} sitemap URLs returned 200`;
 }
 
-const nonceInCsp = /'nonce-([A-Za-z0-9+/=]+)'/;
-
 // The middleware mints a nonce per request and stamps it on every script tag.
 // A 200 whose scripts carry a different nonce than the header is a page that
 // renders but executes nothing, which no status-code check would notice.
 export async function verifyNonce() {
   const first = await fetchChecked(`${origin}/`);
   if (first.status !== 200) throw new Error(`/ returned ${first.status}, expected 200`);
-  const nonce = nonceInCsp.exec(first.headers.get('content-security-policy') ?? '')?.[1];
-  if (!nonce) throw new Error('content-security-policy on / carries no script nonce');
-
+  const nonce = nonceFromCsp(headersToRecord(first.headers)['content-security-policy']);
   const html = await first.text();
-  const scripts = (html.match(/<script\b/g) ?? []).length;
-  const stamped = html.split(`nonce="${nonce}"`).length - 1;
-  if (scripts === 0) throw new Error('/ renders no script tags');
-  if (stamped !== scripts) {
-    throw new Error(`${stamped} of ${scripts} script tags carry the header nonce`);
-  }
+  assertClean(nonceParityFindings(html, nonce), '/');
 
   const second = await fetchChecked(`${origin}/`, { method: 'HEAD' });
-  const rotated = nonceInCsp.exec(second.headers.get('content-security-policy') ?? '')?.[1];
+  const rotated = nonceFromCsp(headersToRecord(second.headers)['content-security-policy']);
   if (!rotated || rotated === nonce) {
     throw new Error('nonce did not rotate between two requests; middleware bypassed or response cached');
   }
-  return `${scripts} script tags carry the header nonce; nonce rotates per request`;
+  return `${scriptTagCount(html)} script tags and the inlined stylesheet carry the header nonce; nonce rotates per request`;
+}
+
+// public/_headers pins fingerprinted assets for a year and keeps chrome assets
+// revalidating; the home page names one of each.
+export async function verifyCacheRules() {
+  const home = await fetchChecked(`${origin}/`);
+  const html = await home.text();
+  const fingerprinted = html.match(/(?:src|href)="(\/_astro\/[^"]+)"/)?.[1];
+  const chrome = html.match(/href="(\/assets\/icons\/[^"]+)"/)?.[1];
+  if (!fingerprinted || !chrome) throw new Error('/ references no _astro asset or no icon to check cache rules on');
+
+  for (const [pathname, immutable] of [[fingerprinted, true], [chrome, false]]) {
+    const response = await fetchChecked(`${origin}${pathname}`, { method: 'HEAD' });
+    if (response.status !== 200) throw new Error(`${pathname} returned ${response.status}, expected 200`);
+    assertClean(cacheRuleFindings(headersToRecord(response.headers), { immutable }), pathname);
+  }
+  return `${fingerprinted} is immutable for a year; ${chrome} revalidates hourly`;
 }
 
 export async function verifyNotFound() {
@@ -250,11 +211,7 @@ export async function verifyContactGate() {
     }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (response.status !== 400 || payload.ok !== false || !/verification/i.test(payload.error ?? '')) {
-    throw new Error(
-      `POST /api/contact without a Turnstile token returned ${response.status} ${JSON.stringify(payload)}, expected 400 refusing verification`,
-    );
-  }
+  assertClean(contactRefusalFindings(response.status, payload), 'POST /api/contact without a Turnstile token');
   return 'POST without a Turnstile token is refused with 400';
 }
 
@@ -264,7 +221,7 @@ export async function verifySecurityTxt() {
     throw new Error(`/.well-known/security.txt returned ${response.status}, expected 200`);
   }
   const live = await response.text();
-  const committed = fs.readFileSync(path.join(root, 'public/.well-known/security.txt'), 'utf8');
+  const committed = fs.readFileSync(path.join(siteRoot, 'public/.well-known/security.txt'), 'utf8');
   if (live !== committed) {
     throw new Error('live security.txt differs from the committed, signed file');
   }
@@ -280,18 +237,7 @@ async function verifyProductionGuard() {
 }
 
 function verifyCodeScanning() {
-  const alerts = JSON.parse(
-    command('gh', [
-      'api',
-      `repos/${repository}/code-scanning/alerts`,
-      '--method',
-      'GET',
-      '-f',
-      'state=open',
-      '-f',
-      'per_page=100',
-    ]),
-  );
+  const alerts = openCodeScanningAlerts(repository);
   if (alerts.length > 0) {
     throw new Error(`${alerts.length} open code-scanning alert(s) remain`);
   }
@@ -334,16 +280,15 @@ function writeSummary(sha) {
 }
 
 async function main() {
-  if (command('git', ['status', '--porcelain'])) {
+  if (git('status', '--porcelain')) {
     throw new Error('worktree is not clean; commit the verified release candidate first');
   }
-  if (command('git', ['branch', '--show-current']) !== 'main') {
+  if (git('branch', '--show-current') !== 'main') {
     throw new Error('production deployment verification must run from main');
   }
 
-  const sha = command('git', ['rev-parse', 'HEAD']);
-  const remote = command('git', ['ls-remote', 'origin', 'refs/heads/main'])
-    .split(/\s+/)[0];
+  const sha = git('rev-parse', 'HEAD');
+  const remote = git('ls-remote', 'origin', 'refs/heads/main').split(/\s+/)[0];
   if (sha !== remote) {
     throw new Error(`local HEAD ${sha} does not match origin/main ${remote}`);
   }
@@ -351,7 +296,7 @@ async function main() {
   status('target', origin);
 
   await run('audit', () => {
-    command('npm', ['audit', '--omit=dev', '--audit-level=high']);
+    runSync('npm', ['audit', '--omit=dev', '--audit-level=high'], { cwd: siteRoot });
     return 'no high-severity production dependency advisories';
   });
 
@@ -374,7 +319,7 @@ async function main() {
       if (!writeupPath) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
       await verifyHeaders('/');
       await verifyHeaders(writeupPath);
-      return `CSP, reporting, HSTS, nosniff, and referrer policy passed (/ and ${writeupPath})`;
+      return `CSP, report-only staging, static security headers, and HSTS passed (/ and ${writeupPath})`;
     });
     await run('routes', () => verifyLiveRoutes(publicUrls));
   } else {
@@ -384,6 +329,7 @@ async function main() {
 
   await run('production', verifyProductionGuard);
   await run('nonce', verifyNonce);
+  await run('cache', verifyCacheRules);
   await run('not-found', verifyNotFound);
   await run('contact', verifyContactGate);
   await run('security-txt', verifySecurityTxt);
@@ -401,7 +347,7 @@ async function main() {
   const summary = `all ${results.length} checks passed for ${sha.slice(0, 12)} against ${origin}`;
   annotate('notice', 'deploy-verify', summary);
   console.log(
-    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, nonce, 404, contact gate, security.txt, dependency audit, and code scanning passed',
+    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, nonce, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
   );
 }
 

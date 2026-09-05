@@ -6,6 +6,7 @@ const checks = [
   ['contact OpenAPI', ['bin/sync-contact-openapi.mjs', '--check']],
   ['content schemas', ['bin/sync-content-contract.mjs', '--check']],
   ['embed CSS projection', ['bin/make-embed-bundle.mjs', '--check']],
+  ['edge site identity', ['bin/sync-edge-site.mjs', '--check']],
 ];
 for (const [name, args] of checks) {
   const result = spawnSync(process.execPath, args, { encoding: 'utf8' });
@@ -14,4 +15,4 @@ for (const [name, args] of checks) {
     process.exit(1);
   }
 }
-console.log('ok       generated brand, API, schema, and CSS projections match their canonical sources');
+console.log('ok       generated brand, API, schema, CSS, and edge identity projections match their canonical sources');

@@ -2,9 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = siteRoot;
 const roots = ['bin', 'src', 'tests'];
 const failures = [];
 

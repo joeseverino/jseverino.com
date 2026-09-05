@@ -13,26 +13,16 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+import { siteRoot } from '../../src/lib/site-root.mjs';
+import { isConflictCopy, walkFiles } from '../../src/lib/walk.mjs';
 
 const scripts = JSON.parse(fs.readFileSync(path.join(siteRoot, 'package.json'), 'utf8')).scripts ?? {};
 
-// iCloud conflict copies ("README 2.md") are transient cruft, never real docs.
-const conflictCopy = / \d+(\.[^.]+)?$/;
-
-function walk(dir, files = []) {
-  const abs = path.join(siteRoot, dir);
-  if (!fs.existsSync(abs)) return files;
-  for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
-    if (conflictCopy.test(entry.name)) continue;
-    const rel = path.join(dir, entry.name);
-    if (entry.isDirectory()) walk(rel, files);
-    else if (entry.name.endsWith('.md')) files.push(rel);
-  }
-  return files;
-}
+const walk = (dir) =>
+  walkFiles(path.join(siteRoot, dir), {
+    filter: (file) => file.endsWith('.md'),
+    skip: (entry) => isConflictCopy(entry.name),
+  }).map((file) => path.relative(siteRoot, file));
 
 const rootDocs = ['README.md', 'SECURITY.md', 'CONTRIBUTING.md', 'AGENTS.md'].filter((file) =>
   fs.existsSync(path.join(siteRoot, file)),

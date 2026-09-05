@@ -3,9 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../src/lib/site-root.mjs';
+import { isConflictCopy, walkFiles } from '../../src/lib/walk.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = siteRoot;
 const failures = [];
 
 function read(file) {
@@ -58,7 +59,7 @@ const forbiddenTracked = tracked.filter(
     (/(^|\/)\.env(?:\.|$)/.test(file) && !file.endsWith('.env.example')) ||
     (/(^|\/)\.dev\.vars(?:\.|$)/.test(file) && !file.endsWith('.dev.vars.example')) ||
     /(^|\/)(?:dist|playwright-report|test-results)(?:\/|$)/.test(file) ||
-    /(?:^|\/)[^/]+ [0-9]+(?:\.[^/]*)?$/.test(file),
+    isConflictCopy(path.basename(file)),
 );
 if (forbiddenTracked.length > 0) {
   fail(`forbidden generated, secret, or conflict files are tracked: ${forbiddenTracked.join(', ')}`);
@@ -66,20 +67,13 @@ if (forbiddenTracked.length > 0) {
 
 const conflictCopies = [];
 for (const base of ['src/content', 'public/assets']) {
-  const absoluteBase = path.join(root, base);
-  if (!fs.existsSync(absoluteBase)) continue;
-
-  const pending = [absoluteBase];
-  while (pending.length > 0) {
-    const current = pending.pop();
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      const absolute = path.join(current, entry.name);
-      if (/ [0-9]+(?:\.[^/]*)?$/.test(entry.name)) {
-        conflictCopies.push(path.relative(root, absolute));
-      }
-      if (entry.isDirectory()) pending.push(absolute);
-    }
-  }
+  walkFiles(path.join(root, base), {
+    skip: (entry, dir) => {
+      if (!isConflictCopy(entry.name)) return false;
+      conflictCopies.push(path.relative(root, path.join(dir, entry.name)));
+      return true;
+    },
+  });
 }
 if (conflictCopies.length > 0) {
   fail(`iCloud conflict copies remain: ${conflictCopies.sort().join(', ')}`);
@@ -100,8 +94,12 @@ const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/
 const authoredStyles = styleFiles
   .map((file) => {
     const stylesheet = read(file);
-    const tokenEnd = stylesheet.indexOf('/* tokens:end */');
-    return tokenEnd >= 0 ? stylesheet.slice(tokenEnd) : stylesheet;
+    // A generated block ends with a `/* <name>:end */` marker (tokens.css,
+    // brand.css); strip through the last one so a hand-authored rule below it
+    // is still checked, but nothing generated is mistaken for hand-authored.
+    const ends = [...stylesheet.matchAll(/\/\* \w+:end \*\//g)];
+    const blockEnd = ends.at(-1)?.index;
+    return blockEnd !== undefined ? stylesheet.slice(blockEnd) : stylesheet;
   })
   .join('\n');
 const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;

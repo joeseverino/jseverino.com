@@ -4,13 +4,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 import {
   contentContract,
   contentContractFingerprint,
 } from '../../src/lib/content-contract.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = siteRoot;
 const mcpRoot = process.env.MCP_DIR
   ? path.resolve(process.env.MCP_DIR)
   : path.resolve(root, '../../Assets/severino-vault-mcp');

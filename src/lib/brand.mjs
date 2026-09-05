@@ -5,7 +5,7 @@
 // Plain .mjs so both the Astro site and the node asset generators can import it.
 // Consumers:
 //   - src/layouts/BaseLayout.astro  → theme color
-//   - src/pages/brand.css.ts        → CSS brand custom properties (via brandVarsCss)
+//   - src/styles/brand.css          → CSS brand custom properties (via brandVarsCss)
 //   - src/lib/web-styles.mjs        → the base.css + brand vars + font bundle for embedders
 //   - bin/make-icons.mjs            → the brand mark (favicon, HD marks)
 //   - bin/make-og-image / make-github-social → social-card palette
@@ -71,11 +71,12 @@ export function brandCardColors() {
 }
 
 // The brand custom properties every site surface AND every embedder needs
-// ALONGSIDE base.css. They are deliberately NOT in base.css: --color-primary is
-// brand identity (swappable), base.css is the design system (stable). Owned here
-// so /brand.css (src/pages/brand.css.ts) and the Obsidian plugin's preview don't
-// each re-derive them — the re-derivation that once left --color-primary dead in
-// the preview, killing base.css's tinted tables, links, and buttons.
+// ALONGSIDE the design system. They live in their own file, src/styles/brand.css
+// (generated from here by `npm run sync:tokens`, imported by base.css):
+// --color-primary is brand identity (swappable), the rest is the design system
+// (stable). Owned here so the site stylesheet and the Obsidian plugin's preview
+// don't each re-derive them — the re-derivation that once left --color-primary
+// dead in the preview, killing base.css's tinted tables, links, and buttons.
 //
 // Navy is unreadable on a dark page, so dark mode uses the onDark pair. `deep`
 // means "more emphasis", which is DARKER on a light page and LIGHTER on a dark
@@ -84,12 +85,14 @@ export function brandCardColors() {
 // Do not put light-dark() inside these custom properties. Safari can preserve
 // the light arm when a separately loaded stylesheet defines the variable before
 // the page's color-scheme settles. Emit explicit selectors instead: this is the
-// one theme contract consumed by /brand.css and every generated embed bundle.
-export function brandVarsCss() {
+// one theme contract consumed by brand.css and every generated embed bundle.
+// sync-tokens passes the freshly pulled upstream pair so the generated file
+// never lags the block above by one run.
+export function brandVarsCss(themes = PRIMARY_BY_THEME) {
   const declarations = (primary, deep) =>
     `--color-primary:${primary};--color-primary-deep:${deep}`;
-  const light = declarations(PRIMARY_BY_THEME.light.primary, PRIMARY_BY_THEME.light.deep);
-  const dark = declarations(PRIMARY_BY_THEME.dark.primary, PRIMARY_BY_THEME.dark.deep);
+  const light = declarations(themes.light.primary, themes.light.deep);
+  const dark = declarations(themes.dark.primary, themes.dark.deep);
 
   return [
     `:root{${light}}`,

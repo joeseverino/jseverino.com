@@ -12,9 +12,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const vaultRoot =
   process.env.VAULT_DIR
     ? path.resolve(process.env.VAULT_DIR)

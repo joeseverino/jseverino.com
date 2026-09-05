@@ -12,10 +12,10 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { buildOutDir } from '../src/lib/build-output.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
+import { walkFiles } from '../src/lib/walk.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const baselineRef = process.argv[2] || 'HEAD';
 const TEXT_EXT = /\.(html|xml|txt|json|css|js)$/;
 
@@ -37,17 +37,10 @@ function normalize(text) {
 }
 
 function collect(dir) {
-  const files = new Map();
-  const walk = (current) => {
-    if (!fs.existsSync(current)) return;
-    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-      const full = path.join(current, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (TEXT_EXT.test(entry.name)) files.set(path.relative(dir, full), normalize(fs.readFileSync(full, 'utf8')));
-    }
-  };
-  walk(dir);
-  return files;
+  return new Map(
+    walkFiles(dir, { filter: (file) => TEXT_EXT.test(file) })
+      .map((file) => [path.relative(dir, file), normalize(fs.readFileSync(file, 'utf8'))]),
+  );
 }
 
 function firstDivergence(a, b) {

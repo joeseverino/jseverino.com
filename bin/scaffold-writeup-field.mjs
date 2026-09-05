@@ -4,9 +4,9 @@
 // command never patches consumers.
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const target = path.join(root, 'contracts/content.v1.json');
 const args = process.argv.slice(2);
 const value = (name, fallback) => {

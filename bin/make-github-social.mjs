@@ -2,12 +2,12 @@
 // Upload via the repo's Settings -> Social preview. Not served from the site.
 // Run with: node bin/make-github-social.mjs
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { brandCardColors } from '../src/lib/brand.mjs';
 import { SITE } from '../src/lib/site-config.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const browser = await launchBrowser();
 try {
   await renderCard(browser, {

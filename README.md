@@ -278,6 +278,7 @@ Do not commit:
 - [`docs/Blueprint-Setup.md`](./docs/Blueprint-Setup.md) inventories every instance-specific value (identity, brand, edge config, dashboard) for reuse as a blueprint.
 - [`docs/Authoring-Guide.md`](./docs/Authoring-Guide.md) documents supported Markdown extensions.
 - [`docs/Commands.md`](./docs/Commands.md) is the full command reference — every npm script by role, with detail per command.
+- [`docs/Dependencies.md`](./docs/Dependencies.md) records why each `overrides` entry in `package.json` exists and the condition for removing it.
 - [`docs/Site-CLI.md`](./docs/Site-CLI.md) documents the personal `site` CLI and the `site manage` TUI that drive publishing day to day.
 - [`docs/SEO.md`](./docs/SEO.md) documents canonical URLs, structured data, discovery files, and metadata flow.
 - [`docs/Deployment-Preview-Review.md`](./docs/Deployment-Preview-Review.md) documents the sitedrift-powered Cloudflare preview review workflow and production guard.

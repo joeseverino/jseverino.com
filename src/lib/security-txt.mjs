@@ -1,13 +1,13 @@
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { SITE } from './site-config.mjs';
+import { siteRoot } from './site-root.mjs';
 
 // Shared, side-effect-free helpers for the security.txt signer (bin/sign-security.mjs)
 // and verifier (tests/audits/check-security-txt.mjs). Both must agree on how the
 // signed body is extracted, so that logic lives here once.
 
-export const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+export const SITE_ROOT = siteRoot;
 export const SECURITY_FILE = path.join(SITE_ROOT, 'public/.well-known/security.txt');
 export const WKD_DIR = path.join(SITE_ROOT, 'public/.well-known/openpgpkey/hu');
 export const SIGNING_EMAIL = `security@${SITE.domain}`;

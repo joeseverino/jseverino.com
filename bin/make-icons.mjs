@@ -13,12 +13,12 @@
 //   public/assets/brand/wordmark-caps.svg       (tile + name lockup, currentColor text)
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { renderMarkSet, wordmarkSvg } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.mjs';
 import { SITE } from '../src/lib/site-config.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const iconsDir = path.join(root, 'public/assets/icons');
 const brandDir = path.join(root, 'public/assets/brand');
 

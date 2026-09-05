@@ -12,11 +12,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { BRAND } from '../../src/lib/brand.mjs';
 import { readCssEntry } from '../../bin/lib/css-entry.mjs';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const cssPath = path.join(siteRoot, 'src/styles/base.css');
 const AA_NORMAL = 4.5;
 
@@ -82,8 +81,9 @@ for (const [, name, raw] of tokenBlock.matchAll(/--color-([a-z0-9-]+)\s*:\s*([^;
   else if (PLAIN.test(value)) tokens.set(`--color-${name}`, { light: value.toLowerCase(), dark: value.toLowerCase() });
 }
 
-// --color-primary lives in brand.mjs, not base.css (brand identity vs design
-// system), so it's folded in from the same source /brand.css is generated from.
+// --color-primary lives in brand.mjs, not the design-system tokens (brand
+// identity vs design system), so it's folded in from the same source
+// src/styles/brand.css is generated from.
 tokens.set('--color-primary', {
   light: BRAND.navy.toLowerCase(),
   dark: BRAND.onDark.primary.toLowerCase(),

@@ -51,7 +51,7 @@
 
 .mobile-nav {
   position: fixed;
-  inset-block-start: var(--header-height, 3.6rem);
+  inset-block-start: var(--header-height);
   inset-inline: 0;
   inset-block-end: 0;
   inline-size: auto;
@@ -84,7 +84,7 @@
      only the header-offset inset is nav-specific. */
   &::backdrop {
     position: fixed;
-    inset-block-start: var(--header-height, 3.6rem);
+    inset-block-start: var(--header-height);
     inset-inline: 0;
     inset-block-end: 0;
   }
@@ -189,7 +189,6 @@
 .lightbox::backdrop {
   background: color-mix(in oklch, var(--color-bg) 72%, transparent);
   backdrop-filter: blur(var(--blur-chrome));
-  -webkit-backdrop-filter: blur(var(--blur-chrome));
   opacity: 0;
   transition:
     opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
@@ -308,5 +307,38 @@
 body:has(.mobile-nav:popover-open),
 body:has(.lightbox[open]) {
   overflow: hidden;
+}
+
+/* ── Breakpoints ────────────────────────────────────────────────────── */
+
+@media (width <= 640px) {
+  .sli {
+    flex-direction: column;
+    gap: var(--space-10);
+  }
+
+  .sli-aside {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
+
+@media (width <= 599px) {
+  .primary-nav { display: none; }
+  .nav-toggle { display: inline-flex; }
+  .site-nav { align-items: center; }
+  .project-grid { grid-template-columns: 1fr; }
+  .page-hero { text-align: left; }
+  .page-intro { margin-inline: 0; }
+  .page-actions { justify-content: flex-start; }
+
+  .archive-section summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .archive-taxonomy-group { grid-template-columns: 1fr; }
+  .split { grid-template-columns: 1fr; }
 }
 }

@@ -11,6 +11,9 @@
     "url": "git+https://github.com/joeseverino/jseverino.com.git"
   },
   "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "help": "node bin/help.mjs",
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
@@ -19,6 +22,8 @@
     "sync:contract": "node bin/sync-content-contract.mjs",
     "sync:contact-openapi": "node bin/sync-contact-openapi.mjs",
     "sync:tokens": "node bin/sync-tokens.mjs",
+    "sync:edge-site": "node bin/sync-edge-site.mjs",
+    "sync:docs": "node bin/sync-docs.mjs",
     "check:tokens": "node bin/sync-tokens.mjs --check",
     "snapshot:github": "node bin/snapshot-github.mjs",
     "diagnose": "node bin/diagnose.mjs",
@@ -35,13 +40,14 @@
     "make:og": "node bin/make-og-image.mjs",
     "make:embed": "node bin/make-embed-bundle.mjs",
     "make:social": "node bin/make-github-social.mjs",
+    "make:font": "node bin/make-font.mjs",
     "make:content-index": "node bin/make-content-index.mjs",
     "scaffold:primer": "node bin/scaffold-primer.mjs",
     "scaffold:writeup-field": "node bin/scaffold-writeup-field.mjs",
     "draft:cover-alt": "node bin/draft-cover-alt.mjs",
     "sign:security": "node bin/sign-security.mjs",
     "seo:preview": "node bin/seo-preview.mjs",
-    "test:unit": "node --disable-warning=ExperimentalWarning --experimental-strip-types --test 'tests/unit/**/*.test.ts'",
+    "test:unit": "node --test 'tests/unit/**/*.test.ts'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:visual": "VISUAL=1 playwright test tests/playwright/visual.spec.ts",

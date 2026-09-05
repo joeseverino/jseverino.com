@@ -294,35 +294,4 @@
 }
 
 .sli-writeup { color: var(--color-text-alt); }
-
-@media (width <= 640px) {
-  .sli {
-    flex-direction: column;
-    gap: var(--space-10);
-  }
-
-  .sli-aside {
-    align-items: flex-start;
-    text-align: start;
-  }
-}
-
-@media (width <= 599px) {
-  .primary-nav { display: none; }
-  .nav-toggle { display: inline-flex; }
-  .site-nav { align-items: center; }
-  .project-grid { grid-template-columns: 1fr; }
-  .page-hero { text-align: left; }
-  .page-intro { margin-inline: 0; }
-  .page-actions { justify-content: flex-start; }
-
-  .archive-section summary {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .archive-taxonomy-group { grid-template-columns: 1fr; }
-  .split { grid-template-columns: 1fr; }
-}
 }

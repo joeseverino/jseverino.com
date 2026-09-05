@@ -10,10 +10,10 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AUDITS, auditsFor } from '../audits/registry.mjs';
+import { siteRoot } from '../../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = siteRoot;
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 const scripts = JSON.parse(read('package.json')).scripts as Record<string, string>;
 

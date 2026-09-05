@@ -6,11 +6,11 @@
 //   node bin/playwright-summary.mjs "Cross-browser suite" [test-results/results.json]
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { status } from './lib/run.mjs';
 import { annotate, appendSummary, cell, table } from './lib/step-summary.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const title = process.argv[2] ?? 'Playwright';
 const input = path.resolve(root, process.argv[3] ?? 'test-results/results.json');
 

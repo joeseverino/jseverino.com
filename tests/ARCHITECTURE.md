@@ -48,7 +48,7 @@ The prefix in `tests/audits/` is meaningful, not decorative:
 
 The fan-out is six steps; the gates enforce most of them, so a missed step fails loudly rather than silently:
 
-1. **Write the script** in `tests/audits/check-<thing>.mjs`. Resolve paths from the module's own location (`fileURLToPath(import.meta.url)`), never the cwd. Post-build audits get the built tree from [`lib.mjs`](./audits/lib.mjs) (`builtHtmlPages()` / `walkFiles()`) rather than re-resolving the outDir — the outDir decision itself is single-sourced in [`src/lib/build-output.mjs`](../src/lib/build-output.mjs). Exit non-zero on violation. On success print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>` — `publish:check` extracts the first `ok` + two-or-more-spaces line as its terse status (see `summarize()` in [`bin/publish-check.mjs`](../bin/publish-check.mjs)).
+1. **Write the script** in `tests/audits/check-<thing>.mjs`. Resolve paths from `siteRoot` in [`src/lib/site-root.mjs`](../src/lib/site-root.mjs), never the cwd, and list files with `walkFiles()` from [`src/lib/walk.mjs`](../src/lib/walk.mjs) rather than a private recursion. Post-build audits get the built tree from [`lib.mjs`](./audits/lib.mjs) (`builtHtmlPages()` / `walkFiles()`) rather than re-resolving the outDir — the outDir decision itself is single-sourced in [`src/lib/build-output.mjs`](../src/lib/build-output.mjs). Exit non-zero on violation. On success print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>` — `publish:check` extracts the first `ok` + two-or-more-spaces line as its terse status (see `summarize()` in [`bin/publish-check.mjs`](../bin/publish-check.mjs)).
 2. **Register it** in [`registry.mjs`](./audits/registry.mjs): id, label, name, phase (`pre-build`/`post-build`), exec, gates, one-line `fix`. The unit suite ([`registry.test.ts`](./unit/registry.test.ts)) validates the entry shape and that the exec target exists; every gate picks the audit up from here automatically.
 3. **Add the npm script** in `package.json` for targeted runs. The naming rule: the script suffix matches the registry `label` (`check:<label>` — e.g. label `edge` → `check:edge`), while the file name stays long and descriptive (`check-functions-parity.mjs`).
 4. **Add the help line** in [`bin/help.mjs`](../bin/help.mjs) — an uncategorized script shows under "Other" with a nudge until it is categorized.
@@ -79,6 +79,42 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
    Playwright and edge suites, so both serve that artifact instead of
    rebuilding it inside their `webServer`.
 
+### Gate coverage
+
+Which registry audit runs under which gate, rendered from [`tests/audits/registry.mjs`](./audits/registry.mjs) by `npm run sync:docs` (the gate refuses a stale copy):
+
+<!-- generated:start gate-coverage (npm run sync:docs) -->
+
+| Audit | Label | Phase | gate | publish | diagnose | release |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Source Integrity | `source` | pre-build | ✓ | ✓ | ✓ | ✓ |
+| Generated Contract Projections | `contracts` | pre-build |  | ✓ | ✓ | ✓ |
+| Security Signatures | `security` | pre-build |  | ✓ | ✓ |  |
+| WCAG Color Contrast | `contrast` | pre-build |  | ✓ | ✓ |  |
+| Vault/MCP/Code Parity (authoring machine only) | `parity` | pre-build |  | ✓ | ✓ |  |
+| Functions Type Check | `types` | pre-build |  | ✓ | ✓ |  |
+| Functions/Schema Parity | `edge` | pre-build |  | ✓ | ✓ |  |
+| Sitedrift Preview Guard | `preview` | pre-build |  | ✓ | ✓ |  |
+| Unit Test Suite | `unit` | pre-build |  | ✓ | ✓ |  |
+| Generated Documentation Blocks | `docs-sync` | pre-build | ✓ | ✓ | ✓ |  |
+| Docs Link Integrity | `docs` | pre-build | ✓ | ✓ | ✓ |  |
+| Embed Bundle Freshness | `embed` | pre-build |  | ✓ | ✓ |  |
+| Stylelint CSS Check | `css-lint` | pre-build | ✓ | ✓ | ✓ |  |
+| CSS Unused Variables | `css-vars` | pre-build |  | ✓ | ✓ |  |
+| Astro Compiler Diagnostics | `check` | pre-build |  | ✓ | ✓ |  |
+| Repository Policy | `repo-policy` | pre-build | ✓ |  | ✓ | ✓ |
+| Playwright Browser Revisions | `browsers` | pre-build |  |  | ✓ | ✓ |
+| Git Formatting/Conflicts | `git-diff` | pre-build |  |  | ✓ | ✓ |
+| Asset Weight Limits | `assets` | post-build |  | ✓ | ✓ |  |
+| Internal Link Integrity | `links` | post-build |  | ✓ | ✓ |  |
+| Page Weight Budget | `weight` | post-build |  | ✓ | ✓ |  |
+| Structural HTML | `html` | post-build |  | ✓ | ✓ |  |
+| SEO Metadata | `seo` | post-build |  | ✓ | ✓ |  |
+| Edge Runtime Tests | `edge-runtime` | post-build |  |  | ✓ | ✓ |
+| Playwright Browser Tests | `e2e` | post-build |  |  | ✓ | ✓ |
+
+<!-- generated:end gate-coverage -->
+
 ### What there is to read
 
 The design goal: a green run leaves nothing to read, and a red run leaves nothing *but* what to fix.
@@ -98,13 +134,14 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Logic | [markdown DSL](#the-unit-layer) | `tests/unit/markdown-dsl.test.ts` | Every custom block (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::button`, `::cta`, `::center`, `::hero`), inline rewrite, image directive, and writeup-chrome transform renders to the expected HTML. |
 | Logic | [contact API](#the-unit-layer) | `tests/unit/contact-api.test.ts` | The contact function's validation ladder, honeypot, Turnstile verification, rate limit, and D1 persistence paths behave, with D1 and siteverify stubbed. |
 | Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
-| Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, report-only policy, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
+| Logic | [middleware](#the-unit-layer) | `tests/unit/middleware.test.ts` | HTML responses get a fresh per-request CSP nonce, `report-to` without the deprecated `report-uri`, the report-only policy staging `'strict-dynamic'` under the same nonce, and reporting endpoints; non-HTML and bodyless responses pass through untouched. |
 | Logic | [gate harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
 | Logic | [registry shape](#the-unit-layer) | `tests/unit/registry.test.ts` | Registry entries are well-formed: unique ids, known gates/phases, exec targets that exist, every audit visible to `diagnose`. |
 | Docs | [registry/docs parity](#the-unit-layer) | `tests/unit/docs-parity.test.ts` | Every audit is documented here, every publish label appears in the release checklist, every script in `docs/Commands.md`, every gate command in the README. |
 | Types | [functions type check](#functions-type-check) | `tsc -p functions` | The Cloudflare functions — the only TypeScript excluded from `astro check` — compile clean under strict mode. |
 | Source | [source integrity](#check-source-integritymjs) | `tests/audits/check-source-integrity.mjs` | JavaScript/TypeScript parses and has no duplicate top-level function declarations. |
-| Contracts | [generated projections](#check-contract-projectionsmjs) | `tests/audits/check-contract-projections.mjs` | Generated API, typed content schema, and embeddable CSS exactly match canonical sources. |
+| Contracts | [generated projections](#check-contract-projectionsmjs) | `tests/audits/check-contract-projections.mjs` | Generated API, typed content schema, embeddable CSS, and the edge runtime's site identity (`functions/generated/site.ts`) exactly match canonical sources. |
+| Docs | [generated doc blocks](#generated-documentation-blocks) | `bin/sync-docs.mjs --check` | The command overview in `docs/Commands.md` and the gate-coverage table in this file match the groups in `bin/help.mjs` and the audit registry. |
 | Parity | [functions/schema parity](#check-functions-paritymjs) | `tests/audits/check-functions-parity.mjs` | The contact handler, the API Shield OpenAPI schema, and the D1 schema agree on fields, limits, and INSERT columns. |
 | Routing | [preview guard](#check-sitedrift-previewmjs) | `tests/audits/check-sitedrift-preview.mjs` | The sitedrift review wrapper is present on preview branches and absent on `main`. |
 | Styling | [unused CSS vars](#check-cssmjs) | `tests/audits/check-css.mjs` | No `--custom-property` is defined but never referenced. |
@@ -123,11 +160,11 @@ The design goal: a green run leaves nothing to read, and a red run leaves nothin
 | Structure | [structural HTML](#check-htmlmjs) | `tests/audits/check-html.mjs` | No page repeats an `id`; every `<img>` carries an `alt` attribute. All pages, statically. |
 | A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser. |
 | Links | [internal link integrity](#check-linksmjs) | `tests/audits/check-links.mjs` | Every internal `href`/`src`/`srcset` reference in the built HTML resolves to an emitted file (or a known function route). |
-| Perf | [page weight budget](#check-page-weightmjs) | `tests/audits/check-page-weight.mjs` | Per-page HTML, total CSS, and total JS stay within their byte budgets. |
+| Perf | [page weight budget](#check-page-weightmjs) | `tests/audits/check-page-weight.mjs` | Per-page HTML, the inlined stylesheet, and total JS stay within their byte budgets. |
 | SEO | [page metadata](#check-seomjs) | `tests/audits/check-seo.mjs` | Every built page has title, canonical, og:title, og:image, and valid JSON-LD. |
 | Visual | [visual regression](#5-visual-regression) | `tests/playwright/visual.spec.ts` | Page and component screenshots match committed macOS Chromium baselines. |
 | Edge runtime | [edge suite](#the-edge-runtime-suite-testsedge) | `tests/edge/runtime.spec.ts` | Served through `wrangler pages dev` before deploy: the CSP nonce on every script tag and rotating per request, the `_headers` security and cache rules, a real 404, the contact function's refusals, byte-exact `security.txt`, the WKD key's content type. |
-| Post-push | [deploy verification](#post-push-deploy-verification) | `bin/deploy-verify.mjs` | Remote CI status, prod dependency audit, live headers, live sitemap 200s, open CodeQL alerts. |
+| Post-push | [deploy verification](#post-push-deploy-verification) | `bin/deploy-verify.mjs` | Remote CI status, prod dependency audit, live headers and HSTS, live sitemap 200s, nonce parity and rotation, cache rules, the contact gate, `security.txt` parity, open CodeQL alerts. The response predicates are the edge suite's, from `src/lib/edge-expectations.mjs`. |
 | CI | CodeQL | `.github/workflows/codeql.yml` | Semantic JS/TS scanning for injection, XSS, prototype pollution. |
 | CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
 | CI | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Supply-chain posture: branch protection, pinned actions, token scope. |
@@ -201,7 +238,7 @@ Links inside fenced code blocks are treated as example syntax and skipped, so au
 Runs **after the build**. The sitemap smoke test proves every page exists; this proves every internal reference *inside* the pages resolves. It walks the emitted HTML, collects `href`/`src`/`poster`/`srcset` references (including same-origin absolute URLs like the canonical link), and asserts each one maps to a file the build emitted. Routes served by Pages functions (`/api/…`, `/cdn-cgi/…`) are allowlisted. A typo'd in-content link fails here, before deploy, instead of surfacing in the live traversal after.
 
 ### `check-page-weight.mjs`
-Runs **after the build** — the deterministic, flake-free complement to the CI Lighthouse run. Three byte budgets over the emitted output: per-page HTML (150 KB), total CSS (75 KB), and total JS (25 KB), set from the measured baseline (~80 KB worst page, ~25 KB CSS, ~2.5 KB JS) with generous headroom. A failure means a real regression — a runaway page, a style explosion, or a framework bundle sneaking into a no-framework site. Budgets may be raised, but only as a conscious commit to `tests/audits/check-page-weight.mjs`.
+Runs **after the build** — the deterministic, flake-free complement to the CI Lighthouse run. Three byte budgets over the emitted output: per-page HTML (150 KB), CSS (75 KB: the stylesheet every page inlines, plus any external `.css`), and total JS (25 KB), set from the measured baseline (~115 KB worst page carrying the ~36 KB inlined stylesheet, ~5 KB JS) with headroom. A failure means a real regression — a runaway page, a style explosion, or a framework bundle sneaking into a no-framework site. Budgets may be raised, but only as a conscious commit to `tests/audits/check-page-weight.mjs`.
 
 ### `check-html.mjs`
 Runs **after the build**. Structural assertions over every emitted page, statically: no `id` value appears twice on a page (duplicate ids silently break fragment links, label association, and `aria-*` references), and every `<img>` carries an `alt` attribute (empty `alt` is valid — it marks a decorative image — but a missing attribute is always an authoring bug). The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
@@ -461,7 +498,7 @@ only, so no browser is launched.
 [`runtime.spec.ts`](./edge/runtime.spec.ts) asserts, against `/` and one writeup
 page picked from the build rather than a pinned slug:
 
-- the per-request CSP carries a nonce, `default-src 'none'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, the `report-to` / `report-uri` pair, and no `'unsafe-inline'` script source; the Trusted Types report-only policy and `Reporting-Endpoints` are present;
+- the per-request CSP carries a nonce, `default-src 'none'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, `report-to csp-endpoint` (and no deprecated `report-uri`), and no `'unsafe-inline'` script source; the report-only policy stages `'strict-dynamic'` under the same nonce plus Trusted Types, and `Reporting-Endpoints` is present. The predicates live in [`src/lib/edge-expectations.mjs`](../src/lib/edge-expectations.mjs), shared with `deploy:verify`;
 - every `<script>` tag carries the header nonce, and the nonce rotates between requests;
 - the static security headers from `public/_headers` are present and no CORS header leaks onto HTML;
 - fingerprinted `/_astro/` assets are `immutable` for a year while chrome assets under `/assets/icons/` are short-lived and never immutable;
@@ -487,7 +524,7 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 4. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source,
-   - `reporting-endpoints` / `report-uri` routed to `/api/csp-report`,
+   - `reporting-endpoints` and `report-to` routed to `/api/csp-report`, the report-only policy staging `'strict-dynamic'`,
    - sitedrift proxy paths return `404`.
 5. **Live sitemap traversal** — HEAD every route from `sitemap-index.xml`; zero dead links.
 6. **CodeQL** — no open scanning alerts.

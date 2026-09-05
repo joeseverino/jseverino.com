@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import { browserTestEnv, edgeRuntime } from './tests/browser-test-env.mjs';
+import { browserTestEnv, ciReporters, edgeRuntime } from './tests/browser-test-env.mjs';
 
 // The edge suite. `astro preview` serves static files only; the CSP
 // middleware, the Pages Functions, and the public/_headers rules exist only on
@@ -13,9 +13,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
-    : 'list',
+  reporter: process.env.CI ? [...ciReporters] : 'list',
   use: {
     baseURL: origin,
   },

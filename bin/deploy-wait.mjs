@@ -5,9 +5,9 @@
 // and a gate that verify can depend on.
 //
 //   DEPLOY_SHA=<sha> GH_TOKEN=<token> node bin/deploy-wait.mjs
-import { spawnSync } from 'node:child_process';
 import { SITE } from '../src/lib/site-config.mjs';
-import { status } from './lib/run.mjs';
+import { checkRuns } from './lib/github.mjs';
+import { sleep, status } from './lib/run.mjs';
 import { annotate, appendSummary, endGroup, group, table } from './lib/step-summary.mjs';
 
 const repository = `${SITE.github}/${SITE.domain}`;
@@ -18,20 +18,6 @@ if (!sha) {
   process.exit(1);
 }
 
-function checkRuns() {
-  const result = spawnSync(
-    'gh',
-    ['api', `repos/${repository}/commits/${sha}/check-runs`, '--method', 'GET', '-f', 'per_page=100'],
-    { encoding: 'utf8' },
-  );
-  if (result.status !== 0) throw new Error(result.stderr.trim() || 'gh api failed');
-  return JSON.parse(result.stdout).check_runs;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 const started = Date.now();
 const deadline = started + 15 * 60_000;
 let lastReport = '';
@@ -40,7 +26,7 @@ let check = null;
 group(`deploy      waiting for ${checkName} on ${sha.slice(0, 12)}`);
 try {
   while (Date.now() < deadline) {
-    check = checkRuns().find((run) => run.name === checkName) ?? null;
+    check = checkRuns(repository, sha).find((run) => run.name === checkName) ?? null;
     const report = check ? `${check.status}${check.conclusion ? ` (${check.conclusion})` : ''}` : 'not yet reported';
     if (report !== lastReport) {
       lastReport = report;

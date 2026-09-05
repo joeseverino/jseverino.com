@@ -70,6 +70,12 @@ export default defineConfig({
       },
     }),
   ],
+  // The whole stylesheet is ~8 KB compressed. Inlined, first paint no longer
+  // waits on a second round trip for it; the middleware nonces the <style>
+  // tag the same way it nonces every <script>, so the CSP stays nonce-only.
+  build: {
+    inlineStylesheets: 'always',
+  },
   // Emit component <script> blocks as external /_astro/*.js files instead of
   // inlining them. The middleware still nonces every <script> tag, so CSP is
   // unaffected; this keeps the rendered HTML clean and lets the browser cache

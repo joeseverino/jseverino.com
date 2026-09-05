@@ -8,12 +8,12 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { firstFailureLine } from './lib/audit-summary.mjs';
 import { status } from './lib/run.mjs';
 import { annotate, appendSummary, table } from './lib/step-summary.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = siteRoot;
 const config = JSON.parse(fs.readFileSync(path.join(root, '.lighthouserc.json'), 'utf8')).ci;
 
 const urls = config.collect.url;

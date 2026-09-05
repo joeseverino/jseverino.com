@@ -11,4 +11,4 @@ published: true
 
 <p class="resume-role"><strong>Master of Science, Cybersecurity</strong><span class="resume-dates">Expected: August 2025 – December 2027</span></p>
 
-- 3 courses completed · 1 in progress
+- 4 courses completed

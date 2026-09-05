@@ -242,7 +242,6 @@ main > * + * {
     box-shadow: 0 4px 10px
       color-mix(in oklch, var(--shadow-color-chrome) calc(var(--header-scroll) * 100%), transparent);
     backdrop-filter: blur(var(--blur-chrome));
-    -webkit-backdrop-filter: blur(var(--blur-chrome));
     transition: --header-scroll var(--motion-duration-standard) var(--motion-ease-standard);
   }
 
@@ -280,7 +279,7 @@ main > * + * {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-20);
-  min-block-size: 3.6rem;
+  min-block-size: var(--header-height);
   padding-block: 0.65rem;
 }
 

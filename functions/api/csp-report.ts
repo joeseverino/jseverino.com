@@ -3,6 +3,8 @@
 // Receives browser CSP violation reports from the enforced site policy and
 // stores a compact, normalized record in D1 for review.
 
+import { SITE } from '../generated/site.ts';
+
 interface D1Result {
   success: boolean;
 }
@@ -49,7 +51,7 @@ const MAX_REPORTS_PER_REQUEST = 10;
 const MAX_FIELD_LENGTH = 2_048;
 const MAX_DIRECTIVE_LENGTH = 256;
 const MAX_USER_AGENT_LENGTH = 512;
-const SITE_ORIGIN = 'https://jseverino.com';
+const SITE_ORIGIN = SITE.origin;
 const IGNORED_BLOCKED_URI_PREFIXES = [
   'chrome-extension:',
   'moz-extension:',

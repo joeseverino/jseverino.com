@@ -9,6 +9,16 @@ export const browserTestEnv = Object.freeze({
   PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
 });
 
+// Reporters every Playwright config uses under CI: the list for the log, the
+// HTML report for the artifact, and the JSON that bin/playwright-summary.mjs
+// renders into the job summary.
+/** @type {import('@playwright/test').ReporterDescription[]} */
+export const ciReporters = [
+  ['list'],
+  ['html', { open: 'never' }],
+  ['json', { outputFile: 'test-results/results.json' }],
+];
+
 // The Cloudflare runtime the edge suite serves the build through. The
 // compatibility date must match the Pages project (Settings > Runtime in the
 // Cloudflare dashboard) so local semantics are production semantics.

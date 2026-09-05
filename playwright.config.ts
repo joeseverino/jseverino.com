@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { browserTestEnv } from './tests/browser-test-env.mjs';
+import { browserTestEnv, ciReporters } from './tests/browser-test-env.mjs';
 
 const PORT = 4321;
 
@@ -9,11 +9,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
-  // The JSON report feeds bin/playwright-summary.mjs, which draws the
-  // per-project table on the CI job summary.
-  reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
-    : 'list',
+  reporter: process.env.CI ? [...ciReporters] : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',

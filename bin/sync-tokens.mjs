@@ -11,10 +11,10 @@
 // is hand-managed.
 //
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { syncTargets, toJs, webContract } from 'severino-brand';
+import { brandVarsCss } from '../src/lib/brand.mjs';
+import { siteRoot } from '../src/lib/site-root.mjs';
 
-const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const check = process.argv.includes('--check');
 
 const brandBlock = [
@@ -29,6 +29,7 @@ const targets = [
   { file: path.join(siteRoot, 'src/styles/tokens.css'), label: '/* tokens', inner: webContract.designSystemCss },
   { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// tokens', inner: brandBlock },
   { file: path.join(siteRoot, 'src/lib/brand.mjs'), label: '// surfaces', inner: surfaceBlock },
+  { file: path.join(siteRoot, 'src/styles/brand.css'), label: '/* brand', inner: brandVarsCss(webContract.primaryByTheme) },
 ];
 
 const changed = syncTargets(targets, { root: siteRoot, check });

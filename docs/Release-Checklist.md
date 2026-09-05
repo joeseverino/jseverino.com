@@ -73,6 +73,7 @@ types        passed
 edge         OpenAPI fields/limits and <n> D1 inserts agree with the handlers
 preview      passed
 unit         passed
+docs-sync    generated blocks in docs/Commands.md and tests/ARCHITECTURE.md match their sources
 docs         <n> docs, <n> local links, <n> script refs resolve
 embed        embed bundle current (public/embed/bundle.css)
 css-lint     passed
@@ -214,7 +215,8 @@ Confirm:
 - `content-security-policy` is present on HTML responses.
 - The HTML CSP does not include `script-src 'unsafe-inline'`.
 - `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
-- The HTML CSP includes `report-to csp-endpoint` and `report-uri https://jseverino.com/api/csp-report`.
+- The HTML CSP includes `report-to csp-endpoint` and no deprecated `report-uri`.
+- The report-only CSP carries `'strict-dynamic'` with the enforced nonce and `require-trusted-types-for 'script'`.
 - `strict-transport-security` includes `includeSubDomains`.
 - `x-content-type-options: nosniff` is present.
 - `referrer-policy: strict-origin-when-cross-origin` is present.

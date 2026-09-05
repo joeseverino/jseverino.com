@@ -19,7 +19,10 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
   // browser toolbar blends into the page instead of staying dark in both themes.
   await expect(page.locator('meta[name="theme-color"][data-scheme="light"]')).toHaveAttribute('content', /#ffffff/i);
   await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', /#131826/i);
-  await expect(page.locator('link[rel="stylesheet"][href="/brand.css"]')).toHaveCount(1);
+  // The whole stylesheet, brand vars included, is inlined: first paint never
+  // waits on a stylesheet request.
+  await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(0);
+  await expect(page.locator('head style')).toHaveCount(1);
 
   // The shared brand emitter resolves the light palette explicitly.
   const declared = (property: string) =>
