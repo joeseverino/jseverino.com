@@ -329,6 +329,15 @@ function skip(name, reason) {
   status(name, `skipped: ${reason}`);
 }
 
+// Backslashes first, then pipes, then newlines: a detail string must not be
+// able to escape its own table cell.
+export function cell(text) {
+  return String(text)
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
+    .replace(/\r?\n/g, ' ');
+}
+
 function writeSummary(sha) {
   const file = process.env.GITHUB_STEP_SUMMARY;
   if (!file) return;
@@ -344,7 +353,7 @@ function writeSummary(sha) {
     '| Check | Result | Detail |',
     '| :--- | :--- | :--- |',
     ...results.map(
-      (result) => `| \`${result.name}\` | ${icon(result.ok)} | ${result.detail.replace(/\|/g, '\\|')} |`,
+      (result) => `| \`${result.name}\` | ${icon(result.ok)} | ${cell(result.detail)} |`,
     ),
     '',
   ];
