@@ -14,5 +14,5 @@ export const browserTestEnv = Object.freeze({
 // Cloudflare dashboard) so local semantics are production semantics.
 export const edgeRuntime = Object.freeze({
   port: 8788,
-  compatibilityDate: '2026-06-02',
+  compatibilityDate: '2026-05-19',
 });
