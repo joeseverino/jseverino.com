@@ -94,8 +94,12 @@ const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/
 const authoredStyles = styleFiles
   .map((file) => {
     const stylesheet = read(file);
-    const tokenEnd = stylesheet.indexOf('/* tokens:end */');
-    return tokenEnd >= 0 ? stylesheet.slice(tokenEnd) : stylesheet;
+    // A generated block ends with a `/* <name>:end */` marker (tokens.css,
+    // brand.css); strip through the last one so a hand-authored rule below it
+    // is still checked, but nothing generated is mistaken for hand-authored.
+    const ends = [...stylesheet.matchAll(/\/\* \w+:end \*\//g)];
+    const blockEnd = ends.at(-1)?.index;
+    return blockEnd !== undefined ? stylesheet.slice(blockEnd) : stylesheet;
   })
   .join('\n');
 const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;

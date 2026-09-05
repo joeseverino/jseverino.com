@@ -8,6 +8,7 @@
 
 import { describe, test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
 
 interface CapturedHandler {
   selector: string;
@@ -106,7 +107,7 @@ describe('HTML responses', () => {
   test('applies the same nonce from the CSP header to every script and style element', async () => {
     const response = await call(htmlResponse());
     const nonce = nonceFrom(response);
-    assert.match(response.headers.get('Content-Security-Policy') ?? '', new RegExp(`style-src 'self' 'nonce-${nonce.replace(/[+/=]/g, '\\$&')}'`));
+    assert.match(response.headers.get('Content-Security-Policy') ?? '', new RegExp(`style-src 'self' 'nonce-${escapeRegExp(nonce)}'`));
 
     assert.ok(lastRewriter, 'middleware ran the rewriter');
     assert.deepEqual(lastRewriter.handlers.map((entry) => entry.selector), ['script', 'style']);

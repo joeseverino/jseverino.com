@@ -7,6 +7,7 @@
 // `headers` is a plain object keyed by lower-cased header name, which is what
 // Playwright's response.headers() returns; headersToRecord() produces the same
 // shape from a fetch Response.
+import { escapeRegExp } from './escape-regexp.mjs';
 import { SITE } from './site-config.mjs';
 
 export const siteOrigin = `https://${SITE.domain}`;
@@ -44,7 +45,7 @@ export function cspFindings(headers) {
   }
   if (csp.includes('report-uri')) findings.push('content-security-policy still carries the deprecated report-uri');
   if (/script-src[^;]*'unsafe-inline'/.test(csp)) findings.push("script-src falls back to 'unsafe-inline'");
-  if (nonce && !new RegExp(`style-src[^;]*'nonce-${nonce.replace(/[+/=]/g, '\\$&')}'`).test(csp)) {
+  if (nonce && !new RegExp(`style-src[^;]*'nonce-${escapeRegExp(nonce)}'`).test(csp)) {
     findings.push('style-src does not carry the request nonce the inlined stylesheet needs');
   }
 
