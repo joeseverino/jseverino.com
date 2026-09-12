@@ -4,6 +4,8 @@
 // GitHub hiccup or rate limit can never break a deploy.
 
 import snapshot from '../data/github-repos.json';
+import { asyncCache } from './async-cache';
+import { fetchJson } from './fetch-json';
 
 const OWNER = 'joeseverino';
 
@@ -39,12 +41,7 @@ function fromRest(r: RestRepo): GithubRepo {
   };
 }
 
-let cache: Promise<GithubRepo[]> | undefined;
-
-export function getGithubRepos(): Promise<GithubRepo[]> {
-  if (!cache) cache = load();
-  return cache;
-}
+export const getGithubRepos = asyncCache(load);
 
 async function load(): Promise<GithubRepo[]> {
   const token = process.env.GITHUB_TOKEN;
@@ -52,12 +49,10 @@ async function load(): Promise<GithubRepo[]> {
   if (token) headers.Authorization = `Bearer ${token}`;
 
   try {
-    const res = await fetch(
+    const data = await fetchJson<RestRepo[]>(
       `https://api.github.com/users/${OWNER}/repos?per_page=100&type=owner&sort=pushed`,
       { headers },
     );
-    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-    const data = (await res.json()) as RestRepo[];
     if (!Array.isArray(data) || data.length === 0) throw new Error('GitHub API empty');
     return data.map(fromRest);
   } catch (error) {

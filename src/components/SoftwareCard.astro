@@ -67,29 +67,26 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 </li>
 
 <script>
-  function initSoftwareCopy(): void {
-    document.querySelectorAll<HTMLButtonElement>('.software-copy').forEach((btn) => {
-      if (btn.dataset.wired) return;
-      btn.dataset.wired = '1';
-      btn.addEventListener('click', async () => {
-        const text = btn.getAttribute('data-copy') ?? '';
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch {
-          return; // clipboard unavailable; command is still visible to copy by hand
-        }
-        const label = btn.querySelector('.copy-label');
-        if (!label) return;
-        const prev = label.textContent;
-        label.textContent = 'Copied';
-        btn.classList.add('is-copied');
-        window.setTimeout(() => {
-          label.textContent = prev;
-          btn.classList.remove('is-copied');
-        }, 1400);
-      });
-    });
-  }
+  const resets = new WeakMap<HTMLButtonElement, number>();
 
-  initSoftwareCopy();
+  document.addEventListener('click', async (event) => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest<HTMLButtonElement>('.software-copy');
+    if (!button) return;
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy ?? '');
+    } catch {
+      return; // The visible command remains available to copy by hand.
+    }
+    const label = button.querySelector('.copy-label');
+    if (!label) return;
+    window.clearTimeout(resets.get(button));
+    label.textContent = 'Copied';
+    button.classList.add('is-copied');
+    resets.set(button, window.setTimeout(() => {
+      label.textContent = 'Copy';
+      button.classList.remove('is-copied');
+      resets.delete(button);
+    }, 1400));
+  });
 </script>

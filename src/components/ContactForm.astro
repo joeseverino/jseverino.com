@@ -1,12 +1,15 @@
 ---
 import contactContract from '../../contracts/contact.v1.json';
+import { site } from '@lib/site';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
+const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
 ---
 
 <div class="contact-intake">
-  <form class="contact-intake-form">
+  <p class="contact-fallback prose">If the form is unavailable, <a href={linkedin.href}>get in touch on LinkedIn</a>.</p>
+  <form class="contact-intake-form" action="/api/contact" method="post" hidden>
     <div class="contact-field">
       <label for="contact-name">Name</label>
       <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
@@ -98,5 +101,8 @@ const fields = contactContract.request.properties;
         turnstile?.reset();
       }
     });
+    form.hidden = false;
+    const fallback = document.querySelector<HTMLElement>('.contact-fallback');
+    if (fallback) fallback.hidden = true;
   }
 </script>

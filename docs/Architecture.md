@@ -79,6 +79,11 @@ is derived at build time, never hand-keyed:
 Refresh the snapshot fallback with `npm run snapshot:github` after editing repo
 descriptions or adding repos.
 
+Build-time GitHub and registry requests have a five-second timeout, including
+response-body reads. npm version and download requests run concurrently and
+fail independently. Content, GitHub, and software loaders share pending work
+through [`async-cache.ts`](../src/lib/async-cache.ts); failed loads can be retried.
+
 ## 3. Sync Pipeline
 
 [`bin/sync-content.mjs`](../bin/sync-content.mjs) orchestrates the private-to-public sync.
@@ -245,6 +250,11 @@ Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vi
 The policy significantly reduces script-injection risk while still allowing first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
 
 The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form.
+
+The contact page shows a LinkedIn fallback until its submission handler is
+installed. With JavaScript disabled or its bundle blocked, the form stays hidden
+and the fallback remains usable. The form declares POST explicitly so entered
+messages never default to a GET query string.
 
 The contact function applies:
 
@@ -521,6 +531,14 @@ GitHub Actions provide the remote quality gate:
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
+
+Dependabot's version-update schedule is weekly for npm and monthly for GitHub
+Actions, with minor/patch grouping. Auto-merge covers ordinary non-major
+maintenance as well as security updates; it is not a security-only policy.
+Major version updates are ignored by the scheduled configuration and require
+manual maintenance. For dependency review to block merging, the main ruleset
+must require the `dependency-review` status check; a failing optional check
+does not enforce that policy.
 
 Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
 

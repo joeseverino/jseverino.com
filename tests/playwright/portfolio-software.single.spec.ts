@@ -6,6 +6,25 @@ import { test, expect } from '@playwright/test';
 // assertions pin behaviour and structure, not specific version numbers.
 
 test.describe('portfolio software tab', () => {
+  test('repeated copies reset feedback after the latest click', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText: async () => {} },
+      });
+    });
+    await page.goto('/portfolio/#software');
+    await page.clock.install();
+    const button = page.locator('.software-copy').first();
+    await button.click();
+    await expect(button).toHaveText('Copied');
+    await page.clock.runFor(1000);
+    await button.click();
+    await page.clock.runFor(500);
+    await expect(button).toHaveText('Copied');
+    await page.clock.runFor(1000);
+    await expect(button).toHaveText('Copy');
+    await expect(button).not.toHaveClass(/is-copied/);
+  });
   test('both panels render in the DOM (no-JS / SEO)', async ({ page }) => {
     await page.goto('/portfolio/');
     // Present in the markup regardless of which tab the script activates.

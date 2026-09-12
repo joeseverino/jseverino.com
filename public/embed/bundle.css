@@ -1314,6 +1314,8 @@ figure {
 .contact-intake-form {
   display: grid;
   gap: var(--space-25);
+
+  &[hidden] { display: none; }
 }
 
 .contact-field {
