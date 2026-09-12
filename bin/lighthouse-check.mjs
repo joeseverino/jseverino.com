@@ -8,12 +8,18 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { chromium } from 'playwright';
 import { firstFailureLine } from './lib/audit-summary.mjs';
 import { status } from './lib/run.mjs';
 import { annotate, appendSummary, table } from './lib/step-summary.mjs';
 import { siteRoot } from '../src/lib/site-root.mjs';
 
 const root = siteRoot;
+const chromePath = process.env.CHROME_PATH || chromium.executablePath();
+if (!fs.existsSync(chromePath)) {
+  console.error('Lighthouse browser missing. Run `npx playwright install chromium` or set CHROME_PATH.');
+  process.exit(1);
+}
 const config = JSON.parse(fs.readFileSync(path.join(root, '.lighthouserc.json'), 'utf8')).ci;
 
 const urls = config.collect.url;
@@ -34,6 +40,7 @@ const percent = (score) => (score === null || score === undefined ? '-' : Math.r
 
 const rows = [];
 let errors = 0;
+let auditFailures = 0;
 let warnings = 0;
 let version = '';
 
@@ -51,13 +58,16 @@ for (const url of urls) {
       '--quiet',
       '--no-enable-error-reporting',
     ],
-    { cwd: root, encoding: 'utf8' },
+    { cwd: root, encoding: 'utf8', env: { ...process.env, CHROME_PATH: chromePath }, timeout: 180_000 },
   );
 
+  const log = [result.error?.message, result.stdout, result.stderr].filter(Boolean).join('\n');
+  fs.writeFileSync(`${base}.log`, log);
+
   if (result.status !== 0 || !fs.existsSync(`${base}.report.json`)) {
-    const reason = firstFailureLine(`${result.stdout}\n${result.stderr}`);
+    const reason = firstFailureLine(log);
     rows.push([url, '-', '-', '-', '-', '**FAIL**', reason]);
-    errors += 1;
+    auditFailures += 1;
     status(slug(url), `FAILED: ${reason}`);
     annotate('error', 'lighthouse', `${url}: ${reason}`);
     continue;
@@ -95,15 +105,15 @@ const thresholds = assertions
 appendSummary([
   `## Lighthouse${version ? ` ${version}` : ''}`,
   '',
-  errors === 0
+  errors === 0 && auditFailures === 0
     ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
-    : `${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
+    : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
   '',
   table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
 ].join('\n'));
 
-if (errors > 0) {
-  console.error(`\nfailed: ${errors} Lighthouse threshold(s)`);
+if (errors > 0 || auditFailures > 0) {
+  console.error(`\nfailed: ${auditFailures} Lighthouse audit execution failure(s), ${errors} threshold(s)`);
   process.exit(1);
 }
 
