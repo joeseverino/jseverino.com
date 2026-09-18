@@ -117,23 +117,33 @@ const tagCount = tags.length;
         if (panel) panel.hidden = !on;
       });
       if (updateHash) {
-        const url = name === 'software' ? '#software' : window.location.pathname;
-        history.replaceState(null, '', url);
+        const url = new URL(window.location.href);
+        url.hash = name === 'software' ? 'software' : '';
+        history.replaceState(history.state, '', url);
       }
     }
 
     tabs.forEach((tab, i) => {
       tab.addEventListener('click', () => activate(tab.dataset.tab ?? '', true));
       tab.addEventListener('keydown', (event) => {
-        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        const destinations: Record<string, number> = {
+          ArrowRight: (i + 1) % tabs.length,
+          ArrowLeft: (i + tabs.length - 1) % tabs.length,
+          Home: 0,
+          End: tabs.length - 1,
+        };
+        const index = destinations[event.key];
+        if (index === undefined) return;
         event.preventDefault();
-        const next = tabs[(i + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        const next = tabs[index];
         next.focus();
         activate(next.dataset.tab ?? '', true);
       });
     });
 
-    activate(window.location.hash === '#software' ? 'software' : 'writeups', false);
+    const syncFromUrl = () => activate(window.location.hash === '#software' ? 'software' : 'writeups', false);
+    window.addEventListener('hashchange', syncFromUrl);
+    syncFromUrl();
   }
 
   initPortfolioTabs();

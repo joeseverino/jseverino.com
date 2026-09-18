@@ -187,7 +187,20 @@ Playwright exercises the current bundled Chromium, Firefox, and WebKit engines o
 
 ### Sticky-header shadow
 
-The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The inline script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()` so non-supporting engines still get the shadow without running JS in the modern path.
+The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The bundled script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()`. The same module owns mobile-menu state and delegates link clicks to the menu.
+
+Interactive CSS separates hit areas from visual effects. Writeup and software
+cards share [`CardSurface.astro`](../src/components/CardSurface.astro): the list
+item stays stationary while its surface lifts on fine-pointer hover. Keyboard
+focus receives the same raised shadow. Buttons retain their lift with a hit
+area that accounts for their border width. Shared rules live in `content.css`;
+variants add only their differences. Regression tests check edge-hover behavior,
+focus, forced colors, and reduced motion across browser engines.
+
+Portfolio tabs derive selected panels and focusability from the active tab,
+follow URL hash changes, preserve query parameters, and support arrows, Home,
+and End. These states use the existing DOM rather than a second client-side
+copy of the portfolio data.
 
 Both paths set one registered custom property, `--header-scroll` (a `<number>`, 0 to 1); the scrim color and shadow are composed from it in a single rule. The keyframe deliberately carries **no color**. Chromium and WebKit both resolve a keyframe's `var()` colors once and keep serving that resolved value when `color-scheme` changes, so an earlier version that animated `color-mix(… var(--color-bg) …)` directly left a white header bar over a dark page until the next reload. Anything animated that depends on a themeable token has to interpolate a number and compose the color outside the keyframe. [`tests/playwright/theme.spec.ts`](../tests/playwright/theme.spec.ts) pins the behavior.
 
@@ -251,10 +264,16 @@ The policy significantly reduces script-injection risk while still allowing firs
 
 The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form.
 
-The contact page shows a LinkedIn fallback until its submission handler is
-installed. With JavaScript disabled or its bundle blocked, the form stays hidden
-and the fallback remains usable. The form declares POST explicitly so entered
+The contact page provides a LinkedIn fallback until its submission handler is
+installed. With JavaScript enabled, CSS delays the fallback for three seconds
+to avoid flashing it during normal module loading. With JavaScript disabled it
+appears immediately; with the bundle blocked it appears after the delay. The
+form stays hidden until its handler is ready and declares POST explicitly so entered
 messages never default to a GET query string.
+
+Submission is marked busy, ignores repeat submissions while pending, and times
+out after fifteen seconds. Success clears the form; failures retain entered
+text and restore the submit control for retry.
 
 The contact function applies:
 

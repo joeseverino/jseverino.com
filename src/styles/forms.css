@@ -14,6 +14,19 @@
   &[hidden] { display: none; }
 }
 
+/* Allow the form module to load before displaying a failure fallback.
+   Without scripting, the alternate contact link is available immediately. */
+@media (scripting: enabled) {
+  .contact-fallback {
+    visibility: hidden;
+    animation: contact-fallback-reveal 0s 3s forwards;
+  }
+}
+
+@keyframes contact-fallback-reveal {
+  to { visibility: visible; }
+}
+
 .contact-field {
   display: grid;
   gap: 0.45rem;

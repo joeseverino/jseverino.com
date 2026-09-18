@@ -1,5 +1,6 @@
 ---
 import { metaLine, type SoftwareEntry } from '@lib/software';
+import CardSurface from '@components/CardSurface.astro';
 
 type Props = { entry: SoftwareEntry };
 const { entry } = Astro.props;
@@ -17,53 +18,55 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 ---
 
 <li class="software-card">
-  <div class="software-card-head">
-    <h3 class="software-card-title">
-      {titleHref ? (
-        <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
-      ) : (
-        entry.title
+  <CardSurface>
+    <div class="software-card-head">
+      <h3 class="software-card-title">
+        {titleHref ? (
+          <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+        ) : (
+          entry.title
+        )}
+      </h3>
+      {(pkg || entry.selfHosted) && (
+        <div class="software-badges">
+          {pkg && (
+            <span class={`badge badge--${pkg.registry}`}>
+              {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
+            </span>
+          )}
+          {pkg?.downloadsPerMonth != null && (
+            <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+          )}
+          {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+        </div>
       )}
-    </h3>
-    {(pkg || entry.selfHosted) && (
-      <div class="software-badges">
-        {pkg && (
-          <span class={`badge badge--${pkg.registry}`}>
-            {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
-          </span>
-        )}
-        {pkg?.downloadsPerMonth != null && (
-          <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
-        )}
-        {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+    </div>
+
+    <p class="software-card-summary">{entry.description}</p>
+
+    {pkg && (
+      <div class="terminal-block software-install">
+        <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
+        <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
+          <span class="copy-label">Copy</span>
+        </button>
       </div>
     )}
-  </div>
 
-  <p class="software-card-summary">{entry.description}</p>
+    {meta && <p class="software-meta">{meta}</p>}
 
-  {pkg && (
-    <div class="terminal-block software-install">
-      <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
-      <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
-        <span class="copy-label">Copy</span>
-      </button>
+    <div class="software-links">
+      {entry.repoUrl && (
+        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      )}
+      {pkg && (
+        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
+      )}
+      {entry.writeupSlug && (
+        <a class="software-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Read the writeup →</a>
+      )}
     </div>
-  )}
-
-  {meta && <p class="software-meta">{meta}</p>}
-
-  <div class="software-links">
-    {entry.repoUrl && (
-      <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-    )}
-    {pkg && (
-      <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
-    )}
-    {entry.writeupSlug && (
-      <a class="software-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Read the writeup →</a>
-    )}
-  </div>
+  </CardSurface>
 </li>
 
 <script>

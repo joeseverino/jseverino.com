@@ -44,10 +44,11 @@ test.describe('auto (default)', () => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/');
     const card = await page
-      .locator('.project-card')
+      .locator('.card-surface')
       .first()
       .evaluate((el) => getComputedStyle(el).backgroundColor);
     expect(card).not.toBe(DARK_BG);
+    expect(card).not.toBe('rgba(0, 0, 0, 0)');
   });
 });
 

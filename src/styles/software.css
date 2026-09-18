@@ -62,7 +62,7 @@
   & + & { margin-block-start: var(--space-40); }
 }
 
-.software-card {
+.software-card > .card-surface {
   padding: var(--space-20);
 }
 
@@ -247,7 +247,7 @@
 
 .sli-flag {
   color: var(--color-muted);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.04em;

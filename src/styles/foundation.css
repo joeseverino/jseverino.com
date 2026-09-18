@@ -16,7 +16,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: var(--font-base);
   font-weight: 400;
   line-height: 1.6;

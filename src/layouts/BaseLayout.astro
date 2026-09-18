@@ -4,6 +4,7 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import SocialIconsDefs from '@components/SocialIconsDefs.astro';
 import { SURFACE } from '@lib/brand.mjs';
+import { site } from '@lib/site';
 import '@styles/base.css';
 
 type Props = {
@@ -63,7 +64,7 @@ const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnec
       crossorigin
     />
     <SeoHead {...seo} />
-    <link rel="alternate" type="application/rss+xml" title="Joe Severino — Portfolio" href="/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} — Portfolio`} href="/feed.xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" />

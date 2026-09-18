@@ -6,6 +6,34 @@ import { test, expect } from '@playwright/test';
 // assertions pin behaviour and structure, not specific version numbers.
 
 test.describe('portfolio software tab', () => {
+  test('tabs follow URL changes and preserve query parameters', async ({ page }) => {
+    await page.goto('/portfolio/?source=review');
+    await page.getByRole('tab', { name: 'Software' }).click();
+    await expect(page).toHaveURL(/\?source=review#software$/);
+    await page.evaluate(() => { window.location.hash = ''; });
+    await expect(page.getByRole('tab', { name: 'Writeups' })).toHaveAttribute('aria-selected', 'true');
+    await page.goBack();
+    await expect(page.getByRole('tab', { name: 'Software' })).toHaveAttribute('aria-selected', 'true');
+    await page.getByRole('tab', { name: 'Writeups' }).click();
+    await expect(page).toHaveURL(/\?source=review$/);
+  });
+
+  test('keyboard navigation includes Home, End, and arrow wrapping', async ({ page }) => {
+    await page.goto('/portfolio/');
+    const writeups = page.getByRole('tab', { name: 'Writeups' });
+    const software = page.getByRole('tab', { name: 'Software' });
+    await writeups.focus();
+    await page.keyboard.press('End');
+    await expect(software).toBeFocused();
+    await expect(software).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('ArrowRight');
+    await expect(writeups).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(software).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(writeups).toBeFocused();
+    await expect(writeups).toHaveAttribute('aria-selected', 'true');
+  });
   test('repeated copies reset feedback after the latest click', async ({ page }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, 'clipboard', {

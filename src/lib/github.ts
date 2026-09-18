@@ -6,8 +6,7 @@
 import snapshot from '../data/github-repos.json';
 import { asyncCache } from './async-cache';
 import { fetchJson } from './fetch-json';
-
-const OWNER = 'joeseverino';
+import { SITE } from './site-config.mjs';
 
 export type GithubRepo = {
   name: string;
@@ -50,7 +49,7 @@ async function load(): Promise<GithubRepo[]> {
 
   try {
     const data = await fetchJson<RestRepo[]>(
-      `https://api.github.com/users/${OWNER}/repos?per_page=100&type=owner&sort=pushed`,
+      `https://api.github.com/users/${SITE.github}/repos?per_page=100&type=owner&sort=pushed`,
       { headers },
     );
     if (!Array.isArray(data) || data.length === 0) throw new Error('GitHub API empty');

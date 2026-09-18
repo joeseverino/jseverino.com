@@ -57,7 +57,7 @@ const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (!button) return;
+      if (!button || button.disabled) return;
 
       const data = new FormData(form);
       const token = String(data.get('cf-turnstile-response') ?? '');
@@ -67,12 +67,14 @@ const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
       }
 
       button.disabled = true;
+      form.setAttribute('aria-busy', 'true');
       button.textContent = 'Sending…';
 
       try {
         const response = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15_000),
           body: JSON.stringify({
             ...Object.fromEntries(
               [...data.entries()].filter(([name]) => name !== 'cf-turnstile-response'),
@@ -92,10 +94,13 @@ const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
         } else {
           show(result.error ?? 'Something went wrong. Please try again.', 'error');
         }
-      } catch {
-        show('Could not reach the server. Please try again in a moment.', 'error');
+      } catch (error) {
+        show(error instanceof DOMException && error.name === 'TimeoutError'
+          ? 'The request timed out. Please try again.'
+          : 'Could not reach the server. Please try again in a moment.', 'error');
       } finally {
         button.disabled = false;
+        form.removeAttribute('aria-busy');
         button.textContent = 'Send Message';
         const turnstile = (window as unknown as { turnstile?: { reset: () => void } }).turnstile;
         turnstile?.reset();
