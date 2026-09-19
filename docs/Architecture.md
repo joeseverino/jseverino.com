@@ -297,6 +297,19 @@ The contact function applies:
 - per-IP hourly rate limiting backed by D1;
 - parameterized D1 inserts.
 
+Both API endpoints use [`request-json.ts`](../functions/lib/request-json.ts)
+to match media types exactly and read JSON into a bounded byte buffer. The
+reader counts UTF-8 bytes, rejects invalid UTF-8, and cancels oversized streams
+without trusting `Content-Length` or buffering the entire upload first. Each
+endpoint retains its own size limit and response format.
+
+The contact runtime contract also sets a five-second Turnstile verification
+timeout covering the response body. Provider HTTP errors fail verification;
+database failures during either the rate-limit lookup or insert return the
+documented JSON error. Closed-schema validation rejects unknown own keys,
+including names inherited from `Object.prototype`. Both endpoints share the
+minimal D1 type declarations in [`database.ts`](../functions/lib/database.ts).
+
 ### Edge schema validation
 
 Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`db/contact-openapi.json`](../db/contact-openapi.json) — alongside [`db/schema.sql`](../db/schema.sql) and the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract), the machine-readable schemas this repo declares — and is uploaded to the Cloudflare dashboard (Security → Web assets → Schema validation). It is not consumed by the build.

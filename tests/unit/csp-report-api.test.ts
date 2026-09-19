@@ -41,6 +41,13 @@ describe('request validation', () => {
     assert.equal(response.status, 415);
   });
 
+  test('accepts media-type parameters without allowing substring matches', async () => {
+    for (const contentType of ['application/jsonp', 'text/plain; note=application/csp-report']) {
+      assert.equal((await call(reportRequest(legacyReport, contentType))).status, 415);
+    }
+    assert.equal((await call(reportRequest(legacyReport, 'Application/CSP-Report; charset=utf-8'))).status, 204);
+  });
+
   test('rejects an oversized body with 413', async () => {
     const padded = { 'csp-report': { ...legacyReport['csp-report'], referrer: 'r'.repeat(17_000) } };
     const response = await call(reportRequest(padded));
@@ -50,6 +57,14 @@ describe('request validation', () => {
   test('rejects malformed JSON with 400', async () => {
     const response = await call(reportRequest('{nope'));
     assert.equal(response.status, 400);
+  });
+
+  test('counts multibyte reports by bytes before database work', async () => {
+    const db = createD1Stub();
+    const padded = { 'csp-report': { ...legacyReport['csp-report'], referrer: '€'.repeat(6_000) } };
+    const response = await call(reportRequest(padded), db);
+    assert.equal(response.status, 413);
+    assert.equal(db.queries.length, 0);
   });
 });
 

@@ -24,7 +24,7 @@ if (!submission) {
     fail('OpenAPI ContactSubmission is stale; run npm run sync:contact-openapi');
   }
   const contactSrc = read('functions/api/contact.ts');
-  if (!contactSrc.includes('validateContactPayload(payload)')) {
+  if (!/\bvalidateContactPayload\s*\(/.test(contactSrc)) {
     fail('contact handler does not validate through the canonical contract adapter');
   }
   if (/interface ContactPayload|MAX_SOURCE_URL_LENGTH|name\.length\s*>/.test(contactSrc)) {

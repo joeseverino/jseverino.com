@@ -9,6 +9,7 @@ import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequestPost } from '../../functions/api/contact.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
+import { CONTACT_RUNTIME } from '../../functions/lib/contact-contract.ts';
 
 const realFetch = globalThis.fetch;
 let turnstile: 'pass' | 'fail' | 'error';
@@ -55,6 +56,13 @@ describe('request validation', () => {
     assert.equal(response.status, 415);
   });
 
+  test('matches the media type exactly while accepting parameters and case differences', async () => {
+    for (const contentType of ['application/jsonp', 'text/plain; note=application/json']) {
+      assert.equal((await call(contactRequest(validPayload, { 'Content-Type': contentType }))).status, 415);
+    }
+    assert.equal((await call(contactRequest(validPayload, { 'Content-Type': 'Application/JSON; charset=utf-8' }))).status, 200);
+  });
+
   test('rejects an oversized body with 413', async () => {
     const response = await call(contactRequest({ ...validPayload, message: 'x'.repeat(9_000) }));
     assert.equal(response.status, 413);
@@ -87,6 +95,22 @@ describe('request validation', () => {
     assert.equal(response.status, 400);
   });
 
+  test('rejects inherited Object property names as unknown fields', async () => {
+    for (const name of ['constructor', 'toString', '__proto__']) {
+      const response = await call(contactRequest({ ...validPayload, [name]: 'unexpected' }));
+      assert.equal(response.status, 400, name);
+    }
+    assert.equal(turnstileCalls.length, 0);
+  });
+
+  test('enforces the body limit in UTF-8 bytes, not string length', async () => {
+    const db = createD1Stub();
+    const response = await call(contactRequest({ ...validPayload, message: '€'.repeat(3_000) }), db);
+    assert.equal(response.status, 413);
+    assert.equal(db.queries.length, 0);
+    assert.equal(turnstileCalls.length, 0);
+  });
+
   test('rejects non-http source URLs', async () => {
     const response = await call(contactRequest({ ...validPayload, sourceUrl: 'file:///etc/passwd' }));
     assert.equal(response.status, 400);
@@ -112,6 +136,42 @@ describe('honeypot', () => {
 });
 
 describe('turnstile verification', () => {
+  test('fails closed on an HTTP error even if its JSON claims success', async () => {
+    globalThis.fetch = async () => Response.json({ success: true }, { status: 503 });
+    const db = createD1Stub();
+    const response = await call(contactRequest(validPayload), db);
+    assert.equal(response.status, 400);
+    assert.equal(db.queries.length, 0);
+  });
+
+  test('bounds verification through response-body consumption', async (t) => {
+    const abort = new AbortController();
+    t.mock.method(AbortSignal, 'timeout', (milliseconds: number) => {
+      assert.equal(milliseconds, CONTACT_RUNTIME.turnstileTimeoutMs);
+      return abort.signal;
+    });
+    let cancelled = false;
+    globalThis.fetch = async (_input, init) => {
+      const signal = init?.signal;
+      assert.ok(signal);
+      return new Response(new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"success":'));
+          signal.addEventListener('abort', () => {
+            cancelled = true;
+            controller.error(signal.reason);
+          }, { once: true });
+          queueMicrotask(() => abort.abort(new DOMException('Timeout', 'TimeoutError')));
+        },
+      }));
+    };
+    const db = createD1Stub();
+    const response = await call(contactRequest(validPayload), db);
+    assert.equal(response.status, 400);
+    assert.equal(cancelled, true);
+    assert.equal(db.queries.length, 0);
+  });
+
   test('sends secret, token, and caller IP to siteverify', async () => {
     await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }));
     assert.equal(turnstileCalls.length, 1);
@@ -136,6 +196,15 @@ describe('turnstile verification', () => {
 });
 
 describe('rate limiting', () => {
+  test('returns a controlled failure and never inserts when the rate-limit query fails', async () => {
+    const db = createD1Stub({ failFirst: true });
+    const response = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }), db);
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assert.deepEqual(await response.json(), { ok: false, error: 'Could not save your message. Please try again.' });
+    assert.equal(db.queries.length, 1);
+    assert.match(db.queries[0].query, /SELECT COUNT/);
+  });
   test('returns 429 once an IP hits the hourly cap', async () => {
     const db = createD1Stub({ firstResult: { n: 5 } });
     const response = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }), db);

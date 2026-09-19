@@ -4,19 +4,8 @@
 // stores a compact, normalized record in D1 for review.
 
 import { SITE } from '../generated/site.ts';
-
-interface D1Result {
-  success: boolean;
-}
-
-interface D1PreparedStatement {
-  bind(...values: unknown[]): D1PreparedStatement;
-  run(): Promise<D1Result>;
-}
-
-interface D1Database {
-  prepare(query: string): D1PreparedStatement;
-}
+import type { D1Database } from '../lib/database.ts';
+import { readRequestJson, requestMediaType } from '../lib/request-json.ts';
 
 interface Env {
   DB: D1Database;
@@ -73,14 +62,7 @@ function noContent(status = 204): Response {
   });
 }
 
-function isAllowedContentType(contentType: string): boolean {
-  const normalized = contentType.toLowerCase();
-  return (
-    normalized.includes('application/csp-report') ||
-    normalized.includes('application/reports+json') ||
-    normalized.includes('application/json')
-  );
-}
+const ALLOWED_MEDIA_TYPES = new Set(['application/csp-report', 'application/reports+json', 'application/json']);
 
 function asString(value: unknown, max = MAX_FIELD_LENGTH): string {
   if (typeof value !== 'string') return '';
@@ -172,27 +154,13 @@ function normalizeReports(payload: unknown): NormalizedReport[] {
 
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
-  const contentType = request.headers.get('Content-Type') ?? '';
-
-  if (!isAllowedContentType(contentType)) {
+  if (!ALLOWED_MEDIA_TYPES.has(requestMediaType(request))) {
     return noContent(415);
   }
 
-  const contentLength = Number(request.headers.get('Content-Length') ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
-    return noContent(413);
-  }
-
-  let reports: NormalizedReport[];
-  try {
-    const body = await request.text();
-    if (body.length > MAX_BODY_BYTES) {
-      return noContent(413);
-    }
-    reports = normalizeReports(JSON.parse(body));
-  } catch {
-    return noContent(400);
-  }
+  const payload = await readRequestJson(request, MAX_BODY_BYTES);
+  if (!payload.ok) return noContent(payload.status);
+  const reports = normalizeReports(payload.value);
 
   if (reports.length === 0) {
     return noContent(400);
