@@ -9,6 +9,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const JQ = [
   '[.[] | {',
@@ -25,7 +26,7 @@ const JQ = [
 const raw = execFileSync(
   'gh',
   [
-    'repo', 'list', 'joeseverino',
+    'repo', 'list', SITE.github,
     '--visibility', 'public',
     '--no-archived',
     '--limit', '100',

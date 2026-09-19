@@ -1,0 +1,73 @@
+name: dependabot post-merge ci
+
+# Auto-merge is enabled with GITHUB_TOKEN, so GitHub deliberately suppresses
+# workflows from the resulting push. Cloudflare's external check still runs;
+# its completed check is the trusted signal used to recover the missing CI run.
+on:
+  check_run:
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  recover-main-ci:
+    if: github.event.check_run.name == 'Cloudflare Pages' && github.event.check_run.app.slug == 'cloudflare-workers-and-pages'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Dispatch CI for a Dependabot merge when its push run is absent
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.payload.check_run.head_sha;
+            const { data: repository } = await github.rest.repos.get({ owner, repo });
+            const branch = repository.default_branch;
+            const { data: ref } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+
+            if (ref.object.sha !== sha) {
+              core.info(`Ignoring ${sha}: ${branch} is at ${ref.object.sha}`);
+              return;
+            }
+
+            const pulls = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha: sha, per_page: 100 },
+            );
+            const dependabotMerge = pulls.find((pull) =>
+              pull.merged_at &&
+              pull.base.ref === branch &&
+              pull.user?.login === 'dependabot[bot]',
+            );
+            if (!dependabotMerge) {
+              core.info(`Ignoring ${sha}: it is not a merged Dependabot pull request`);
+              return;
+            }
+
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              head_sha: sha,
+              per_page: 100,
+            });
+            const recorded = runs.workflow_runs.find((run) =>
+              run.event === 'push' || run.event === 'workflow_dispatch',
+            );
+            if (recorded) {
+              core.info(`CI already recorded for ${sha}: ${recorded.html_url}`);
+              return;
+            }
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              ref: branch,
+            });
+            core.notice(`Dispatched CI for Dependabot PR #${dependabotMerge.number} at ${sha}`);

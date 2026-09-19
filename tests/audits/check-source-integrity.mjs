@@ -3,18 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
 import { siteRoot } from '../../src/lib/site-root.mjs';
+import { walkFiles } from '../../src/lib/walk.mjs';
 
 const root = siteRoot;
 const roots = ['bin', 'src', 'tests'];
 const failures = [];
-
-function visit(directory) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const absolute = path.join(directory, entry.name);
-    if (entry.isDirectory()) visit(absolute);
-    else if (/\.(?:mjs|cjs|js|ts)$/.test(entry.name)) inspect(absolute);
-  }
-}
 
 function inspect(file) {
   const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
@@ -36,7 +29,11 @@ function inspect(file) {
   }
 }
 
-for (const directory of roots) visit(path.join(root, directory));
+for (const directory of roots) {
+  for (const file of walkFiles(path.join(root, directory), { filter: (file) => /\.(?:mjs|cjs|js|ts)$/.test(file) })) {
+    inspect(file);
+  }
+}
 if (failures.length) {
   console.error(failures.join('\n'));
   process.exit(1);

@@ -1,12 +1,15 @@
 ---
 import contactContract from '../../contracts/contact.v1.json';
+import { site } from '@lib/site';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
+const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
 ---
 
 <div class="contact-intake">
-  <form class="contact-intake-form">
+  <p class="contact-fallback prose">If the form is unavailable, <a href={linkedin.href}>get in touch on LinkedIn</a>.</p>
+  <form class="contact-intake-form" action="/api/contact" method="post" hidden>
     <div class="contact-field">
       <label for="contact-name">Name</label>
       <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
@@ -54,7 +57,7 @@ const fields = contactContract.request.properties;
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (!button) return;
+      if (!button || button.disabled) return;
 
       const data = new FormData(form);
       const token = String(data.get('cf-turnstile-response') ?? '');
@@ -64,12 +67,14 @@ const fields = contactContract.request.properties;
       }
 
       button.disabled = true;
+      form.setAttribute('aria-busy', 'true');
       button.textContent = 'Sending…';
 
       try {
         const response = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(15_000),
           body: JSON.stringify({
             ...Object.fromEntries(
               [...data.entries()].filter(([name]) => name !== 'cf-turnstile-response'),
@@ -89,14 +94,20 @@ const fields = contactContract.request.properties;
         } else {
           show(result.error ?? 'Something went wrong. Please try again.', 'error');
         }
-      } catch {
-        show('Could not reach the server. Please try again in a moment.', 'error');
+      } catch (error) {
+        show(error instanceof DOMException && error.name === 'TimeoutError'
+          ? 'The request timed out. Please try again.'
+          : 'Could not reach the server. Please try again in a moment.', 'error');
       } finally {
         button.disabled = false;
+        form.removeAttribute('aria-busy');
         button.textContent = 'Send Message';
         const turnstile = (window as unknown as { turnstile?: { reset: () => void } }).turnstile;
         turnstile?.reset();
       }
     });
+    form.hidden = false;
+    const fallback = document.querySelector<HTMLElement>('.contact-fallback');
+    if (fallback) fallback.hidden = true;
   }
 </script>

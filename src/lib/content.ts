@@ -5,6 +5,7 @@ import type { CollectionEntry } from 'astro:content';
 import { enhanceImages } from './images';
 import { renderPageHtml, renderWriteupHtml } from './markdown';
 import { site } from './site';
+import { asyncCache } from './async-cache';
 
 export type Writeup = {
   slug: string;
@@ -41,26 +42,6 @@ export type TechnologyGroup = {
   tags: TechnologyTag[];
 };
 
-// Build-time memoization. Technology groups are intentionally not cached so
-// dev edits to `src/content/technology-groups.md` show up without restarting
-// the dev server; the parse is microseconds.
-function memo<T>(): { get(load: () => T): T; getAsync(load: () => Promise<T>): Promise<T> } {
-  let value: T | undefined;
-  return {
-    get(load) {
-      if (value === undefined) value = load();
-      return value;
-    },
-    async getAsync(load) {
-      if (value === undefined) value = await load();
-      return value;
-    },
-  };
-}
-
-const pagesCache = memo<CollectionEntry<'pages'>[]>();
-const writeupsCache = memo<Writeup[]>();
-
 function normalizeDate(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   if (typeof value === 'string') return value.slice(0, 10);
@@ -90,12 +71,10 @@ function collectionSlug(id: string): string {
   return id.replace(/\/index\.md$/, '').replace(/\.md$/, '');
 }
 
-function loadPages(): Promise<CollectionEntry<'pages'>[]> {
+const loadPages = asyncCache(() => {
   // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
-  return pagesCache.getAsync(() =>
-    getCollection('pages', (page) => import.meta.env.DEV || page.data.published),
-  );
-}
+  return getCollection('pages', (page) => import.meta.env.DEV || page.data.published);
+});
 
 function toPageContent(entry: CollectionEntry<'pages'>): PageContent {
   const slug = collectionSlug(entry.id);
@@ -125,6 +104,7 @@ export async function getEducationInstitutions(): Promise<PageContent[]> {
     .map(toPageContent);
 }
 
+// Parse on demand so dev edits appear without restarting the server.
 export function getTechnologyGroups(): TechnologyGroup[] {
   const file = path.resolve(process.cwd(), 'src/content/technology-groups.md');
   const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
@@ -180,40 +160,38 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
   warnedUnknownTechnologies = true;
 }
 
-export async function getWriteups(): Promise<Writeup[]> {
-  return writeupsCache.getAsync(async () => {
-    // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
-    const entries = await getCollection(
-      'writeups',
-      (entry) => import.meta.env.DEV || entry.data.published === true,
-    );
+export const getWriteups = asyncCache<Writeup[]>(async () => {
+  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+  const entries = await getCollection(
+    'writeups',
+    (entry) => import.meta.env.DEV || entry.data.published === true,
+  );
 
-    const writeups = entries.map((entry) => {
-      const slug = collectionSlug(entry.id);
-      const heroImage =
-        resolveWriteupAsset(entry.data.cover_image, slug) ??
-        firstBodyImage(entry.body ?? '', slug) ??
-        site.defaultOgImage;
+  const writeups = entries.map((entry) => {
+    const slug = collectionSlug(entry.id);
+    const heroImage =
+      resolveWriteupAsset(entry.data.cover_image, slug) ??
+      firstBodyImage(entry.body ?? '', slug) ??
+      site.defaultOgImage;
 
-      return {
-        slug,
-        title: entry.data.title,
-        description: entry.data.description ?? '',
-        date: normalizeDate(entry.data.published_at),
-        lastReviewed: normalizeDate(entry.data.last_reviewed),
-        technologies: entry.data.technologies,
-        heroImage,
-        heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
-        bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
-        featured: entry.data.featured,
-        featuredOrder: entry.data.featured_order,
-      } satisfies Writeup;
-    });
-
-    warnOnUnknownTechnologies(writeups);
-    return writeups.sort((a, b) => b.date.localeCompare(a.date));
+    return {
+      slug,
+      title: entry.data.title,
+      description: entry.data.description ?? '',
+      date: normalizeDate(entry.data.published_at),
+      lastReviewed: normalizeDate(entry.data.last_reviewed),
+      technologies: entry.data.technologies,
+      heroImage,
+      heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
+      bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
+      featured: entry.data.featured,
+      featuredOrder: entry.data.featured_order,
+    } satisfies Writeup;
   });
-}
+
+  warnOnUnknownTechnologies(writeups);
+  return writeups.sort((a, b) => b.date.localeCompare(a.date));
+});
 
 export async function getFeaturedWriteups(): Promise<Writeup[]> {
   const all = await getWriteups();

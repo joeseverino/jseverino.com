@@ -19,18 +19,6 @@ const navigation = navItems.map((item) => ({
 
 <div id="scroll-sentinel" class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
-  <script is:inline>
-    if (!CSS.supports('animation-timeline', 'scroll()')) {
-      const header = document.querySelector('[data-sticky-header]');
-      const sentinel = document.querySelector('#scroll-sentinel');
-      if (header && sentinel) {
-        const observer = new IntersectionObserver((entries) => {
-          header.classList.toggle('scrolled', !entries[0].isIntersecting);
-        }, { threshold: 0 });
-        observer.observe(sentinel);
-      }
-    }
-  </script>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
       <svg class="brand-mark" viewBox="0 0 1736.11 352" aria-hidden="true" focusable="false" set:html={wordmarkInner} />
@@ -69,6 +57,17 @@ const navigation = navItems.map((item) => ({
 </header>
 
 <script>
+  if (!CSS.supports('animation-timeline', 'scroll()')) {
+    const header = document.querySelector('[data-sticky-header]');
+    const sentinel = document.querySelector('#scroll-sentinel');
+    if (header && sentinel) {
+      const observer = new IntersectionObserver(([entry]) => {
+        header.classList.toggle('scrolled', !entry.isIntersecting);
+      }, { threshold: 0 });
+      observer.observe(sentinel);
+    }
+  }
+
   const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
 
@@ -79,12 +78,11 @@ const navigation = navItems.map((item) => ({
       toggle.setAttribute('aria-expanded', String((event as ToggleEvent).newState === 'open'));
     });
 
-    mobileNav.querySelectorAll<HTMLAnchorElement>('[data-mobile-nav-link]').forEach((link) => {
-      link.addEventListener('click', () => mobileNav.hidePopover());
-    });
-
     mobileNav.addEventListener('click', (event) => {
-      if (event.target === mobileNav) mobileNav.hidePopover();
+      if (event.target instanceof Element &&
+          (event.target === mobileNav || event.target.closest('[data-mobile-nav-link]'))) {
+        mobileNav.hidePopover();
+      }
     });
   }
 </script>

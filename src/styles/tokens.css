@@ -1,5 +1,8 @@
 @layer tokens {
 
+/* Site-local font choice accompanies the font asset below. */
+html { --font-sans: Inter, system-ui, sans-serif; }
+
 /* The file is subset by `npm run make:font` to the site's characters and this
    weight range; declaring the same range keeps the browser from synthesizing
    weights the font no longer carries. */

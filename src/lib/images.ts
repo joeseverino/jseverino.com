@@ -4,6 +4,8 @@
 // plain <img> so nothing breaks.
 import fs from 'node:fs';
 import path from 'node:path';
+import MarkdownIt from 'markdown-it';
+import { parseImageDirectives } from './image-directives.ts';
 
 type Variant = [number, string];
 type ManifestEntry = {
@@ -48,9 +50,9 @@ export type PictureOptions = {
   noZoom?: boolean;
 };
 
-const esc = (value: string): string => value.replace(/"/g, '&quot;');
+const { escapeHtml: esc, unescapeAll } = new MarkdownIt().utils;
 const srcset = (variants: Variant[]): string =>
-  variants.map(([w, url]) => `${url} ${w}w`).join(', ');
+  variants.map(([w, url]) => `${esc(url)} ${w}w`).join(', ');
 
 /** Build a responsive <picture>, or a plain <img> when the source is unknown. */
 export function buildPicture(opts: PictureOptions): string {
@@ -62,7 +64,7 @@ export function buildPicture(opts: PictureOptions): string {
   const entry = manifest()[src];
 
   if (!entry) {
-    return `<img src="${src}"${altAttr}${cls} loading="${loading}" decoding="async"${fp}${nz}>`;
+    return `<img src="${esc(src)}"${altAttr}${cls} loading="${loading}" decoding="async"${fp}${nz}>`;
   }
 
   // Emit width/height so the browser reserves the box (no layout shift).
@@ -81,9 +83,9 @@ export function buildPicture(opts: PictureOptions): string {
 
   return (
     '<picture>' +
-    `<source type="image/avif" srcset="${srcset(entry.avif)}" sizes="${sizes}">` +
-    `<source type="image/webp" srcset="${srcset(entry.webp)}" sizes="${sizes}">` +
-    `<img src="${entry.fallback}"${altAttr} width="${w}" height="${h}" ` +
+    `<source type="image/avif" srcset="${srcset(entry.avif)}" sizes="${esc(sizes)}">` +
+    `<source type="image/webp" srcset="${srcset(entry.webp)}" sizes="${esc(sizes)}">` +
+    `<img src="${esc(entry.fallback)}"${altAttr} width="${w}" height="${h}" ` +
     `loading="${loading}" decoding="async"${fp}${cls}${nz}>` +
     '</picture>'
   );
@@ -96,7 +98,9 @@ const ATTR = /([a-zA-Z][\w-]*)(?:="([^"]*)")?/g;
 export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 100vw, 672px'): string {
   return html.replace(IMG_TAG, (whole: string, attrString: string) => {
     const attrs: Record<string, string> = {};
-    for (const match of attrString.matchAll(ATTR)) attrs[match[1].toLowerCase()] = match[2] ?? '';
+    for (const match of attrString.matchAll(ATTR)) {
+      attrs[match[1].toLowerCase()] = unescapeAll(match[2] ?? '');
+    }
     if (!attrs.src || !manifest()[attrs.src]) return whole;
     // `![alt|350](src)` survives as `alt="alt|350"` when the markdown reaches
     // us already-rendered (e.g., split-side inline images). Split it back out
@@ -104,11 +108,10 @@ export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 1
     let alt = attrs.alt ?? '';
     let width = attrs.width;
     if (!width && alt.includes('|')) {
-      const parts = alt.split('|').map((p) => p.trim());
-      const widthPart = parts.slice(1).find((p) => /^\d+$/.test(p));
-      if (widthPart) {
-        alt = parts[0] ?? '';
-        width = widthPart;
+      const directive = parseImageDirectives(alt);
+      if (directive.width) {
+        alt = directive.alt;
+        width = directive.width;
       }
     }
     const sizes = width ? undefined : defaultSizes;

@@ -63,6 +63,18 @@ describe('::button (single)', () => {
     const html = renderPageHtml('::button sticky\n[Resume](/resume.pdf)\n::');
     assert.match(html, /<a class="button sticky-button" href="\/resume\.pdf">Resume<\/a>/);
   });
+
+  test('uses the Markdown link parser for escaping, formatting, and parentheses in URLs', () => {
+    const html = renderPageHtml('::button\n[**Open & inspect**](https://example.com/a_(b))\n::');
+    assert.match(html, /<a class="button" href="https:\/\/example\.com\/a_\(b\)"><strong>Open &amp; inspect<\/strong><\/a>/);
+  });
+
+  test('does not turn unsafe or malformed links into HTML', () => {
+    for (const link of ['[Bad](javascript:alert(1))', 'plain text']) {
+      const html = renderPageHtml(`::button\n${link}\n::`);
+      assert.doesNotMatch(html, /class="actions"|<a\b|javascript:/);
+    }
+  });
 });
 
 describe('::buttons', () => {
@@ -70,6 +82,13 @@ describe('::buttons', () => {
     const html = renderPageHtml('::buttons\n- [First](/a/)\n- [Second](/b/)\n::');
     assert.match(html, /<a class="button" href="\/a\/">First<\/a>/);
     assert.match(html, /<a class="button secondary" href="\/b\/">Second<\/a>/);
+  });
+
+  test('omits invalid rows while preserving primary and secondary order', () => {
+    const html = renderPageHtml('::buttons\n- [First](/a/)\n- [Bad](javascript:alert(1))\n- [Third](/c/)\n::');
+    assert.match(html, /<a class="button" href="\/a\/">First<\/a>/);
+    assert.match(html, /<a class="button secondary" href="\/c\/">Third<\/a>/);
+    assert.doesNotMatch(html, /javascript:|>Bad</);
   });
 });
 
@@ -136,6 +155,12 @@ describe('::table (writeup)', () => {
 });
 
 describe('image directives (writeup)', () => {
+  test('escapes image attributes without treating literal entities as markup', () => {
+    const html = renderWriteupHtml('![A < B & "C" &copy;|320](photo.png?a=1&b=2)', 'demo');
+    assert.match(html, /src="photo\.png\?a=1&amp;b=2"/);
+    assert.match(html, /alt="A &lt; B &amp; &quot;C&quot; ©"/);
+  });
+
   // markdown.ts parses the `alt|width|nocap` directive into <img> attributes;
   // the <figure>/<picture> wrapping is assembled downstream in enhanceImages.
   test('`alt|width` parses the width into an attribute and flags the alt caption', () => {

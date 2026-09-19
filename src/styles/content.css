@@ -57,6 +57,7 @@
 
 .button {
   --button-lift: 2px;
+  --button-border: 0px;
 
   position: relative;
   display: inline-flex;
@@ -65,7 +66,7 @@
   min-block-size: calc((1em * 1.6) + (0.667em * 2) + 4px);
   padding-block: calc(0.667em + 2px);
   padding-inline: calc(1.333em + 2px);
-  border: 0;
+  border: var(--button-border) solid transparent;
   border-radius: var(--radius-button);
   background: var(--color-primary);
   color: var(--color-bg);
@@ -79,11 +80,11 @@
     box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
-  /* Same hover-lift backfill as the cards above, at the button's own distance. */
+  /* Cover the complete resting hit area, including secondary-button borders. */
   &::after {
     content: '';
     position: absolute;
-    inset-block: 100% calc(var(--button-lift) * -1);
+    inset-block: calc(var(--button-border) * -1) calc((var(--button-lift) + var(--button-border)) * -1);
     inset-inline: 0;
   }
 
@@ -102,7 +103,9 @@
 
   &.secondary {
     background: transparent;
-    border: 2px solid currentColor;
+    --button-border: 2px;
+
+    border-color: currentColor;
     color: var(--color-primary);
     padding-block: 0.667em;
     padding-inline: 1.33em;
@@ -144,7 +147,14 @@
 
 .project-card,
 .software-card {
+  display: flex;
+  min-inline-size: 0;
+}
+
+.card-surface {
   position: relative;
+  flex: 1;
+  min-inline-size: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-15);
@@ -155,37 +165,20 @@
   transition:
     translate var(--motion-duration-fast) var(--motion-ease-standard),
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
-
 }
 
-/* Lifting a card on hover moves its hit box out from under the cursor, which
-   un-hovers it, which drops it back under the cursor — an infinite oscillation
-   along the bottom edge ("doom flicker"). The pseudo backfills exactly the strip
-   the card vacates, so the pointer never leaves the element. It covers only that
-   strip, not the card, so it can't intercept a click meant for the card link.
-   Both the lift and the backfill read one custom property and cannot drift. */
+/* The list item keeps its hit area while its shared surface lifts. */
 @media (hover: hover) and (pointer: fine) {
-  :where(.project-card, .software-card) {
-    --card-lift: 6px;
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset-block: 100% calc(var(--card-lift) * -1);
-      inset-inline: 0;
-    }
-
-    &:hover {
-      translate: 0 calc(var(--card-lift) * -1);
-      box-shadow: var(--shadow-md);
-    }
+  :where(.project-card, .software-card):hover > .card-surface {
+    translate: 0 -6px;
+    box-shadow: var(--shadow-md);
   }
 }
 
-/* No `overflow: hidden`: the media sits below the title, so it never meets the
-   card's rounded corners, and clipping would eat the hover backfill above. */
+.card-surface:focus-within { box-shadow: var(--shadow-md); }
+
 .project-card {
-  &:has(.project-card-title a:active) {
+  &:has(.project-card-title a:active) > .card-surface {
     box-shadow: none;
   }
 }

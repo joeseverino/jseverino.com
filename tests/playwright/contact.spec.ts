@@ -1,6 +1,41 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Contact Form Interactive Verification', () => {
+  test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
+    let requests = 0;
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    await page.route('/api/contact', async (route) => {
+      requests++;
+      await pending;
+      await route.abort();
+    });
+    await page.locator('#contact-name').fill('Jane Doe');
+    await page.locator('#contact-email').fill('jane@example.com');
+    await page.locator('#contact-message').fill('Keep this message for retry.');
+    await page.locator('form').evaluate((form) => {
+      const token = document.createElement('input');
+      token.type = 'hidden';
+      token.name = 'cf-turnstile-response';
+      token.value = 'test-token';
+      form.append(token);
+    });
+    try {
+      await page.locator('.contact-submit').click();
+      await expect.poll(() => requests).toBe(1);
+      await page.locator('form').evaluate((form) => {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+      await expect(page.locator('form')).toHaveAttribute('aria-busy', 'true');
+      await expect(page.locator('.contact-submit')).toBeDisabled();
+    } finally {
+      finish();
+    }
+    await expect(page.locator('.contact-status')).toContainText('Could not reach the server');
+    await expect(page.locator('.contact-submit')).toBeEnabled();
+    await expect(page.locator('#contact-message')).toHaveValue('Keep this message for retry.');
+    expect(requests).toBe(1);
+  });
   test.beforeEach(async ({ page }) => {
     // Block the Turnstile script so its always-pass test key cannot auto-solve
     // mid-test. Each test then controls the token state deterministically instead

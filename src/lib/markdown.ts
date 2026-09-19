@@ -14,6 +14,7 @@
 // in content.ts, which imports renderPageHtml / renderWriteupHtml from here.
 
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
+import { parseImageDirectives } from './image-directives.ts';
 
 function createMarkdownRenderer() {
   return new MarkdownIt({
@@ -25,6 +26,7 @@ function createMarkdownRenderer() {
 
 const md = createMarkdownRenderer();
 const fragmentMd = createMarkdownRenderer();
+const { escapeHtml } = md.utils;
 
 // Let separator-delimited values (IPs, MACs) wrap at their separators instead of
 // mid-token, so a narrow table column breaks `00:00:00:00:` / `02:1e`, never
@@ -110,23 +112,16 @@ function preprocessImageDirectives(markdown: string): string {
   return markdown.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
     (match, altRaw: string, url: string) => {
-      const parts = altRaw.split('|').map((p) => p.trim());
-      let alt = parts[0] ?? '';
-      let width: string | null = null;
-      let nocap = false;
-      let nozoom = false;
+      const { alt: parsedAlt, width, noCaption: nocap, noZoom: nozoom } = parseImageDirectives(altRaw);
 
-      for (const part of parts.slice(1)) {
-        if (/^\d+$/.test(part)) width = part;
-        else if (part.toLowerCase() === 'nocap' || part.toLowerCase() === 'nocaption') nocap = true;
-        else if (part.toLowerCase() === 'nozoom') nozoom = true;
-      }
-
-      if (!width && !nocap && !nozoom && alt === altRaw) return match;
+      if (!width && !nocap && !nozoom && parsedAlt === altRaw) return match;
+      // Match Markdown-it's normal image-label semantics before emitting the
+      // modifier-bearing raw <img> tag that the renderer will pass through.
+      const alt = md.utils.unescapeAll(parsedAlt);
 
       const attrs = [
-        `src="${url}"`,
-        `alt="${alt.replace(/"/g, '&quot;')}"`,
+        `src="${escapeHtml(url)}"`,
+        `alt="${escapeHtml(alt)}"`,
         width ? `width="${width}"` : '',
         nocap ? 'data-nocap' : '',
         nozoom ? 'data-no-zoom' : '',
@@ -158,7 +153,7 @@ function renderFigure(content: string): string {
   let imgTag: string;
   if (markdownImage) {
     const [, altRaw, src] = markdownImage;
-    imgTag = `<img src="${src}" alt="${altRaw.replace(/"/g, '&quot;')}">`;
+    imgTag = `<img src="${escapeHtml(src)}" alt="${escapeHtml(altRaw)}">`;
   } else if (/^<img\b[^>]*>$/.test(imageLine)) {
     // The figure's own caption line supersedes the alt-derived one.
     imgTag = imageLine.replace(/\s*data-has-alt-caption\b/, '');
@@ -206,29 +201,41 @@ function renderTable(content: string): string {
     .join('');
 }
 
+function renderActionLink(markdown: string, className: string): string {
+  const [inline, ...extra] = md.parseInline(markdown.trim(), {});
+  const children = (inline?.children ?? []).filter((token) => token.type !== 'text' || token.content !== '');
+  if (
+    extra.length > 0 ||
+    children[0]?.type !== 'link_open' ||
+    children.at(-1)?.type !== 'link_close' ||
+    children.filter((token) => token.type === 'link_open').length !== 1
+  ) {
+    return '';
+  }
+  children[0].attrs = [
+    ['class', className],
+    ...(children[0].attrs ?? []).filter(([name]) => name !== 'class'),
+  ];
+  return md.renderer.render(children, md.options, {});
+}
+
 function renderButton(content: string, classes = ''): string {
-  const link = content.match(/\[([^\]]+)\]\(([^)]+)\)/);
-  if (!link) return '';
-  const className = `button ${classes}`.trim();
-  return `<div class="actions"><a class="${className}" href="${link[2]}">${link[1]}</a></div>`;
+  const link = renderActionLink(content, `button ${classes}`.trim());
+  return link ? `<div class="actions">${link}</div>` : '';
 }
 
 function renderButtons(content: string): string {
-  const buttons = [...content.matchAll(/- \[([^\]]+)\]\(([^)]+)\)/g)]
-    .map((match, index) => {
-      const className = index === 0 ? 'button' : 'button secondary';
-      return `<a class="${className}" href="${match[2]}">${match[1]}</a>`;
-    })
-    .join('\n');
-  return `<div class="actions">${buttons}</div>`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.match(/^\s*-\s+(.+)$/)?.[1])
+    .filter((line): line is string => Boolean(line));
+  const buttons: string[] = [];
+  for (const line of lines) {
+    const className = buttons.length === 0 ? 'button' : 'button secondary';
+    const link = renderActionLink(line, className);
+    if (link) buttons.push(link);
+  }
+  return buttons.length > 0 ? `<div class="actions">${buttons.join('\n')}</div>` : '';
 }
 
 function renderTerminal(content: string): string {

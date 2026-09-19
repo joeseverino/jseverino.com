@@ -50,6 +50,7 @@ export const contactContract = {
   },
   "runtime": {
     "maxBodyBytes": 8192,
+    "turnstileTimeoutMs": 5000,
     "maxPerIpPerHour": 5,
     "maxUserAgentLength": 512
   }

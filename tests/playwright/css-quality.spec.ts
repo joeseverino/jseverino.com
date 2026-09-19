@@ -87,7 +87,7 @@ test('motion tokens drive stable pressed feedback', async ({ page }) => {
   expect(standardDurationMs).toBe(200);
 
   const cardLink = page.locator('.project-card-title a').first();
-  const card = page.locator('.project-card').first();
+  const card = page.locator('.card-surface').first();
   const box = await cardLink.boundingBox();
   expect(box).not.toBeNull();
 
@@ -132,7 +132,7 @@ test('buttons and cards keep a stable click target through press and release', a
     cardBox!.x + cardBox!.width / 2,
     cardBox!.y + cardBox!.height / 2,
   );
-  await expect(page.locator('.project-card').first()).toHaveCSS('translate', '0px -6px');
+  await expect(page.locator('.card-surface').first()).toHaveCSS('translate', '0px -6px');
   const raisedCardBox = await cardLink.boundingBox();
   expect(raisedCardBox).not.toBeNull();
   await page.mouse.down();
@@ -141,40 +141,56 @@ test('buttons and cards keep a stable click target through press and release', a
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href!)}$`));
 });
 
-// Lifting an element on hover moves its hit box off the cursor, so a pointer
-// resting near the bottom edge lands in the strip it just vacated: un-hover,
-// drop back under the cursor, re-hover, forever ("doom flicker"). A transparent
-// ::after backfills that strip so the pointer never leaves.
-//
-// This asserts the GEOMETRY, not the behavior: the oscillation needs a real
-// compositor and does not reproduce under Playwright's synthetic mouse, so a
-// behavioral test here would pass with the fix deleted. What is checkable, and
-// what actually prevents the bug, is that the backfill exists and is exactly as
-// tall as the lift — the two are driven by one custom property and must not drift.
+// Sample the actual target geometry, including the bottom edge that used to
+// trigger a hover/unhover loop. Feedback must never move the pointer target.
 for (const { name, selector, path } of [
-  { name: 'card', selector: '.project-card', path: '/portfolio/' },
-  { name: 'button', selector: '.button', path: '/404.html' },
-]) {
-  test(`${name} backfills the strip its hover lift vacates`, async ({ page }) => {
-    await page.goto(path);
+  { name: 'writeup card', selector: '.project-card', path: '/portfolio/' },
+  { name: 'software card', selector: '.software-card', path: '/portfolio/#software' },
 
+]) {
+  test(`${name} stays stationary at its bottom hover edge`, async ({ page }) => {
+    await page.goto(path);
     const target = page.locator(selector).first();
     await target.scrollIntoViewIfNeeded();
-
-    const backfillHeight = await target.evaluate(
-      (element) => getComputedStyle(element, '::after').height,
-    );
+    await page.mouse.move(0, 0);
     const box = await target.boundingBox();
-    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    // Let the lift transition settle; sampling mid-flight reads a partial offset.
-    await expect(target).toHaveCSS('translate', /^0px -\d/);
-    await page.waitForTimeout(300);
+    expect(box).not.toBeNull();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
+    await expect(target.locator('.card-surface')).toHaveCSS('translate', '0px -6px');
+    const frames = await target.evaluate(async (element) => {
+      const samples: { x: number; y: number; hovered: boolean }[] = [];
+      for (let i = 0; i < 30; i++) {
+        await new Promise(requestAnimationFrame);
+        const rect = element.getBoundingClientRect();
+        samples.push({ x: rect.x, y: rect.y, hovered: element.matches(':hover') });
+      }
+      return samples;
+    });
+    for (const frame of frames) {
+      expect(frame.x).toBeCloseTo(box!.x, 1);
+      expect(frame.y).toBeCloseTo(box!.y, 1);
+      expect(frame.hovered).toBe(true);
+    }
+  });
+}
 
-    const lift = await target.evaluate((element) => getComputedStyle(element).translate);
-    const liftPx = Math.abs(Number.parseFloat(lift.split(' ')[1] ?? '0'));
-
-    expect(liftPx).toBeGreaterThan(0);
-    expect(Number.parseFloat(backfillHeight)).toBe(liftPx);
+for (const selector of ['.button:not(.secondary)', '.button.secondary']) {
+  test(`${selector} keeps hover at its bottom border`, async ({ page }) => {
+    await page.goto('/');
+    const target = page.locator(selector).first();
+    await target.scrollIntoViewIfNeeded();
+    const box = await target.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
+    await expect(target).toHaveCSS('translate', '0px -2px');
+    const hovered = await target.evaluate(async (element) => {
+      for (let i = 0; i < 30; i++) {
+        await new Promise(requestAnimationFrame);
+        if (!element.matches(':hover')) return false;
+      }
+      return true;
+    });
+    expect(hovered).toBe(true);
   });
 }
 

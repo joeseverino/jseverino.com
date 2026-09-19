@@ -194,7 +194,11 @@ WKD key's content type. CI's `edge` leg and the local `release:check` and
 lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
 URLs, device preset, and thresholds declared in `.lighthouserc.json`. Prints a
 score line per page, writes the table to the job summary in CI, and exits
-non-zero only on an `error`-level threshold. Needs Chrome. Expect best
+non-zero on an audit execution failure or an `error`-level threshold. Uses the
+lockfile's Playwright Chromium (`npx playwright install chromium`), with
+`CHROME_PATH` available for an explicit browser override. CI installs Chromium
+and its system dependencies before the audit. Per-page logs accompany the
+reports, including when Chrome fails to launch. Expect best
 practices in the 70s from any client Cloudflare distrusts: Bot Fight Mode's
 injected detection script uses deprecated browser APIs, and PageSpeed Insights
 is not served that script.

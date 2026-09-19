@@ -1,5 +1,6 @@
 ---
 import { metaLine, type SoftwareEntry } from '@lib/software';
+import CardSurface from '@components/CardSurface.astro';
 
 type Props = { entry: SoftwareEntry };
 const { entry } = Astro.props;
@@ -17,79 +18,78 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 ---
 
 <li class="software-card">
-  <div class="software-card-head">
-    <h3 class="software-card-title">
-      {titleHref ? (
-        <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
-      ) : (
-        entry.title
+  <CardSurface>
+    <div class="software-card-head">
+      <h3 class="software-card-title">
+        {titleHref ? (
+          <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+        ) : (
+          entry.title
+        )}
+      </h3>
+      {(pkg || entry.selfHosted) && (
+        <div class="software-badges">
+          {pkg && (
+            <span class={`badge badge--${pkg.registry}`}>
+              {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
+            </span>
+          )}
+          {pkg?.downloadsPerMonth != null && (
+            <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+          )}
+          {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+        </div>
       )}
-    </h3>
-    {(pkg || entry.selfHosted) && (
-      <div class="software-badges">
-        {pkg && (
-          <span class={`badge badge--${pkg.registry}`}>
-            {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
-          </span>
-        )}
-        {pkg?.downloadsPerMonth != null && (
-          <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
-        )}
-        {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+    </div>
+
+    <p class="software-card-summary">{entry.description}</p>
+
+    {pkg && (
+      <div class="terminal-block software-install">
+        <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
+        <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
+          <span class="copy-label">Copy</span>
+        </button>
       </div>
     )}
-  </div>
 
-  <p class="software-card-summary">{entry.description}</p>
+    {meta && <p class="software-meta">{meta}</p>}
 
-  {pkg && (
-    <div class="terminal-block software-install">
-      <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
-      <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
-        <span class="copy-label">Copy</span>
-      </button>
+    <div class="software-links">
+      {entry.repoUrl && (
+        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      )}
+      {pkg && (
+        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
+      )}
+      {entry.writeupSlug && (
+        <a class="software-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Read the writeup →</a>
+      )}
     </div>
-  )}
-
-  {meta && <p class="software-meta">{meta}</p>}
-
-  <div class="software-links">
-    {entry.repoUrl && (
-      <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-    )}
-    {pkg && (
-      <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
-    )}
-    {entry.writeupSlug && (
-      <a class="software-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Read the writeup →</a>
-    )}
-  </div>
+  </CardSurface>
 </li>
 
 <script>
-  function initSoftwareCopy(): void {
-    document.querySelectorAll<HTMLButtonElement>('.software-copy').forEach((btn) => {
-      if (btn.dataset.wired) return;
-      btn.dataset.wired = '1';
-      btn.addEventListener('click', async () => {
-        const text = btn.getAttribute('data-copy') ?? '';
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch {
-          return; // clipboard unavailable; command is still visible to copy by hand
-        }
-        const label = btn.querySelector('.copy-label');
-        if (!label) return;
-        const prev = label.textContent;
-        label.textContent = 'Copied';
-        btn.classList.add('is-copied');
-        window.setTimeout(() => {
-          label.textContent = prev;
-          btn.classList.remove('is-copied');
-        }, 1400);
-      });
-    });
-  }
+  const resets = new WeakMap<HTMLButtonElement, number>();
 
-  initSoftwareCopy();
+  document.addEventListener('click', async (event) => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest<HTMLButtonElement>('.software-copy');
+    if (!button) return;
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy ?? '');
+    } catch {
+      return; // The visible command remains available to copy by hand.
+    }
+    const label = button.querySelector('.copy-label');
+    if (!label) return;
+    window.clearTimeout(resets.get(button));
+    label.textContent = 'Copied';
+    button.classList.add('is-copied');
+    resets.set(button, window.setTimeout(() => {
+      label.textContent = 'Copy';
+      button.classList.remove('is-copied');
+      resets.delete(button);
+    }, 1400));
+  });
 </script>

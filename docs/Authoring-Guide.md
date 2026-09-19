@@ -67,13 +67,17 @@ Lines beginning with `$` are rendered as commands. Other lines are rendered as o
 Single button:
 
 ```md
-::button [View Resume](/resume/) ::
+::button
+[View Resume](/resume/)
+::
 ```
 
 Sticky button:
 
 ```md
-::button sticky [Download PDF](/assets/resume.pdf) ::
+::button sticky
+[Download PDF](/assets/resume.pdf)
+::
 ```
 
 Button row:

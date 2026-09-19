@@ -9,6 +9,7 @@ export interface RecordedQuery {
 export interface D1StubOptions {
   firstResult?: unknown;
   failRun?: boolean;
+  failFirst?: boolean;
 }
 
 export function createD1Stub(options: D1StubOptions = {}) {
@@ -24,6 +25,7 @@ export function createD1Stub(options: D1StubOptions = {}) {
         },
         async first() {
           queries.push(record);
+          if (options.failFirst) throw new Error('d1 unavailable');
           return options.firstResult ?? null;
         },
         async run() {

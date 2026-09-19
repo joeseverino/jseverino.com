@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../src/lib/site-root.mjs';
+import { SITE } from '../src/lib/site-config.mjs';
 
 const root = siteRoot;
 const contract = JSON.parse(fs.readFileSync(path.join(root, 'contracts/contact.v1.json'), 'utf8'));
@@ -14,11 +15,11 @@ const response = (description, ref) => ({
 const document = {
   openapi: '3.0.3',
   info: {
-    title: 'jseverino.com Contact API',
+    title: `${SITE.domain} Contact API`,
     version: '1.0.0',
     description: 'Schema for the public contact form endpoint.',
   },
-  servers: [{ url: 'https://jseverino.com' }],
+  servers: [{ url: `https://${SITE.domain}` }],
   paths: {
     '/api/contact': {
       post: {

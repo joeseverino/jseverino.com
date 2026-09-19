@@ -24,7 +24,7 @@ export function validateContactPayload(payload: unknown): ContactValidation {
     return { ok: false, reason: 'invalid' };
   }
   const source = payload as ContactPayload;
-  if (Object.keys(source).some((key) => !(key in CONTACT_PROPERTIES))) {
+  if (Object.keys(source).some((key) => !Object.hasOwn(CONTACT_PROPERTIES, key))) {
     return { ok: false, reason: 'invalid' };
   }
   const value: Record<string, string> = {};

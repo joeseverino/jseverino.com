@@ -6,6 +6,8 @@
 // description) and it appears; cut a release and the version updates.
 
 import { getGithubRepos } from './github';
+import { asyncCache } from './async-cache';
+import { fetchJson } from './fetch-json';
 import {
   FEATURED,
   ORDER,
@@ -41,9 +43,7 @@ function slugify(name: string): string {
 
 async function fetchPypiVersion(name: string): Promise<string | undefined> {
   try {
-    const res = await fetch(`https://pypi.org/pypi/${name}/json`);
-    if (!res.ok) return undefined;
-    const data = (await res.json()) as { info?: { version?: string } };
+    const data = await fetchJson<{ info?: { version?: string } }>(`https://pypi.org/pypi/${name}/json`);
     return data.info?.version;
   } catch {
     return undefined;
@@ -53,26 +53,14 @@ async function fetchPypiVersion(name: string): Promise<string | undefined> {
 async function fetchNpmInfo(
   name: string,
 ): Promise<{ version?: string; downloadsPerMonth?: number }> {
-  const out: { version?: string; downloadsPerMonth?: number } = {};
-  try {
-    const res = await fetch(`https://registry.npmjs.org/${name}`);
-    if (res.ok) {
-      const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
-      out.version = data['dist-tags']?.latest;
-    }
-  } catch {
-    /* version stays undefined */
-  }
-  try {
-    const res = await fetch(`https://api.npmjs.org/downloads/point/last-month/${name}`);
-    if (res.ok) {
-      const data = (await res.json()) as { downloads?: number };
-      out.downloadsPerMonth = data.downloads;
-    }
-  } catch {
-    /* downloads are optional */
-  }
-  return out;
+  const [version, downloads] = await Promise.allSettled([
+    fetchJson<{ 'dist-tags'?: { latest?: string } }>(`https://registry.npmjs.org/${name}`),
+    fetchJson<{ downloads?: number }>(`https://api.npmjs.org/downloads/point/last-month/${name}`),
+  ]);
+  return {
+    version: version.status === 'fulfilled' ? version.value?.['dist-tags']?.latest : undefined,
+    downloadsPerMonth: downloads.status === 'fulfilled' ? downloads.value?.downloads : undefined,
+  };
 }
 
 async function enrich(pkg: SoftwarePackage): Promise<void> {
@@ -85,12 +73,7 @@ async function enrich(pkg: SoftwarePackage): Promise<void> {
   }
 }
 
-let cache: Promise<SoftwareEntry[]> | undefined;
-
-export function getSoftware(): Promise<SoftwareEntry[]> {
-  if (!cache) cache = build();
-  return cache;
-}
+export const getSoftware = asyncCache(build);
 
 async function build(): Promise<SoftwareEntry[]> {
   const repos = await getGithubRepos();

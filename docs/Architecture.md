@@ -79,6 +79,11 @@ is derived at build time, never hand-keyed:
 Refresh the snapshot fallback with `npm run snapshot:github` after editing repo
 descriptions or adding repos.
 
+Build-time GitHub and registry requests have a five-second timeout, including
+response-body reads. npm version and download requests run concurrently and
+fail independently. Content, GitHub, and software loaders share pending work
+through [`async-cache.ts`](../src/lib/async-cache.ts); failed loads can be retried.
+
 ## 3. Sync Pipeline
 
 [`bin/sync-content.mjs`](../bin/sync-content.mjs) orchestrates the private-to-public sync.
@@ -180,9 +185,28 @@ Playwright exercises the current bundled Chromium, Firefox, and WebKit engines o
 
 `stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css-vars` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
 
+[`base.css`](../src/styles/base.css) imports each focused stylesheet once.
+Contact controls live in `forms.css`; footer, theme controls, and social links
+live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
+The source-integrity and CSS-variable audits reuse the same
+[`walkFiles`](../src/lib/walk.mjs) helper as the other file-based audits.
+
 ### Sticky-header shadow
 
-The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The inline script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()` so non-supporting engines still get the shadow without running JS in the modern path.
+The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The bundled script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()`. The same module owns mobile-menu state and delegates link clicks to the menu.
+
+Interactive CSS separates hit areas from visual effects. Writeup and software
+cards share [`CardSurface.astro`](../src/components/CardSurface.astro): the list
+item stays stationary while its surface lifts on fine-pointer hover. Keyboard
+focus receives the same raised shadow. Buttons retain their lift with a hit
+area that accounts for their border width. Shared rules live in `content.css`;
+variants add only their differences. Regression tests check edge-hover behavior,
+focus, forced colors, and reduced motion across browser engines.
+
+Portfolio tabs derive selected panels and focusability from the active tab,
+follow URL hash changes, preserve query parameters, and support arrows, Home,
+and End. These states use the existing DOM rather than a second client-side
+copy of the portfolio data.
 
 Both paths set one registered custom property, `--header-scroll` (a `<number>`, 0 to 1); the scrim color and shadow are composed from it in a single rule. The keyframe deliberately carries **no color**. Chromium and WebKit both resolve a keyframe's `var()` colors once and keep serving that resolved value when `color-scheme` changes, so an earlier version that animated `color-mix(… var(--color-bg) …)` directly left a white header bar over a dark page until the next reload. Anything animated that depends on a themeable token has to interpolate a number and compose the color outside the keyframe. [`tests/playwright/theme.spec.ts`](../tests/playwright/theme.spec.ts) pins the behavior.
 
@@ -200,11 +224,20 @@ Referenced images are processed during sync, before Astro builds the site.
 
 For each optimizable source image, the pipeline emits:
 
-- AVIF variants at 512, 1024, and 1600 px;
-- WebP variants at 512, 1024, and 1600 px;
+- AVIF variants at 512, 768, 1024, and 1600 px;
+- WebP variants at 512, 768, 1024, and 1600 px;
 - one optimized fallback file.
 
 [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) records the output variants and source dimensions. [`src/components/Picture.astro`](../src/components/Picture.astro) uses the manifest to render stable responsive images with explicit `width` and `height` attributes.
+
+Writeup preprocessing and page-image enhancement share the modifier grammar in
+[`image-directives.ts`](../src/lib/image-directives.ts), including the last-width
+rule when a width is repeated. Markdown-generated image attributes and terminal
+content use Markdown-it's HTML escaping. Integration tests cover both rendering
+paths and preservation of escaped alt text during picture enhancement.
+Responsive-picture generation decodes the renderer's attribute entities and
+then performs one canonical Markdown-it escape pass across source URLs, alt
+text, classes, `sizes`, and `srcset`, including the plain-image fallback.
 
 This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
 
@@ -244,7 +277,24 @@ Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vi
 
 The policy significantly reduces script-injection risk while still allowing first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
 
+Client scripts do not assign `innerHTML`, `outerHTML`, or call
+`insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
+sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
+Custom button directives render links through Markdown-it's token parser, so
+their escaping and URL-scheme validation match ordinary Markdown links.
+
 The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form.
+
+The contact page provides a LinkedIn fallback until its submission handler is
+installed. With JavaScript enabled, CSS delays the fallback for three seconds
+to avoid flashing it during normal module loading. With JavaScript disabled it
+appears immediately; with the bundle blocked it appears after the delay. The
+form stays hidden until its handler is ready and declares POST explicitly so entered
+messages never default to a GET query string.
+
+Submission is marked busy, ignores repeat submissions while pending, and times
+out after fifteen seconds. Success clears the form; failures retain entered
+text and restore the submit control for retry.
 
 The contact function applies:
 
@@ -255,6 +305,19 @@ The contact function applies:
 - email format validation;
 - per-IP hourly rate limiting backed by D1;
 - parameterized D1 inserts.
+
+Both API endpoints use [`request-json.ts`](../functions/lib/request-json.ts)
+to match media types exactly and read JSON into a bounded byte buffer. The
+reader counts UTF-8 bytes, rejects invalid UTF-8, and cancels oversized streams
+without trusting `Content-Length` or buffering the entire upload first. Each
+endpoint retains its own size limit and response format.
+
+The contact runtime contract also sets a five-second Turnstile verification
+timeout covering the response body. Provider HTTP errors fail verification;
+database failures during either the rate-limit lookup or insert return the
+documented JSON error. Closed-schema validation rejects unknown own keys,
+including names inherited from `Object.prototype`. Both endpoints share the
+minimal D1 type declarations in [`database.ts`](../functions/lib/database.ts).
 
 ### Edge schema validation
 
@@ -302,7 +365,10 @@ dist/
 └── sitemap-index.xml           # @astrojs/sitemap output
 ```
 
-**Fingerprinting.** Astro hashes every artifact under `_astro/` (and any image variant written by the pipeline) by content. Filenames change when bytes change, so they can be cached `immutable` for one year (see [`public/_headers`](../public/_headers)) without risk of stale serves. HTML is short-cached and revalidated.
+**Fingerprinting.** Astro hashes every artifact under `_astro/` by content, so
+those filenames can be cached `immutable` for one year. Vault image filenames
+are stable; their cache contract is described in §12. HTML is short-cached and
+revalidated.
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block — and that is data, not executable code. The middleware nonces every `<script>` tag the browser sees, including the external bundles.
 
@@ -370,14 +436,20 @@ All assets resolve under `/assets/<bucket>/<filename>`. Filenames are not finger
 
 This stability is intentional for assets that external links may bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf` (linked from LinkedIn, recruiter outreach, etc.).
 
-The image *variants* emitted by the image pipeline (AVIF/WebP at multiple widths) live alongside the original under `images/` and are fingerprinted internally by content; the `<picture>` `srcset` URLs change only when source-image content hashes change.
+The image variants (AVIF/WebP at multiple widths) live alongside the original
+under `images/`, named by source basename and width. Content hashes identify
+the local encoder cache; they are not part of public `srcset` URLs.
 
 ### Cache behavior
 
-`/assets/*` is served `immutable` with a one-year max-age (see [`public/_headers`](../public/_headers)).
+[`public/_headers`](../public/_headers) scopes caching by asset directory:
 
-- For **repo-managed assets** (favicons, fonts, OG defaults, downloadable docs): immutable caching is the right tradeoff since these change rarely. To force a refresh of an existing URL, change the filename (e.g., `resume-2027.pdf`).
-- For **vault-synced images**: the image pipeline emits content-hashed variants, so a real content change produces new variant filenames that bypass the cache cleanly.
+- Fingerprinted Astro bundles, writeup/page images, and fonts receive a one-year
+  immutable cache. Rename a source image or font when replacing its contents so
+  the public URL changes; the local encoder hash alone does not invalidate a
+  browser's cached response.
+- Downloadable documents, favicons, brand marks, and OG cards retain stable URLs
+  with a one-hour cache and mandatory revalidation after expiry.
 
 ### When to add a new bucket
 
@@ -522,7 +594,25 @@ GitHub Actions provide the remote quality gate:
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible instead of silent.
 
+Dependabot's version-update schedule is weekly for npm and monthly for GitHub
+Actions, with minor/patch grouping. Auto-merge covers ordinary non-major
+maintenance as well as security updates; it is not a security-only policy.
+Major version updates are ignored by the scheduled configuration and require
+manual maintenance. For dependency review to block merging, the main ruleset
+must require the `dependency-review` status check; a failing optional check
+does not enforce that policy.
+
 Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
+
+Dependabot auto-merge uses the repository `GITHUB_TOKEN`. GitHub suppresses
+new workflow runs caused by that token, so the squash commit does not emit the
+normal `push` CI run. [`dependabot-post-merge.yml`](../.github/workflows/dependabot-post-merge.yml)
+recovers it from the completed external Cloudflare Pages check. The recovery
+job verifies that the check came from the Cloudflare app, its SHA is current
+`main`, the associated merged PR belongs to Dependabot, and no CI run already
+exists for that SHA before dispatching `ci.yml`. `workflow_dispatch` is one of
+the event types GitHub permits `GITHUB_TOKEN` to create, and the duplicate guard
+keeps ordinary pushes and manual reruns single-shot.
 
 The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29); the failing checks are structural to a one-person project and are not real security gaps. The release checklist in [`docs/Release-Checklist.md`](./Release-Checklist.md#4-commit-and-push) documents the `gh api` query for confirming the dashboard is clean after any workflow or build-script change.
 

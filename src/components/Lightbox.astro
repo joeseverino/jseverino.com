@@ -47,13 +47,13 @@
 
       const figcaption = img.closest('figure')?.querySelector('figcaption');
       if (figcaption) {
-        caption.innerHTML = figcaption.innerHTML;
+        caption.replaceChildren(...Array.from(figcaption.childNodes, (node) => node.cloneNode(true)));
         caption.hidden = false;
       } else if (img.alt) {
-        caption.textContent = img.alt;
+        caption.replaceChildren(img.alt);
         caption.hidden = false;
       } else {
-        caption.textContent = '';
+        caption.replaceChildren();
         caption.hidden = true;
       }
 

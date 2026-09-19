@@ -1,4 +1,34 @@
 @layer components {
+.svg-defs {
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.skip-link {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 10000;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  background: var(--color-primary);
+  color: var(--color-bg);
+  font-weight: 600;
+  border-radius: 0 0 var(--radius-sm) 0;
+  translate: 0 -100%;
+  transition: translate var(--motion-duration-fast) var(--motion-ease-standard);
+
+  &:focus {
+    translate: 0 0;
+    outline: 2px solid var(--color-bg);
+    outline-offset: -2px;
+    text-decoration: none;
+  }
+}
+
 /* ── Forced colors ──────────────────────────────────────────────────── */
 
 @media (forced-colors: active) {
@@ -13,7 +43,7 @@
   .page-actions a,
   .archive-tag,
   .nav-toggle,
-  .project-card,
+  .card-surface,
   .article-hero,
   .theme-toggle {
     border: 1px solid ButtonText;

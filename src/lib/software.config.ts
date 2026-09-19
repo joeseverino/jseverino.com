@@ -4,13 +4,15 @@
 // descriptions, language, and last-pushed are derived from GitHub — edit copy on
 // the repo, not here. Forks and archived repos are excluded automatically.
 
+import { SITE } from './site-config.mjs';
+
 /** Repos to hide (meta, archived predecessors, or not portfolio-worthy). */
 export const SKIP = new Set<string>([
   'arp-spoofing-mininet-lab',
   'phptest',
   'AdGuardHome_DNSQueryAnalyzer',
   'jseverino.com-legacy',
-  'joeseverino',
+  SITE.github,
   'severino-brand',
 ]);
 

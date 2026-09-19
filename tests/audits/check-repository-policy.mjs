@@ -116,6 +116,18 @@ if (transitionHooks.length > 0) {
   fail(`Astro View Transition hooks are not used by this site: ${transitionHooks.join(', ')}`);
 }
 
+// Client-side HTML parsing creates an avoidable injection sink and blocks the
+// site's path toward an enforced Trusted Types policy. Build-time Astro
+// `set:html` remains explicit and reviewable; browser scripts clone existing
+// nodes or assign text instead of reparsing strings as markup.
+const clientHtmlSinks = existingTracked.filter(
+  (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) &&
+    /\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(read(file)),
+);
+if (clientHtmlSinks.length > 0) {
+  fail(`client-side HTML assignment is forbidden: ${clientHtmlSinks.join(', ')}`);
+}
+
 // Deprecated private-link markers and internal service URLs must never enter
 // the public content snapshot or generated site source.
 const publicSources = existingTracked.filter(
