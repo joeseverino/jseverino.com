@@ -185,6 +185,12 @@ Playwright exercises the current bundled Chromium, Firefox, and WebKit engines o
 
 `stylelint.config.mjs` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css-vars` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
 
+[`base.css`](../src/styles/base.css) imports each focused stylesheet once.
+Contact controls live in `forms.css`; footer, theme controls, and social links
+live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
+The source-integrity and CSS-variable audits reuse the same
+[`walkFiles`](../src/lib/walk.mjs) helper as the other file-based audits.
+
 ### Sticky-header shadow
 
 The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The bundled script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()`. The same module owns mobile-menu state and delegates link clicks to the menu.
@@ -218,11 +224,17 @@ Referenced images are processed during sync, before Astro builds the site.
 
 For each optimizable source image, the pipeline emits:
 
-- AVIF variants at 512, 1024, and 1600 px;
-- WebP variants at 512, 1024, and 1600 px;
+- AVIF variants at 512, 768, 1024, and 1600 px;
+- WebP variants at 512, 768, 1024, and 1600 px;
 - one optimized fallback file.
 
 [`src/lib/image-manifest.json`](../src/lib/image-manifest.json) records the output variants and source dimensions. [`src/components/Picture.astro`](../src/components/Picture.astro) uses the manifest to render stable responsive images with explicit `width` and `height` attributes.
+
+Writeup preprocessing and page-image enhancement share the modifier grammar in
+[`image-directives.ts`](../src/lib/image-directives.ts), including the last-width
+rule when a width is repeated. Markdown-generated image attributes and terminal
+content use Markdown-it's HTML escaping. Integration tests cover both rendering
+paths and preservation of escaped alt text during picture enhancement.
 
 This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
 
@@ -399,14 +411,20 @@ All assets resolve under `/assets/<bucket>/<filename>`. Filenames are not finger
 
 This stability is intentional for assets that external links may bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf` (linked from LinkedIn, recruiter outreach, etc.).
 
-The image *variants* emitted by the image pipeline (AVIF/WebP at multiple widths) live alongside the original under `images/` and are fingerprinted internally by content; the `<picture>` `srcset` URLs change only when source-image content hashes change.
+The image variants (AVIF/WebP at multiple widths) live alongside the original
+under `images/`, named by source basename and width. Content hashes identify
+the local encoder cache; they are not part of public `srcset` URLs.
 
 ### Cache behavior
 
-`/assets/*` is served `immutable` with a one-year max-age (see [`public/_headers`](../public/_headers)).
+[`public/_headers`](../public/_headers) scopes caching by asset directory:
 
-- For **repo-managed assets** (favicons, fonts, OG defaults, downloadable docs): immutable caching is the right tradeoff since these change rarely. To force a refresh of an existing URL, change the filename (e.g., `resume-2027.pdf`).
-- For **vault-synced images**: the image pipeline emits content-hashed variants, so a real content change produces new variant filenames that bypass the cache cleanly.
+- Fingerprinted Astro bundles, writeup/page images, and fonts receive a one-year
+  immutable cache. Rename a source image or font when replacing its contents so
+  the public URL changes; the local encoder hash alone does not invalidate a
+  browser's cached response.
+- Downloadable documents, favicons, brand marks, and OG cards retain stable URLs
+  with a one-hour cache and mandatory revalidation after expiry.
 
 ### When to add a new bucket
 

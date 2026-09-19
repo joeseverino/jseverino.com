@@ -4,6 +4,7 @@
 // plain <img> so nothing breaks.
 import fs from 'node:fs';
 import path from 'node:path';
+import { parseImageDirectives } from './image-directives.ts';
 
 type Variant = [number, string];
 type ManifestEntry = {
@@ -104,11 +105,10 @@ export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 1
     let alt = attrs.alt ?? '';
     let width = attrs.width;
     if (!width && alt.includes('|')) {
-      const parts = alt.split('|').map((p) => p.trim());
-      const widthPart = parts.slice(1).find((p) => /^\d+$/.test(p));
-      if (widthPart) {
-        alt = parts[0] ?? '';
-        width = widthPart;
+      const directive = parseImageDirectives(alt);
+      if (directive.width) {
+        alt = directive.alt;
+        width = directive.width;
       }
     }
     const sizes = width ? undefined : defaultSizes;

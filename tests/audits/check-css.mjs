@@ -1,12 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.mjs';
+import { walkFiles } from '../../src/lib/walk.mjs';
 
 const srcDir = path.join(siteRoot, 'src');
-const listFiles = (dir, pattern) => fs
-  .readdirSync(dir, { recursive: true, withFileTypes: true })
-  .filter((entry) => entry.isFile() && pattern.test(entry.name))
-  .map((entry) => path.join(entry.parentPath, entry.name));
+const listFiles = (dir, pattern) => walkFiles(dir, { filter: (file) => pattern.test(file) });
 
 // Definitions come from the stylesheets; usages can live anywhere in src/ —
 // a var(--x) in an .astro template or a JS string still justifies the token.

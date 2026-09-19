@@ -136,6 +136,12 @@ describe('::table (writeup)', () => {
 });
 
 describe('image directives (writeup)', () => {
+  test('escapes image attributes without treating literal entities as markup', () => {
+    const html = renderWriteupHtml('![A < B & "C" &copy;|320](photo.png?a=1&b=2)', 'demo');
+    assert.match(html, /src="photo\.png\?a=1&amp;b=2"/);
+    assert.match(html, /alt="A &lt; B &amp; &quot;C&quot; &amp;copy;"/);
+  });
+
   // markdown.ts parses the `alt|width|nocap` directive into <img> attributes;
   // the <figure>/<picture> wrapping is assembled downstream in enhanceImages.
   test('`alt|width` parses the width into an attribute and flags the alt caption', () => {

@@ -1,0 +1,126 @@
+@layer components {
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.site-footer {
+  margin-block-start: var(--space-50);
+  padding-block: var(--space-30);
+  padding-inline: var(--gutter);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-15) var(--space-20);
+  inline-size: min(var(--wide), 100%);
+  margin-inline: auto;
+}
+
+.source-link {
+  display: flex;
+  align-items: center;
+  block-size: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary-deep);
+    text-decoration: none;
+  }
+
+  &:active {
+    color: var(--color-primary);
+  }
+}
+
+/* Hidden until the boot script marks :root, because with JS off the segments
+   cannot do anything — auto already works on its own. */
+.theme-toggle {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+:root[data-theme-mode] .theme-toggle {
+  display: inline-flex;
+}
+
+.theme-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    scale var(--motion-duration-instant) var(--motion-ease-standard);
+
+  & svg {
+    inline-size: 15px;
+    block-size: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--color-primary);
+  }
+
+  &[aria-pressed='true'] {
+    background: var(--color-soft);
+    color: var(--color-primary);
+  }
+
+  &:active {
+    scale: 0.94;
+    color: var(--color-primary-deep);
+  }
+}
+
+.social-links {
+  display: flex;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+
+  & li a {
+    display: flex;
+    align-items: center;
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    &:active {
+      color: var(--color-primary-deep);
+    }
+  }
+
+  & svg {
+    inline-size: 24px;
+    block-size: 24px;
+    fill: currentColor;
+  }
+}
+}

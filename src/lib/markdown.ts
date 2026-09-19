@@ -14,6 +14,7 @@
 // in content.ts, which imports renderPageHtml / renderWriteupHtml from here.
 
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
+import { parseImageDirectives } from './image-directives.ts';
 
 function createMarkdownRenderer() {
   return new MarkdownIt({
@@ -25,6 +26,7 @@ function createMarkdownRenderer() {
 
 const md = createMarkdownRenderer();
 const fragmentMd = createMarkdownRenderer();
+const { escapeHtml } = md.utils;
 
 // Let separator-delimited values (IPs, MACs) wrap at their separators instead of
 // mid-token, so a narrow table column breaks `00:00:00:00:` / `02:1e`, never
@@ -110,23 +112,13 @@ function preprocessImageDirectives(markdown: string): string {
   return markdown.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
     (match, altRaw: string, url: string) => {
-      const parts = altRaw.split('|').map((p) => p.trim());
-      let alt = parts[0] ?? '';
-      let width: string | null = null;
-      let nocap = false;
-      let nozoom = false;
-
-      for (const part of parts.slice(1)) {
-        if (/^\d+$/.test(part)) width = part;
-        else if (part.toLowerCase() === 'nocap' || part.toLowerCase() === 'nocaption') nocap = true;
-        else if (part.toLowerCase() === 'nozoom') nozoom = true;
-      }
+      const { alt, width, noCaption: nocap, noZoom: nozoom } = parseImageDirectives(altRaw);
 
       if (!width && !nocap && !nozoom && alt === altRaw) return match;
 
       const attrs = [
-        `src="${url}"`,
-        `alt="${alt.replace(/"/g, '&quot;')}"`,
+        `src="${escapeHtml(url)}"`,
+        `alt="${escapeHtml(alt)}"`,
         width ? `width="${width}"` : '',
         nocap ? 'data-nocap' : '',
         nozoom ? 'data-no-zoom' : '',
@@ -158,7 +150,7 @@ function renderFigure(content: string): string {
   let imgTag: string;
   if (markdownImage) {
     const [, altRaw, src] = markdownImage;
-    imgTag = `<img src="${src}" alt="${altRaw.replace(/"/g, '&quot;')}">`;
+    imgTag = `<img src="${escapeHtml(src)}" alt="${escapeHtml(altRaw)}">`;
   } else if (/^<img\b[^>]*>$/.test(imageLine)) {
     // The figure's own caption line supersedes the alt-derived one.
     imgTag = imageLine.replace(/\s*data-has-alt-caption\b/, '');
@@ -221,14 +213,6 @@ function renderButtons(content: string): string {
     })
     .join('\n');
   return `<div class="actions">${buttons}</div>`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function renderTerminal(content: string): string {
