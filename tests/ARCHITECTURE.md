@@ -225,6 +225,10 @@ Structural health:
 
 Fails before the build and browser matrix when any Playwright executable path is missing. The remediation installs the lockfile-matched Chromium, Firefox, and WebKit revisions once instead of discovering the mismatch after a long partial run.
 - **Action pinning** — every third-party GitHub Action is pinned to an immutable commit SHA, not a mutable tag.
+- **Dependabot post-merge recovery** — a completed Cloudflare Pages check on
+  current `main` dispatches `ci.yml` only when the associated merged PR is from
+  Dependabot and that SHA has no push/manual CI run. This restores the run that
+  GitHub suppresses after a `GITHUB_TOKEN` auto-merge without adding a PAT.
 - **No ambiguous module siblings** — no two tracked files share a basename with both a JS-like (`.mjs`/`.js`) and a TS-like (`.ts`/`.mts`) extension. Such a pair resolves differently in Vite (which tries `.mjs` first) than in the TS compiler (which tries `.ts` first), so a build can break while `astro check` passes. Declaration files (`foo.d.ts`) keep a distinct stem and are fine.
 
 ### `check-docs.mjs`

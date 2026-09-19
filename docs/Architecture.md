@@ -235,6 +235,9 @@ Writeup preprocessing and page-image enhancement share the modifier grammar in
 rule when a width is repeated. Markdown-generated image attributes and terminal
 content use Markdown-it's HTML escaping. Integration tests cover both rendering
 paths and preservation of escaped alt text during picture enhancement.
+Responsive-picture generation decodes the renderer's attribute entities and
+then performs one canonical Markdown-it escape pass across source URLs, alt
+text, classes, `sizes`, and `srcset`, including the plain-image fallback.
 
 This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
 
@@ -273,6 +276,12 @@ The origin and report endpoint the middleware and the report receiver name come 
 Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block — which is data, not executable code, but still receives a nonce. This means CSP enforcement applies to every script the browser sees, and there is no inline executable JavaScript on the page at all.
 
 The policy significantly reduces script-injection risk while still allowing first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile. This move to a [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the `'unsafe-inline'` requirements of the legacy platform, hardening the site's security posture.
+
+Client scripts do not assign `innerHTML`, `outerHTML`, or call
+`insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
+sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
+Custom button directives render links through Markdown-it's token parser, so
+their escaping and URL-scheme validation match ordinary Markdown links.
 
 The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form.
 
@@ -356,7 +365,10 @@ dist/
 └── sitemap-index.xml           # @astrojs/sitemap output
 ```
 
-**Fingerprinting.** Astro hashes every artifact under `_astro/` (and any image variant written by the pipeline) by content. Filenames change when bytes change, so they can be cached `immutable` for one year (see [`public/_headers`](../public/_headers)) without risk of stale serves. HTML is short-cached and revalidated.
+**Fingerprinting.** Astro hashes every artifact under `_astro/` by content, so
+those filenames can be cached `immutable` for one year. Vault image filenames
+are stable; their cache contract is described in §12. HTML is short-cached and
+revalidated.
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.mjs`](../astro.config.mjs). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block — and that is data, not executable code. The middleware nonces every `<script>` tag the browser sees, including the external bundles.
 
@@ -591,6 +603,16 @@ must require the `dependency-review` status check; a failing optional check
 does not enforce that policy.
 
 Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR summary comment (`report`), and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected.
+
+Dependabot auto-merge uses the repository `GITHUB_TOKEN`. GitHub suppresses
+new workflow runs caused by that token, so the squash commit does not emit the
+normal `push` CI run. [`dependabot-post-merge.yml`](../.github/workflows/dependabot-post-merge.yml)
+recovers it from the completed external Cloudflare Pages check. The recovery
+job verifies that the check came from the Cloudflare app, its SHA is current
+`main`, the associated merged PR belongs to Dependabot, and no CI run already
+exists for that SHA before dispatching `ci.yml`. `workflow_dispatch` is one of
+the event types GitHub permits `GITHUB_TOKEN` to create, and the duplicate guard
+keeps ordinary pushes and manual reruns single-shot.
 
 The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current local Scorecard aggregate is **6.4 / 10** (2026-05-29); the failing checks are structural to a one-person project and are not real security gaps. The release checklist in [`docs/Release-Checklist.md`](./Release-Checklist.md#4-commit-and-push) documents the `gh api` query for confirming the dashboard is clean after any workflow or build-script change.
 

@@ -112,9 +112,12 @@ function preprocessImageDirectives(markdown: string): string {
   return markdown.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
     (match, altRaw: string, url: string) => {
-      const { alt, width, noCaption: nocap, noZoom: nozoom } = parseImageDirectives(altRaw);
+      const { alt: parsedAlt, width, noCaption: nocap, noZoom: nozoom } = parseImageDirectives(altRaw);
 
-      if (!width && !nocap && !nozoom && alt === altRaw) return match;
+      if (!width && !nocap && !nozoom && parsedAlt === altRaw) return match;
+      // Match Markdown-it's normal image-label semantics before emitting the
+      // modifier-bearing raw <img> tag that the renderer will pass through.
+      const alt = md.utils.unescapeAll(parsedAlt);
 
       const attrs = [
         `src="${escapeHtml(url)}"`,
@@ -198,21 +201,41 @@ function renderTable(content: string): string {
     .join('');
 }
 
+function renderActionLink(markdown: string, className: string): string {
+  const [inline, ...extra] = md.parseInline(markdown.trim(), {});
+  const children = (inline?.children ?? []).filter((token) => token.type !== 'text' || token.content !== '');
+  if (
+    extra.length > 0 ||
+    children[0]?.type !== 'link_open' ||
+    children.at(-1)?.type !== 'link_close' ||
+    children.filter((token) => token.type === 'link_open').length !== 1
+  ) {
+    return '';
+  }
+  children[0].attrs = [
+    ['class', className],
+    ...(children[0].attrs ?? []).filter(([name]) => name !== 'class'),
+  ];
+  return md.renderer.render(children, md.options, {});
+}
+
 function renderButton(content: string, classes = ''): string {
-  const link = content.match(/\[([^\]]+)\]\(([^)]+)\)/);
-  if (!link) return '';
-  const className = `button ${classes}`.trim();
-  return `<div class="actions"><a class="${className}" href="${link[2]}">${link[1]}</a></div>`;
+  const link = renderActionLink(content, `button ${classes}`.trim());
+  return link ? `<div class="actions">${link}</div>` : '';
 }
 
 function renderButtons(content: string): string {
-  const buttons = [...content.matchAll(/- \[([^\]]+)\]\(([^)]+)\)/g)]
-    .map((match, index) => {
-      const className = index === 0 ? 'button' : 'button secondary';
-      return `<a class="${className}" href="${match[2]}">${match[1]}</a>`;
-    })
-    .join('\n');
-  return `<div class="actions">${buttons}</div>`;
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.match(/^\s*-\s+(.+)$/)?.[1])
+    .filter((line): line is string => Boolean(line));
+  const buttons: string[] = [];
+  for (const line of lines) {
+    const className = buttons.length === 0 ? 'button' : 'button secondary';
+    const link = renderActionLink(line, className);
+    if (link) buttons.push(link);
+  }
+  return buttons.length > 0 ? `<div class="actions">${buttons.join('\n')}</div>` : '';
 }
 
 function renderTerminal(content: string): string {

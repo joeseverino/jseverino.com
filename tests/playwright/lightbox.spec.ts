@@ -73,4 +73,22 @@ test.describe('figure lightbox', () => {
 
     await expect(page.locator('dialog.lightbox')).toBeVisible();
   });
+
+  test('copies rich captions as DOM nodes without an HTML parsing sink', async ({ page }) => {
+    await page.goto(WRITEUP);
+    const trigger = page.locator('.prose figure:has(figcaption) .image-zoom').first();
+    await trigger.evaluate((element) => {
+      const caption = element.closest('figure')!.querySelector('figcaption')!;
+      const emphasis = document.createElement('em');
+      emphasis.textContent = 'Rich caption';
+      const link = document.createElement('a');
+      link.href = '/portfolio/';
+      link.textContent = 'Portfolio';
+      caption.replaceChildren(emphasis, ' — ', link);
+    });
+    await trigger.click();
+    const caption = page.locator('.lightbox-caption');
+    await expect(caption.locator('em')).toHaveText('Rich caption');
+    await expect(caption.locator('a')).toHaveAttribute('href', '/portfolio/');
+  });
 });
