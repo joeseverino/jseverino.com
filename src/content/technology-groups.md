@@ -30,6 +30,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | mitre-attack | MITRE ATT&CK | yes |
 | nist | NIST |  |
 | private-root-ca | Private Root CA | yes |
+| secrets-management | Secrets Management | yes |
 | security-event-monitoring | Security Event Monitoring |  |
 | vulnerability-detection | Vulnerability Detection |  |
 | webauthn | WebAuthn | yes |
@@ -93,6 +94,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 | docker | Docker | yes |
 | docker-engine | Docker Engine |  |
 | hyper-v | Hyper-V |  |
+| systemd | systemd |  |
 | ubuntu-server | Ubuntu Server | yes |
 | utm | UTM |  |
 | windows | Windows |  |
@@ -103,6 +105,7 @@ repo via `bin/sync-content.mjs`; the vault copy is authoritative.
 
 | Slug | Label | Featured |
 | --- | --- | --- |
+| 1password | 1Password | yes |
 | adguard-home | AdGuard Home | yes |
 | kali-linux | Kali Linux | yes |
 | lets-encrypt | Let’s Encrypt |  |

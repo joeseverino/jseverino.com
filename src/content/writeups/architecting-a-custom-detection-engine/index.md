@@ -25,8 +25,7 @@ technologies:
   - wordpress
   - zero-trust
   - zsh
-featured: true
-featured_order: 6
+featured: false
 ---
 
 # Architecting a Custom Detection Engine with File Integrity and Security Event Monitoring
