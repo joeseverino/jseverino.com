@@ -29,6 +29,12 @@ describe('::terminal', () => {
     assert.doesNotMatch(html, /<b>/);
   });
 
+  test('joins line spans without newlines and keeps blank lines', () => {
+    const html = renderPageHtml('::terminal\n$ ls\n\nout\n::');
+    assert.doesNotMatch(html, /<\/span>\n<span class="line/);
+    assert.match(html, /<span class="line"> <\/span><span class="line out">out<\/span>/);
+  });
+
   test('HTML-escapes non-command output lines', () => {
     const html = renderPageHtml('::terminal\n<not a tag>\n::');
     assert.match(html, /<span class="line out">&lt;not a tag&gt;<\/span>/);
