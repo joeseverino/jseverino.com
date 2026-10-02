@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { stringifyFrontmatter } from '../src/lib/frontmatter.mjs';
 import { createEducationSource, createResumeSource, createVaultSource } from './content-sync/source-adapters.mjs';
 import { siteRoot } from '../src/lib/site-root.mjs';
+import { lifeVaultRoot as lifeVaultRootFor, vaultRoot as vaultRootFor } from './content-sync/vault-paths.mjs';
 import {
   createPublicProjection,
   rewritePageAssetPaths,
@@ -15,15 +16,11 @@ import {
   stripRepeatedDescription,
 } from './content-sync/public-projection.mjs';
 
-const vaultRoot = process.env.VAULT_DIR
-  ? path.resolve(process.env.VAULT_DIR)
-  : path.resolve(siteRoot, '../../Severino Labs');
+const vaultRoot = vaultRootFor();
 
 const includeDrafts = process.argv.includes('--drafts');
 
-const lifeVaultRoot = process.env.LIFE_VAULT_DIR
-  ? path.resolve(process.env.LIFE_VAULT_DIR)
-  : path.resolve(siteRoot, '../../../Life');
+const lifeVaultRoot = lifeVaultRootFor();
 
 const vaultSource = createVaultSource({ vaultRoot, includeDrafts });
 const resumeSource = createResumeSource({ lifeVaultRoot, includeDrafts });

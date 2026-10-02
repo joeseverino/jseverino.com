@@ -10,6 +10,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { vaultRoot as vaultRootFor } from './content-sync/vault-paths.mjs';
 
 const args = process.argv.slice(2);
 
@@ -34,10 +35,7 @@ if (!title) fail('title required (positional or --title)');
 const tagsRaw = flag('tags', positional(1)) ?? '';
 const tags = tagsRaw.split(',').map((t) => t.trim()).filter(Boolean);
 
-const vault =
-  flag('vault') ??
-  process.env.VAULT_DIR ??
-  path.resolve(process.cwd(), '../../Severino Labs');
+const vault = flag('vault') ?? vaultRootFor();
 if (!fs.existsSync(vault)) fail(`vault not found: ${vault}`);
 
 const referenceDir = path.join(vault, '04 Reference');

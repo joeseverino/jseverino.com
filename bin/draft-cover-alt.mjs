@@ -12,12 +12,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { siteRoot } from '../src/lib/site-root.mjs';
+import { vaultRoot as vaultRootFor } from './content-sync/vault-paths.mjs';
 
-const vaultRoot =
-  process.env.VAULT_DIR
-    ? path.resolve(process.env.VAULT_DIR)
-    : path.resolve(siteRoot, '../../Severino Labs');
+const vaultRoot = vaultRootFor();
 const writeupsRoot = path.join(vaultRoot, '05 Writeups');
 
 const args = process.argv.slice(2);
