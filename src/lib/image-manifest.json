@@ -3995,6 +3995,277 @@
     ],
     "fallback": "/assets/writeups/exploiting-php-cgi-argument-injection/images/php-cgi-wireshark-tcp-stream.png"
   },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment.png": {
+    "w": 2592,
+    "h": 1235,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/agent-environment.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server.png": {
+    "w": 2680,
+    "h": 1659,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/connect-server.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/cover.png": {
+    "w": 3200,
+    "h": 1800,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/cover-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/cover.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology.png": {
+    "w": 3200,
+    "h": 1138,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/renderer-topology.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id.png": {
+    "w": 1888,
+    "h": 1234,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-ca-touch-id.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates.png": {
+    "w": 2440,
+    "h": 2254,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-512.avif"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-768.avif"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-1024.avif"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-1600.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-512.webp"
+      ],
+      [
+        768,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-768.webp"
+      ],
+      [
+        1024,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-1024.webp"
+      ],
+      [
+        1600,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates-1600.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/ssh-certificates.png"
+  },
+  "/assets/writeups/from-icloud-passwords-to-1password/images/vaults.png": {
+    "w": 570,
+    "h": 1342,
+    "avif": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/vaults-512.avif"
+      ],
+      [
+        570,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/vaults-570.avif"
+      ]
+    ],
+    "webp": [
+      [
+        512,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/vaults-512.webp"
+      ],
+      [
+        570,
+        "/assets/writeups/from-icloud-passwords-to-1password/images/vaults-570.webp"
+      ]
+    ],
+    "fallback": "/assets/writeups/from-icloud-passwords-to-1password/images/vaults.png"
+  },
   "/assets/writeups/from-wordpress-to-astro/images/before-after.png": {
     "w": 3200,
     "h": 1800,
