@@ -242,7 +242,7 @@ describe('syncContent and checkContent against a temp vault', () => {
     const vault = await fixtureVault();
     const root = tempDir('overlay-');
     // Drafts include the unpublished resume canonical, which renders through the grammar.
-    write(path.join(vault, 'resume-engine/lib/grammar.mjs'), [
+    write(path.join(vault, 'resume-engine/lib/grammar.ts'), [
       'export const linesForSite = (lines) => lines;',
       'export const matchOrg = () => null;',
       'export const matchRole = () => null;',
