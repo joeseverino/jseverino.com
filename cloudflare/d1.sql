@@ -1,9 +1,9 @@
 -- Contact form submissions for jseverino.com.
 --
 -- Apply to the remote D1 database:
---   wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+--   npm run d1:apply
 -- Apply to the local dev database (used by `wrangler pages dev`):
---   wrangler d1 execute jseverino-contact --local --file=./db/schema.sql
+--   wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,

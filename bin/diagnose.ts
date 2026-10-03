@@ -63,21 +63,15 @@ const sayErr: (text: string) => void = jsonMode ? () => {} : (text) => console.e
 
 const runCommand = (cmd: string, cmdArgs: readonly string[], options: RunOptions = {}): Promise<RunResult> => run(cmd, cmdArgs, { cwd: root, ...options });
 
-// --no-tests skips every browser suite; only the two that serve the Phase 3
-// build take PREBUILT.
-const BROWSER_SUITES = new Set(['browser-tests', 'visual-tests']);
-const PREBUILT_SUITES = new Set(['browser-tests', 'edge-tests']);
 
 async function getGitStatus(): Promise<string> {
   const result = await runCommand('git', ['status', '--porcelain=v1']);
   return result.stdout.trim();
 }
 
-// Playwright's long quiet browser run gets a heartbeat; the suites that serve
-// the Phase 3 build take PREBUILT.
+// Playwright's long quiet browser run gets a heartbeat.
 function postBuildOptions(audit: Audit): RunAuditOptions {
   return {
-    ...(PREBUILT_SUITES.has(audit.id) ? { env: { PREBUILT: '1' } } : {}),
     ...(audit.id === 'browser-tests' && !jsonMode
       ? {
           heartbeatMs: 30_000,
@@ -192,12 +186,11 @@ async function diagnose() {
     });
 
     // Phase 4: Post-build audits + browser tests (only if the build compiled).
-    // PREBUILT tells playwright.config.ts to reuse the Phase 3 artifact instead
-    // of rebuilding it.
+    // Suites marked servesBuild reuse the Phase 3 artifact (PREBUILT).
     if (buildSuccess) {
       say(styleText('blue', 'Phase 4: Running Post-Build Audits and Browser Tests...'));
-      // The visual suite builds its own fixture tree, so it never takes PREBUILT.
-      const postAudits = auditsFor('diagnose', 'post-build').filter((a) => runTests || !BROWSER_SUITES.has(a.id));
+      // --no-tests skips the browser suites.
+      const postAudits = auditsFor('diagnose', 'post-build').filter((a) => runTests || !a.heavy);
       checks.push(...await runAudits(postAudits, {
         cwd: root,
         optionsFor: postBuildOptions,

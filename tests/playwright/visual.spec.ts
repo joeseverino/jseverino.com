@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Runs under playwright.visual.config.ts against the fixture build
+// Runs under tests/playwright.visual.config.ts against the fixture build
 // (tests/fixtures/content), never real content: these routes are fixture
 // slugs, so a publish cannot move a baseline. After an intended fixture or
 // layout change, re-baseline with `npm run test:e2e:visual:update`.

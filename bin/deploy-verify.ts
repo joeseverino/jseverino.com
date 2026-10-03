@@ -33,7 +33,7 @@ import {
 } from '../src/lib/edge-expectations.ts';
 import { cli as parseCli } from './lib/args.ts';
 import { git } from './lib/git.ts';
-import { awaitChecks, openCodeScanningAlerts, passed } from './lib/github.ts';
+import { awaitChecks, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { runSync, status } from './lib/run.ts';
 import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
@@ -56,14 +56,13 @@ const onTarget = (url: string): string => {
   return `${origin}${pathname}${search}`;
 };
 
-const requiredChecks = new Set([
-  'build',
-  'e2e',
-  'visual',
-  'edge',
-  'analyze javascript-typescript',
+// The main ruleset's required checks, less the ones that only run on pull
+// requests, plus the Pages build itself.
+const PULL_REQUEST_ONLY = new Set(['dependency-review']);
+const requiredChecks = (): string[] => [...new Set([
+  ...requiredContexts(repository, 'main').filter((name) => !PULL_REQUEST_ONLY.has(name)),
   'Cloudflare Pages',
-]);
+])];
 
 const results: { name: string; ok: Outcome; detail: string }[] = [];
 
@@ -105,7 +104,8 @@ async function waitForChecks(sha: string): Promise<string> {
 }
 
 async function pollChecks(sha: string, deadline: number, started: number, report: (line: string) => void): Promise<string> {
-  const checks = await awaitChecks(repository, sha, [...requiredChecks], {
+  const names = requiredChecks();
+  const checks = await awaitChecks(repository, sha, names, {
     deadline,
     onPending: ({ missing, pending }) => report(
       `waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`,
@@ -116,7 +116,7 @@ async function pollChecks(sha: string, deadline: number, started: number, report
   if (failed.length > 0) {
     throw new Error(`remote checks failed: ${failed.map((check) => `${check.name}=${check.conclusion}`).join(', ')}`);
   }
-  return `${requiredChecks.size} required checks passed after ${Math.round((Date.now() - started) / 1000)}s`;
+  return `${names.length} required checks passed after ${Math.round((Date.now() - started) / 1000)}s`;
 }
 
 async function verifyHeaders(pathname: string): Promise<void> {
@@ -282,12 +282,14 @@ async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promi
   return `${pathname} is listed, served with headers, and its ${images.length} image URLs resolve`;
 }
 
+// CodeQL findings only: Scorecard's Vulnerabilities finding stays open while an
+// accepted advisory is in the lockfile, and npm run audit gates those.
 function verifyCodeScanning(): string {
-  const alerts = openCodeScanningAlerts(repository);
+  const alerts = openCodeScanningAlerts(repository, 'CodeQL');
   if (alerts.length > 0) {
-    throw new Error(`${alerts.length} open code-scanning alert(s) remain`);
+    throw new Error(`${alerts.length} open CodeQL alert(s) remain`);
   }
-  return 'zero open code-scanning alerts';
+  return 'zero open CodeQL alerts';
 }
 
 async function run(name: string, check: () => string | Promise<string>): Promise<boolean> {

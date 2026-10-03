@@ -26,7 +26,7 @@ jobs:
   # Skipped (reported as passing) on content-only pull requests. If the
   # classification itself fails, the analysis runs rather than skip.
   analyze:
-    name: analyze javascript-typescript
+    name: analyze typescript
     needs: changes
     if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true') }}
     runs-on: ubuntu-24.04

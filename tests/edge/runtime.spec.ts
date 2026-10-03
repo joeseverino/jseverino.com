@@ -18,7 +18,7 @@ import {
 } from '../../src/lib/edge-expectations.ts';
 
 // Every assertion here is against the Cloudflare runtime serving the built
-// output (see playwright.edge.config.ts). The expectations are the functions
+// output (see tests/playwright.edge.config.ts). The expectations are the functions
 // in src/lib/edge-expectations.ts, which bin/deploy-verify.ts asserts
 // against production after a release; a finding list is empty when correct.
 

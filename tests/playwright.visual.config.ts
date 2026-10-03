@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { browserTestEnv, suiteArtifacts, workers } from './tests/browser-test-env.ts';
+import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
 // The visual suite. It builds tests/fixtures/content (synthetic writeups and
 // pages, a fixed GitHub snapshot, fixture images) into dist-visual/, so a
@@ -10,7 +10,7 @@ const astro = 'npx astro';
 const config = '--config tests/fixtures/astro.config.ts';
 
 export default defineConfig({
-  testDir: './tests/playwright',
+  testDir: './playwright',
   testMatch: /visual\.spec\.ts$/,
   fullyParallel: true,
   ...workers(),
@@ -24,6 +24,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
+    cwd: webServerCwd,
     // --ignore-lock: the e2e preview may be running at the same time.
     command: `${astro} build ${config} && ${astro} preview ${config} --host 127.0.0.1 --port ${PORT} --ignore-lock`,
     url: `http://127.0.0.1:${PORT}`,

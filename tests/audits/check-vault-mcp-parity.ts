@@ -60,7 +60,7 @@ if (fs.existsSync(mcpRoot)) {
   }
 }
 
-const tui = fs.readFileSync(path.join(root, 'bin/site/manage.ts'), 'utf8');
+const tui = fs.readFileSync(path.join(root, 'bin/site/manage-model.ts'), 'utf8');
 if (!tui.includes("collectionFields('writeups')")) {
   fail('site manage does not read its fields from the content contract');
 }

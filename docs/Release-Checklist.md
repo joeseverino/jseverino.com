@@ -67,6 +67,7 @@ weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75K
 html         <n> pages: <n> ids unique per page, <n> images all carry alt, no unprocessed directives
 routes       <n> pages and <n> Function routes invoke Functions; <n> static excludes carry the static CSP; <n> fallback pages
 seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
+edge-runtime <n> passed (<n>s)
 ```
 
 `parity` reads `skipped` where `CI` is set. `release:check` ends in
@@ -157,7 +158,7 @@ npm run deploy:verify
 
 It waits for the required checks on that commit, then verifies the production
 dependency audit, security headers, the production sitedrift `404`, every live
-sitemap URL, and zero open code-scanning alerts.
+sitemap URL, and zero open CodeQL alerts.
 
 Scheduled checks measure external freshness, which no single deployment
 decides, so they run on their own:
@@ -256,13 +257,13 @@ read the matching D1 row to identify the source.
 
 ## 6. D1 And CSP Reporting Checks
 
-After any change to [`db/schema.sql`](../db/schema.sql), apply the schema to the
+After any change to [`cloudflare/d1.sql`](../cloudflare/d1.sql), apply the schema to the
 remote D1 database (`jseverino-contact`, the `d1` value in
 [`src/lib/site-config.ts`](../src/lib/site-config.ts)). Every statement is
 `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-npx wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+npm run d1:apply
 ```
 
 Confirm the expected operational tables exist:

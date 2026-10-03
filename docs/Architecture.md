@@ -267,7 +267,7 @@ The origin and report endpoint the middleware and the report receiver name come 
 
 Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block, which is data and still receives a nonce. CSP enforcement applies to every script the browser sees.
 
-The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a nonce. The [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [`SECURITY.md`](../SECURITY.md#http-response-headers).
+The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a nonce. The [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
 
 Raw HTML in Markdown is rebuilt from an allow-list in
 [`markdown.ts`](../src/lib/markdown.ts): listed formatting tags with listed
@@ -319,7 +319,7 @@ minimal D1 type declarations in [`database.ts`](../functions/lib/database.ts).
 
 ### Edge schema validation
 
-Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`db/contact-openapi.json`](../db/contact-openapi.json), next to [`db/schema.sql`](../db/schema.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `npm run cloudflare:apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
+Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), next to [`cloudflare/d1.sql`](../cloudflare/d1.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `npm run cloudflare:apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
 
 Coverage:
 
@@ -473,17 +473,17 @@ The site needs three pieces of Cloudflare Pages project configuration to run: th
 |---|---|---|
 | `DB` | `jseverino-contact` | [`functions/api/contact.ts`](../functions/api/contact.ts), [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) |
 
-The schema lives at [`db/schema.sql`](../db/schema.sql). Every statement is `IF NOT EXISTS`, so re-applying it after a change adds the new indexes:
+The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement is `IF NOT EXISTS`, so re-applying it after a change adds the new indexes:
 
 ```sh
 # Remote (production):
-wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+npm run d1:apply
 
 # Local (for `wrangler pages dev`):
-wrangler d1 execute jseverino-contact --local --file=./db/schema.sql
+wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 ```
 
-The schema is described in detail in [`SECURITY.md`](../SECURITY.md#d1-schema).
+The schema is described in detail in [Security](./Security.md#d1-schema).
 
 The same database holds:
 
@@ -496,7 +496,7 @@ The same database holds:
 |---|---|---|
 | `TURNSTILE_SECRET_KEY` | Server (Pages Function env) | [`functions/api/contact.ts`](../functions/api/contact.ts) |
 
-This is the secret half of the Cloudflare Turnstile keypair. It must never appear in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.dev.vars.example`](../.dev.vars.example) to `.dev.vars` (gitignored); `wrangler pages dev` reads it automatically.
+This is the secret half of the Cloudflare Turnstile keypair. It must never appear in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.env.example`](../.env.example) to `.dev.vars` (gitignored); `wrangler pages dev` reads it automatically.
 
 ### Build environment variables
 
@@ -534,7 +534,7 @@ Every gate derives its checks from [`tests/audits/registry.ts`](../tests/audits/
 
 - [`bin/gate-check.ts`](../bin/gate-check.ts) (`npm run gate:check`) runs the fast pre-build invariants, collect-all.
 - [`bin/publish-check.ts`](../bin/publish-check.ts) (`npm run publish:check`) is the local publish gate: clean, sync from the vault (skippable with `--no-sync`), the pre-build audits, the production build, the post-build audits, stopping at the first failure.
-- [`bin/release-check.ts`](../bin/release-check.ts) (`npm run release:check`, macOS) runs `publish:check`, then the `release` audits (browser and edge suites, repository policy, `git diff --check`), and fails if validation changed the worktree.
+- [`bin/release-check.ts`](../bin/release-check.ts) (`npm run release:check`, macOS) runs `publish:check`, then the `release` audits (the browser suites, repository policy, `git diff --check`), and fails if validation changed the worktree.
 - [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping and writes one report.
 
 Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures instead of hanging. Preview review on Cloudflare and the live post-deploy checks stay separate because they depend on external state or human judgment.
@@ -543,7 +543,7 @@ Audits run concurrently, capped by memory, and report in registry order. All gat
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
 waits for the exact commit's GitHub and Cloudflare checks, runs the production
 dependency audit, validates live security headers and the production sitedrift
-guard, checks every live sitemap URL, and requires zero open code-scanning
+guard, checks every live sitemap URL, and requires zero open CodeQL
 alerts. `--origin <url>` verifies a single Cloudflare Pages deployment instead
 (the served responses only; HSTS is set at the zone and absent on
 `*.pages.dev`), and `--slug <writeup>` verifies one writeup after a publish.
@@ -591,10 +591,10 @@ GitHub Actions provide the remote quality gate:
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories, and comments only when it blocks.
 - Both are skipped on pull requests that touch only content or prose, classified by the reusable [`changes`](../.github/workflows/changes.yml) workflow and a job-level `if`: a skipped job reports success to a required check, where `paths-ignore` would leave it pending forever. If the classification fails, they run.
-- [`npm audit`](../.github/workflows/npm-audit.yml) runs `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) weekly over the lockfile and fails on a high or critical advisory that [`security/audit-allowlist.json`](../security/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date.
+- [`npm audit`](../.github/workflows/npm-audit.yml) runs `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) weekly over the lockfile and fails on a high or critical advisory that [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
 - [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, writes both lychee reports into the job summary, and uploads them.
-- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `.lighthouserc.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
+- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `tests/lighthouserc.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`, and `sitedrift`, which is bundled into the production edge functions and gets its own Dependabot group; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible.
@@ -620,7 +620,7 @@ exists for that SHA before dispatching `ci.yml`. `workflow_dispatch` is one of
 the event types GitHub permits `GITHUB_TOKEN` to create, and the duplicate guard
 keeps ordinary pushes and manual reruns single-shot.
 
-The GitHub code-scanning dashboard is kept at zero open alerts as a release-gate signal. CodeQL findings are fixed at the source; OpenSSF Scorecard findings that do not apply to a solo personal repo (`Branch-Protection`, `Code-Review`, `Fuzzing`, `CII-Best-Practices`, `Maintained` for the first 90 days of the repo's life) are dismissed in the dashboard with an inline justification. The current Scorecard aggregate and the checks below maximum are in the [README](../README.md#scorecard-score). `npm run deploy:verify` fails while any code-scanning alert is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)).
+CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 
 ## Related Docs
 

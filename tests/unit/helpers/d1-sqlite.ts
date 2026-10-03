@@ -1,4 +1,4 @@
-// D1 backed by an in-memory SQLite database built from db/schema.sql, for the
+// D1 backed by an in-memory SQLite database built from cloudflare/d1.sql, for the
 // tests that need the real statement semantics (conditional INSERTs, batches).
 
 import fs from 'node:fs';
@@ -8,7 +8,7 @@ import { siteRoot } from '../../../src/lib/site-root.ts';
 
 export function createD1Sqlite() {
   const db = new DatabaseSync(':memory:');
-  db.exec(fs.readFileSync(path.join(siteRoot, 'db/schema.sql'), 'utf8'));
+  db.exec(fs.readFileSync(path.join(siteRoot, 'cloudflare/d1.sql'), 'utf8'));
   const run = (query: string, values: unknown[]) => {
     const { changes } = db.prepare(query).run(...(values as (string | number | null)[]));
     return { success: true, meta: { changes: Number(changes) } };

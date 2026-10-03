@@ -36,13 +36,13 @@ describe('registry/docs parity', () => {
     }
   });
 
-  test('every gate command is listed in the README command reference', () => {
-    const readme = read('README.md');
+  test('every gate command is listed in docs/Development.md', () => {
+    const development = read('docs/Development.md');
     const gateScripts = Object.keys(scripts).filter((name) =>
       /^(publish:|release:|deploy:|diagnose$)/.test(name),
     );
     for (const name of gateScripts) {
-      assert.ok(readme.includes(`npm run ${name}`), `gate command "${name}" is missing from README.md`);
+      assert.ok(development.includes(`npm run ${name}`), `gate command "${name}" is missing from docs/Development.md`);
     }
   });
 

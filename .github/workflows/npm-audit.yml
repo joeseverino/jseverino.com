@@ -24,7 +24,7 @@ jobs:
           install: 'false'
 
       # Reads the lockfile; no install needed. Fails on a high or critical
-      # advisory that security/audit-allowlist.json does not accept, or
+      # advisory that .github/audit-allowlist.json does not accept, or
       # accepts past its reviewBy date.
       - name: Audit the lockfile
         run: npm run -s audit

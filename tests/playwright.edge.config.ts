@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import { browserTestEnv, edgeRuntime, suiteArtifacts, workers } from './tests/browser-test-env.ts';
+import { browserTestEnv, edgeRuntime, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
 // The edge suite. `astro preview` serves static files only; the CSP
 // middleware, the Pages Functions, and the public/_headers rules exist only on
@@ -8,7 +8,7 @@ import { browserTestEnv, edgeRuntime, suiteArtifacts, workers } from './tests/br
 const origin = `http://127.0.0.1:${edgeRuntime.port}`;
 
 export default defineConfig({
-  testDir: './tests/edge',
+  testDir: './edge',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -19,6 +19,7 @@ export default defineConfig({
   },
   projects: [{ name: 'edge' }],
   webServer: {
+    cwd: webServerCwd,
     // PREBUILT is set by bin/diagnose.ts after its own build-static run, so
     // the suite serves that artifact instead of rebuilding it.
     command: [
