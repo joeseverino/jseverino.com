@@ -28,6 +28,8 @@
 //               on the authoring machine
 //   timeout     ms before the gate kills a hung check (default in bin/lib/run.ts)
 //   heavy       a browser suite: the runners cap how many run at once by memory
+//   servesBuild serves the gate's own dist/; the runners pass PREBUILT=1 so it
+//               does not rebuild
 //   lock        audits sharing a lock never overlap ('astro': both write .astro/)
 
 export type Gate = 'gate' | 'publish' | 'diagnose' | 'release';
@@ -47,6 +49,7 @@ export interface Audit {
   localOnly?: boolean;
   timeout?: number;
   heavy?: boolean;
+  servesBuild?: boolean;
   lock?: 'astro';
 }
 
@@ -116,10 +119,10 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'functions-parity', label: 'edge', name: 'Functions/Schema Parity', phase: 'pre-build',
-    asserts: 'The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns db/schema.sql defines.',
+    asserts: 'The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines.',
     exec: { cmd: 'node', args: ['tests/audits/check-functions-parity.ts'] },
     gates: ['publish', 'diagnose'],
-    fix: 'The contact handler, `db/contact-openapi.json` (API Shield), and `db/schema.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together.',
+    fix: 'The contact handler, `contracts/contact.openapi.json` (API Shield), and `cloudflare/d1.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together.',
   },
   {
     id: 'preview-check', label: 'preview', name: 'Sitedrift Preview Guard', phase: 'pre-build',
@@ -241,27 +244,27 @@ export const AUDITS: readonly Audit[] = [
     id: 'edge-tests', label: 'edge-runtime', name: 'Edge Runtime Tests', phase: 'post-build',
     asserts: 'Served through `wrangler pages dev`: the CSP nonce, the _headers rules, _routes.json, a real 404, the contact refusals, and security.txt parity.',
     exec: {
-      cmd: 'npx', args: ['playwright', 'test', '-c', 'playwright.edge.config.ts', '--reporter=line'],
+      cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.edge.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, gates: ['diagnose', 'release'], timeout: 10 * 60_000,
+    servesBuild: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
     fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP middleware, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
   },
   {
     id: 'browser-tests', label: 'e2e', name: 'Playwright Browser Tests', phase: 'post-build',
     asserts: 'The functional Playwright specs pass across the browser matrix.',
     exec: {
-      cmd: 'npx', args: ['playwright', 'test', '--reporter=line'],
+      cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, gates: ['diagnose', 'release'], timeout: 15 * 60_000,
-    fix: 'Run `npx playwright test --ui` to debug the functional specs.',
+    heavy: true, servesBuild: true, gates: ['diagnose', 'release'], timeout: 15 * 60_000,
+    fix: 'Run `npm run test:e2e:ui` to debug the functional specs.',
   },
   {
     id: 'visual-tests', label: 'visual', name: 'Visual Regression (fixture content)', phase: 'post-build',
     asserts: 'Screenshots of the fixture build match the committed macOS Chromium baselines.',
     exec: {
-      cmd: 'npx', args: ['playwright', 'test', '-c', 'playwright.visual.config.ts', '--reporter=line'],
+      cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.visual.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
     heavy: true, gates: ['diagnose', 'release'], macosOnly: true, timeout: 10 * 60_000,

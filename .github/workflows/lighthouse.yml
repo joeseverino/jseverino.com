@@ -24,7 +24,7 @@ jobs:
 
       # Lighthouse comes from the lockfile (Dependabot keeps it current), so
       # the scores here use the same Lighthouse generation PageSpeed Insights
-      # scores with. URLs and thresholds live in .lighthouserc.json.
+      # scores with. URLs and thresholds live in tests/lighthouserc.json.
       - name: Audit the live site
         run: npm run -s check:lighthouse
 

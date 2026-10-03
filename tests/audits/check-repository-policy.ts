@@ -67,7 +67,7 @@ const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, f
 const forbiddenTracked = tracked.filter(
   (file) =>
     (/(^|\/)\.env(?:\.|$)/.test(file) && !file.endsWith('.env.example')) ||
-    (/(^|\/)\.dev\.vars(?:\.|$)/.test(file) && !file.endsWith('.dev.vars.example')) ||
+    /(^|\/)\.dev\.vars(?:\.|$)/.test(file) ||
     /(^|\/)(?:dist|playwright-report|test-results)(?:\/|$)/.test(file),
 );
 if (forbiddenTracked.length > 0) {

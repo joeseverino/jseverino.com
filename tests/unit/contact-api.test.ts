@@ -205,7 +205,7 @@ describe('turnstile verification', () => {
     assert.equal(response.status, 400);
   });
 
-  test('the test secret from .dev.vars.example accepts siteverify\'s test hostname and action; production does not', () => {
+  test('the test secret from .env.example accepts siteverify\'s test hostname and action; production does not', () => {
     const test = { success: true, hostname: 'localhost', action: 'test' };
     const [passing] = TURNSTILE_TEST_SECRETS;
     assert.equal(siteverifyAccepts(test, passing ?? ''), true);

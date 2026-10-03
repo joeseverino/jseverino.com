@@ -66,7 +66,7 @@ const moduleOutput = [
 ].join('\n');
 writeOrCheck(
   [
-    { file: fromRoot('db/contact-openapi.json'), content: output },
+    { file: fromRoot('contracts/contact.openapi.json'), content: output },
     { file: fromRoot('functions/generated/contact-contract.ts'), content: moduleOutput },
   ],
   { check, hint: 'npm run sync:contact-openapi' },

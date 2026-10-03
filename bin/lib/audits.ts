@@ -50,7 +50,7 @@ export async function runAudit(audit: Audit, { cwd = siteRoot, env, ci, platform
       code: 0, stdout: '', stderr: '', output: '', duration: 0, timedOut: false,
     };
   }
-  const merged = env ? { ...audit.exec.env, ...env } : audit.exec.env;
+  const merged = { ...audit.exec.env, ...(audit.servesBuild ? { PREBUILT: '1' } : {}), ...env };
   const args = audit.exec.jsonArgs && jsonLogs({ ...process.env, ...merged }) ? [...audit.exec.args, ...audit.exec.jsonArgs] : audit.exec.args;
   const result = await run(audit.exec.cmd, args, {
     cwd,

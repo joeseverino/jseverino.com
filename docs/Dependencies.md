@@ -12,7 +12,7 @@ under which it can go.
 
 A high or critical advisory with no fixed release is accepted,
 with a reason and a review date, in
-[`security/audit-allowlist.json`](../security/audit-allowlist.json) rather than
+[`.github/audit-allowlist.json`](../.github/audit-allowlist.json) rather than
 pinned here.
 
 ## Testing whether an override still matters

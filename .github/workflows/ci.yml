@@ -91,19 +91,19 @@ jobs:
             os: ubuntu-24.04
             browsers: chromium firefox webkit
             prebuild: true
-            config: playwright.config.ts
+            config: tests/playwright.config.ts
           - suite: visual
             title: Visual baselines
             os: macos-26
             browsers: chromium
             prebuild: false
-            config: playwright.visual.config.ts
+            config: tests/playwright.visual.config.ts
           - suite: edge
             title: Edge runtime
             os: ubuntu-24.04
             browsers: ''
             prebuild: true
-            config: playwright.edge.config.ts
+            config: tests/playwright.edge.config.ts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

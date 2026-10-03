@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // npm audit with an expiring allowlist: fails on any high or critical advisory
-// that security/audit-allowlist.json does not accept, or accepts past its
+// that .github/audit-allowlist.json does not accept, or accepts past its
 // reviewBy date. Reads the lockfile; no install needed.
 //
 //   node bin/audit.ts [--json]
@@ -52,7 +52,7 @@ export interface AuditDocument {
   stale: AllowlistEntry[];
 }
 
-const { advisories: allowlist } = readJson<{ advisories: AllowlistEntry[] }>(fromRoot('security/audit-allowlist.json'));
+const { advisories: allowlist } = readJson<{ advisories: AllowlistEntry[] }>(fromRoot('.github/audit-allowlist.json'));
 const accepted = new Map(allowlist.map((entry) => [`${entry.ghsa}:${entry.package}`, entry]));
 
 // npm audit exits 1 whenever it finds anything; the report is on stdout either way.
@@ -91,7 +91,7 @@ if (json) {
     const note = finding.status === 'accepted' ? `accepted until ${finding.reviewBy}` : finding.status === 'expired' ? `EXPIRED ${finding.reviewBy}: review it` : 'NOT ACCEPTED';
     console.log(`${finding.severity.padEnd(9)}${finding.ghsa} ${finding.package}: ${finding.title} (${note})`);
   }
-  for (const entry of stale) console.log(`stale    ${entry.ghsa} ${entry.package} no longer applies; remove it from security/audit-allowlist.json`);
+  for (const entry of stale) console.log(`stale    ${entry.ghsa} ${entry.package} no longer applies; remove it from .github/audit-allowlist.json`);
   if (failing.length === 0) console.log(`ok       ${findings.length} high/critical advisories, all accepted and current`);
   else console.error(`failed: ${failing.length} high/critical advisories need a fix or a reviewed allowlist entry`);
 }

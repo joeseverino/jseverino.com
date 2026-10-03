@@ -3,6 +3,7 @@
 // exercising different artifacts.
 import os from 'node:os';
 import type { ReporterDescription } from '@playwright/test';
+import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 
 export const browserTestEnv = Object.freeze({
   PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
@@ -17,18 +18,21 @@ export function workers(ci?: number): { workers?: number } {
   return { workers: Math.max(1, Math.min(Math.floor(os.availableParallelism() / 2), Math.floor(os.totalmem() / (2.5 * 2 ** 30)))) };
 }
 
+// The configs live in tests/; servers and artifacts run from the repo root.
+export const webServerCwd = siteRoot;
+
 // Per-suite artifact paths, so suites running at the same time (diagnose runs
 // edge and browser together) never empty each other's output. PLAYWRIGHT_REPORT
 // adds the HTML report for the artifact and the JSON bin/playwright-summary.ts
 // renders; without it, the list reporter alone. Workers and retries follow CI.
 export function suiteArtifacts(suite: string): { outputDir: string; reporter: ReporterDescription[] } {
   return {
-    outputDir: `test-results/${suite}`,
+    outputDir: fromRoot('test-results', suite),
     reporter: process.env.PLAYWRIGHT_REPORT
       ? [
           ['list'],
-          ['html', { open: 'never', outputFolder: `playwright-report/${suite}` }],
-          ['json', { outputFile: `test-results/${suite}.json` }],
+          ['html', { open: 'never', outputFolder: fromRoot('playwright-report', suite) }],
+          ['json', { outputFile: fromRoot('test-results', `${suite}.json`) }],
         ]
       : [['list']],
   };

@@ -43,8 +43,8 @@ export const requiredContexts = (repository: string, branch: string): string[] =
     .map((check) => check.context)),
 ];
 
-export const openCodeScanningAlerts = (repository: string): CodeScanningAlert[] =>
-  ghApi<CodeScanningAlert[]>(`repos/${repository}/code-scanning/alerts`, { state: 'open', per_page: 100 });
+export const openCodeScanningAlerts = (repository: string, tool: string): CodeScanningAlert[] =>
+  ghApi<CodeScanningAlert[]>(`repos/${repository}/code-scanning/alerts`, { state: 'open', tool_name: tool, per_page: 100 });
 
 export interface AwaitChecksOptions {
   deadline: number;

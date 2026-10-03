@@ -65,7 +65,7 @@ that projection; no second domain declaration needs manual synchronization.
   [`bin/make-github-social.ts`](../bin/make-github-social.ts).
 
 ### CI / external config
-- [`.lighthouserc.json`](../.lighthouserc.json): audited URLs.
+- [`tests/lighthouserc.json`](../tests/lighthouserc.json): audited URLs.
 - [`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml): `--base-url`.
 
 ### Cloudflare zone and account
@@ -78,7 +78,7 @@ that projection; no second domain declaration needs manual synchronization.
 - Pages project, the `DB` D1 binding pointing at the `d1` database from `site-config.ts`,
   Turnstile keys, and any environment variables. The repo has no `wrangler.toml`
   by design; bindings live in the dashboard.
-- Apply the D1 schema (tables and indexes): `npx wrangler d1 execute <d1> --remote --file=./db/schema.sql`.
+- Apply the D1 schema (tables and indexes): `npx wrangler d1 execute <d1> --remote --file=./cloudflare/d1.sql`.
 
 ### Content
 - Replace `src/content/pages/` and `src/content/writeups/` (synced from the vault),

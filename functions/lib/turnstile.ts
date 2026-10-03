@@ -7,7 +7,7 @@ export type Siteverify = { success?: boolean; hostname?: string; action?: string
 // Cloudflare's published Turnstile test secrets (pass, fail, token spent).
 // Siteverify answers them for any token with its documented test values
 // (hostname localhost, action test), so a local `wrangler pages dev` with the
-// secret from .dev.vars.example can submit. Only these exact keys relax the
+// secret from .env.example can submit. Only these exact keys relax the
 // check; the production secret never matches one.
 export const TURNSTILE_TEST_SECRETS: ReadonlySet<string> = new Set([
   '1x0000000000000000000000000000000AA',

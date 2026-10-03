@@ -36,7 +36,7 @@ appears here.
 | `npm run gate:check` | The registry's fast pre-build audits, collect-all; the first step of CI's `build` job |
 | `npm run deploy:verify` | After the merge deploys, from a residential IP: verify remote CI + the live production deploy |
 | `npm run content:diff` | What a content change means by slug: published, edited, removed, pages, generated (`-- --json`) |
-| `npm run audit` | `npm audit` against `security/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review |
+| `npm run audit` | `npm audit` against `.github/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review |
 | `npm run build` | Type-check, then produce the static build (what CI's `build` job wraps) |
 
 ### Occasional
@@ -66,7 +66,8 @@ appears here.
 | `npm run cloudflare:check` | Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift) |
 | `npm run cloudflare:plan` | The Cloudflare API calls an apply would make |
 | `npm run cloudflare:apply` | Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only) |
-| `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `.lighthouserc.json` (needs Chrome; CI runs it weekly) |
+| `npm run d1:apply` | Apply `cloudflare/d1.sql` to the remote D1 database (idempotent) |
+| `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly) |
 | `npm run clean:generated` | Remove build output and build caches |
 
 ### Internal (run by the commands above)
@@ -193,13 +194,13 @@ produces: the per-request CSP nonce stamped on every script tag and rotating
 between requests, the `public/_headers` security and cache rules, a real 404,
 the contact function's refusals (no Turnstile token, wrong content type,
 malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
-WKD key's content type. CI's `edge` leg and the local `release:check` and
+WKD key's content type. CI's `edge` leg and the local `publish:check` and
 `diagnose` gates run it. **`npm run edge:serve`** starts the same runtime on
 `http://127.0.0.1:8788` for by-hand checks.
 
 **`npm run check:lighthouse`**: Lighthouse against the live site, using the
 lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
-URLs, device preset, and thresholds declared in `.lighthouserc.json`. Prints a
+URLs, device preset, and thresholds declared in `tests/lighthouserc.json`. Prints a
 score line per page, writes the table to the job summary in CI, and exits
 non-zero on an audit execution failure or an `error`-level threshold. Uses the
 lockfile's Playwright Chromium (`npx playwright install chromium`), with
@@ -220,7 +221,7 @@ picked from the live sitemap, every sitemap URL returns 200, the preview proxy
 is absent in production, the CSP nonce is stamped on every script tag and
 rotates between requests, an unknown route returns a real 404, `POST
 /api/contact` without a Turnstile token is refused, the live `security.txt`
-matches the committed file, and zero open code-scanning alerts. Every check
+matches the committed file, and zero open CodeQL alerts. Every check
 runs even after an earlier one fails. `--origin <url>` verifies one
 Cloudflare Pages deployment instead (what `deploy.yml` runs), `--preview`
 marks a branch preview, and `--slug <writeup>` checks one writeup.
@@ -287,7 +288,7 @@ the Vite cache. Synced content is left alone; `sync:content` owns it.
 `npm audit --omit=dev` checks production dependency advisories (also run by
 `deploy:verify` on production), and `npm outdated` reports direct dependency
 freshness; `npm run audit` fails on a high or critical advisory that
-`security/audit-allowlist.json` does not accept or accepts past its review
+`.github/audit-allowlist.json` does not accept or accepts past its review
 date. The publishing workflow (`npm run site -- <command>`: validate,
 publish, land, featured, and the `site manage` TUI) is documented in
 [`Site-CLI.md`](./Site-CLI.md).

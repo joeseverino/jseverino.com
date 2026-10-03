@@ -77,7 +77,7 @@
   },
   "schemaValidation": {
     "name": "jseverino-com-contact",
-    "file": "db/contact-openapi.json",
+    "file": "contracts/contact.openapi.json",
     "host": "jseverino.com",
     "method": "POST",
     "endpoint": "/api/contact",

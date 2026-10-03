@@ -18,10 +18,10 @@ const fail = (message: string): void => {
 // --- 1. Canonical request contract -> OpenAPI + handler ---------------------
 
 const contract: { request: unknown } = JSON.parse(read('contracts/contact.v1.json'));
-const openapi: { components?: { schemas?: { ContactSubmission?: unknown } } } = JSON.parse(read('db/contact-openapi.json'));
+const openapi: { components?: { schemas?: { ContactSubmission?: unknown } } } = JSON.parse(read('contracts/contact.openapi.json'));
 const submission = openapi.components?.schemas?.ContactSubmission;
 if (!submission) {
-  fail('db/contact-openapi.json has no components.schemas.ContactSubmission');
+  fail('contracts/contact.openapi.json has no components.schemas.ContactSubmission');
 } else {
   if (JSON.stringify(submission) !== JSON.stringify(contract.request)) {
     fail('OpenAPI ContactSubmission is stale; run npm run sync:contact-openapi');
@@ -37,7 +37,7 @@ if (!submission) {
 
 // --- 2. Handler INSERTs <-> D1 schema ---------------------------------------
 
-const sql = read('db/schema.sql');
+const sql = read('cloudflare/d1.sql');
 const tables = new Map<string, Set<string>>();
 for (const [, table = '', body = ''] of sql.matchAll(/CREATE TABLE IF NOT EXISTS (\w+) \(([\s\S]*?)\n\);/g)) {
   const columns = body
@@ -47,7 +47,7 @@ for (const [, table = '', body = ''] of sql.matchAll(/CREATE TABLE IF NOT EXISTS
     .map((line) => line.split(/\s+/)[0] ?? '');
   tables.set(table, new Set(columns));
 }
-if (tables.size === 0) fail('db/schema.sql defines no CREATE TABLE statements');
+if (tables.size === 0) fail('cloudflare/d1.sql defines no CREATE TABLE statements');
 
 // Each table's row type in functions/lib/database.ts names exactly its columns.
 const rows = read('functions/lib/database.ts');
@@ -57,7 +57,7 @@ for (const [, table = '', body = ''] of rows.matchAll(/\/\/ D1 table (\w+)\nexpo
   const fields = [...body.matchAll(/^\s*(\w+):/gm)].map(([, field = '']) => field);
   const columns = [...(tables.get(table) ?? [])];
   if (fields.join(',') !== columns.join(',')) {
-    fail(`functions/lib/database.ts row type for ${table} (${fields.join(', ')}) differs from db/schema.sql (${columns.join(', ')})`);
+    fail(`functions/lib/database.ts row type for ${table} (${fields.join(', ')}) differs from cloudflare/d1.sql (${columns.join(', ')})`);
   }
 }
 if (rowTypes !== tables.size) fail(`functions/lib/database.ts declares ${rowTypes} row types for ${tables.size} tables`);
@@ -75,12 +75,12 @@ for (const file of fs.readdirSync(path.join(siteRoot, 'functions/api'))) {
 
     const known = tables.get(table);
     if (!known) {
-      fail(`functions/api/${file} inserts into "${table}", which db/schema.sql does not define`);
+      fail(`functions/api/${file} inserts into "${table}", which cloudflare/d1.sql does not define`);
       continue;
     }
     for (const column of columns) {
       if (!known.has(column)) {
-        fail(`functions/api/${file} inserts column "${column}" missing from ${table} in db/schema.sql`);
+        fail(`functions/api/${file} inserts column "${column}" missing from ${table} in cloudflare/d1.sql`);
       }
     }
     if (placeholders !== columns.length) {

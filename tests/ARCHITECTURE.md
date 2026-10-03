@@ -118,7 +118,7 @@ Which registry audit runs under which gate, rendered from [`tests/audits/registr
 | Structural HTML | `html` | post-build |  | ✓ | ✓ |  |
 | Functions Routing | `routes` | post-build |  | ✓ | ✓ |  |
 | SEO Metadata | `seo` | post-build |  | ✓ | ✓ |  |
-| Edge Runtime Tests | `edge-runtime` | post-build |  |  | ✓ | ✓ |
+| Edge Runtime Tests | `edge-runtime` | post-build |  | ✓ | ✓ |  |
 | Playwright Browser Tests | `e2e` | post-build |  |  | ✓ | ✓ |
 | Visual Regression (fixture content) | `visual` | post-build |  |  | ✓ | ✓ |
 
@@ -150,7 +150,7 @@ by `npm run sync:docs`; edit the registry, and this table follows.
 | [WCAG Color Contrast](./audits/check-contrast.ts) | Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1). | `npm run check:contrast` | The colors come from severino-brand through `npm run sync:tokens` (the token block in `src/styles/tokens.css` is generated): change the color upstream or the pairing in `src/styles/`. Register a new intended pair in `pairs` in `tests/audits/check-contrast.ts`. |
 | [Vault/MCP/Code Parity](./audits/check-vault-mcp-parity.ts) | The content contract, its generated Astro schema, the MCP projection, and the `site manage` TUI agree on one fingerprint. | `npm run check:parity` | Edit `contracts/content.v1.json`, run `npm run sync:contract` (it also writes the projection in the vault MCP checkout), and commit every generated projection in both repos. Never hand-edit a projection. |
 | TypeScript Type Check | Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib. | `npm run -s typecheck` | Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib, with Cloudflare-runtime globals declared in `functions/cloudflare.d.ts`. `astro check` covers the .astro files. |
-| [Functions/Schema Parity](./audits/check-functions-parity.ts) | The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns db/schema.sql defines. | `npm run check:edge` | The contact handler, `db/contact-openapi.json` (API Shield), and `db/schema.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together. |
+| [Functions/Schema Parity](./audits/check-functions-parity.ts) | The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines. | `npm run check:edge` | The contact handler, `contracts/contact.openapi.json` (API Shield), and `cloudflare/d1.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together. |
 | [Sitedrift Preview Guard](./audits/check-sitedrift-preview.ts) | The sitedrift review wrapper is present on preview branches and absent on main. | `npm run check:preview` | The sitedrift wrapper must be present on preview branches and absent on main. Check the build-static sitedrift step and `tests/audits/check-sitedrift-preview.ts`. |
 | Unit Test Suite | The `node:test` specs under tests/unit pass. | `npm run test:unit` | Run `npm run test:unit` and reconcile the code or the expected behavior in the failing spec under `tests/unit/`. |
 | Generated Documentation Blocks | The generated blocks in docs/Commands.md and tests/ARCHITECTURE.md match bin/help.ts and this registry. | `node bin/sync-docs.ts --check` | A generated block in docs/Commands.md or tests/ARCHITECTURE.md lags its source (the groups in bin/help.ts, the entries in tests/audits/registry.ts). Run `npm run sync:docs` and commit the result. |
@@ -167,9 +167,9 @@ by `npm run sync:docs`; edit the registry, and this table follows.
 | [Structural HTML](./audits/check-html.ts) | No built page repeats an id, every <img> has alt, and no literal `::name` directive reaches the page text. | `npm run check:html` | A built page repeats an id attribute, ships an <img> without alt, or shows a literal `::name` directive. Fix the component or content at the reported page; decorative images use alt="", never a missing attribute; a leaked directive is a typo or one the page's renderer does not support. |
 | [Functions Routing](./audits/check-routes.ts) | public/_routes.json stays inside the Pages limits and excludes no built HTML page or Function route; every exclude is a prefix with its static fallback page or an exact built file, and carries the static CSP in _headers. | `npm run check:routes` | public/_routes.json excludes a path that serves HTML or a Function route, breaks the Pages limits, or lacks its static CSP or fallback page. Narrow the exclude (an excluded HTML page ships without the middleware CSP), add the static CSP rule for it to public/_headers, and rebuild so bin/build-static.ts writes the fallback. |
 | [SEO Metadata](./audits/check-seo.ts) | Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD; zero pages fails. | `npm run check:seo` | A built page is missing a `<title>`, canonical link, og:title/og:image, or has invalid JSON-LD. Check `src/components/SeoHead.astro` and the page frontmatter. |
-| Edge Runtime Tests | Served through `wrangler pages dev`: the CSP nonce, the _headers rules, _routes.json, a real 404, the contact refusals, and security.txt parity. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test -c playwright.edge.config.ts --reporter=line` | The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP middleware, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand. |
-| Playwright Browser Tests | The functional Playwright specs pass across the browser matrix. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test --reporter=line` | Run `npx playwright test --ui` to debug the functional specs. |
-| Visual Regression (fixture content) | Screenshots of the fixture build match the committed macOS Chromium baselines. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test -c playwright.visual.config.ts --reporter=line` | Inspect expected/actual/diff under test-results/visual/. If the layout or a fixture changed on purpose, re-baseline with `npm run test:e2e:visual:update` and review every PNG in the diff. |
+| Edge Runtime Tests | Served through `wrangler pages dev`: the CSP nonce, the _headers rules, _routes.json, a real 404, the contact refusals, and security.txt parity. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test -c tests/playwright.edge.config.ts --reporter=line` | The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP middleware, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand. |
+| Playwright Browser Tests | The functional Playwright specs pass across the browser matrix. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test -c tests/playwright.config.ts --reporter=line` | Run `npm run test:e2e:ui` to debug the functional specs. |
+| Visual Regression (fixture content) | Screenshots of the fixture build match the committed macOS Chromium baselines. | `ASTRO_TELEMETRY_DISABLED=1 npx playwright test -c tests/playwright.visual.config.ts --reporter=line` | Inspect expected/actual/diff under test-results/visual/. If the layout or a fixture changed on purpose, re-baseline with `npm run test:e2e:visual:update` and review every PNG in the diff. |
 
 <!-- generated:end audit-reference -->
 
@@ -201,7 +201,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | Post-deploy | [deploy verification](#post-deploy-verification) | `bin/deploy-verify.ts` | Remote CI status, prod dependency audit, live headers and HSTS, live sitemap 200s, nonce parity and rotation, cache rules, the contact gate, `security.txt` parity, open CodeQL alerts. The response predicates are the edge suite's, from `src/lib/edge-expectations.ts`. |
 | CI | CodeQL | `.github/workflows/codeql.yml` | Semantic JS/TS scanning for injection, XSS, prototype pollution. |
 | CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
-| CI | npm audit | `.github/workflows/npm-audit.yml` | The weekly lockfile audit, with accepted advisories in `security/audit-allowlist.json`. |
+| CI | npm audit | `.github/workflows/npm-audit.yml` | The weekly lockfile audit, with accepted advisories in `.github/audit-allowlist.json`. |
 | CI | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Supply-chain posture: branch protection, pinned actions, token scope. |
 
 ---
@@ -247,7 +247,7 @@ Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting an
 
 The deploy-side sibling of the content parity check. It verifies that
 [`contracts/contact.v1.json`](../contracts/contact.v1.json) exactly projects to
-[`db/contact-openapi.json`](../db/contact-openapi.json), that the Pages Function
+[`contracts/contact.openapi.json`](../contracts/contact.openapi.json), that the Pages Function
 consumes the contract rather than restating its fields and limits, and that
 every handler `INSERT` names only columns the D1 schema defines with matching
 bind counts. A stale API Shield document or persistence mismatch fails before
@@ -330,7 +330,7 @@ The specs double as executable documentation of the block grammar: each case pai
 
 ## 4. `tests/playwright/`: browser specs
 
-The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`playwright.config.ts`](../playwright.config.ts); routing is by filename suffix, so a spec's project matrix is always an explicit choice: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
+The browser suite runs against the **compiled** static output (`dist/`) served by the preview server, never Astro's dev server. Config lives in [`tests/playwright.config.ts`](./playwright.config.ts); routing is by filename suffix, so a spec's project matrix is always an explicit choice: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` rather than the full matrix, so they cost one run, not six.
 
 The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability (for example, the writeup with a table or the most images), so renaming a writeup in the vault cannot break the code gates. The visual suite is separate: it never renders real content. It builds the synthetic tree in [`fixtures/content/`](./fixtures/content/) and pins the fixture slugs, so a publish cannot move a baseline.
 
@@ -379,7 +379,7 @@ test('buttons and cards keep a stable click target through press and release', a
 ```
 
 ### `contact.spec.ts`
-Drives the contact form with Cloudflare Turnstile in test-key mode (`PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`, set in `playwright.config.ts`). The `beforeEach` **aborts the Turnstile script** (`challenges.cloudflare.com`) so its always-pass test key cannot auto-solve mid-test; each test then controls the token state deterministically instead of racing the widget. Three paths: HTML5 required-field validation, the error shown when no token is present, and a fully mocked successful submit. The success case intercepts `POST /api/contact`, asserts the payload, and overrides `FormData.prototype.get` so the form reads a stubbed Turnstile token even though no real challenge ran:
+Drives the contact form with Cloudflare Turnstile in test-key mode (`PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`, set in `tests/playwright.config.ts`). The `beforeEach` **aborts the Turnstile script** (`challenges.cloudflare.com`) so its always-pass test key cannot auto-solve mid-test; each test then controls the token state deterministically instead of racing the widget. Three paths: HTML5 required-field validation, the error shown when no token is present, and a fully mocked successful submit. The success case intercepts `POST /api/contact`, asserts the payload, and overrides `FormData.prototype.get` so the form reads a stubbed Turnstile token even though no real challenge ran:
 
 ```ts
 test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
@@ -441,7 +441,7 @@ The HTML report after a full run:
 
 ## 5. Visual regression
 
-`visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, **baselines are owned by Chromium on macOS**. It runs under [`playwright.visual.config.ts`](../playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; fixture images from [`fixtures/make-images.ts`](./fixtures/make-images.ts)) into `dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) rather than `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `test-results/visual/`; CI uploads them with the HTML report.
+`visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, **baselines are owned by Chromium on macOS**. It runs under [`tests/playwright.visual.config.ts`](./playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; fixture images from [`fixtures/make-images.ts`](./fixtures/make-images.ts)) into `dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) rather than `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `test-results/visual/`; CI uploads them with the HTML report.
 
 The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/) are review artifacts, meant to be checked in the diff before any visual change merges.
 
@@ -524,7 +524,7 @@ and the [`public/_headers`](../public/_headers) rules exist only on Cloudflare's
 runtime, so the browser suite cannot see them. The edge suite serves the built
 output through `wrangler pages dev` (Cloudflare's `workerd`, bundled with the
 `wrangler` devDependency; no account or token involved) and asserts the served
-responses. Config lives in [`playwright.edge.config.ts`](../playwright.edge.config.ts);
+responses. Config lives in [`tests/playwright.edge.config.ts`](./playwright.edge.config.ts);
 the port and the compatibility date live in
 [`browser-test-env.ts`](./browser-test-env.ts), and the date must match the
 Pages project's runtime setting. The specs use Playwright's request fixture
@@ -547,7 +547,7 @@ npm run edge:serve     # the same runtime on http://127.0.0.1:8788, for checks b
 ```
 
 CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
-`release:check` and `diagnose` through the registry (`edge-tests`).
+`publish:check` and `diagnose` through the registry (`edge-tests`).
 
 ### Post-deploy verification
 
@@ -574,11 +574,11 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 | `deploy.yml` | Cloudflare Pages check-run completed; `ci` completed | `verify` runs the default branch's `bin/deploy-verify.ts --origin` against the deployment's `*.pages.dev` URL, with the Access service token and no branch code; `report` keeps one PR comment current (CI summaries and the deployment, in whichever order they finish); `recover-main-ci` dispatches the CI run GitHub suppresses after a Dependabot auto-merge. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. Skipped on content-only PRs (`changes.yml` classifies the paths). |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. Skipped on content-only PRs. |
-| `npm-audit.yml` | weekly | `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) over the lockfile: fails on a high or critical advisory that [`security/audit-allowlist.json`](../security/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date. |
+| `npm-audit.yml` | weekly | `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) over the lockfile: fails on a high or critical advisory that [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning, and a JSON pass rendered by `bin/scorecard-summary.ts` into the job summary: the aggregate plus every check with Scorecard's reason. |
 | `workflow-lint.yml` | workflow changes | `actionlint` on Action YAML; also gates SHA-pinning. |
 | `link-check.yml` | docs changes, weekly | `lychee` audits repository documentation links and public content links (self-domain links excluded; 403/429/999 accepted as answered) and writes both reports into the job summary. |
-| `lighthouse.yml` | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse against the URLs in `.lighthouserc.json` with its thresholds (accessibility 95 and SEO 90 fail; performance 85 and best practices 70 warn), writes the per-page scores to the job summary, and uploads the reports. |
+| `lighthouse.yml` | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse against the URLs in `tests/lighthouserc.json` with its thresholds (accessibility 95 and SEO 90 fail; performance 85 and best practices 70 warn), writes the per-page scores to the job summary, and uploads the reports. |
 | `security-txt-expires.yml` | schedule | Opens an issue when `security.txt` nears expiry (runs `check-security-txt.ts`). |
 | `dependabot-auto-merge.yml` | Dependabot PRs | Enables squash auto-merge for non-major updates except `sitedrift`; GitHub merges after every required check passes. |
 | `dependabot-stale.yml` | weekly | Opens a self-closing issue listing Dependabot PRs open past seven days. |

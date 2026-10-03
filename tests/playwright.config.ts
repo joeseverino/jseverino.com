@@ -1,14 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
-import { browserTestEnv, suiteArtifacts, workers } from './tests/browser-test-env.ts';
+import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
 const PORT = 4321;
 const mobile = /\.mobile\.spec\.ts$/;
 const single = /\.single\.spec\.ts$/;
-// The visual suite renders fixture content; playwright.visual.config.ts owns it.
+// The visual suite renders fixture content; tests/playwright.visual.config.ts owns it.
 const visualSpec = /visual\.spec\.ts$/;
 
 export default defineConfig({
-  testDir: './tests/playwright',
+  testDir: './playwright',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -53,6 +53,7 @@ export default defineConfig({
     },
   ],
   webServer: {
+    cwd: webServerCwd,
     // PREBUILT is set by bin/diagnose.ts (after its own build-static run) and
     // by CI (which builds while system dependencies install), so the suite
     // serves that artifact instead of rebuilding it.

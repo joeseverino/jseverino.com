@@ -55,3 +55,7 @@ test('the astro summary reads the same under the JSON logger', () => {
   const json = `${JSON.stringify({ message: 'Synced content', label: 'content', level: 'info' })}\n${plain}`;
   for (const output of [plain, json]) assert.equal(summarize({ summary: 'astro' }, output), '0 errors, 0 warnings');
 });
+
+test('a Playwright suite summarizes as its pass count', () => {
+  assert.equal(summarize({}, 'Running 19 tests using 1 worker\n\n  19 passed (5.4s)\n'), '19 passed (5.4s)');
+});

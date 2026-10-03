@@ -15,7 +15,7 @@ export interface D1Database {
   batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
 }
 
-// Row shapes of db/schema.sql, one per table; check-functions-parity holds
+// Row shapes of cloudflare/d1.sql, one per table; check-functions-parity holds
 // each to its CREATE TABLE. SQLite returns INTEGER as number, TEXT as string.
 
 // D1 table contact_submissions
