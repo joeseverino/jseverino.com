@@ -77,22 +77,22 @@ interface ExecError extends Error {
   stderr?: string;
 }
 
-export function createEducationSource({ command = 'severino-edu-mcp' } = {}): EducationSource {
+export function createEducationSource({ command = 'severino-vault-mcp' } = {}): EducationSource {
   let cached: EducationDataset | undefined;
   return {
     async load() {
       if (cached) return cached;
       let stdout: string;
       try {
-        ({ stdout } = await execFileAsync(command, ['export']));
+        ({ stdout } = await execFileAsync(command, ['export', 'education']));
       } catch (caught) {
         const error = caught as ExecError;
         let detail: string | undefined;
         try { detail = (JSON.parse(error.stdout ?? '') as { errors?: string[] }).errors?.join('\n  '); }
         catch { detail = error.stderr?.trim() || error.message; }
         throw new Error(
-          `education export failed (${command} export):\n  ${detail}\n` +
-          'Install/update with: uv tool install --reinstall ~/Code/Assets/severino-edu-mcp',
+          `education export failed (${command} export education):\n  ${detail}\n` +
+          'Install/update with: tools reinstall severino-vault-mcp',
         );
       }
       cached = JSON.parse(stdout) as EducationDataset;
