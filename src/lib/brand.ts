@@ -1,13 +1,13 @@
-// Brand identity the site builds from — a vendored mirror of
-// the lockfile-pinned severino-brand contract. Regenerate with `npm run sync:tokens`;
-// edit the values upstream, never here. Committed so the build stays self-sufficient.
+// Brand identity the site builds from: a vendored mirror of the lockfile-pinned
+// severino-brand contract. Regenerate with `npm run sync:tokens`; edit the values
+// upstream. Committed so the build needs nothing outside the repo.
 //
-// Plain .mjs so both the Astro site and the node asset generators can import it.
+// Dependency-free so both the Astro site and the node asset generators can import it.
 // Consumers:
 //   - src/layouts/BaseLayout.astro  → theme color
 //   - src/styles/brand.css          → CSS brand custom properties (via brandVarsCss)
-//   - src/lib/web-styles.mjs        → the base.css + brand vars + font bundle for embedders
-//   - bin/make-icons.mjs            → the brand mark (favicon, HD marks)
+//   - src/lib/web-styles.ts        → the base.css + brand vars + font bundle for embedders
+//   - bin/make-icons.ts            → the brand mark (favicon, HD marks)
 //   - bin/make-og-image / make-github-social → social-card palette
 // The rendering logic lives in the branding-engine dependency; this file is the
 // identity the site hands to it.
@@ -66,7 +66,7 @@ export const SURFACE = {
 // branding-engine's card renderer consumes semantic roles, while the source
 // brand contract stores identity tokens. Keep that projection here so every
 // generated card receives the same mapping.
-export function brandCardColors() {
+export function brandCardColors(): typeof CARD_COLORS {
   return { ...CARD_COLORS };
 }
 
@@ -75,12 +75,12 @@ export function brandCardColors() {
 // (generated from here by `npm run sync:tokens`, imported by base.css):
 // --color-primary is brand identity (swappable), the rest is the design system
 // (stable). Owned here so the site stylesheet and the Obsidian plugin's preview
-// don't each re-derive them — the re-derivation that once left --color-primary
-// dead in the preview, killing base.css's tinted tables, links, and buttons.
+// read one definition; a preview without --color-primary renders base.css's
+// tables, links, and buttons untinted.
 //
 // Navy is unreadable on a dark page, so dark mode uses the onDark pair. `deep`
 // means "more emphasis", which is DARKER on a light page and LIGHTER on a dark
-// one — hover states read the same either way.
+// one, so hover states read the same either way.
 //
 // Do not put light-dark() inside these custom properties. Safari can preserve
 // the light arm when a separately loaded stylesheet defines the variable before
@@ -88,8 +88,8 @@ export function brandCardColors() {
 // one theme contract consumed by brand.css and every generated embed bundle.
 // sync-tokens passes the freshly pulled upstream pair so the generated file
 // never lags the block above by one run.
-export function brandVarsCss(themes = PRIMARY_BY_THEME) {
-  const declarations = (primary, deep) =>
+export function brandVarsCss(themes: typeof PRIMARY_BY_THEME = PRIMARY_BY_THEME): string {
+  const declarations = (primary: string, deep: string) =>
     `--color-primary:${primary};--color-primary-deep:${deep}`;
   const light = declarations(themes.light.primary, themes.light.deep);
   const dark = declarations(themes.dark.primary, themes.dark.deep);

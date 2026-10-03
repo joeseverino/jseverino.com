@@ -1,5 +1,5 @@
 ---
-import { site } from '@lib/site';
+import { site } from '@lib/site.ts';
 import NavLinks from '@components/NavLinks.astro';
 import SocialLinks from '@components/SocialLinks.astro';
 import wordmark from '../../public/assets/brand/wordmark-caps.svg?raw';
@@ -61,8 +61,9 @@ const navigation = navItems.map((item) => ({
     const header = document.querySelector('[data-sticky-header]');
     const sentinel = document.querySelector('#scroll-sentinel');
     if (header && sentinel) {
+      // One observed target, so one entry per callback.
       const observer = new IntersectionObserver(([entry]) => {
-        header.classList.toggle('scrolled', !entry.isIntersecting);
+        header.classList.toggle('scrolled', !entry!.isIntersecting);
       }, { threshold: 0 });
       observer.observe(sentinel);
     }

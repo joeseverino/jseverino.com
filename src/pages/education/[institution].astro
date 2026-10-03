@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
-import { getEducationInstitutions } from '@lib/content';
+import { getEducationInstitutions } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getEducationInstitutions()).map((page) => ({

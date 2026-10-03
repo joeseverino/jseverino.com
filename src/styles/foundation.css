@@ -50,7 +50,7 @@ a:focus {
   }
 }
 
-/* Form controls don't inherit font by default — make them match the site. */
+/* Form controls don't inherit font by default. */
 button,
 input,
 textarea,

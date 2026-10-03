@@ -1,4 +1,4 @@
-import { site } from '@lib/site';
+import { site } from '@lib/site.ts';
 
 const aiTrainingCrawlers = ['GPTBot', 'CCBot', 'Google-Extended', 'ClaudeBot', 'Bytespider'];
 

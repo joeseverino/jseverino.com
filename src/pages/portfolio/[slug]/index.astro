@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import { writeupPath } from '@lib/site-config.ts';
 import Picture from '@components/Picture.astro';
 import Lightbox from '@components/Lightbox.astro';
-import { formatDate, getWriteups, titleCase } from '@lib/content';
+import { formatDate, getWriteups, titleCase } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getWriteups()).map((writeup) => ({
@@ -19,7 +20,7 @@ const hasFigures = writeup.bodyHtml.includes('<img');
   seo={{
     title: writeup.title,
     description: writeup.description,
-    path: `/portfolio/${writeup.slug}/`,
+    path: writeupPath(writeup.slug),
     image: writeup.heroImage,
     type: 'article',
     publishedTime: writeup.date,
@@ -28,7 +29,7 @@ const hasFigures = writeup.bodyHtml.includes('<img');
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Portfolio', url: '/portfolio/' },
-      { name: writeup.title, url: `/portfolio/${writeup.slug}/` },
+      { name: writeup.title, url: writeupPath(writeup.slug) },
     ],
   }}
 >

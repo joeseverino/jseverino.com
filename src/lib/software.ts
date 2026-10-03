@@ -5,9 +5,10 @@
 // The result is the derived list the page renders. Add a repo on GitHub (with a
 // description) and it appears; cut a release and the version updates.
 
-import { getGithubRepos } from './github';
-import { asyncCache } from './async-cache';
-import { fetchJson } from './fetch-json';
+import { getGithubRepos } from './github.ts';
+import { asyncCache } from './async-cache.ts';
+import { fixtureContent } from './content-root.ts';
+import { fetchJson } from './fetch-json.ts';
 import {
   FEATURED,
   ORDER,
@@ -16,11 +17,11 @@ import {
   SKIP,
   WRITEUPS,
   type PackageConfig,
-} from './software.config';
+} from './software.config.ts';
 
 export type SoftwarePackage = PackageConfig & {
-  version?: string;
-  downloadsPerMonth?: number;
+  version?: string | undefined;
+  downloadsPerMonth?: number | undefined;
 };
 
 export type SoftwareEntry = {
@@ -28,12 +29,12 @@ export type SoftwareEntry = {
   title: string;
   description: string;
   repoUrl: string;
-  language?: string;
-  updatedAt?: string; // 'YYYY-MM'
+  language?: string | undefined;
+  updatedAt?: string | undefined; // 'YYYY-MM'
   featured: boolean;
   selfHosted: boolean;
-  writeupSlug?: string;
-  package?: SoftwarePackage;
+  writeupSlug?: string | undefined;
+  package?: SoftwarePackage | undefined;
   order: number;
 };
 
@@ -52,7 +53,7 @@ async function fetchPypiVersion(name: string): Promise<string | undefined> {
 
 async function fetchNpmInfo(
   name: string,
-): Promise<{ version?: string; downloadsPerMonth?: number }> {
+): Promise<Pick<SoftwarePackage, 'version' | 'downloadsPerMonth'>> {
   const [version, downloads] = await Promise.allSettled([
     fetchJson<{ 'dist-tags'?: { latest?: string } }>(`https://registry.npmjs.org/${name}`),
     fetchJson<{ downloads?: number }>(`https://api.npmjs.org/downloads/point/last-month/${name}`),
@@ -101,12 +102,13 @@ async function build(): Promise<SoftwareEntry[]> {
       };
     });
 
-  await Promise.all(entries.map((entry) => (entry.package ? enrich(entry.package) : undefined)));
+  // Fixture builds are hermetic: no registry calls, so no live numbers.
+  if (!fixtureContent) {
+    await Promise.all(entries.map((entry) => (entry.package ? enrich(entry.package) : undefined)));
+  }
 
-  // Deterministic: explicit order first, then alphabetical by title. Crucially
-  // NOT by last-pushed — that depends on GitHub's volatile push ordering, so any
-  // repo push (including merging this site) would reorder the list and break the
-  // visual baseline. Stable order keeps the snapshot valid across pushes.
+  // Explicit order first, then alphabetical by title. Never by last-pushed: any
+  // repo push (including a merge to this site) would reorder the list.
   return entries.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 }
 

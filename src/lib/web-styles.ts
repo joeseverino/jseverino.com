@@ -3,28 +3,31 @@
 // A consumer that embeds the site's writeup styling outside the site (the
 // Obsidian plugin's preview pane, any future tool) needs THREE things TOGETHER:
 //
-//   1. base.css           — the design system (tables, links, buttons, prose)
-//   2. the brand vars      — --color-primary / --color-primary-deep. base.css
+//   1. base.css            the design system (tables, links, buttons, prose)
+//   2. the brand vars      --color-primary / --color-primary-deep. base.css
 //                            imports them from src/styles/brand.css, so an
 //                            embedder that expands the imports (readCssEntry)
 //                            already has them; one that pastes base.css raw
-//                            does not, and its tinted tables, zebra stripes,
-//                            header underline, links, and buttons render dead.
-//   3. the Inter @font-face — base.css references Inter by name; the embedder must
+//                            does not, and its tables, links, and buttons
+//                            render untinted.
+//   3. the Inter @font-face  base.css references Inter by name; the embedder must
 //                             supply a resolvable font URL (an inlined data URI in
 //                             an iframe, an absolute URL on the site).
 //
-// Missing #2 is the trap that cost a debugging session. This helper hands back
-// all three as one <style> blob so an embedder calls ONE function and cannot
+// This helper returns all three as one <style> blob, so an embedder cannot
 // forget the brand vars. base.css and the font are passed in because each
 // embedder obtains them its own way (esbuild text/dataurl import, a fetch, a
 // file read); only the assembly is shared.
-import { brandVarsCss } from './brand.mjs';
+import { brandVarsCss } from './brand.ts';
 
-export function previewStyles({ baseCss, fontUrl }) {
+// The Inter rule base.css expects, for a font URL the embedder resolves.
+export const interFontFace = (fontUrl: string): string =>
+  `@font-face{font-family:Inter;font-weight:400 700;font-style:normal;font-display:swap;src:url(${fontUrl}) format('woff2')}`;
+
+export function previewStyles({ baseCss, fontUrl }: { baseCss: string; fontUrl: string }): string {
   return [
     `<style>${brandVarsCss()}</style>`,
     `<style>${baseCss}</style>`,
-    `<style>@font-face{font-family:Inter;font-weight:400 700;font-style:normal;font-display:swap;src:url(${fontUrl}) format('woff2')}</style>`,
+    `<style>${interFontFace(fontUrl)}</style>`,
   ].join('\n');
 }

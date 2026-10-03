@@ -39,7 +39,7 @@
 }
 
 /* Hidden until the boot script marks :root, because with JS off the segments
-   cannot do anything — auto already works on its own. */
+   do nothing, and auto already works on its own. */
 .theme-toggle {
   display: none;
   align-items: center;

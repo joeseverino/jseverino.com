@@ -2,65 +2,54 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
-import { enhanceImages } from './images';
-import { renderPageHtml, renderWriteupHtml } from './markdown';
-import { site } from './site';
-import { asyncCache } from './async-cache';
+import { enhanceImages } from './images.ts';
+import { renderPageHtml, renderWriteupHtml } from './markdown.ts';
+import { site } from './site.ts';
+import { asyncCache } from './async-cache.ts';
+import { contentRoot } from './content-root.ts';
+import { parseTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
+import { isoDate } from './dates.ts';
+
+export type { TechnologyGroup, TechnologyTag } from './technology-groups.ts';
 
 export type Writeup = {
   slug: string;
   title: string;
   description: string;
   date: string;
-  lastReviewed?: string;
+  lastReviewed?: string | undefined;
   technologies: string[];
   heroImage: string;
   heroAlt: string;
   bodyHtml: string;
   featured: boolean;
-  featuredOrder?: number;
+  featuredOrder?: number | undefined;
 };
 
 export type PageContent = {
   slug: string;
   title: string;
   description: string;
-  intro?: string;
+  intro?: string | undefined;
   path: string;
   body: string;
   bodyHtml: string;
 };
 
-export type TechnologyTag = {
-  slug: string;
-  label: string;
-  featured: boolean;
-};
-
-export type TechnologyGroup = {
-  name: string;
-  tags: TechnologyTag[];
-};
-
 function normalizeDate(value: unknown): string {
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (value instanceof Date) return isoDate(value);
   if (typeof value === 'string') return value.slice(0, 10);
   return '';
 }
 
-function resolveWriteupAsset(src: string | undefined, slug: string): string | undefined {
-  if (!src) return undefined;
-  if (/^https?:\/\//.test(src) || src.startsWith('/')) return src;
-  return `/assets/writeups/${slug}/${src.replace(/^\.\//, '')}`;
+// The sync rewrites every local reference (body and cover_image) to its
+// public /assets/ URL, so content arrives here already resolved.
+function firstBodyImage(markdown: string): string | undefined {
+  return markdown.match(/!\[[^\]]*\]\(([^)\s]+)/)?.[1];
 }
 
-function firstBodyImage(markdown: string, slug: string): string | undefined {
-  const match = markdown.match(/!\[[^\]]*\]\(([^)]+)\)/);
-  return resolveWriteupAsset(match?.[1], slug);
-}
-
-function renderWriteupMarkdown(markdown: string, slug: string): string {
-  return enhanceImages(renderWriteupHtml(markdown, slug));
+function renderWriteupMarkdown(markdown: string): string {
+  return enhanceImages(renderWriteupHtml(markdown));
 }
 
 export function renderPageMarkdown(markdown: string): string {
@@ -72,7 +61,7 @@ function collectionSlug(id: string): string {
 }
 
 const loadPages = asyncCache(() => {
-  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+  // Drafts render in `site dev --drafts` (a gitignored overlay) but never in a build.
   return getCollection('pages', (page) => import.meta.env.DEV || page.data.published);
 });
 
@@ -106,28 +95,8 @@ export async function getEducationInstitutions(): Promise<PageContent[]> {
 
 // Parse on demand so dev edits appear without restarting the server.
 export function getTechnologyGroups(): TechnologyGroup[] {
-  const file = path.resolve(process.cwd(), 'src/content/technology-groups.md');
-  const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  const sections = body.split(/^##\s+/m).slice(1);
-
-  return sections
-    .map((section) => {
-      const [nameLine = '', ...lines] = section.split('\n');
-      const tags: TechnologyTag[] = [];
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
-        const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
-        if (cells.length < 2) continue;
-        const [slug, label, featured] = cells;
-        if (!slug || !label) continue;
-        if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;
-        if (/^:?-{2,}:?$/.test(slug)) continue;
-        tags.push({ slug, label, featured: featured?.toLowerCase() === 'yes' });
-      }
-      return { name: nameLine.trim(), tags };
-    })
-    .filter((group) => group.name && group.tags.length > 0);
+  const file = path.resolve(process.cwd(), contentRoot, 'technology-groups.md');
+  return parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
 }
 
 function getTechnologyLabel(slug: string): string | undefined {
@@ -154,14 +123,14 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
   if (unknown.size > 0) {
     const list = [...unknown].sort().join(', ');
     console.warn(
-      `[technology-groups] Writeup frontmatter references tag slugs missing from src/content/technology-groups.md: ${list}`,
+      `[technology-groups] Writeup frontmatter references tag slugs missing from ${contentRoot}/technology-groups.md: ${list}`,
     );
   }
   warnedUnknownTechnologies = true;
 }
 
 export const getWriteups = asyncCache<Writeup[]>(async () => {
-  // Drafts render in `astro dev` (npm run dev:drafts) but never in a build.
+  // Drafts render in `site dev --drafts` (a gitignored overlay) but never in a build.
   const entries = await getCollection(
     'writeups',
     (entry) => import.meta.env.DEV || entry.data.published === true,
@@ -169,10 +138,7 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
 
   const writeups = entries.map((entry) => {
     const slug = collectionSlug(entry.id);
-    const heroImage =
-      resolveWriteupAsset(entry.data.cover_image, slug) ??
-      firstBodyImage(entry.body ?? '', slug) ??
-      site.defaultOgImage;
+    const heroImage = entry.data.cover_image || firstBodyImage(entry.body ?? '') || site.defaultOgImage;
 
     return {
       slug,
@@ -183,7 +149,7 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
       technologies: entry.data.technologies,
       heroImage,
       heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
-      bodyHtml: renderWriteupMarkdown(entry.body ?? '', slug),
+      bodyHtml: renderWriteupMarkdown(entry.body ?? ''),
       featured: entry.data.featured,
       featuredOrder: entry.data.featured_order,
     } satisfies Writeup;

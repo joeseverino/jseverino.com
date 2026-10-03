@@ -1,34 +1,53 @@
 // Responsive <picture> markup driven by src/lib/image-manifest.json, which
-// bin/sync-content.mjs writes after optimizing each source image into AVIF +
-// WebP variants. When an image is not in the manifest the helpers degrade to a
-// plain <img> so nothing breaks.
-import fs from 'node:fs';
+// bin/sync-content.ts writes after optimizing each source image into AVIF +
+// WebP variants. A synced raster image missing from the manifest fails a
+// production build; anything else (and any image in dev) degrades to a plain
+// <img>.
 import path from 'node:path';
 import MarkdownIt from 'markdown-it';
 import { parseImageDirectives } from './image-directives.ts';
+import { contentRoot, fixtureContent } from './content-root.ts';
+import { readJson } from './json.ts';
 
-type Variant = [number, string];
-type ManifestEntry = {
+// One image-manifest.json entry: intrinsic size, [width, url] variants, the
+// fallback URL. The sync writes it; the build reads it.
+export type Variant = [width: number, url: string];
+export interface ImageManifestEntry {
   w: number;
   h: number;
   avif: Variant[];
   webp: Variant[];
   fallback: string;
-};
-type Manifest = Record<string, ManifestEntry>;
+}
+export type Manifest = Record<string, ImageManifestEntry>;
 
 let manifestCache: Manifest | undefined;
 
 function manifest(): Manifest {
   if (!manifestCache) {
-    const file = path.resolve(process.cwd(), 'src/lib/image-manifest.json');
+    const file = fixtureContent
+      ? path.resolve(process.cwd(), contentRoot, 'image-manifest.json')
+      : path.resolve(process.cwd(), 'src/lib/image-manifest.json');
     try {
-      manifestCache = JSON.parse(fs.readFileSync(file, 'utf8')) as Manifest;
+      manifestCache = readJson<Manifest>(file);
     } catch {
       manifestCache = {};
     }
   }
   return manifestCache;
+}
+
+// Raster images the sync owns: each must have a manifest entry.
+const SYNCED_RASTER = /^\/assets\/(?:writeups|pages)\/.+\.(?:png|jpe?g)$/i;
+const strictManifest = (): boolean =>
+  import.meta.env?.PROD === true ||
+  process.env.NODE_ENV === 'production' ||
+  process.env.STRICT_IMAGE_MANIFEST === '1';
+
+function requireEntry(src: string): void {
+  if (SYNCED_RASTER.test(src) && strictManifest()) {
+    throw new Error(`${src} is not in the image manifest; run the content sync (npm run sync:content) and commit its outputs`);
+  }
 }
 
 /** Intrinsic width/height for an asset URL, or `undefined` if not in the manifest. */
@@ -39,22 +58,22 @@ export function getImageDimensions(src: string): { width: number; height: number
 
 export type PictureOptions = {
   src: string;
-  alt?: string;
-  class?: string;
-  sizes?: string;
-  loading?: 'lazy' | 'eager';
-  fetchpriority?: 'high' | 'low' | 'auto';
+  alt?: string | undefined;
+  class?: string | undefined;
+  sizes?: string | undefined;
+  loading?: 'lazy' | 'eager' | undefined;
+  fetchpriority?: 'high' | 'low' | 'auto' | undefined;
   /** Author display-width override (markdown `![alt|400](...)`). */
-  width?: number | string;
+  width?: number | string | undefined;
   /** Opt this image out of the figure lightbox (markdown `![alt|nozoom](...)`). */
-  noZoom?: boolean;
+  noZoom?: boolean | undefined;
 };
 
 const { escapeHtml: esc, unescapeAll } = new MarkdownIt().utils;
 const srcset = (variants: Variant[]): string =>
   variants.map(([w, url]) => `${esc(url)} ${w}w`).join(', ');
 
-/** Build a responsive <picture>, or a plain <img> when the source is unknown. */
+/** Build a responsive <picture>, or a plain <img> when the source is not a synced image. */
 export function buildPicture(opts: PictureOptions): string {
   const { src, alt = '', loading = 'lazy', fetchpriority } = opts;
   const cls = opts.class ? ` class="${esc(opts.class)}"` : '';
@@ -64,6 +83,7 @@ export function buildPicture(opts: PictureOptions): string {
   const entry = manifest()[src];
 
   if (!entry) {
+    requireEntry(src);
     return `<img src="${esc(src)}"${altAttr}${cls} loading="${loading}" decoding="async"${fp}${nz}>`;
   }
 
@@ -99,9 +119,14 @@ export function enhanceImages(html: string, defaultSizes = '(max-width: 720px) 1
   return html.replace(IMG_TAG, (whole: string, attrString: string) => {
     const attrs: Record<string, string> = {};
     for (const match of attrString.matchAll(ATTR)) {
-      attrs[match[1].toLowerCase()] = unescapeAll(match[2] ?? '');
+      const [, name = '', value = ''] = match;
+      attrs[name.toLowerCase()] = unescapeAll(value);
     }
-    if (!attrs.src || !manifest()[attrs.src]) return whole;
+    if (!attrs.src) return whole;
+    if (!manifest()[attrs.src]) {
+      requireEntry(attrs.src);
+      return whole;
+    }
     // `![alt|350](src)` survives as `alt="alt|350"` when the markdown reaches
     // us already-rendered (e.g., split-side inline images). Split it back out
     // so the width hint can drive the responsive sizes attribute.

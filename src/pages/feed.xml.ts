@@ -1,6 +1,7 @@
 import rss from '@astrojs/rss';
-import { getWriteups } from '@lib/content';
-import { site } from '@lib/site';
+import { getWriteups } from '@lib/content.ts';
+import { site } from '@lib/site.ts';
+import { writeupPath } from '@lib/site-config.ts';
 
 export async function GET(context: { site: string }) {
   return rss({
@@ -11,7 +12,7 @@ export async function GET(context: { site: string }) {
       title: writeup.title,
       description: writeup.description,
       pubDate: new Date(`${writeup.date}T00:00:00Z`),
-      link: `/portfolio/${writeup.slug}/`,
+      link: writeupPath(writeup.slug),
     })),
   });
 }

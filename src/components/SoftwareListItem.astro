@@ -1,5 +1,6 @@
 ---
-import { metaLine, type SoftwareEntry } from '@lib/software';
+import { metaLine, type SoftwareEntry } from '@lib/software.ts';
+import { writeupPath } from '@lib/site-config.ts';
 
 type Props = { entry: SoftwareEntry };
 const { entry } = Astro.props;
@@ -28,7 +29,7 @@ const titleHref = entry.repoUrl ?? entry.package?.url;
         <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       )}
       {entry.writeupSlug && (
-        <a class="sli-writeup" href={`/portfolio/${entry.writeupSlug}/`}>Writeup →</a>
+        <a class="sli-writeup" href={writeupPath(entry.writeupSlug)}>Writeup →</a>
       )}
     </div>
   </div>
