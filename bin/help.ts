@@ -77,7 +77,7 @@ export const GROUPS = [
       'lint:css': 'Stylelint over `src/styles/`',
       'check:security': 'security.txt signature, required fields, expiry, WKD file',
       'check:contrast': 'WCAG ratios for every text/background pair in `base.css`',
-      'check:parity': 'Vault schema, Zod config, MCP server, and the `site manage` TUI agree on writeup fields',
+      'check:parity': 'The content contract, the Astro schema, the writeup store, and the `site manage` TUI agree on writeup fields',
       typecheck: 'Strict TypeScript over the whole repo (Node program, then the Workers program for `functions/`)',
       'check:edge': 'Contact handler, OpenAPI schema, and D1 schema agree',
       'check:preview': 'Sitedrift wrapping on previews, absent on main',

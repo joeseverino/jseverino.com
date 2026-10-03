@@ -97,11 +97,11 @@ export const AUDITS: readonly Audit[] = [
     fix: 'The colors come from severino-brand through `npm run sync:tokens` (the token block in `src/styles/tokens.css` is generated): change the color upstream or the pairing in `src/styles/`. Register a new intended pair in `pairs` in `tests/audits/check-contrast.ts`.',
   },
   {
-    id: 'parity-check', label: 'parity', name: 'Vault/MCP/Code Parity', phase: 'pre-build',
-    asserts: 'The content contract, its generated Astro schema, the MCP projection, and the `site manage` TUI agree on one fingerprint.',
-    exec: { cmd: 'node', args: ['tests/audits/check-vault-mcp-parity.ts'] },
-    gates: ['publish', 'diagnose'], localOnly: true,
-    fix: 'Edit `contracts/content.v1.json`, run `npm run sync:contract` (it also writes the projection in the vault MCP checkout), and commit every generated projection in both repos. Never hand-edit a projection.',
+    id: 'parity-check', label: 'parity', name: 'Content Contract Parity', phase: 'pre-build',
+    asserts: 'The content contract, its generated Astro schema, the public projection, the writeup store, and the `site manage` TUI agree on one fingerprint.',
+    exec: { cmd: 'node', args: ['tests/audits/check-contract-parity.ts'] },
+    gates: ['publish', 'diagnose'],
+    fix: 'Edit `contracts/content.v1.json`, run `npm run sync:contract`, and commit the generated schema. Never hand-edit a projection.',
   },
   {
     id: 'typecheck', label: 'types', name: 'TypeScript Type Check', phase: 'pre-build',

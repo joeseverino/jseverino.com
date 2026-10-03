@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-// Project contracts/content.v1.json into the typed Astro schemas and the vault
-// MCP's offline copy.
+// Project contracts/content.v1.json into the typed Astro schemas.
 //
-//   node bin/sync-content-contract.ts           # write the projections
-//   node bin/sync-content-contract.ts --check   # fail if a projection is stale
-import fs from 'node:fs';
-import path from 'node:path';
+//   node bin/sync-content-contract.ts           # write the projection
+//   node bin/sync-content-contract.ts --check   # fail if it is stale
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { vaultMcpRoot } from './lib/local-paths.ts';
 import { writeOrCheck } from './lib/projection.ts';
 import {
   contentContract,
@@ -17,20 +13,7 @@ import {
 } from '../src/lib/content-contract.ts';
 
 const check = checkMode('usage: node bin/sync-content-contract.ts [--check]');
-const mcpRoot = vaultMcpRoot();
-// --check holds the MCP projection to the contract only when VAULT_MCP_DIR names
-// a checkout explicitly; the local-only parity audit covers the default one.
-const checkMcpProjection = Boolean(process.env.VAULT_MCP_DIR);
-const mcpTarget = path.join(
-  mcpRoot,
-  'src/severino_vault_mcp/contracts/site_content.v1.json',
-);
 const schemaTarget = fromRoot('src/generated/content-schema.ts');
-const projection = `${JSON.stringify({
-  source: 'jseverino.com/contracts/content.v1.json',
-  fingerprint: contentContractFingerprint(),
-  contract: contentContract,
-}, null, 2)}\n`;
 
 function zodExpression(spec: FieldSpec): string {
   const base = ({
@@ -67,7 +50,5 @@ const schemaSource = [
   ]),
 ].join('\n');
 
-const targets = [{ file: schemaTarget, content: schemaSource }];
-if (fs.existsSync(mcpRoot) && (!check || checkMcpProjection)) targets.push({ file: mcpTarget, content: projection });
-writeOrCheck(targets, { check, hint: 'npm run sync:contract' });
+writeOrCheck([{ file: schemaTarget, content: schemaSource }], { check, hint: 'npm run sync:contract' });
 if (check) console.log(`ok       content contract projection ${contentContractFingerprint().slice(0, 12)}`);

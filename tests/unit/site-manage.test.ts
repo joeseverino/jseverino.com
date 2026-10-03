@@ -1,6 +1,5 @@
 // site manage without a terminal: it refuses to start, and its frames render
-// through the MANAGE_TUI_SMOKE / MANAGE_TUI_KEYS harness against a temp vault
-// and a stubbed severino-vault-mcp.
+// through the MANAGE_TUI_SMOKE / MANAGE_TUI_KEYS harness against a temp vault.
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,18 +14,8 @@ let tmp = '';
 before(() => {
   tmp = tempDir('site-manage-');
   write(path.join(tmp, 'vault/06 Pages/_technology-groups.md'), '## Tools\n\n| Slug | Label | Featured |\n| --- | --- | --- |\n| astro | Astro | |\n');
-  write(path.join(tmp, 'vault/05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: true\npublished_at: 2026-01-01\ntechnologies: [astro]\n---\nBody\n');
+  write(path.join(tmp, 'vault/05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: true\npublished_at: 2026-01-01\nfeatured: true\nfeatured_order: 1\ntechnologies: [astro]\n---\nBody\n');
   write(path.join(tmp, 'vault/05 Writeups/beta/index.md'), '---\ntitle: Beta\npublished: false\ntechnologies: [unknown]\n---\nBody\n');
-  const dashboard = {
-    ok: true,
-    writeups: [
-      { slug: 'alpha', title: 'Alpha', published: true, featured: true, featured_order: 1, technologies: ['astro'] },
-      { slug: 'beta', title: 'Beta', published: false, featured: false, technologies: ['unknown'] },
-    ],
-    source_fingerprint: 'fixture',
-  };
-  write(path.join(tmp, 'svmc'), `#!/usr/bin/env node\nconsole.log(${JSON.stringify(JSON.stringify(dashboard))});\n`);
-  fs.chmodSync(path.join(tmp, 'svmc'), 0o755);
 });
 
 after(() => fs.rmSync(tmp, { recursive: true, force: true }));
@@ -35,7 +24,7 @@ const manage = (env: Record<string, string>) => spawnSync(process.execPath, ['bi
   cwd: siteRoot,
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'pipe'],
-  env: { ...process.env, VAULT_DIR: path.join(tmp, 'vault'), SVMC_BIN: path.join(tmp, 'svmc'), MANAGE_TUI_COLUMNS: '100', ...env },
+  env: { ...process.env, VAULT_DIR: path.join(tmp, 'vault'), MANAGE_TUI_COLUMNS: '100', ...env },
 });
 
 test('refuses to start without a terminal, naming the non-interactive commands', () => {

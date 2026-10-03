@@ -8,7 +8,7 @@ Phase 1: Syncing Content and Cleaning Caches...
 Phase 2: Running Static Audits and Policy Checks...
   [PASS] Security Signatures (94ms)
   [PASS] WCAG Color Contrast (52ms)
-  [PASS] Vault/MCP/Code Parity (52ms)
+  [PASS] Content Contract Parity (52ms)
   [PASS] Sitedrift Preview Guard (256ms)
   [PASS] Repository Policy (97ms)
   [PASS] Docs Link Integrity (57ms)

@@ -5,6 +5,10 @@ import type { ContentDiff } from '../content-diff.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import type { PreflightCheck } from '../lib/preflight.ts';
 import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
+import type { CspCounts, HeaderCheck, PiiRows, SchemaApply } from '../lib/site-ops.ts';
+import type {
+  FrontmatterResult, LinkResult, PlanResult, PublishReadiness, TagUsage, WriteupDashboard, WriteupListing, writeupContract,
+} from '../lib/writeups/store.ts';
 
 export const EXIT = { ok: 0, failed: 1, usage: 2, preflight: 3, timeout: 4 } as const;
 export type ExitCode = (typeof EXIT)[keyof typeof EXIT];
@@ -137,6 +141,19 @@ export interface DraftAltResult extends Step, ScriptRun {
   applied: boolean;
 }
 
+export type WriteupsResult = Step & WriteupListing & { next: null };
+export type DashboardResult = Step & WriteupDashboard & { next: null };
+export type TagResult = Step & TagUsage & { next: null };
+export type PrepareResult = Step & PublishReadiness;
+export type ApplyPlanResult = Step & PlanResult;
+export type SetResult = Step & FrontmatterResult;
+export type LinkCommandResult = Step & LinkResult;
+export type ContractResult = Step & ReturnType<typeof writeupContract> & { next: null };
+export type ContactResult = Step & PiiRows & { next: null };
+export type CspResult = Step & (({ mode: 'count' } & CspCounts) | ({ mode: 'list' } & PiiRows)) & { next: null };
+export type D1ApplyResult = Step & SchemaApply & { next: null };
+export type HeadersResult = Step & HeaderCheck & { next: null };
+
 // Each command's own fields.
 export interface CommandResults {
   new: NewResult;
@@ -150,6 +167,18 @@ export interface CommandResults {
   tech: TechResult;
   seo: SeoResult;
   'draft-alt': DraftAltResult;
+  writeups: WriteupsResult;
+  dashboard: DashboardResult;
+  tag: TagResult;
+  prepare: PrepareResult;
+  'apply-plan': ApplyPlanResult;
+  set: SetResult;
+  link: LinkCommandResult;
+  contract: ContractResult;
+  contact: ContactResult;
+  csp: CspResult;
+  'd1-apply': D1ApplyResult;
+  headers: HeadersResult;
   // Interactive: it exits from inside the TUI and never prints a result.
   manage: never;
 }

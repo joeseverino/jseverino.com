@@ -3,13 +3,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkContent } from '../content-sync/sync.ts';
-import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { vaultMcp } from '../lib/vault-mcp.ts';
+import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
+import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
-import { parseTechnologyGroups } from '../../src/lib/technology-groups.ts';
 import { EXIT, SiteError, assertSlug, type Output } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
+import { guard } from './writeups.ts';
 import { isoDate } from '../../src/lib/dates.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {
@@ -58,34 +58,11 @@ export async function validate({ slug, draft, out }: { slug: string | undefined;
   return { ...summary, next: slug && !draft ? 'site publish' : null };
 }
 
-// The vault's writeup writer (format-preserving YAML, sequential featured
-// order) is severino-vault-mcp; featured goes through its CLI, pinned to this
-// vault so it never uses the MCP's own default vault.
-interface WriteupListing {
-  featured_order?: FeaturedEntry[];
-  order?: { slug: string; title: string; published: boolean }[];
-}
-
-function svmc(args: string[]): unknown {
-  const result = vaultMcp(args);
-  const detail = result.stderr.trim() || result.stdout.trim() || result.error?.message || '';
-  if (result.error?.code === 'ENOENT' || (result.code !== 0 && /ENOENT|not found/.test(detail))) {
-    throw new SiteError('severino-vault-mcp is not installed', { fix: 'install the vault MCP (uv tool install from its checkout)' });
-  }
-  if (result.code !== 0) throw new SiteError(`severino-vault-mcp ${args[0]} failed: ${detail || `${args.join(' ')} failed`}`);
-  try {
-    return JSON.parse(result.stdout);
-  } catch (error) {
-    throw new SiteError(`severino-vault-mcp ${args[0]} failed: ${(error as Error).message}`);
-  }
-}
-
 const featuredOrder = (): FeaturedListing => {
-  // The MCP's list-writeups --json contract.
-  const listing = svmc(['list-writeups', '--filter', 'featured']) as WriteupListing;
+  const listing = listWriteups(writeupStore(), 'featured');
   return {
-    order: (listing.featured_order ?? []).map(({ slot, slug, title }) => ({ slot, slug, title })),
-    flaggedDrafts: (listing.order ?? []).filter((entry) => !entry.published).map(({ slug, title }) => ({ slug, title })),
+    order: listing.featuredOrder.map(({ slot, slug, title }) => ({ slot: slot ?? 0, slug, title })),
+    flaggedDrafts: listing.order.filter((entry) => !entry.published).map(({ slug, title }) => ({ slug, title })),
   };
 };
 
@@ -119,34 +96,34 @@ function printOrder({ order, flaggedDrafts }: FeaturedListing, out: Output): voi
 
 export async function featured({ slug, target, out }: { slug: string | undefined; target: string | undefined; out: Output }): Promise<FeaturedResult> {
   if (!slug) {
-    const listing = featuredOrder();
+    const listing = await guard(featuredOrder);
     printOrder(listing, out);
     return { ...listing, next: null };
   }
   assertSlug(slug);
   if (!target) throw new SiteError('a target is required', { code: EXIT.usage, fix: `site featured ${slug} <slot|up|down|top|bottom|off>` });
-  const slot = resolveSlot(featuredOrder().order, slug, target);
-  svmc(['reorder-featured', slug, String(slot)]);
+  const slot = resolveSlot((await guard(featuredOrder)).order, slug, target);
+  await guard(() => reorderFeatured(writeupStore(), slug, slot));
   out.ok('moved', slot === 0 ? `${slug} unfeatured` : `${slug} to slot ${slot}`);
-  const listing = featuredOrder();
+  const listing = await guard(featuredOrder);
   printOrder(listing, out);
   return { moved: { slug, slot }, ...listing, next: 'site publish' };
 }
 
 export async function tech({ query, out }: { query: string | undefined; out: Output }): Promise<TechResult> {
-  const file = path.join(vaultRoot(), PAGES_FOLDER, '_technology-groups.md');
-  if (!fs.existsSync(file)) throw new SiteError(`technology catalog not found: ${file}`, { fix: 'set VAULT_DIR to the vault root' });
+  const store = writeupStore();
+  const catalog = await guard(() => technologyCatalog(store));
   const q = (query ?? '').toLowerCase();
-  const groups = parseTechnologyGroups(fs.readFileSync(file, 'utf8'))
+  const groups = catalog.groups
     .map((group) => ({
       name: group.name,
       tags: group.tags.filter((tag) => !q || [tag.slug, tag.label, group.name].some((value) => value.toLowerCase().includes(q))),
     }))
     .filter((group) => group.tags.length > 0);
-  if (groups.length === 0) throw new SiteError(`no catalog match for: ${query}`, { fix: `add a "| slug | Label | |" row to ${file}` });
+  if (groups.length === 0) throw new SiteError(`no catalog match for: ${query}`, { fix: `add a "| slug | Label | |" row to ${catalog.path}` });
   for (const group of groups) {
     out.text(group.name);
     for (const tag of group.tags) out.text(`  ${tag.slug.padEnd(36)}${tag.label}${tag.featured ? '  [featured]' : ''}`);
   }
-  return { catalog: path.relative(vaultRoot(), file), groups, next: null };
+  return { catalog: path.relative(store.vaultRoot, catalog.path), groups, next: null };
 }

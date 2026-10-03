@@ -79,7 +79,7 @@ appears here.
 | `npm run lint:css` | Stylelint over `src/styles/` |
 | `npm run check:security` | security.txt signature, required fields, expiry, WKD file |
 | `npm run check:contrast` | WCAG ratios for every text/background pair in `base.css` |
-| `npm run check:parity` | Vault schema, Zod config, MCP server, and the `site manage` TUI agree on writeup fields |
+| `npm run check:parity` | The content contract, the Astro schema, the writeup store, and the `site manage` TUI agree on writeup fields |
 | `npm run typecheck` | Strict TypeScript over the whole repo (Node program, then the Workers program for `functions/`) |
 | `npm run check:edge` | Contact handler, OpenAPI schema, and D1 schema agree |
 | `npm run check:preview` | Sitedrift wrapping on previews, absent on main |

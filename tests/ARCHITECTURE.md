@@ -98,7 +98,7 @@ Which registry audit runs under which gate, rendered from [`tests/audits/registr
 | No Drafts in the Snapshot | `drafts` | pre-build | ✓ | ✓ | ✓ |  |
 | Security Signatures | `security` | pre-build |  | ✓ | ✓ |  |
 | WCAG Color Contrast | `contrast` | pre-build |  | ✓ | ✓ |  |
-| Vault/MCP/Code Parity (authoring machine only) | `parity` | pre-build |  | ✓ | ✓ |  |
+| Content Contract Parity | `parity` | pre-build |  | ✓ | ✓ |  |
 | TypeScript Type Check | `types` | pre-build | ✓ | ✓ | ✓ |  |
 | Functions/Schema Parity | `edge` | pre-build |  | ✓ | ✓ |  |
 | Sitedrift Preview Guard | `preview` | pre-build |  | ✓ | ✓ |  |
@@ -146,7 +146,7 @@ by `npm run sync:docs`; edit the registry, and this table follows.
 | [No Drafts in the Snapshot](./audits/check-no-drafts.ts) | No document under src/content is `published: false`. | `node tests/audits/check-no-drafts.ts` | A `published: false` document is in src/content, where it would deploy. Re-run `npm run sync:content`; preview drafts with `site dev --drafts`, which writes to the gitignored overlay. |
 | [Security Signatures](./audits/check-security-txt.ts) | `security.txt` is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 30 days out, and its Encryption URL names a committed WKD key. | `npm run check:security` | Run `npm run sign:security` to sign or re-sign `public/.well-known/security.txt` with the security@ key. |
 | [WCAG Color Contrast](./audits/check-contrast.ts) | Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1). | `npm run check:contrast` | The colors come from severino-brand through `npm run sync:tokens` (the token block in `src/styles/tokens.css` is generated): change the color upstream or the pairing in `src/styles/`. Register a new intended pair in `pairs` in `tests/audits/check-contrast.ts`. |
-| [Vault/MCP/Code Parity](./audits/check-vault-mcp-parity.ts) | The content contract, its generated Astro schema, the MCP projection, and the `site manage` TUI agree on one fingerprint. | `npm run check:parity` | Edit `contracts/content.v1.json`, run `npm run sync:contract` (it also writes the projection in the vault MCP checkout), and commit every generated projection in both repos. Never hand-edit a projection. |
+| [Content Contract Parity](./audits/check-contract-parity.ts) | The content contract, its generated Astro schema, the public projection, the writeup store, and the `site manage` TUI agree on one fingerprint. | `npm run check:parity` | Edit `contracts/content.v1.json`, run `npm run sync:contract`, and commit the generated schema. Never hand-edit a projection. |
 | TypeScript Type Check | Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib. | `npm run -s typecheck` | Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib, with Cloudflare-runtime globals declared in `functions/cloudflare.d.ts`. `astro check` covers the .astro files. |
 | [Functions/Schema Parity](./audits/check-functions-parity.ts) | The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines. | `npm run check:edge` | The contact handler, `contracts/contact.openapi.json` (API Shield), and `cloudflare/d1.sql` (D1) disagree on fields, limits, or INSERT columns. Change all three together. |
 | [Sitedrift Preview Guard](./audits/check-sitedrift-preview.ts) | The sitedrift review wrapper is present on preview branches and absent on main. | `npm run check:preview` | The sitedrift wrapper must be present on preview branches and absent on main. Check the build-static sitedrift step and `tests/audits/check-sitedrift-preview.ts`. |
@@ -220,12 +220,12 @@ Signing is a **separate** tool, [`bin/sign-security.ts`](../bin/sign-security.ts
 ### `check-contrast.ts`
 Expands the ordered [`src/styles/base.css`](../src/styles/base.css) entrypoint, reads its `--color-*` declarations, computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
 
-### `check-vault-mcp-parity.ts`
+### `check-contract-parity.ts`
 Asserts that [`contracts/content.v1.json`](../contracts/content.v1.json) is the
-one content-field definition and that its generated Astro schema, MCP package
-projection, contract-derived CLI/tool schemas, and the `site manage` TUI agree on
-the same fingerprint and capabilities. Any stale projection or reintroduced
-hardcoded field table fails the gate.
+one content-field definition and that its generated Astro schema, the public
+projection, the writeup store's editable fields, and the `site manage` TUI agree
+on the same fingerprint. Any stale projection or reintroduced hardcoded field
+table fails the gate.
 
 ### `check-no-drafts.ts`
 No document under `src/content` carries `published: false`. The committed snapshot is what deploys; `site dev --drafts` writes drafts to the gitignored `.cache/drafts` overlay instead.

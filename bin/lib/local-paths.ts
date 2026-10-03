@@ -6,7 +6,6 @@
 //   VAULT_DIR, then NOTES_HOME   Labs vault          ~/Documents/Code/Severino Labs
 //   LIFE_VAULT_DIR               Life vault          ~/Documents/Life
 //   RESUME_ENGINE_DIR            resume-engine       ~/Code/Assets/resume-engine
-//   VAULT_MCP_DIR                severino-vault-mcp  ~/Code/Assets/severino-vault-mcp
 import os from 'node:os';
 import path from 'node:path';
 
@@ -20,4 +19,3 @@ export const vaultRoot = (env = process.env) =>
   pick(env.VAULT_DIR || env.NOTES_HOME, home('Documents', 'Code', 'Severino Labs'));
 export const lifeVaultRoot = (env = process.env) => pick(env.LIFE_VAULT_DIR, home('Documents', 'Life'));
 export const resumeEngineRoot = (env = process.env) => pick(env.RESUME_ENGINE_DIR, home('Code', 'Assets', 'resume-engine'));
-export const vaultMcpRoot = (env = process.env) => pick(env.VAULT_MCP_DIR, home('Code', 'Assets', 'severino-vault-mcp'));

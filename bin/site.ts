@@ -8,6 +8,7 @@ import type { parseArgs, ParseArgsOptionsConfig } from 'node:util';
 import { parse } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
 import { EXIT, SiteError, createOutput, type Output } from './site/cli.ts';
+import { collectionFields } from '../src/lib/content-contract.ts';
 import type { CommandName, CommandResults, SiteFailure, SiteHelp, SiteSuccessOf } from './site/types.ts';
 
 type Values<O extends ParseArgsOptionsConfig> =
@@ -39,6 +40,28 @@ const define = <const O extends ParseArgsOptionsConfig, R>(
 
 const authoring = () => import('./site/authoring.ts');
 const local = () => import('./site/local.ts');
+const writeupOps = () => import('./site/writeups.ts');
+const siteOps = () => import('./site/ops.ts');
+
+// `site set` flags: each contract field with a cli_flag, plus published.
+const SET_FIELDS = Object.entries(collectionFields('writeups'))
+  .filter(([, spec]) => spec.editable === true && spec.cli_flag)
+  .map(([name, spec]) => [name, (spec.cli_flag as string).replace(/^--/, '')] as const);
+const SET_OPTIONS = {
+  ...Object.fromEntries(SET_FIELDS.map(([, flag]) => [flag, { type: 'string' as const }])),
+  published: { type: 'string' as const },
+  'touch-last-reviewed': { type: 'boolean' as const, default: false },
+} satisfies ParseArgsOptionsConfig;
+
+function setFields(values: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  for (const [name, flag] of SET_FIELDS) if (typeof values[flag] === 'string') fields[name] = values[flag];
+  if (values.published !== undefined) {
+    if (values.published !== 'true' && values.published !== 'false') throw new SiteError('--published must be true or false', { code: EXIT.usage });
+    fields.published = values.published === 'true';
+  }
+  return fields;
+}
 
 const minutes = (value: string, name: string): number => {
   const n = Number(value);
@@ -124,7 +147,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   featured: define({
     summary: 'Show the home-page featured order, or move one writeup (renumbers 1..N)',
     usage: 'site featured [<slug> <slot|up|down|top|bottom|off>]',
-    help: 'Writes vault frontmatter through severino-vault-mcp. The new order ships on the next site publish.',
+    help: 'Rewrites the featured writeups\' frontmatter in one transaction. The new order ships on the next site publish.',
     positionals: [0, 2],
     run: async ({ positionals: [slug, target], out }) => (await authoring()).featured({ slug, target, out }),
   }),
@@ -145,10 +168,106 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   'draft-alt': define({
     summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
     usage: 'site draft-alt <slug> [--apply]',
-    help: 'Needs ANTHROPIC_API_KEY. --apply writes the draft to the vault through severino-vault-mcp.',
+    help: 'Needs ANTHROPIC_API_KEY. --apply writes the draft to the writeup\'s cover_alt.',
     options: { apply: { type: 'boolean', default: false } },
     positionals: [1, 1],
     run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, apply: values.apply, out }),
+  }),
+  writeups: define({
+    summary: 'List the vault\'s writeups with publish and featured state',
+    usage: 'site writeups [--filter all|published|draft|featured]',
+    help: 'featured sorts by featured_order, the order the home page renders.',
+    options: { filter: { type: 'string', default: 'all' } },
+    run: async ({ values, out }) => (await writeupOps()).writeups({ filter: values.filter, out }),
+  }),
+  dashboard: define({
+    summary: 'Every writeup, the featured order, and the draft gate in one read',
+    usage: 'site dashboard',
+    help: 'sourceFingerprint identifies the state read; pass it as source_fingerprint in an apply-plan so a stale plan is refused.',
+    run: async ({ out }) => (await writeupOps()).showDashboard({ out }),
+  }),
+  tag: define({
+    summary: 'Which writeups use a technology slug (and how many are published)',
+    usage: 'site tag <slug>',
+    help: 'A tag earns a featured slot on the home page only when a published writeup uses it.',
+    positionals: [1, 1],
+    run: async ({ positionals: [slug = ''], out }) => (await writeupOps()).tag({ slug, out }),
+  }),
+  prepare: define({
+    summary: 'Publish readiness for one writeup: the ship gate plus its featured slot',
+    usage: 'site prepare <slug> [--tag-usage]',
+    help: '--tag-usage adds how many writeups use each of its technologies.',
+    options: { 'tag-usage': { type: 'boolean', default: false } },
+    positionals: [1, 1],
+    run: async ({ values, positionals: [slug = ''], out }) => (await writeupOps()).prepareWriteup({ slug, tagUsage: values['tag-usage'], out }),
+  }),
+  'apply-plan': define({
+    summary: 'Apply field updates and the complete featured order in one transaction',
+    usage: 'site apply-plan [--file <plan.json>]',
+    help: [
+      'Reads the plan from --file or stdin:',
+      '  { "updates": [{ "slug": "...", "<field>": value }], "featured_order": ["slug", ...], "source_fingerprint": "..." }',
+      'Fields are the contract\'s editable ones (site contract). Every file is staged first; any failure rolls back.',
+    ].join('\n'),
+    options: { file: { type: 'string' } },
+    run: async ({ values, out }) => (await writeupOps()).applyWriteupPlan({ file: values.file, out }),
+  }),
+  set: define({
+    summary: 'Set editable frontmatter fields on one writeup',
+    usage: `site set <slug> ${SET_FIELDS.map(([, flag]) => `[--${flag} <value>]`).join(' ')} [--published true|false] [--touch-last-reviewed]`,
+    help: 'Rewrites only the changed lines; every other byte of the file is kept. Featured order is site featured.',
+    options: SET_OPTIONS,
+    positionals: [1, 1],
+    run: async ({ values, positionals: [slug = ''], out }) => (await writeupOps()).set({
+      slug, fields: setFields(values), touchLastReviewed: values['touch-last-reviewed'], out,
+    }),
+  }),
+  link: define({
+    summary: 'Replace one exact Markdown link in a writeup body',
+    usage: 'site link <slug> --label <text> --from <url> --to <url>',
+    help: 'Exactly one [label](from) must match; both URLs must be absolute http(s).',
+    options: { label: { type: 'string' }, from: { type: 'string' }, to: { type: 'string' } },
+    positionals: [1, 1],
+    run: async ({ positionals: [slug = ''], values: { label, from, to }, out }) => (await writeupOps()).link({ slug, label, from, to, out }),
+  }),
+  contract: define({
+    summary: 'The writeup field contract and its fingerprint',
+    usage: 'site contract',
+    help: 'contracts/content.v1.json: the fields an editor or client may read and write.',
+    run: async ({ out }) => (await writeupOps()).contract({ out }),
+  }),
+  contact: define({
+    summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
+    usage: 'site contact [--limit <n>] [--pii]',
+    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii returns full names, emails, and messages and is written to the audit log.',
+    options: { limit: { type: 'string' }, pii: { type: 'boolean', default: false } },
+    run: async ({ values, out }) => (await siteOps()).contact({ limit: values.limit, pii: values.pii, out }),
+  }),
+  csp: define({
+    summary: 'CSP violation reports from D1: recent rows, or counts by directive',
+    usage: 'site csp [--count] [--limit <n>] [--directive <name>] [--pii]',
+    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
+    options: {
+      count: { type: 'boolean', default: false },
+      limit: { type: 'string' },
+      directive: { type: 'string' },
+      pii: { type: 'boolean', default: false },
+    },
+    run: async ({ values, out }) => (await siteOps()).csp({ count: values.count, limit: values.limit, directive: values.directive, pii: values.pii, out }),
+  }),
+  'd1-apply': define({
+    summary: 'Apply cloudflare/d1.sql to the remote D1 database (needs --confirm)',
+    usage: 'site d1-apply --confirm',
+    help: 'The schema is CREATE ... IF NOT EXISTS, so it only adds. Needs CLOUDFLARE_API_TOKEN (op run).',
+    options: { confirm: { type: 'boolean', default: false } },
+    run: async ({ values, out }) => (await siteOps()).d1Apply({ confirm: values.confirm, out }),
+  }),
+  headers: define({
+    summary: 'Check the live security headers on one path',
+    usage: 'site headers [<path>]',
+    help: 'HEAD against the production origin (SITE_ORIGIN overrides), redirects not followed.',
+    positionals: [0, 1],
+    run: async ({ positionals: [pathname], out }) => (await siteOps()).headers({ path: pathname, out }),
   }),
   manage: define({
     summary: 'Interactive writeup manager: featured order, publish state, gate issues (needs a terminal)',
