@@ -5,7 +5,7 @@
 //
 // Usage:
 //   node bin/draft-cover-alt.ts <slug>
-//   node bin/draft-cover-alt.ts <slug> --apply        # write through MCP
+//   node bin/draft-cover-alt.ts <slug> --apply        # write cover_alt to the writeup
 //   node bin/draft-cover-alt.ts --all                 # draft for every published writeup missing alt
 //
 // Requires ANTHROPIC_API_KEY in the environment.
@@ -15,6 +15,7 @@ import path from 'node:path';
 import { WRITEUPS_FOLDER, vaultRoot as vaultRootFor } from './lib/local-paths.ts';
 import { parseFrontmatter } from '../src/lib/frontmatter.ts';
 import { cli } from './lib/args.ts';
+import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
 
 const vaultRoot = vaultRootFor();
 const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);
@@ -120,13 +121,9 @@ async function draftFor(slug: string): Promise<Draft> {
   return { slug, draft };
 }
 
-async function applyViaMcp(slug: string, draft: string): Promise<void> {
-  // The MCP CLI doesn't expose update_writeup_frontmatter directly from the
-  // shell, so writing through MCP requires Claude Code. This script prints
-  // the call shape the operator can paste into a Claude session.
-  console.log(`\n# To apply via MCP, paste into Claude Code:`);
-  const escaped = draft.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  console.log(`# mcp__severino-vault-mcp__update_writeup_frontmatter(slug="${slug}", cover_alt="${escaped}")`);
+function applyDraft(slug: string, draft: string): void {
+  const result = updateFrontmatter(writeupStore(), slug, { cover_alt: draft });
+  console.log(result.noOp ? `unchanged ${slug}: cover_alt already matches` : `applied  ${slug}: cover_alt`);
 }
 
 const slugsToProcess: string[] = [];
@@ -151,5 +148,5 @@ for (const target of slugsToProcess) {
   }
   console.log(`\n${target}`);
   console.log(`  ${result.draft}`);
-  if (apply) await applyViaMcp(target, result.draft);
+  if (apply) applyDraft(target, result.draft);
 }

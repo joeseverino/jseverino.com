@@ -121,7 +121,6 @@ The sync and the local-only audits find the vaults and sibling repos through [`b
 | Labs vault | `VAULT_DIR`, then `NOTES_HOME` | `~/Documents/Code/Severino Labs` |
 | Life vault | `LIFE_VAULT_DIR` | `~/Documents/Life` |
 | resume-engine | `RESUME_ENGINE_DIR` | `~/Code/Assets/resume-engine` |
-| severino-vault-mcp | `VAULT_MCP_DIR` | `~/Code/Assets/severino-vault-mcp` |
 
 ## Cloudflare Build Boundary
 

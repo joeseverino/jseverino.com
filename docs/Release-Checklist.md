@@ -220,13 +220,10 @@ Confirm:
 Browser-extension errors, including AdGuard content script messages, are not site
 release failures unless they reproduce with extensions disabled.
 
-**Structured check via the vault MCP.** From a Claude Code session, call the
-[`check_jseverino_security_headers`](https://github.com/joeseverino/severino-vault-mcp)
-tool on the local [`severino-vault-mcp`](https://github.com/joeseverino/severino-vault-mcp)
-server. It returns the same headers as a structured JSON response with named
-pass/fail booleans (`has_csp`, `no_unsafe_inline_script`, `has_csp_report_to`,
-`has_csp_report_uri`, `has_reporting_endpoints`) in place of the `curl` parse
-above.
+**Structured check.** `site headers / --json` returns the same headers as a
+structured result with named pass/fail checks (`hasCsp`, `noUnsafeInlineScript`,
+`hasCspReportTo`, `hasCspReportUri`, `hasReportingEndpoints`) in place of the
+`curl` parse above, and exits non-zero when any check fails.
 
 **HAR audit (deep verification).** The MCP check confirms response headers
 arrive. A HAR audit confirms that those headers do not break a real browser

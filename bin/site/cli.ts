@@ -29,6 +29,20 @@ export class SiteError extends Error {
   }
 }
 
+// A library's own error type as a SiteError; anything else propagates.
+export async function translate<T, E extends Error>(
+  work: () => T | Promise<T>,
+  type: abstract new (...args: never[]) => E,
+  toSiteError: (error: E) => SiteError,
+): Promise<T> {
+  try {
+    return await work();
+  } catch (error) {
+    if (error instanceof type) throw toSiteError(error);
+    throw error;
+  }
+}
+
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function assertSlug(slug: string | undefined): string {

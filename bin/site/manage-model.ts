@@ -1,13 +1,13 @@
 // site manage's state: the writeup rows and staged edits, the Site tab's
-// status, and the commands that read them (severino-vault-mcp, the gate
-// check, git). Nothing here draws or reads keys.
+// status, and what reads them (the writeup store, the gate check, git).
+// Nothing here draws or reads keys.
 import { statSync } from 'node:fs';
 import path from 'node:path';
 import { GREEN, RED, RESET, YELLOW } from './tui.ts';
 import { DEV_PORT, isListening } from './dev-server.ts';
 import { WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { spawnResult, type SpawnOptions, type SpawnResult } from '../lib/run.ts';
-import { vaultMcp } from '../lib/vault-mcp.ts';
+import { WriteupError, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -24,29 +24,6 @@ interface RunOutcome {
   error: string;
 }
 
-// The JSON documents severino-vault-mcp and `sync-content --check` print.
-interface WriteupSummary {
-  slug: string;
-  title?: string;
-  published?: boolean;
-  featured?: boolean;
-  featured_order?: number;
-  [field: string]: unknown;
-}
-
-export interface McpDocument {
-  ok?: boolean;
-  error?: { message?: string } | string;
-  writeups?: WriteupSummary[];
-  source_fingerprint?: string;
-  // apply-writeup-plan: set when a staged write failed and was undone.
-  rolled_back?: boolean;
-}
-
-interface JsonOutcome extends RunOutcome {
-  json: McpDocument | null;
-}
-
 function outcome(proc: SpawnResult): RunOutcome {
   const ok = proc.code === 0 && !proc.error;
   return { ok, stdout: proc.stdout, stderr: proc.stderr, error: proc.error?.message || (ok ? '' : (proc.stderr || proc.stdout).trim()) };
@@ -55,21 +32,15 @@ function outcome(proc: SpawnResult): RunOutcome {
 const run = (bin: string, args: readonly string[], options: Pick<SpawnOptions, 'stdio'> = {}): RunOutcome =>
   outcome(spawnResult(bin, args, { cwd: siteRoot, ...options }));
 
-function json(result: RunOutcome): JsonOutcome {
-  if (!result.ok) return { ...result, json: null };
+// The writeup snapshot, or a load failure the TUI shows instead of crashing.
+export function loadSnapshot(): WriteupDashboard {
   try {
-    const parsed: McpDocument | null = JSON.parse(result.stdout || 'null');
-    if (parsed?.ok === false) {
-      const error = typeof parsed.error === 'string' ? parsed.error : parsed.error?.message ?? parsed.error ?? 'failed';
-      return { ...result, ok: false, json: parsed, error: String(error) };
-    }
-    return { ...result, json: parsed };
+    return snapshot(writeupStore());
   } catch (error) {
-    return { ...result, ok: false, json: null, error: `invalid JSON: ${(error as Error).message}` };
+    if (error instanceof WriteupError) fail(`could not load the writeups: ${error.message}`);
+    throw error;
   }
 }
-
-export const mcp = (args: readonly string[], input?: string): JsonOutcome => json(outcome(vaultMcp(args, { input })));
 
 // The gate issues `site validate --draft` reports, per writeup slug. error
 // names why there is no report, so a broken check never reads as "no issues".
@@ -89,7 +60,7 @@ function gateIssues(): { issues: Map<string, string[]>; error: string | null } {
 }
 
 function fail(message: string): never {
-  throw new SiteError(message, { fix: 'check that severino-vault-mcp is installed and the vault is reachable' });
+  throw new SiteError(message, { fix: 'check that the vault is reachable (VAULT_DIR)' });
 }
 
 function camelKey(value: string): string {
@@ -172,11 +143,12 @@ function configureFields(): Record<string, FieldSpec> {
   return fields;
 }
 
-function toItem(w: WriteupSummary, contractFields: Record<string, FieldSpec>): Item {
+function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: Record<string, FieldSpec>): Item {
+  const source: Record<string, unknown> = w;
   const fields: Record<string, unknown> = {};
   for (const [name, spec] of Object.entries(contractFields)) {
     const fallback = 'default' in spec ? structuredClone(spec.default) : '';
-    fields[camelKey(name)] = w[name] ?? fallback;
+    fields[camelKey(name)] = source[name] ?? fallback;
   }
   return {
     slug: w.slug,
@@ -268,10 +240,9 @@ export function loadSiteStatus(): SiteStatus {
 }
 
 export function load(): Model {
-  const res = mcp(['writeup-dashboard']);
-  if (!res.ok) fail('could not load the writeup dashboard: ' + (res.error || 'is severino-vault-mcp on PATH?'));
+  const loaded = loadSnapshot();
   const contractFields = configureFields();
-  const summaries = res.json?.writeups || [];
+  const summaries = loaded.writeups;
   const featured = summaries
     .filter((w) => w.featured)
     .sort(
@@ -301,7 +272,7 @@ export function load(): Model {
     origPublished: new Map(items.map((i) => [i.slug, i.published])),
     siteStatus: null,
     actionCursor: 0,
-    sourceFingerprint: res.json?.source_fingerprint || '',
+    sourceFingerprint: loaded.sourceFingerprint,
   };
 }
 
@@ -418,8 +389,10 @@ export function createWriteup(model: Model, slug: string): boolean {
     return false;
   }
   // Pull the scaffold's real frontmatter so the detail view edits the truth.
-  const dashboard = mcp(['writeup-dashboard']);
-  const summary = dashboard.ok ? (dashboard.json?.writeups || []).find((w) => w.slug === slug) : null;
+  let summary: WriteupSummary | undefined;
+  try {
+    summary = snapshot(writeupStore()).writeups.find((w) => w.slug === slug);
+  } catch {}
   const contractFields = collectionFields('writeups');
   const item = toItem(summary ?? { slug, title: slug, published: false }, contractFields);
   model.items.push(item);

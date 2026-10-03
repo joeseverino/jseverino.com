@@ -13,7 +13,7 @@ on failure and deletes it on success. See ../../ARCHITECTURE.md#1-the-gate-ladde
 | :--- | :--- | :--- | :--- |
 | **Security Signatures** | ✅ PASS | 83ms | Run `npm run sign:security` to sign or re-sign `public/.well-known/security.txt` with the security@ key. |
 | **WCAG Color Contrast** | ✅ PASS | 52ms | Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.ts`. |
-| **Vault/MCP/Code Parity** | ✅ PASS | 53ms | Ensure the vault frontmatter schema (`Frontmatter Schema.md`), Zod schema (`src/content.config.ts`), and the Python MCP server parameters agree on all fields. |
+| **Content Contract Parity** | ✅ PASS | 53ms | The content contract, its generated Astro schema, the public projection, the writeup store, and the `site manage` TUI agree on one fingerprint. |
 | **Sitedrift Preview Guard** | ✅ PASS | 211ms | Check `tests/audits/check-sitedrift-preview.ts`. SiteDrift proxy wrapping must be active on feature branches and absent on main. |
 | **Repository Policy** | ✅ PASS | 88ms | Align the Node pin (.nvmrc, engines, packageManager), lockfile dependencies, or commit hashes for GitHub Actions. |
 | **Docs Link Integrity** | ❌ FAIL | 68ms | A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target. |

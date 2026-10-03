@@ -1,7 +1,7 @@
 // site manage: every writeup on one screen. Reorder the featured list,
 // feature/unfeature, publish/unpublish, scaffold a writeup, edit frontmatter.
 // Changes stage locally and are written on save in one transactional plan
-// through severino-vault-mcp, the vault's writer. Gate issues come from the
+// through the writeup store (bin/lib/writeups/store.ts). Gate issues come from the
 // same check `site validate` runs. The one interactive command: it refuses to
 // start without a terminal. The model is in ./manage-model.ts, the frames in
 // ./manage-render.ts, dev-server control in ./dev-server.ts; this file reads
@@ -17,12 +17,13 @@ import {
 } from './tui.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
 import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
 import { DEV_PORT, isListening, listeners, startDevServer, stopDevServer, type StartedServer } from './dev-server.ts';
 import {
-  FIELDS, SITE, createWriteup, current, currentField, diff, fieldValue, hasStaged, load, loadSiteStatus, mcp, moveCursor, moveItem,
-  reload, toggleFeatured, togglePublished, type McpDocument, type Model, type Tab,
+  FIELDS, SITE, createWriteup, current, currentField, diff, fieldValue, hasStaged, load, loadSiteStatus, moveCursor, moveItem,
+  reload, toggleFeatured, togglePublished, type Model, type Tab,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, drawTabBar, listFrame, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
 
@@ -177,11 +178,13 @@ function draw(model: Model): void {
   process.stdout.write('\x1b[H\x1b[2J' + fitFrame(currentFrame(model), terminalColumns(), terminalRows()));
 }
 
-// What a failed save left in the vault, from what severino-vault-mcp reported.
-function saveFailure(report: McpDocument | null): string {
-  if (report?.rolled_back) return 'a staged write failed and was rolled back; nothing was written';
-  if (report) return 'the plan was refused before any write; nothing was written';
-  return 'severino-vault-mcp reported no result; check the vault with git status before saving again';
+// What a failed save left in the vault.
+function saveFailure(error: unknown): string {
+  if (!(error instanceof WriteupError)) return 'the save stopped unexpectedly; check the vault with git status before saving again';
+  if (error.code !== 'transaction_failed') return 'the plan was refused before any write; nothing was written';
+  return error.details.rolled_back === false
+    ? 'a staged write failed and could not be fully rolled back; check the vault with git status'
+    : 'a staged write failed and was rolled back; nothing was written';
 }
 
 function apply(model: Model): number {
@@ -193,12 +196,12 @@ function apply(model: Model): number {
 
   const today = isoDate();
   const touched = new Set([...publishFlips, ...fieldEdits].map((i) => i.slug));
-  const updates: Record<string, unknown>[] = [];
+  const updates: ({ slug: string } & Record<string, unknown>)[] = [];
   const labels: string[] = [];
   for (const slug of touched) {
     const item = model.items.find((i) => i.slug === slug);
     if (!item) continue;
-    const update: Record<string, unknown> = { slug };
+    const update: { slug: string } & Record<string, unknown> = { slug };
     const what: string[] = [];
     for (const f of FIELDS) {
       if (f.flag && f.key in item.edits) {
@@ -217,7 +220,7 @@ function apply(model: Model): number {
     labels.push(`${slug}: ${what.join(', ')}`);
   }
 
-  const plan: { updates: Record<string, unknown>[]; source_fingerprint: string; featured_order?: string[] } = {
+  const plan: WriteupPlan = {
     updates,
     source_fingerprint: model.sourceFingerprint,
   };
@@ -226,11 +229,11 @@ function apply(model: Model): number {
     labels.push('featured order');
   }
 
-  const result = mcp(['apply-writeup-plan'], JSON.stringify(plan));
-  if (!result.ok) {
-    const reason = result.error || 'failed';
-    process.stdout.write(`  ${RED}✗${RESET} transactional save failed: ${reason}\n`);
-    process.stdout.write(`${RED}${saveFailure(result.json)}${RESET}\n`);
+  try {
+    applyPlan(writeupStore(), plan);
+  } catch (error) {
+    process.stdout.write(`  ${RED}✗${RESET} transactional save failed: ${(error as Error).message}\n`);
+    process.stdout.write(`${RED}${saveFailure(error)}${RESET}\n`);
     return 1;
   }
   for (const label of labels) {

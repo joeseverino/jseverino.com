@@ -64,6 +64,18 @@ a usage error (exit 2, with the JSON error document).
 | `site tech [<query>]` | Search the technology catalog |
 | `site seo <page> [--result]` | Search-snippet preview from the last build |
 | `site draft-alt <slug> [--apply]` | Draft `cover_alt` from the cover image (Claude API) |
+| `site writeups [--filter all\|published\|draft\|featured]` | Every writeup with its publish and featured state |
+| `site dashboard` | Every writeup, the featured order, the draft gate, and the `sourceFingerprint` a plan is checked against |
+| `site tag <slug>` | Which writeups use a technology slug, and how many are published |
+| `site prepare <slug> [--tag-usage]` | Publish readiness for one writeup: the ship gate plus its featured slot |
+| `site apply-plan [--file <plan.json>]` | Field updates and the complete featured order in one transaction (plan on stdin or `--file`) |
+| `site set <slug> [--<field> <value>...] [--published true\|false] [--touch-last-reviewed]` | Set editable frontmatter fields; the flags come from the content contract |
+| `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
+| `site contract` | The writeup field contract and its fingerprint |
+| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited) |
+| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1, or counts by directive |
+| `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
+| `site headers [<path>]` | Live security headers on one path, with named pass/fail checks |
 | `site manage` | The interactive manager (below) |
 
 The everyday loop: `site new`, write, `site validate <slug> --draft`, set
@@ -90,12 +102,16 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 | :--- | :--- | :--- |
 | npm scripts | build, audits, tests | `npm run diagnose`, `npm run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
-| `severino-vault-mcp` | vault frontmatter writes with gate guarantees | `reorder-featured`, `apply-writeup-plan` |
+| [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
+| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads, the schema apply, header checks | `contactSubmissions`, `checkSecurityHeaders` |
 
-Anything that writes writeup frontmatter (featured order, publish flags, field
-edits in `site manage`) goes through the vault MCP's code path: sequential
-`1..N` featured order and format-preserving YAML edits. The repo never writes
-the vault except `site new`, which copies the template.
+Every write to writeup frontmatter (featured order, publish flags, field edits
+in `site manage`, `site set`, `site featured`) goes through the writeup store:
+format-preserving line edits, a sequential `1..N` featured order, and an
+all-or-nothing transaction with rollback. The store and the site operations are
+typed functions with no console output and injected paths, so other callers
+(HQ) can import them or drive the same commands with `--json`. The repo writes
+the vault only through the store and `site new`, which copies the template.
 
 ## `site manage`: the TUI
 
@@ -157,10 +173,12 @@ server on the port that this session did not start is named and left running.
 ## Configuration
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
-(`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `VAULT_MCP_DIR`).
+(`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`).
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts`; `build:static` accepts only a
 tree under `tests/fixtures` or that overlay), `SITE_JSON=1` switches Astro
-to JSON logs (set by `--json`), and `SVMC_BIN` names the vault MCP binary
-(default `severino-vault-mcp`).
+to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
+(default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`
+(default `~/.local/state/jseverino.com/audit.log`), and `CLOUDFLARE_API_TOKEN`
+from the environment (`op run`).
