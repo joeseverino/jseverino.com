@@ -33,7 +33,7 @@ import {
 } from '../src/lib/edge-expectations.ts';
 import { cli as parseCli } from './lib/args.ts';
 import { git } from './lib/git.ts';
-import { awaitChecks, openCodeScanningAlerts, passed } from './lib/github.ts';
+import { awaitChecks, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { runSync, status } from './lib/run.ts';
 import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
@@ -56,14 +56,13 @@ const onTarget = (url: string): string => {
   return `${origin}${pathname}${search}`;
 };
 
-const requiredChecks = new Set([
-  'build',
-  'e2e',
-  'visual',
-  'edge',
-  'analyze javascript-typescript',
+// The main ruleset's required checks, less the ones that only run on pull
+// requests, plus the Pages build itself.
+const PULL_REQUEST_ONLY = new Set(['dependency-review']);
+const requiredChecks = (): string[] => [...new Set([
+  ...requiredContexts(repository, 'main').filter((name) => !PULL_REQUEST_ONLY.has(name)),
   'Cloudflare Pages',
-]);
+])];
 
 const results: { name: string; ok: Outcome; detail: string }[] = [];
 
@@ -105,7 +104,8 @@ async function waitForChecks(sha: string): Promise<string> {
 }
 
 async function pollChecks(sha: string, deadline: number, started: number, report: (line: string) => void): Promise<string> {
-  const checks = await awaitChecks(repository, sha, [...requiredChecks], {
+  const names = requiredChecks();
+  const checks = await awaitChecks(repository, sha, names, {
     deadline,
     onPending: ({ missing, pending }) => report(
       `waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`,
@@ -116,7 +116,7 @@ async function pollChecks(sha: string, deadline: number, started: number, report
   if (failed.length > 0) {
     throw new Error(`remote checks failed: ${failed.map((check) => `${check.name}=${check.conclusion}`).join(', ')}`);
   }
-  return `${requiredChecks.size} required checks passed after ${Math.round((Date.now() - started) / 1000)}s`;
+  return `${names.length} required checks passed after ${Math.round((Date.now() - started) / 1000)}s`;
 }
 
 async function verifyHeaders(pathname: string): Promise<void> {
