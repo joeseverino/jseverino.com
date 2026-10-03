@@ -1,20 +1,22 @@
-# Cloudflare Pages redirects — see https://developers.cloudflare.com/pages/configuration/redirects/
+# Cloudflare Pages redirects: https://developers.cloudflare.com/pages/configuration/redirects/
 # Format:  <source>  <destination>  [<status>]
 #
 # Note: Pages only supports 3xx (redirect) and 200 (rewrite) statuses here.
-# To make a path return 404, just leave it unmatched and rely on the
+# To make a path return 404, leave it unmatched and rely on the
 # `404.html` file at the site root, which Pages auto-serves with status 404.
 
-# WordPress admin paths — redirect home (admin doesn't exist on the static surface).
+# WordPress admin paths redirect home; there is no admin on a static site.
+# Superseded by the scanner-noise WAF rule in cloudflare/zone.json: once it is
+# live, `npm run cloudflare:check` flags these lines for deletion.
 /wp-admin/*          /                                   302
 /wp-login.php        /                                   302
 
-# WordPress legacy taxonomy URL — the old /category/portfolio/ archive is now /portfolio/.
+# WordPress taxonomy URL: the old /category/portfolio/ archive is /portfolio/.
 /category/portfolio/   /portfolio/                       301
 
-# Renamed writeup slug (2026-06-10) — keep the old URL and its assets alive.
+# Renamed writeup slug (2026-06-10): the old URL and its assets still resolve.
 /portfolio/building-local-dns-filtering-with-adguard-home-and-docker-engine/    /portfolio/building-local-dns-filtering/    301
 /assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/*    /assets/writeups/building-local-dns-filtering/:splat    301
 
-# Resume PDF moved to kebab-case; single-source pipeline renders it (2026-07-11).
+# Resume PDF renamed to kebab-case (2026-07-11).
 /assets/docs/Joseph_Severino_Resume.pdf  /assets/docs/joseph-severino-resume.pdf  301

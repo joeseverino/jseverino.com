@@ -9,8 +9,9 @@
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
 
-# Unversioned files (resume PDF, signed docs) — short cache so an update
+# Unversioned files (resume PDF, signed docs): short cache so an update
 # propagates within an hour instead of riding the immutable rule below.
 /assets/docs/*
   Cache-Control: public, max-age=3600, must-revalidate
@@ -22,6 +23,7 @@
 /favicon.ico
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
 
 /assets/icons/*
   Cache-Control: public, max-age=3600, must-revalidate
@@ -50,7 +52,7 @@
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin
 
-# WKD key serving — explicit content-type since the binary key file has no
+# WKD key: explicit content-type since the binary key file has no
 # extension, and a short cache so revocations propagate within minutes.
 /.well-known/openpgpkey/*
   Content-Type: application/octet-stream
@@ -67,10 +69,43 @@ https://:project.pages.dev/*
 https://:version.:project.pages.dev/*
   X-Robots-Tag: noindex
 
+# Static CSP for every path public/_routes.json excludes from Functions.
+# Those responses skip the middleware, and a miss under an excluded prefix
+# gets that prefix's own 404.html (bin/build-static.ts writes it: no script,
+# no style). /_astro/* and /favicon.ico carry theirs in the cache rules above:
+# a path listed twice keeps only its last block. tests/audits/check-routes.ts
+# keeps the excludes covered and every path listed once.
+/assets/*
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/embed/*
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/schemas/*
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/.well-known/*
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/robots.txt
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/sitemap-index.xml
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/sitemap-0.xml
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/feed.xml
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
+/content-index.json
+  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+
 # Security headers for every route.
-# Content-Security-Policy is issued per-request (with a nonce) by
-# functions/_middleware.ts for HTML responses. No static CSP fallback is set
-# here — Pages Functions middleware runs on every HTML response.
+# Content-Security-Policy for HTML routes is issued per request (with a nonce)
+# by functions/_middleware.ts; public/_routes.json keeps every HTML route on
+# Functions (tests/audits/check-routes.ts).
 # Strict-Transport-Security is set at the Cloudflare zone level (SSL/TLS →
 # Edge Certificates → HSTS) so it applies to every response without being
 # duplicated here.

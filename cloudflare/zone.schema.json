@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jseverino.com/cloudflare/zone.schema.json",
+  "title": "Cloudflare zone desired state",
+  "description": "The zone and account posture bin/cloudflare.ts checks and applies. No account or zone IDs: both resolve at runtime from the zone name. See docs/Cloudflare.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["zone", "owner", "settings", "hsts", "dnssec", "firewall", "rateLimit", "pagesDevRedirect", "pages", "schemaValidation", "turnstile"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "zone": { "description": "Zone name; the zone and its account are looked up by it.", "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]+$" },
+    "owner": {
+      "description": "Ownership tag. Rules whose ref starts with '<owner>-' belong to this file; apply never edits or deletes any other rule.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "settings": {
+      "description": "Zone settings by API setting id (PATCH /zones/:zone/settings/:id).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_tls_version", "tls_1_3", "always_use_https", "http3", "0rtt", "speed_brain", "rocket_loader", "email_obfuscation", "server_side_exclude", "automatic_https_rewrites", "browser_cache_ttl", "brotli"],
+      "properties": {
+        "min_tls_version": { "enum": ["1.0", "1.1", "1.2", "1.3"] },
+        "tls_1_3": { "enum": ["on", "off", "zrt"] },
+        "always_use_https": { "$ref": "#/$defs/toggle" },
+        "http3": { "$ref": "#/$defs/toggle" },
+        "0rtt": { "$ref": "#/$defs/toggle" },
+        "speed_brain": { "description": "Off: speculation is useless for Function-rendered HTML and conflicts with a nonce CSP.", "$ref": "#/$defs/toggle" },
+        "rocket_loader": { "description": "Off: rewrites script tags, which breaks the nonce CSP.", "$ref": "#/$defs/toggle" },
+        "email_obfuscation": { "description": "Off: injects a decoder script into HTML.", "$ref": "#/$defs/toggle" },
+        "server_side_exclude": { "description": "Off: rewrites HTML.", "$ref": "#/$defs/toggle" },
+        "automatic_https_rewrites": { "description": "Off: rewrites HTML; every URL is already https.", "$ref": "#/$defs/toggle" },
+        "hotlink_protection": { "description": "Off: Cross-Origin-Resource-Policy already covers it.", "$ref": "#/$defs/toggle" },
+        "browser_cache_ttl": { "description": "0 respects the origin's Cache-Control, so public/_headers decides browser TTLs.", "type": "integer", "minimum": 0 },
+        "brotli": { "$ref": "#/$defs/toggle" }
+      }
+    },
+    "hsts": {
+      "description": "The security_header setting's strict_transport_security block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "max_age", "include_subdomains", "preload"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "max_age": { "type": "integer", "minimum": 0 },
+        "include_subdomains": { "type": "boolean" },
+        "preload": { "description": "Pending a decision; preload is hard to undo.", "type": "boolean" }
+      }
+    },
+    "dnssec": { "enum": ["active", "disabled"] },
+    "firewall": {
+      "description": "WAF custom rules (phase http_request_firewall_custom). The free plan allows 5; keep one free for incidents.",
+      "type": "array",
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "rateLimit": {
+      "description": "The free plan's one rate-limiting rule (phase http_ratelimit): path and verified-bot fields, per IP and colo, 10 s period and block.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "expression", "action", "characteristics", "period", "requests_per_period", "mitigation_timeout"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description": { "type": "string", "minLength": 1 },
+        "expression": { "type": "string", "minLength": 1 },
+        "action": { "const": "block" },
+        "characteristics": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "period": { "const": 10 },
+        "requests_per_period": { "type": "integer", "minimum": 1 },
+        "mitigation_timeout": { "const": 10 }
+      }
+    },
+    "pagesDevRedirect": {
+      "description": "Account Bulk Redirect closing the production pages.dev alias. Preview subdomains stay reachable (include_subdomains false).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["list", "source_url", "target_url", "status_code", "preserve_query_string", "subpath_matching", "preserve_path_suffix", "include_subdomains"],
+      "properties": {
+        "list": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "source_url": { "type": "string", "minLength": 1 },
+        "target_url": { "type": "string", "pattern": "^https://" },
+        "status_code": { "enum": [301, 302, 307, 308] },
+        "preserve_query_string": { "type": "boolean" },
+        "subpath_matching": { "type": "boolean" },
+        "preserve_path_suffix": { "type": "boolean" },
+        "include_subdomains": { "type": "boolean" }
+      }
+    },
+    "pages": {
+      "description": "The Pages project. Its compatibility date is checked against tests/browser-test-env.ts, the one the edge suite runs.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "previewAccess", "previewPolicy"],
+      "properties": {
+        "project": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "previewAccess": { "description": "An Access application covers the preview hostnames (Settings → General → Enable access policy).", "type": "boolean" },
+        "previewPolicy": {
+          "description": "Every policy on the preview Access application is Service Auth whose include rules are service tokens only: previews are reached by CI's token and the tailnet proxy's, never by a person's identity. Check-only: apply never edits Access.",
+          "enum": ["service-auth-only"]
+        }
+      }
+    },
+    "schemaValidation": {
+      "description": "API Shield schema validation for the contact endpoint. Block is the only action on the free plan.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "file", "host", "method", "endpoint", "action"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "file": { "type": "string", "pattern": "\\.json$" },
+        "host": { "type": "string", "minLength": 1 },
+        "method": { "enum": ["POST"] },
+        "endpoint": { "type": "string", "pattern": "^/" },
+        "action": { "const": "block" }
+      }
+    },
+    "turnstile": {
+      "description": "The Turnstile widget serving the zone, found by hostname.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domains"],
+      "properties": {
+        "domains": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "toggle": { "enum": ["on", "off"] },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "expression", "action"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "description": { "type": "string", "minLength": 1 },
+        "expression": { "type": "string", "minLength": 1 },
+        "action": { "enum": ["block", "managed_challenge"] }
+      }
+    }
+  }
+}

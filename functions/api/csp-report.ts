@@ -1,11 +1,15 @@
-// Cloudflare Pages Function — POST /api/csp-report
+// Cloudflare Pages Function: POST /api/csp-report
 //
 // Receives browser CSP violation reports from the enforced site policy and
-// stores a compact, normalized record in D1 for review.
+// stores a compact, normalized record in D1 for review. The endpoint is open
+// by necessity, so writes are bounded: one batch per request, a report
+// identical to one stored in the last hour is skipped, and each IP gets a
+// fixed number of stored reports per hour.
 
 import { SITE } from '../generated/site.ts';
 import type { D1Database } from '../lib/database.ts';
-import { readRequestJson, requestMediaType } from '../lib/request-json.ts';
+import { asString, requestMeta } from '../lib/request-meta.ts';
+import { readRequestJson, requestMediaType, type PostContext } from '../lib/request-json.ts';
 
 interface Env {
   DB: D1Database;
@@ -40,6 +44,7 @@ const MAX_REPORTS_PER_REQUEST = 10;
 const MAX_FIELD_LENGTH = 2_048;
 const MAX_DIRECTIVE_LENGTH = 256;
 const MAX_USER_AGENT_LENGTH = 512;
+const MAX_STORED_PER_IP_PER_HOUR = 30;
 const SITE_ORIGIN = SITE.origin;
 const IGNORED_BLOCKED_URI_PREFIXES = [
   'chrome-extension:',
@@ -49,7 +54,6 @@ const IGNORED_BLOCKED_URI_PREFIXES = [
 ];
 const IGNORED_SOURCE_FILE_PREFIXES = [
   'chrome-extension',
-  'chrome-extension:',
   'moz-extension:',
   'safari-web-extension:',
   'edge-extension:',
@@ -64,11 +68,8 @@ function noContent(status = 204): Response {
 
 const ALLOWED_MEDIA_TYPES = new Set(['application/csp-report', 'application/reports+json', 'application/json']);
 
-function asString(value: unknown, max = MAX_FIELD_LENGTH): string {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
-}
+const field = (value: unknown) => asString(value, MAX_FIELD_LENGTH);
+const directive = (value: unknown) => asString(value, MAX_DIRECTIVE_LENGTH);
 
 function asNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
@@ -107,13 +108,13 @@ function isIgnoredReport(report: NormalizedReport): boolean {
 
 function normalizeLegacy(report: Record<string, unknown>): NormalizedReport {
   return {
-    documentUri: asString(report['document-uri']),
-    blockedUri: asString(report['blocked-uri']),
-    effectiveDirective: asString(report['effective-directive'], MAX_DIRECTIVE_LENGTH),
-    violatedDirective: asString(report['violated-directive'], MAX_DIRECTIVE_LENGTH),
-    disposition: asString(report.disposition, MAX_DIRECTIVE_LENGTH),
-    referrer: asString(report.referrer),
-    sourceFile: asString(report['source-file']),
+    documentUri: field(report['document-uri']),
+    blockedUri: field(report['blocked-uri']),
+    effectiveDirective: directive(report['effective-directive']),
+    violatedDirective: directive(report['violated-directive']),
+    disposition: directive(report.disposition),
+    referrer: field(report.referrer),
+    sourceFile: field(report['source-file']),
     lineNumber: asNumber(report['line-number']),
     columnNumber: asNumber(report['column-number']),
     statusCode: asNumber(report['status-code']),
@@ -125,13 +126,13 @@ function normalizeReportingApi(report: ReportingApiReport): NormalizedReport | n
   if (report.type !== 'csp-violation' || !report.body) return null;
   const body = report.body;
   return {
-    documentUri: asString(body.documentURL || report.url),
-    blockedUri: asString(body.blockedURL),
-    effectiveDirective: asString(body.effectiveDirective, MAX_DIRECTIVE_LENGTH),
-    violatedDirective: asString(body.effectiveDirective, MAX_DIRECTIVE_LENGTH),
-    disposition: asString(body.disposition, MAX_DIRECTIVE_LENGTH),
-    referrer: asString(body.referrer),
-    sourceFile: asString(body.sourceFile),
+    documentUri: field(body.documentURL || report.url),
+    blockedUri: field(body.blockedURL),
+    effectiveDirective: directive(body.effectiveDirective),
+    violatedDirective: directive(body.effectiveDirective),
+    disposition: directive(body.disposition),
+    referrer: field(body.referrer),
+    sourceFile: field(body.sourceFile),
     lineNumber: asNumber(body.lineNumber),
     columnNumber: asNumber(body.columnNumber),
     statusCode: asNumber(body.statusCode),
@@ -152,8 +153,7 @@ function normalizeReports(payload: unknown): NormalizedReport[] {
     .filter((report): report is NormalizedReport => report !== null && !isIgnoredReport(report));
 }
 
-export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
-  const { request, env } = context;
+export async function onRequestPost({ request, env }: PostContext<Env>): Promise<Response> {
   if (!ALLOWED_MEDIA_TYPES.has(requestMediaType(request))) {
     return noContent(415);
   }
@@ -166,20 +166,29 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     return noContent(400);
   }
 
-  const userAgent = asString(request.headers.get('User-Agent'), MAX_USER_AGENT_LENGTH);
-  const ip = asString(request.headers.get('CF-Connecting-IP'), 64);
-  const country = asString(request.headers.get('CF-IPCountry'), 2);
+  const { ip, userAgent, country } = requestMeta(request, MAX_USER_AGENT_LENGTH);
+  const insert = env.DB.prepare(
+    `INSERT INTO csp_reports
+       (document_uri, blocked_uri, effective_directive, violated_directive,
+        disposition, referrer, source_file, line_number, column_number,
+        status_code, user_agent, ip_address, country, raw_report)
+     SELECT * FROM (VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14))
+     WHERE (?12 IS NULL
+            OR (SELECT COUNT(*) FROM csp_reports
+                WHERE ip_address = ?12 AND created_at > datetime('now', '-1 hour')) < ?15)
+       AND NOT EXISTS (
+         SELECT 1 FROM csp_reports
+         WHERE blocked_uri IS ?2 AND created_at > datetime('now', '-1 hour')
+           AND document_uri IS ?1 AND effective_directive IS ?3 AND disposition IS ?5
+           AND source_file IS ?7 AND line_number IS ?8 AND column_number IS ?9)`,
+  );
 
   try {
-    for (const report of reports) {
-      await env.DB.prepare(
-        `INSERT INTO csp_reports
-           (document_uri, blocked_uri, effective_directive, violated_directive,
-            disposition, referrer, source_file, line_number, column_number,
-            status_code, user_agent, ip_address, country, raw_report)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`,
-      )
-        .bind(
+    // One batch is one round trip and one transaction, so the cap and the
+    // duplicate check also see the rows earlier in the same request.
+    await env.DB.batch(
+      reports.map((report) =>
+        insert.bind(
           report.documentUri || null,
           report.blockedUri || null,
           report.effectiveDirective || null,
@@ -194,9 +203,10 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
           ip || null,
           country || null,
           report.rawReport,
-        )
-        .run();
-    }
+          MAX_STORED_PER_IP_PER_HOUR,
+        ),
+      ),
+    );
   } catch (error) {
     console.error('D1 CSP report insert failed', error);
     return noContent(500);

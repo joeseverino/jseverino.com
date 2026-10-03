@@ -1,7 +1,13 @@
+// What Pages passes an endpoint's onRequestPost.
+export interface PostContext<Env> {
+  request: Request;
+  env: Env;
+}
+
 type JsonBody = { ok: true; value: unknown } | { ok: false; status: 400 | 413 };
 
 export function requestMediaType(request: Request): string {
-  return (request.headers.get('Content-Type') ?? '').split(';', 1)[0].trim().toLowerCase();
+  return (request.headers.get('Content-Type') ?? '').split(';', 1)[0]?.trim().toLowerCase() ?? '';
 }
 
 /** Bound bytes while reading, even when Content-Length is absent or inaccurate. */

@@ -1,17 +1,18 @@
 // Cloudflare Pages middleware.
 //
-// For HTML responses, generate a per-request CSP nonce, attach it to every
-// script and style tag in the document, and replace the static CSP header with
-// the nonce-bearing version. Cloudflare JavaScript Detections parses
-// nonce-based CSP headers and applies the nonce to its own injected scripts.
+// For HTML responses, generate a per-request CSP nonce, swap it in for the
+// build-time placeholder on the script and style tags the site emits, and set
+// the nonce-bearing CSP. Tags without the placeholder keep no nonce, so markup
+// that reaches a page from content cannot run. Cloudflare JavaScript
+// Detections and the Web Analytics beacon are injected after this runs; both
+// pick up the nonce from the header, and the beacon's host is allowlisted too.
 
 import { SITE } from './generated/site.ts';
+import { CSP_NONCE_PLACEHOLDER } from './lib/csp-nonce.ts';
 
 const CSP_HEADER = 'Content-Security-Policy';
 const CSP_REPORT_ONLY_HEADER = 'Content-Security-Policy-Report-Only';
 const REPORTING_ENDPOINTS_HEADER = 'Reporting-Endpoints';
-const CLOUDFLARE_BEACON_HASH =
-  "'sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=='";
 
 function createNonce(): string {
   const bytes = new Uint8Array(16);
@@ -21,10 +22,13 @@ function createNonce(): string {
   return btoa(binary);
 }
 
+// blob: stays in script-src for the blob scripts Cloudflare JavaScript
+// Detections loads; drop it once the report-only policy (which omits it)
+// shows no blob violations in /api/csp-report.
 function csp(nonce: string): string {
   return [
     "default-src 'none'",
-    `script-src 'self' 'nonce-${nonce}' ${CLOUDFLARE_BEACON_HASH} blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
+    `script-src 'self' 'nonce-${nonce}' blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com`,
     `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data:",
     "font-src 'self'",
@@ -36,6 +40,9 @@ function csp(nonce: string): string {
     "frame-ancestors 'self'",
     'upgrade-insecure-requests',
     'report-to csp-endpoint',
+    // Browsers without Reporting API support for CSP (Firefox) use this;
+    // the rest ignore it when report-to is present.
+    `report-uri ${SITE.cspReportUri}`,
   ].join('; ');
 }
 
@@ -43,7 +50,7 @@ function csp(nonce: string): string {
 // /api/csp-report shows it blocks nothing real.
 //
 // 'strict-dynamic' drops the host allowlist in favor of nonce propagation:
-// every script the page itself carries is nonced by the middleware, and
+// every script the page itself emits is nonced by the middleware, and
 // whatever those scripts load inherits trust, so 'self' and the Cloudflare
 // hosts stop mattering. It stays report-only until the D1 log confirms the
 // Cloudflare-injected scripts and Turnstile survive it.
@@ -55,9 +62,10 @@ function csp(nonce: string): string {
 // relies on. Reassess if Cloudflare ships TT-compliant versions.
 function cspReportOnly(nonce: string): string {
   return [
-    `script-src 'nonce-${nonce}' 'strict-dynamic' ${CLOUDFLARE_BEACON_HASH}`,
+    `script-src 'nonce-${nonce}' 'strict-dynamic'`,
     "require-trusted-types-for 'script'",
     'report-to csp-endpoint',
+    `report-uri ${SITE.cspReportUri}`,
   ].join('; ');
 }
 
@@ -92,9 +100,10 @@ export async function onRequest(context: { next(): Promise<Response> }): Promise
 
   const nonce = createNonce();
   const handler = new NonceHandler(nonce);
+  const placeholder = `[nonce="${CSP_NONCE_PLACEHOLDER}"]`;
   const transformed = new HTMLRewriter()
-    .on('script', handler)
-    .on('style', handler)
+    .on(`script${placeholder}`, handler)
+    .on(`style${placeholder}`, handler)
     .transform(response);
 
   // HTMLRewriter decompresses the body, so we must remove headers that
