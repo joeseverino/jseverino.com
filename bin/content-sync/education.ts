@@ -3,7 +3,7 @@
 //
 //   • The resume canonical's EDUCATION section (the same lines behind the PDF
 //     and /resume/) owns institution identity: name, location, degree, dates.
-//   • `severino-edu-mcp export` owns coursework: institutions with slug and
+//   • `severino-vault-mcp export education` owns coursework: institutions with slug and
 //     description, courses with code/title/term/status and their `## Site`
 //     bullets, joined to the resume org by institution name. The vault is never
 //     parsed here; the engine that governs MCP writes emits the dataset.
@@ -16,7 +16,7 @@ import { stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar, type Org, type Role } from './documents.ts';
 
-// `severino-edu-mcp export`: the fields this join reads.
+// `severino-vault-mcp export education`: the fields this join reads.
 export interface Course {
   code: string;
   title: string;
