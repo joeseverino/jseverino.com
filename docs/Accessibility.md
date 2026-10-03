@@ -26,7 +26,7 @@ Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it 
 
 Body images use the alt text from the markdown source. The `|width` and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`npm run check:html` fails on a missing one). The figures in `building-a-custom-mcp-layer` use empty alt with descriptive captions.
+An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`npm run check:html` fails on a missing one). No image on the site uses it today.
 
 ## Focus Management
 
