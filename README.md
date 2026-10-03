@@ -12,9 +12,6 @@ private Obsidian vault and published as a static Astro site on Cloudflare.
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
-<sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./docs/diagrams/system-shape.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
-
 This repository is the public build source. The vault stays private: a sync
 step projects only published content through a declared contract, and
 Cloudflare builds from what is committed here, with no access to the vault and
