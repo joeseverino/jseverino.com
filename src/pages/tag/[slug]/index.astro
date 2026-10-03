@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
+import { writeupPath } from '@lib/site-config.ts';
 import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
-import { getAllTags, getWriteups, titleCase } from '@lib/content';
+import { getAllTags, getWriteups, titleCase } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getAllTags()).map((tag) => ({
@@ -26,7 +27,7 @@ const projectLabel = writeups.length === 1 ? 'project' : 'projects';
     pageType: 'itemList',
     itemListItems: writeups.map((writeup) => ({
       name: writeup.title,
-      url: `/portfolio/${writeup.slug}/`,
+      url: writeupPath(writeup.slug),
     })),
     breadcrumbs: [
       { name: 'Home', url: '/' },

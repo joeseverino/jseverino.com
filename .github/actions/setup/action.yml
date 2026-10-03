@@ -1,0 +1,24 @@
+name: setup
+description: Node from .nvmrc, then a clean install from the lockfile with the npm download cache.
+
+# The checkout comes first in the calling job: a local action is read from the
+# working tree, so it cannot check the repository out itself.
+inputs:
+  install:
+    description: Run npm ci. Scripts that import no packages skip it.
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      with:
+        node-version-file: .nvmrc
+        cache: ${{ inputs.install == 'true' && 'npm' || '' }}
+
+    # --no-audit: dependency review and the weekly audit workflow enforce
+    # advisories; an install would only print them.
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      run: npm ci --no-audit --no-fund

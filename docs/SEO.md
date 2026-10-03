@@ -1,6 +1,6 @@
 # SEO And Metadata
 
-This site handles SEO as build-time metadata, not as a plugin layer. Routes pass explicit metadata into [`SeoHead.astro`](../src/components/SeoHead.astro), and shared identity data comes from [`src/lib/site.ts`](../src/lib/site.ts).
+SEO is build-time metadata. Routes pass explicit metadata into [`SeoHead.astro`](../src/components/SeoHead.astro), and shared identity data comes from [`src/lib/site.ts`](../src/lib/site.ts).
 
 ## Canonical URLs
 
@@ -14,7 +14,7 @@ Rules:
 - Portfolio writeups use `/portfolio/<slug>/`.
 - Tag pages use `/tag/<slug>/`.
 
-Canonical correctness matters because the content source uses a `home` slug internally while the public homepage is `/`.
+The content source calls the homepage `home`; its public URL is `/`.
 
 ## Titles And Descriptions
 
@@ -28,7 +28,7 @@ Canonical correctness matters because the content source uses a `home` slug inte
 
 Article pages render the writeup title as the page `h1`. Writeup body sections therefore start at `##`, which renders as `h2`, and subsections use `###`, which renders as `h3`.
 
-The article CSS intentionally preserves the existing visual scale for those semantic headings, so the HTML outline improves without changing the typography users see.
+The article CSS keeps the visual scale for those headings, so the outline is semantic without changing the typography.
 
 ## Structured Data
 
@@ -40,7 +40,7 @@ Every page includes:
 - `Person`
 - optional `BreadcrumbList`
 
-Routes that match a known page archetype add one more node so Google understands what the page *is*:
+Routes that match a known page archetype add one more node:
 
 | Route | Extra node |
 |---|---|
@@ -50,7 +50,7 @@ Routes that match a known page archetype add one more node so Google understands
 
 Pass `pageType: 'profile' | 'collection' | 'itemList'` (and, for `itemList`, an `itemListItems` array) into `SeoHead` from the page that owns the route.
 
-`Article` images are emitted as `ImageObject` with intrinsic `width` and `height` resolved from `src/lib/image-manifest.json`. This is what lets Google attach a thumbnail to the SERP result without falling back to a generic preview. The default OG image's dimensions live next to the URL in [`src/lib/site.ts`](../src/lib/site.ts) so they survive a sync that hasn't touched it.
+`Article` images are emitted as `ImageObject` with intrinsic `width` and `height` resolved from `src/lib/image-manifest.json`. Search results can then show a thumbnail. The default OG image's dimensions live next to the URL in [`src/lib/site.ts`](../src/lib/site.ts) so they survive a sync that hasn't touched it.
 
 The `Person` entity reads:
 
@@ -69,23 +69,23 @@ Writeups use:
 - `published_at` for `datePublished`;
 - `last_reviewed` for `dateModified` when available.
 
-The sync process preserves existing review dates on first sync and updates them only when known synced content changes. The local hash cache is a helper, not the canonical historical record.
+The sync ([`bin/content-sync/public-projection.ts`](../bin/content-sync/public-projection.ts)) sets `last_reviewed` to the sync date when a writeup's projected body differs from the committed snapshot. An unchanged body keeps the later of the vault's date and the committed one, so a re-sync never moves it.
 
 ## Images
 
-Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image. `og:image:width` and `og:image:height` are emitted alongside `og:image` whenever dimensions are known — from the image manifest for writeup heroes, or from `site.ts` for the default card.
+Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image. `og:image:width` and `og:image:height` are emitted alongside `og:image` whenever dimensions are known: from the image manifest for writeup heroes, or from `site.ts` for the default card.
 
-Article/body images are optimized during sync and rendered with stable dimensions through `Picture.astro`, which supports Core Web Vitals by avoiding image layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
+Article and body images are optimized during sync and rendered with stable dimensions (`Picture.astro`, and `enhanceImages()` in [`src/lib/images.ts`](../src/lib/images.ts) for Markdown bodies), so images cause no layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
 
 ### Cover alt text
 
-Vault writeups carry a `cover_alt` frontmatter field that describes the *actual* image. The site sync mirrors it into the synced content and surfaces it as `writeup.heroAlt`, which is the `<img alt>` used by `ProjectCard` and the article hero `<figure>`. When `cover_alt` is empty, the title is used as a fallback so nothing renders without an alt. `prepare_writeup_publish` in the vault MCP flags missing `cover_alt` as a nit so unpublished drafts don't ship with a duplicated-title alt.
+Vault writeups carry a `cover_alt` frontmatter field that describes the *actual* image. The sync copies it into the synced content and [`src/lib/content.ts`](../src/lib/content.ts) surfaces it as `writeup.heroAlt`, which is the `<img alt>` used by `ProjectCard` and the article hero `<figure>`. When `cover_alt` is empty, the title is used as a fallback so nothing renders without an alt. `prepare_writeup_publish` in the vault MCP flags missing `cover_alt` as a nit so unpublished drafts don't ship with a duplicated-title alt.
 
 ## Discovery Files
 
-- Sitemap is generated by `@astrojs/sitemap` at `/sitemap-index.xml`. Each URL carries a `<lastmod>`: per-writeup pages use the synced `last_reviewed` (see [`astro.config.mjs`](../astro.config.mjs)), and every other URL falls back to the build timestamp.
+- Sitemap is generated by `@astrojs/sitemap` at `/sitemap-index.xml`. Each URL carries a `<lastmod>`: per-writeup pages use the synced `last_reviewed` (see [`astro.config.ts`](../astro.config.ts)), and every other URL falls back to the build timestamp.
 - RSS is generated by [`src/pages/feed.xml.ts`](../src/pages/feed.xml.ts). The feed is also advertised via `<link rel="alternate" type="application/rss+xml">` in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) so browsers and feed readers can autodiscover it.
-- Robots.txt is generated by [`src/pages/robots.txt.ts`](../src/pages/robots.txt.ts) and points to the sitemap. It allows everything by default, advertises a `Content-Signal: search=yes,ai-train=no` opt-out, and `Disallow`s the AI *training* crawlers (`GPTBot`, `CCBot`, `Google-Extended`, `ClaudeBot`, `Bytespider`). Real-time AI search and assistant bots (e.g. `OAI-SearchBot`, `PerplexityBot`, `ChatGPT-User`) are intentionally left allowed so the site stays citeable in AI answers. This is the single source of truth for robots.txt — Cloudflare's "Manage robots.txt" is disabled so the file is not mutated at the edge.
+- Robots.txt is generated by [`src/pages/robots.txt.ts`](../src/pages/robots.txt.ts) and points to the sitemap. It allows everything by default, advertises a `Content-Signal: search=yes,ai-train=no` opt-out, and `Disallow`s the AI *training* crawlers (`GPTBot`, `CCBot`, `Google-Extended`, `ClaudeBot`, `Bytespider`). AI search and assistant bots (for example `OAI-SearchBot`, `PerplexityBot`, `ChatGPT-User`) fall under `User-agent: *` and stay allowed, so the site can be cited in AI answers. This file is the only robots.txt: Cloudflare's "Manage robots.txt" is off, so the edge does not rewrite it.
 
 ## Preview deployments
 
@@ -94,26 +94,26 @@ preview. Those URLs would otherwise be indexable and would split ranking
 signal away from the canonical custom domain. [`public/_headers`](../public/_headers)
 adds an `X-Robots-Tag: noindex` to every response served from
 `https://:project.pages.dev/*` and `https://:version.:project.pages.dev/*`,
-which keeps every preview deployment out of search results while leaving
-the canonical `https://jseverino.com/` indexing untouched.
+which keeps preview deployments out of search results. The canonical
+`https://jseverino.com/` is unaffected.
 
-Non-production deployments are wrapped by
+Preview deployments (any branch but `main`) are wrapped by
 [sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel
 renders DEV and LIVE search snippets together, highlights title, description,
 and canonical differences, and checks H1 count, viewport, language, Open Graph,
-indexing directives, favicon, and image alt coverage. This makes metadata drift
-visible on the exact deployed artifact before merge.
+indexing directives, favicon, and image alt coverage on the deployed artifact
+before merge.
 
-The wrapper does not change production HTML or make preview URLs indexable.
+Production builds carry no wrapper, and the wrapper does not make preview URLs indexable.
 Canonical metadata still points at `jseverino.com`, and the
 `X-Robots-Tag: noindex` preview rule remains authoritative. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
 
 ## Security Headers And SEO
 
-The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The middleware also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. The static Astro origin gives crawlers a simpler response path than the legacy WordPress runtime; measured response snapshots are documented in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
+The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The middleware also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the old WordPress runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
-[`public/_headers`](../public/_headers) carries the other security headers; CSP itself is issued only by the middleware. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension/off-site noise filtering — the filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
+[`public/_headers`](../public/_headers) carries the other security headers; CSP itself is issued only by the middleware. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
 
 ## Validation Checklist
 
@@ -133,13 +133,13 @@ Then inspect generated HTML for:
 - article pages emit `image` as an `ImageObject` with `width` and `height`, not a bare URL;
 - `/about/` and `/resume/` include a `ProfilePage` node, `/portfolio/` a `CollectionPage`, and `/tag/<slug>/` an `ItemList` whose `itemListElement` covers every writeup in the tag;
 - the RSS autodiscovery `<link rel="alternate">` is present on every page;
-- `dist.nosync/sitemap-0.xml` URLs each carry a `<lastmod>`;
+- `dist/sitemap-0.xml` URLs each carry a `<lastmod>`;
 - `ProjectCard` and article hero `<img alt>` describes the image, not the writeup title.
 
 For a non-production Pages deployment, also open sitedrift's SEO panel and
-confirm DEV/LIVE differences are intentional. Its checks are a fast
-browser-level signal, not a replacement for generated-HTML inspection,
-structured-data validation, Search Console, or Lighthouse.
+confirm DEV/LIVE differences are intentional. Its checks are a quick
+browser-level signal; generated-HTML inspection, structured-data validation,
+Search Console, and Lighthouse still apply.
 
 ## Related Docs
 

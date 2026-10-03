@@ -215,7 +215,7 @@ main > * + * {
    class + transition fallback) each set ONE value and the colors are composed in
    a single place. A keyframe holding var() colors would resolve them once and
    keep serving the stale pair after a theme switch, leaving a white scrim over a
-   dark page until the next reload — in Chromium and WebKit alike. */
+   dark page until the next reload, in Chromium and WebKit. */
 @property --header-scroll {
   syntax: '<number>';
   inherits: false;

@@ -1,0 +1,30 @@
+name: npm audit
+
+# Dependency review only sees advisories a pull request introduces. This
+# surfaces advisories published against what is already in the lockfile.
+on:
+  schedule:
+    - cron: '43 9 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          install: 'false'
+
+      # Reads the lockfile; no install needed. Fails on a high or critical
+      # advisory that security/audit-allowlist.json does not accept, or
+      # accepts past its reviewBy date.
+      - name: Audit the lockfile
+        run: npm run -s audit

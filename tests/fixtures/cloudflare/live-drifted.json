@@ -1,0 +1,42 @@
+{
+  "_comment": "Live state shaped like the v4 API responses, close to the zone as audited on 2026-10-02: Cloudflare's defaults for the HTML-rewriting settings, no rate limit, no pages.dev redirect. Ids are placeholders.",
+  "zone": { "id": "zone-0001", "name": "jseverino.com", "account": { "id": "account-0001", "name": "fixture" } },
+  "settings": {
+    "min_tls_version": { "value": "1.2", "editable": true },
+    "tls_1_3": { "value": "on", "editable": true },
+    "always_use_https": { "value": "on", "editable": true },
+    "http3": { "value": "on", "editable": true },
+    "0rtt": { "value": "off", "editable": true },
+    "speed_brain": { "value": "on", "editable": true },
+    "rocket_loader": { "value": "off", "editable": true },
+    "email_obfuscation": { "value": "on", "editable": true },
+    "automatic_https_rewrites": { "value": "on", "editable": true },
+    "hotlink_protection": { "value": "off", "editable": true },
+    "browser_cache_ttl": { "value": 14400, "editable": true },
+    "brotli": { "value": "on", "editable": true },
+    "security_header": {
+      "value": { "strict_transport_security": { "enabled": true, "max_age": 31536000, "include_subdomains": true, "preload": false, "nosniff": false } },
+      "editable": true
+    }
+  },
+  "dnssec": { "status": "active" },
+  "rulesets": {
+    "zones/http_request_firewall_custom": {
+      "id": "ruleset-fw",
+      "phase": "http_request_firewall_custom",
+      "rules": [
+        { "id": "rule-incident", "ref": "incident-2026-09", "description": "Hand-made incident rule", "expression": "(ip.src eq 192.0.2.1)", "action": "block", "enabled": true },
+        { "id": "rule-api-method", "ref": "jseverino-com-api-method", "description": "[jseverino-com] The API accepts POST only", "expression": "(http.request.uri.path eq \"/api/contact\" and http.request.method ne \"POST\")", "action": "block", "enabled": true },
+        { "id": "rule-retired", "ref": "jseverino-com-retired", "description": "[jseverino-com] A rule zone.json no longer lists", "expression": "(http.request.uri.path eq \"/old\")", "action": "block", "enabled": true }
+      ]
+    }
+  },
+  "lists": [],
+  "project": { "name": "jseverino", "deployment_configs": { "production": { "compatibility_date": "2025-01-01" }, "preview": { "compatibility_date": "2025-01-01" } } },
+  "accessApps": [ { "id": "app-1", "type": "self_hosted", "domain": "*.jseverino.pages.dev", "name": "jseverino previews", "policies": [ { "name": "account members", "decision": "allow", "include": [ { "email_domain": { "domain": "example.com" } } ] }, { "name": "ci", "decision": "non_identity", "include": [ { "service_token": { "token_id": "token-ci" } } ] } ] } ],
+  "schemas": [ { "schema_id": "schema-old", "name": "jseverino-com-contact", "kind": "openapi_v3", "source": "{\"openapi\":\"3.0.3\",\"paths\":{}}", "validation_enabled": true } ],
+  "validationSettings": { "validation_default_mitigation_action": "none", "validation_override_mitigation_action": null },
+  "operations": [ { "operation_id": "op-contact", "method": "POST", "host": "jseverino.com", "endpoint": "/api/contact" } ],
+  "operationSettings": {},
+  "widgets": [ { "sitekey": "0x4AAAAAAAfixture", "name": "contact", "mode": "managed", "domains": ["jseverino.com", "jseverino.pages.dev"], "clearance_level": "no_clearance", "bot_fight_mode": false, "offlabel": false, "region": "world" } ]
+}

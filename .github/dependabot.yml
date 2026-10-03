@@ -6,11 +6,21 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # A release must age a week before Dependabot proposes it, so a compromised
+    # or yanked version is usually caught upstream first. Security updates are
+    # exempt.
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: "*"
         update-types:
           - version-update:semver-major
     groups:
+      # sitedrift is bundled into the production edge functions; its own group
+      # keeps it out of the auto-merged dev-dependencies PR.
+      sitedrift:
+        patterns:
+          - sitedrift
       astro:
         patterns:
           - astro
@@ -20,6 +30,8 @@ updates:
           - patch
       dev-dependencies:
         dependency-type: development
+        exclude-patterns:
+          - sitedrift
         update-types:
           - minor
           - patch
@@ -33,9 +45,14 @@ updates:
           - patch
 
   - package-ecosystem: github-actions
-    directory: /
+    # The workflows, plus the local composite actions they call.
+    directories:
+      - /
+      - /.github/actions/*
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     ignore:
       - dependency-name: "*"
         update-types:

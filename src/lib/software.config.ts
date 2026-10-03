@@ -1,10 +1,10 @@
 // Curation for the Software tab. This is the ONLY hand-maintained input: which
 // repos show, their prominence/order, their writeup cross-links, and the
 // non-GitHub facts GitHub can't know (PyPI/npm packages, self-hosted). Repo
-// descriptions, language, and last-pushed are derived from GitHub — edit copy on
-// the repo, not here. Forks and archived repos are excluded automatically.
+// descriptions, language, and last-pushed come from GitHub; edit that copy on
+// the repo. Forks and archived repos are excluded automatically.
 
-import { SITE } from './site-config.mjs';
+import { SITE } from './site-config.ts';
 
 /** Repos to hide (meta, archived predecessors, or not portfolio-worthy). */
 export const SKIP = new Set<string>([

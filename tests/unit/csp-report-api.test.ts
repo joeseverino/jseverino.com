@@ -9,16 +9,14 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequestPost } from '../../functions/api/csp-report.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
+import { createD1Sqlite } from './helpers/d1-sqlite.ts';
+import type { CspReportRow } from '../../functions/lib/database.ts';
+import { postRequest } from './helpers/requests.ts';
 
-function reportRequest(body: unknown, contentType = 'application/csp-report') {
-  return new Request('https://jseverino.com/api/csp-report', {
-    method: 'POST',
-    headers: { 'Content-Type': contentType },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
-  });
-}
+const reportRequest = (body: unknown, contentType = 'application/csp-report', headers: Record<string, string> = {}): Request =>
+  postRequest('https://jseverino.com/api/csp-report', body, { 'Content-Type': contentType, ...headers });
 
-function call(request: Request, db = createD1Stub()) {
+function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
   return onRequestPost({ request, env: { DB: db } } as Parameters<typeof onRequestPost>[0]);
 }
 
@@ -109,7 +107,7 @@ describe('noise filtering', () => {
 describe('persistence', () => {
   test('stores a normalized legacy report and returns 204', async () => {
     const db = createD1Stub();
-    const response = await call(reportRequest(legacyReport));
+    const response = await call(reportRequest(legacyReport), db);
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
   });
@@ -118,9 +116,9 @@ describe('persistence', () => {
     const db = createD1Stub();
     await call(reportRequest(legacyReport), db);
     assert.equal(db.queries.length, 1);
-    assert.match(db.queries[0].query, /INSERT INTO csp_reports/);
+    assert.match(db.queries[0]?.query ?? '', /INSERT INTO csp_reports/);
     const [documentUri, blockedUri, effectiveDirective, , disposition, , sourceFile, lineNumber, , statusCode] =
-      db.queries[0].values;
+      db.queries[0]?.values ?? [];
     assert.equal(documentUri, 'https://jseverino.com/contact/');
     assert.equal(blockedUri, 'https://evil.example/payload.js');
     assert.equal(effectiveDirective, 'script-src-elem');
@@ -146,8 +144,21 @@ describe('persistence', () => {
     const db = createD1Stub();
     const response = await call(reportRequest(report, 'application/reports+json'), db);
     assert.equal(response.status, 204);
-    assert.equal(db.queries[0].values[0], 'https://jseverino.com/portfolio/');
-    assert.equal(db.queries[0].values[1], 'https://evil.example/tracker.js');
+    assert.equal(db.queries[0]?.values[0], 'https://jseverino.com/portfolio/');
+    assert.equal(db.queries[0]?.values[1], 'https://evil.example/tracker.js');
+  });
+
+  test('writes every report of a request in one batch', async () => {
+    const db = createD1Stub();
+    let batches = 0;
+    const batch = db.batch.bind(db);
+    db.batch = async (statements) => {
+      batches += 1;
+      return batch(statements);
+    };
+    await call(reportRequest([legacyReport, legacyReport]), db);
+    assert.equal(batches, 1);
+    assert.equal(db.queries.length, 2);
   });
 
   test('caps a report batch at ten inserts', async () => {
@@ -162,5 +173,46 @@ describe('persistence', () => {
     const db = createD1Stub({ failRun: true });
     const response = await call(reportRequest(legacyReport), db);
     assert.equal(response.status, 500);
+  });
+});
+
+describe('write bounds', () => {
+  const distinct = (line: number) => ({ 'csp-report': { ...legacyReport['csp-report'], 'line-number': line } });
+  const fromIp = (body: unknown, ip = '203.0.113.7') => reportRequest(body, 'application/csp-report', { 'CF-Connecting-IP': ip });
+
+  test('stores a report identical to one from the last hour only once', async () => {
+    const db = createD1Sqlite();
+    assert.equal((await call(fromIp([legacyReport, legacyReport]), db)).status, 204);
+    assert.equal((await call(fromIp(legacyReport, '198.51.100.9'), db)).status, 204);
+    assert.equal(db.count('csp_reports'), 1);
+    await call(fromIp(distinct(99)), db);
+    assert.equal(db.count('csp_reports'), 2);
+  });
+
+  test('stores at most thirty reports per IP per hour', async () => {
+    const db = createD1Sqlite();
+    for (let batch = 0; batch < 4; batch += 1) {
+      const reports = Array.from({ length: 10 }, (_, i) => distinct(batch * 10 + i));
+      assert.equal((await call(fromIp(reports), db)).status, 204);
+    }
+    assert.equal(db.count('csp_reports'), 30);
+    await call(fromIp(distinct(1_000), '198.51.100.9'), db);
+    assert.equal(db.count('csp_reports'), 31);
+  });
+
+  test('stores the normalized fields and caller metadata', async () => {
+    const db = createD1Sqlite();
+    await call(reportRequest(legacyReport, 'application/csp-report', {
+      'CF-Connecting-IP': '203.0.113.7',
+      'CF-IPCountry': 'US',
+      'User-Agent': '  Mozilla/5.0  ',
+    }), db);
+    const row = await db.prepare('SELECT * FROM csp_reports').first<CspReportRow>();
+    assert.ok(row);
+    assert.equal(row.document_uri, 'https://jseverino.com/contact/');
+    assert.equal(row.line_number, 12);
+    assert.equal(row.ip_address, '203.0.113.7');
+    assert.equal(row.country, 'US');
+    assert.equal(row.user_agent, 'Mozilla/5.0');
   });
 });

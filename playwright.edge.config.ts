@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import { browserTestEnv, ciReporters, edgeRuntime } from './tests/browser-test-env.mjs';
+import { browserTestEnv, edgeRuntime, suiteArtifacts, workers } from './tests/browser-test-env.ts';
 
 // The edge suite. `astro preview` serves static files only; the CSP
 // middleware, the Pages Functions, and the public/_headers rules exist only on
@@ -12,21 +12,22 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: process.env.CI ? [...ciReporters] : 'list',
+  ...workers(1),
+  ...suiteArtifacts('edge'),
   use: {
     baseURL: origin,
   },
   projects: [{ name: 'edge' }],
   webServer: {
-    // PREBUILT is set by bin/diagnose.mjs after its own build-static run, so
+    // PREBUILT is set by bin/diagnose.ts after its own build-static run, so
     // the suite serves that artifact instead of rebuilding it.
     command: [
       process.env.PREBUILT ? null : 'npm run build:static',
-      'node bin/edge-serve.mjs',
+      'node bin/edge-serve.ts',
     ].filter(Boolean).join(' && '),
     url: origin,
-    reuseExistingServer: !process.env.CI,
+    // A prebuilt artifact is served fresh, never by whatever holds the port.
+    reuseExistingServer: !process.env.CI && !process.env.PREBUILT,
     timeout: 180_000,
     stdout: 'ignore',
     stderr: 'pipe',

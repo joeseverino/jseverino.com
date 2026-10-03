@@ -1,6 +1,7 @@
 ---
-import { site } from '@lib/site';
-import { getImageDimensions } from '@lib/images';
+import { site } from '@lib/site.ts';
+import { getImageDimensions } from '@lib/images.ts';
+import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
 
 type Breadcrumb = { name: string; url: string };
 type ListItem = { name: string; url: string };
@@ -13,7 +14,7 @@ type Props = {
   type?: 'website' | 'article';
   noindex?: boolean;
   publishedTime?: string;
-  modifiedTime?: string;
+  modifiedTime?: string | undefined;
   tags?: string[];
   breadcrumbs?: Breadcrumb[];
   pageType?: 'profile' | 'collection' | 'itemList';
@@ -173,4 +174,4 @@ const jsonLd: JsonLd = {
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {tags.map((tag) => <meta property="article:tag" content={tag} />)}
-<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+<script is:inline nonce={CSP_NONCE_PLACEHOLDER} type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />

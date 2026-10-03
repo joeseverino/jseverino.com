@@ -1,6 +1,16 @@
-import { test, expect } from '@playwright/test';
-import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
+import { test, expect, type Page } from '@playwright/test';
 import { tableWriteup } from './helpers/writeups.ts';
+
+// The brand primary pair the page resolves on <html>.
+async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
+  const declared = (property: string) =>
+    page.locator('html').evaluate(
+      (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
+      property,
+    );
+  expect(await declared('--color-primary')).toBe(primary);
+  expect(await declared('--color-primary-deep')).toBe(deep);
+}
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
@@ -25,16 +35,7 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
   await expect(page.locator('head style')).toHaveCount(1);
 
   // The shared brand emitter resolves the light palette explicitly.
-  const declared = (property: string) =>
-    page
-      .locator('html')
-      .evaluate(
-        (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
-        property,
-      );
-
-  expect(await declared('--color-primary')).toBe('#1e3a8a');
-  expect(await declared('--color-primary-deep')).toBe('#14245c');
+  await expectBrandVars(page, '#1e3a8a', '#14245c');
 
   const cardLink = page.locator('.project-card-title a').first();
   await cardLink.focus();
@@ -50,14 +51,7 @@ test('dark brand paint stays legible in links, navigation, and primary actions',
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
 
-  const declared = (property: string) =>
-    page.locator('html').evaluate(
-      (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
-      property,
-    );
-
-  expect(await declared('--color-primary')).toBe('#7c9ce0');
-  expect(await declared('--color-primary-deep')).toBe('#a8c0f0');
+  await expectBrandVars(page, '#7c9ce0', '#a8c0f0');
 
   const button = page.locator('.button').first();
   await expect(button).toHaveCSS('background-color', 'rgb(124, 156, 224)');
@@ -138,11 +132,11 @@ test('buttons and cards keep a stable click target through press and release', a
   await page.mouse.down();
   expect(await cardLink.boundingBox()).toEqual(raisedCardBox);
   await page.mouse.up();
-  await expect(page).toHaveURL(new RegExp(`${escapeRegExp(href!)}$`));
+  await expect(page).toHaveURL(new RegExp(`${RegExp.escape(href!)}$`));
 });
 
-// Sample the actual target geometry, including the bottom edge that used to
-// trigger a hover/unhover loop. Feedback must never move the pointer target.
+// Sample the target geometry, including the bottom edge, where a raised hover
+// state can move the target out from under the pointer and loop.
 for (const { name, selector, path } of [
   { name: 'writeup card', selector: '.project-card', path: '/portfolio/' },
   { name: 'software card', selector: '.software-card', path: '/portfolio/#software' },

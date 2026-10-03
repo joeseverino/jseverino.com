@@ -1,8 +1,6 @@
-// Shape validation for the audit registry (tests/audits/registry.mjs) — the
-// single source every gate derives its checks from. The gates trust this
-// inventory blindly, so the inventory itself is what gets verified here:
-// well-formed entries, unique ids, valid gate/phase claims, and exec targets
-// that actually exist on disk.
+// Shape validation for the audit registry (tests/audits/registry.ts), which
+// every gate derives its checks from: well-formed entries, unique ids, valid
+// gate/phase claims, and exec targets that exist on disk.
 //
 //   npm run test:unit
 
@@ -10,18 +8,17 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor } from '../../tests/audits/registry.mjs';
-import { siteRoot } from '../../src/lib/site-root.mjs';
+import { AUDITS, auditsFor } from '../../tests/audits/registry.ts';
+import { siteRoot as root } from '../../src/lib/site-root.ts';
 
-const root = siteRoot;
 const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
 const VALID_PHASES = ['pre-build', 'post-build'];
 
 describe('audit registry', () => {
   test('every entry carries the required fields', () => {
     for (const audit of AUDITS) {
-      const record = audit as Record<string, unknown>;
-      for (const field of ['id', 'label', 'name', 'phase', 'exec', 'gates', 'fix']) {
+      const record: Record<string, unknown> = { ...audit };
+      for (const field of ['id', 'label', 'name', 'asserts', 'phase', 'exec', 'gates', 'fix']) {
         assert.ok(record[field], `${audit.id ?? '<missing id>'} is missing ${field}`);
       }
       assert.ok(typeof audit.exec.cmd === 'string' && audit.exec.cmd.length > 0, `${audit.id} exec.cmd`);

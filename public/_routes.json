@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_astro/*",
+    "/assets/*",
+    "/embed/*",
+    "/schemas/*",
+    "/.well-known/*",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap-index.xml",
+    "/sitemap-0.xml",
+    "/feed.xml",
+    "/content-index.json"
+  ]
+}

@@ -3,7 +3,10 @@
 # Pages dashboard under Settings -> Variables and Secrets.
 
 # Cloudflare Turnstile secret key. The value below is Cloudflare's
-# "always passes" TEST secret — replace with the real one for production.
+# "always passes" TEST secret; production uses the real one. With a test
+# secret, functions/api/contact.ts accepts siteverify's test hostname
+# (localhost) and action (test); with any other secret it requires
+# jseverino.com and the contact widget's action.
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
 # Email notifications are not enabled. If Resend is added later, its secrets

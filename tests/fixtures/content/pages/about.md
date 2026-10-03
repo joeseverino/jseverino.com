@@ -1,0 +1,13 @@
+---
+title: About Me
+description: Fixture about page for the visual suite.
+intro: A short synthetic biography.
+path: /about/
+published: true
+---
+
+This page exists because the build renders it. The visual suite does not snapshot it.
+
+![Fixture topology diagram](/assets/fixtures/network-lab-topology.png)
+
+Fixture topology diagram.

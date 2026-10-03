@@ -9,19 +9,105 @@
 //
 // Everything here is a deterministic string → string transform whose only
 // dependency is markdown-it, so it carries no Astro coupling and can be unit
-// tested directly (`tests/unit/markdown-dsl.test.ts`). The Astro-aware glue —
-// content collections, slug/asset resolution, and <picture> enhancement — lives
-// in content.ts, which imports renderPageHtml / renderWriteupHtml from here.
+// tested directly (`tests/unit/markdown-dsl.test.ts`). The Astro-aware glue
+// (content collections and <picture> enhancement) lives in content.ts, which
+// imports renderPageHtml / renderWriteupHtml from here.
 
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance } from 'markdown-it';
 import { parseImageDirectives } from './image-directives.ts';
 
+// ---------------------------------------------------------------------------
+// Raw HTML allow-list
+// ---------------------------------------------------------------------------
+
+// Raw HTML in markdown (and the DSL output, which re-enters markdown as raw
+// HTML) is rebuilt from an allow-list: listed tags with listed attributes,
+// values entity-decoded then re-escaped, URLs limited to http(s)/mailto or
+// relative. Every other tag, and any stray `<`, renders as text; comments drop.
+const GLOBAL_ATTRIBUTES = [
+  'class',
+  'title',
+  'aria-hidden',
+  'aria-label',
+  'data-content-block',
+  'data-has-alt-caption',
+  'data-no-zoom',
+  'data-nocap',
+];
+const RAW_HTML_TAGS = new Map<string, ReadonlySet<string>>(
+  Object.entries({
+    a: ['href', 'target', 'rel'],
+    img: ['src', 'alt', 'width', 'height', 'loading', 'decoding'],
+    ol: ['start'],
+    td: ['colspan', 'rowspan'],
+    th: ['colspan', 'rowspan', 'scope'],
+    ...Object.fromEntries(
+      ('abbr b blockquote br caption code dd del div dl dt em figcaption figure h1 h2 h3 h4 h5 h6 ' +
+        'header hr i kbd li mark p pre s small span strong sub sup table tbody tfoot thead tr u ul wbr')
+        .split(' ')
+        .map((tag) => [tag, []]),
+    ),
+  }).map(([tag, attributes]) => [tag, new Set([...GLOBAL_ATTRIBUTES, ...attributes])]),
+);
+const URL_ATTRIBUTES = new Set(['href', 'src']);
+const SAFE_SCHEMES = new Set(['http', 'https', 'mailto']);
+
+const RAW_TOKEN =
+  /<!--[\s\S]*?(?:-->|$)|<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^\s"'>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*\/?>/g;
+const RAW_ATTRIBUTE = /([^\s"'>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+const escapeText = (text: string): string => text.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+function isSafeUrl(value: string): boolean {
+  // Browsers ignore control characters and whitespace inside a scheme.
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(value.replace(/[\u0000-\u0020\u007f]/g, ''))?.[1];
+  return !scheme || SAFE_SCHEMES.has(scheme.toLowerCase());
+}
+
+function sanitizeAttributes(allowed: ReadonlySet<string>, source: string): string {
+  const seen = new Set<string>();
+  let out = '';
+  for (const [, rawName = '', double, single, bare] of source.matchAll(RAW_ATTRIBUTE)) {
+    const name = rawName.toLowerCase();
+    if (seen.has(name) || !allowed.has(name)) continue;
+    seen.add(name);
+    const raw = double ?? single ?? bare;
+    if (raw === undefined) {
+      out += ` ${name}`;
+      continue;
+    }
+    const value = md.utils.unescapeAll(raw);
+    if (URL_ATTRIBUTES.has(name) && !isSafeUrl(value)) continue;
+    out += ` ${name}="${escapeHtml(value)}"`;
+  }
+  return out;
+}
+
+export function sanitizeRawHtml(html: string): string {
+  let out = '';
+  let last = 0;
+  for (const match of html.matchAll(RAW_TOKEN)) {
+    const [token, closing, rawName, attributes = ''] = match;
+    out += escapeText(html.slice(last, match.index));
+    last = match.index + token.length;
+    if (!rawName) continue;
+    const name = rawName.toLowerCase();
+    const allowed = RAW_HTML_TAGS.get(name);
+    if (!allowed) out += escapeText(token);
+    else out += closing ? `</${name}>` : `<${name}${sanitizeAttributes(allowed, attributes)}>`;
+  }
+  return out + escapeText(html.slice(last));
+}
+
 function createMarkdownRenderer() {
-  return new MarkdownIt({
+  const renderer = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: true,
   });
+  renderer.renderer.rules.html_block = (tokens, idx) => sanitizeRawHtml(tokens[idx]?.content ?? '');
+  renderer.renderer.rules.html_inline = (tokens, idx) => sanitizeRawHtml(tokens[idx]?.content ?? '');
+  return renderer;
 }
 
 const md = createMarkdownRenderer();
@@ -50,7 +136,7 @@ function addCellBreaks(renderer: MarkdownItInstance, onlyInTables: boolean): voi
   renderer.renderer.rules.text = (tokens, idx, options, env, self) => {
     const out = text
       ? text(tokens, idx, options, env, self)
-      : renderer.utils.escapeHtml(tokens[idx].content);
+      : renderer.utils.escapeHtml(tokens[idx]?.content ?? '');
     return !onlyInTables || state.inTable ? breakAtSeparators(out) : out;
   };
 }
@@ -144,7 +230,7 @@ function renderFigure(content: string): string {
   const imageIndex = lines.findIndex((line) => line.trim() !== '');
   if (imageIndex === -1) return '';
 
-  const imageLine = lines[imageIndex].trim();
+  const imageLine = (lines[imageIndex] ?? '').trim();
   // preprocessImageDirectives runs before this, so an image carrying a
   // modifier (|width, |nocap, |nozoom) arrives already as an <img> tag, while
   // a plain image is still ![alt](src). Support both so the explicit caption
@@ -152,7 +238,7 @@ function renderFigure(content: string): string {
   const markdownImage = imageLine.match(/^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)$/);
   let imgTag: string;
   if (markdownImage) {
-    const [, altRaw, src] = markdownImage;
+    const [, altRaw = '', src = ''] = markdownImage;
     imgTag = `<img src="${escapeHtml(src)}" alt="${escapeHtml(altRaw)}">`;
   } else if (/^<img\b[^>]*>$/.test(imageLine)) {
     // The figure's own caption line supersedes the alt-derived one.
@@ -271,7 +357,7 @@ function renderSplit(content: string): string {
   if (parts.length < 2) {
     return `\n\n<div class="split">${renderSplitSide(content)}</div>\n\n`;
   }
-  const [left, ...rest] = parts;
+  const [left = '', ...rest] = parts;
   const right = rest.join(':::');
   return `\n\n<div class="split"><div>${renderSplitSide(left)}</div><div>${renderSplitSide(right)}</div></div>\n\n`;
 }
@@ -347,13 +433,10 @@ export function renderPageHtml(markdown: string): string {
   return restoreFigures(md.render(prepared));
 }
 
-// Render a writeup's markdown body to HTML: strip the duplicated H1/lede/hero,
-// expand the block DSL, then rewrite relative image paths to the writeup's
-// published asset folder. Image <picture> enhancement is layered on by content.ts.
-export function renderWriteupHtml(markdown: string, slug: string): string {
+// Render a writeup's markdown body to HTML: strip the duplicated H1/lede/hero
+// and expand the block DSL. Asset URLs arrive resolved from the sync. Image
+// <picture> enhancement is layered on by content.ts.
+export function renderWriteupHtml(markdown: string): string {
   const prepared = applyBlockDirectives(preprocessImageDirectives(stripArticleChrome(markdown)), writeupBlockDirectives);
-  const html = md.render(prepared);
-  return promoteStandaloneLinks(restoreFigures(html))
-    .replaceAll('src="./images/', `src="/assets/writeups/${slug}/images/`)
-    .replaceAll('src="images/', `src="/assets/writeups/${slug}/images/`);
+  return promoteStandaloneLinks(restoreFigures(md.render(prepared)));
 }

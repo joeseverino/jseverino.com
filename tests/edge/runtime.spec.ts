@@ -1,24 +1,28 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { buildOutDir } from '../../src/lib/build-output.mjs';
-import { siteRoot } from '../../src/lib/site-root.mjs';
+import { readRoutes } from '../../bin/lib/pages-routes.ts';
+import { buildOutDir } from '../../src/lib/build-output.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { writeupPath } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
   cspFindings,
   nonceFromCsp,
   nonceParityFindings,
+  placeholderFindings,
   siteOrigin,
+  staticCspFindings,
   staticHeaderFindings,
-} from '../../src/lib/edge-expectations.mjs';
+} from '../../src/lib/edge-expectations.ts';
 
 // Every assertion here is against the Cloudflare runtime serving the built
 // output (see playwright.edge.config.ts). The expectations are the functions
-// in src/lib/edge-expectations.mjs, which bin/deploy-verify.mjs asserts
+// in src/lib/edge-expectations.ts, which bin/deploy-verify.ts asserts
 // against production after a release; a finding list is empty when correct.
 
-const dist = path.join(siteRoot, buildOutDir());
+const dist = path.join(siteRoot, buildOutDir);
 
 function firstFile(dir: string, matches: (name: string) => boolean): string {
   const hit = fs.readdirSync(path.join(dist, dir)).find(matches);
@@ -31,7 +35,7 @@ function firstWriteup(): string {
     .readdirSync(path.join(dist, 'portfolio'), { withFileTypes: true })
     .find((entry) => entry.isDirectory() && fs.existsSync(path.join(dist, 'portfolio', entry.name, 'index.html')));
   if (!slug) throw new Error('the build has no /portfolio/<slug>/ page');
-  return `/portfolio/${slug.name}/`;
+  return writeupPath(slug.name);
 }
 
 const htmlPaths = ['/', firstWriteup()];
@@ -75,6 +79,45 @@ test('an unknown route returns a real 404', async ({ request }) => {
   const response = await request.get(`/edge-probe-${Date.now().toString(36)}`);
   expect(response.status()).toBe(404);
   expect(response.headers()['content-type'] ?? '').toContain('text/html');
+});
+
+// public/_routes.json sends static paths straight to the asset server, so they
+// never spend the Functions quota. Those responses skip the middleware, so
+// public/_headers gives them a static CSP, and a miss under an excluded prefix
+// gets that prefix's own fallback page, which needs neither script nor style.
+test.describe('Functions routing', () => {
+  const routes = readRoutes(path.join(dist, '_routes.json'));
+  const probe = Date.now().toString(36);
+
+  test('a missing page outside the excludes runs the middleware', async ({ request }) => {
+    const response = await request.get(`/edge-probe-${probe}/`);
+    expect(response.status()).toBe(404);
+    expect(cspFindings(response.headers())).toEqual([]);
+    expect(nonceParityFindings(await response.text(), nonceFromCsp(response.headers()['content-security-policy']))).toEqual([]);
+  });
+
+  test('an excluded asset path is served without the middleware and keeps its cache rule', async ({ request }) => {
+    expect(routes.exclude).toContain('/assets/*');
+    const icon = await request.get(firstFile('assets/icons', (name) => !name.startsWith('.')));
+    expect(icon.status()).toBe(200);
+    expect(cacheRuleFindings(icon.headers(), { immutable: false })).toEqual([]);
+    expect(icon.headers()['x-content-type-options']).toBe('nosniff');
+    expect(staticCspFindings(icon.headers())).toEqual([]);
+  });
+
+  for (const prefix of ['assets', '_astro', '.well-known']) {
+    test(`a miss under /${prefix}/ gets the static fallback with the static CSP`, async ({ request }) => {
+      const miss = await request.get(`/${prefix}/edge-probe-${probe}/x.png`);
+      expect(miss.status()).toBe(404);
+      expect(miss.headers()['content-type'] ?? '').toContain('text/html');
+      expect(staticCspFindings(miss.headers())).toEqual([]);
+      expect(staticHeaderFindings(miss.headers())).toEqual([]);
+      expect(miss.headers()['reporting-endpoints']).toBeUndefined();
+      const body = await miss.text();
+      expect(placeholderFindings(body)).toEqual([]);
+      expect(body).not.toMatch(/<script\b|<style\b/);
+    });
+  }
 });
 
 test('the preview review proxy is absent from a production build', async ({ request }) => {

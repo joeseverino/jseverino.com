@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { BRAND_CONTRACT, CARD_COLORS, brandCardColors } from '../../src/lib/brand.mjs';
-import { SITE } from '../../src/lib/site-config.mjs';
+import { BRAND_CONTRACT, CARD_COLORS, brandCardColors } from '../../src/lib/brand.ts';
+import { SITE } from '../../src/lib/site-config.ts';
 
 test('brand card roles derive from the canonical token projection', () => {
   assert.equal(BRAND_CONTRACT.schema, 1);

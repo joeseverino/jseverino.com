@@ -1,0 +1,89 @@
+{
+  "$schema": "./zone.schema.json",
+  "zone": "jseverino.com",
+  "owner": "jseverino-com",
+  "settings": {
+    "min_tls_version": "1.2",
+    "tls_1_3": "on",
+    "always_use_https": "on",
+    "http3": "on",
+    "0rtt": "off",
+    "speed_brain": "off",
+    "rocket_loader": "off",
+    "email_obfuscation": "off",
+    "server_side_exclude": "off",
+    "automatic_https_rewrites": "off",
+    "hotlink_protection": "off",
+    "browser_cache_ttl": 0,
+    "brotli": "on"
+  },
+  "hsts": {
+    "enabled": true,
+    "max_age": 31536000,
+    "include_subdomains": true,
+    "preload": false
+  },
+  "dnssec": "active",
+  "firewall": [
+    {
+      "id": "api-method",
+      "description": "The API accepts POST only",
+      "expression": "(starts_with(http.request.uri.path, \"/api/\") and http.request.method ne \"POST\")",
+      "action": "block"
+    },
+    {
+      "id": "api-content-type",
+      "description": "API bodies carry the media type their handler reads",
+      "expression": "(http.request.uri.path eq \"/api/contact\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\")) or (http.request.uri.path eq \"/api/csp-report\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/csp-report*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/reports+json*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\"))",
+      "action": "block"
+    },
+    {
+      "id": "sitedrift-production",
+      "description": "The preview review proxy never answers on the production hosts",
+      "expression": "(http.host in {\"jseverino.com\" \"www.jseverino.com\"} and starts_with(http.request.uri.path, \"/__sitedrift\"))",
+      "action": "block"
+    },
+    {
+      "id": "scanner-noise",
+      "description": "PHP, WordPress, dotenv, and git probes",
+      "expression": "(ends_with(lower(http.request.uri.path), \".php\") or starts_with(lower(http.request.uri.path), \"/wp-\") or starts_with(http.request.uri.path, \"/.env\") or starts_with(http.request.uri.path, \"/.git\") or http.request.uri.path eq \"/xmlrpc.php\")",
+      "action": "block"
+    }
+  ],
+  "rateLimit": {
+    "id": "api-rate",
+    "description": "15 API requests per 10 seconds per IP",
+    "expression": "(starts_with(http.request.uri.path, \"/api/\"))",
+    "action": "block",
+    "characteristics": ["cf.colo.id", "ip.src"],
+    "period": 10,
+    "requests_per_period": 15,
+    "mitigation_timeout": 10
+  },
+  "pagesDevRedirect": {
+    "list": "jseverino_pages_dev",
+    "source_url": "jseverino.pages.dev/",
+    "target_url": "https://jseverino.com",
+    "status_code": 301,
+    "preserve_query_string": true,
+    "subpath_matching": true,
+    "preserve_path_suffix": true,
+    "include_subdomains": false
+  },
+  "pages": {
+    "project": "jseverino",
+    "previewAccess": true,
+    "previewPolicy": "service-auth-only"
+  },
+  "schemaValidation": {
+    "name": "jseverino-com-contact",
+    "file": "db/contact-openapi.json",
+    "host": "jseverino.com",
+    "method": "POST",
+    "endpoint": "/api/contact",
+    "action": "block"
+  },
+  "turnstile": {
+    "domains": ["jseverino.com"]
+  }
+}

@@ -4,48 +4,27 @@ This checklist separates the deterministic repository gate from checks that
 require a deployed environment or human judgment.
 
 > [!NOTE]
-> For details on every validation script, configuration, baseline screenshot, and verification step mentioned in this checklist, see the full reference in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md) (or the short tour in [`tests/README.md`](../tests/README.md)).
+> Every audit, spec, and baseline named here is described in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md) (short tour: [`tests/README.md`](../tests/README.md)).
 
-Use it for production pushes, signed releases, and any change that affects
+Use it for every pull request that deploys to production, signed releases,
+and any change that affects
 content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO
 metadata, D1 schema, or the contact form.
 
 ## 1. Preflight
 
-For a production push, confirm the branch is current:
+Release work happens on a branch cut from a current `origin/main`; `main`
+changes only by a merged pull request:
 
 ```sh
+git fetch origin
+git switch -c <branch> origin/main   # or, on an existing branch: git rebase origin/main
 git status -sb
-git log -1 --oneline
 ```
 
-The expected status before release work is:
+The worktree is clean before the gate runs.
 
-```text
-## main...origin/main
-```
-
-If local commits exist, push them before starting deploy validation. If remote
-commits exist, pull or rebase first.
-
-## 2. iCloud Conflict Copies
-
-The repo currently lives in an iCloud-synced path. iCloud can create numbered
-conflict-copy files or directories such as `home 2.md` or `building-a-homelab 2`.
-Those are local filesystem artifacts, not source files.
-
-Check for conflict copies before the release gate:
-
-```sh
-find src/content public/assets -name '* [0-9]' -o -name '* [0-9].*'
-```
-
-`publish:check` runs [`bin/clean-generated.mjs`](../bin/clean-generated.mjs),
-which resolves numbered copies in generated content and asset roots. If conflict
-copies are reported, treat them as release noise that must be resolved before the
-final status check. Do not commit numbered copies.
-
-## 3. Local Release Gate
+## 2. Local Release Gate
 
 Run the canonical repo-local gate:
 
@@ -53,29 +32,31 @@ Run the canonical repo-local gate:
 npm run release:check
 ```
 
-`release:check` runs `publish:check` (including the sitedrift production guard),
-the cross-browser functional suite, the macOS Chromium visual suite,
-repository policy, `git diff --check`, and an idempotence check that proves
-validation did not change repository state.
+`release:check` runs `publish:check`, then the `release` audits from
+[`tests/audits/registry.ts`](../tests/audits/registry.ts) (repository policy,
+Playwright browser revisions, `git diff --check`, the edge runtime suite, the
+cross-browser functional suite, and the macOS Chromium visual suite), then an
+idempotence check that proves validation did not change repository state.
 
-A clean release runs `publish:check` (its audits come from
-[`tests/audits/registry.mjs`](../tests/audits/registry.mjs)) and should report:
+A clean `publish:check` reports one line per step:
 
 ```text
 sync         content snapshot updated
 content      no content changes
 source       source files parse and top-level declarations are unique
-contracts    generated API/schema/CSS projections match canonical sources
+dupes        <n> files, no clone of 30+ tokens over 3+ lines (40/4 between tests)
+contracts    generated brand, API, schema, CSS, and edge identity projections match their canonical sources
+manifest     <n> synced images have manifest entries; all <n> named files exist
+drafts       <n> committed documents, none a draft
 security     signed, 5 fields present, expires in <n>d, WKD file present
-contrast     <ratio>:1  body text on background (<fg> on <bg>)
-parity       schema/Zod/MCP agree on writeup fields: ...
+contrast     light <ratio>:1  <pair> (<fg> on <bg>)
+parity       one content contract drives Astro/public/MCP/CLI/TUI (<fingerprint>)
 types        passed
-edge         OpenAPI fields/limits and <n> D1 inserts agree with the handlers
-preview      passed
+edge         contact contract drives OpenAPI/handler; <n> D1 inserts and <n> row types match storage; inserts cap per IP
+preview      preview wrapped; main unchanged
 unit         passed
 docs-sync    generated blocks in docs/Commands.md and tests/ARCHITECTURE.md match their sources
-docs         <n> docs, <n> local links, <n> script refs resolve
-embed        embed bundle current (public/embed/bundle.css)
+docs         <n> docs, <n> local links, <n> script refs, <n> repo paths resolve
 css-lint     passed
 css-vars     passed
 check        0 errors, 0 warnings
@@ -83,12 +64,12 @@ build        <n> pages built
 assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
 links        <n> pages, <n> internal references (<n> unique) resolve
 weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75KB, JS <n>KB/25KB
-html         <n> pages: <n> ids unique per page, <n> images all carry alt
+html         <n> pages: <n> ids unique per page, <n> images all carry alt, no unprocessed directives
+routes       <n> pages and <n> Function routes invoke Functions; <n> static excludes carry the static CSP; <n> fallback pages
 seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 ```
 
-then the `release`-only audits (repository policy, `git diff --check`, the
-cross-browser + visual Playwright suite) and the idempotence snapshot, ending in
+`parity` reads `skipped` where `CI` is set. `release:check` ends in
 `ok release-ready`.
 
 `release:check` snapshots the worktree before validation and fails if sync,
@@ -102,19 +83,21 @@ To run all codebase validations and E2E browser tests without short-circuiting o
 npm run diagnose
 ```
 
-If any check fails, it writes a detailed `.validation-report.md` in the project root with the exact commands needed to fix the issues. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`. For machine-readable results (agents, CI), `npm run -s diagnose -- --json` emits a single JSON document with per-check status and the rerun command for each failure.
+If any check fails, it writes `.validation-report.md` in the project root with each failure's fix and rerun command. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`. For machine-readable results (agents, CI), `npm run -s diagnose -- --json` emits a single JSON document with per-check status and the rerun command for each failure.
 
 For a focused frontend check without the complete release gate, run:
 
 ```sh
-CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop
+npm run test:e2e:visual
 ```
 
-If it fails, inspect the expected, actual, and diff images in `test-results/`.
+The visual suite renders the fixture content in `tests/fixtures/content`, not
+the synced writeups, so a content publish never needs a baseline update. If it
+fails, inspect the expected, actual, and diff images in `test-results/visual/`.
 For an intentional design change only, update and review the baselines:
 
 ```sh
-npm run test:e2e:visual:update -- --project=chromium-desktop
+npm run test:e2e:visual:update
 git diff -- tests/playwright/visual.spec.ts-snapshots/
 ```
 
@@ -136,10 +119,17 @@ npm run check:security
 is also wired into `publish:check`, so a release with an unsigned, expired, or
 WKD-mismatched `security.txt` fails the gate before the build runs.
 
-## 4. Commit And Push
+## 3. Pull Request And Merge
 
-For a feature branch, review the immutable Cloudflare deployment before
-merging:
+Push the branch and open a pull request against `main`. The ruleset's
+required checks (`build`, `e2e`, `visual`, `edge`, CodeQL, `dependency-review`,
+and `Cloudflare Pages`)
+must pass before a merge. Content changes go through `site publish` and
+`site land` ([Site CLI](./Site-CLI.md)), and `site land` reads the same list
+from the ruleset.
+
+Review the immutable Cloudflare deployment before merging, through the
+tailnet proxy ([preview access](./Cloudflare.md#preview-access)):
 
 1. Confirm compact DEV Solo view loads.
 2. Switch to LIVE and confirm the production comparison target.
@@ -153,30 +143,24 @@ merging:
 See [Deployment Preview Review](./Deployment-Preview-Review.md).
 
 Commit source, content snapshot, generated manifest, docs, and public assets
-that are part of the release:
+that are part of the release. Do not commit local caches, build output,
+`.env*`, `.dev.vars*`, or editor folders.
+
+The `deploy` workflow verifies every deployment on its `*.pages.dev` URL when
+the `Cloudflare Pages` check completes. After the merge, verify production from
+a residential IP on a clean, current `main`:
 
 ```sh
-git add <changed-files>
-git commit -m "<release commit message>"
-git push origin main
-```
-
-Do not commit local caches, build output, `.env*`, `.dev.vars*`, editor folders,
-or numbered iCloud conflict copies.
-
-After pushing `main`, run:
-
-```sh
+git switch main && git pull --ff-only
 npm run deploy:verify
 ```
 
-This waits for `build`, CodeQL, Playwright functional/visual, and Cloudflare
-Pages checks on the exact pushed commit. It then verifies the production
-dependency audit, security headers, production sitedrift `404`, every live
+It waits for the required checks on that commit, then verifies the production
+dependency audit, security headers, the production sitedrift `404`, every live
 sitemap URL, and zero open code-scanning alerts.
 
-Scheduled/manual quality checks remain separate because they measure external
-freshness rather than the correctness of one deployment:
+Scheduled checks measure external freshness, which no single deployment
+decides, so they run on their own:
 
 - `link check` uploads `link-check-reports`.
 - `lighthouse` uploads `lighthouse-reports`.
@@ -185,22 +169,23 @@ freshness rather than the correctness of one deployment:
 Use `npm outdated` when intentionally reviewing dependency freshness; an
 available update is not itself a failed deployment.
 
-## 5. Signed Version Tag
+## 4. Signed Version Tag
 
 For a versioned release, move the signed tag only after the final release commit
 is on `main`.
 
 ```sh
-git tag -s -f v3.0.0 -m "v3.0.0 - <release summary>"
-git tag -v v3.0.0
-git push --force origin v3.0.0
-git ls-remote origin refs/tags/v3.0.0 refs/tags/v3.0.0^{}
+git tag -s -f v<version> -m "v<version> - <release summary>"
+git tag -v v<version>
+git push --force origin v<version>
+git ls-remote origin refs/tags/v<version> refs/tags/v<version>^{}
 ```
 
-The local verification must show a good signature. The peeled remote tag
-(`refs/tags/v3.0.0^{}`) must point to the intended release commit.
+`<version>` is the `version` in `package.json`. The local verification must
+show a good signature. The peeled remote tag (`refs/tags/v<version>^{}`) must
+point to the intended release commit.
 
-## 6. Cloudflare Deploy Verification
+## 5. Cloudflare Deploy Verification
 
 After Cloudflare Pages deploys `main`, verify the live site from a clean browser
 profile or with extensions disabled:
@@ -215,7 +200,8 @@ Confirm:
 - `content-security-policy` is present on HTML responses.
 - The HTML CSP does not include `script-src 'unsafe-inline'`.
 - `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
-- The HTML CSP includes `report-to csp-endpoint` and no deprecated `report-uri`.
+- The HTML CSP includes `report-to csp-endpoint` and the `report-uri https://jseverino.com/api/csp-report` fallback.
+- No `__CSP_NONCE__` placeholder survives in the HTML, and every `<script>` carries the header nonce.
 - The report-only CSP carries `'strict-dynamic'` with the enforced nonce and `require-trusted-types-for 'script'`.
 - `strict-transport-security` includes `includeSubDomains`.
 - `x-content-type-options: nosniff` is present.
@@ -231,8 +217,8 @@ release failures unless they reproduce with extensions disabled.
 tool on the local [`severino-vault-mcp`](https://github.com/joeseverino/severino-vault-mcp)
 server. It returns the same headers as a structured JSON response with named
 pass/fail booleans (`has_csp`, `no_unsafe_inline_script`, `has_csp_report_to`,
-`has_csp_report_uri`, `has_reporting_endpoints`) — one call replaces the
-`curl` parse above.
+`has_csp_report_uri`, `has_reporting_endpoints`) in place of the `curl` parse
+above.
 
 **HAR audit (deep verification).** The MCP check confirms response headers
 arrive. A HAR audit confirms that those headers do not break a real browser
@@ -241,9 +227,9 @@ session under the full third-party load. Run after any change to
 [`public/_headers`](../public/_headers), and as the operational gate for
 promoting Trusted Types from report-only to enforcing.
 
-Capture HARs from a clean browser profile (DevTools → Network → "Export
-HAR…" in Chromium, or Develop → Show Web Inspector → Network → "Export"
-in Safari) for the three high-traffic surfaces:
+Capture HARs from a clean browser profile (DevTools, Network, "Export
+HAR…" in Chromium; Develop, Show Web Inspector, Network, "Export" in
+Safari) for the three high-traffic surfaces:
 
 - `https://jseverino.com/`
 - `https://jseverino.com/contact/` (loads Turnstile widget)
@@ -264,29 +250,31 @@ jq -r '.log.entries[]
 A clean run is: 2xx across the board (one 204 from `/cdn-cgi/rum?` is
 expected) and zero output from the second command. A POST to
 `/api/csp-report` means the browser tripped the enforcing CSP or the
-Trusted Types report-only directive — inspect the report body in the HAR
+Trusted Types report-only directive: inspect the report body in the HAR
 (grep the entry's `request.postData.text` for `effective-directive`) or
 read the matching D1 row to identify the source.
 
-## 7. D1 And CSP Reporting Checks
+## 6. D1 And CSP Reporting Checks
 
 After any change to [`db/schema.sql`](../db/schema.sql), apply the schema to the
-remote D1 database:
+remote D1 database (`jseverino-contact`, the `d1` value in
+[`src/lib/site-config.ts`](../src/lib/site-config.ts)). Every statement is
+`CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
+npx wrangler d1 execute jseverino-contact --remote --file=./db/schema.sql
 ```
 
 Confirm the expected operational tables exist:
 
 ```sh
-wrangler d1 execute jseverino-contact --remote --command "SELECT name, type FROM sqlite_master WHERE type IN ('table','index') ORDER BY type, name;"
+npx wrangler d1 execute jseverino-contact --remote --command "SELECT name, type FROM sqlite_master WHERE type IN ('table','index') ORDER BY type, name;"
 ```
 
 After deployment, confirm the CSP report table is readable:
 
 ```sh
-wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS csp_report_count FROM csp_reports;"
+npx wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS csp_report_count FROM csp_reports;"
 ```
 
 CSP reports from browser extensions are filtered by the report endpoint and
@@ -298,7 +286,7 @@ should not be treated as site regressions.
 violations to decide whether to promote it into the enforcing CSP:
 
 ```sh
-wrangler d1 execute jseverino-contact --remote --command \
+npx wrangler d1 execute jseverino-contact --remote --command \
   "SELECT created_at, disposition, document_uri, source_file, line_number
    FROM csp_reports
    WHERE effective_directive = 'require-trusted-types-for'
@@ -307,12 +295,12 @@ wrangler d1 execute jseverino-contact --remote --command \
 
 Promotion criteria: ~7 days of clean reports across `/`, `/contact/`, and
 at least one writeup (verified by the HAR audit in
-[§6](#6-cloudflare-deploy-verification)). When the query returns no rows
+[§5](#5-cloudflare-deploy-verification)). When the query returns no rows
 across that window, move the directive from `cspReportOnly()` into the
 enforcing `csp()` function in
 [`functions/_middleware.ts`](../functions/_middleware.ts).
 
-## 8. SEO And Accessibility Spot Checks
+## 7. SEO And Accessibility Spot Checks
 
 After deployment, validate the high-value URLs:
 
@@ -340,10 +328,10 @@ Check:
 - VoiceOver rotor headings show one page `h1`, then article or section headings
   in a coherent order.
 
-## 9. Scorecard Update
+## 8. Scorecard Update
 
-Update the vault scorecard in `00 Reporting` only for work that was actually
-completed and verified. Do not raise the score for planned items.
+Update the scorecard in the private vault only for work that was completed and
+verified. Do not raise the score for planned items.
 
 Recommended evidence to record:
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('contact remains usable without JavaScript', async ({ browser, baseURL }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
+  const context = await browser.newContext({ javaScriptEnabled: false, ...(baseURL ? { baseURL } : {}) });
   const page = await context.newPage();
   try {
     await page.goto('/contact/');

@@ -1,6 +1,6 @@
 # Accessibility
 
-This site treats accessibility as a property of the rendered HTML and CSS, not as a layer bolted on later. The posture is documented here so future changes don't quietly regress it.
+Accessibility here is a property of the rendered HTML and CSS. This file records the posture so a change can be checked against it.
 
 ## Document Structure
 
@@ -24,15 +24,15 @@ This site treats accessibility as a property of the rendered HTML and CSS, not a
 
 Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it to `writeup.heroAlt`, and both the `ProjectCard` listing and the article hero `<figure>` use that string as the `<img alt>`. When `cover_alt` is empty the title is used as a fallback so no image ever renders without alt text. `prepare_writeup_publish` in the vault MCP nags about missing `cover_alt` so drafts don't ship with duplicated-title alts.
 
-Body images use the alt text from the markdown source. The `![|width|nocap]` directive in [`src/lib/content.ts`](../src/lib/content.ts) only modifies layout — the alt text itself is preserved verbatim into the rendered `<img>`.
+Body images use the alt text from the markdown source. The `|width`, `|nocap`, and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-Decorative-only images should use `alt=""`, never omit the attribute. Currently no images on the site use this case.
+Decorative-only images use `alt=""`; the attribute is never omitted (`npm run check:html` fails on a missing one). No image on the site uses this case today.
 
 ## Focus Management
 
-Visible focus is preserved on every interactive element. Shared focus and assistive styles live in [`src/styles/accessibility.css`](../src/styles/accessibility.css); component-specific selectors remain in their concern modules. The site uses `:focus` rather than `:focus-visible`, meaning focus rings render on mouse interaction as well as keyboard — intentional, since the cost is cosmetic and the benefit is that low-vision mouse users still see the focused control.
+Visible focus is preserved on every interactive element. Shared focus and assistive styles live in [`src/styles/accessibility.css`](../src/styles/accessibility.css); component-specific selectors remain in their concern modules. The site uses `:focus` rather than `:focus-visible`, so focus rings render on mouse interaction as well as keyboard. The cost is cosmetic, and low-vision mouse users still see the focused control.
 
-Mobile navigation uses the native `popover` API. The browser handles focus restoration when the popover closes, eliminating a class of bugs around losing focus to an unmounted element.
+Mobile navigation uses the native `popover` API. The browser restores focus when the popover closes.
 
 ## Reduced Motion
 
@@ -69,14 +69,14 @@ The three-state control in the footer ([`src/components/ThemeToggle.astro`](../s
 - A blocking inline script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) applies a stored choice before first paint, so an overridden theme never flashes the OS theme first. It also stamps `data-theme-mode` on `<html>`, which is what reveals the control.
 - `<meta name="color-scheme" content="light dark">` sits in the head alongside that script. It duplicates the `color-scheme` in `base.css` deliberately: the stylesheet governs only once it has loaded, and until then the document scheme is `normal`, so the browser paints a white canvas with light scrollbars and form controls even on a dark-mode OS. The meta is parsed first, so the very first frame is already dark.
 - With JavaScript off, the control does not render at all, because it could not do anything. Auto is unaffected.
-- `<meta name="theme-color">` ships as a light and a dark pair scoped by `prefers-color-scheme`, carrying the page background for each theme (`SURFACE` in [`src/lib/brand.mjs`](../src/lib/brand.mjs), projected from `--color-bg`) so the browser toolbar blends into the page. The metas sit above the boot script in the head, and the script re-points them for an explicit choice: browsers sample `theme-color` while parsing the head, so a deferred fixup lands after it has already been read. Safari on macOS samples once per load and does not re-read on an in-place toggle; the tint corrects on the next navigation.
-- The code-block and terminal palette (`--code-*`, `--term-*`) stays dark in both themes by design. It represents a real terminal, not a themeable surface.
+- `<meta name="theme-color">` ships as a light and a dark pair scoped by `prefers-color-scheme`, carrying the page background for each theme (`SURFACE` in [`src/lib/brand.ts`](../src/lib/brand.ts), projected from `--color-bg`) so the browser toolbar blends into the page. The metas sit above the boot script in the head, and the script re-points them for an explicit choice: browsers sample `theme-color` while parsing the head, so a deferred fixup lands after it has already been read. Safari on macOS samples once per load and does not re-read on an in-place toggle; the tint corrects on the next navigation.
+- The code-block and terminal palette (`--code-*`, `--term-*`) stays dark in both themes, like a real terminal.
 
 ## Color Contrast
 
 The palette is documented in CSS custom properties in [`src/styles/tokens.css`](../src/styles/tokens.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
-`npm run check:contrast` measures every pair below once per theme and fails the gate under 4.5:1. Measuring only the light arm was the specific regression this guards: dark values are easy to author by eye and easy to get wrong.
+`npm run check:contrast` measures every pair below once per theme and fails the gate under 4.5:1.
 
 | Pair | Light | Dark |
 |---|---|---|
@@ -94,13 +94,13 @@ The palette is documented in CSS custom properties in [`src/styles/tokens.css`](
 
 Terminal label `#94a3b8` on `#111827` is ≈ 6.4:1 and identical in both themes, since that group does not recolor.
 
-All current pairs meet AA. Add new ones to the `pairs` array in [`tests/audits/check-contrast.mjs`](../tests/audits/check-contrast.mjs) and to this table together when a component introduces a novel color-on-color combination.
+All current pairs meet AA. Add new ones to the `pairs` array in [`tests/audits/check-contrast.ts`](../tests/audits/check-contrast.ts) and to this table together when a component introduces a novel color-on-color combination.
 
 ## What's Intentionally Not Done
 
-- **No accessibility statement page.** This is a personal portfolio, not a public service; the documentation in this file is the statement.
+- **No accessibility statement page.** This is a personal portfolio; this file is the statement.
 - **No separate high-contrast theme.** Light and dark both clear AA on every measured pair, so a third palette would add a surface to maintain without adding headroom. The explicit `forced-colors: active` rules preserve control boundaries and focus for users who need system-level contrast.
-- **No per-theme imagery.** Writeup screenshots keep their original light or dark chrome in both themes. Swapping them would mean maintaining two of every image for a cosmetic gain.
+- **No per-theme imagery.** Writeup screenshots keep their original light or dark chrome in both themes. Swapping them would mean two of every image.
 - **No font-size scaler.** Browsers handle zoom and reflow; the layout is responsive down to 320px without horizontal scroll.
 
 ## Validation
@@ -133,13 +133,13 @@ remains useful before large interaction changes.
 
 Three layers of this posture are machine-enforced on every gate run: static
 WCAG contrast math over the color tokens (`npm run check:contrast`),
-structural HTML over every built page — unique ids, alt on every image
-(`npm run check:html`) — and an axe-core WCAG A/AA sweep over the key page
+structural HTML over every built page (unique ids, alt on every image, no
+unprocessed `::directive` text; `npm run check:html`), and an axe-core WCAG A/AA sweep over the key page
 archetypes in a real browser
 ([`tests/playwright/a11y.single.spec.ts`](../tests/playwright/a11y.single.spec.ts)).
 
 ## Related Docs
 
-- [`docs/SEO.md`](./SEO.md) — heading hierarchy and image alt strategy
-- [`docs/Architecture.md`](./Architecture.md) — render model
-- [`SECURITY.md`](../SECURITY.md) — contact form and form-field handling
+- [`docs/SEO.md`](./SEO.md): heading hierarchy and image alt strategy
+- [`docs/Architecture.md`](./Architecture.md): render model
+- [`SECURITY.md`](../SECURITY.md): contact form and form-field handling

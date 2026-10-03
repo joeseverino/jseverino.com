@@ -2,7 +2,7 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ContactForm from '@components/ContactForm.astro';
 import PageHero from '@components/PageHero.astro';
-import { getPage, renderPageMarkdown } from '@lib/content';
+import { getPage, renderPageMarkdown } from '@lib/content.ts';
 
 const page = await getPage('contact');
 const blocks = page.body

@@ -2,7 +2,7 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import ProjectCard from '@components/ProjectCard.astro';
 import TechnologyCloud from '@components/TechnologyCloud.astro';
-import { getFeaturedWriteups, getPage, renderPageMarkdown } from '@lib/content';
+import { getFeaturedWriteups, getPage, renderPageMarkdown } from '@lib/content.ts';
 
 const page = await getPage('home');
 const featured = await getFeaturedWriteups();

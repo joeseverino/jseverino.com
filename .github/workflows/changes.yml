@@ -1,0 +1,46 @@
+name: changes
+
+# Reusable: classifies a pull request's files. `code` is 'false' only when every
+# changed path is content or prose (writeups, pages, assets, the image manifest,
+# the GitHub snapshot, Markdown), so callers can skip analysis that only reads
+# code with a job-level `if`. A skipped job reports success to a required
+# check; paths-ignore would leave it pending forever instead. Anything other
+# than a pull request counts as code.
+on:
+  workflow_call:
+    outputs:
+      code:
+        description: "'true' unless the pull request touches only content"
+        value: ${{ jobs.classify.outputs.code }}
+
+permissions:
+  contents: read
+
+jobs:
+  classify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            if (context.eventName !== 'pull_request') {
+              core.setOutput('code', 'true');
+              return;
+            }
+            const content = /^(?:src\/content\/|public\/assets\/|src\/lib\/image-manifest\.json$|src\/data\/github-repos\.json$)|^(?!\.github\/).*\.md$/;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            const code = files.filter((file) =>
+              [file.filename, file.previous_filename].some((name) => name && !content.test(name)));
+            core.info(code.length ? `code paths: ${code.map((file) => file.filename).join(', ')}` : 'content only');
+            core.setOutput('code', String(code.length > 0));

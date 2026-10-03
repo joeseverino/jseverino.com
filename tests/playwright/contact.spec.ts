@@ -1,4 +1,20 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
+
+async function fillContact(page: Page, name: string, email: string, message: string): Promise<void> {
+  await page.locator('#contact-name').fill(name);
+  await page.locator('#contact-email').fill(email);
+  await page.locator('#contact-message').fill(message);
+}
+
+// Submits the form and waits for the status line to report kind and text.
+async function submitExpecting(page: Page, kind: 'error' | 'success', text: string): Promise<Locator> {
+  await page.locator('.contact-submit').click();
+  const status = page.locator('.contact-status');
+  await expect(status).toBeVisible();
+  await expect(status).toHaveAttribute('data-kind', kind);
+  await expect(status).toContainText(text);
+  return status;
+}
 
 test.describe('Contact Form Interactive Verification', () => {
   test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
@@ -10,9 +26,7 @@ test.describe('Contact Form Interactive Verification', () => {
       await pending;
       await route.abort();
     });
-    await page.locator('#contact-name').fill('Jane Doe');
-    await page.locator('#contact-email').fill('jane@example.com');
-    await page.locator('#contact-message').fill('Keep this message for retry.');
+    await fillContact(page, 'Jane Doe', 'jane@example.com', 'Keep this message for retry.');
     await page.locator('form').evaluate((form) => {
       const token = document.createElement('input');
       token.type = 'hidden';
@@ -50,41 +64,27 @@ test.describe('Contact Form Interactive Verification', () => {
     const emailInput = page.locator('#contact-email');
     const messageInput = page.locator('#contact-message');
 
-    // Initially, fields should be empty and form validation should block submission
     await expect(nameInput).toHaveValue('');
     await expect(emailInput).toHaveValue('');
     await expect(messageInput).toHaveValue('');
 
-    // Trigger validation by clicking submit on empty form
     await submitButton.click();
 
-    // Assert that the browser validation blocks submission (field invalid)
     const isNameInvalid = await nameInput.evaluate((el: HTMLInputElement) => !el.checkValidity());
     expect(isNameInvalid).toBe(true);
   });
 
   test('shows turnstile error message if challenge is not completed', async ({ page }) => {
-    // Fill the inputs
-    await page.locator('#contact-name').fill('John Doe');
-    await page.locator('#contact-email').fill('john@example.com');
-    await page.locator('#contact-message').fill('Hello! This is a test message.');
+    await fillContact(page, 'John Doe', 'john@example.com', 'Hello! This is a test message.');
 
-    // Attempt to submit without solving turnstile
-    await page.locator('.contact-submit').click();
+    // Submitting without solving turnstile shows the error.
+    const status = await submitExpecting(page, 'error', 'Please complete the verification challenge');
 
-    // Verify error message is shown
-    const status = page.locator('.contact-status');
-    await expect(status).toBeVisible();
-    await expect(status).toHaveAttribute('data-kind', 'error');
-    await expect(status).toContainText('Please complete the verification challenge');
-
-    // Typing should hide the error message
     await page.locator('#contact-name').press('KeyA');
     await expect(status).toBeHidden();
   });
 
   test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
-    // Mock the POST request to /api/contact
     await page.route('/api/contact', async (route) => {
       expect(route.request().method()).toBe('POST');
       const payload = route.request().postDataJSON();
@@ -93,7 +93,6 @@ test.describe('Contact Form Interactive Verification', () => {
       expect(payload.message).toBe('Mocked message content');
       expect(payload.turnstileToken).toBe('mocked-turnstile-token');
 
-      // Return a simulated success response
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -101,13 +100,10 @@ test.describe('Contact Form Interactive Verification', () => {
       });
     });
 
-    // Fill form fields
-    await page.locator('#contact-name').fill('Jane Doe');
-    await page.locator('#contact-email').fill('jane@example.com');
-    await page.locator('#contact-message').fill('Mocked message content');
+    await fillContact(page, 'Jane Doe', 'jane@example.com', 'Mocked message content');
 
-    // Simulate Cloudflare Turnstile injecting a token response into the form.
-    // We mock FormData.prototype.get to ensure our token is read even if the Turnstile iframe renders empty inputs.
+    // The Turnstile script is blocked, so stub the token the form reads off
+    // FormData on submit.
     await page.evaluate(() => {
       const originalGet = FormData.prototype.get;
       FormData.prototype.get = function (name) {
@@ -116,16 +112,8 @@ test.describe('Contact Form Interactive Verification', () => {
       };
     });
 
-    // Submit the form
-    await page.locator('.contact-submit').click();
+    await submitExpecting(page, 'success', 'Thanks, your message has been sent');
 
-    // Verify success state and form reset
-    const status = page.locator('.contact-status');
-    await expect(status).toBeVisible();
-    await expect(status).toHaveAttribute('data-kind', 'success');
-    await expect(status).toContainText('Thanks, your message has been sent');
-
-    // Form inputs should be cleared/reset
     await expect(page.locator('#contact-name')).toHaveValue('');
     await expect(page.locator('#contact-email')).toHaveValue('');
     await expect(page.locator('#contact-message')).toHaveValue('');

@@ -1,5 +1,5 @@
 ---
-import { getAllTags, getTechnologyGroups } from '@lib/content';
+import { getAllTags, getTechnologyGroups } from '@lib/content.ts';
 
 const collator = new Intl.Collator('en', { sensitivity: 'base' });
 const availableTags = new Set((await getAllTags()).map((tag) => tag.slug));

@@ -5,8 +5,8 @@ import ProjectCard from '@components/ProjectCard.astro';
 import SoftwareCard from '@components/SoftwareCard.astro';
 import SoftwareListItem from '@components/SoftwareListItem.astro';
 import TagIndex from '@components/TagIndex.astro';
-import { getAllTags, getPage, getWriteups } from '@lib/content';
-import { getFeaturedSoftware, getMoreSoftware, getSoftware } from '@lib/software';
+import { getAllTags, getPage, getWriteups } from '@lib/content.ts';
+import { getFeaturedSoftware, getMoreSoftware, getSoftware } from '@lib/software.ts';
 
 const page = await getPage('portfolio');
 const writeups = await getWriteups();
@@ -135,7 +135,8 @@ const tagCount = tags.length;
         const index = destinations[event.key];
         if (index === undefined) return;
         event.preventDefault();
-        const next = tabs[index];
+        // destinations only names indexes inside tabs.
+        const next = tabs[index]!;
         next.focus();
         activate(next.dataset.tab ?? '', true);
       });

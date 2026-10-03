@@ -1,20 +1,24 @@
 import { contactContract as contract } from '../generated/contact-contract.ts';
 
 type ContractProperty = {
-  type: string;
-  minLength?: number;
-  maxLength?: number;
-  format?: string;
-  'x-purpose'?: string;
+  readonly type: string;
+  readonly minLength?: number;
+  readonly maxLength?: number;
+  readonly format?: string;
+  readonly 'x-purpose'?: string;
 };
 
+export type ContactField = keyof typeof contract.request.properties;
+export type ContactFields = Record<ContactField, string>;
 export type ContactPayload = Record<string, unknown>;
 export const CONTACT_RUNTIME = contract.runtime;
-export const CONTACT_PROPERTIES = contract.request.properties as Record<string, ContractProperty>;
+export const CONTACT_PROPERTIES: Readonly<Record<ContactField, ContractProperty>> = contract.request.properties;
 export const CONTACT_REQUIRED = new Set<string>(contract.request.required);
+// Object.entries widens keys to string; these are the contract's own fields.
+const FIELDS = Object.entries(CONTACT_PROPERTIES) as [ContactField, ContractProperty][];
 
 export type ContactValidation =
-  | { ok: true; value: Record<string, string> }
+  | { ok: true; value: ContactFields }
   | { ok: false; reason: 'invalid' | 'missing' | 'too_long' | 'email' | 'uri'; field?: string };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,8 +31,8 @@ export function validateContactPayload(payload: unknown): ContactValidation {
   if (Object.keys(source).some((key) => !Object.hasOwn(CONTACT_PROPERTIES, key))) {
     return { ok: false, reason: 'invalid' };
   }
-  const value: Record<string, string> = {};
-  for (const [name, spec] of Object.entries(CONTACT_PROPERTIES)) {
+  const value: Partial<ContactFields> = {};
+  for (const [name, spec] of FIELDS) {
     const raw = source[name];
     if (raw !== undefined && typeof raw !== 'string') return { ok: false, reason: 'invalid' };
     const normalized = typeof raw === 'string' ? raw.trim() : '';
@@ -51,5 +55,6 @@ export function validateContactPayload(payload: unknown): ContactValidation {
     }
     value[name] = normalized;
   }
-  return { ok: true, value };
+  // The loop assigned every contract field or returned early.
+  return { ok: true, value: value as ContactFields };
 }

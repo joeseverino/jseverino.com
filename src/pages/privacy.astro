@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
-import { getPage } from '@lib/content';
+import { getPage } from '@lib/content.ts';
 
 const page = await getPage('privacy');
 ---

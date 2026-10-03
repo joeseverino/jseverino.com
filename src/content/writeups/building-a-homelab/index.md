@@ -7,7 +7,7 @@ description: >-
 published: true
 published_at: 2026-05-06T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
-cover_image: ./images/homelab-tailscale-docker-cover.png
+cover_image: /assets/writeups/building-a-homelab/images/homelab-tailscale-docker-cover.png
 cover_alt: >-
   Nginx Proxy Manager on the homelab serving the internal `homelab` hostname
   with a custom certificate from the private Root CA, proxied to a Docker

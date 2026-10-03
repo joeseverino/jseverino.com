@@ -1,0 +1,21 @@
+---
+title: A Fixture Archive Entry
+description: >-
+  A synthetic writeup that is not featured, so the portfolio lists more cards
+  than the home page does.
+published: true
+published_at: 2026-03-10T00:00:00.000Z
+cover_image: /assets/fixtures/archive-entry-cover.png
+cover_alt: Two nodes on a pale violet ground.
+technologies:
+  - python
+featured: false
+---
+
+# A Fixture Archive Entry
+
+![hero](/assets/fixtures/archive-entry-cover.png)
+
+## Overview
+
+An unfeatured writeup. It appears on the portfolio and on its tag pages, not on the home page.

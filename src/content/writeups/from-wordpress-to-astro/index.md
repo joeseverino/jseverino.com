@@ -7,7 +7,8 @@ description: >-
 published: true
 published_at: 2026-06-17T00:00:00.000Z
 last_reviewed: 2026-06-17T00:00:00.000Z
-cover_image: ./images/pagespeed-perfect-scores-cover.png
+cover_image: >-
+  /assets/writeups/from-wordpress-to-astro/images/pagespeed-perfect-scores-cover.png
 cover_alt: >-
   Google PageSpeed Insights reporting 100 for Performance, Accessibility, Best
   Practices, and SEO on jseverino.com.

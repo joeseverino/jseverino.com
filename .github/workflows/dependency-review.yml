@@ -6,15 +6,38 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+
+# A newer push to the same pull request supersedes the run in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+
+  # Skipped (reported as passing) on content-only pull requests. If the
+  # classification itself fails, the review runs rather than skip.
   dependency-review:
-    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # The review lands in the job summary on every run; it comments on the pull
+    # request only when it has something to block, and that comment is the one
+    # write this job needs.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
-          comment-summary-in-pr: always
+          comment-summary-in-pr: on-failure

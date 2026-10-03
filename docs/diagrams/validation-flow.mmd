@@ -1,9 +1,23 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart LR
-    A["Source Change"] --> B["npm run publish:check"] --> C["npm run release:check"] --> D["git push origin main"] --> E["npm run deploy:verify"]
-    G["npm run diagnose — every check, one pass, any time"] -.-> B
-    G -.-> C
+    A["Source change"] --> B["npm run gate:check"] --> C["npm run publish:check"] --> D["Push branch, open PR"]
+    D --> CI
+    D --> P["Cloudflare Pages preview"]
+    P --> V["deploy.yml verify: deploy-verify --origin hash.jseverino.pages.dev"]
+    CI --> M["Merge on Joe's go: site land"]
+    V --> M
+    M --> PR["Production deploy"] --> F["npm run deploy:verify from a residential IP"]
+    R["npm run release:check (optional, local)"] -.-> D
+    G["npm run diagnose: every check, one pass"] -.-> C
 
-    %% the irreversible pivot — local gates before, live after
+    subgraph CI ["CI on the PR (independent jobs)"]
+        CB["build"]
+        CE["e2e"]
+        CV["visual"]
+        CG["edge"]
+        CQ["CodeQL"]
+    end
+
+    %% the pivot: local gates before, the PR and production after
     classDef anchor stroke-width:2px;
-    class D anchor;
+    class D,M anchor;

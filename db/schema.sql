@@ -57,3 +57,10 @@ CREATE INDEX IF NOT EXISTS idx_csp_reports_created_at
 
 CREATE INDEX IF NOT EXISTS idx_csp_reports_effective_directive
   ON csp_reports (effective_directive);
+
+-- The per-IP cap and the one-hour duplicate check in functions/api/csp-report.ts.
+CREATE INDEX IF NOT EXISTS idx_csp_reports_ip_created_at
+  ON csp_reports (ip_address, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_csp_reports_blocked_created_at
+  ON csp_reports (blocked_uri, created_at DESC);

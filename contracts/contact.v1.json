@@ -19,6 +19,7 @@
     "maxBodyBytes": 8192,
     "turnstileTimeoutMs": 5000,
     "maxPerIpPerHour": 5,
-    "maxUserAgentLength": 512
+    "maxUserAgentLength": 512,
+    "turnstileAction": "contact"
   }
 }

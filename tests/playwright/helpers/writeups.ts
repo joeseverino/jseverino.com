@@ -3,36 +3,20 @@
 // break the code gates. Each helper picks the alphabetically-first writeup
 // satisfying a capability (deterministic across runs).
 //
-// The visual suite (visual.spec.ts) intentionally does NOT use these: its
-// committed baselines protect specific pages, so it pins slugs and a rename
-// there means re-pinning and re-baselining on purpose.
+// The visual suite (visual.spec.ts) does not use these: it renders the fixture
+// content and pins the fixture slugs.
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { siteRoot } from '../../../src/lib/site-root.mjs';
+import { writeupPath } from '../../../src/lib/site-config.ts';
+import { snapshotWriteups } from '../../../src/lib/snapshot.ts';
 
-const writeupsDir = path.join(siteRoot, 'src/content/writeups');
-
-const slugs = fs
-  .readdirSync(writeupsDir, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(writeupsDir, entry.name, 'index.md')))
-  .map((entry) => entry.name)
-  .sort();
-
-const bodies = new Map<string, string>();
-function body(slug: string): string {
-  if (!bodies.has(slug)) {
-    bodies.set(slug, fs.readFileSync(path.join(writeupsDir, slug, 'index.md'), 'utf8'));
-  }
-  return bodies.get(slug)!;
-}
+const writeups = snapshotWriteups();
 
 function writeupWhere(predicate: (body: string) => boolean, description: string): string {
-  const slug = slugs.find((candidate) => predicate(body(candidate)));
-  if (!slug) {
+  const match = writeups.find((writeup) => predicate(writeup.source));
+  if (!match) {
     throw new Error(`no synced writeup ${description}; run \`npm run sync:content\` and check the vault`);
   }
-  return `/portfolio/${slug}/`;
+  return writeupPath(match.slug);
 }
 
 export const anyWriteup = () => writeupWhere(() => true, 'exists');
@@ -42,11 +26,12 @@ export const tableWriteup = () =>
   writeupWhere((text) => /^::table/m.test(text) || /^\|.+\|$/m.test(text), 'with a table block');
 
 export const imageHeavyWriteup = () => {
-  const counted = slugs
-    .map((slug) => ({ slug, images: (body(slug).match(/!\[/g) ?? []).length }))
+  const counted = writeups
+    .map(({ slug, source }) => ({ slug, images: (source.match(/!\[/g) ?? []).length }))
     .sort((a, b) => b.images - a.images || a.slug.localeCompare(b.slug));
-  if (!counted.length || counted[0].images === 0) {
+  const [top] = counted;
+  if (!top || top.images === 0) {
     throw new Error('no synced writeup contains images; run `npm run sync:content`');
   }
-  return `/portfolio/${counted[0].slug}/`;
+  return writeupPath(top.slug);
 };

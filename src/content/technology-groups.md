@@ -15,7 +15,7 @@ If a writeup's `technologies:` frontmatter references a slug that is missing
 from this file, a warning is printed at dev/build time so it can be added.
 
 This vault file syncs to `src/content/technology-groups.md` in the site
-repo via `bin/sync-content.mjs`; the vault copy is authoritative.
+repo via `bin/sync-content.ts`; the vault copy is authoritative.
 
 ## Concepts & Frameworks
 
