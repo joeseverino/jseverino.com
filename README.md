@@ -9,6 +9,9 @@ private Obsidian vault and published as a static Astro site on Cloudflare.
 
 ![Obsidian vault, synced into this repo, built by Astro, served by Cloudflare Pages](./docs/diagrams/system-shape.png)
 
+<sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./docs/diagrams/system-shape.mmd),
+pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+
 This repository is the public build source. The vault stays private: a sync
 step projects only published content through a declared contract, and
 Cloudflare builds from what is committed here, with no access to the vault and
