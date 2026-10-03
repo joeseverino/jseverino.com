@@ -13,6 +13,7 @@
 // (title, description, intro, lead prose); its published flag gates the tree.
 // Resume-only institutions with no vault presence stay off /education/.
 import { stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
+import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar, type Org, type Role } from './documents.ts';
 
 // `severino-edu-mcp export`: the fields this join reads.
@@ -113,7 +114,7 @@ export function buildEducation({ grammar, shell, resume, dataset, projectPage }:
     const courses = publishableCourses(institution);
     const detailBody = courses.map((course) => `${courseRow(course)}\n\n${course.site_bullets}`).join('\n\n');
     pages.push({
-      page: `education/${institution.slug}.md`,
+      page: `education/${institution.slug}/${DOCUMENT_FILE}`,
       content: stringifyFrontmatter(
         renderDocumentRows(grammar, detailBody),
         projectPage({
@@ -141,6 +142,6 @@ export function buildEducation({ grammar, shell, resume, dataset, projectPage }:
     );
   }
 
-  pages.push({ page: 'education.md', content: stringifyFrontmatter(rows.join('\n\n'), projectPage(shell.data)) });
+  pages.push({ page: `education/${DOCUMENT_FILE}`, content: stringifyFrontmatter(rows.join('\n\n'), projectPage(shell.data)) });
   return { pages, links };
 }

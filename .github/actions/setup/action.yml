@@ -7,6 +7,9 @@ inputs:
   install:
     description: Run npm ci. Scripts that import no packages skip it.
     default: 'true'
+  astro-cache:
+    description: Restore and save Astro's image cache, for jobs that build the site.
+    default: 'false'
 
 runs:
   using: composite
@@ -22,3 +25,15 @@ runs:
       if: inputs.install == 'true'
       shell: bash
       run: npm ci --no-audit --no-fund
+
+    # Astro writes every encoded image variant to node_modules/.astro, keyed by
+    # source and options, so a partial restore is still correct. A cold build
+    # encodes them all; a warm one only what changed. The Pages build cache
+    # keeps the same directory.
+    - name: Restore the image cache
+      if: inputs.astro-cache == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: node_modules/.astro
+        key: astro-${{ runner.os }}-${{ hashFiles('src/content/**/*.png', 'src/content/**/*.jpg', 'src/content/**/*.jpeg', 'src/content/**/*.webp', 'astro.config.ts', 'package-lock.json') }}
+        restore-keys: astro-${{ runner.os }}-

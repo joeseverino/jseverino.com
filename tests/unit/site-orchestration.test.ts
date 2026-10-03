@@ -68,7 +68,7 @@ function buildFixture(origin: string, seed: string, checkout: string): void {
   git(tmp, 'clone', '--quiet', origin, seed);
   write(path.join(seed, 'package-lock.json'), '{"packages":{}}\n');
   write(path.join(seed, '.gitignore'), 'node_modules\n');
-  write(path.join(seed, 'src/content/writeups/old/index.md'), '---\ntitle: Old\n---\nOld body\n');
+  write(path.join(seed, 'src/content/writeups/old/index.mdx'), '---\ntitle: Old\n---\nOld body\n');
   git(seed, 'add', '-A');
   git(seed, 'commit', '--quiet', '-m', 'seed');
   git(seed, 'push', '--quiet', 'origin', 'main');
@@ -77,7 +77,7 @@ function buildFixture(origin: string, seed: string, checkout: string): void {
   git(checkout, 'switch', '--quiet', '-c', 'stale');
   write(path.join(checkout, 'node_modules/.package-lock.json'), '{"packages":{}}\n');
 
-  write(path.join(seed, 'src/content/writeups/old/index.md'), '---\ntitle: Old\n---\nNewer body on main\n');
+  write(path.join(seed, 'src/content/writeups/old/index.mdx'), '---\ntitle: Old\n---\nNewer body on main\n');
   git(seed, 'commit', '--quiet', '-am', 'main moves on');
   git(seed, 'push', '--quiet', 'origin', 'main');
 }
@@ -104,10 +104,9 @@ const syncWriting = (files: Record<string, string>, extra: Record<string, string
   };
 
 const NEW_WRITEUP = {
-  'src/content/writeups/new/index.md': '---\ntitle: New\n---\nBody\n',
-  'public/assets/writeups/new/images/a.png': 'png',
-  'public/assets/writeups/new/images/a-512.webp': 'webp',
-  'src/lib/image-manifest.json': '{}\n',
+  'src/content/writeups/new/index.mdx': '---\ntitle: New\n---\nBody\n',
+  'src/content/writeups/new/images/a.png': 'png',
+  'src/content/writeups/new/images/b.png': 'png',
 };
 const gate = async () => {};
 
@@ -177,7 +176,7 @@ describe('site publish', () => {
     const { origin, checkout } = fixture();
     const result = await publish({
       root: checkout, out, now: NOW, gate,
-      sync: syncWriting({ 'src/content/writeups/old/index.md': '---\ntitle: Old\n---\nNewer body on main\n' }),
+      sync: syncWriting({ 'src/content/writeups/old/index.mdx': '---\ntitle: Old\n---\nNewer body on main\n' }),
     });
     assert.equal(result.status, 'nothing-to-publish');
     assert.equal(git(origin, 'branch', '--list', 'content/*'), '');
@@ -229,7 +228,7 @@ describe('site publish', () => {
     assert.equal(result.status, 'dry-run');
     assert.match(result.commit, /^[0-9a-f]{40}$/);
     assert.match(result.body, /\*\*Published\*\*/);
-    assert.match(result.body, /3 generated files/);
+    assert.match(result.body, /2 generated files/);
     assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
     assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
     assert.equal(git(origin, 'branch', '--list', 'content/*'), '');
@@ -269,7 +268,7 @@ describe('site land', () => {
   test('waits for every required check, merges, waits for the deploy, verifies published and removed slugs', async () => {
     const { seed, checkout } = fixture();
     // The squash-merge commit as it lands on main.
-    write(path.join(seed, 'src/content/writeups/new/index.md'), '---\ntitle: New\n---\nBody\n');
+    write(path.join(seed, 'src/content/writeups/new/index.mdx'), '---\ntitle: New\n---\nBody\n');
     fs.rmSync(path.join(seed, 'src/content/writeups/old'), { recursive: true });
     git(seed, 'add', '-A');
     git(seed, 'commit', '--quiet', '-m', 'content: publish 1, remove 1');

@@ -8,7 +8,7 @@ import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { permittedContentRoot } from '../src/lib/content-root.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
-import { stampSitedriftPreview } from '../src/integrations/csp-nonce.ts';
+import { CSP_NONCE_PLACEHOLDER } from '../functions/lib/csp-nonce.ts';
 import { jsonLogs, spawnResult } from './lib/run.ts';
 import { writeStaticFallbacks } from './lib/pages-routes.ts';
 
@@ -37,10 +37,9 @@ run(process.execPath, [
   '--dir', outDir,
   '--live', SITE_ORIGIN,
   '--brand', SITE.owner,
+  // Every tag the viewer writes carries the placeholder the middleware nonces.
+  '--nonce', CSP_NONCE_PLACEHOLDER,
 ]);
-// Nonce placeholders on the preview viewer the wrap just wrote; a no-op on
-// production builds, which carry no viewer.
-stampSitedriftPreview(outDir);
 // The 404 pages for misses under excluded prefixes, after the wrap so a
 // preview build serves them as written.
 writeStaticFallbacks(path.join(siteRoot, outDir));

@@ -172,19 +172,26 @@ available update is not itself a failed deployment.
 
 ## 4. Signed Version Tag
 
-For a versioned release, move the signed tag only after the final release commit
-is on `main`.
+Tag a versioned release once the final release commit is on `main`. A tag is
+never moved: its push publishes the release.
 
 ```sh
-git tag -s -f v<version> -m "v<version> - <release summary>"
+git tag -s v<version> -m "v<version> - <release summary>"
 git tag -v v<version>
-git push --force origin v<version>
-git ls-remote origin refs/tags/v<version> refs/tags/v<version>^{}
+git push origin v<version>
 ```
 
-`<version>` is the `version` in `package.json`. The local verification must
-show a good signature. The peeled remote tag (`refs/tags/v<version>^{}`) must
-point to the intended release commit.
+`<version>` is the `version` in `package.json`, and the local verification must
+show a good signature. The push runs
+[`release.yml`](../.github/workflows/release.yml): it builds the tagged commit,
+packages the build output and a CycloneDX SBOM, attests both through Sigstore
+(build provenance and an SBOM attestation), and attaches all four files to the
+GitHub release. Anyone can check a release:
+
+```sh
+gh release download v<version> -R joeseverino/jseverino.com -p '*.tar.gz'
+gh attestation verify jseverino.com-v<version>.tar.gz -R joeseverino/jseverino.com
+```
 
 ## 5. Cloudflare Deploy Verification
 

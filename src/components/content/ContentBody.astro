@@ -1,0 +1,31 @@
+---
+// Renders a content entry. Markdown images render as <Picture>, the blocks a
+// page places (::featured-projects, ::contact-form) as their components, and
+// each run of prose between those blocks in the page's wrapper: .home-content
+// on the home page, .prose elsewhere.
+import { render, type CollectionEntry } from 'astro:content';
+import ContactForm from '@components/ContactForm.astro';
+import { CONTENT_RUN, PLACEHOLDERS } from '@lib/markdown/index.ts';
+import ContentImage from './ContentImage.astro';
+import FeaturedProjects from './FeaturedProjects.astro';
+import HomeRun from './HomeRun.astro';
+import ProseRun from './ProseRun.astro';
+import TechnologySection from './TechnologySection.astro';
+
+type Props = {
+  entry: CollectionEntry<'pages'> | CollectionEntry<'writeups'>;
+  runs?: 'home' | 'prose';
+};
+
+const { entry, runs = 'prose' } = Astro.props;
+const { Content } = await render(entry);
+
+const placeholders = {
+  'featured-projects': FeaturedProjects,
+  'technology-cloud': TechnologySection,
+  'contact-form': ContactForm,
+} satisfies Record<(typeof PLACEHOLDERS)[number], unknown>;
+const components = { img: ContentImage, ...placeholders, [CONTENT_RUN]: runs === 'home' ? HomeRun : ProseRun };
+---
+
+<Content components={components} />

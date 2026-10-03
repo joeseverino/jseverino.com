@@ -96,7 +96,7 @@ mark, with no exported file recolored by hand.
 
 ![Generated social preview and mark changing together](./images/sitedrift-brand-demo/github-generated-assets-diff.png)
 
-[![One branding-engine input change compared against production with sitedrift](./images/sitedrift-brand-demo/red-vs-live-split.png)](https://6ef83545.jseverino.pages.dev/)
+![One branding-engine input change compared against production with sitedrift](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
 Side by side, every brand-colored surface changes while the layout and content
 stay aligned. Diff mode hides identical pixels and shows only the changed brand
@@ -104,9 +104,8 @@ surfaces.
 
 ![Brand-only pixel differences](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-The demonstration deployment is still at
-[`6ef83545.jseverino.pages.dev`](https://6ef83545.jseverino.pages.dev/). The
-branch went back to navy afterward.
+The demonstration deployment is still at `6ef83545.jseverino.pages.dev`, behind
+Cloudflare Access with every preview. The branch went back to navy afterward.
 
 ## How The Site Consumes It
 

@@ -7,10 +7,10 @@
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
 
-![Obsidian vault, synced into this repo, built by Astro, served by Cloudflare Pages](./docs/diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./docs/diagrams/system-shape.png)
 
-<sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./docs/diagrams/system-shape.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+<sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
+pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 This repository is the public build source. The vault stays private: a sync
 step projects only published content through a declared contract, and
@@ -21,7 +21,9 @@ no secrets.
 
 | | |
 | :--- | :--- |
-| Site | [Astro 7](https://astro.build), static output, Markdown rendered through an allow-list |
+| Site | [Astro 7](https://astro.build), static output |
+| Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
+| Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | Cloudflare Pages Functions: per-request CSP nonces, the contact form, CSP reporting |
 | Data | Cloudflare D1 for contact submissions and CSP reports, behind Turnstile |
@@ -71,7 +73,9 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
   and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
   publish their results to code scanning.
 - Every commit on `main` is signed and every change lands through a pull
-  request with required checks; each `main` build attaches a CycloneDX SBOM.
+  request with required checks.
+- Each release carries the build output and its CycloneDX SBOM with Sigstore
+  attestations: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
   scanner result with its date and what was reviewed.
 

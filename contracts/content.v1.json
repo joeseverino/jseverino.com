@@ -20,7 +20,7 @@
         "published": { "type": "boolean", "default": false, "editable": true, "public": true, "ownership": "publish-state" },
         "published_at": { "type": "date", "editable": true, "public": true, "cli_flag": "--published-at" },
         "last_reviewed": { "type": "date", "editable": true, "public": true, "cli_flag": "--last-reviewed" },
-        "cover_image": { "type": "string", "editable": true, "public": true, "cli_flag": "--cover-image" },
+        "cover_image": { "type": "image", "editable": true, "public": true, "cli_flag": "--cover-image" },
         "cover_alt": { "type": "string", "editable": true, "public": true, "cli_flag": "--cover-alt" },
         "technologies": { "type": "string[]", "default": [], "editable": false, "public": true, "ownership": "vault" },
         "featured": { "type": "boolean", "default": false, "editable": false, "public": true, "ownership": "featured-order" },

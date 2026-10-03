@@ -17,7 +17,7 @@ try {
     tagline: 'Hands-on security & infrastructure projects',
     meta: 'Technical Solutions Engineer • CCNA • Security+',
     url: SITE.domain,
-    photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
+    photoPath: path.join(root, 'src/content/pages/home/images/portrait.jpg'),
     outPath: path.join(root, 'public/assets/og/og-default.png'),
     colors: brandCardColors(),
   });

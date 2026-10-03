@@ -6,9 +6,12 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stampNonces, stampSitedriftViewer, unstampedTags } from '../../src/integrations/csp-nonce.ts';
-import { renderHostedViewer } from './helpers/sitedrift-internals.ts';
-import { CSP_NONCE_ATTRIBUTE } from '../../functions/lib/csp-nonce.ts';
+import fs from 'node:fs';
+import path from 'node:path';
+import { installCloudflarePreview } from 'sitedrift';
+import { stampNonces, unstampedTags } from '../../src/integrations/csp-nonce.ts';
+import { CSP_NONCE_ATTRIBUTE, CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
+import { tempDir } from './helpers/fs.ts';
 
 const page = (head: string, body: string) => `<!doctype html><html><head>${head}</head><body>${body}</body></html>`;
 const astroScript = '<script type="module" src="/_astro/Header.astro_astro_type_script_index_0_lang.BGt9nm10.js"></script>';
@@ -42,10 +45,15 @@ describe('stampNonces', () => {
   });
 });
 
-describe('stampSitedriftViewer', () => {
-  test('stamps both scripts of the hosted review viewer', () => {
-    const html = stampSitedriftViewer(renderHostedViewer({ live: 'https://jseverino.com', brand: 'x', initialPath: '/' }));
-    assert.equal(html.split('<script').length - 1, 2);
-    assert.deepEqual(unstampedTags(html), []);
+describe('the sitedrift preview viewer', () => {
+  test('every tag it writes carries the placeholder the middleware nonces', () => {
+    const dir = tempDir('sitedrift-');
+    fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><html><head><title>x</title></head><body>x</body></html>');
+    const result = installCloudflarePreview({ dir, live: 'https://jseverino.com', nonce: CSP_NONCE_PLACEHOLDER, force: true });
+    assert.equal(result.installed, true);
+    const viewer = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+    assert.ok(viewer.includes('<script'), 'the page is the review viewer');
+    assert.deepEqual(unstampedTags(viewer), []);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });

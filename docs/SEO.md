@@ -50,7 +50,7 @@ Routes that match a known page archetype add one more node:
 
 Pass `pageType: 'profile' | 'collection' | 'itemList'` (and, for `itemList`, an `itemListItems` array) into `SeoHead` from the page that owns the route.
 
-`Article` images are emitted as `ImageObject` with intrinsic `width` and `height` resolved from `src/lib/image-manifest.json`. Search results can then show a thumbnail. The default OG image's dimensions live next to the URL in [`src/lib/site.ts`](../src/lib/site.ts) so they survive a sync that hasn't touched it.
+`Article` images are emitted as `ImageObject` with the `width` and `height` of the 1200px card Astro's `getImage()` encodes from the cover. Search results can then show a thumbnail. The default OG image's dimensions live next to the URL in [`src/lib/site.ts`](../src/lib/site.ts) so they survive a sync that hasn't touched it.
 
 The `Person` entity reads:
 

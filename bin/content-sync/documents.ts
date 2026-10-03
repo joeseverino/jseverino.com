@@ -2,7 +2,7 @@
 // project meta) rendered to classed HTML rows. /resume/, any page marked
 // `document_layout: true`, and the education pages all render through here:
 // one row renderer, one CSS block. The line grammar and tenure math live in
-// resume-engine's lib/grammar.mjs, which the PDF reads too.
+// resume-engine's lib/grammar.ts, which the PDF reads too.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -29,11 +29,11 @@ export interface Grammar {
 }
 
 export async function loadGrammar(resumeEngineRoot: string): Promise<Grammar> {
-  const grammarPath = path.join(resumeEngineRoot, 'lib', 'grammar.mjs');
+  const grammarPath = path.join(resumeEngineRoot, 'lib', 'grammar.ts');
   if (!fs.existsSync(grammarPath)) {
     throw new Error(`resume grammar not found: ${grammarPath} (clone resume-engine or set RESUME_ENGINE_DIR)`);
   }
-  // An untyped module outside the repo; Grammar is the contract it is held to.
+  // A module outside the repo, loaded by path; Grammar is the contract it is held to.
   return (await import(pathToFileURL(grammarPath).href)) as Grammar;
 }
 

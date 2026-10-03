@@ -59,13 +59,13 @@ they cover the signed `security.txt`, color contrast, contract parity on both
 boundaries (vault/Zod/MCP and handler/OpenAPI/D1), strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
-(including unprocessed `::directives`), Functions routing, and SEO metadata.
+(including unprocessed directives), Functions routing, and SEO metadata.
 The [audit table](./ARCHITECTURE.md#2-audits) says what each one asserts and how to fix it.
 
 **[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
-build. The [Markdown DSL](./ARCHITECTURE.md#the-unit-layer) in
-[`src/lib/markdown.ts`](../src/lib/markdown.ts) is pinned block by block to the
-HTML it must produce. The Cloudflare Pages Functions (contact API, CSP report
+build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
+[`src/lib/markdown/`](../src/lib/markdown/) is pinned block by block to the
+HTML it must produce, and its guard to what it refuses. The Cloudflare Pages Functions (contact API, CSP report
 endpoint, header middleware) run request in, response out, with D1 and
 Turnstile stubbed. The gate harness, the registry, the `site` CLI's publish and
 land flows, and each audit's rule are tested too. Node runs the specs directly

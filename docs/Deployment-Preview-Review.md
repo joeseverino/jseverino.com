@@ -120,21 +120,24 @@ The project has two integration points. `npm run build:static`
 `sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
 output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
 and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts).
-It then stamps the nonce placeholder onto the viewer's inline tags, a no-op on
-production builds.
+`--nonce __CSP_NONCE__` stamps the placeholder the middleware replaces on every
+tag the viewer writes; the viewer has no inline script, so a preview runs under
+the same nonce CSP as production.
 
 The scoped Pages Function,
-[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts),
-wraps sitedrift's `onRequest` with the helpers in
-[`functions/lib/sitedrift-preview.ts`](../functions/lib/sitedrift-preview.ts):
+[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts), is
+sitedrift's own `onRequest`, whose defaults are this route's guards:
 
-- it returns `404` on the production hosts and on any build without sitedrift's
-  generated config;
-- only content-negotiation headers (`accept`, `accept-language`,
-  `cache-control`, conditional and range headers, `user-agent`) reach the
-  upstream; cookies, `authorization`, and Access headers never do;
-- responses get the static security headers back, and the frame bridge and
-  LIVE pages get the nonce placeholder so the preview's own nonce applies.
+- `404` on the production host (and its `www.`) and on any build without
+  sitedrift's generated config;
+- only content-negotiation headers (`accept`, `accept-language`, conditional and
+  range headers, `user-agent`) reach production; cookies, `authorization`, and
+  Access headers never do, and production's `set-cookie` is dropped;
+- responses get the security headers back, and LIVE pages carry the preview's
+  own nonce.
+
+[`tests/unit/csp-nonce.test.ts`](../tests/unit/csp-nonce.test.ts) wraps a page
+with the installed sitedrift and fails if any tag lacks the placeholder.
 
 `sitedrift` is pinned in `devDependencies` and the exact tarball is locked in
 `package-lock.json`.

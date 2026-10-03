@@ -1,9 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { ImageMetadata } from 'astro';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
-import { enhanceImages } from './images.ts';
-import { renderPageHtml, renderWriteupHtml } from './markdown.ts';
 import { site } from './site.ts';
 import { asyncCache } from './async-cache.ts';
 import { contentRoot } from './content-root.ts';
@@ -19,9 +18,10 @@ export type Writeup = {
   date: string;
   lastReviewed?: string | undefined;
   technologies: string[];
-  heroImage: string;
+  heroImage: ImageMetadata | string;
   heroAlt: string;
-  bodyHtml: string;
+  hasImages: boolean;
+  entry: CollectionEntry<'writeups'>;
   featured: boolean;
   featuredOrder?: number | undefined;
 };
@@ -32,8 +32,7 @@ export type PageContent = {
   description: string;
   intro?: string | undefined;
   path: string;
-  body: string;
-  bodyHtml: string;
+  entry: CollectionEntry<'pages'>;
 };
 
 function normalizeDate(value: unknown): string {
@@ -42,22 +41,8 @@ function normalizeDate(value: unknown): string {
   return '';
 }
 
-// The sync rewrites every local reference (body and cover_image) to its
-// public /assets/ URL, so content arrives here already resolved.
-function firstBodyImage(markdown: string): string | undefined {
-  return markdown.match(/!\[[^\]]*\]\(([^)\s]+)/)?.[1];
-}
-
-function renderWriteupMarkdown(markdown: string): string {
-  return enhanceImages(renderWriteupHtml(markdown));
-}
-
-export function renderPageMarkdown(markdown: string): string {
-  return enhanceImages(renderPageHtml(markdown));
-}
-
 function collectionSlug(id: string): string {
-  return id.replace(/\/index\.md$/, '').replace(/\.md$/, '');
+  return id.replace(/\/index(?:\.mdx)?$/, '').replace(/\.mdx$/, '');
 }
 
 const loadPages = asyncCache(() => {
@@ -73,8 +58,7 @@ function toPageContent(entry: CollectionEntry<'pages'>): PageContent {
     description: entry.data.description ?? '',
     intro: entry.data.intro,
     path: entry.data.path || (slug === 'home' ? '/' : `/${slug}/`),
-    body: entry.body ?? '',
-    bodyHtml: renderPageMarkdown(entry.body ?? ''),
+    entry,
   };
 }
 
@@ -138,7 +122,6 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
 
   const writeups = entries.map((entry) => {
     const slug = collectionSlug(entry.id);
-    const heroImage = entry.data.cover_image || firstBodyImage(entry.body ?? '') || site.defaultOgImage;
 
     return {
       slug,
@@ -147,9 +130,10 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
       date: normalizeDate(entry.data.published_at),
       lastReviewed: normalizeDate(entry.data.last_reviewed),
       technologies: entry.data.technologies,
-      heroImage,
+      heroImage: entry.data.cover_image ?? site.defaultOgImage,
       heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
-      bodyHtml: renderWriteupMarkdown(entry.body ?? ''),
+      hasImages: /!\[[^\]]*\]\(/.test(entry.body ?? ''),
+      entry,
       featured: entry.data.featured,
       featuredOrder: entry.data.featured_order,
     } satisfies Writeup;

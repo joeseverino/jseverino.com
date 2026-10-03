@@ -3,6 +3,7 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import { writeupPath } from '@lib/site-config.ts';
 import Picture from '@components/Picture.astro';
 import Lightbox from '@components/Lightbox.astro';
+import ContentBody from '@components/content/ContentBody.astro';
 import { formatDate, getWriteups, titleCase } from '@lib/content.ts';
 
 export async function getStaticPaths() {
@@ -13,7 +14,6 @@ export async function getStaticPaths() {
 }
 
 const { writeup } = Astro.props;
-const hasFigures = writeup.bodyHtml.includes('<img');
 ---
 
 <BaseLayout
@@ -50,7 +50,7 @@ const hasFigures = writeup.bodyHtml.includes('<img');
       </figure>
     </header>
 
-    <article class="prose" set:html={writeup.bodyHtml} />
+    <article class="prose"><ContentBody entry={writeup.entry} /></article>
 
     {
       writeup.technologies.length > 0 && (
@@ -66,5 +66,5 @@ const hasFigures = writeup.bodyHtml.includes('<img');
       )
     }
   </main>
-  {hasFigures && <Lightbox />}
+  {writeup.hasImages && <Lightbox />}
 </BaseLayout>

@@ -1,18 +1,14 @@
 #!/usr/bin/env node
-// Regenerates the fixture images and their manifest (the same AVIF/WebP
-// variant shape bin/sync-content.ts writes). Shapes only, no text, so the
+// Regenerates the fixture image masters beside the fixture documents that use
+// them, as bin/sync-content.ts writes them. Shapes only, no text, so the
 // output does not depend on the fonts of the machine that runs it.
 //
 //   node tests/fixtures/make-images.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
-import type { Manifest, Variant } from '../../src/lib/images.ts';
 
 const root = path.join(import.meta.dirname, 'content');
-const urlDir = '/assets/fixtures';
-const outDir = path.join(root, 'public', urlDir);
-const WIDTHS = [512, 768, 1024, 1600];
 
 type Point = [x: number, y: number];
 
@@ -39,27 +35,24 @@ const images = {
   'portrait.png': diagram(680, 680, '#e7ecf7', [[340, 300], [340, 560]]),
 };
 
-fs.rmSync(outDir, { recursive: true, force: true });
-fs.mkdirSync(outDir, { recursive: true });
-const manifest: Manifest = {};
+// The documents each image belongs to.
+const uses: Record<keyof typeof images, string[]> = {
+  'network-lab-cover.png': ['writeups/network-lab'],
+  'network-lab-topology.png': ['writeups/network-lab', 'pages/about'],
+  'detection-pipeline-cover.png': ['writeups/detection-pipeline'],
+  'hardening-checklist-cover.png': ['writeups/hardening-checklist'],
+  'archive-entry-cover.png': ['writeups/archive-entry'],
+  'portrait.png': ['pages/home'],
+};
 
-for (const [name, svg] of Object.entries(images)) {
+let written = 0;
+for (const [name, svg] of Object.entries(images) as [keyof typeof images, string][]) {
   const png = await sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toBuffer();
-  fs.writeFileSync(path.join(outDir, name), png);
-  // sharp always reports dimensions for a PNG it just encoded.
-  const { width = 0, height = 0 } = await sharp(png).metadata();
-  const base = path.basename(name, '.png');
-  const widths = [...new Set([...WIDTHS.filter((w) => w < width), Math.min(width, Math.max(...WIDTHS))])];
-  const avif: Variant[] = [];
-  const webp: Variant[] = [];
-  for (const w of widths) {
-    fs.writeFileSync(path.join(outDir, `${base}-${w}.avif`), await sharp(png).resize({ width: w }).avif({ quality: 60 }).toBuffer());
-    fs.writeFileSync(path.join(outDir, `${base}-${w}.webp`), await sharp(png).resize({ width: w }).webp({ quality: 82 }).toBuffer());
-    avif.push([w, `${urlDir}/${base}-${w}.avif`]);
-    webp.push([w, `${urlDir}/${base}-${w}.webp`]);
+  for (const doc of uses[name]) {
+    const dir = path.join(root, doc, 'images');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, name), png);
+    written += 1;
   }
-  manifest[`${urlDir}/${name}`] = { w: width, h: height, avif, webp, fallback: `${urlDir}/${name}` };
 }
-
-fs.writeFileSync(path.join(root, 'image-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`wrote ${Object.keys(manifest).length} fixture images to ${path.relative(process.cwd(), outDir)}`);
+console.log(`wrote ${written} fixture images under ${path.relative(process.cwd(), root)}`);

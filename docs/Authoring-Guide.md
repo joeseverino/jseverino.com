@@ -1,240 +1,212 @@
 # Authoring Guide
 
-Content is written in the private vault as Markdown. The sync copies only published content into this repo. [`src/lib/markdown.ts`](../src/lib/markdown.ts) renders it with standard Markdown plus a small set of custom directives, and [`src/lib/image-directives.ts`](../src/lib/image-directives.ts) parses the image modifiers. [`src/lib/content.ts`](../src/lib/content.ts) is the Astro glue: content collections and `<picture>` enhancement.
+Content is written in the private vault as Markdown with
+[directives](https://talk.commonmark.org/t/generic-directives-plugins-syntax/444).
+The sync copies published documents into this repo as MDX, and Astro renders
+them with its Rust Markdown processor, Sätteri, and the site's plugins in
+[`src/lib/markdown/`](../src/lib/markdown/). Images go through Astro's image
+pipeline.
 
 Use this guide when writing or reviewing vault content.
 
-## Which Directives Work Where
+## Blocks
 
-Pages and writeups render through two pipelines, and each recognizes its own directives:
+A block opens with `:::name` on its own line and closes with `:::`. Every block
+works in pages and writeups alike.
 
-| Pipeline | Block directives | Inline directives |
-| --- | --- | --- |
-| Pages (`06 Pages`) | `::button`, `::button sticky`, `::buttons`, `::terminal`, `::center`, `::split`, `::hero` | `::cta ::`, `::featured-projects ::`, `::technology-cloud ::` |
-| Writeups (`05 Writeups`) | `::terminal`, `::figure`, `::table` | none |
+| Block | Renders |
+| --- | --- |
+| `:::figure` | an image with a caption |
+| `:::table` | a table with a caption |
+| `:::button` | one action button; `:::button{.sticky}` keeps it pinned |
+| `:::buttons` | a row of buttons from a list of links |
+| `:::center` | centered text |
+| `:::hero` | the home-page hero |
+| `:::split` with two `:::side` | a two-column section |
 
-A block opens with `::name` on its own line and closes with `::` on its own line. A directive the pipeline does not recognize, or a typo such as `::termnial`, stays in the page as literal text, and the HTML audit (`npm run check:html`) fails the build on it.
+A block inside another needs a longer fence on the outside: give the parent
+one more colon than the tallest block it holds.
+
+```md
+::::hero
+# Hi, I'm Joe Severino
+
+:::buttons
+- [View My Resume](/resume/)
+- [Get in Touch](/contact/)
+:::
+::::
+```
+
+A name that is not a block, or a typo such as `:::figrue`, fails the build
+with its line. `site validate` reports it before anything syncs.
 
 ## General Rules
 
 - Keep frontmatter factual and public-safe.
 - Set `published: true` only when the page or writeup is ready to ship.
-- Put writeup images in the writeup's local `images/` folder.
-- Reference local images as `./images/file.png`.
-- Start writeup body sections at `##`; the article title is already rendered as the page `h1`.
-- Prefer normal Markdown unless a directive adds real structure.
-- Do not rely on raw HTML unless there is a specific reason. See [Raw HTML](#raw-html) for what survives.
+- Keep a document's images in its `images/` folder and reference them as
+  `./images/file.png`.
+- Start writeup body sections at `##`; the article title is already the page `h1`.
+- Prefer plain Markdown unless a block adds real structure.
 
-## Image Syntax
+## Writing MDX
 
-Standard image:
+Documents compile as MDX, so content follows its rules. `site validate`
+reports a problem with its line before the build would.
+
+- A literal brace needs a backslash: `\{` and `\}`. An unescaped `{…}` is an
+  expression, and content cannot run code.
+- A literal `<` before a letter needs `&lt;`, or belongs in code. Anything
+  inside backticks or a fenced block is literal already.
+- HTML comments do not compile. Leave notes out of published documents.
+- A `:::` line directly after a table becomes a table row. Leave a blank line
+  between a table and the fence that closes its block.
+
+## Images
 
 ```md
 ![Screenshot of the final dashboard](./images/dashboard.png)
 ```
 
-The alt text is used as the visible caption when the image is promoted to a figure.
-
-Width override:
+Modifiers go after the alt text, separated by `|`:
 
 ```md
 ![Packet capture showing ARP replies|720](./images/arp-replies.png)
+![Decorative divider|nozoom](./images/divider.png)
 ```
 
-No visible caption:
+- A number sets the display width; the height follows the image's ratio.
+- `nozoom` keeps the image out of the zoom view a writeup image opens on click.
+
+The sync writes each image's master beside its document: at most 1600 pixels
+wide, converted to sRGB, with every metadata block (EXIF, XMP, ICC) removed.
+Astro encodes AVIF and WebP at 512, 768, 1024, and 1600 pixels from it, with
+the intrinsic size on every `<img>` so nothing shifts as it loads.
+
+## Figures
 
 ```md
-![Joe Severino portrait|nocap](./images/portrait.jpg)
-```
-
-Opt out of the zoom view:
-
-```md
-![Decorative divider|nozoom](./images/divider.svg)
-```
-
-Every image in a writeup body opens an enlarged zoom view on click or tap by
-default. Add `|nozoom` to keep a specific image static; it still renders
-normally. The `|nozoom` modifier also works inside `::figure` blocks.
-
-The caption, `|nocap`, and `|nozoom` modifiers apply to writeups. On pages, only the width modifier (`|720`) is read.
-
-The sync generates responsive variants. `enhanceImages()` in [`src/lib/images.ts`](../src/lib/images.ts) renders AVIF, WebP, and fallback sources with stable dimensions from [`src/lib/image-manifest.json`](../src/lib/image-manifest.json).
-
-## Terminal Blocks
-
-Use terminal blocks for command/output sequences.
-
-```md
-::terminal
-$ npm run publish:check
-check      0 errors, 0 warnings
-build      76 pages built
-::
-```
-
-Lines beginning with `$` are rendered as commands. Other lines are rendered as output.
-
-## Buttons
-
-Pages only.
-
-Single button:
-
-```md
-::button
-[View Resume](/resume/)
-::
-```
-
-Sticky button:
-
-```md
-::button sticky
-[Download PDF](/assets/resume.pdf)
-::
-```
-
-Button row:
-
-```md
-::buttons
-- [View Portfolio](/portfolio/)
-- [Contact Me](/contact/)
-::
-```
-
-Standard CTA:
-
-```md
-::cta ::
-```
-
-The standard CTA expands to a `::buttons` row: View Portfolio and Get in Touch.
-
-A writeup paragraph that is nothing but one link is promoted to a button automatically.
-
-## Centered Content
-
-Pages only. Use sparingly for short page-opening text.
-
-```md
-::center
-Cybersecurity and networking projects.
-::
-```
-
-## Split Layout
-
-Pages only. Use a split layout for two-column page sections.
-
-```md
-::split
-Left column content.
-:::
-Right column content.
-::
-```
-
-The `:::` line separates the two columns.
-
-## Hero
-
-Wraps the home-page hero in a centered `<header>`. Use once, at the top of the home page.
-
-```md
-::hero
-<p class="hero-eyebrow">Cybersecurity • Networking • AI</p>
-
-# Hi, I'm Joe Severino
-
-Role • Credentials
-
-<p class="hero-summary">One-line summary of the work.</p>
-
-<p class="hero-location">City, State</p>
-
-::buttons
-- [View My Resume](/resume/)
-- [Get in Touch](/contact/)
-::
-::
-```
-
-The `hero-eyebrow`, `hero-summary`, and `hero-location` classes style the kicker, the lead summary, and the location chip.
-
-## Dynamic Page Blocks
-
-Pages only.
-
-Featured projects:
-
-```md
-::featured-projects ::
-```
-
-Technology cloud:
-
-```md
-::technology-cloud ::
-```
-
-Both are placeholders the page layout fills from structured content. Featured projects come from writeup frontmatter (`featured`, `featured_order`). Technology groups come from [`src/content/technology-groups.md`](../src/content/technology-groups.md), synced from the vault catalog.
-
-## Figure Blocks
-
-Writeups only. Use figure blocks when a caption needs Markdown or multiple lines.
-
-```md
-::figure
+:::figure
 ![Nftables host filter](./images/nftables.png)
 The host firewall accepts SSH only from the VPN interface.
-::
+:::
 ```
 
-## Table Blocks
+The caption is everything after the image: the lines right below it, or the
+paragraphs after a blank line. It takes inline Markdown.
 
-Writeups only. Use table blocks when a table needs a caption.
+## Tables
 
 ```md
-::table
+:::table
 | Control | Purpose |
 | --- | --- |
 | Turnstile | Bot challenge |
 | D1 | Contact messages and CSP reports |
 
 Contact form controls.
-::
+:::
 ```
 
-Tables are wrapped for horizontal scrolling on small screens, and separator-delimited values (IPs, MACs) break at their `.` and `:` separators.
+Every table scrolls sideways on small screens, with or without the block.
+Separator-delimited values (IPs, MACs) break at their `.` and `:`.
+
+## Terminal Output
+
+A fenced block tagged `terminal` renders as a terminal:
+
+````md
+```terminal
+$ npm run publish:check
+check      0 errors, 0 warnings
+build      93 pages built
+```
+````
+
+Lines starting with `$` render as commands, the rest as output. The content is
+literal, so `<placeholders>` need no escaping.
+
+## Buttons
+
+```md
+:::button
+[View Resume](/resume/)
+:::
+
+:::buttons
+- [View Portfolio](/portfolio/)
+- [Contact Me](/contact/)
+:::
+```
+
+In a row the first button is primary and the rest secondary. In a writeup, a
+paragraph that is only a link renders as a button too.
+
+## Split Sections
+
+```md
+::::split
+:::side
+![Portrait|340](./images/portrait.jpg)
+:::
+:::side
+The text column.
+:::
+::::
+```
+
+A side that holds only an image renders the image bare.
+
+## Placeholders
+
+A page places a site component on a line of its own:
+
+```md
+::featured-projects
+::technology-cloud
+::contact-form
+```
+
+The page renders each one, and every run of prose between them in its own
+wrapper. Featured projects come from writeup frontmatter (`featured`,
+`featured_order`); technology groups from
+[`src/content/technology-groups.md`](../src/content/technology-groups.md), synced
+from the vault catalog.
 
 ## Raw HTML
 
-Raw HTML is rebuilt from an allow-list in [`src/lib/markdown.ts`](../src/lib/markdown.ts):
+Raw HTML is limited to an allow-list, enforced by
+[`src/lib/markdown/guard.ts`](../src/lib/markdown/guard.ts). Anything outside it
+fails the build:
 
-- Tags: `a`, `abbr`, `b`, `blockquote`, `br`, `caption`, `code`, `dd`, `del`, `div`, `dl`, `dt`, `em`, `figcaption`, `figure`, `h1` to `h6`, `header`, `hr`, `i`, `img`, `kbd`, `li`, `mark`, `ol`, `p`, `pre`, `s`, `small`, `span`, `strong`, `sub`, `sup`, `table`, `tbody`, `td`, `tfoot`, `th`, `thead`, `tr`, `u`, `ul`, `wbr`.
-- Attributes on any of them: `class`, `title`, `aria-hidden`, `aria-label`. Per tag: `a` keeps `href`, `target`, `rel`; `img` keeps `src`, `alt`, `width`, `height`, `loading`, `decoding`; `ol` keeps `start`; `td`/`th` keep `colspan`, `rowspan` (`th` also `scope`).
-- URLs in `href` and `src` must be relative or `http`, `https`, or `mailto`; any other scheme drops the attribute.
-
-Any other tag renders as visible text, and HTML comments are dropped.
+- Tags: `a`, `abbr`, `b`, `blockquote`, `br`, `caption`, `code`, `dd`, `del`,
+  `div`, `dl`, `dt`, `em`, `figcaption`, `figure`, `h1` to `h6`, `header`, `hr`,
+  `i`, `img`, `kbd`, `li`, `mark`, `ol`, `p`, `pre`, `s`, `small`, `span`,
+  `strong`, `sub`, `sup`, `table`, `tbody`, `td`, `tfoot`, `th`, `thead`, `tr`,
+  `u`, `ul`, `wbr`.
+- Attributes on any of them: `class`, `title`, `aria-hidden`, `aria-label`. Per
+  tag: `a` takes `href`, `target`, `rel`; `img` takes `src`, `alt`, `width`,
+  `height`, `loading`, `decoding`; `ol` takes `start`; `td`/`th` take
+  `colspan`, `rowspan` (`th` also `scope`).
+- Attribute values are plain strings, and URLs in `href` and `src` are relative
+  or `http`, `https`, or `mailto`.
 
 ## Review Checklist
 
 Before publishing:
 
-- The page or writeup has `published: true`.
+- The page or writeup has `published: true`, and a writeup has a `cover_image`.
 - The title and description are public-safe.
-- Images use local relative paths.
-- Captions are descriptive.
-- No private hostnames, keys, internal notes, or vault metadata appear in body content.
-- `npm run publish:check` passes after sync (see [`docs/Release-Checklist.md`](./Release-Checklist.md)).
+- Images use local relative paths and captions are descriptive.
+- No private hostnames, keys, internal notes, or vault metadata appear in body
+  content.
+- `site validate` passes, then `npm run publish:check` after the sync (see
+  [Release Checklist](./Release-Checklist.md)).
 
 ## Related Docs
 
-- [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
-- [`docs/Site-CLI.md`](./Site-CLI.md)
-- [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
-- [`docs/Architecture.md`](./Architecture.md)
-- [`docs/SEO.md`](./SEO.md)
-- [`docs/Accessibility.md`](./Accessibility.md)
+- [Vault Workflow](./Vault-Workflow.md)
+- [Site CLI](./Site-CLI.md)
+- [Architecture](./Architecture.md)
+- [SEO](./SEO.md) · [Accessibility](./Accessibility.md)

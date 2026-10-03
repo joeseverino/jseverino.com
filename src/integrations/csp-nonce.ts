@@ -38,22 +38,6 @@ function htmlFiles(dir: string): string[] {
     .map((entry) => path.join(entry.parentPath, entry.name));
 }
 
-// Preview builds only: sitedrift replaces every page with its review viewer
-// after the Astro build, so these are the viewer's own two scripts. Called by
-// bin/build-static.ts after the sitedrift wrap; a no-op on production builds.
-const VIEWER_SCRIPT = /<script>(?=window\.__SITEDRIFT_CONFIG__ = )|<script src="\/__sitedrift\/assets\/viewer\.js\?v=\d+" defer>/g;
-
-export function stampSitedriftViewer(html: string): string {
-  return html.replace(VIEWER_SCRIPT, (tag) => tag.replace(/^<script/, `<script ${CSP_NONCE_ATTRIBUTE}`));
-}
-
-export function stampSitedriftPreview(dir: string): number {
-  if (!fs.existsSync(path.join(dir, '__sitedrift', 'config.json'))) return 0;
-  const files = htmlFiles(dir).filter((file) => !file.startsWith(path.join(dir, '__sitedrift')));
-  for (const file of files) fs.writeFileSync(file, stampSitedriftViewer(fs.readFileSync(file, 'utf8')));
-  return files.length;
-}
-
 export function cspNonce(): AstroIntegration {
   return {
     name: 'csp-nonce',

@@ -7,8 +7,8 @@ production site.
 
 The full explanation appears in
 [Deployment Preview Review](../../Deployment-Preview-Review.md). The exact
-historical deployment remains available at
-[`6ef83545.jseverino.pages.dev`](https://6ef83545.jseverino.pages.dev/).
+historical deployment remains at `6ef83545.jseverino.pages.dev`, behind
+Cloudflare Access with every preview.
 
 ## What Each Capture Shows
 

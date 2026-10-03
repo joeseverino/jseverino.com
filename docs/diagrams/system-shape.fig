@@ -1,0 +1,21 @@
+# From the private vault to the edge, and where each step runs.
+direction: right
+
+Mac [dashed] {
+  Obsidian vault [icon: file, note: private]
+  Content sync [icon: terminal, note: MDX · image masters]
+}
+
+GitHub [dashed] {
+  Repository [icon: code, note: public snapshot]
+}
+
+Cloudflare [dashed] {
+  Pages build [icon: cpu, note: Astro · AVIF · WebP]
+  Edge [icon: globe, anchor, note: CSP nonce · Functions]
+}
+
+Obsidian vault > Content sync
+Content sync > Repository: pull request
+Repository > Pages build
+Pages build > Edge

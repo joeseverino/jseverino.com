@@ -2,10 +2,6 @@
 // lib does not know about. Only the surface this code touches, narrower than
 // @cloudflare/workers-types on purpose, so the type gate adds no dependency.
 
-declare module 'sitedrift/cloudflare' {
-  export function onRequest(context: { request: Request; next(): Promise<Response> }): Promise<Response>;
-}
-
 declare class HTMLRewriter {
   on(
     selector: string,

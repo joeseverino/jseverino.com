@@ -1,7 +1,9 @@
 ---
+import ContentBody from '@components/content/ContentBody.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
 import { getPage } from '@lib/content.ts';
+import { site } from '@lib/site.ts';
 
 const page = await getPage('resume');
 ---
@@ -21,7 +23,10 @@ const page = await getPage('resume');
   <main id="main" class="content-page resume-page">
     <div class="content-flow">
       <PageHero title={page.title} />
-      <div class="prose" set:html={page.bodyHtml} />
+      <div class="prose">
+        <ContentBody entry={page.entry} />
+        <div class="actions"><a class="button sticky-button" href={site.resumePdf}>Download Resume</a></div>
+      </div>
     </div>
   </main>
 </BaseLayout>

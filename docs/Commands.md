@@ -181,7 +181,7 @@ visual baselines are macOS Chromium renders.
 
 **`npm run gate:check`**: the first step of the `build` job in `ci.yml`.
 Runs the registry audits that claim the `gate` gate (source integrity,
-duplicated code, the snapshot's image manifest and draft guards, the type
+duplicated code, the snapshot's draft guard, the type
 check, the generated doc blocks, docs references, stylesheet lint, repository
 policy) concurrently and keeps going after a failure, so one report names
 every broken invariant before the publish gate builds anything. In CI the

@@ -1,4 +1,5 @@
 ---
+import ContentBody from '@components/content/ContentBody.astro';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
 import { getPage } from '@lib/content.ts';
@@ -20,7 +21,7 @@ const page = await getPage('privacy');
   <main id="main" class="content-page">
     <div class="content-flow">
       <PageHero title={page.title} description={page.intro ?? page.description} />
-      <div class="prose" set:html={page.bodyHtml} />
+      <div class="prose"><ContentBody entry={page.entry} /></div>
     </div>
   </main>
 </BaseLayout>

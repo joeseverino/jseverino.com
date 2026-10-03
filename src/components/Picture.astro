@@ -1,9 +1,51 @@
 ---
-import { buildPicture, type PictureOptions } from '@lib/images.ts';
+// A responsive <picture>: an AVIF source and a WebP <img>, each at the widths
+// the layout serves (Astro drops any wider than the original). Astro sets the
+// intrinsic size, so the box is reserved before the image loads. Every
+// browser this site's CSS supports decodes both formats.
+//
+// The image's metadata is never read here: touching it marks the original as
+// referenced, and Astro would then ship the unprocessed file with its EXIF.
+// A URL string (the default social card) renders as a plain <img>.
+import type { ImageMetadata } from 'astro';
+import { Picture as AstroPicture } from 'astro:assets';
+import { IMAGE_WIDTHS } from '@lib/images.ts';
 
-type Props = PictureOptions;
+type Props = {
+  src: ImageMetadata | string;
+  alt?: string | undefined;
+  class?: string | undefined;
+  sizes?: string | undefined;
+  loading?: 'lazy' | 'eager' | undefined;
+  fetchpriority?: 'high' | 'low' | 'auto' | undefined;
+  /** Display width override (`![alt|400](…)`); height follows the ratio. */
+  width?: number | undefined;
+  /** Opt out of the figure lightbox (`![alt|nozoom](…)`). */
+  noZoom?: boolean | undefined;
+};
 
-const html = buildPicture(Astro.props);
+const { src, alt = '', class: className, loading = 'lazy', fetchpriority, width, noZoom = false } = Astro.props;
+const sizes = Astro.props.sizes ?? (width ? `(min-width: 600px) ${width}px, 100vw` : '(max-width: 720px) 100vw, 672px');
+const zoom = noZoom ? { 'data-no-zoom': '' } : {};
 ---
 
-<Fragment set:html={html} />
+{
+  typeof src === 'string' ? (
+    <img src={src} alt={alt} class={className} loading={loading} decoding="async" fetchpriority={fetchpriority} {...zoom} />
+  ) : (
+    <AstroPicture
+      src={src}
+      alt={alt}
+      class={className}
+      formats={['avif']}
+      fallbackFormat="webp"
+      widths={IMAGE_WIDTHS}
+      sizes={sizes}
+      {...(width ? { width } : {})}
+      loading={loading}
+      decoding="async"
+      fetchpriority={fetchpriority}
+      {...zoom}
+    />
+  )
+}

@@ -18,7 +18,7 @@ try {
     tagline: 'Source for my personal site',
     meta: 'Astro • TypeScript • Cloudflare Pages',
     url: `github.com/${SITE_REPOSITORY}`,
-    photoPath: path.join(root, 'public/assets/pages/home/images/portrait.jpg'),
+    photoPath: path.join(root, 'src/content/pages/home/images/portrait.jpg'),
     outPath: path.join(root, '.github/social-preview.png'),
     colors: brandCardColors(),
   });

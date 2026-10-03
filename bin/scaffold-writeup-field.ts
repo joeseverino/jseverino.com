@@ -26,7 +26,7 @@ const { values } = cli({
   },
 });
 
-const FIELD_TYPES: readonly string[] = ['string', 'boolean', 'date', 'integer', 'string[]'] satisfies FieldType[];
+const FIELD_TYPES: readonly string[] = ['string', 'boolean', 'date', 'integer', 'string[]', 'image'] satisfies FieldType[];
 const isFieldType = (value: string): value is FieldType => FIELD_TYPES.includes(value);
 
 const { name, type } = values;

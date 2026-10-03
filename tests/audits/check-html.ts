@@ -49,7 +49,8 @@ if (import.meta.main) {
 
     for (const match of html.matchAll(/<img\b[^>]*>/g)) {
       imgCount += 1;
-      if (!/\salt=/.test(match[0])) {
+      // A bare `alt` is the empty alt, as `alt=""` is.
+      if (!/\salt(?:=|[\s/>])/.test(match[0])) {
         problems.push(`${rel}: <img> without an alt attribute (${match[0].slice(0, 80)}…)`);
       }
     }

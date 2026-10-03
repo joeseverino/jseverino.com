@@ -24,9 +24,9 @@ Accessibility here is a property of the rendered HTML and CSS. This file records
 
 Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it to `writeup.heroAlt`, and both the `ProjectCard` listing and the article hero `<figure>` use that string as the `<img alt>`. When `cover_alt` is empty the title is used as a fallback so no image ever renders without alt text. `prepare_writeup_publish` in the vault MCP nags about missing `cover_alt` so drafts don't ship with duplicated-title alts.
 
-Body images use the alt text from the markdown source. The `|width`, `|nocap`, and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
+Body images use the alt text from the markdown source. The `|width` and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-Decorative-only images use `alt=""`; the attribute is never omitted (`npm run check:html` fails on a missing one). No image on the site uses this case today.
+An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`npm run check:html` fails on a missing one). No image on the site uses it today.
 
 ## Focus Management
 

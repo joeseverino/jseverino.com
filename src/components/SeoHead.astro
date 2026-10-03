@@ -1,6 +1,7 @@
 ---
+import type { ImageMetadata } from 'astro';
+import { getImage } from 'astro:assets';
 import { site } from '@lib/site.ts';
-import { getImageDimensions } from '@lib/images.ts';
 import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
 
 type Breadcrumb = { name: string; url: string };
@@ -10,7 +11,7 @@ type Props = {
   title?: string;
   description?: string;
   path?: string;
-  image?: string;
+  image?: ImageMetadata | string;
   type?: 'website' | 'article';
   noindex?: boolean;
   publishedTime?: string;
@@ -37,13 +38,17 @@ const {
 } = Astro.props;
 
 const canonical = new URL(path, site.url).href;
-const ogImage = new URL(image, site.url).href;
+// A content image becomes a 1200px JPEG card, the format every platform
+// reads; getImage reports its size without exposing the original.
+const card = typeof image === 'string'
+  ? { src: image, ...(image === site.defaultOgImage ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight } : {}) }
+  : await (async () => {
+      const { src, attributes } = await getImage({ src: image, width: 1200, format: 'jpg' });
+      return { src, width: Number(attributes.width), height: Number(attributes.height) };
+    })();
+const ogImage = new URL(card.src, site.url).href;
 const personImage = new URL('/assets/brand/joe-severino.jpg', site.url).href;
-const ogDimensions =
-  getImageDimensions(image) ??
-  (image === site.defaultOgImage
-    ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight }
-    : undefined);
+const ogDimensions = card.width && card.height ? { width: card.width, height: card.height } : undefined;
 const fullTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
 
 const imageObject: Record<string, unknown> = {

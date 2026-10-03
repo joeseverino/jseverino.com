@@ -1,6 +1,6 @@
 {
   "name": "jseverino-com",
-  "version": "6.0.0",
+  "version": "7.0.0",
   "description": "Personal site for Joe Severino, built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
   "license": "UNLICENSED",
@@ -86,11 +86,13 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
+    "@astrojs/markdown-satteri": "^0.4.2",
+    "@astrojs/mdx": "^8.0.2",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
     "astro": "^7.3.5",
     "js-yaml": "^4.3.2",
-    "markdown-it": "^15.0.2",
+    "satteri": "^0.10.5",
     "typescript": "^6.0.3"
   },
   "overrides": {
@@ -105,10 +107,11 @@
     "@playwright/test": "^1.63.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.19.1",
+    "fast-check": "^4.10.2",
     "lighthouse": "^13.5.0",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v1.0.2/severino-brand-1.0.2.tgz",
     "sharp": "^0.35.4",
-    "sitedrift": "^0.3.11",
+    "sitedrift": "^0.4.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "wrangler": "^4.145.0"

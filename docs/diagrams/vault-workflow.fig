@@ -1,0 +1,22 @@
+# What the sync carries from the private vault into the public snapshot.
+direction: right
+
+Private vault [dashed] {
+  05 Writeups [icon: file, note: published only]
+  06 Pages [icon: file, note: published only]
+}
+
+Content sync [icon: terminal, note: contract · masters · compile]
+
+Public repository [dashed] {
+  src/content [icon: code, note: <slug>/index.mdx · images/]
+  Content schema [icon: shield, note: generated from the contract]
+}
+
+Cloudflare Pages [icon: cloud, anchor, note: build · edge]
+
+05 Writeups > Content sync
+06 Pages > Content sync
+Content sync > src/content
+src/content > Content schema
+Content schema > Cloudflare Pages
