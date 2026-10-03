@@ -7,7 +7,8 @@ description: >-
 published: true
 published_at: 2026-03-29T00:00:00.000Z
 last_reviewed: 2026-05-30T00:00:00.000Z
-cover_image: ./images/marks-spencer-cyberattack-diamond-model.png
+cover_image: >-
+  /assets/writeups/marks-spencer-cyberattack-diamond-model-analysis/images/marks-spencer-cyberattack-diamond-model.png
 cover_alt: >-
   The Diamond Model of Intrusion Analysis — Adversary, Capability,
   Infrastructure, and Victim arranged around the central diamond used to map the

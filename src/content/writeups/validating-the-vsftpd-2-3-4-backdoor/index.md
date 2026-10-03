@@ -6,7 +6,8 @@ description: >-
 published: true
 published_at: 2026-04-21T00:00:00.000Z
 last_reviewed: 2026-05-22T00:00:00.000Z
-cover_image: ./images/meterpreter-sysinfo.png
+cover_image: >-
+  /assets/writeups/validating-the-vsftpd-2-3-4-backdoor/images/meterpreter-sysinfo.png
 cover_alt: >-
   Metasploit's vsftpd_234_backdoor module landing a session on the
   Metasploitable target, ending in a sysinfo prompt that confirms the backdoor

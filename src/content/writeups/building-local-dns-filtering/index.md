@@ -7,8 +7,9 @@ description: >-
   Root CA.
 published: true
 published_at: 2026-05-08T00:00:00.000Z
-last_reviewed: 2026-05-22T00:00:00.000Z
-cover_image: ./images/adguard-home-docker-dns-cover.png
+last_reviewed: '2026-10-03'
+cover_image: >-
+  /assets/writeups/building-local-dns-filtering/images/adguard-home-docker-dns-cover.png
 cover_alt: >-
   AdGuard Home dashboard at adguard.homelab showing 34,977 DNS queries over 24
   hours, 6,311 blocked by filters, and per-device query counts that local
@@ -105,7 +106,7 @@ I run Tailscale across all my devices and wanted everything on the tailnet using
 
 My first attempt was setting the Tailscale DNS nameserver to `192.168.1.233`, the VM’s LAN IP. That worked in terms of connectivity, but it brought back the same visibility problem. Tailscale devices routing DNS through a LAN IP end up going through the Windows homelab machine’s network stack to reach it, so everyone shows up as `192.168.1.13` in AdGuard (the homelab IP).
 
-The fix was installing Tailscale on the Ubuntu Server VM itself. Without it the VM had no Tailscale IP, which meant any DNS path from the tailnet to AdGuard had to bounce through the homelab machine first. Once Tailscale was on the VM it got its own IP, `100.85.33.67`, and I set that as the global nameserver in the Tailscale admin console with Override local DNS enabled. Each Tailscale device now has a direct peer path to the VM, so AdGuard sees the real client IPs.
+The fix was installing Tailscale on the Ubuntu Server VM itself. Without it the VM had no Tailscale IP, which meant any DNS path from the tailnet to AdGuard had to bounce through the homelab machine first. Once Tailscale was on the VM it got its own tailnet IP, and I set that as the global nameserver in the Tailscale admin console with Override local DNS enabled. Each Tailscale device now has a direct peer path to the VM, so AdGuard sees the real client IPs.
 
 One thing to get right on the VM side — the `--accept-dns=false` flag when bringing Tailscale up. The VM is the DNS server. If it accepted the tailnet DNS setting pointing back at itself, it would loop.
 

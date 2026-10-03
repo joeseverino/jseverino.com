@@ -9,7 +9,7 @@ description: >-
 published: true
 published_at: 2026-10-02T00:00:00.000Z
 last_reviewed: 2026-10-02T00:00:00.000Z
-cover_image: ./images/cover.png
+cover_image: /assets/writeups/from-icloud-passwords-to-1password/images/cover.png
 cover_alt: >-
   One 1Password account feeding four things: logins and passkeys on the Mac and
   iPhone, SSH certificates and sudo approved by Touch ID, server secrets
