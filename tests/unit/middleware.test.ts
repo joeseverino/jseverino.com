@@ -1,14 +1,14 @@
 // Unit tests for the Pages middleware (functions/_middleware.ts): per-request
-// CSP nonce generation, header rewriting, and the pass-through rules for
-// non-HTML and bodyless responses. HTMLRewriter is a Cloudflare runtime
-// global, so a recording stub stands in for it; the nonce handler is driven
+// CSP nonce generation, the placeholder-only nonce swap, header rewriting, and
+// the pass-through rules for non-HTML and bodyless responses. HTMLRewriter is
+// a Cloudflare runtime global, so a recording stub stands in for it; the nonce handler is driven
 // directly through the stub's captured registration.
 //
 //   npm run test:unit
 
 import { describe, test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { escapeRegExp } from '../../src/lib/escape-regexp.mjs';
+import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
 
 interface CapturedHandler {
   selector: string;
@@ -53,7 +53,7 @@ function call(response: Response) {
 function nonceFrom(response: Response): string {
   const match = (response.headers.get('Content-Security-Policy') ?? '').match(/'nonce-([^']+)'/);
   assert.ok(match, 'CSP header carries a nonce');
-  return match[1];
+  return match[1] ?? '';
 }
 
 describe('pass-through rules', () => {
@@ -78,12 +78,15 @@ describe('HTML responses', () => {
     assert.match(csp, /default-src 'none'/);
     assert.match(csp, /script-src 'self' 'nonce-/);
     assert.match(csp, /report-to csp-endpoint/);
-    assert.doesNotMatch(csp, /report-uri/, 'report-uri is deprecated in CSP3');
+    assert.match(csp, /report-uri https:\/\/jseverino\.com\/api\/csp-report(;|$)/, 'Firefox reports through report-uri');
     assert.doesNotMatch(csp, /unsafe-inline/);
+    assert.match(csp, /script-src [^;]*https:\/\/static\.cloudflareinsights\.com/, 'the Web Analytics beacon host stays allowlisted');
+    assert.doesNotMatch(csp, /'sha(256|384|512)-/, 'no script hashes: the beacon matches by nonce or host');
 
     const reportOnly = response.headers.get('Content-Security-Policy-Report-Only') ?? '';
     assert.match(reportOnly, /require-trusted-types-for 'script'/);
     assert.match(reportOnly, /'strict-dynamic'/);
+    assert.doesNotMatch(reportOnly, /'sha(256|384|512)-/);
     assert.ok(reportOnly.includes(`'nonce-${nonceFrom(response)}'`), 'the report-only policy carries the enforced nonce');
     assert.equal(
       response.headers.get('Reporting-Endpoints'),
@@ -104,13 +107,16 @@ describe('HTML responses', () => {
     assert.notEqual(first, second);
   });
 
-  test('applies the same nonce from the CSP header to every script and style element', async () => {
+  test('nonces only script and style elements carrying the build placeholder', async () => {
     const response = await call(htmlResponse());
     const nonce = nonceFrom(response);
-    assert.match(response.headers.get('Content-Security-Policy') ?? '', new RegExp(`style-src 'self' 'nonce-${escapeRegExp(nonce)}'`));
+    assert.match(response.headers.get('Content-Security-Policy') ?? '', new RegExp(`style-src 'self' 'nonce-${RegExp.escape(nonce)}'`));
 
     assert.ok(lastRewriter, 'middleware ran the rewriter');
-    assert.deepEqual(lastRewriter.handlers.map((entry) => entry.selector), ['script', 'style']);
+    assert.deepEqual(lastRewriter.handlers.map((entry) => entry.selector), [
+      `script[nonce="${CSP_NONCE_PLACEHOLDER}"]`,
+      `style[nonce="${CSP_NONCE_PLACEHOLDER}"]`,
+    ]);
 
     for (const { handler } of lastRewriter.handlers) {
       const attributes = new Map<string, string>();

@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { sitemapUrls } from '../../src/lib/sitemap.ts';
 
-// Endpoint and error routes that the sitemap-driven smoke test cannot reach.
-// Named *.single so the config runs them only on chromium-desktop: the responses
-// are engine-independent, so there is no value in the full browser matrix.
+// Route-level responses: every sitemap page, plus the endpoint and error routes
+// the sitemap cannot reach. Named *.single so the config runs them only on
+// chromium-desktop: the responses are engine-independent.
 
 test('robots.txt serves plain text and points at the sitemap', async ({ request }) => {
   const response = await request.get('/robots.txt');
@@ -30,4 +31,21 @@ test('an unknown route returns 404 and renders the not-found page', async ({ pag
   expect(response?.status()).toBe(404);
   await expect(page.locator('h1')).toHaveText('Page Not Found');
   await expect(page.getByRole('link', { name: 'View Portfolio' })).toBeVisible();
+});
+
+test('every sitemap page returns 200', async ({ request }) => {
+  // <loc>s name the canonical origin; read each from the server under test.
+  const urls = await sitemapUrls('/sitemap-index.xml', async (url) => {
+    const pathname = url.startsWith('/') ? url : new URL(url).pathname;
+    const response = await request.get(pathname);
+    expect(response.status(), `expected 200 from ${pathname}`).toBe(200);
+    return response.text();
+  });
+  const publicPaths = urls.map((url) => new URL(url).pathname);
+
+  expect(publicPaths.length).toBeGreaterThan(0);
+  for (const path of publicPaths) {
+    const response = await request.get(path);
+    expect(response.status(), `expected 200 from ${path}`).toBe(200);
+  }
 });

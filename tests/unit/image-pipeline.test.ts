@@ -1,17 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { buildPicture, enhanceImages } from '../../src/lib/images.ts';
+import { buildPicture, enhanceImages, type Manifest } from '../../src/lib/images.ts';
 import { renderPageHtml, renderWriteupHtml } from '../../src/lib/markdown.ts';
+import { readJson } from '../../src/lib/json.ts';
 
-const manifest = JSON.parse(readFileSync(new URL('../../src/lib/image-manifest.json', import.meta.url), 'utf8'));
+const manifest = readJson<Manifest>(new URL('../../src/lib/image-manifest.json', import.meta.url));
 const src = Object.keys(manifest)[0];
 assert.ok(src, 'The synced image manifest must contain a fixture.');
 
 test('page and writeup images use the same final width modifier', () => {
   const markdown = `![Diagram|120|320](${src})`;
   const page = enhanceImages(renderPageHtml(`::split\n${markdown}\n:::\nExplanation\n::`));
-  const writeup = enhanceImages(renderWriteupHtml(markdown, 'demo'));
+  const writeup = enhanceImages(renderWriteupHtml(markdown));
   for (const html of [page, writeup]) {
     assert.match(html, /<picture>/);
     assert.match(html, /alt="Diagram" width="320"/);
@@ -21,7 +21,7 @@ test('page and writeup images use the same final width modifier', () => {
 });
 
 test('image enhancement preserves escaped alt text and the lightbox opt-out', () => {
-  const html = enhanceImages(renderWriteupHtml(`![A < B & "C" &copy;|320|nozoom](${src})`, 'demo'));
+  const html = enhanceImages(renderWriteupHtml(`![A < B & "C" &copy;|320|nozoom](${src})`));
   assert.match(html, /<picture>/);
   assert.match(html, /alt="A &lt; B &amp; &quot;C&quot; ©"/);
   assert.match(html, /data-no-zoom/);
@@ -41,7 +41,7 @@ test('plain image fallback escapes every authored attribute exactly once', () =>
 });
 
 test('picture enhancement decodes parser entities before one canonical escape pass', () => {
-  const html = enhanceImages(renderWriteupHtml(`![A < B & "C" &copy;](${src})`, 'demo'));
+  const html = enhanceImages(renderWriteupHtml(`![A < B & "C" &copy;](${src})`));
   assert.match(html, /alt="A &lt; B &amp; &quot;C&quot; ©"/);
   assert.doesNotMatch(html, /&amp;(?:lt|amp|quot);/);
 });

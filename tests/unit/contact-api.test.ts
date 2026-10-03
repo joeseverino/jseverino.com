@@ -1,27 +1,32 @@
 // Unit tests for the contact endpoint (functions/api/contact.ts): request in,
 // response out, with D1 and the Turnstile siteverify call stubbed. This is the
 // only place the validation ladder, honeypot, rate limit, and D1 failure paths
-// run before production — the Playwright contact spec mocks this API away.
+// run before production; the Playwright contact spec mocks this API away.
 //
 //   npm run test:unit
 
 import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { onRequestPost } from '../../functions/api/contact.ts';
+import { TURNSTILE_TEST_SECRETS, siteverifyAccepts } from '../../functions/lib/turnstile.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
+import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import { CONTACT_RUNTIME } from '../../functions/lib/contact-contract.ts';
+import { postRequest } from './helpers/requests.ts';
 
 const realFetch = globalThis.fetch;
 let turnstile: 'pass' | 'fail' | 'error';
+let siteverify: Record<string, unknown>;
 let turnstileCalls: FormData[];
 
 beforeEach(() => {
   turnstile = 'pass';
+  siteverify = { hostname: 'jseverino.com', action: CONTACT_RUNTIME.turnstileAction };
   turnstileCalls = [];
   globalThis.fetch = (async (_url: unknown, init?: { body?: unknown }) => {
     turnstileCalls.push(init?.body as FormData);
     if (turnstile === 'error') throw new Error('network down');
-    return new Response(JSON.stringify({ success: turnstile === 'pass' }));
+    return new Response(JSON.stringify({ success: turnstile === 'pass', ...siteverify }));
   }) as typeof fetch;
 });
 
@@ -37,15 +42,10 @@ const validPayload = {
   sourceUrl: 'https://jseverino.com/contact/',
 };
 
-function contactRequest(body: unknown, headers: Record<string, string> = {}) {
-  return new Request('https://jseverino.com/api/contact', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
-  });
-}
+const contactRequest = (body: unknown, headers: Record<string, string> = {}): Request =>
+  postRequest('https://jseverino.com/api/contact', body, { 'Content-Type': 'application/json', ...headers });
 
-function call(request: Request, db = createD1Stub()) {
+function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
   const env = { DB: db, TURNSTILE_SECRET_KEY: 'secret-key' };
   return onRequestPost({ request, env } as Parameters<typeof onRequestPost>[0]);
 }
@@ -135,13 +135,18 @@ describe('honeypot', () => {
   });
 });
 
+// A valid submission that verification turns away: 400, nothing written.
+async function assertRejectedUnstored(): Promise<void> {
+  const db = createD1Stub();
+  const response = await call(contactRequest(validPayload), db);
+  assert.equal(response.status, 400);
+  assert.equal(db.queries.length, 0);
+}
+
 describe('turnstile verification', () => {
   test('fails closed on an HTTP error even if its JSON claims success', async () => {
     globalThis.fetch = async () => Response.json({ success: true }, { status: 503 });
-    const db = createD1Stub();
-    const response = await call(contactRequest(validPayload), db);
-    assert.equal(response.status, 400);
-    assert.equal(db.queries.length, 0);
+    await assertRejectedUnstored();
   });
 
   test('bounds verification through response-body consumption', async (t) => {
@@ -172,12 +177,43 @@ describe('turnstile verification', () => {
     assert.equal(db.queries.length, 0);
   });
 
-  test('sends secret, token, and caller IP to siteverify', async () => {
+  test('sends secret, token, caller IP, and a fresh idempotency key to siteverify', async () => {
     await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }));
-    assert.equal(turnstileCalls.length, 1);
-    assert.equal(turnstileCalls[0].get('secret'), 'secret-key');
-    assert.equal(turnstileCalls[0].get('response'), 'tok-1');
-    assert.equal(turnstileCalls[0].get('remoteip'), '203.0.113.7');
+    await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }));
+    assert.equal(turnstileCalls.length, 2);
+    assert.equal(turnstileCalls[0]?.get('secret'), 'secret-key');
+    assert.equal(turnstileCalls[0]?.get('response'), 'tok-1');
+    assert.equal(turnstileCalls[0]?.get('remoteip'), '203.0.113.7');
+    const keys = turnstileCalls.map((body) => String(body.get('idempotency_key')));
+    assert.match(keys[0] ?? '', /^[0-9a-f-]{36}$/);
+    assert.notEqual(keys[0], keys[1]);
+  });
+
+  test('rejects a token solved on another hostname', async () => {
+    siteverify.hostname = 'evil.example';
+    await assertRejectedUnstored();
+  });
+
+  test('rejects a token minted for a different widget action', async () => {
+    siteverify.action = 'login';
+    await assertRejectedUnstored();
+  });
+
+  test('rejects a siteverify response that omits hostname and action', async () => {
+    siteverify = {};
+    const response = await call(contactRequest(validPayload));
+    assert.equal(response.status, 400);
+  });
+
+  test('the test secret from .dev.vars.example accepts siteverify\'s test hostname and action; production does not', () => {
+    const test = { success: true, hostname: 'localhost', action: 'test' };
+    const [passing] = TURNSTILE_TEST_SECRETS;
+    assert.equal(siteverifyAccepts(test, passing ?? ''), true);
+    assert.equal(siteverifyAccepts(test, '1x0000000000000000000000000000000AA'), true);
+    assert.equal(siteverifyAccepts(test, 'secret-key'), false);
+    assert.equal(siteverifyAccepts({ ...test, hostname: 'evil.example' }, '1x0000000000000000000000000000000AA'), false);
+    assert.equal(siteverifyAccepts({ ...test, success: false }, '2x0000000000000000000000000000000AA'), false);
+    assert.equal(siteverifyAccepts({ success: true, hostname: 'jseverino.com', action: CONTACT_RUNTIME.turnstileAction }, 'secret-key'), true);
   });
 
   test('rejects when siteverify says no', async () => {
@@ -196,28 +232,32 @@ describe('turnstile verification', () => {
 });
 
 describe('rate limiting', () => {
-  test('returns a controlled failure and never inserts when the rate-limit query fails', async () => {
-    const db = createD1Stub({ failFirst: true });
-    const response = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }), db);
-    assert.equal(response.status, 500);
-    assert.equal(response.headers.get('Cache-Control'), 'no-store');
-    assert.deepEqual(await response.json(), { ok: false, error: 'Could not save your message. Please try again.' });
-    assert.equal(db.queries.length, 1);
-    assert.match(db.queries[0].query, /SELECT COUNT/);
-  });
-  test('returns 429 once an IP hits the hourly cap', async () => {
-    const db = createD1Stub({ firstResult: { n: 5 } });
+  test('returns 429 when the capped INSERT writes nothing', async () => {
+    const db = createD1Stub({ changes: 0 });
     const response = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }), db);
     assert.equal(response.status, 429);
     assert.equal(db.queries.length, 1);
-    assert.match(db.queries[0].query, /SELECT COUNT/);
+    assert.match(db.queries[0]?.query ?? '', /INSERT INTO contact_submissions/);
   });
 
-  test('skips the rate-limit query when no client IP is present', async () => {
-    const db = createD1Stub();
-    await call(contactRequest(validPayload), db);
-    assert.equal(db.queries.length, 1);
-    assert.match(db.queries[0].query, /INSERT INTO contact_submissions/);
+  test('caps an IP at the hourly limit inside one statement', async () => {
+    const db = createD1Sqlite();
+    const statuses = [];
+    for (let i = 0; i <= CONTACT_RUNTIME.maxPerIpPerHour; i += 1) {
+      statuses.push((await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7' }), db)).status);
+    }
+    assert.deepEqual(statuses, [...Array(CONTACT_RUNTIME.maxPerIpPerHour).fill(200), 429]);
+    assert.equal(db.count('contact_submissions'), CONTACT_RUNTIME.maxPerIpPerHour);
+
+    const other = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '198.51.100.9' }), db);
+    assert.equal(other.status, 200);
+  });
+
+  test('does not cap submissions that carry no client IP', async () => {
+    const db = createD1Sqlite();
+    for (let i = 0; i <= CONTACT_RUNTIME.maxPerIpPerHour; i += 1) {
+      assert.equal((await call(contactRequest(validPayload), db)).status, 200);
+    }
   });
 });
 

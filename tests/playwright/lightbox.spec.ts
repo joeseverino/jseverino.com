@@ -1,46 +1,56 @@
-import { test, expect } from '@playwright/test';
-import { imageHeavyWriteup } from './helpers/writeups';
+import { test, expect, type Page } from '@playwright/test';
+import { imageHeavyWriteup } from './helpers/writeups.ts';
 
 const WRITEUP = imageHeavyWriteup();
 
+// The writeup's first zoomable figure and the lightbox it opens.
+async function openFigurePage(page: Page) {
+  await page.goto(WRITEUP);
+  return { trigger: page.locator('.prose .image-zoom').first(), dialog: page.locator('dialog.lightbox') };
+}
+
+async function openWithPointer(page: Page) {
+  const figure = await openFigurePage(page);
+  await figure.trigger.click();
+  await expect(figure.dialog).toBeVisible();
+  return figure;
+}
+
+const closeButton = (page: Page) => page.getByRole('button', { name: 'Close' });
+
+async function openWithKeyboard(page: Page) {
+  const figure = await openFigurePage(page);
+  await figure.trigger.focus();
+  await page.keyboard.press('Enter');
+  return figure;
+}
+
 test.describe('figure lightbox', () => {
   test('clicking a body figure opens the modal and locks scroll', async ({ page }) => {
-    await page.goto(WRITEUP);
-    const trigger = page.locator('.prose .image-zoom').first();
+    const { trigger, dialog } = await openFigurePage(page);
     await expect(trigger).toHaveAttribute('type', 'button');
     await expect(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 
     await trigger.click();
 
-    const dialog = page.locator('dialog.lightbox');
     await expect(dialog).toBeVisible();
     await expect(page.locator('.lightbox-img')).toHaveAttribute('src', /.+/);
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   });
 
   test('pointer open and close do not leave visible focus outlines', async ({ page }) => {
-    await page.goto(WRITEUP);
-    const trigger = page.locator('.prose .image-zoom').first();
-    await trigger.click();
-
-    const dialog = page.locator('dialog.lightbox');
-    await expect(dialog).toBeVisible();
+    const { trigger, dialog } = await openWithPointer(page);
     await expect(dialog).toBeFocused();
-    await expect(page.getByRole('button', { name: 'Close' })).not.toBeFocused();
+    await expect(closeButton(page)).not.toBeFocused();
 
-    await page.getByRole('button', { name: 'Close' }).click();
+    await closeButton(page).click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
     await expect(trigger).not.toBeFocused();
   });
 
   test('keyboard close returns focus to the trigger', async ({ page }) => {
-    await page.goto(WRITEUP);
-    const trigger = page.locator('.prose .image-zoom').first();
-    await trigger.focus();
-    await page.keyboard.press('Enter');
-
-    const dialog = page.locator('dialog.lightbox');
+    const { trigger, dialog } = await openWithKeyboard(page);
     await expect(dialog).toBeVisible();
 
     await page.keyboard.press('Escape');
@@ -49,13 +59,8 @@ test.describe('figure lightbox', () => {
   });
 
   test('closes via the close button and the backdrop', async ({ page }) => {
-    await page.goto(WRITEUP);
-    const trigger = page.locator('.prose .image-zoom').first();
-    const dialog = page.locator('dialog.lightbox');
-
-    await trigger.click();
-    await expect(dialog).toBeVisible();
-    await page.getByRole('button', { name: 'Close' }).click();
+    const { trigger, dialog } = await openWithPointer(page);
+    await closeButton(page).click();
     await expect(dialog).toBeHidden();
 
     await trigger.click();
@@ -66,12 +71,8 @@ test.describe('figure lightbox', () => {
   });
 
   test('opens via the keyboard on a focused figure', async ({ page }) => {
-    await page.goto(WRITEUP);
-    const trigger = page.locator('.prose .image-zoom').first();
-    await trigger.focus();
-    await page.keyboard.press('Enter');
-
-    await expect(page.locator('dialog.lightbox')).toBeVisible();
+    const { dialog } = await openWithKeyboard(page);
+    await expect(dialog).toBeVisible();
   });
 
   test('copies rich captions as DOM nodes without an HTML parsing sink', async ({ page }) => {

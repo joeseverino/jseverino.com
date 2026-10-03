@@ -1,8 +1,6 @@
-// Parity between the machine inventory and the hand-written docs. The prose
-// can't be machine-verified for accuracy, but coverage can: every audit must
-// be documented, every gate label must appear in the release checklist's
-// expected output, and every script must appear in the command reference —
-// so a stale doc table fails the gate instead of waiting to be noticed.
+// Coverage between the machine inventory and the hand-written docs: every
+// audit is documented, every gate label appears in the release checklist's
+// expected output, and every script appears in the command reference.
 //
 //   npm run test:unit
 
@@ -10,12 +8,12 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor } from '../audits/registry.mjs';
-import { siteRoot } from '../../src/lib/site-root.mjs';
+import { AUDITS, auditsFor } from '../audits/registry.ts';
+import { siteRoot as root } from '../../src/lib/site-root.ts';
+import { packageScripts } from '../../src/lib/json.ts';
 
-const root = siteRoot;
 const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
-const scripts = JSON.parse(read('package.json')).scripts as Record<string, string>;
+const scripts = packageScripts();
 
 describe('registry/docs parity', () => {
   test('every audit script is documented in tests/ARCHITECTURE.md', () => {
@@ -32,7 +30,7 @@ describe('registry/docs parity', () => {
     const checklist = read('docs/Release-Checklist.md');
     for (const audit of auditsFor('publish')) {
       assert.ok(
-        new RegExp(`^${audit.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s`, 'm').test(checklist),
+        new RegExp(`^${RegExp.escape(audit.label)}\\s`, 'm').test(checklist),
         `${audit.id}: label "${audit.label}" is missing from the expected gate output in docs/Release-Checklist.md`,
       );
     }

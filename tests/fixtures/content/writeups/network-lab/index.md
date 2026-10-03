@@ -1,0 +1,52 @@
+---
+title: Building a Fixture Network Lab
+description: >-
+  A synthetic writeup with a table, a figure, and a cover image, so the visual
+  suite has one page that exercises every block a real writeup uses.
+published: true
+published_at: 2026-06-01T00:00:00.000Z
+last_reviewed: 2026-06-02T00:00:00.000Z
+cover_image: /assets/fixtures/network-lab-cover.png
+cover_alt: A hub node linked to four spoke nodes on a pale blue ground.
+technologies:
+  - docker
+  - networking
+  - yaml
+featured: true
+featured_order: 1
+---
+
+# Building a Fixture Network Lab
+
+![hero](/assets/fixtures/network-lab-cover.png)
+
+## Overview
+
+This writeup is fixture content. It never changes unless the visual suite needs it to, which is the point: a baseline that moves with every publish is not a baseline.
+
+The lab has one hub and four spokes. Each spoke runs a container, and the hub routes between them.
+
+## The topology
+
+::figure
+![](/assets/fixtures/network-lab-topology.png)
+
+The fixture topology: one hub, four spokes, every link drawn the same weight.
+::
+
+## The inventory
+
+::table
+| Host | Role | Address |
+|---|---|---|
+| hub | Router and DNS | 10.0.0.1 |
+| spoke-a | Web | 10.0.0.11 |
+| spoke-b | Database | 10.0.0.12 |
+| spoke-c | Monitoring | 10.0.0.13 |
+
+Every host in the fixture lab, with a role and an address in the documentation range.
+::
+
+## What it shows
+
+Tables, figures, and captions render the way they do in real writeups, with the same classes and the same spacing.

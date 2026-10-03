@@ -17,7 +17,7 @@ function isKnownTurnstileWarning(message: ConsoleMessage): boolean {
   return message.type() === 'warning'
     && isTurnstileSource
     && match !== null
-    && turnstileFeaturePolicyWarnings.has(match[1]);
+    && turnstileFeaturePolicyWarnings.has(match[1] ?? '');
 }
 
 test('home page loads with hero heading', async ({ page }) => {
@@ -43,31 +43,6 @@ test('writeup page renders article and prose body', async ({ page }) => {
   await expect(page.locator('.prose')).not.toBeEmpty();
 });
 
-test('every sitemap page returns 200', async ({ request }) => {
-  const indexResponse = await request.get('/sitemap-index.xml');
-  expect(indexResponse.status()).toBe(200);
-
-  const sitemapUrls = [...(await indexResponse.text()).matchAll(/<loc>([^<]+)<\/loc>/g)]
-    .map((match) => new URL(match[1]).pathname);
-  expect(sitemapUrls.length).toBeGreaterThan(0);
-
-  const publicPaths: string[] = [];
-  for (const sitemapUrl of sitemapUrls) {
-    const sitemapResponse = await request.get(sitemapUrl);
-    expect(sitemapResponse.status(), `expected 200 from ${sitemapUrl}`).toBe(200);
-    publicPaths.push(
-      ...[...(await sitemapResponse.text()).matchAll(/<loc>([^<]+)<\/loc>/g)]
-        .map((match) => new URL(match[1]).pathname),
-    );
-  }
-
-  expect(publicPaths.length).toBeGreaterThan(0);
-  for (const path of publicPaths) {
-    const response = await request.get(path);
-    expect(response.status(), `expected 200 from ${path}`).toBe(200);
-  }
-});
-
 test('representative routes emit no browser warnings or errors', async ({ page }) => {
   const diagnostics: string[] = [];
   page.on('pageerror', (err) => diagnostics.push(`pageerror: ${err.message}`));
@@ -82,7 +57,8 @@ test('representative routes emit no browser warnings or errors', async ({ page }
   });
   for (const route of ['/', '/portfolio/', '/resume/', '/contact/']) {
     await page.goto(route, { waitUntil: 'load' });
-    await page.waitForTimeout(500);
+    // Two frames past load: post-load handlers have run and painted.
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   }
   expect(diagnostics, diagnostics.join('\n')).toHaveLength(0);
 });

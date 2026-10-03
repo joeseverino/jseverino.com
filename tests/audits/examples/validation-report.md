@@ -12,10 +12,10 @@ on failure and deletes it on success. See ../../ARCHITECTURE.md#1-the-gate-ladde
 | Check Name | Status | Duration | Recommendation |
 | :--- | :--- | :--- | :--- |
 | **Security Signatures** | ✅ PASS | 83ms | Run `npm run sign:security` to sign or re-sign `public/.well-known/security.txt` with the security@ key. |
-| **WCAG Color Contrast** | ✅ PASS | 52ms | Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.mjs`. |
+| **WCAG Color Contrast** | ✅ PASS | 52ms | Adjust colors in `src/styles/base.css` to achieve >= 4.5:1 ratio, or register the custom pair in `tests/audits/check-contrast.ts`. |
 | **Vault/MCP/Code Parity** | ✅ PASS | 53ms | Ensure the vault frontmatter schema (`Frontmatter Schema.md`), Zod schema (`src/content.config.ts`), and the Python MCP server parameters agree on all fields. |
-| **Sitedrift Preview Guard** | ✅ PASS | 211ms | Check `tests/audits/check-sitedrift-preview.mjs`. SiteDrift proxy wrapping must be active on feature branches and absent on main. |
-| **Repository Policy** | ✅ PASS | 88ms | Align Node version (.nvmrc), lockfile dependencies, commit hashes for GitHub Actions, or run `npm run clean:conflicts` to remove iCloud conflict copies. |
+| **Sitedrift Preview Guard** | ✅ PASS | 211ms | Check `tests/audits/check-sitedrift-preview.ts`. SiteDrift proxy wrapping must be active on feature branches and absent on main. |
+| **Repository Policy** | ✅ PASS | 88ms | Align the Node pin (.nvmrc, engines, packageManager), lockfile dependencies, or commit hashes for GitHub Actions. |
 | **Docs Link Integrity** | ❌ FAIL | 68ms | A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target. |
 | **Stylelint CSS Check** | ✅ PASS | 1077ms | Fix syntax and rule violations in your CSS files located under `src/styles/`. |
 | **CSS Unused Variables** | ❌ FAIL | 53ms | Remove declared CSS custom properties in `src/styles/` that are never referenced with `var(...)`. |
@@ -30,7 +30,7 @@ on failure and deletes it on success. See ../../ARCHITECTURE.md#1-the-gate-ladde
 
 **Action Item**: A doc links to a renamed/removed file or an npm script that no longer exists. Fix the reference at the reported file:line, or restore the target.
 
-**Rerun**: `node tests/audits/check-docs.mjs`
+**Rerun**: `node tests/audits/check-docs.ts`
 
 **Error Output**:
 ```text
@@ -42,7 +42,7 @@ check-docs: documentation references that do not resolve:
 
 **Action Item**: Remove declared CSS custom properties in `src/styles/` that are never referenced with `var(...)`.
 
-**Rerun**: `node tests/audits/check-css.mjs`
+**Rerun**: `node tests/audits/check-css.ts`
 
 **Error Output**:
 ```text

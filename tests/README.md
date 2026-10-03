@@ -1,107 +1,94 @@
 # Tests & Validation
 
-Every change to this site passes through layered verification before it ships:
-Node audits that assert invariants about the source, unit tests for the pure
-library logic, Playwright specs that drive a real browser against the **built**
-output, and post-push probes that re-check the live site. This directory holds the
-first three; [`bin/`](../bin/) sequences them into gates.
+Every change passes four layers before and after it ships: Node audits that
+assert invariants about the source and the build, unit tests for the pure
+logic, Playwright specs that drive the **built** output in a browser and through
+the Cloudflare runtime, and post-deploy probes against each deployment. This
+directory holds the first three; [`bin/`](../bin/) sequences them into gates.
 
-> **Looking for detail?** This file is the tour. The exact assertions, every
-> script, the code examples, and the troubleshooting tree live in the full
-> reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+> This file is the tour. Every audit with its fix, every spec, and the CI
+> workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
 ```
 tests/
-├── audits/        Node verifiers — assert an invariant, exit non-zero on failure
-│   └── registry.mjs   single source of truth: which audits exist + which gate runs each
-├── unit/          node:test specs for pure logic (Markdown DSL, CF functions, gate harness, registry)
-├── edge/          Runtime specs — serve dist/ through wrangler pages dev (middleware, functions, _headers) and assert the responses
-└── playwright/    Browser specs — drive dist/ through a preview server
+├── audits/        Node checks: assert an invariant, exit non-zero on failure
+│   └── registry.ts   the audit inventory: which audits exist, which gate runs each
+├── unit/          node:test specs for pure logic (Markdown DSL, Functions, gate harness, audit rules)
+├── edge/          request specs against dist/ served by wrangler pages dev (middleware, Functions, _headers)
+├── playwright/    browser specs against dist/ through a preview server
+└── fixtures/      the synthetic content the visual suite builds
 ```
 
-Every gate (`gate:check`, `publish:check`, `diagnose`, `release:check`) derives its check list
-from [`audits/registry.mjs`](./audits/registry.mjs), so a new audit is picked up
-everywhere at once and no gate can silently fall out of sync.
+Every gate (`gate:check`, `publish:check`, `diagnose`, `release:check`) reads its
+audits from [`audits/registry.ts`](./audits/registry.ts), so a new audit runs in
+every gate that claims it.
 
 ## How it fits together
 
-Three gates run in order. The first two are local; the third runs after the push.
-
-![Testing gates run from local publish and release checks through post-push deployment verification](../docs/diagrams/testing-gates.png)
+![Testing gates from the local gates through the pull request, site land, and production verification](../docs/diagrams/testing-gates.png)
 
 <sup>Diagram source: [`docs/diagrams/testing-gates.mmd`](../docs/diagrams/testing-gates.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run publish:check` | local, pre-build | signatures, contrast, schema + edge parity, functions types, unit tests, preview guard, CSS, `astro check` + build, asset weight, internal links, page weight, structural HTML — also run by CI on every push (minus the local-only vault parity check) |
-| `npm run release:check` | local, macOS | Playwright E2E + visual baselines, the edge runtime suite, repository policy, clean-worktree check |
-| `npm run deploy:verify` | after push, from a residential IP | remote CI status, live HSTS/CSP headers, nonce rotation and script parity, sitemap 200s, real 404, contact Turnstile gate, `security.txt` parity, open CodeQL alerts |
+| `npm run gate:check` | local and CI, first | the fast invariants: source parse, duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
+| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO; CI skips the local-only vault parity check |
+| `npm run release:check` | local, macOS | `publish:check`, then Playwright E2E, visual baselines, the edge runtime suite, repository policy, and a clean-worktree check |
+| `npm run deploy:verify` | after a deploy | live headers and CSP, nonce rotation, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
+
+The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md#gate-coverage) table.
 
 ### The one-stop gate: `npm run diagnose`
 
-The single source of truth for "is the codebase okay?". It runs **every** check
-in the registry without stopping at the first failure, so one pass surfaces
-every problem in the worktree:
+Runs **every** audit in the registry without stopping at the first failure, so
+one pass reports every problem in the worktree:
 
-- **Green** prints one summary line. There is nothing else to read.
-- **Red** writes `.validation-report.md` — one row per failure, a concrete
-  remediation, and the exact command to rerun that one check. Long output is
-  clipped; the rerun command is the path to the full thing.
-- **`--json`** emits a single machine-readable document (per-check status,
-  durations, rerun + fix for each failure) instead of console output — the
-  contract for agents and CI, no prose parsing.
-- `--fast` runs only the static checks (~7s); `--no-tests` skips the browser
-  suite.
+- **Green** prints one summary line.
+- **Red** writes `.validation-report.md`: one row per failure, the fix, and the
+  exact command to rerun that check. Long output is clipped; the rerun command
+  shows the rest.
+- **`--json`** prints one document (per-check status, durations, rerun and fix
+  for each failure) for agents and CI.
+- `--fast` runs only the static checks; `--no-tests` skips the browser suites.
 
-See [the gate ladder](./ARCHITECTURE.md#1-the-gate-ladder) for the full breakdown.
+## The layers
 
-## The three layers
+**[`tests/audits/`](./audits/)**: Node checks with no browser. Before the build
+they cover the signed `security.txt`, color contrast, contract parity on both
+boundaries (vault/Zod/MCP and handler/OpenAPI/D1), strict types, duplicated
+code, unused CSS variables, repository policy, and the docs' links and paths.
+After the build they cover internal links, page weight, structural HTML
+(including unprocessed `::directives`), Functions routing, and SEO metadata.
+The [audit table](./ARCHITECTURE.md#2-audits) says what each one asserts and how to fix it.
 
-**[`tests/audits/`](./audits/)** — fast Node checks with no browser. They prove
-things the build itself won't catch: a [PGP-signed `security.txt`](./ARCHITECTURE.md#check-security-txtmjs)
-that is current and resolves to a real WKD key, [WCAG contrast](./ARCHITECTURE.md#check-contrastmjs)
-on every color token, [schema parity](./ARCHITECTURE.md#check-vault-mcp-paritymjs)
-across the vault YAML, the Zod config, and the Python MCP server, no
-[unused CSS variables](./ARCHITECTURE.md#check-cssmjs), a
-[repository policy](./ARCHITECTURE.md#check-repository-policymjs) that keeps secrets,
-build output, and unpinned Actions out of git,
-[documentation integrity](./ARCHITECTURE.md#check-docsmjs) so every link and `npm run`
-reference in the docs resolves, [functions/schema parity](./ARCHITECTURE.md#check-functions-paritymjs)
-so the contact handler, the API Shield schema, and the D1 tables can't drift apart,
-a [strict type check](./ARCHITECTURE.md#functions-type-check) over the Cloudflare
-functions, and (post-build)
-[internal link integrity](./ARCHITECTURE.md#check-linksmjs) across every built page,
-a [page-weight budget](./ARCHITECTURE.md#check-page-weightmjs),
-[structural HTML](./ARCHITECTURE.md#check-htmlmjs) (unique ids, alt on every image), and
-[SEO metadata](./ARCHITECTURE.md#check-seomjs) on every rendered page.
-
-**[`tests/unit/`](./unit/)** — `node:test` specs for pure logic, no browser and no
+**[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
 build. The [Markdown DSL](./ARCHITECTURE.md#the-unit-layer) in
-[`src/lib/markdown.ts`](../src/lib/markdown.ts) is pinned block-by-block to the
-exact HTML it must produce. The [Cloudflare Pages functions](./ARCHITECTURE.md#the-unit-layer)
-(contact API, CSP report endpoint, header middleware) run request-in/response-out
-with D1 and Turnstile stubbed — production serverless code verified before it
-ships, not after. The [gate harness and the audit registry](./ARCHITECTURE.md#the-unit-layer)
-are tested too, so the machinery the gates stand on can't rot silently. Runs on
-Node's native test runner via type stripping — no extra dependency.
+[`src/lib/markdown.ts`](../src/lib/markdown.ts) is pinned block by block to the
+HTML it must produce. The Cloudflare Pages Functions (contact API, CSP report
+endpoint, header middleware) run request in, response out, with D1 and
+Turnstile stubbed. The gate harness, the registry, the `site` CLI's publish and
+land flows, and each audit's rule are tested too. Node runs the specs directly
+by stripping types.
 
-**[`tests/playwright/`](./playwright/)** — specs against the compiled site. The
-[smoke suite](./ARCHITECTURE.md#smokespects) pulls every URL from the sitemap and
-200-checks it, so new writeups are covered automatically. Others drive the
+**[`tests/edge/`](./edge/)**: the build served by `wrangler pages dev`, so the
+CSP middleware, the Functions, and `public/_headers` answer as they do on
+Cloudflare. [Details](./ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
+
+**[`tests/playwright/`](./playwright/)**: specs against the compiled site. The
+[routes suite](./ARCHITECTURE.md#routessinglespects) requests every URL in the
+sitemap, so new writeups are covered automatically. Others drive the
 [mobile drawer](./ARCHITECTURE.md#menumobilespects),
 [accessibility and motion](./ARCHITECTURE.md#css-qualityspects), the
 [Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
-backend), portfolio interactions, and the
-engine-agnostic [`*.single`](./ARCHITECTURE.md#4-testsplaywright--browser-specs)
-checks for endpoints/404, image-variant resolution, `rel=noopener`, and an
+backend), portfolio interactions, `rel=noopener`, and an
 [axe-core WCAG A/AA sweep](./ARCHITECTURE.md#a11ysinglespects) over the key
-page archetypes.
+page archetypes. The visual suite renders the fixture content only, so a
+publish never moves a baseline.
 
-> The `audit-` vs `check-` prefix is meaningful: `check-*` gates (fail), `audit-*`
-> measures and reports — though the gates run the one `audit-*` (`audit-assets`)
-> with `STRICT_ASSET_AUDIT=1`, so an oversized image fails too.
-> [Why →](./ARCHITECTURE.md#naming-audit--vs-check-)
+> The `audit-` vs `check-` prefix: `check-*` fails on a violation, `audit-*`
+> measures and reports. The gates run the one `audit-*` (`audit-assets`) with
+> `STRICT_ASSET_AUDIT=1`, so an oversized image fails too.
 
 ## What it catches
 
@@ -126,12 +113,14 @@ The full baseline gallery and more diff/failure examples are in
 ```sh
 npm run help                     # grouped list of every script by role
 
+npm run gate:check               # fast invariants, collect-all
 npm run publish:check            # local build gate
 npm run publish:check:ci         # the same gate under CI conditions (scratch keyring, CI=1)
 npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit (--fast | --no-tests | --json)
 
-npm run test:unit                # unit suite: DSL, functions, harness, registry (fast, no browser)
+npm run test:unit                # unit suite (fast, no browser)
+npm run test:edge                # the edge runtime suite
 npm run test:e2e                 # functional specs across Chromium, Firefox, WebKit
 npm run test:e2e:visual          # visual regression (macOS Chromium)
 npm run test:e2e:visual:update   # re-baseline after an intentional design change
@@ -139,6 +128,5 @@ npm run test:e2e:visual:update   # re-baseline after an intentional design chang
 
 ---
 
-**Full reference → [ARCHITECTURE.md](./ARCHITECTURE.md)** — validation matrix, every
-script and spec, code examples, post-push `deploy:verify`, CI workflows, and the
-troubleshooting tree.
+Full reference: [ARCHITECTURE.md](./ARCHITECTURE.md), with every audit and its
+fix, every spec, post-deploy `deploy:verify`, and the CI workflows.

@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+// The home page's menu toggle and the popover it controls.
+async function menu(page: Page) {
+  await page.goto('/');
+  return { toggle: page.locator('[data-nav-toggle]'), popover: page.locator('[data-mobile-nav]') };
+}
+
+async function openMenu(page: Page) {
+  const nav = await menu(page);
+  await nav.toggle.click();
+  await expect(nav.popover).toBeVisible();
+  return nav;
+}
 
 test('touch targets suppress title-only tap highlights', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not implement -webkit-tap-highlight-color.');
@@ -16,9 +29,7 @@ test('touch targets suppress title-only tap highlights', async ({ page, browserN
 });
 
 test('mobile menu opens via hamburger and closes on Escape', async ({ page }) => {
-  await page.goto('/');
-  const toggle = page.locator('[data-nav-toggle]');
-  const popover = page.locator('[data-mobile-nav]');
+  const { toggle, popover } = await menu(page);
 
   await expect(toggle).toBeVisible();
   await expect(popover).toBeHidden();
@@ -35,12 +46,7 @@ test('mobile menu opens via hamburger and closes on Escape', async ({ page }) =>
 });
 
 test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
-  await page.goto('/');
-  const toggle = page.locator('[data-nav-toggle]');
-  const popover = page.locator('[data-mobile-nav]');
-
-  await toggle.click();
-  await expect(popover).toBeVisible();
+  const { toggle, popover } = await openMenu(page);
 
   // Click the popover's own backdrop (top-left corner), not a nav link.
   await popover.click({ position: { x: 4, y: 4 } });
@@ -49,12 +55,7 @@ test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
 });
 
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {
-  await page.goto('/');
-  const toggle = page.locator('[data-nav-toggle]');
-  const popover = page.locator('[data-mobile-nav]');
-
-  await toggle.click();
-  await expect(popover).toBeVisible();
+  const { popover } = await openMenu(page);
 
   await popover.getByRole('link', { name: /portfolio/i }).first().click();
   await expect(page).toHaveURL(/\/portfolio\/$/);

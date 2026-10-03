@@ -1,14 +1,14 @@
-// Unit tests for the shared gate harness (bin/lib/run.mjs). These cover the
+// Unit tests for the shared gate harness (bin/lib/run.ts). These cover the
 // failure modes a green gate run never exercises: non-zero exits, a binary
 // that does not exist, and a command that hangs past its timeout. All three
-// must resolve as failed results — never hang, never reject — because every
+// must resolve as failed results (never hang, never reject), because every
 // gate (diagnose, publish-check, release-check) sits on this wrapper.
 //
 //   npm run test:unit
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { run, stripAnsi } from '../../bin/lib/run.mjs';
+import { run } from '../../bin/lib/run.ts';
 
 describe('run()', () => {
   test('captures stdout and stderr from a passing command', async () => {
@@ -61,8 +61,9 @@ describe('run()', () => {
   });
 });
 
-describe('stripAnsi()', () => {
-  test('removes color codes and leaves text intact', () => {
-    assert.equal(stripAnsi('\x1b[1m\x1b[32mok\x1b[0m done'), 'ok done');
+describe('run() output', () => {
+  test('strips color codes from the combined output', async () => {
+    const result = await run(process.execPath, ['-e', 'console.log("\\x1b[1m\\x1b[32mok\\x1b[0m done")']);
+    assert.equal(result.output.trim(), 'ok done');
   });
 });

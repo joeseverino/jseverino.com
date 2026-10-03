@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { anyWriteup } from './helpers/writeups';
+import { anyWriteup } from './helpers/writeups.ts';
 
 // Include tablet and the narrowest supported phone, not only screenshot sizes.
 for (const width of [320, 390, 768, 1440]) {

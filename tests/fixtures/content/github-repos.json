@@ -1,0 +1,56 @@
+[
+  {
+    "archived": false,
+    "description": "Fixture description for a featured repository with a published npm package.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "branding-engine",
+    "pushedAt": "2026-06",
+    "url": "https://github.com/joeseverino/branding-engine"
+  },
+  {
+    "archived": false,
+    "description": "A fixture command-line tool that appears in the compact list.",
+    "fork": false,
+    "language": "Shell",
+    "name": "fixture-cli",
+    "pushedAt": "2026-04",
+    "url": "https://github.com/joeseverino/fixture-cli"
+  },
+  {
+    "archived": false,
+    "description": "A fixture dashboard that appears in the compact list.",
+    "fork": false,
+    "language": "Python",
+    "name": "fixture-dashboard",
+    "pushedAt": "2026-03",
+    "url": "https://github.com/joeseverino/fixture-dashboard"
+  },
+  {
+    "archived": false,
+    "description": "A fork, which the Software tab excludes.",
+    "fork": true,
+    "language": "Go",
+    "name": "fixture-fork",
+    "pushedAt": "2026-02",
+    "url": "https://github.com/joeseverino/fixture-fork"
+  },
+  {
+    "archived": false,
+    "description": "Fixture description for a second featured repository with a published package.",
+    "fork": false,
+    "language": "JavaScript",
+    "name": "sitedrift",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/sitedrift"
+  },
+  {
+    "archived": false,
+    "description": "Fixture description for a featured repository without a package.",
+    "fork": false,
+    "language": "Shell",
+    "name": "tools",
+    "pushedAt": "2026-05",
+    "url": "https://github.com/joeseverino/tools"
+  }
+]

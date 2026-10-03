@@ -9,7 +9,7 @@
 //
 // renderPageHtml drives the page directives; renderWriteupHtml drives the writeup
 // pipeline (chrome strip + slug-relative asset rewriting). Image <picture>
-// enhancement is layered on in content.ts and is intentionally out of scope here.
+// enhancement happens in content.ts and is out of scope here.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -129,32 +129,32 @@ describe('external links', () => {
 
 describe('::figure (writeup)', () => {
   test('builds a figure with the trailing line as its caption', () => {
-    const html = renderWriteupHtml('::figure\n![A cat](cat.png)\nA caption here\n::', 'demo');
+    const html = renderWriteupHtml('::figure\n![A cat](cat.png)\nA caption here\n::');
     assert.match(html, /<figure><img src="cat\.png" alt="A cat"><figcaption>A caption here<\/figcaption><\/figure>/);
   });
 
   test('falls back to plain rendering when the block has no image line', () => {
-    const html = renderWriteupHtml('::figure\nnot an image line\n::', 'demo');
+    const html = renderWriteupHtml('::figure\nnot an image line\n::');
     assert.match(html, /<p>not an image line<\/p>/);
     assert.doesNotMatch(html, /<figure>/);
   });
 
   test('honors a |nozoom modifier on the figure image', () => {
-    const html = renderWriteupHtml('::figure\n![A cat|nozoom](cat.png)\nA caption here\n::', 'demo');
+    const html = renderWriteupHtml('::figure\n![A cat|nozoom](cat.png)\nA caption here\n::');
     assert.match(html, /<figure><img src="cat\.png" alt="A cat" data-no-zoom><figcaption>A caption here<\/figcaption><\/figure>/);
   });
 });
 
 describe('::table (writeup)', () => {
   test('wraps the table in a table-figure and renders the trailing caption', () => {
-    const html = renderWriteupHtml('::table\n| A | B |\n| - | - |\n| 1 | 2 |\nTable caption\n::', 'demo');
+    const html = renderWriteupHtml('::table\n| A | B |\n| - | - |\n| 1 | 2 |\nTable caption\n::');
     assert.match(html, /<figure class="table-figure"><div class="table-box"><table>/);
     assert.match(html, /<th>A<\/th>/);
     assert.match(html, /<figcaption>Table caption<\/figcaption>/);
   });
 
   test('falls back to plain rendering when the block has no table rows', () => {
-    const html = renderWriteupHtml('::table\njust a caption\n::', 'demo');
+    const html = renderWriteupHtml('::table\njust a caption\n::');
     assert.match(html, /<p>just a caption<\/p>/);
     assert.doesNotMatch(html, /table-figure/);
   });
@@ -162,7 +162,7 @@ describe('::table (writeup)', () => {
 
 describe('image directives (writeup)', () => {
   test('escapes image attributes without treating literal entities as markup', () => {
-    const html = renderWriteupHtml('![A < B & "C" &copy;|320](photo.png?a=1&b=2)', 'demo');
+    const html = renderWriteupHtml('![A < B & "C" &copy;|320](photo.png?a=1&b=2)');
     assert.match(html, /src="photo\.png\?a=1&amp;b=2"/);
     assert.match(html, /alt="A &lt; B &amp; &quot;C&quot; ©"/);
   });
@@ -170,66 +170,132 @@ describe('image directives (writeup)', () => {
   // markdown.ts parses the `alt|width|nocap` directive into <img> attributes;
   // the <figure>/<picture> wrapping is assembled downstream in enhanceImages.
   test('`alt|width` parses the width into an attribute and flags the alt caption', () => {
-    const html = renderWriteupHtml('![A cat|320](photo.png)', 'demo');
+    const html = renderWriteupHtml('![A cat|320](photo.png)');
     assert.match(html, /<img src="photo\.png" alt="A cat" width="320" data-has-alt-caption>/);
   });
 
   test('a plain image without a directive stays an inline paragraph image', () => {
-    const html = renderWriteupHtml('![A cat](photo.png)', 'demo');
+    const html = renderWriteupHtml('![A cat](photo.png)');
     assert.match(html, /<p><img src="photo\.png" alt="A cat"><\/p>/);
   });
 
   test('`nocap` with alt text flags both data-nocap and data-has-alt-caption', () => {
-    const html = renderWriteupHtml('![A cat|nocap](photo.png)', 'demo');
+    const html = renderWriteupHtml('![A cat|nocap](photo.png)');
     assert.match(html, /<img src="photo\.png" alt="A cat" data-nocap data-has-alt-caption>/);
   });
 
   test('`nocap` with empty alt flags data-nocap only', () => {
-    const html = renderWriteupHtml('![|nocap](photo.png)', 'demo');
+    const html = renderWriteupHtml('![|nocap](photo.png)');
     assert.match(html, /<img src="photo\.png" alt="" data-nocap>/);
   });
 
   test('`nozoom` flags data-no-zoom so the image opts out of the lightbox', () => {
-    const html = renderWriteupHtml('![A cat|nozoom](photo.png)', 'demo');
+    const html = renderWriteupHtml('![A cat|nozoom](photo.png)');
     assert.match(html, /<img src="photo\.png" alt="A cat" data-no-zoom data-has-alt-caption>/);
   });
 });
 
 describe('fenced code (writeup)', () => {
   test('tags a fenced block with its markdown-it language class', () => {
-    const html = renderWriteupHtml('```bash\nls -la\n```', 'demo');
+    const html = renderWriteupHtml('```bash\nls -la\n```');
     assert.match(html, /<pre><code class="language-bash">ls -la\n<\/code><\/pre>/);
   });
 });
 
 describe('standalone links (writeup)', () => {
   test('a link alone in a paragraph is promoted to an action button', () => {
-    const html = renderWriteupHtml('[Download the PDF](https://example.com/file.pdf)', 'demo');
+    const html = renderWriteupHtml('[Download the PDF](https://example.com/file.pdf)');
     assert.match(html, /<div class="actions"><a class="button" href="https:\/\/example\.com\/file\.pdf">Download the PDF<\/a><\/div>/);
   });
 });
 
 describe('writeup chrome + asset paths', () => {
   test('strips a leading H1 so the article title is not duplicated', () => {
-    const html = renderWriteupHtml('# Building a Homelab\n\nReal body text.', 'demo');
+    const html = renderWriteupHtml('# Building a Homelab\n\nReal body text.');
     assert.doesNotMatch(html, /<h1>/);
     assert.match(html, /Real body text\./);
   });
 
   test('strips a leading blockquote lede', () => {
-    const html = renderWriteupHtml('> A short lede.\n\nReal body text.', 'demo');
+    const html = renderWriteupHtml('> A short lede.\n\nReal body text.');
     assert.doesNotMatch(html, /<blockquote>/);
     assert.match(html, /<p>Real body text\.<\/p>/);
   });
 
   test('strips a leading hero image so it is not repeated in the body', () => {
-    const html = renderWriteupHtml('![hero](cover.png)\n\nReal body text.', 'demo');
+    const html = renderWriteupHtml('![hero](cover.png)\n\nReal body text.');
     assert.doesNotMatch(html, /cover\.png/);
     assert.match(html, /<p>Real body text\.<\/p>/);
   });
+});
 
-  test('rewrites relative ./images paths to the published writeup asset folder', () => {
-    const html = renderWriteupHtml('![pic](./images/diagram.png)', 'building-a-homelab');
-    assert.match(html, /src="\/assets\/writeups\/building-a-homelab\/images\/diagram\.png"/);
+describe('raw HTML allow-list', () => {
+  const renderBoth = (markdown: string) => [renderPageHtml(markdown), renderWriteupHtml(markdown)];
+
+  test('a <script> renders as text', () => {
+    for (const html of renderBoth('Intro\n\n<script>alert(1)</script>\n\nText <script src="/x.js"></script>')) {
+      assert.doesNotMatch(html, /<script/i);
+      assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    }
+  });
+
+  test('a script carrying the nonce placeholder still renders as text', () => {
+    for (const html of renderBoth('<script nonce="__CSP_NONCE__">alert(1)</script>')) {
+      assert.doesNotMatch(html, /<script/i);
+    }
+  });
+
+  test('an <iframe>, <style>, <object>, and <svg> render as text', () => {
+    for (const tag of ['iframe src="https://evil.example/"', 'style', 'object data="x"', 'svg onload="alert(1)"']) {
+      for (const html of renderBoth(`<${tag}></${tag.split(' ')[0]}>`)) {
+        assert.doesNotMatch(html, new RegExp(`<${tag.split(' ')[0]}`, 'i'));
+      }
+    }
+  });
+
+  test('event handler attributes are dropped from allowed tags', () => {
+    for (const html of renderBoth('<img src="/a.png" alt="a" onerror="alert(1)">\n\n<p onclick=alert(1) class="x">hi</p>')) {
+      assert.doesNotMatch(html, /onerror|onclick/i);
+      assert.match(html, /<img src="\/a.png" alt="a">/);
+      assert.match(html, /<p class="x">hi<\/p>/);
+    }
+  });
+
+  test('javascript: URLs are dropped, however they are spelled', () => {
+    const links = [
+      '<a href="javascript:alert(1)">a</a>',
+      '<a href="JaVaScRiPt:alert(1)">b</a>',
+      '<a href="jav&#x09;ascript:alert(1)">c</a>',
+      '<a href="&#106;avascript:alert(1)">d</a>',
+      '<a href=" javascript:alert(1)">e</a>',
+      '<img src="javascript:alert(1)" alt="f">',
+      '[g](javascript:alert(1))',
+    ];
+    for (const html of renderBoth(links.join('\n\n'))) {
+      assert.doesNotMatch(html, /href="[^"]*script:|src="[^"]*script:/i);
+    }
+  });
+
+  test('an unterminated tag cannot absorb the markup after it', () => {
+    for (const html of renderBoth('<div>\n<img src=x onerror=alert(1)\n</div>')) {
+      assert.doesNotMatch(html, /<img/);
+    }
+  });
+
+  test('the raw HTML published content uses passes through', () => {
+    const html = renderWriteupHtml(
+      '<p class="lede">Hi <strong>there</strong> <a href="https://example.com/" target="_blank" rel="noopener">x</a></p>\n\n' +
+        '<figure class="f"><img src="/assets/writeups/demo/images/a.png" alt="A &amp; B" class="i"/><figcaption class="c">Cap</figcaption></figure>\n\n' +
+        '<h4 class="h">Head</h4>\n\n<pre class="p"><code>code</code></pre>',
+    );
+    assert.match(html, /<p class="lede">Hi <strong>there<\/strong> <a href="https:\/\/example.com\/" target="_blank" rel="noopener">x<\/a><\/p>/);
+    assert.match(html, /<figure class="f"><img src="\/assets\/writeups\/demo\/images\/a.png" alt="A &amp; B" class="i"><figcaption class="c">Cap<\/figcaption><\/figure>/);
+    assert.match(html, /<h4 class="h">Head<\/h4>/);
+    assert.match(html, /<pre class="p"><code>code<\/code><\/pre>/);
+  });
+
+  test('HTML comments are dropped', () => {
+    assert.doesNotMatch(renderPageHtml('<!-- note -->\n\nText'), /<!--|note/);
   });
 });
+
