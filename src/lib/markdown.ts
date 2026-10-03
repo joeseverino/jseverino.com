@@ -242,14 +242,17 @@ function renderTerminal(content: string): string {
   const lines = content.replace(/\r?\n$/, '').split(/\r?\n/);
   const rendered = lines
     .map((line) => {
-      if (line === '') return '';
+      // Each .line is display:block, so a blank line needs its own span and the
+      // spans join with nothing: a newline between blocks inside <pre> renders
+      // as an extra empty row.
+      if (line === '') return '<span class="line"> </span>';
       if (/^\$\s?/.test(line)) {
         const cmd = line.replace(/^\$\s?/, '');
         return `<span class="line"><span class="prompt">$</span> <span class="cmd">${escapeHtml(cmd)}</span></span>`;
       }
       return `<span class="line out">${escapeHtml(line)}</span>`;
     })
-    .join('\n');
+    .join('');
   return `\n\n<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"></span><span class="terminal-label">TERMINAL</span></div><pre><code>${rendered}</code></pre></div>\n\n`;
 }
 

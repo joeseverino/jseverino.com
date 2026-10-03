@@ -23,7 +23,7 @@ technologies:
   - tailscale
   - ubuntu-server
 featured: true
-featured_order: 4
+featured_order: 5
 ---
 
 # Deploying Local DNS Filtering with AdGuard Home and Docker Engine

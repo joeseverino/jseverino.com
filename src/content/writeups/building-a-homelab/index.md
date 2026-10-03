@@ -26,7 +26,7 @@ technologies:
   - windows-11-pro
   - wireguard
 featured: true
-featured_order: 5
+featured_order: 6
 ---
 
 # Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA

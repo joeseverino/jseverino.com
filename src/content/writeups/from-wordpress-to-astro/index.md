@@ -19,7 +19,7 @@ technologies:
   - typescript
   - markdown
 featured: true
-featured_order: 1
+featured_order: 2
 ---
 
 # From WordPress to Astro: Building a Static Publishing System for jseverino.com
