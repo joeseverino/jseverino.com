@@ -483,6 +483,10 @@ surface:
   not apply to a solo personal repo are dismissed with a documented reason;
   its Vulnerabilities finding stays open while an accepted advisory is in the
   lockfile.
+- **Attested releases.** A signed version tag runs `release.yml`, which builds
+  the tagged commit and attests the build output and its SBOM through Sigstore
+  ([`.github/workflows/release.yml`](../.github/workflows/release.yml)); `gh
+  attestation verify` checks a release against this repository's workflow.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
   the actionlint container is pinned by digest, Lighthouse runs from the
   lockfile, and dependencies install from the committed lockfile.

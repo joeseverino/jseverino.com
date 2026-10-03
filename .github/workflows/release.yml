@@ -1,0 +1,68 @@
+name: release
+
+# A signed version tag (docs/Release-Checklist.md §4) publishes a verifiable
+# release: the build output and its SBOM, each with a Sigstore attestation
+# GitHub issues for this workflow run. Verify with:
+#   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - name: Build the site
+        run: npm run -s build:static
+        env:
+          ASTRO_TELEMETRY_DISABLED: '1'
+
+      - name: Package the build and its SBOM
+        run: |
+          tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@$(git log -1 --format=%ct)" \
+            -czf "jseverino.com-$TAG.tar.gz" -C dist .
+          npm sbom --sbom-format=cyclonedx > "jseverino.com-$TAG.cdx.json"
+
+      - id: provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: jseverino.com-${{ github.ref_name }}.tar.gz
+
+      - id: sbom
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
+        with:
+          subject-path: jseverino.com-${{ github.ref_name }}.tar.gz
+          sbom-path: jseverino.com-${{ github.ref_name }}.cdx.json
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROVENANCE: ${{ steps.provenance.outputs.bundle-path }}
+          SBOM_BUNDLE: ${{ steps.sbom.outputs.bundle-path }}
+        run: |
+          cp "$PROVENANCE" "jseverino.com-$TAG.tar.gz.sigstore.json"
+          cp "$SBOM_BUNDLE" "jseverino.com-$TAG.cdx.json.sigstore.json"
+          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes
+          gh release upload "$TAG" --clobber \
+            "jseverino.com-$TAG.tar.gz" "jseverino.com-$TAG.tar.gz.sigstore.json" \
+            "jseverino.com-$TAG.cdx.json" "jseverino.com-$TAG.cdx.json.sigstore.json"

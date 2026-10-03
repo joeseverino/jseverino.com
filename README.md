@@ -76,7 +76,9 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
   and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
   publish their results to code scanning.
 - Every commit on `main` is signed and every change lands through a pull
-  request with required checks; each `main` build attaches a CycloneDX SBOM.
+  request with required checks.
+- Each release carries the build output and its CycloneDX SBOM with Sigstore
+  attestations: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
   scanner result with its date and what was reviewed.
 

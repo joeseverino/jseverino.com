@@ -7,26 +7,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pathToFileURL } from 'node:url';
-import { markdownToHtml, mdxToJs } from 'satteri';
-import { processorOptions } from '../../src/lib/markdown/index.ts';
-
-type Collection = 'pages' | 'writeups';
-const fileURL = (collection: Collection) => pathToFileURL(`/content/${collection}/doc/index.mdx`);
-
-// The site's plugins are synchronous, so Sätteri returns the result directly.
-function html(markdown: string, collection: Collection): string {
-  const result = markdownToHtml(markdown, { ...processorOptions, fileURL: fileURL(collection) });
-  if (result instanceof Promise) throw new Error('a content plugin went async');
-  return result.html;
-}
-
-// Whitespace between block tags is dropped; inline whitespace is content.
-const render = (markdown: string, collection: Collection = 'writeups'): string => html(markdown, collection).replace(/>\n+</g, '><').trim();
-
-const compile = (markdown: string, collection: Collection = 'writeups'): void => {
-  mdxToJs(markdown, { ...processorOptions, fileURL: fileURL(collection) });
-};
+import { compile, html, render } from './helpers/render.ts';
 
 describe('```terminal', () => {
   test('renders a prompt span for $-prefixed lines and an output span otherwise', () => {
@@ -196,8 +177,8 @@ describe('content is data, not code', () => {
     assert.throws(() => compile('<span {...props}>y</span>'), /takes no spread attributes/);
   });
 
-  test('unsafe URL schemes are refused in links, images, and raw HTML', () => {
-    for (const markup of ['[a](javascript:alert(1))', '![b](javascript:alert(1))', '<a href="javascript:alert(1)">c</a>', '<a href=" JaVaScRiPt:alert(1)">d</a>']) {
+  test('unsafe URL schemes are refused in links, images, reference definitions, and raw HTML', () => {
+    for (const markup of ['[a](javascript:alert(1))', '![b](javascript:alert(1))', '[c][r]\n\n[r]: javascript:alert(1)', '![d][r]\n\n[r]: javascript:alert(1)', '<a href="javascript:alert(1)">e</a>', '<a href=" JaVaScRiPt:alert(1)">f</a>']) {
       assert.throws(() => compile(markup), /scheme other than http\(s\) or mailto/, markup);
     }
   });
