@@ -31,6 +31,8 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup
+        with:
+          astro-cache: 'true'
 
       - name: Build the site
         run: npm run -s build:static

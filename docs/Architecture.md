@@ -254,8 +254,9 @@ asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
 Encodes are cached in `node_modules/.astro`, which Cloudflare Pages keeps
-between builds (Settings, Build, Build cache), so a build re-encodes only new
-or changed images. The efficiency of the approach is documented in the
+between builds (Settings, Build, Build cache) and CI restores with
+`actions/cache` (the `astro-cache` input of the setup action), so a build
+re-encodes only new or changed images. The efficiency of the approach is documented in the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
 ## 9. SEO And Metadata

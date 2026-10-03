@@ -23,13 +23,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - uses: ./.github/actions/setup
+        with:
+          astro-cache: 'true'
 
       # Cheap invariants first: an unpinned action or a misaligned lockfile
       # fails here in seconds, collect-all, before the build starts.
@@ -81,7 +83,7 @@ jobs:
   playwright:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -110,6 +112,8 @@ jobs:
           persist-credentials: false
 
       - uses: ./.github/actions/setup
+        with:
+          astro-cache: ${{ matrix.prebuild }}
 
       # Cache the browser binaries by Playwright version, not by lockfile hash:
       # every Dependabot PR rewrites the lockfile and would otherwise miss.
