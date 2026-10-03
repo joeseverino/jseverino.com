@@ -15,7 +15,7 @@ coherent brand system from structured inputs, and
 deployment with the current live site.
 
 For the demonstration, I temporarily changed the primary brand token in
-`src/lib/brand.mjs` from navy to red. `branding-engine` propagated that one
+`src/lib/brand.ts` from navy to red. `branding-engine` propagated that one
 decision through the favicon, marks, header wordmark, interface color, Open
 Graph card, and GitHub social preview. The change was deployed only to a
 Cloudflare branch preview; production stayed navy.
@@ -23,23 +23,24 @@ Cloudflare branch preview; production stayed navy.
 ![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
 
 [Open the immutable red-brand comparison](https://6ef83545.jseverino.pages.dev/).
-Unlike a moving branch alias, this URL remains pinned to the exact demonstration
-build even though the source branch has since been restored to navy.
+Unlike a moving branch alias, this URL stays pinned to the demonstration build
+after the branch went back to navy. Preview deployments sit behind Cloudflare
+Access (see [Cloudflare](./Cloudflare.md)), so the link opens only for the owner.
 
 ### 1. Turn A Git Commit Into A Reviewable Artifact
 
 Cloudflare records the repository, branch, commit, deployment status, duration,
-and immutable URL together. That provenance matters: a reviewer can identify
-the exact code being evaluated, and the documentation can link to a deployment
-that will not move when the branch receives another push.
+and immutable URL together, so a reviewer can identify the exact code under
+review, and a doc can link to a deployment that does not move when the branch
+gets another push.
 
 [![Cloudflare deployment details for the red-brand commit](./images/sitedrift-brand-demo/cloudflare-deployment.png)](https://6ef83545.jseverino.pages.dev/)
 
 ### 2. Add The Review Layer During The Normal Build
 
 There is no separate review server to operate. The ordinary Cloudflare build
-runs the repository's static build command, then the installed sitedrift
-dependency wraps the 83 generated HTML files because this is a non-production
+runs the repository's static build command, which has the installed sitedrift
+dependency wrap the 83 generated HTML files because this is a non-production
 branch. Cloudflare uploads the resulting static assets and scoped Function as
 part of the same successful deployment.
 
@@ -48,8 +49,8 @@ part of the same successful deployment.
 ### 3. Confirm The Branch Works By Itself
 
 Solo mode presents DEV as a normal, interactive website with a compact review
-bar. This matters because a visual review tool is not useful if it breaks
-navigation, menus, scrolling, or the responsive site it is evaluating.
+bar. The review layer must not break navigation, menus, scrolling, or the
+responsive layout it is reviewing.
 
 [![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://6ef83545.jseverino.pages.dev/)
 
@@ -57,9 +58,8 @@ navigation, menus, scrolling, or the responsive site it is evaluating.
 
 Split mode places the red branch and navy production site on the same route and
 scroll position. The page structure and content remain aligned; the coordinated
-brand change appears in the mark, buttons, and other generated surfaces. This
-is the useful connection between the tools: `branding-engine` creates the
-systematic change, and `sitedrift` makes its deployed scope immediately visible.
+brand change appears in the mark, buttons, and other generated surfaces. `branding-engine`
+made the change; `sitedrift` shows how far it reached.
 
 ![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
@@ -91,9 +91,8 @@ or becomes unexpectedly heavier.
 ### 7. Leave Review Context Without Adding A Service
 
 Review notes are attached to the preview workflow but stored only in that
-browser's `localStorage`. The interface states that boundary directly. Teams
-get a useful review scratchpad without creating an account system, public write
-API, database, or new production security surface.
+browser's `localStorage`. The interface says so. The notes need no account
+system, write API, or database.
 
 ![Browser-local review notes](./images/sitedrift-brand-demo/browser-local-notes.png)
 
@@ -111,28 +110,31 @@ API, database, or new production security surface.
   coverage.
 - Review notes stored only in that browser's `localStorage`.
 
-The status and SEO panels are diagnostics, not synthetic performance
-benchmarks. Their value is fast same-route comparison under the same browser
-session.
+The status and SEO panels compare the same route in the same browser
+session; they are not performance benchmarks.
 
 ## Repository Integration
 
-The project has two integration points. The static build ends with:
+The project has two integration points. `npm run build:static`
+([`bin/build-static.ts`](../bin/build-static.ts)) runs `astro build`, then
+`sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
+output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
+and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts).
+It then stamps the nonce placeholder onto the viewer's inline tags, a no-op on
+production builds.
 
-```json
-{
-  "scripts": {
-    "build:static": "ASTRO_TELEMETRY_DISABLED=1 astro build && sitedrift cloudflare --dir dist --live https://jseverino.com --brand \"Joe Severino\""
-  }
-}
-```
+The scoped Pages Function,
+[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts),
+wraps sitedrift's `onRequest` with the helpers in
+[`functions/lib/sitedrift-preview.ts`](../functions/lib/sitedrift-preview.ts):
 
-The scoped Pages Function is:
-
-```ts
-// functions/__sitedrift/[[path]].ts
-export { onRequest } from 'sitedrift/cloudflare';
-```
+- it returns `404` on the production hosts and on any build without sitedrift's
+  generated config;
+- only content-negotiation headers (`accept`, `accept-language`,
+  `cache-control`, conditional and range headers, `user-agent`) reach the
+  upstream; cookies, `authorization`, and Access headers never do;
+- responses get the static security headers back, and the frame bridge and
+  LIVE pages get the nonce placeholder so the preview's own nonce applies.
 
 `sitedrift` is pinned in `devDependencies` and the exact tarball is locked in
 `package-lock.json`.
@@ -153,11 +155,12 @@ newer build during testing.
 The addon does not wrap production. `sitedrift cloudflare` exits without
 changing the Astro output when `CF_PAGES_BRANCH=main`.
 
-Cloudflare bundles the `functions/` tree separately, so the exported Function
-still exists in production. The required generated configuration is absent,
-therefore `/__sitedrift/*` fails closed with `404`. The normal site, contact
-form, CSP report receiver, middleware, headers, and static assets follow their
-existing production paths unchanged.
+Cloudflare bundles the `functions/` tree separately, so the Function still
+exists in production. It answers `404` there twice over: the production host
+check, and the missing generated config. The `sitedrift-production` WAF rule
+also blocks `/__sitedrift*` on the production hosts at the edge. The normal
+site, contact form, CSP report receiver, middleware, headers, and static assets
+follow their production paths unchanged.
 
 Run the project-level guard before release:
 
@@ -173,13 +176,14 @@ the review wrapper while `main` remains the original Astro document.
 - The Function owns only `/__sitedrift/*`.
 - It allows only `GET` and `HEAD`.
 - The LIVE destination is fixed at build time to `https://jseverino.com`.
-- It does not forward contact-form writes or arbitrary origins.
+- It does not forward contact-form writes, arbitrary origins, cookies, or
+  credentials.
 - Hosted frames execute trusted first-party preview code so the deployed site
   remains interactive.
 - Notes never leave the browser and are not available through the sitedrift MCP.
 - Existing CSP middleware and application Functions retain their routes.
 - Pages preview hostnames remain excluded from indexing through
-  `X-Robots-Tag: noindex`.
+  `X-Robots-Tag: noindex`, and Cloudflare Access gates them.
 
 This adds a read-only preview review surface. It does not add an account system,
 production content API, database binding, secret, upload endpoint, or public

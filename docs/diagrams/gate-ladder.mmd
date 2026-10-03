@@ -1,9 +1,16 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart TB
-    A["Source change"] --> B
-    B --> C
-    C --> D["git push origin main"]
+    A["Source change"] --> G0
+    G0 --> B
+    B --> CI0
+    B -.-> C
+    CI0 --> P
+    P --> D["PR merged (site land)"]
     D --> E
+
+    subgraph fast ["Gate Check (Fast Pre-Build Audits)"]
+        G0["npm run gate:check"]
+    end
 
     subgraph publish ["Publish Check (Local Build Gate)"]
         B["npm run publish:check"]
@@ -15,10 +22,10 @@ flowchart TB
         B4["sitedrift preview guard"]
         B5["CSS lint + unused-var check"]
         B6["astro check + build"]
-        B7["asset weight + links + page weight + HTML + SEO"]
+        B7["asset weight + links + page weight + HTML + SEO + routes"]
     end
 
-    subgraph release ["Release Check (Final Local Gate)"]
+    subgraph release ["Release Check (Optional Local Gate)"]
         C["npm run release:check"]
         C1["Playwright E2E + visual"]
         C2["repository policy"]
@@ -26,7 +33,20 @@ flowchart TB
         C4["worktree left clean"]
     end
 
-    subgraph deploy ["Deploy Verification (Post-Push)"]
+    subgraph ci ["CI (PR), independent jobs"]
+        CI0["pull request to main"]
+        CI1["build"]
+        CI2["e2e"]
+        CI3["visual"]
+        CI4["edge"]
+    end
+
+    subgraph preview ["Preview Deploy Verification"]
+        P["deploy.yml verify"]
+        P1["deploy-verify --origin on the Pages deployment"]
+    end
+
+    subgraph deploy ["Post-merge, production"]
         E["npm run deploy:verify"]
         E1["remote CI green"]
         E2["live HSTS / CSP headers"]
@@ -38,9 +58,13 @@ flowchart TB
     B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B9 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
     B7 ~~~ C
     C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
-    C4 ~~~ D
+    CI0 ~~~ CI1
+    CI0 ~~~ CI2
+    CI0 ~~~ CI3
+    CI0 ~~~ CI4
+    P ~~~ P1
     E ~~~ E1 ~~~ E2 ~~~ E3 ~~~ E4
 
-    %% the irreversible pivot — everything before is local, everything after is live
+    %% the pivot: everything before is local, everything after is the PR and production
     classDef anchor stroke-width:2px;
     class D anchor;

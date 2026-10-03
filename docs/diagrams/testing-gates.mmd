@@ -1,9 +1,13 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart LR
-    A["change"] --> B["publish:check"] --> C["release:check"] --> D["git push"] --> E["deploy:verify"]
-    G["diagnose — all of it, one pass, any time"] -.-> B
-    G -.-> C
+    A["change"] --> B["gate:check"] --> C["publish:check"] --> D["PR"]
+    D --> E["CI: build · e2e · visual · edge · CodeQL"]
+    D --> F["preview deploy-verify --origin"]
+    E --> G["site land"]
+    F --> G
+    G --> H["production deploy:verify"]
+    R["release:check (optional)"] -.-> D
 
-    %% the irreversible pivot — local gates before, live after
+    %% the pivot: local gates before, the PR and production after
     classDef anchor stroke-width:2px;
-    class D anchor;
+    class D,G anchor;
