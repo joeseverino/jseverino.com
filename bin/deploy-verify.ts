@@ -15,6 +15,7 @@
 // marks a branch preview, where sitedrift wraps every HTML route. --slug
 // verifies one writeup after a publish: listed, served with headers, images resolve.
 import fs from 'node:fs';
+import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
 import { SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
@@ -143,22 +144,31 @@ async function collectSitemapUrls(): Promise<string[]> {
   return publicUrls;
 }
 
+// A deployment that just finished can answer 404 for a page while it reaches
+// every edge, so a failed route is checked once more before it counts. A page
+// that is really missing fails both times.
+const ROUTE_RETRY_MS = 5_000;
+
+async function routeStatuses(urls: readonly string[]): Promise<{ url: string; status: number }[]> {
+  const results: { url: string; status: number }[] = [];
+  for (let index = 0; index < urls.length; index += 8) {
+    results.push(...await Promise.all(urls.slice(index, index + 8).map(async (url) => {
+      const response = await fetchChecked(url, { method: 'HEAD' });
+      return { url, status: response.status };
+    })));
+  }
+  return results;
+}
+
 async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> {
-  const failures: { url: string; status: number }[] = [];
-  for (let index = 0; index < publicUrls.length; index += 8) {
-    const batch = publicUrls.slice(index, index + 8);
-    const batchResults = await Promise.all(
-      batch.map(async (url) => {
-        const response = await fetchChecked(onTarget(url), { method: 'HEAD' });
-        return { url, status: response.status };
-      }),
-    );
-    failures.push(...batchResults.filter((result) => result.status !== 200));
+  const notOk = (results: { url: string; status: number }[]) => results.filter((result) => result.status !== 200);
+  let failures = notOk(await routeStatuses(publicUrls.map(onTarget)));
+  if (failures.length > 0) {
+    await sleep(ROUTE_RETRY_MS);
+    failures = notOk(await routeStatuses(failures.map(({ url }) => url)));
   }
   if (failures.length > 0) {
-    throw new Error(
-      `live routes failed: ${failures.map(({ url, status: code }) => `${code} ${url}`).join(', ')}`,
-    );
+    throw new Error(`routes failed: ${failures.map(({ url, status: code }) => `${code} ${url}`).join(', ')}`);
   }
   return `${publicUrls.length} sitemap URLs returned 200`;
 }
