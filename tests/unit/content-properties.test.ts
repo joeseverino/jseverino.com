@@ -7,6 +7,7 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fc from 'fast-check';
+import { htmlToHast, type HastNode } from 'satteri';
 import { isSafeUrl, RAW_HTML_TAGS } from '../../src/lib/markdown/guard.ts';
 import { compile, html } from './helpers/render.ts';
 
@@ -19,8 +20,16 @@ const respelled = (value: string) =>
   fc.tuple(fc.array(fc.boolean(), { minLength: value.length, maxLength: value.length }), fc.constantFrom('', ' ', '\t', '\n '))
     .map(([upper, pad]) => pad + [...value].map((char, index) => (upper[index] ? char.toUpperCase() : char)).join(''));
 
-const textOf = (markup: string) => markup.replace(/<[^>]+>/g, '');
-const decode = (text: string) => text.replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&quot;', '"').replaceAll('&#39;', "'").replaceAll('&amp;', '&');
+// Rendered HTML parsed back into a tree, so assertions read text nodes and
+// elements, never markup.
+type Element = Extract<HastNode, { type: 'element' }>;
+const tree = (markup: string): HastNode => htmlToHast(markup, { fragment: true });
+const childrenOf = (node: HastNode): HastNode[] => ('children' in node ? (node.children as HastNode[]) : []);
+const textOf = (node: HastNode): string => (node.type === 'text' ? node.value : childrenOf(node).map(textOf).join(''));
+const elements = (node: HastNode, tagName: string): Element[] => [
+  ...(node.type === 'element' && node.tagName === tagName ? [node] : []),
+  ...childrenOf(node).flatMap((child) => elements(child, tagName)),
+];
 
 describe('URL schemes', () => {
   test('a URL is safe exactly when it is relative or http(s)/mailto, however it is spelled', () => {
@@ -74,7 +83,7 @@ describe('text fidelity', () => {
     const token = fc.array(word, { minLength: 1, maxLength: 6 }).map((parts) => parts.join(':'));
     fc.assert(fc.property(fc.array(token, { minLength: 1, maxLength: 6 }), (tokens) => {
       const sentence = `Seen ${tokens.join(' and ')} today.`;
-      assert.equal(decode(textOf(html(sentence))).trim(), sentence);
+      assert.equal(textOf(tree(html(sentence))).trim(), sentence);
     }), RUNS);
   });
 
@@ -83,10 +92,7 @@ describe('text fidelity', () => {
       .chain((parts) => fc.constantFrom('.', ':').map((separator) => parts.join(separator)));
     fc.assert(fc.property(fc.array(cell, { minLength: 1, maxLength: 4 }), (cells) => {
       const table = `| ${cells.map((_, index) => `C${index}`).join(' | ')} |\n| ${cells.map(() => '---').join(' | ')} |\n| ${cells.join(' | ')} |`;
-      const rendered = html(table);
-      const row = /<tbody>([\s\S]*)<\/tbody>/.exec(rendered)?.[1] ?? '';
-      const texts = [...row.matchAll(/<td>([\s\S]*?)<\/td>/g)].map(([, inner = '']) => textOf(inner));
-      assert.deepEqual(texts, cells);
+      assert.deepEqual(elements(tree(html(table)), 'td').map(textOf), cells);
     }), RUNS);
   });
 
@@ -94,10 +100,11 @@ describe('text fidelity', () => {
     const line = fc.string({ unit: fc.constantFrom('a', 'b', '<', '>', '&', '"', "'", ' ', '/', '$', 'x'), maxLength: 30 });
     fc.assert(fc.property(fc.array(line, { minLength: 1, maxLength: 5 }), (lines) => {
       const body = lines.map((value) => value.replace(/`/g, '')).join('\n');
-      const rendered = html(`\`\`\`terminal\n${body}\n\`\`\``);
-      const code = /<code>([\s\S]*)<\/code>/.exec(rendered)?.[1] ?? '';
-      const allowed = new Set(['span', '/span']);
-      for (const [, name = ''] of code.matchAll(/<(\/?[a-z]+)/g)) assert.ok(allowed.has(name), `unexpected <${name}> in ${code}`);
+      const [code] = elements(tree(html(`\`\`\`terminal\n${body}\n\`\`\``)), 'code');
+      assert.ok(code, 'the terminal block has a code element');
+      const inside = childrenOf(code).flatMap(function all(node: HastNode): HastNode[] { return [node, ...childrenOf(node).flatMap(all)]; });
+      for (const node of inside) if (node.type === 'element') assert.equal(node.tagName, 'span');
+      assert.equal(textOf(code), lines.map((value) => value.replace(/`/g, '')).map((value) => value.replace(/^\$\s?/, '$ ') || ' ').join(''));
     }), RUNS);
   });
 });
