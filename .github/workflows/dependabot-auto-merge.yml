@@ -13,7 +13,8 @@ jobs:
     # human commit onto its branch must not re-arm auto-merge), and never on a
     # fork of this repository.
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]' && github.repository == 'joeseverino/jseverino.com'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
@@ -25,10 +26,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       # dependabot.yml already ignores semver-major updates; this guard keeps a
-      # major from auto-merging if that ignore is ever loosened. The PR still
-      # waits on every required check before GitHub performs the merge.
+      # major from auto-merging if that ignore is ever loosened. sitedrift is
+      # bundled into the production edge functions, so its updates (grouped on
+      # their own in dependabot.yml) wait for a human. The PR still waits on
+      # every required check before GitHub performs the merge.
       - name: Enable auto-merge
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major' && !contains(steps.metadata.outputs.dependency-names, 'sitedrift')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}

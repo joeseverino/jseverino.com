@@ -15,18 +15,26 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same pull request supersedes the run in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lychee:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # 403, 429, and 999 are accepted on purpose: they come from targets that
       # wall off automated clients (LinkedIn, some vendor docs, rate limiters),
       # and a link that answers at all is not a dead link. A real 404 or a
       # connection failure still fails the run.
       - name: Check repository documentation links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           output: lychee/repository-documentation.md
           args: >-
@@ -39,7 +47,7 @@ jobs:
           fail: true
 
       - name: Check public content links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           output: lychee/public-content.md
           # Self-domain links are excluded: a PR that introduces a page and

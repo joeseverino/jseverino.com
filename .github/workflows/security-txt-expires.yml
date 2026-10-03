@@ -11,12 +11,15 @@ permissions:
 
 jobs:
   check-expires:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
       contents: read
       issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
@@ -30,9 +33,9 @@ jobs:
         id: check
         run: |
           set -euo pipefail
-          OUTPUT=$(node tests/audits/check-security-txt.mjs 2>&1) || {
+          OUTPUT=$(node tests/audits/check-security-txt.ts 2>&1) || {
             echo "$OUTPUT"
-            echo "::error::check-security-txt.mjs failed; expiry not evaluated."
+            echo "::error::check-security-txt.ts failed; expiry not evaluated."
             exit 1
           }
           echo "$OUTPUT"
@@ -47,10 +50,14 @@ jobs:
       - name: Open or update issue
         if: steps.check.outputs.expires_soon == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        # Step outputs reach the script through the environment, never spliced
+        # into its source.
+        env:
+          DAYS_REMAINING: ${{ steps.check.outputs.days_remaining }}
         with:
           script: |
-            const days = ${{ steps.check.outputs.days_remaining }};
-            const title = 'security.txt Expires within 60 days — rotate signature';
+            const days = Number(process.env.DAYS_REMAINING);
+            const title = 'security.txt Expires within 60 days: rotate signature';
             const body = [
               `\`public/.well-known/security.txt\` expires in **${days} days**.`,
               '',

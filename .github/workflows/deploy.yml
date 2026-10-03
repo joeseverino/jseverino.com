@@ -1,0 +1,268 @@
+name: deploy
+
+# Cloudflare Pages builds each push on its own infrastructure and reports back
+# as the `Cloudflare Pages` check-run. Nothing here waits on it: the completed
+# check-run starts this workflow, which verifies that one deployment and keeps
+# the pull request's single CI comment current. A completed ci run updates the
+# same comment with the job summaries.
+on:
+  check_run:
+    types: [completed]
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+
+permissions:
+  contents: read
+
+# Updates to one commit's comment apply in order, never concurrently.
+concurrency:
+  group: deploy-${{ github.event.check_run.head_sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  # Runs deploy-verify from the default branch against the deployment. The job
+  # holds the Access service token, so it checks out no branch code; the
+  # deployment URL is the only input taken from the event.
+  verify:
+    if: github.event_name == 'check_run' && github.event.check_run.name == 'Cloudflare Pages' && github.event.check_run.app.slug == 'cloudflare-workers-and-pages'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # The per-deployment URL (https://<hash>.<project>.pages.dev) is outside
+      # the zone, so Bot Fight Mode does not challenge the runner as it does on
+      # jseverino.com.
+      - name: Read the deployment
+        id: deployment
+        env:
+          SUMMARY: ${{ github.event.check_run.output.summary }}
+          CONCLUSION: ${{ github.event.check_run.conclusion }}
+          BRANCH: ${{ github.event.check_run.check_suite.head_branch }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          DASHBOARD: ${{ github.event.check_run.details_url }}
+          SHA: ${{ github.event.check_run.head_sha }}
+        run: |
+          set -euo pipefail
+          url=$(printf '%s' "$SUMMARY" | grep -oE 'https://[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev' | head -n 1 || true)
+          environment=$([ "$BRANCH" = "$DEFAULT_BRANCH" ] && echo production || echo preview)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "environment=$environment" >> "$GITHUB_OUTPUT"
+          if [ "$CONCLUSION" != 'success' ] || [ -z "$url" ]; then
+            {
+              echo '## Cloudflare Pages'
+              echo
+              echo "The $environment deployment for \`${SHA:0:12}\` did not produce a verifiable deployment ($CONCLUSION). [Dashboard]($DASHBOARD)"
+            } > "$RUNNER_TEMP/summary-deploy.md"
+            cat "$RUNNER_TEMP/summary-deploy.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.deployment.outputs.url != '' && github.event.check_run.conclusion == 'success'
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        if: steps.deployment.outputs.url != '' && github.event.check_run.conclusion == 'success'
+        with:
+          install: 'false'
+
+      - name: Verify the deployment
+        if: steps.deployment.outputs.url != '' && github.event.check_run.conclusion == 'success'
+        run: |
+          {
+            echo '## Cloudflare Pages'
+            echo
+            echo "The $ENVIRONMENT deployment is live at $URL ([dashboard]($DASHBOARD))."
+            echo
+          } > "$JOB_SUMMARY_FILE"
+          args=(--origin "$URL")
+          if [ "$ENVIRONMENT" = 'preview' ]; then args+=(--preview); fi
+          node bin/deploy-verify.ts "${args[@]}"
+        env:
+          URL: ${{ steps.deployment.outputs.url }}
+          ENVIRONMENT: ${{ steps.deployment.outputs.environment }}
+          DASHBOARD: ${{ github.event.check_run.details_url }}
+          DEPLOY_SHA: ${{ github.event.check_run.head_sha }}
+          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-deploy.md
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+
+      - name: Keep the summary for the PR comment
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: summary-deploy
+          path: ${{ runner.temp }}/summary-deploy.md
+          retention-days: 1
+          if-no-files-found: ignore
+
+  # The one comment per pull request. Each section (ci, deploy) is replaced by
+  # the event that owns it and the others are kept, so the CI run and the
+  # deployment can finish in either order. Executes no repository code.
+  report:
+    needs: verify
+    if: >-
+      always() && (
+        (github.event_name == 'check_run' && needs.verify.result != 'skipped') ||
+        (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' &&
+          github.event.workflow_run.head_repository.full_name == github.repository)
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Collect the ci run's summaries
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          pattern: summary-*
+          merge-multiple: true
+          path: summaries
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Collect the deployment summary
+        if: github.event_name == 'check_run'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        continue-on-error: true
+        with:
+          name: summary-deploy
+          path: summaries
+
+      - name: Post or update the CI comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const { owner, repo } = context.repo;
+            const marker = '<!-- ci-summary -->';
+            const fromCi = context.eventName === 'workflow_run';
+            const sha = fromCi ? context.payload.workflow_run.head_sha : context.payload.check_run.head_sha;
+
+            const pulls = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit, {
+              owner, repo, commit_sha: sha, per_page: 100,
+            });
+            const pull = pulls.find((candidate) =>
+              candidate.state === 'open' && candidate.head.sha === sha && candidate.head.repo?.full_name === `${owner}/${repo}`);
+            if (!pull) {
+              core.info(`No open pull request has ${sha} as its head; nothing to comment on.`);
+              return;
+            }
+
+            const read = (name) => {
+              const file = path.join('summaries', `summary-${name}.md`);
+              return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().replace(/^## /gm, '### ') : null;
+            };
+            const fenced = (name, body) => `<!-- section:${name} -->\n${body}\n<!-- /section:${name} -->`;
+            const sectionRe = (name) => new RegExp(`<!-- section:${name} -->[\\s\\S]*?<!-- /section:${name} -->`);
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: pull.number, per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            const previous = existing?.body.includes(sha.slice(0, 12)) ? existing.body : '';
+            const kept = (name, fallback) => previous.match(sectionRe(name))?.[0] ?? fenced(name, fallback);
+
+            let ci;
+            let deploy;
+            if (fromCi) {
+              const run = context.payload.workflow_run;
+              const parts = ['gate', 'build', 'e2e', 'visual', 'edge'].map((name) => read(name)).filter(Boolean);
+              ci = fenced('ci', [`### ci: ${run.conclusion} · [run](${run.html_url})`, ...parts].join('\n\n'));
+              deploy = kept('deploy', '### Cloudflare Pages\n\nWaiting for the deployment.');
+            } else {
+              ci = kept('ci', '### ci\n\nRunning.');
+              deploy = fenced('deploy', read('deploy') ?? `### Cloudflare Pages\n\n${context.payload.check_run.conclusion}: no summary was produced.`);
+            }
+
+            const { data: { check_runs: checks } } = await github.rest.checks.listForRef({
+              owner, repo, ref: sha, per_page: 100,
+            });
+            const tracked = ['build', 'e2e', 'visual', 'edge', 'Cloudflare Pages'];
+            const status = tracked
+              .map((name) => {
+                const check = checks.find((candidate) => candidate.name === name);
+                return `\`${name}\` ${check ? check.conclusion ?? check.status : 'pending'}`;
+              })
+              .join(' · ');
+
+            const body = [marker, `## CI for \`${sha.slice(0, 12)}\``, '', status, '', ci, '', deploy, ''].join('\n');
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: pull.number, body });
+            }
+
+  # Auto-merge is enabled with GITHUB_TOKEN, so GitHub suppresses workflows from
+  # the resulting push. Cloudflare's external check still runs; its completed
+  # check is the trusted signal used to recover the missing CI run.
+  recover-main-ci:
+    if: github.event_name == 'check_run' && github.event.check_run.name == 'Cloudflare Pages' && github.event.check_run.app.slug == 'cloudflare-workers-and-pages'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Dispatch CI for a Dependabot merge when its push run is absent
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.payload.check_run.head_sha;
+            const { data: repository } = await github.rest.repos.get({ owner, repo });
+            const branch = repository.default_branch;
+            const { data: ref } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+
+            if (ref.object.sha !== sha) {
+              core.info(`Ignoring ${sha}: ${branch} is at ${ref.object.sha}`);
+              return;
+            }
+
+            const pulls = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              { owner, repo, commit_sha: sha, per_page: 100 },
+            );
+            const dependabotMerge = pulls.find((pull) =>
+              pull.merged_at &&
+              pull.base.ref === branch &&
+              pull.user?.login === 'dependabot[bot]',
+            );
+            if (!dependabotMerge) {
+              core.info(`Ignoring ${sha}: it is not a merged Dependabot pull request`);
+              return;
+            }
+
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              head_sha: sha,
+              per_page: 100,
+            });
+            const recorded = runs.workflow_runs.find((run) =>
+              run.event === 'push' || run.event === 'workflow_dispatch',
+            );
+            if (recorded) {
+              core.info(`CI already recorded for ${sha}: ${recorded.html_url}`);
+              return;
+            }
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              ref: branch,
+            });
+            core.notice(`Dispatched CI for Dependabot PR #${dependabotMerge.number} at ${sha}`);

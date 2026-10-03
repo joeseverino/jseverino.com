@@ -11,85 +11,32 @@ permissions:
   contents: read
 
 # A newer push to the same pull request supersedes the run in flight. Pushes to
-# main are never cancelled: each one deploys and deserves its own record.
+# main are never cancelled: each one deploys and keeps its own run.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Every job starts at once and none depends on another, so a failure reports as
+# a failure on its own check: a required check is never left skipped (which
+# counts as passing) because something upstream failed. Cloudflare Pages builds
+# and deploys on its own; the deploy workflow verifies it and comments.
 jobs:
-  # Cheap invariants first: an unpinned action or a misaligned lockfile should
-  # fail in under a minute, not after three runners have installed browsers.
-  gate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version-file: .nvmrc
-          cache: npm
+          persist-credentials: false
 
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
+      # Cheap invariants first: an unpinned action or a misaligned lockfile
+      # fails here in seconds, collect-all, before the build starts.
       - name: Gate audits
         run: npm run -s gate:check
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-gate.md
-
-      - name: Keep the summary for the PR comment
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: summary-gate
-          path: ${{ runner.temp }}/summary-gate.md
-          retention-days: 1
-          if-no-files-found: ignore
-
-  # Cloudflare Pages builds the commit on its own infrastructure, triggered by
-  # the push rather than by this workflow, and reports back as a check-run.
-  # This job gives that deployment a node in the graph and a summary.
-  deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      checks: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .nvmrc
-
-      - name: Wait for Cloudflare Pages
-        run: node bin/deploy-wait.mjs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPLOY_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-deploy.md
-
-      - name: Keep the summary for the PR comment
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: summary-deploy
-          path: ${{ runner.temp }}/summary-deploy.md
-          retention-days: 1
-          if-no-files-found: ignore
-
-  build:
-    needs: gate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-
-      - run: npm ci
 
       # The security-txt audit verifies the PGP signature; the public key ships
       # in the repo's WKD directory, so the runner can import it from there.
@@ -105,30 +52,34 @@ jobs:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
 
       - name: Generate SBOM
+        if: github.event_name != 'pull_request'
         run: npm sbom --sbom-format=cyclonedx > sbom.cdx.json
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.event_name != 'pull_request'
         with:
           name: sbom
           path: sbom.cdx.json
           if-no-files-found: error
 
-      - name: Keep the summary for the PR comment
+      - name: Keep the summaries for the PR comment
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: summary-build
-          path: ${{ runner.temp }}/summary-build.md
+          path: |
+            ${{ runner.temp }}/summary-gate.md
+            ${{ runner.temp }}/summary-build.md
           retention-days: 1
           if-no-files-found: ignore
 
   # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, and
-  # `edge`, so the ruleset's required checks match by name; the run graph
-  # groups the legs as one matrix. The edge leg serves the build through the
-  # Cloudflare runtime (wrangler) and needs no browser.
+  # `edge`, so the ruleset's required checks match by name. The edge leg serves
+  # the build through the Cloudflare runtime (wrangler) and needs no browser;
+  # the visual leg builds tests/fixtures/content and runs on macOS because the
+  # baselines are macOS Chromium renders.
   playwright:
     name: ${{ matrix.suite }}
-    needs: gate
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -137,71 +88,79 @@ jobs:
         include:
           - suite: e2e
             title: Cross-browser suite
-            os: ubuntu-latest
-            cache: ~/.cache/ms-playwright
-            install: npx playwright install --with-deps chromium firefox webkit
-            install-deps: npx playwright install-deps chromium firefox webkit
-            command: npm run test:e2e
+            os: ubuntu-24.04
+            browsers: chromium firefox webkit
+            prebuild: true
+            config: playwright.config.ts
           - suite: visual
             title: Visual baselines
-            os: macos-latest
-            cache: ~/Library/Caches/ms-playwright
-            install: npx playwright install chromium
-            install-deps: 'true'
-            command: npm run test:e2e:visual -- --project=chromium-desktop
+            os: macos-26
+            browsers: chromium
+            prebuild: false
+            config: playwright.visual.config.ts
           - suite: edge
             title: Edge runtime
-            os: ubuntu-latest
-            cache: ''
-            install: 'true'
-            install-deps: 'true'
-            command: npm run test:edge
+            os: ubuntu-24.04
+            browsers: ''
+            prebuild: true
+            config: playwright.edge.config.ts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
-          node-version-file: .nvmrc
-          cache: npm
+          persist-credentials: false
 
-      - run: npm ci
+      - uses: ./.github/actions/setup
 
       # Cache the browser binaries by Playwright version, not by lockfile hash:
       # every Dependabot PR rewrites the lockfile and would otherwise miss.
       - name: Read Playwright version
-        if: matrix.cache != ''
+        if: matrix.browsers != ''
         id: playwright
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Restore cached browsers
-        if: matrix.cache != ''
+        if: matrix.browsers != ''
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: browsers
         with:
-          path: ${{ matrix.cache }}
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+          path: ${{ runner.os == 'macOS' && '~/Library/Caches/ms-playwright' || '~/.cache/ms-playwright' }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browsers }}
 
-      # System dependencies are a Linux concern; the macOS leg's install-deps
-      # is a no-op.
-      - name: Install browsers
-        if: matrix.cache != '' && steps.browsers.outputs.cache-hit != 'true'
-        run: ${{ matrix.install }}
-
-      - name: Install system dependencies for cached browsers
-        if: matrix.cache != '' && steps.browsers.outputs.cache-hit == 'true'
-        run: ${{ matrix.install-deps }}
+      # The apt install (Linux system packages for the browsers; a no-op on
+      # macOS) runs in the background while the site builds, then the suite
+      # serves that build (PREBUILT) instead of building it again.
+      - name: Install browsers and build
+        run: |
+          set -euo pipefail
+          pid=''
+          if [ -n "$BROWSERS" ]; then
+            if [ "$CACHE_HIT" = 'true' ]; then cmd='install-deps'; else cmd='install --with-deps'; fi
+            # shellcheck disable=SC2086 # word-split the command and browser list
+            npx playwright $cmd $BROWSERS > "$RUNNER_TEMP/browsers.log" 2>&1 &
+            pid=$!
+          fi
+          if [ "$PREBUILD" = 'true' ]; then node tests/browser-test-env.ts build; fi
+          if [ -n "$pid" ] && ! wait "$pid"; then cat "$RUNNER_TEMP/browsers.log"; exit 1; fi
+        env:
+          BROWSERS: ${{ matrix.browsers }}
+          CACHE_HIT: ${{ steps.browsers.outputs.cache-hit }}
+          PREBUILD: ${{ matrix.prebuild }}
+          ASTRO_TELEMETRY_DISABLED: '1'
 
       - name: ${{ matrix.title }}
-        run: ${{ matrix.command }}
+        run: npx playwright test -c "$CONFIG"
         env:
-          CI: '1'
+          CONFIG: ${{ matrix.config }}
+          PREBUILT: ${{ matrix.prebuild && '1' || '' }}
+          PLAYWRIGHT_REPORT: '1'
           ASTRO_TELEMETRY_DISABLED: '1'
 
       - name: Summarize results
         if: always()
-        run: node bin/playwright-summary.mjs "$TITLE"
+        run: node bin/playwright-summary.ts "$TITLE" "test-results/$SUITE.json"
         env:
           TITLE: ${{ matrix.title }}
+          SUITE: ${{ matrix.suite }}
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -209,8 +168,8 @@ jobs:
         with:
           name: playwright-${{ matrix.suite }}-report
           path: |
-            playwright-report/
-            test-results/
+            playwright-report/${{ matrix.suite }}/
+            test-results/${{ matrix.suite }}/
           retention-days: 7
           if-no-files-found: ignore
 
@@ -222,82 +181,3 @@ jobs:
           path: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
           retention-days: 1
           if-no-files-found: ignore
-
-  # Stitches every job's summary into one comment on the pull request, updated
-  # in place on each push. Pull requests only: a push to main has no thread.
-  report:
-    if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    needs: [gate, build, playwright, deploy]
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Collect job summaries
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        continue-on-error: true
-        with:
-          pattern: summary-*
-          merge-multiple: true
-          path: summaries
-
-      - name: Post or update the summary comment
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        env:
-          RESULTS: ${{ toJSON(needs) }}
-        with:
-          script: |
-            const fs = require('node:fs');
-            const path = require('node:path');
-            const marker = '<!-- ci-summary -->';
-            // [summary file, job the outcome comes from]
-            const sections = [['gate', 'gate'], ['build', 'build'], ['e2e', 'playwright'], ['visual', 'playwright'], ['edge', 'playwright'], ['deploy', 'deploy']];
-            const results = JSON.parse(process.env.RESULTS);
-            const pull = context.payload.pull_request;
-            const sha = pull.head.sha.slice(0, 12);
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const outcome = (job) => results[job]?.result ?? 'unknown';
-
-            const rendered = sections.map(([name, job]) => {
-              const file = path.join('summaries', `summary-${name}.md`);
-              if (!fs.existsSync(file)) return `### ${name}\n\n${outcome(job)}: no summary was produced.`;
-              return fs.readFileSync(file, 'utf8').trim().replace(/^## /gm, '### ');
-            });
-
-            const status = [...new Set(sections.map(([, job]) => job))]
-              .map((job) => `\`${job}\` ${outcome(job)}`)
-              .join(' · ');
-
-            const body = [
-              marker,
-              `## CI for \`${sha}\``,
-              '',
-              `${status} · [run](${runUrl})`,
-              '',
-              ...rendered.flatMap((section) => [section, '']),
-            ].join('\n');
-
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pull.number,
-              per_page: 100,
-            });
-            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pull.number,
-                body,
-              });
-            }
