@@ -1,11 +1,15 @@
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
+import mdx from '@astrojs/mdx';
+import { satteri } from '@astrojs/markdown-satteri';
 import sitemap from '@astrojs/sitemap';
 import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
 import { snapshotWriteups } from './src/lib/snapshot.ts';
 import { buildOutDir } from './src/lib/build-output.ts';
 import { cspNonce } from './src/integrations/csp-nonce.ts';
 import { contentOverlay } from './src/integrations/content-overlay.ts';
+import { processorOptions } from './src/lib/markdown/index.ts';
+import { IMAGE_WIDTHS } from './src/lib/images.ts';
 
 // Local-only dev server settings, sourced from the gitignored .env so no
 // machine-specific values land in the repo. All unset in prod/CI, so the build
@@ -54,7 +58,30 @@ export default defineConfig({
     ...(devHost && { host: true }),
     ...(devPort && { port: devPort }),
   },
+  // Content renders through Astro's Rust Markdown processor with the site's
+  // plugins (src/lib/markdown/); MDX lets images render as <Picture>.
+  markdown: {
+    syntaxHighlight: false,
+    processor: satteri(processorOptions),
+  },
+  // Content images: AVIF and WebP at the widths the layout serves. 768 is
+  // there for the common 600-720px box (a split column, a project card at a
+  // high device-pixel ratio): 512 undersizes it and 1024 ships about double
+  // the bytes. Per-format quality keeps text in screenshots crisp.
+  image: {
+    breakpoints: IMAGE_WIDTHS,
+    service: {
+      entrypoint: 'astro/assets/services/sharp',
+      config: {
+        avif: { quality: 60 },
+        webp: { quality: 82 },
+        jpeg: { quality: 82 },
+        png: { compressionLevel: 9 },
+      },
+    },
+  },
   integrations: [
+    mdx(),
     cspNonce(),
     contentOverlay(process.env.SITE_CONTENT_ROOT),
     sitemap({
@@ -83,6 +110,14 @@ export default defineConfig({
       // kills the scroll-driven header shadow. esbuild (Vite 7's default)
       // leaves it alone.
       cssMinify: 'esbuild',
+      // Astro's MDX modules open with a "use astro:head-inject" directive the
+      // bundler reports and then handles; only that report, and only for MDX.
+      rolldownOptions: {
+        onwarn(warning, warn) {
+          if (warning.code === 'MODULE_LEVEL_DIRECTIVE' && warning.id?.includes('.mdx')) return;
+          warn(warning);
+        },
+      },
     },
     server: {
       allowedHosts: devAllowedHosts,

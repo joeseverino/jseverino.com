@@ -21,7 +21,7 @@ The result:
 
 - content is written privately in a [Vault-driven workflow](./Vault-Workflow.md), then synced through an allowlisted pipeline;
 - pages are generated as static HTML, CSS, JavaScript, and optimized assets;
-- screenshots are converted to responsive AVIF/WebP variants via a custom [image pipeline](./Architecture.md#8-image-pipeline);
+- screenshots are encoded to responsive AVIF and WebP at build time by the [image pipeline](./Architecture.md#8-image-pipeline);
 - [metadata, sitemap, RSS, JSON-LD, and canonical URLs](./SEO.md) are generated from the same content source;
 - Cloudflare Pages serves the site without exposing a WordPress runtime (see [Architecture](./Architecture.md)).
 

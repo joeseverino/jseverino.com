@@ -16,6 +16,8 @@ export const site = {
   defaultOgImage: '/assets/og/og-default.png',
   defaultOgImageWidth: 1200,
   defaultOgImageHeight: 630,
+  // Rendered from the resume canonical by resume-engine; the resume page links it.
+  resumePdf: '/assets/docs/joseph-severino-resume.pdf',
   jobTitle: 'Technical Solutions Engineer',
   employer: 'World Wide Technology',
   summary,

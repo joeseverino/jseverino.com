@@ -7,31 +7,28 @@ import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type Pars
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
 import { parseTechnologyGroups } from '../../src/lib/technology-groups.ts';
 import { createEducationSource, createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
-import { createPublicProjection, stripRepeatedDescription } from './public-projection.ts';
+import { createPublicProjection, stripArticleChrome, stripRepeatedDescription } from './public-projection.ts';
 import {
-  OPTIMIZABLE,
   collectAssetRefs,
-  createImageEncoder,
+  createMasterEncoder,
   defaultConcurrency,
   mapLimit,
   normalizeLocalAssetRef,
   referenceIssues,
   resolveAssetSource,
-  rewriteAssetUrls,
   STRAY_REFERENCE,
   strayReferences,
 } from './assets.ts';
-import type { ImageManifestEntry } from '../../src/lib/images.ts';
+import { compileIssues } from './compile.ts';
 import { loadGrammar, renderDocumentRows, type Grammar } from './documents.ts';
 import { buildEducation } from './education.ts';
 import { createWriter, type SyncReport } from './writer.ts';
 import { isoDate } from '../../src/lib/dates.ts';
+import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 
 export interface Layout {
   root: string;
   content: string;
-  assets: string;
-  manifest: string;
   // Files copied verbatim into the layout.
   extras?: { from: string; to: string }[];
 }
@@ -61,8 +58,10 @@ export interface SyncResult extends SyncReport {
 interface AssetJob {
   source: string;
   target: string;
-  url: string;
 }
+
+// Each document is <collection>/<slug>/index.mdx with its images beside it.
+const documentFile = (dir: string, slug: string): string => path.join(dir, slug, DOCUMENT_FILE);
 
 // Where a sync writes. The committed layout is the repo snapshot; the overlay
 // is a self-contained content root (SITE_CONTENT_ROOT) for draft previews.
@@ -70,8 +69,6 @@ export function committedLayout(root: string): Layout {
   return {
     root,
     content: path.join(root, 'src/content'),
-    assets: path.join(root, 'public/assets'),
-    manifest: path.join(root, 'src/lib/image-manifest.json'),
   };
 }
 
@@ -79,8 +76,6 @@ export function overlayLayout(root: string, siteRoot: string): Layout {
   return {
     root,
     content: root,
-    assets: path.join(root, 'public/assets'),
-    manifest: path.join(root, 'image-manifest.json'),
     extras: [{ from: path.join(siteRoot, 'src/data/github-repos.json'), to: path.join(root, 'github-repos.json') }],
   };
 }
@@ -88,7 +83,7 @@ export function overlayLayout(root: string, siteRoot: string): Layout {
 // The committed snapshot's writeup, read before the sync overwrites it.
 function snapshotReader(contentDir: string): (slug: string) => ParsedFrontmatter | undefined {
   return (slug) => {
-    const file = path.join(contentDir, 'writeups', slug, 'index.md');
+    const file = documentFile(path.join(contentDir, 'writeups'), slug);
     return fs.existsSync(file) ? parseFrontmatter(fs.readFileSync(file, 'utf8')) : undefined;
   };
 }
@@ -125,11 +120,7 @@ export async function syncContent({
         warnings.push(`draft ${collection}/${slug}: missing image ${ref}`);
         continue;
       }
-      assetJobs.push({
-        source,
-        target: path.join(layout.assets, collection, slug, ref),
-        url: `/assets/${collection}/${slug}/${ref}`,
-      });
+      assetJobs.push({ source, target: path.join(layout.content, collection, slug, ref) });
     }
   };
 
@@ -169,55 +160,38 @@ export async function syncContent({
   for (const { slug, sourceDir, parsed } of pages) {
     if (parsed === shell?.parsed) continue;
     refuseStrays(parsed.content, 'pages', slug, parsed.data.published === true);
-    let body = rewriteAssetUrls(parsed.content, `/assets/pages/${slug}`);
+    let body = parsed.content;
     if (parsed.data.document_layout) body = renderDocumentRows(await documentGrammar(), body, educationLinks);
-    await writer.write(path.join(pagesDir, `${slug}.md`), stringifyFrontmatter(body, projection.page(parsed.data)));
+    await writer.write(documentFile(pagesDir, slug), stringifyFrontmatter(body, projection.page(parsed.data)));
     queueAssets(collectAssetRefs(parsed.content), sourceDir, 'pages', slug, parsed.data.published === true);
   }
 
   const resume = await resumeSource.load();
   if (resume) {
     const body = renderDocumentRows(await documentGrammar(), resume.content, educationLinks);
-    await writer.write(path.join(pagesDir, 'resume.md'), stringifyFrontmatter(body, projection.page(resume.data)));
+    await writer.write(documentFile(pagesDir, 'resume'), stringifyFrontmatter(body, projection.page(resume.data)));
   }
 
   const writeups = await vault.writeups();
   for (const { slug, sourceDir, parsed } of writeups) {
-    const content = stripRepeatedDescription(parsed.content, parsed.data.description);
-    refuseStrays(content, 'writeups', slug, parsed.data.published === true);
-    const body = rewriteAssetUrls(content, `/assets/writeups/${slug}`);
-    const refs = collectAssetRefs(content);
+    const body = stripArticleChrome(stripRepeatedDescription(parsed.content, parsed.data.description));
+    refuseStrays(body, 'writeups', slug, parsed.data.published === true);
+    const refs = collectAssetRefs(body);
     const coverRef = normalizeLocalAssetRef(parsed.data.cover_image);
     if (coverRef) refs.add(coverRef);
-    await writer.write(
-      path.join(writeupsDir, slug, 'index.md'),
-      stringifyFrontmatter(body, projection.writeup(parsed.data, { slug, body })),
-    );
+    await writer.write(documentFile(writeupsDir, slug), stringifyFrontmatter(body, projection.writeup(parsed.data, { slug, body })));
     queueAssets(refs, sourceDir, 'writeups', slug, parsed.data.published === true);
   }
 
-  const encode = createImageEncoder({ cacheDir, writer });
-  const manifest: Record<string, ImageManifestEntry> = {};
-  await mapLimit(assetJobs, concurrency, async ({ source, target, url }) => {
-    if (OPTIMIZABLE.test(source)) manifest[url] = await encode(source, target, url);
-    else await writer.copy(source, target);
-  });
-
-  await writer.prune([
-    pagesDir,
-    writeupsDir,
-    path.join(layout.assets, 'pages'),
-    path.join(layout.assets, 'writeups'),
-  ]);
-
-  const sorted = Object.fromEntries(Object.keys(manifest).sort().map((key) => [key, manifest[key]]));
-  await writer.write(layout.manifest, `${JSON.stringify(sorted, null, 2)}\n`);
+  const master = createMasterEncoder(cacheDir);
+  await mapLimit(assetJobs, concurrency, async ({ source, target }) => writer.write(target, await master(source)));
+  await writer.prune([pagesDir, writeupsDir]);
 
   return {
     ...writer.report(),
     pages: pages.length + (resume ? 1 : 0),
     writeups: writeups.length,
-    images: Object.keys(sorted).length,
+    images: assetJobs.length,
     warnings,
     pagesRoot: vault.pagesRoot,
     writeupsRoot: vault.writeupsRoot,
@@ -233,6 +207,7 @@ function writeupIssues(data: FrontmatterData, { draft, catalog }: { draft: boole
   const issues: string[] = [];
   if (!draft && data.published !== true) issues.push('published is not true (validate a draft with --draft)');
   if (!draft && !data.published_at) issues.push('missing published_at');
+  if (!draft && !data.cover_image) issues.push('missing cover_image');
   if (typeof data.description === 'string' && data.description.trim().length > DESCRIPTION_LIMIT) {
     issues.push(`description is ${data.description.trim().length} characters (limit ${DESCRIPTION_LIMIT})`);
   }
@@ -285,6 +260,7 @@ export async function checkContent({ vaultRoot, slug, draft = false }: CheckOpti
         ...frontmatterIssues('writeups', parsed.data),
         ...writeupIssues(parsed.data, { draft, catalog }),
         ...(await referenceIssues(content, sourceDir, { cover: parsed.data.cover_image })),
+        ...compileIssues(stripArticleChrome(content), 'writeups'),
       ],
     });
   }
@@ -299,6 +275,7 @@ export async function checkContent({ vaultRoot, slug, draft = false }: CheckOpti
         issues: [
           ...frontmatterIssues('pages', parsed.data),
           ...(await referenceIssues(parsed.content, sourceDir)),
+          ...compileIssues(parsed.content, 'pages'),
         ],
       });
     }

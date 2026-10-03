@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+// Every image the build ships: committed static assets and the variants
+// Astro encodes from content. Reports the count and weight; with
+// STRICT_ASSET_AUDIT=1 an image at or over the limit fails.
 import fs from 'node:fs';
 import path from 'node:path';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { walkFiles } from '../../src/lib/walk.ts';
+import { builtPages } from './lib.ts';
 
-const assetsRoot = path.join(siteRoot, 'public/assets');
+const { distDir } = builtPages('audit-assets');
 const warnBytes = Number(process.env.ASSET_WARN_MB ?? 1.5) * 1024 * 1024;
 
 function formatBytes(bytes: number): string {
@@ -13,10 +16,10 @@ function formatBytes(bytes: number): string {
   return `${bytes} B`;
 }
 
-const images = walkFiles(assetsRoot, { filter: (file) => /\.(?:png|jpe?g|webp|gif|svg)$/i.test(file) })
+const images = walkFiles(distDir, { filter: (file) => /\.(?:png|jpe?g|webp|avif|gif|svg)$/i.test(file) })
   .map((file) => ({
     file,
-    relative: path.relative(siteRoot, file),
+    relative: path.relative(distDir, file),
     bytes: fs.statSync(file).size,
   }))
   .sort((a, b) => b.bytes - a.bytes);

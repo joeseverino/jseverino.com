@@ -7,7 +7,10 @@
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
 
-![Obsidian vault, synced into this repo, built by Astro, served by Cloudflare Pages](./docs/diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./docs/diagrams/system-shape.png)
+
+<sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
+pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 <sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./docs/diagrams/system-shape.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
@@ -21,7 +24,9 @@ no secrets.
 
 | | |
 | :--- | :--- |
-| Site | [Astro 7](https://astro.build), static output, Markdown rendered through an allow-list |
+| Site | [Astro 7](https://astro.build), static output |
+| Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
+| Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | Cloudflare Pages Functions: per-request CSP nonces, the contact form, CSP reporting |
 | Data | Cloudflare D1 for contact submissions and CSP reports, behind Turnstile |

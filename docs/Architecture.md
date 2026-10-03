@@ -6,10 +6,10 @@ This document explains how `jseverino.com` is built, where data enters the syste
 
 The site is a static Astro build deployed to Cloudflare Pages.
 
-![The Obsidian vault syncs into a Git snapshot that builds into the Cloudflare Pages CDN](./diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./diagrams/system-shape.png)
 
-<sup>Diagram source: [`docs/diagrams/system-shape.mmd`](./diagrams/system-shape.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+<sup>Diagram source: [`docs/diagrams/system-shape.fig`](./diagrams/system-shape.fig),
+pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 The request-time execution and data boundary is at the edge:
 
@@ -36,12 +36,10 @@ The private Obsidian vault is the editorial source of truth. This repository is 
 
 Synced public source files:
 
-- [`src/content/pages/`](../src/content/pages/)
-- [`src/content/writeups/`](../src/content/writeups/)
+- [`src/content/pages/`](../src/content/pages/) and
+  [`src/content/writeups/`](../src/content/writeups/): one `<slug>/index.mdx`
+  per document, with its image masters in `<slug>/images/`
 - [`src/content/technology-groups.md`](../src/content/technology-groups.md)
-- [`public/assets/pages/`](../public/assets/pages/)
-- [`public/assets/writeups/`](../public/assets/writeups/)
-- [`src/lib/image-manifest.json`](../src/lib/image-manifest.json)
 
 Cloudflare Pages builds from the committed snapshot. It does not need vault access.
 
@@ -76,8 +74,8 @@ is derived at build time, never hand-keyed:
 - [`src/lib/software.ts`](../src/lib/software.ts) composes those with live
   PyPI/npm version and download counts.
 
-Refresh the snapshot sooner with `npm run snapshot:github` (or by dispatching
-the workflow) after editing repo descriptions or adding repos.
+Refresh it with `npm run snapshot:github` after editing repo descriptions or
+adding repos.
 
 Build-time GitHub and registry requests have a five-second timeout, including
 response-body reads. npm version and download requests run concurrently and
@@ -97,14 +95,16 @@ Main responsibilities:
 - Copy `_technology-groups.md` to [`src/content/technology-groups.md`](../src/content/technology-groups.md).
 - Allowlist public frontmatter fields.
 - Drop vault-only metadata by omission.
-- Rewrite local asset references to public `/assets/...` paths.
+- Write each document as `<collection>/<slug>/index.mdx`; a writeup drops the
+  H1, lede, and leading image its page renders from frontmatter.
 - Refuse asset paths that resolve outside the source folder.
-- Optimize referenced images.
-- Write [`src/lib/image-manifest.json`](../src/lib/image-manifest.json).
+- Write each referenced image's master beside its document: at most 1600
+  pixels wide, sRGB, every metadata block removed. Astro encodes the variants
+  from it at build time.
 - Date `last_reviewed` from the committed snapshot: a writeup whose projected body changed gets today; an unchanged one keeps the later of the vault's date and the committed one, so a re-sync is idempotent.
 - Report every file written or removed (`--report`), the exact set `site publish` commits.
 
-The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, document rows, education, prune, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract without writing anything (`site validate`). Image encodes are cached under the gitignored `.cache/` by source-content hash and encoder version, outside `node_modules` so `npm ci` keeps them. Each cache file is written to a temp name and renamed, so an interrupted sync leaves no partial variant. The first sync that finds no `.cache/images` but an earlier `node_modules/.cache/jseverino-img` moves that cache into place (same layout), so the variants are reused instead of re-encoded. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
+The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, image masters, document rows, education, prune, the compile check, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract, and compiles every document with the site's renderer, without writing anything (`site validate`), so an MDX error or a refused block surfaces with its line before a build. Masters are cached under the gitignored `.cache/` by source hash and encoder version, outside `node_modules` so `npm ci` keeps them; each is written to a temp name and renamed, so an interrupted sync leaves no partial file. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
 
 ## 4. Content Collections
 
@@ -128,7 +128,8 @@ Writeups:
 - `published`
 - optional `published_at`
 - optional `last_reviewed`
-- optional `cover_image`
+- optional `cover_image`: an `image()` path relative to the document, so the
+  cover goes through Astro's image pipeline (required at publish)
 - optional `cover_alt`
 - `technologies`
 - `featured`
@@ -141,13 +142,37 @@ To add or change a writeup field, edit only the canonical contract and run
 
 ## 5. Markdown Rendering
 
-Rendering is split in two:
+Documents are MDX, rendered by Astro 7's default Markdown processor,
+[Sätteri](https://satteri.bruits.org/): a Rust parser with plugins written in
+TypeScript against the standard mdast and hast trees. The site's plugins are in
+[`src/lib/markdown/`](../src/lib/markdown/), each a separate pass:
 
-- [`src/lib/markdown.ts`](../src/lib/markdown.ts) is the pure Markdown-to-HTML layer: `markdown-it`, the raw-HTML allow-list, and the block DSL (`::terminal`, `::figure`, `::table`, `::split`, `::buttons`, `::cta`, `::center`, `::hero`, and the `::featured-projects` / `::technology-cloud` placeholders pages fill in). Page and writeup pipelines are ordered lists of directive entries.
-- [`src/lib/image-directives.ts`](../src/lib/image-directives.ts) parses the image modifier grammar (`![alt|width|nocap](...)`) shared by writeups and pages.
-- [`src/lib/content.ts`](../src/lib/content.ts) is the Astro glue: content collections, taxonomy lookup, and `<picture>` enhancement of the rendered HTML through the image manifest.
+- [`guard.ts`](../src/lib/markdown/guard.ts) keeps content from being code. MDX
+  would run `import`/`export` and `{…}` expressions at build time and treat raw
+  HTML as JSX; the guard refuses all three, limits raw HTML to an allow-list of
+  tags and string attributes, and refuses URL schemes other than http(s) and
+  mailto. A refusal fails the build with its line.
+- [`literal.ts`](../src/lib/markdown/literal.ts) puts inline `:name` text
+  directives back as the text they were parsed from, so a MAC address's `:1e`
+  stays literal.
+- [`blocks.ts`](../src/lib/markdown/blocks.ts) renders the container directives
+  (`:::figure`, `:::table`, `:::button`, `:::buttons`, `:::center`,
+  `:::hero`, `:::split`/`:::side`) to the site's markup, and the placeholders
+  (`::featured-projects`, `::technology-cloud`, `::contact-form`) to elements a
+  page maps to components, grouping the prose between them into runs.
+- [`prose.ts`](../src/lib/markdown/prose.ts) reads image modifiers
+  (`![alt|400|nozoom](…)`) and, in a writeup, turns a paragraph that is only a
+  link into a button.
+- [`markup.ts`](../src/lib/markdown/markup.ts) renders ` ```terminal ` fences,
+  adds break opportunities after `.` and `:` in table cells, and wraps every
+  table in a scrollable figure.
 
-The syntax is in the [Authoring Guide](./Authoring-Guide.md). Text that directives interpolate into HTML goes through Markdown-it's escaping. A directive the page's pipeline does not render, or a misspelled one, reaches the built HTML as literal `::name` text, and the HTML audit fails on it.
+[`ContentBody.astro`](../src/components/content/ContentBody.astro) renders an
+entry with its component map: every Markdown image as
+[`Picture.astro`](../src/components/Picture.astro), each placeholder as its
+component, and each run of prose in the page's wrapper. The syntax is in the
+[Authoring Guide](./Authoring-Guide.md); the plugins' behavior is pinned by
+[`tests/unit/content-render.test.ts`](../tests/unit/content-render.test.ts).
 
 ## 6. Site Chrome And Taxonomy
 
@@ -212,26 +237,26 @@ The mobile navigation is a `popover="auto"` element. The toggle button uses `pop
 
 ## 8. Image Pipeline
 
-Referenced images are processed during sync, before Astro builds the site.
+Images are encoded by Astro at build time from the masters the sync commits
+beside each document (at most 1600 pixels wide, sRGB, no metadata).
+[`Picture.astro`](../src/components/Picture.astro) renders every content image
+and cover as a `<picture>`: an AVIF `<source>` and a WebP `<img>`, each at 512,
+768, 1024, and 1600 pixels (Astro drops any wider than the master), with the
+`sizes` the layout needs and the intrinsic `width` and `height` on the `<img>`.
+Every browser the site's CSS supports decodes both formats. The encoder
+settings (AVIF quality 60, WebP 82) live in the image service config in
+[`astro.config.ts`](../astro.config.ts), and the widths in
+[`src/lib/images.ts`](../src/lib/images.ts).
 
-For each optimizable source image, the pipeline emits:
+`Picture.astro` never reads an image's metadata itself. Astro tracks reads of
+it, and an image read outside its pipeline ships its unprocessed original; the
+asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
+JPEG from `getImage()`, which reports the card's size without a read.
 
-- AVIF variants at 512, 768, 1024, and 1600 px;
-- WebP variants at 512, 768, 1024, and 1600 px;
-- one optimized fallback file.
-
-[`src/lib/image-manifest.json`](../src/lib/image-manifest.json) records the output variants and source dimensions. [`src/components/Picture.astro`](../src/components/Picture.astro) uses the manifest to render stable responsive images with explicit `width` and `height` attributes.
-
-Writeup preprocessing and page-image enhancement share the modifier grammar in
-[`image-directives.ts`](../src/lib/image-directives.ts), including the last-width
-rule when a width is repeated. Markdown-generated image attributes and terminal
-content use Markdown-it's HTML escaping. Integration tests cover both rendering
-paths and preservation of escaped alt text during picture enhancement.
-Responsive-picture generation decodes the renderer's attribute entities and
-then performs one canonical Markdown-it escape pass across source URLs, alt
-text, classes, `sizes`, and `srcset`, including the plain-image fallback.
-
-This design keeps image optimization deterministic and avoids runtime image services. The efficiency of this pipeline is documented in the [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup), where the Astro version transferred far less image weight than the legacy WordPress page.
+Encodes are cached in `node_modules/.astro`, which Cloudflare Pages keeps
+between builds (Settings, Build, Build cache), so a build re-encodes only new
+or changed images. The efficiency of the approach is documented in the
+[Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
 ## 9. SEO And Metadata
 
@@ -269,17 +294,18 @@ Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vi
 
 The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a nonce. The [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
 
-Raw HTML in Markdown is rebuilt from an allow-list in
-[`markdown.ts`](../src/lib/markdown.ts): listed formatting tags with listed
-attributes, values entity-decoded and re-escaped, `href`/`src` limited to
-`http`, `https`, `mailto`, or relative URLs. Any other tag (`<script>`,
-`<style>`, `<iframe>`, ...) and any stray `<` render as text, and comments drop.
+Raw HTML in content is limited by
+[`guard.ts`](../src/lib/markdown/guard.ts): listed formatting tags with
+listed, plain-string attributes, `href`/`src` limited to `http`, `https`,
+`mailto`, or relative URLs. Any other tag (`<script>`, `<style>`,
+`<iframe>`, ...), an event handler, an expression, or an `import` fails the
+build.
 
 Client scripts do not assign `innerHTML`, `outerHTML`, or call
 `insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
 sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
-Custom button directives render links through Markdown-it's token parser, so
-their escaping and URL-scheme validation match ordinary Markdown links.
+Button blocks render the Markdown links they hold, so the guard checks their
+URL schemes like any other link.
 
 The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form. The endpoint is unauthenticated, so writes are bounded: every report in a request goes out as one D1 batch, a report identical to one stored in the last hour is skipped, and each IP gets at most 30 stored reports per hour, with both checks inside the INSERT itself.
 
@@ -359,18 +385,16 @@ dist/
 │   ├── fonts/                  # Subset Inter variable WOFF2
 │   ├── icons/                  # Favicons and apple-touch-icon
 │   ├── og/                     # Open Graph card images
-│   ├── pages/<slug>/           # Page-attached assets, synced from the vault
-│   └── writeups/<slug>/        # Per-writeup image variants (AVIF/WebP/fallback), synced from the vault
+│   └── brand/                  # HD brand marks and the Person-schema headshot
 ├── __sitedrift/                # preview only: viewer assets and configuration
 ├── __sitedrift_source/         # preview only: preserved Astro HTML
 ├── <route>/index.html          # One HTML file per route
 └── sitemap-index.xml           # @astrojs/sitemap output
 ```
 
-**Fingerprinting.** Astro hashes every artifact under `_astro/` by content, so
-those filenames can be cached `immutable` for one year. Vault image filenames
-are stable; their cache contract is described in §12. HTML is short-cached and
-revalidated.
+**Fingerprinting.** Astro hashes every artifact under `_astro/` by content,
+including every encoded content image, so those filenames can be cached
+`immutable` for one year. HTML is short-cached and revalidated.
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block, which is data. The build stamps every `<script>` tag the site emits, including the external bundles, with the nonce placeholder the middleware replaces.
 
@@ -408,15 +432,13 @@ Resource hints are advisory: a browser may skip them under tight CPU or memory b
 | `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `npm run make:icons` |
 | `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `npm run make:icons` (marks) / headshot hand-added |
 | `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `npm run make:og` |
-| `public/assets/pages/<slug>/` | Vault | Page-attached assets, synced from `06 Pages/<slug>/images/` | `npm run sync:content` |
-| `public/assets/writeups/<slug>/` | Vault | Writeup-attached image variants, synced from `05 Writeups/<slug>/images/` | `npm run sync:content` |
 
 ### Vault-synced vs repo-managed
 
 This is the central distinction:
 
-- **Vault-synced** (`pages/`, `writeups/`) tracks editorial content. Files appear here only because the vault references them. They are reprocessed (image variants, manifest entries) on every `sync:content`. **Direct edits in the repo are wiped on the next sync; edit the vault.**
-- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `og/`) is site chrome. These assets belong to the site as a whole, not to a single editorial page. They are tracked in the repo because they don't change often and don't need vault versioning.
+- **Vault-synced** images are not under `public/`. Each sits beside its document in `src/content/<collection>/<slug>/images/`, written by `sync:content`, and Astro encodes it. **Direct edits in the repo are wiped on the next sync; edit the vault.**
+- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `brand/`, `og/`) is site chrome. These assets belong to the site as a whole, not to a single editorial page. They are tracked in the repo because they don't change often and don't need vault versioning.
 
 A new asset that's specific to one page or writeup belongs in the vault. A new site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the corresponding `public/assets/<bucket>/` directory in the repo.
 
@@ -436,22 +458,17 @@ For the full story (how the brand went from an inherited WordPress purple and an
 
 ### Stable URLs
 
-All assets resolve under `/assets/<bucket>/<filename>`. Filenames are not fingerprinted at this level; Astro fingerprints only what goes through `_astro/` (component bundles and component CSS). The URL of a vault-synced image will not change unless its source filename changes.
+Repo-managed assets resolve under `/assets/<bucket>/<filename>` and are not fingerprinted; Astro fingerprints what goes through `_astro/` (component bundles, CSS, and content images).
 
 This stability is intentional for assets that external links may bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf` (linked from LinkedIn, recruiter outreach, etc.).
-
-The image variants (AVIF/WebP at multiple widths) live alongside the original
-under `images/`, named by source basename and width. Content hashes identify
-the local encoder cache; they are not part of public `srcset` URLs.
 
 ### Cache behavior
 
 [`public/_headers`](../public/_headers) scopes caching by asset directory:
 
-- Fingerprinted Astro bundles, writeup/page images, and fonts receive a one-year
-  immutable cache. Rename a source image or font when replacing its contents so
-  the public URL changes; the local encoder hash alone does not invalidate a
-  browser's cached response.
+- Everything under `/_astro/` (bundles, CSS, and every content image, all
+  named by content hash) and the font receive a one-year immutable cache.
+  Replacing an image changes its URL; rename the font when replacing it.
 - Downloadable documents, favicons, brand marks, and OG cards retain stable URLs
   with a one-hour cache and mandatory revalidation after expiry.
 

@@ -81,6 +81,6 @@ that projection; no second domain declaration needs manual synchronization.
 - Apply the D1 schema (tables and indexes): `npx wrangler d1 execute <d1> --remote --file=./cloudflare/d1.sql`.
 
 ### Content
-- Replace `src/content/pages/` and `src/content/writeups/` (synced from the vault),
-  and the matching `public/assets/pages/` and `public/assets/writeups/`.
+- Replace `src/content/pages/` and `src/content/writeups/` (synced from the vault,
+  each document with its images beside it).
 - `src/content/technology-groups.md`: the tag taxonomy (vault-synced).

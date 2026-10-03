@@ -131,7 +131,7 @@ export function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string
     '',
     ...(diff.generated.count > 0
       ? [
-          `<details><summary>${diff.generated.count} generated files (image variants and the image manifest)</summary>`,
+          `<details><summary>${diff.generated.count} generated files (image masters)</summary>`,
           '',
           ...[...byFolder].map(([folder, count]) => `- \`${folder}\`: ${count}`),
           '',

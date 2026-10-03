@@ -9,20 +9,19 @@ import sharp from 'sharp';
 import {
   collectAssetRefs,
   collectReferences,
+  createMasterEncoder,
+  MASTER_WIDTH,
   mapLimit,
   referenceIssues,
   resolveAssetSource,
-  rewriteAssetUrls,
 } from '../../bin/content-sync/assets.ts';
+import { stripArticleChrome } from '../../bin/content-sync/public-projection.ts';
 import { createWriter } from '../../bin/content-sync/writer.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { readJson } from '../../src/lib/json.ts';
-import type { Manifest } from '../../src/lib/images.ts';
 import { tempDir, write } from './helpers/fs.ts';
-import { adoptLegacyImageCache } from '../../bin/lib/cache.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
 
 
@@ -45,23 +44,9 @@ describe('asset references', () => {
     ]);
   });
 
-  test('rewrites exactly the collected destinations, keeping titles, fragments, and external URLs', () => {
-    const rewritten = rewriteAssetUrls(body, '/assets/writeups/demo');
-    assert.match(rewritten, /!\[Alt\]\(\/assets\/writeups\/demo\/images\/a\.png "A title"\)/);
-    assert.match(rewritten, /!\[Same\]\(<\/assets\/writeups\/demo\/images\/b c\.png>\)/);
-    assert.match(rewritten, /\(\/assets\/writeups\/demo\/images\/doc\.pdf#page=2\)/);
-    assert.match(rewritten, /\[!\[thumb\]\(\/assets\/writeups\/demo\/images\/t\.png\)\]\(\/assets\/writeups\/demo\/images\/full\.png\)/);
-    assert.match(rewritten, /\[ref\]: \/assets\/writeups\/demo\/images\/ref\.png "Ref title"/);
-    assert.match(rewritten, /src="\/assets\/writeups\/demo\/images\/raw\.png"/);
-    assert.match(rewritten, /https:\/\/example\.com\/images\/x\.png/);
-    assert.match(rewritten, /\(\/assets\/og\/card\.png\)/);
-  });
-
-  test('alt text that repeats the destination is never the part rewritten', () => {
-    assert.equal(
-      rewriteAssetUrls('![./images/a.png](./images/a.png)', '/x'),
-      '![./images/a.png](/x/images/a.png)',
-    );
+  test('a writeup body drops the H1, the lede blockquote, and the leading image its page renders from frontmatter', () => {
+    assert.equal(stripArticleChrome('# Title\n\n> The lede.\n\n![Cover](./images/cover.png)\n\nBody.\n'), 'Body.\n');
+    assert.equal(stripArticleChrome('Body first.\n\n# Later heading\n'), 'Body first.\n\n# Later heading\n');
   });
 
   test('a reference escaping its folder is refused', () => {
@@ -181,7 +166,7 @@ describe('education', () => {
   test('joins vault institutions to resume orgs and returns the links explicitly', () => {
     const { pages, links } = buildEducation({ grammar, shell, resume, dataset, projectPage });
     assert.deepEqual([...links], [['School', '/education/school/']]);
-    assert.deepEqual(pages.map((page) => page.page), ['education/school.md', 'education.md']);
+    assert.deepEqual(pages.map((page) => page.page), ['education/school/index.mdx', 'education/index.mdx']);
     const [detailPage, indexPage] = pages;
     assert.ok(detailPage && indexPage);
     const index = parseFrontmatter(indexPage.content);
@@ -218,7 +203,7 @@ async function fixtureVault() {
   write(path.join(vault, '05 Writeups/live/images/diagram.png'), png);
   // An unpublished resume canonical: the resume page is skipped.
   write(path.join(vault, 'life/Career/resume.md'), '---\npublished: false\n---\n');
-  write(path.join(vault, '05 Writeups/draft/index.md'), '---\ntitle: CHANGEME\npublished: false\ntechnologies:\n  - nope\n---\n![x](images/missing.png)\n');
+  write(path.join(vault, '05 Writeups/draft/index.md'), '---\ntitle: CHANGEME\npublished: false\ntechnologies:\n  - nope\n---\nWork in progress.\n\n![x](images/missing.png)\n');
   return vault;
 }
 
@@ -226,8 +211,7 @@ describe('syncContent and checkContent against a temp vault', () => {
   test('writes the public snapshot, declares every file, and prunes the rest', async () => {
     const vault = await fixtureVault();
     const root = tempDir('site-');
-    write(path.join(root, 'src/content/writeups/gone/index.md'), '---\ntitle: Gone\n---\n');
-    write(path.join(root, 'public/assets/writeups/gone/images/old.png'), 'x');
+    write(path.join(root, 'src/content/writeups/gone/index.mdx'), '---\ntitle: Gone\n---\n');
     const result = await syncContent({
       layout: committedLayout(root),
       vaultRoot: vault,
@@ -238,25 +222,18 @@ describe('syncContent and checkContent against a temp vault', () => {
       date: '2026-07-26',
     });
 
-    assert.deepEqual(result.removed, ['public/assets/writeups/gone/images/old.png', 'src/content/writeups/gone/index.md']);
-    assert.ok(result.written.includes('src/lib/image-manifest.json'));
+    assert.deepEqual(result.removed, ['src/content/writeups/gone/index.mdx']);
     assert.ok(result.written.includes('src/content/technology-groups.md'));
-    assert.ok(result.written.includes('public/assets/writeups/live/images/diagram-512.avif'));
+    assert.ok(result.written.includes('src/content/pages/about/index.mdx'));
+    assert.ok(result.written.includes('src/content/pages/about/images/me.png'));
+    assert.ok(result.written.includes('src/content/writeups/live/images/diagram.png'));
     assert.ok(!result.written.some((file) => file.includes('draft')));
     for (const file of result.written) assert.ok(fs.existsSync(path.join(root, file)), file);
 
-    const live = parseFrontmatter(fs.readFileSync(path.join(root, 'src/content/writeups/live/index.md'), 'utf8'));
-    assert.equal(live.data.cover_image, '/assets/writeups/live/images/cover.png');
+    const live = parseFrontmatter(fs.readFileSync(path.join(root, 'src/content/writeups/live/index.mdx'), 'utf8'));
+    assert.equal(live.data.cover_image, './images/cover.png');
     assert.equal(live.data.related_projects, undefined);
-    assert.match(live.content, /\(\/assets\/writeups\/live\/images\/diagram\.png "Diagram"\)/);
-
-    const manifest = readJson<Manifest>(path.join(root, 'src/lib/image-manifest.json'));
-    assert.deepEqual(Object.keys(manifest), [
-      '/assets/pages/about/images/me.png',
-      '/assets/writeups/live/images/cover.png',
-      '/assets/writeups/live/images/diagram.png',
-    ]);
-    assert.equal(manifest['/assets/writeups/live/images/cover.png']?.w, 600);
+    assert.equal(live.content, 'Body with ![Diagram](images/diagram.png "Diagram").\n');
     const cached = fs.readdirSync(path.join(root, '.cache/images'), { recursive: true }).map(String);
     assert.ok(cached.length > 0 && !cached.some((file) => file.endsWith('.tmp')), 'cache writes land by rename');
   });
@@ -284,7 +261,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       includeDrafts: true,
     });
     assert.deepEqual(result.warnings, ['draft writeups/draft: missing image images/missing.png']);
-    assert.ok(result.written.includes('src/content/writeups/draft/index.md'));
+    assert.ok(result.written.includes('src/content/writeups/draft/index.mdx'));
   });
 
   test('a published relative link outside images/ stops the sync with the message validate reports', async () => {
@@ -330,19 +307,35 @@ describe('syncContent and checkContent against a temp vault', () => {
   });
 });
 
-describe('image cache location', () => {
-  test('the earlier node_modules cache moves into place once, and never over an existing cache', () => {
-    const root = tempDir('cache-');
-    const legacy = path.join(root, 'node_modules/.cache/jseverino-img');
-    const target = path.join(root, '.cache/images');
-    write(path.join(legacy, 'sharp-x/a.avif'), 'a');
-    assert.equal(adoptLegacyImageCache(target, legacy), true);
-    assert.equal(fs.readFileSync(path.join(target, 'sharp-x/a.avif'), 'utf8'), 'a');
-    assert.equal(fs.existsSync(legacy), false);
-    write(path.join(legacy, 'sharp-x/b.avif'), 'b');
-    assert.equal(adoptLegacyImageCache(target, legacy), false);
-    assert.equal(fs.existsSync(path.join(target, 'sharp-x/b.avif')), false);
-    fs.rmSync(root, { recursive: true, force: true });
+describe('image masters', () => {
+  test('a master is at most MASTER_WIDTH wide and carries no metadata', async () => {
+    const dir = tempDir('master-');
+    const source = path.join(dir, 'wide.jpg');
+    write(source, await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#336699' } })
+      .withExif({ IFD0: { Make: 'Camera', Software: 'Tool' } })
+      .jpeg()
+      .toBuffer());
+    const master = createMasterEncoder(path.join(dir, 'cache'));
+    const meta = await sharp(await master(source)).metadata();
+    assert.equal(meta.width, MASTER_WIDTH);
+    assert.equal(meta.height, MASTER_WIDTH / 2);
+    assert.equal(meta.exif, undefined);
+    assert.equal(meta.icc, undefined);
+    assert.deepEqual(await master(source), await master(source), 'a second encode is the cached bytes');
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+});
+
+describe('MDX compile issues', () => {
+  test('checkContent reports what the build would refuse, with its line', async () => {
+    const vault = await fixtureVault();
+    write(path.join(vault, '05 Writeups/live/index.md'), [
+      '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
+      'cover_image: ./images/cover.png', 'technologies:', '  - astro', '---', '', 'Costs {price} today.', '',
+    ].join('\n'));
+    const checked = await checkContent({ vaultRoot: vault });
+    const live = checked.documents.find((doc) => doc.slug === 'live');
+    assert.ok(live?.issues.some((issue) => /\{price\} is an expression/.test(issue)), JSON.stringify(live?.issues));
   });
 });
 

@@ -76,13 +76,6 @@ export const AUDITS: readonly Audit[] = [
     fix: 'Regenerate the stale projection with the `run:` command it names (sync:tokens, sync:contract, sync:contact-openapi, make:embed, or sync:edge-site); generated artifacts must exactly match their canonical inputs.',
   },
   {
-    id: 'image-manifest', label: 'manifest', name: 'Image Manifest Coverage', phase: 'pre-build',
-    asserts: 'Every synced png/jpg under public/assets/writeups and public/assets/pages has a manifest entry, and every variant and fallback an entry names exists.',
-    exec: { cmd: 'node', args: ['tests/audits/check-image-manifest.ts'] },
-    gates: ['gate', 'publish', 'diagnose'],
-    fix: 'A synced image under public/assets has no entry in src/lib/image-manifest.json, or the manifest names a variant that does not exist. Run `npm run sync:content` and commit everything it wrote; a production build refuses a synced image without an entry.',
-  },
-  {
     id: 'no-drafts', label: 'drafts', name: 'No Drafts in the Snapshot', phase: 'pre-build',
     asserts: 'No document under src/content is `published: false`.',
     exec: { cmd: 'node', args: ['tests/audits/check-no-drafts.ts'] },
@@ -200,10 +193,10 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'asset-audit', label: 'assets', name: 'Asset Weight Limits', phase: 'post-build',
-    asserts: 'No image under public/assets exceeds 1.5 MB (strict mode); reports the count and total weight.',
+    asserts: 'No image the build ships (committed or encoded from content) exceeds 1.5 MB (strict mode); reports the count and total weight.',
     exec: { cmd: 'node', args: ['tests/audits/audit-assets.ts'], env: { STRICT_ASSET_AUDIT: '1' } },
     gates: ['publish', 'diagnose'], summary: 'assets',
-    fix: 'Shrink the reported image under `public/assets/` below 1.5 MB. Run the audit without `STRICT_ASSET_AUDIT=1` for a warn-only report.',
+    fix: 'Shrink the reported image below 1.5 MB: a committed file under `public/assets/`, or the content original it was encoded from. Run the audit without `STRICT_ASSET_AUDIT=1` for a warn-only report.',
   },
   {
     id: 'links-check', label: 'links', name: 'Internal Link Integrity', phase: 'post-build',

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Sync the public pages and writeups from the vault into the repo snapshot
-// (src/content, public/assets, src/lib/image-manifest.json).
+// Sync the public pages and writeups from the vault into the repo snapshot:
+// src/content/<collection>/<slug>/index.mdx with its image masters beside it.
 //
 //   node bin/sync-content.ts                  # write the committed snapshot
 //   node bin/sync-content.ts --report <file>  # also write the files it owns as JSON
@@ -10,7 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { cli } from './lib/args.ts';
-import { adoptLegacyImageCache, cacheDir, draftsOverlay } from './lib/cache.ts';
+import { cacheDir, draftsOverlay } from './lib/cache.ts';
 import { lifeVaultRoot, resumeEngineRoot, vaultRoot } from './lib/local-paths.ts';
 import { checkContent, committedLayout, overlayLayout, syncContent } from './content-sync/sync.ts';
 import type { SyncReport } from './content-sync/writer.ts';
@@ -48,8 +48,6 @@ if (values.check) {
   process.exit(result.ok ? 0 : 1);
 }
 
-const imageCache = path.join(cacheDir(), 'images');
-if (adoptLegacyImageCache(imageCache)) console.log(`Moved the image cache from node_modules/.cache/jseverino-img to ${path.relative(siteRoot, imageCache) || imageCache}`);
 const overlay = draftsOverlay();
 const layout = values.drafts ? overlayLayout(overlay, siteRoot) : committedLayout(siteRoot);
 const result = await syncContent({
@@ -57,7 +55,7 @@ const result = await syncContent({
   vaultRoot: vaultRoot(),
   lifeVaultRoot: lifeVaultRoot(),
   resumeEngineRoot: resumeEngineRoot(),
-  cacheDir: imageCache,
+  cacheDir: path.join(cacheDir(), 'images'),
   includeDrafts: values.drafts,
   snapshotDir: committedLayout(siteRoot).content,
 });
@@ -70,5 +68,5 @@ if (values.report) {
 for (const warning of result.warnings) console.warn(`warning: ${warning}`);
 console.log(`Synced ${result.pages} pages from ${result.pagesRoot}`);
 console.log(`Synced ${result.writeups} writeups from ${result.writeupsRoot}`);
-console.log(`Optimized ${result.images} images; wrote ${result.written.length} files, removed ${result.removed.length}`);
+console.log(`Prepared ${result.images} images; wrote ${result.written.length} files, removed ${result.removed.length}`);
 if (values.drafts) console.log(`Drafts included, written to ${path.relative(siteRoot, overlay)} (gitignored; never committed or deployed)`);

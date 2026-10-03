@@ -1,6 +1,6 @@
 import { projectFrontmatter } from '../../src/lib/content-contract.ts';
 import type { FrontmatterData, ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
-import { rewriteAssetUrl } from './assets.ts';
+import { normalizeLocalAssetRef } from './assets.ts';
 
 // Frontmatter dates arrive as strings or, for YAML timestamps, Dates.
 const time = (value: unknown): number => (value ? new Date(value as string | Date).getTime() : Number.NaN);
@@ -31,11 +31,29 @@ export function createPublicProjection({ today, previousWriteup = () => undefine
     writeup(data: FrontmatterData, { slug, body }: { slug: string; body: string }): FrontmatterData {
       return projectFrontmatter('writeups', {
         ...data,
-        cover_image: rewriteAssetUrl(data.cover_image, `/assets/writeups/${slug}`),
+        cover_image: coverPath(data.cover_image),
         last_reviewed: reviewedDate(data, previousWriteup(slug), body, today),
       });
     },
   };
+}
+
+// cover_image as a path relative to the document, for Astro's image() schema.
+function coverPath(value: unknown): unknown {
+  const ref = normalizeLocalAssetRef(value);
+  return ref ? `./${ref}` : value;
+}
+
+// A writeup page renders its title, lede, and cover from frontmatter, so the
+// body's own H1, opening blockquote, and leading image are dropped.
+export function stripArticleChrome(markdown: string): string {
+  const body = markdown
+    .trimStart()
+    .replace(/^# .+(?:\r?\n)+/, '')
+    .replace(/^>\s+.+(?:\r?\n)+/, '')
+    .replace(/^!\[[^\]]*\]\([^)]+\)(?:\r?\n)+/, '')
+    .trim();
+  return `${body}\n`;
 }
 
 function stripHtmlTags(value: string): string {

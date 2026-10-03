@@ -2,10 +2,10 @@
 
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. The move from a live admin to this private-first pipeline is recorded in [WordPress to Astro](./WordPress-To-Astro-Migration.md#operational-shift).
 
-![Private vault content is synchronized into validated repository content and assets before reaching Cloudflare](./diagrams/vault-workflow.png)
+![Published writeups and pages pass through the content sync into src/content and the generated schema before Cloudflare Pages builds them](./diagrams/vault-workflow.png)
 
-<sup>Diagram source: [`docs/diagrams/vault-workflow.mmd`](./diagrams/vault-workflow.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+<sup>Diagram source: [`docs/diagrams/vault-workflow.fig`](./diagrams/vault-workflow.fig),
+pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 
 ## Vault Layout
@@ -90,9 +90,8 @@ The sync script:
 
 - resolves the path against the source folder;
 - refuses paths outside that folder;
-- copies non-image assets as-is;
-- optimizes image assets into responsive variants, caching encodes under `.cache/` (`SITE_CACHE_DIR` moves it);
-- writes the image manifest ([`src/lib/image-manifest.json`](../src/lib/image-manifest.json)) that `Picture.astro` and the Markdown image enhancement read.
+- writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under `.cache/` (`SITE_CACHE_DIR` moves it);
+- leaves the reference relative, so Astro's image pipeline encodes the AVIF and WebP variants at build time.
 
 ### What does NOT live in the vault
 

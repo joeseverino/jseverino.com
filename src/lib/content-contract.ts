@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { readJson } from './json.ts';
 
-export type FieldType = 'string' | 'boolean' | 'integer' | 'date' | 'string[]';
+// `image` is a path relative to the document, resolved by Astro's image pipeline.
+export type FieldType = 'string' | 'boolean' | 'integer' | 'date' | 'string[]' | 'image';
 
 export interface FieldSpec {
   type: FieldType;
@@ -70,6 +71,7 @@ const TYPE_CHECKS: Record<FieldType, (value: unknown) => boolean> = {
   integer: (value) => Number.isInteger(value),
   date: isDate,
   'string[]': (value) => Array.isArray(value) && value.every((item) => typeof item === 'string'),
+  image: (value) => typeof value === 'string' && value.startsWith('./'),
 };
 
 // Contract violations in authored frontmatter: a missing required field or a

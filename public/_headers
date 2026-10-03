@@ -37,17 +37,10 @@
   Cache-Control: public, max-age=3600, must-revalidate
   ! Access-Control-Allow-Origin
 
-# Write-once content assets and the webfont keep the 1-year immutable cache.
-# Scoped per-dir (not a broad /assets/*) so it never overlaps the chrome paths
-# above; a stale logo pinned for a year is the failure mode that scoping prevents.
-/assets/writeups/*
-  Cache-Control: public, max-age=31536000, immutable
-  ! Access-Control-Allow-Origin
-
-/assets/pages/*
-  Cache-Control: public, max-age=31536000, immutable
-  ! Access-Control-Allow-Origin
-
+# The webfont keeps the 1-year immutable cache (content images are under
+# /_astro/, content-hashed). Scoped per-dir, not a broad /assets/*, so it never
+# overlaps the chrome paths above: a stale logo pinned for a year is the failure
+# mode that scoping prevents.
 /assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
   ! Access-Control-Allow-Origin

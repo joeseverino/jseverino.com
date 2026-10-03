@@ -11,7 +11,7 @@ import { runSync } from './lib/run.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
 // Everything the content sync owns.
-export const CONTENT_PATHS = ['src/content', 'public/assets/writeups', 'public/assets/pages', 'src/lib/image-manifest.json'];
+export const CONTENT_PATHS = ['src/content'];
 
 export type FileStatus = 'A' | 'M' | 'D';
 export interface ChangedFile {
@@ -52,12 +52,13 @@ export function changedFiles({ cwd = siteRoot, range, cached = false }: DiffOpti
   });
 }
 
-const WRITEUP_INDEX = /^src\/content\/writeups\/([^/]+)\/index\.md$/;
-const WRITEUP_FILE = /^(?:src\/content|public\/assets)\/writeups\/([^/]+)\//;
-const PAGE_FILE = /^src\/content\/pages\/(.+)\.md$/;
+// Each document is <collection>/<slug>/index.mdx; the image masters the sync
+// prepares sit in its images/ folder.
+const WRITEUP_INDEX = /^src\/content\/writeups\/([^/]+)\/index\.mdx$/;
+const WRITEUP_FILE = /^src\/content\/writeups\/([^/]+)\//;
+const PAGE_FILE = /^src\/content\/pages\/(.+?)\/(?:index\.mdx|images\/)/;
 const ROOT_FILE = /^src\/content\/([^/]+)\.md$/;
-const PAGE_ASSET = /^public\/assets\/pages\/([^/]+)\//;
-const GENERATED = /^(?:public\/assets\/|src\/lib\/image-manifest\.json$)/;
+const GENERATED = /^src\/content\/.+\/images\//;
 
 type WriteupChange = 'published' | 'edited' | 'removed';
 
@@ -72,7 +73,7 @@ export function classify(files: readonly ChangedFile[]): ContentDiff {
       writeups.set(slug, status === 'A' ? 'published' : status === 'D' ? 'removed' : writeups.get(slug) ?? 'edited');
     } else if ((slug = WRITEUP_FILE.exec(file)?.[1])) {
       if (!writeups.has(slug)) writeups.set(slug, 'edited');
-    } else if ((slug = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file) ?? PAGE_ASSET.exec(file))?.[1])) {
+    } else if ((slug = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1])) {
       pages.add(slug);
     }
   }

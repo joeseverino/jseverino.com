@@ -33,7 +33,7 @@ jobs:
               core.setOutput('code', 'true');
               return;
             }
-            const content = /^(?:src\/content\/|public\/assets\/|src\/lib\/image-manifest\.json$|src\/data\/github-repos\.json$)|^(?!\.github\/).*\.md$/;
+            const content = /^(?:src\/content\/|src\/data\/github-repos\.json$)|^(?!\.github\/).*\.md$/;
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
               repo: context.repo.repo,

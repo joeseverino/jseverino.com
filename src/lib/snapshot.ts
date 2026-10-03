@@ -13,23 +13,24 @@ export interface SnapshotWriteup extends ParsedFrontmatter {
 
 const byName = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
-// Every writeup directory with an index.md, in slug order.
-export function snapshotWriteups(root = siteRoot): SnapshotWriteup[] {
-  const dir = path.join(root, 'src/content/writeups');
+// Each document is <collection>/<slug>/index.mdx.
+export const DOCUMENT_FILE = 'index.mdx';
+
+// The slugs of a collection's top-level documents, in name order.
+function documentSlugs(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, 'index.md')))
+    .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, DOCUMENT_FILE)))
     .map((entry) => entry.name)
-    .sort(byName)
-    .map((slug) => {
-      const source = fs.readFileSync(path.join(dir, slug, 'index.md'), 'utf8');
-      return { slug, source, ...parseFrontmatter(source) };
-    });
+    .sort(byName);
 }
 
-// Page slugs: src/content/pages/<slug>.md.
-export function snapshotPageSlugs(root = siteRoot): string[] {
-  const dir = path.join(root, 'src/content/pages');
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter((file) => file.endsWith('.md')).map((file) => file.slice(0, -3)).sort(byName);
+export function snapshotWriteups(root = siteRoot): SnapshotWriteup[] {
+  const dir = path.join(root, 'src/content/writeups');
+  return documentSlugs(dir).map((slug) => {
+    const source = fs.readFileSync(path.join(dir, slug, DOCUMENT_FILE), 'utf8');
+    return { slug, source, ...parseFrontmatter(source) };
+  });
 }
+
+export const snapshotPageSlugs = (root = siteRoot): string[] => documentSlugs(path.join(root, 'src/content/pages'));

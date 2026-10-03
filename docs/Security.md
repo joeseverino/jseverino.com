@@ -491,14 +491,18 @@ surface:
 
 - **No user-generated content.** There are no comments, no accounts, no
   search, no uploads. Every word on the site comes from the owner's vault.
-- **Raw HTML is rebuilt from an allow-list.** Markdown is authored only by the
-  site owner, but raw HTML in it is still not passed through:
-  [`src/lib/markdown.ts`](../src/lib/markdown.ts) keeps listed formatting tags
-  with listed attributes, re-escapes values, limits `href`/`src` to `http`,
-  `https`, `mailto`, or relative URLs, and renders any other tag as text.
-  Text that custom directives (e.g. `::terminal` blocks) interpolate into HTML
-  goes through Markdown-it's escaping, and the build fails if any script or
-  style tag lacks the nonce placeholder.
+- **Content is data, never code.** Documents compile as MDX, which would run
+  `import`/`export` and `{…}` expressions at build time and treat raw HTML as
+  JSX. [`src/lib/markdown/guard.ts`](../src/lib/markdown/guard.ts) refuses all
+  three: raw HTML is limited to listed formatting tags with listed, plain-string
+  attributes, `href`/`src` to `http`, `https`, `mailto`, or relative URLs, and
+  anything else fails the build with its line. `site validate` runs the same
+  compile before a sync. The build also fails if any script or style tag lacks
+  the nonce placeholder.
+- **Images carry no metadata.** The sync writes each image's master stripped of
+  EXIF, XMP, and ICC data and capped at the 1600 pixels the site serves, so
+  neither the public repo nor the site carries what a camera or screenshot tool
+  recorded. Astro never ships an unprocessed original.
 - **Escaped structured data.** JSON-LD injected into `<head>` has `<`
   characters escaped so a string value can never break out into live markup. See [`src/components/SeoHead.astro`](../src/components/SeoHead.astro).
 - **Analytics is cookieless.** The only analytics is Cloudflare Web Analytics,
