@@ -15,7 +15,7 @@ import {
   referenceIssues,
   resolveAssetSource,
 } from '../../bin/content-sync/assets.ts';
-import { stripArticleChrome } from '../../bin/content-sync/public-projection.ts';
+import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
 import { createWriter } from '../../bin/content-sync/writer.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';

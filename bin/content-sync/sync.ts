@@ -7,7 +7,8 @@ import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type Pars
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
 import { parseTechnologyGroups } from '../../src/lib/technology-groups.ts';
 import { createEducationSource, createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
-import { createPublicProjection, stripArticleChrome, stripRepeatedDescription } from './public-projection.ts';
+import { createPublicProjection } from './public-projection.ts';
+import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 import {
   collectAssetRefs,
   createMasterEncoder,

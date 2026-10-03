@@ -5,11 +5,8 @@ import {
   frontmatterIssues,
   projectFrontmatter,
 } from '../../src/lib/content-contract.ts';
-import {
-  createPublicProjection,
-  reviewedDate,
-  stripRepeatedDescription,
-} from '../../bin/content-sync/public-projection.ts';
+import { createPublicProjection, reviewedDate } from '../../bin/content-sync/public-projection.ts';
+import { stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 
 describe('canonical content contract', () => {
   test('projects only public fields and applies contract defaults', () => {
