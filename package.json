@@ -111,7 +111,7 @@
     "lighthouse": "^13.5.0",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v1.0.2/severino-brand-1.0.2.tgz",
     "sharp": "^0.35.4",
-    "sitedrift": "^0.3.11",
+    "sitedrift": "^0.4.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "wrangler": "^4.145.0"
