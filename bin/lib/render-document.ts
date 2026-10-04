@@ -61,8 +61,9 @@ async function render(input: DocumentInput): Promise<string> {
     const font = `data:font/woff2;base64,${fs.readFileSync(FONT).toString('base64')}`;
     const styles = [brandVarsCss(), baseCss, interFontFace(font)].join('\n');
     const container = await experimental_AstroContainer.create();
-    const html: string = await container.renderToString(WriteupPreview, { props: { ...input, styles } });
-    return html.startsWith('<!doctype') ? html : `<!doctype html>\n${html}`;
+    const html: string = await container.renderToString(WriteupPreview, { props: input });
+    const page = html.replace('</head>', `<style>${styles}</style></head>`);
+    return page.startsWith('<!doctype') ? page : `<!doctype html>\n${page}`;
   } finally {
     await server.close();
   }
