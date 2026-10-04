@@ -1,0 +1,34 @@
+---
+// A self-contained preview page for one writeup: the article markup the site
+// ships (ArticleView) with the site's styles inlined, so it renders from a file
+// or a sandboxed iframe with no server. `site render` renders this through
+// Astro's container and inlines the bundled site CSS into the head.
+import ArticleView from './ArticleView.astro';
+
+type Props = {
+  title: string;
+  date: string;
+  technologies: string[];
+  heroSrc?: string;
+  heroAlt?: string;
+  body: string;
+};
+
+const { title, date, technologies, heroSrc, heroAlt = '', body } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <ArticleView title={title} date={date} technologies={technologies}>
+      {heroSrc && <img slot="hero" src={heroSrc} alt={heroAlt} />}
+      <Fragment set:html={body} />
+    </ArticleView>
+  </body>
+</html>

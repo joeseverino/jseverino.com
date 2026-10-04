@@ -148,6 +148,13 @@ export type PrepareResult = Step & PublishReadiness;
 export type ApplyPlanResult = Step & PlanResult;
 export type SetResult = Step & FrontmatterResult;
 export type LinkCommandResult = Step & LinkResult;
+export interface RenderResult extends Step {
+  slug: string | null;
+  source: string;
+  html: string;
+  document?: string;
+}
+
 export type ContractResult = Step & ReturnType<typeof writeupContract> & { next: null };
 export type ContactResult = Step & PiiRows & { next: null };
 export type CspResult = Step & (({ mode: 'count' } & CspCounts) | ({ mode: 'list' } & PiiRows)) & { next: null };
@@ -175,6 +182,7 @@ export interface CommandResults {
   set: SetResult;
   link: LinkCommandResult;
   contract: ContractResult;
+  render: RenderResult;
   contact: ContactResult;
   csp: CspResult;
   'd1-apply': D1ApplyResult;

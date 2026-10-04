@@ -3,8 +3,9 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import { writeupPath } from '@lib/site-config.ts';
 import Picture from '@components/Picture.astro';
 import Lightbox from '@components/Lightbox.astro';
+import ArticleView from '@components/content/ArticleView.astro';
 import ContentBody from '@components/content/ContentBody.astro';
-import { formatDate, getWriteups, titleCase } from '@lib/content.ts';
+import { getWriteups } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getWriteups()).map((writeup) => ({
@@ -33,38 +34,16 @@ const { writeup } = Astro.props;
     ],
   }}
 >
-  <main id="main" class="article">
-    <header class="article-header">
-      <div class="article-meta">
-        <h1 class="article-title">{writeup.title}</h1>
-        <p class="article-date"><time datetime={writeup.date}>{formatDate(writeup.date)}</time></p>
-      </div>
-      <figure class="article-hero">
-        <Picture
-          src={writeup.heroImage}
-          alt={writeup.heroAlt}
-          sizes="(max-width: 720px) 100vw, 672px"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </figure>
-    </header>
-
-    <article class="prose"><ContentBody entry={writeup.entry} /></article>
-
-    {
-      writeup.technologies.length > 0 && (
-        <footer class="article-tags">
-          <h3>Technologies Used</h3>
-          <div class="tech-pills">
-            {writeup.technologies.map((tag: string) => (
-              <a href={`/tag/${tag}/`} rel="tag">{titleCase(tag)}</a>
-            ))}
-          </div>
-          <hr class="article-separator" />
-        </footer>
-      )
-    }
-  </main>
+  <ArticleView title={writeup.title} date={writeup.date} technologies={writeup.technologies}>
+    <Picture
+      slot="hero"
+      src={writeup.heroImage}
+      alt={writeup.heroAlt}
+      sizes="(max-width: 720px) 100vw, 672px"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <ContentBody entry={writeup.entry} />
+  </ArticleView>
   {writeup.hasImages && <Lightbox />}
 </BaseLayout>
