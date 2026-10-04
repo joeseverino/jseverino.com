@@ -238,10 +238,11 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   }),
   render: define({
     summary: 'One writeup body rendered exactly as the build renders it',
-    usage: 'site render <slug|->',
-    help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. Frontmatter is not rendered. For previews: the Obsidian plugin and HQ call this instead of bundling the renderer.',
+    usage: 'site render <slug|-> [--document]',
+    help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. html is the body the build ships. --document adds document: a self-contained page with the site article layout and styles inlined, for previews (the Obsidian plugin, HQ). Asset paths stay vault-relative.',
     positionals: [1, 1],
-    run: async ({ positionals: [slug = ''], out }) => (await import('./site/render.ts')).render({ slug, out }),
+    options: { document: { type: 'boolean', default: false } },
+    run: async ({ positionals: [slug = ''], values: { document }, out }) => (await import('./site/render.ts')).render({ slug, document, out }),
   }),
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',

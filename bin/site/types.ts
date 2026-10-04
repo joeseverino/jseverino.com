@@ -152,6 +152,7 @@ export interface RenderResult extends Step {
   slug: string | null;
   source: string;
   html: string;
+  document?: string;
 }
 
 export type ContractResult = Step & ReturnType<typeof writeupContract> & { next: null };

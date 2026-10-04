@@ -49,6 +49,28 @@ describe('site render', () => {
     assert.match(result.html, /<strong>this<\/strong>/);
   });
 
+  test('strips the title heading the page renders itself', async () => {
+    const result = await render({ slug: '-', out, stdin: () => '---\ntitle: Demo\n---\n# Demo\n\nBody text.\n' });
+    assert.doesNotMatch(result.html, /<h1/);
+    assert.match(result.html, /Body text\./);
+  });
+
+  test('--document is a self-contained page in the site article layout', async () => {
+    const md = '---\ntitle: Demo Title\npublished_at: 2026-03-15\ntechnologies: [wireshark]\ncover_image: ./images/cover.png\ncover_alt: A cover\n---\nRun **this** first.\n';
+    const result = await render({ slug: '-', document: true, out, stdin: () => md });
+    const doc = result.document ?? '';
+    assert.match(doc, /^<!doctype html>/i);
+    for (const cls of ['article', 'article-header', 'article-title', 'article-hero', 'prose', 'article-tags']) {
+      assert.match(doc, new RegExp(`class="${cls}"`), cls);
+    }
+    assert.match(doc, /<h1 class="article-title">Demo Title<\/h1>/);
+    assert.match(doc, /<img src="\.\/images\/cover\.png" alt="A cover">/);
+    assert.match(doc, /<style>[^]*\.prose[^]*<\/style>/);
+    assert.match(doc, /font\/woff2;base64,/);
+    assert.doesNotMatch(doc, /<link rel="stylesheet"|<script/);
+    assert.ok(doc.includes(result.html.trim()));
+  });
+
   test('refuses a missing writeup and a malformed slug', async () => {
     await assert.rejects(render({ slug: 'no-such-writeup', out }), SiteError);
     await assert.rejects(render({ slug: 'Bad Slug', out }), SiteError);

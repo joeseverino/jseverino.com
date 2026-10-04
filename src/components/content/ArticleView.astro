@@ -1,0 +1,42 @@
+---
+// The writeup article: title, date, hero, body, and technology tags. The
+// portfolio page and `site render` both render through this, so a preview
+// carries the same markup the site ships. The hero and body arrive as slots:
+// the page passes <Picture> and the content entry, the preview plain HTML.
+import { formatDate, titleCase } from '@lib/content.ts';
+
+type Props = {
+  title: string;
+  date: string;
+  technologies: string[];
+};
+
+const { title, date, technologies } = Astro.props;
+const hero = Astro.slots.has('hero') ? (await Astro.slots.render('hero')).trim() : '';
+---
+
+<main id="main" class="article">
+  <header class="article-header">
+    <div class="article-meta">
+      <h1 class="article-title">{title}</h1>
+      {date && <p class="article-date"><time datetime={date}>{formatDate(date)}</time></p>}
+    </div>
+    {hero && <figure class="article-hero" set:html={hero} />}
+  </header>
+
+  <article class="prose"><slot /></article>
+
+  {
+    technologies.length > 0 && (
+      <footer class="article-tags">
+        <h3>Technologies Used</h3>
+        <div class="tech-pills">
+          {technologies.map((tag: string) => (
+            <a href={`/tag/${tag}/`} rel="tag">{titleCase(tag)}</a>
+          ))}
+        </div>
+        <hr class="article-separator" />
+      </footer>
+    )
+  }
+</main>
