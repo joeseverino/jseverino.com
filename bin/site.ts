@@ -236,6 +236,13 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: 'contracts/content.v1.json: the fields an editor or client may read and write.',
     run: async ({ out }) => (await writeupOps()).contract({ out }),
   }),
+  render: define({
+    summary: 'One writeup body rendered exactly as the build renders it',
+    usage: 'site render <slug|->',
+    help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. Frontmatter is not rendered. For previews: the Obsidian plugin and HQ call this instead of bundling the renderer.',
+    positionals: [1, 1],
+    run: async ({ positionals: [slug = ''], out }) => (await import('./site/render.ts')).render({ slug, out }),
+  }),
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
     usage: 'site contact [--limit <n>] [--pii]',

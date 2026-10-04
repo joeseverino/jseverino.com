@@ -72,6 +72,7 @@ a usage error (exit 2, with the JSON error document).
 | `site set <slug> [--<field> <value>...] [--published true\|false] [--touch-last-reviewed]` | Set editable frontmatter fields; the flags come from the content contract |
 | `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
 | `site contract` | The writeup field contract and its fingerprint |
+| `site render <slug\|->` | One writeup body rendered exactly as the build renders it, from the vault or stdin (`-`); previews call this instead of bundling the renderer |
 | `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited) |
 | `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1, or counts by directive |
 | `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
