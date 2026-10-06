@@ -13,7 +13,7 @@ export interface SkipInputs {
   platform?: NodeJS.Platform | undefined;
 }
 
-export function skipReason(audit: Audit, { ci = Boolean(process.env.CI), platform = process.platform }: SkipInputs = {}): string | null {
+function skipReason(audit: Audit, { ci = Boolean(process.env.CI), platform = process.platform }: SkipInputs = {}): string | null {
   if (audit.macosOnly && platform !== 'darwin') return 'requires macOS (the visual baselines are macOS Chromium renders)';
   if (audit.localOnly && ci) return 'verifies sources that only exist on the authoring machine';
   return null;
@@ -70,8 +70,8 @@ export async function runAudit(audit: Audit, { cwd = siteRoot, env, ci, platform
 // heavy ones (a browser suite with its server and browsers, about 1.5 GB) run
 // one at a time below 12 GB of memory so an 8 GB machine never swaps.
 const GB = 2 ** 30;
-export const AUDIT_CONCURRENCY = Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / (2 * GB))));
-export const HEAVY_CONCURRENCY = os.totalmem() < 12 * GB ? 1 : 3;
+const AUDIT_CONCURRENCY = Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / (2 * GB))));
+const HEAVY_CONCURRENCY = os.totalmem() < 12 * GB ? 1 : 3;
 
 export interface RunAuditsOptions extends RunAuditOptions {
   // Per-audit options (env merges over the shared env).

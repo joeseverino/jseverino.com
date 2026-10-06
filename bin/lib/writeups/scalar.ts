@@ -20,12 +20,11 @@ export function renderScalar(value: unknown): string {
   return text === '' ? '' : yamlEscape(text);
 }
 
-export const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Replace the first `key:` line, or insert one before the closing fence.
 export function replaceScalar(text: string, key: string, rendered: string): string {
   const line = `${key}: ${rendered}`.trimEnd();
-  const pattern = new RegExp(`^${escapeRegExp(key)}:[^\\n]*$`, 'm');
+  const pattern = new RegExp(`^${RegExp.escape(key)}:[^\\n]*$`, 'm');
   if (pattern.test(text)) return text.replace(pattern, () => line);
   const lines = text.split('\n');
   let fences = 0;

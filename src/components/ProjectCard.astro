@@ -14,9 +14,9 @@ const { writeup, eager = false } = Astro.props;
 
 <li class="project-card">
   <CardSurface>
-    <h3 class="project-card-title">
+    <h2 class="project-card-title">
       <a href={writeupPath(writeup.slug)}>{writeup.title}</a>
-    </h3>
+    </h2>
     <figure class="project-card-media">
       <a href={writeupPath(writeup.slug)}>
         <Picture

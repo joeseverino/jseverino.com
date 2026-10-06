@@ -8,7 +8,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor } from '../../tests/audits/registry.ts';
+import { AUDITS, auditsFor, publishAudits } from '../../tests/audits/registry.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 
 const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
@@ -71,5 +71,22 @@ describe('audit registry', () => {
       assert.equal(audit.phase, 'pre-build');
     }
     assert.equal(auditsFor('diagnose').length, AUDITS.length);
+  });
+});
+
+describe('publishAudits', () => {
+  const ids = (audits: { id: string }[]) => audits.map((audit) => audit.id);
+
+  test('after the gate, drops exactly the audits the gate claims', () => {
+    const all = ids(publishAudits('pre-build'));
+    const after = ids(publishAudits('pre-build', { afterGate: true }));
+    const gated = ids(auditsFor('gate'));
+    assert.deepEqual(after, all.filter((id) => !gated.includes(id)));
+    assert.ok(all.includes('repo-policy') && !after.includes('repo-policy'));
+  });
+
+  test('on the runner, leaves the edge suite to its own job', () => {
+    assert.ok(ids(publishAudits('post-build')).includes('edge-tests'));
+    assert.ok(!ids(publishAudits('post-build', { ci: true })).includes('edge-tests'));
   });
 });

@@ -1,5 +1,6 @@
 ---
 import { getAllTags, getTechnologyGroups } from '@lib/content.ts';
+import { tagPath } from '@lib/site-config.ts';
 
 const collator = new Intl.Collator('en', { sensitivity: 'base' });
 const availableTags = new Set((await getAllTags()).map((tag) => tag.slug));
@@ -21,7 +22,7 @@ const groups = getTechnologyGroups()
         <h3 class="tag-group-title">{group.name}</h3>
         <div class="tag-list">
           {group.tags.map((tag) => (
-            <a class="tag" href={`/tag/${tag.slug}/`}>
+            <a class="tag" href={tagPath(tag.slug)}>
               {tag.label}
             </a>
           ))}

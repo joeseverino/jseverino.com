@@ -3,6 +3,8 @@
 // `| Slug | Label | Featured |` table. One parser for the build, the sync check,
 // and `site tech`.
 
+import fs from 'node:fs';
+
 export interface TechnologyTag {
   slug: string;
   label: string;
@@ -36,3 +38,7 @@ export function parseTechnologyGroups(body: string): TechnologyGroup[] {
     })
     .filter((group) => group.name && group.tags.length > 0);
 }
+
+// The groups in `file`, or none when the file does not exist yet.
+export const readTechnologyGroups = (file: string): TechnologyGroup[] =>
+  parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');

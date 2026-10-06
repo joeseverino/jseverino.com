@@ -14,10 +14,10 @@
 
 <script>
   const dialog = document.querySelector<HTMLDialogElement>('dialog.lightbox');
+  const view = dialog?.querySelector<HTMLImageElement>('.lightbox-img');
+  const caption = dialog?.querySelector<HTMLElement>('.lightbox-caption');
 
-  if (dialog && typeof dialog.showModal === 'function') {
-    const view = dialog.querySelector<HTMLImageElement>('.lightbox-img')!;
-    const caption = dialog.querySelector<HTMLElement>('.lightbox-caption')!;
+  if (dialog && view && caption && typeof dialog.showModal === 'function') {
     let lastTrigger: HTMLElement | null = null;
     let restoreFocusOnClose = false;
 
@@ -62,7 +62,8 @@
     };
 
     document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement;
+      const { target } = event;
+      if (!(target instanceof Element)) return;
       const trigger = target.closest<HTMLElement>('.prose .image-zoom');
       if (trigger) {
         open(trigger, false);
@@ -78,10 +79,10 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      const target = event.target as HTMLElement;
-      if (!target.matches('.prose .image-zoom')) return;
+      const trigger = event.target instanceof Element ? event.target.closest<HTMLElement>('.prose .image-zoom') : null;
+      if (!trigger) return;
       event.preventDefault();
-      open(target, true);
+      open(trigger, true);
     });
 
     dialog.addEventListener('close', () => {

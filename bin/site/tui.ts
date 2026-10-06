@@ -19,11 +19,11 @@ const SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
 // ---- grapheme-aware width + clipping ----------------------------------------
 
-export function graphemes(text: string): string[] {
+function graphemes(text: string): string[] {
   return [...SEGMENTER.segment(text)].map((entry) => entry.segment);
 }
 
-export function cellWidth(grapheme: string | undefined): number {
+function cellWidth(grapheme: string | undefined): number {
   if (!grapheme || /^[\p{Cc}\p{Cf}\p{Mn}\p{Me}]+$/u.test(grapheme)) return 0;
   if (/\p{Extended_Pictographic}/u.test(grapheme)) return 2;
   const cp = grapheme.codePointAt(0) ?? 0;
@@ -43,7 +43,7 @@ export function cellWidth(grapheme: string | undefined): number {
   ) ? 2 : 1;
 }
 
-export function displayWidth(text: unknown): number {
+function displayWidth(text: unknown): number {
   const plain = String(text).replace(/\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))/g, '');
   return graphemes(plain).reduce((width, grapheme) => width + cellWidth(grapheme), 0);
 }
@@ -64,7 +64,7 @@ export function nextBoundary(text: string, index: number): number {
   return text.length;
 }
 
-export function suffixByWidth(text: string, width: number): string {
+function suffixByWidth(text: string, width: number): string {
   const parts = graphemes(text);
   const kept: string[] = [];
   let used = 0;
@@ -77,7 +77,7 @@ export function suffixByWidth(text: string, width: number): string {
   return kept.join('');
 }
 
-export function prefixByWidth(text: string, width: number): string {
+function prefixByWidth(text: string, width: number): string {
   let out = '';
   let used = 0;
   for (const grapheme of graphemes(text)) {
@@ -89,7 +89,7 @@ export function prefixByWidth(text: string, width: number): string {
   return out;
 }
 
-export function clipAnsi(text: string, width: number): string {
+function clipAnsi(text: string, width: number): string {
   if (width <= 0) return '';
   const ansi = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))/y;
   let out = '';
@@ -223,17 +223,16 @@ export function createTitleSetter(): (title: string) => void {
 // that distinguishes a lone Esc from the start of an escape sequence. onKey is
 // called with each key token; onPaste with the (flattened) pasted text.
 
-// Named keys for replay harnesses: a comma-separated MANAGE_TUI_KEYS /
-// DESCRIBE_TUI_KEYS script maps through this before being fed to the pump.
+// Named keys for replay harnesses: a comma-separated MANAGE_TUI_KEYS script
+// maps through this before being fed to the pump.
 export const NAMED_KEYS: Readonly<Record<string, string>> = {
   up: '\x1b[A', down: '\x1b[B', left: '\x1b[D', right: '\x1b[C',
-  'left-prefix': '\x1b[', 'left-suffix': 'D',
   enter: '\r', esc: '\x1b', space: ' ', tab: '\t', backspace: '\x7f',
   home: '\x1b[H', end: '\x1b[F', delete: '\x1b[3~', slash: '/',
   'ctrl-r': '\x12', 'ctrl-c': '\x03', 'ctrl-u': '\x15', 'ctrl-w': '\x17',
 };
 
-export interface InputPump {
+interface InputPump {
   feedInput(chunk: string): void;
   flushInput(): void;
 }

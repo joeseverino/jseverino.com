@@ -8,7 +8,6 @@ import path from 'node:path';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { walkFiles } from '../../src/lib/walk.ts';
-import { fallbackFiles, readRoutes } from '../../bin/lib/pages-routes.ts';
 
 export { siteRoot };
 
@@ -40,17 +39,9 @@ export interface BuiltPage {
   html: string;
 }
 
-// The static fallback pages under excluded prefixes are not site pages;
-// check-routes audits them on their own.
-function staticFallbacks(distDir: string): string[] {
-  const routesFile = path.join(distDir, '_routes.json');
-  return fs.existsSync(routesFile) ? fallbackFiles(readRoutes(routesFile)).map((file) => file.split('/').join(path.sep)) : [];
-}
-
 export function builtPages(auditName: string): { distDir: string; pages: BuiltPage[] } {
   const distDir = resolveBuiltDir(siteRoot) ?? abort(auditName, 'no build output found. Run `astro build` first.');
-  const fallbacks = new Set(staticFallbacks(distDir));
-  const pages = walkFiles(distDir, { filter: (file) => file.endsWith('.html') && !fallbacks.has(path.relative(distDir, file)) })
+  const pages = walkFiles(distDir, { filter: (file) => file.endsWith('.html') })
     .map((file) => ({ file, rel: path.relative(distDir, file), html: fs.readFileSync(file, 'utf8') }));
   if (pages.length === 0) abort(auditName, `no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
   return { distDir, pages };

@@ -17,7 +17,7 @@ export interface CodeScanningAlert {
 }
 
 // The caller names the response shape; gh returns parsed JSON.
-export function ghApi<T>(pathname: string, params: Record<string, string | number> = {}): T {
+function ghApi<T>(pathname: string, params: Record<string, string | number> = {}): T {
   const args = ['api', pathname, '--method', 'GET'];
   for (const [key, value] of Object.entries(params)) args.push('-f', `${key}=${value}`);
   return JSON.parse(runSync('gh', args)) as T;
@@ -27,7 +27,7 @@ export const checkRuns = (repository: string, sha: string): CheckRun[] =>
   ghApi<{ check_runs: CheckRun[] }>(`repos/${repository}/commits/${sha}/check-runs`, { per_page: 100 }).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.
-export const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
+const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
 export const passed = (check: CheckRun): boolean => check.status === 'completed' && PASSING_CONCLUSIONS.includes(check.conclusion ?? '');
 
 interface BranchRule {

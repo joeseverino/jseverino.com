@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
-import { parseTechnologyGroups } from '../../src/lib/technology-groups.ts';
+import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
 import { createEducationSource, createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
 import { createPublicProjection } from './public-projection.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
@@ -241,7 +241,7 @@ export interface CheckOptions {
 export async function checkContent({ vaultRoot, slug, draft = false }: CheckOptions): Promise<{ ok: boolean; documents: CheckedDocument[] }> {
   const vault = createVaultSource({ vaultRoot, includeDrafts: true });
   const catalog = new Set(
-    parseTechnologyGroups(fs.existsSync(vault.technologyGroups) ? fs.readFileSync(vault.technologyGroups, 'utf8') : '')
+    readTechnologyGroups(vault.technologyGroups)
       .flatMap((group) => group.tags.map((tag) => tag.slug)),
   );
   const documents: CheckedDocument[] = [];

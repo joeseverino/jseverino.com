@@ -13,7 +13,7 @@ export const site = {
   repoUrl: `https://github.com/${SITE_REPOSITORY}`,
   defaultTitle: `${SITE.owner} | ${SITE.focus.slice(0, -1).join(', ')}, and ${SITE.focus.at(-1)}`,
   defaultDescription: summary,
-  defaultOgImage: '/assets/og/og-default.png',
+  defaultOgImage: '/assets/og/og-default.jpg',
   defaultOgImageWidth: 1200,
   defaultOgImageHeight: 630,
   // Rendered from the resume canonical by resume-engine; the resume page links it.

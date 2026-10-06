@@ -10,8 +10,8 @@ import path from 'node:path';
 import { contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { preflight, type CheckName } from '../lib/preflight.ts';
-import { run } from '../lib/run.ts';
-import { SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, run } from '../lib/run.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, requireReady, runScript, type Output } from './cli.ts';
 import { git, gh, ghJson } from './git.ts';
@@ -32,15 +32,14 @@ interface PullRequest extends PullRequestRef {
 function latestContentPr(root: string): PullRequest {
   const prs = ghJson<(PullRequest & { createdAt: string })[]>(root, 'pr', 'list', '--author', '@me', '--state', 'all', '--limit', '30',
     '--search', 'head:content/', '--json', `${PR_FIELDS},createdAt`)
-    .filter((pr) => pr.headRefName.startsWith('content/'))
+    .filter((pr) => pr.headRefName.startsWith(CONTENT_BRANCH_PREFIX))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const [latest] = prs;
   if (!latest) throw new SiteError('no content PR found', { code: EXIT.usage, fix: 'pass the PR number: site land <pr>' });
   return latest;
 }
 
-function timeout(what: string, deadline: number, result: object): void {
-  if (Date.now() < deadline) return;
+function timedOut(what: string, result: object): never {
   throw new SiteError(`timed out waiting for ${what}`, { code: EXIT.timeout, result, fix: 'rerun site land with a longer --timeout once the cause is clear' });
 }
 
@@ -48,7 +47,7 @@ function timeout(what: string, deadline: number, result: object): void {
 // An empty requirement is an error: a fresh PR has reported nothing yet, so
 // "nothing required" cannot be told apart from "nothing reported".
 async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: number, out: Output): Promise<void> {
-  const required = requiredContexts(SITE_REPOSITORY, 'main');
+  const required = requiredContexts(SITE_REPOSITORY, DEFAULT_BRANCH);
   if (required.length === 0) {
     throw new SiteError('main\'s ruleset requires no status checks, so land cannot tell when the PR is ready', {
       result: { pr: pr.url },
@@ -58,7 +57,7 @@ async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: numb
   const head = pr.headRefOid;
   out.step('checks', `waiting for ${required.length} required checks on #${pr.number} (${head.slice(0, 12)})`);
   const runs = await awaitChecks(SITE_REPOSITORY, head, required, { deadline, intervalMs, failFast: true });
-  if (!runs) return timeout('the required checks', 0, { pr: pr.url });
+  if (!runs) timedOut('the required checks', { pr: pr.url });
   const byName = new Map(runs.map((check) => [check.name, check]));
   const failed = required.filter((name) => {
     const check = byName.get(name);
@@ -79,7 +78,7 @@ async function waitForDeploy(sha: string, deadline: number, intervalMs: number, 
   out.step('deploy', `waiting for ${PAGES_CHECK} on ${sha.slice(0, 12)}`);
   const runs = await awaitChecks(SITE_REPOSITORY, sha, [PAGES_CHECK], { deadline, intervalMs });
   const check = runs?.find((entry) => entry.name === PAGES_CHECK);
-  if (!check) return timeout(`${PAGES_CHECK} on ${sha.slice(0, 12)}`, 0, { sha });
+  if (!check) timedOut(`${PAGES_CHECK} on ${sha.slice(0, 12)}`, { sha });
   if (check.conclusion !== 'success') {
     throw new SiteError(`${PAGES_CHECK} ${check.conclusion} for ${sha.slice(0, 12)}`, {
       result: { sha, details: check.details_url },
@@ -109,7 +108,7 @@ function onPath(name: string): boolean {
 
 async function hqSync(root: string, out: Output): Promise<HqSync> {
   if (!onPath('hq')) return { ran: false };
-  const result = await run('hq', ['sync'], { cwd: root, timeout: 10 * 60_000 });
+  const result = await run('hq', ['sync'], { cwd: root, timeout: BUILD_TIMEOUT_MS });
   if (result.code === 0) {
     out.ok('hq', 'hq sync done');
     return { ran: true, ok: true };
@@ -118,7 +117,7 @@ async function hqSync(root: string, out: Output): Promise<HqSync> {
   return { ran: true, ok: false, retry: 'hq sync' };
 }
 
-export interface LandOptions {
+interface LandOptions {
   root?: string;
   pr?: string | undefined;
   timeoutMs?: number;
@@ -133,7 +132,7 @@ export interface LandOptions {
 export async function land({
   root = siteRoot,
   pr: requested,
-  timeoutMs = 30 * 60_000,
+  timeoutMs = GATE_TIMEOUT_MS,
   intervalMs = 10_000,
   out,
   checks = ['gh', 'fetch'],
@@ -164,7 +163,7 @@ export async function land({
   if (!sha) throw new SiteError(`#${pr.number} has no merge commit`, { result: { pr: pr.url } });
   await waitForDeploy(sha, deadline, intervalMs, out);
 
-  git(root, 'fetch', '--quiet', 'origin', 'main');
+  git(root, 'fetch', '--quiet', 'origin', DEFAULT_BRANCH);
   const diff = contentDiff({ cwd: root, range: `${sha}^..${sha}` });
   const verified: Verified[] = [];
   for (const slug of [...diff.published, ...diff.edited]) {

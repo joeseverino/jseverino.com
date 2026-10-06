@@ -74,7 +74,7 @@ const CHOICES = [
     apply((root.dataset.themeMode as Mode) || 'auto');
 
     group.addEventListener('click', (event) => {
-      const choice = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-theme-choice]');
+      const choice = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-theme-choice]') : null;
       if (!choice) return;
 
       const mode = choice.dataset.themeChoice as Mode;

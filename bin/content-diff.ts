@@ -5,7 +5,7 @@
 // and publish:check (its content status line).
 //
 //   node bin/content-diff.ts [--range <a..b> | --cached] [--json]
-import { cli } from './lib/args.ts';
+import { cli, flag } from './lib/args.ts';
 import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
@@ -37,7 +37,7 @@ const STATUS: Record<string, FileStatus> = { A: 'A', D: 'D', '?': 'A' };
 
 // [{ status: 'A'|'M'|'D', path }] for a range (`a..b`, `a...b`), the index
 // (cached), or the working tree against HEAD including untracked files.
-export function changedFiles({ cwd = siteRoot, range, cached = false }: DiffOptions = {}): ChangedFile[] {
+function changedFiles({ cwd = siteRoot, range, cached = false }: DiffOptions = {}): ChangedFile[] {
   if (range || cached) {
     const out = runSync('git', ['diff', '--name-status', '--no-renames', '-z', ...(cached || !range ? ['--cached'] : [range]), '--', ...CONTENT_PATHS], { cwd, raw: true });
     const fields = out.split('\0').filter(Boolean);
@@ -129,8 +129,8 @@ if (import.meta.main) {
     usage: 'usage: node bin/content-diff.ts [--range <a..b> | --cached] [--json]',
     options: {
       range: { type: 'string' },
-      cached: { type: 'boolean', default: false },
-      json: { type: 'boolean', default: false },
+      cached: flag,
+      json: flag,
     },
   });
   const diff = contentDiff({ range: values.range, cached: values.cached });

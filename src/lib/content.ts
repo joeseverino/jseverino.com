@@ -6,7 +6,7 @@ import type { CollectionEntry } from 'astro:content';
 import { site } from './site.ts';
 import { asyncCache } from './async-cache.ts';
 import { contentRoot } from './content-root.ts';
-import { parseTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
+import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 import { isoDate } from './dates.ts';
 
 export type { TechnologyGroup, TechnologyTag } from './technology-groups.ts';
@@ -77,10 +77,16 @@ export async function getEducationInstitutions(): Promise<PageContent[]> {
     .map(toPageContent);
 }
 
-// Parse on demand so dev edits appear without restarting the server.
+// Every tag label and the unknown-slug warning read the catalog, so a build asks
+// for it hundreds of times. The parse is cached per file modification time, so a
+// dev edit still shows up without restarting the server.
+let catalog: { mtimeMs: number; groups: TechnologyGroup[] } | undefined;
+
 export function getTechnologyGroups(): TechnologyGroup[] {
   const file = path.resolve(process.cwd(), contentRoot, 'technology-groups.md');
-  return parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
+  const mtimeMs = fs.statSync(file, { throwIfNoEntry: false })?.mtimeMs ?? 0;
+  if (catalog?.mtimeMs !== mtimeMs) catalog = { mtimeMs, groups: readTechnologyGroups(file) };
+  return catalog.groups;
 }
 
 function getTechnologyLabel(slug: string): string | undefined {
@@ -128,7 +134,7 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
       title: entry.data.title,
       description: entry.data.description ?? '',
       date: normalizeDate(entry.data.published_at),
-      lastReviewed: normalizeDate(entry.data.last_reviewed),
+      lastReviewed: normalizeDate(entry.data.last_reviewed) || undefined,
       technologies: entry.data.technologies,
       heroImage: entry.data.cover_image ?? site.defaultOgImage,
       heroAlt: entry.data.cover_alt?.trim() || entry.data.title,
@@ -178,12 +184,9 @@ export function titleCase(value: string): string {
     .join(' ');
 }
 
+const longDate = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+
+// 'YYYY-MM-DD' -> 'June 17, 2026'. A bare ISO date parses as UTC.
 export function formatDate(value: string): string {
-  if (!value) return '';
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${value}T00:00:00Z`));
+  return value ? longDate.format(new Date(value)) : '';
 }

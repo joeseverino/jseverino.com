@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect } from '@playwright/test';
-import { readRoutes } from '../../bin/lib/pages-routes.ts';
 import { buildOutDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
@@ -9,11 +8,8 @@ import {
   cacheRuleFindings,
   contactRefusalFindings,
   cspFindings,
-  nonceFromCsp,
-  nonceParityFindings,
-  placeholderFindings,
+  inlineHashFindings,
   siteOrigin,
-  staticCspFindings,
   staticHeaderFindings,
 } from '../../src/lib/edge-expectations.ts';
 
@@ -38,31 +34,39 @@ function firstWriteup(): string {
   return writeupPath(slug.name);
 }
 
-const htmlPaths = ['/', firstWriteup()];
+const htmlPaths = ['/', '/contact/', firstWriteup()];
 
 for (const pathname of htmlPaths) {
-  test(`${pathname} carries the per-request CSP and the static security headers`, async ({ request }) => {
+  test(`${pathname} carries the CSP and the static security headers`, async ({ request }) => {
     const response = await request.get(pathname);
     expect(response.status()).toBe(200);
     const headers = response.headers();
-    expect(cspFindings(headers)).toEqual([]);
+    expect(cspFindings(headers, pathname)).toEqual([]);
     expect(staticHeaderFindings(headers)).toEqual([]);
   });
 
-  test(`${pathname} stamps the header nonce on every script tag`, async ({ request }) => {
+  test(`${pathname} carries the hash of every inline script and style in its policy`, async ({ request }) => {
     const response = await request.get(pathname);
-    const nonce = nonceFromCsp(response.headers()['content-security-policy']);
-    expect(nonce).not.toBeNull();
-    expect(nonceParityFindings(await response.text(), nonce)).toEqual([]);
+    expect(await inlineHashFindings(await response.text(), response.headers()['content-security-policy'])).toEqual([]);
   });
 }
 
-test('the nonce rotates between requests', async ({ request }) => {
-  const first = nonceFromCsp((await request.get('/')).headers()['content-security-policy']);
-  const second = nonceFromCsp((await request.get('/')).headers()['content-security-policy']);
-  expect(first).not.toBeNull();
-  expect(second).not.toBeNull();
-  expect(first).not.toBe(second);
+test('the policy is the same on every request: nothing is computed per view', async ({ request }) => {
+  const first = (await request.get('/')).headers()['content-security-policy'];
+  const second = (await request.get('/')).headers()['content-security-policy'];
+  expect(first).toBeTruthy();
+  expect(first).toBe(second);
+});
+
+test('the contact page enforces everything but Trusted Types, which it only reports', async ({ request }) => {
+  const contact = (await request.get('/contact/')).headers();
+  const home = (await request.get('/')).headers();
+  expect(contact['content-security-policy']).not.toContain('require-trusted-types-for');
+  expect(contact['content-security-policy-report-only']).toContain("require-trusted-types-for 'script'");
+  expect(home['content-security-policy']).toContain("require-trusted-types-for 'script'");
+  expect(home['content-security-policy-report-only']).toBeUndefined();
+  const withoutTrustedTypes = (policy = '') => policy.replace(/ ?require-trusted-types-for 'script';?/, '');
+  expect(withoutTrustedTypes(contact['content-security-policy'])).toBe(withoutTrustedTypes(home['content-security-policy']));
 });
 
 test('fingerprinted assets are immutable for a year and chrome assets are not', async ({ request }) => {
@@ -81,41 +85,31 @@ test('an unknown route returns a real 404', async ({ request }) => {
   expect(response.headers()['content-type'] ?? '').toContain('text/html');
 });
 
-// public/_routes.json sends static paths straight to the asset server, so they
-// never spend the Functions quota. Those responses skip the middleware, so
-// public/_headers gives them a static CSP, and a miss under an excluded prefix
-// gets that prefix's own fallback page, which needs neither script nor style.
-test.describe('Functions routing', () => {
-  const routes = readRoutes(path.join(dist, '_routes.json'));
+// public/_routes.json sends only the Function routes to Functions, so every
+// page and asset is served from static assets, with the policy and security
+// headers from public/_headers.
+test.describe('static serving', () => {
   const probe = Date.now().toString(36);
 
-  test('a missing page outside the excludes runs the middleware', async ({ request }) => {
+  test('a missing page is a static 404 with the policy', async ({ request }) => {
     const response = await request.get(`/edge-probe-${probe}/`);
     expect(response.status()).toBe(404);
     expect(cspFindings(response.headers())).toEqual([]);
-    expect(nonceParityFindings(await response.text(), nonceFromCsp(response.headers()['content-security-policy']))).toEqual([]);
+    expect(await inlineHashFindings(await response.text(), response.headers()['content-security-policy'])).toEqual([]);
   });
 
-  test('an excluded asset path is served without the middleware and keeps its cache rule', async ({ request }) => {
-    expect(routes.exclude).toContain('/assets/*');
+  test('an asset keeps its cache rule and the security headers', async ({ request }) => {
     const icon = await request.get(firstFile('assets/icons', (name) => !name.startsWith('.')));
     expect(icon.status()).toBe(200);
     expect(cacheRuleFindings(icon.headers(), { immutable: false })).toEqual([]);
-    expect(icon.headers()['x-content-type-options']).toBe('nosniff');
-    expect(staticCspFindings(icon.headers())).toEqual([]);
+    expect(staticHeaderFindings(icon.headers()).filter((finding) => !finding.startsWith('access-control'))).toEqual([]);
   });
 
   for (const prefix of ['assets', '_astro', '.well-known']) {
-    test(`a miss under /${prefix}/ gets the static fallback with the static CSP`, async ({ request }) => {
+    test(`a miss under /${prefix}/ is a static 404 with the policy`, async ({ request }) => {
       const miss = await request.get(`/${prefix}/edge-probe-${probe}/x.png`);
       expect(miss.status()).toBe(404);
-      expect(miss.headers()['content-type'] ?? '').toContain('text/html');
-      expect(staticCspFindings(miss.headers())).toEqual([]);
-      expect(staticHeaderFindings(miss.headers())).toEqual([]);
-      expect(miss.headers()['reporting-endpoints']).toBeUndefined();
-      const body = await miss.text();
-      expect(placeholderFindings(body)).toEqual([]);
-      expect(body).not.toMatch(/<script\b|<style\b/);
+      expect(cspFindings(miss.headers())).toEqual([]);
     });
   }
 });

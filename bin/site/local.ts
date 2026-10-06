@@ -5,9 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { draftsOverlay } from '../lib/cache.ts';
 import { lockfileDrift, preflight } from '../lib/preflight.ts';
-import { SYNC_TIMEOUT_MS, run } from '../lib/run.ts';
+import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run } from '../lib/run.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { buildOutDir } from '../../src/lib/build-output.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SiteError, assertSlug, requireReady, runScript, type Output } from './cli.ts';
 import type { DevResult, DraftAltResult, PullRequestRef, ScriptRun, SeoResult, StatusResult, VerifyResult } from './types.ts';
@@ -58,7 +59,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
   const [branch, porcelain, counts, prs] = await Promise.all([
     gitLine(root, ['branch', '--show-current']),
     gitLine(root, ['status', '--porcelain=v1']),
-    gitLine(root, ['rev-list', '--left-right', '--count', 'HEAD...origin/main']),
+    gitLine(root, ['rev-list', '--left-right', '--count', `HEAD...origin/${DEFAULT_BRANCH}`]),
     run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName'], { cwd: root, timeout: 30_000 }),
   ]);
   const dirty = (porcelain ?? '').split('\n').filter(Boolean).length;
@@ -75,7 +76,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
     vault: { path: vault, ok: fs.existsSync(path.join(vault, WRITEUPS_FOLDER)) },
     built: fs.existsSync(path.join(root, buildOutDir)),
     draftsOverlay: fs.existsSync(draftsOverlay()),
-    contentPrs: prs.code === 0 ? (JSON.parse(prs.stdout) as PullRequestRef[]).filter((pr) => pr.headRefName.startsWith('content/')) : null,
+    contentPrs: prs.code === 0 ? (JSON.parse(prs.stdout) as PullRequestRef[]).filter((pr) => pr.headRefName.startsWith(CONTENT_BRANCH_PREFIX)) : null,
   };
   out.step('repo', `${root} on ${result.branch ?? 'detached HEAD'}${dirty ? `, ${dirty} uncommitted` : ', clean'}`);
   out.step('main', ahead === null ? 'origin/main unknown (fetch first)' : `${ahead} ahead, ${behind} behind origin/main (as of the last fetch)`);
@@ -92,7 +93,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
 }
 
 async function front(script: string, args: string[], { out, what }: { out: Output; what: string }): Promise<ScriptRun> {
-  const result = await runScript(script, args, { out, timeout: 10 * 60_000 });
+  const result = await runScript(script, args, { out, timeout: BUILD_TIMEOUT_MS });
   if (!result.ok) throw new SiteError(`${what} failed`, { result });
   return result;
 }

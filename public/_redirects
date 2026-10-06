@@ -20,3 +20,6 @@
 
 # Resume PDF renamed to kebab-case (2026-07-11).
 /assets/docs/Joseph_Severino_Resume.pdf  /assets/docs/joseph-severino-resume.pdf  301
+
+# The default social card is a JPEG now (2026-10-05); links that cached the PNG still resolve.
+/assets/og/og-default.png  /assets/og/og-default.jpg  301

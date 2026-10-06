@@ -52,7 +52,7 @@ Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browse
 ```
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
-assets, applies headers, runs a [small HTML middleware](../functions/_middleware.ts) for CSP nonces and reporting, and
+assets, applies headers (including a build-time hash CSP), and
 handles the [contact form endpoint](../functions/api/contact.ts) plus the [CSP report endpoint](../functions/api/csp-report.ts). Preview Pages deployments also carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for visual and SEO comparison against the live site. It no longer fronts a public WordPress page
 renderer.
 
@@ -164,14 +164,14 @@ posture by removing the PHP/database dependency.
 | --- | ---: | ---: |
 | Document TTFB, homepage (`curl`) | ~0.83 s | **~0.26 s** |
 | Document TTFB, article (`curl`) | ~0.96 s | **~0.34 s** |
-| Script Security | `'unsafe-inline'` required | **Nonce-based CSP** |
+| Script Security | `'unsafe-inline'` required | **Hash-based CSP** |
 | Origin Surface | Public PHP/MySQL | **Static Edge** |
 
 The observed TTFB improvement comes from replacing dynamic PHP/database page
 rendering with static edge delivery. Exact response timing varies with cache
 state, Cloudflare routing, and client network conditions, so these numbers
 are a snapshot.
-The [nonce-based Content Security Policy](./Architecture.md#10-edge-security) also reduces script-injection risk; WordPress's reliance on inline scripts made that hard to maintain.
+The [hash-based Content Security Policy](./Architecture.md#10-edge-security) also reduces script-injection risk; WordPress's reliance on inline scripts made that hard to maintain.
 
 ## Lighthouse Notes
 
@@ -256,8 +256,6 @@ Work the migration removed from production operations:
 
 The remaining dynamic pieces are narrow and explicit:
 
-- [`functions/_middleware.ts`](../functions/_middleware.ts) fills the build's
-  nonce placeholders in HTML responses and advertises the CSP report endpoint.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact
   submissions with Turnstile verification, input validation, rate limiting, and
   D1 storage.

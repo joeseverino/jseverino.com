@@ -20,6 +20,8 @@ function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
   return onRequestPost({ request, env: { DB: db } } as Parameters<typeof onRequestPost>[0]);
 }
 
+const inserts = (db: ReturnType<typeof createD1Stub>) => db.queries.filter((entry) => /INSERT INTO csp_reports/.test(entry.query));
+
 const legacyReport = {
   'csp-report': {
     'document-uri': 'https://jseverino.com/contact/',
@@ -75,10 +77,16 @@ describe('noise filtering', () => {
     assert.equal(db.queries.length, 0);
   });
 
-  test('drops browser-extension violations', async () => {
-    const extension = { 'csp-report': { ...legacyReport['csp-report'], 'blocked-uri': 'chrome-extension://abcdef' } };
-    const response = await call(reportRequest(extension));
-    assert.equal(response.status, 400);
+  test('drops browser-extension violations, by blocked URI or by source file', async () => {
+    for (const scheme of ['chrome-extension', 'moz-extension', 'safari-extension', 'safari-web-extension', 'edge-extension']) {
+      for (const field of ['blocked-uri', 'source-file']) {
+        const extension = { 'csp-report': { ...legacyReport['csp-report'], [field]: `${scheme}://abcdef/inject.js` } };
+        const db = createD1Stub();
+        const response = await call(reportRequest(extension), db);
+        assert.equal(response.status, 400, `${scheme} ${field}`);
+        assert.equal(db.queries.length, 0, `${scheme} ${field}`);
+      }
+    }
   });
 
   test('drops extension-injected inline violations attributed to the page itself', async () => {
@@ -105,29 +113,6 @@ describe('noise filtering', () => {
 });
 
 describe('persistence', () => {
-  test('stores a normalized legacy report and returns 204', async () => {
-    const db = createD1Stub();
-    const response = await call(reportRequest(legacyReport), db);
-    assert.equal(response.status, 204);
-    assert.equal(response.headers.get('Cache-Control'), 'no-store');
-  });
-
-  test('binds the normalized legacy fields in column order', async () => {
-    const db = createD1Stub();
-    await call(reportRequest(legacyReport), db);
-    assert.equal(db.queries.length, 1);
-    assert.match(db.queries[0]?.query ?? '', /INSERT INTO csp_reports/);
-    const [documentUri, blockedUri, effectiveDirective, , disposition, , sourceFile, lineNumber, , statusCode] =
-      db.queries[0]?.values ?? [];
-    assert.equal(documentUri, 'https://jseverino.com/contact/');
-    assert.equal(blockedUri, 'https://evil.example/payload.js');
-    assert.equal(effectiveDirective, 'script-src-elem');
-    assert.equal(disposition, 'enforce');
-    assert.equal(sourceFile, 'https://jseverino.com/contact/');
-    assert.equal(lineNumber, 12);
-    assert.equal(statusCode, 200);
-  });
-
   test('stores a Reporting API csp-violation', async () => {
     const report = {
       type: 'csp-violation',
@@ -144,8 +129,8 @@ describe('persistence', () => {
     const db = createD1Stub();
     const response = await call(reportRequest(report, 'application/reports+json'), db);
     assert.equal(response.status, 204);
-    assert.equal(db.queries[0]?.values[0], 'https://jseverino.com/portfolio/');
-    assert.equal(db.queries[0]?.values[1], 'https://evil.example/tracker.js');
+    assert.equal(inserts(db)[0]?.values[0], 'https://jseverino.com/portfolio/');
+    assert.equal(inserts(db)[0]?.values[1], 'https://evil.example/tracker.js');
   });
 
   test('writes every report of a request in one batch', async () => {
@@ -158,7 +143,7 @@ describe('persistence', () => {
     };
     await call(reportRequest([legacyReport, legacyReport]), db);
     assert.equal(batches, 1);
-    assert.equal(db.queries.length, 2);
+    assert.equal(inserts(db).length, 2);
   });
 
   test('caps a report batch at ten inserts', async () => {
@@ -166,7 +151,7 @@ describe('persistence', () => {
     const db = createD1Stub();
     const response = await call(reportRequest(batch), db);
     assert.equal(response.status, 204);
-    assert.equal(db.queries.length, 10);
+    assert.equal(inserts(db).length, 10);
   });
 
   test('returns 500 when the D1 insert fails', async () => {
@@ -200,16 +185,38 @@ describe('write bounds', () => {
     assert.equal(db.count('csp_reports'), 31);
   });
 
+  test('drops reports older than the retention window in the same batch', async () => {
+    const db = createD1Sqlite();
+    const seed = (age: string) =>
+      db.prepare(`INSERT INTO csp_reports (blocked_uri, raw_report, created_at) VALUES (?1, '{}', datetime('now', ?2))`).bind(`https://seed.example/${age}`, age).run();
+    await seed('-61 days');
+    await seed('-59 days');
+    assert.equal(db.count('csp_reports'), 2);
+    assert.equal((await call(fromIp(distinct(1)), db)).status, 204);
+    const kept = async (age: string) =>
+      (await db.prepare('SELECT COUNT(*) AS n FROM csp_reports WHERE blocked_uri = ?1').bind(`https://seed.example/${age}`).first<{ n: number }>())?.n;
+    assert.equal(await kept('-61 days'), 0, 'the 61-day-old report is purged');
+    assert.equal(await kept('-59 days'), 1, 'the 59-day-old report is kept');
+    assert.equal(db.count('csp_reports'), 2);
+  });
+
   test('stores the normalized fields and caller metadata', async () => {
     const db = createD1Sqlite();
-    await call(reportRequest(legacyReport, 'application/csp-report', {
+    const response = await call(reportRequest(legacyReport, 'application/csp-report', {
       'CF-Connecting-IP': '203.0.113.7',
       'CF-IPCountry': 'US',
       'User-Agent': '  Mozilla/5.0  ',
     }), db);
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
     const row = await db.prepare('SELECT * FROM csp_reports').first<CspReportRow>();
     assert.ok(row);
     assert.equal(row.document_uri, 'https://jseverino.com/contact/');
+    assert.equal(row.blocked_uri, 'https://evil.example/payload.js');
+    assert.equal(row.effective_directive, 'script-src-elem');
+    assert.equal(row.disposition, 'enforce');
+    assert.equal(row.source_file, 'https://jseverino.com/contact/');
+    assert.equal(row.status_code, 200);
     assert.equal(row.line_number, 12);
     assert.equal(row.ip_address, '203.0.113.7');
     assert.equal(row.country, 'US');

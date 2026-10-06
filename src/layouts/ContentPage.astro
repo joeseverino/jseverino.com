@@ -1,0 +1,46 @@
+---
+// The shape every document page shares: a hero, then the synced body. Pages
+// differ only in the few props below.
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHero from '@components/PageHero.astro';
+import ContentBody from '@components/content/ContentBody.astro';
+import type { PageContent } from '@lib/content.ts';
+
+type Props = {
+  page: PageContent;
+  /** Breadcrumb trail between Home and the page itself. */
+  parents?: { name: string; url: string }[];
+  pageType?: 'profile';
+  preconnect?: string[];
+  /** Added to the `content-page` class on <main>. */
+  mainClass?: string;
+  /** Show the page's intro under the title. */
+  lede?: boolean;
+  /** Wrap the body in the `.prose` column. */
+  prose?: boolean;
+};
+
+const { page, parents = [], pageType, preconnect, mainClass, lede = true, prose = true } = Astro.props;
+const breadcrumbs = [{ name: 'Home', url: '/' }, ...parents, { name: page.title, url: page.path }];
+---
+
+<BaseLayout
+  seo={{ title: page.title, description: page.description, path: page.path, breadcrumbs, ...(pageType ? { pageType } : {}) }}
+  {...(preconnect ? { preconnect } : {})}
+>
+  <main id="main" class:list={['content-page', mainClass]}>
+    <div class="content-flow">
+      <PageHero title={page.title} {...(lede ? { description: page.intro ?? page.description } : {})} />
+      {
+        prose ? (
+          <div class="prose">
+            <ContentBody entry={page.entry} />
+            <slot />
+          </div>
+        ) : (
+          <ContentBody entry={page.entry} />
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>

@@ -21,7 +21,6 @@ export const API_BASE = 'https://api.cloudflare.com/client/v4';
 const FIREWALL_PHASE = 'http_request_firewall_custom';
 const RATELIMIT_PHASE = 'http_ratelimit';
 const REDIRECT_PHASE = 'http_request_redirect';
-export const FREE_CUSTOM_RULES = 5;
 
 export class ApiError extends Error {
   status: number;
@@ -342,7 +341,7 @@ function pagesItems(desired: DesiredState, live: LiveState, compatibilityDate: s
 const SERVICE_TOKEN_RULES = new Set(['service_token', 'any_valid_service_token']);
 
 // A policy that admits only service tokens: Service Auth, every include rule a token.
-export const isServiceAuthOnly = (policy: AccessPolicy): boolean =>
+const isServiceAuthOnly = (policy: AccessPolicy): boolean =>
   policy.decision === 'non_identity' && (policy.include ?? []).length > 0
   && (policy.include ?? []).every((rule) => Object.keys(rule).length > 0 && Object.keys(rule).every((key) => SERVICE_TOKEN_RULES.has(key)));
 
@@ -422,7 +421,7 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
       widgets.length ? 'more than one widget names these hostnames' : 'no widget names these hostnames');
   }
   const have = [...(widget.domains ?? [])].sort();
-  if (same(have, [...want].sort())) return item('turnstile', 'domains', want, have, 'ok');
+  if (same(have, want.toSorted())) return item('turnstile', 'domains', want, have, 'ok');
   const body = { ...pick(widget, ['name', 'mode', 'bot_fight_mode', 'clearance_level', 'ephemeral_id', 'offlabel', 'region']), domains: want };
   return item('turnstile', 'domains', want, have, 'drift', [
     { use: { sitekey: widget.sitekey } },

@@ -6,9 +6,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DetailedError } from './detailed-error.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
+import { cspReportUri } from '../../src/lib/edge-expectations.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 export type Runner = (cmd: string, args: readonly string[], options: { cwd: string; timeout: number }) => SpawnResult;
 
@@ -34,14 +37,7 @@ export function siteOpsConfig(env: NodeJS.ProcessEnv = process.env): SiteOpsConf
   };
 }
 
-export class SiteOpsError extends Error {
-  details: Record<string, unknown>;
-
-  constructor(message: string, details: Record<string, unknown> = {}) {
-    super(message);
-    this.details = details;
-  }
-}
+export class SiteOpsError extends DetailedError {}
 
 type Row = Record<string, unknown>;
 
@@ -58,12 +54,15 @@ const bounded = (value: number | undefined, fallback: number, max = 100): number
 
 const sqlString = (value: string): string => `'${value.replaceAll("'", "''")}'`;
 
-const wrangler = (config: SiteOpsConfig): string => path.join(config.siteRepo, 'node_modules', '.bin', 'wrangler');
-
-export function runD1(config: SiteOpsConfig, sql: string, timeout = 20_000): D1Result {
-  const bin = wrangler(config);
+// Run the repo's own wrangler, failing clearly when it is not installed.
+function runWrangler(config: SiteOpsConfig, args: string[], timeout: number): SpawnResult {
+  const bin = path.join(config.siteRepo, 'node_modules', '.bin', 'wrangler');
   if (!fs.existsSync(bin)) throw new SiteOpsError(`wrangler not installed in ${config.siteRepo}; run npm ci there`);
-  const proc = config.run(bin, ['d1', 'execute', config.d1Database, '--remote', '--json', '--command', sql], { cwd: config.siteRepo, timeout });
+  return config.run(bin, args, { cwd: config.siteRepo, timeout });
+}
+
+function runD1(config: SiteOpsConfig, sql: string, timeout = 20_000): D1Result {
+  const proc = runWrangler(config, ['d1', 'execute', config.d1Database, '--remote', '--json', '--command', sql], timeout);
   if (proc.code !== 0) {
     throw new SiteOpsError(`wrangler d1 execute failed: ${proc.stderr.trim() || proc.error?.message || `exit ${proc.code}`}`, {
       exit_code: proc.code, stdout: proc.stdout.trim(),
@@ -91,9 +90,9 @@ function audit(config: SiteOpsConfig, action: string, detail: string): void {
 
 export const redactEmail = (email: string): string => {
   const value = email.trim();
-  if (!value.includes('@')) return value ? '***' : '';
-  const [local = '', domain = ''] = [value.slice(0, value.indexOf('@')), value.slice(value.indexOf('@') + 1)];
-  return `${local.slice(0, 1)}***@${domain}`;
+  const at = value.indexOf('@');
+  if (at === -1) return value ? '***' : '';
+  return `${value.slice(0, 1)}***@${value.slice(at + 1)}`;
 };
 
 export const abbreviateName = (name: string): string => {
@@ -187,9 +186,7 @@ export interface SchemaApply {
 export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { confirm?: boolean } = {}): SchemaApply {
   const command = `wrangler d1 execute ${config.d1Database} --remote --file=cloudflare/d1.sql`;
   if (!confirm) throw new SiteOpsError('refusing to apply the D1 schema without confirm', { refused: true, command });
-  const bin = wrangler(config);
-  if (!fs.existsSync(bin)) throw new SiteOpsError(`wrangler not installed in ${config.siteRepo}; run npm ci there`);
-  const proc = config.run(bin, ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], { cwd: config.siteRepo, timeout: 120_000 });
+  const proc = runWrangler(config, ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], 120_000);
   const output = `${proc.stdout}${proc.stderr}`.trim();
   if (proc.code !== 0) throw new SiteOpsError(`${command} failed`, { exit_code: proc.code, output });
   return { applied: true, command, output };
@@ -229,7 +226,7 @@ export async function checkSecurityHeaders(config: SiteOpsConfig, pathname = '/'
   try {
     response = await config.fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(10_000) });
   } catch (error) {
-    throw new SiteOpsError(`HEAD ${url} failed: ${(error as Error).message}`);
+    throw new SiteOpsError(`HEAD ${url} failed: ${errorMessage(error)}`);
   }
   const headers = Object.fromEntries(SECURITY_HEADERS.map((name) => [name, response.headers.get(name)])) as HeaderCheck['headers'];
   const csp = headers['content-security-policy'] ?? '';
@@ -241,9 +238,9 @@ export async function checkSecurityHeaders(config: SiteOpsConfig, pathname = '/'
     headers,
     checks: {
       hasCsp: csp !== '',
-      noUnsafeInlineScript: !csp.includes("script-src 'unsafe-inline'"),
+      noUnsafeInlineScript: !/script-src[^;]*'unsafe-inline'/.test(csp),
       hasCspReportTo: csp.includes('report-to csp-endpoint'),
-      hasCspReportUri: csp.includes(`report-uri ${SITE_ORIGIN}/api/csp-report`),
+      hasCspReportUri: csp.includes(`report-uri ${cspReportUri}`),
       hasReportingEndpoints: reporting.includes('csp-endpoint='),
     },
   };

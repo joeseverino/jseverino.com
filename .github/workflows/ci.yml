@@ -48,7 +48,7 @@ jobs:
       # The same registry-driven gate that runs locally before a push. --no-sync
       # because CI has no vault; src/content is the committed snapshot.
       - name: Publish gate
-        run: npm run publish:check -- --no-sync
+        run: npm run publish:check -- --no-sync --after-gate
         env:
           ASTRO_TELEMETRY_DISABLED: '1'
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md

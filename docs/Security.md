@@ -17,12 +17,12 @@ bypass, remote code execution on an origin) do not apply to the serving
 layer.
 
 The only code that executes per request is Cloudflare Pages Functions for the
-HTML CSP middleware, contact form, CSP report receiver, and the read-only
-`/__sitedrift/*` preview-review route (see below). The sitedrift route is
-inert in production: it needs configuration generated only for preview
-deployments and returns `404` without it. Everything else is a flat file, and
-[`public/_routes.json`](../public/_routes.json) serves those files without
-invoking Functions at all.
+contact form, CSP report receiver, and the read-only `/__sitedrift/*`
+preview-review route (see below). The sitedrift route is inert in production:
+it needs configuration generated only for preview deployments and returns
+`404` without it. Everything else, every HTML page included, is a flat file,
+and [`public/_routes.json`](../public/_routes.json) lists only the Function
+routes, so page views never invoke Functions at all.
 
 ### The private/public boundary is one auditable step
 
@@ -132,7 +132,7 @@ The `contact_submissions` table:
 | `status` | `TEXT NOT NULL DEFAULT 'unread'` | Triage state, updated from the private operations app. |
 | `turnstile` | `TEXT NOT NULL DEFAULT 'verified'` | Records that server-side Turnstile verification passed before the row was written. |
 | `ip_address`, `user_agent`, `browser`, `device`, `country` | `TEXT` | Request context for abuse review. |
-| `source_url` | `TEXT` | Page the form was submitted from. |
+| `source_url` | `TEXT` | Page the form was submitted from: this site's own URL without query or fragment. The submitted value and the `Referer` are both client input, so one that names another origin is stored as `NULL`. |
 | `assigned_to`, `admin_notes` | `TEXT` | Triage fields, updated from the private operations app. |
 | `created_at`, `updated_at` | `TEXT NOT NULL DEFAULT (datetime('now'))` | Audit timestamps. |
 
@@ -153,6 +153,10 @@ The `csp_reports` table stores filtered browser CSP violation reports:
 | `raw_report` | `TEXT NOT NULL` | Size-capped original report JSON for debugging. |
 | `created_at` | `TEXT NOT NULL DEFAULT (datetime('now'))` | Audit timestamp. |
 
+Reports are diagnostics, so they are bounded: the batch that stores a request's
+reports first deletes those older than 60 days, which keeps the table small
+without a scheduler. Contact submissions are the only rows kept indefinitely.
+
 Four indices support it: `created_at DESC` for the latest reports,
 `effective_directive` for grouping recurring policy issues, and
 `(ip_address, created_at DESC)` and `(blocked_uri, created_at DESC)` for the
@@ -164,19 +168,17 @@ depends on are documented in [Architecture §13 Runtime Configuration](./Archite
 
 ## HTTP response headers
 
-Cloudflare Pages applies the static headers in [`public/_headers`](../public/_headers) to every
-response. For HTML responses in production, [`functions/_middleware.ts`](../functions/_middleware.ts) additionally
-emits a per-request, nonce-bearing `Content-Security-Policy` header, attaches
-the matching nonce to the `<script>` and `<style>` tags the build stamped, and advertises the CSP reporting
-endpoint.
-
-The middleware handles two edge cases:
-- **Skips bodyless responses.** It immediately returns the original response for `304 Not Modified` and `204 No Content` statuses, preventing broken caching behavior or empty documents.
-- **Strips decompression headers.** `HTMLRewriter` decompresses the response stream but does not automatically remove the `Content-Encoding` or `Content-Length` headers. The middleware explicitly deletes these headers after transformation, since stale headers make the browser misread the uncompressed HTML as a blank page.
+Cloudflare Pages applies [`public/_headers`](../public/_headers) to static
+assets, which is every page the site serves. It does not apply to Function
+responses: the JSON from `/api/*` sets its own headers. The
+`Content-Security-Policy` is computed at build time: `public/_headers` holds
+placeholders and [`bin/build-csp.ts`](../bin/build-csp.ts) writes the finished
+policy and the `Reporting-Endpoints` header into `dist/_headers` (see Content
+Security Policy below). The policy is identical on every request.
 
 | Header | Value | Purpose |
 |---|---|---|
-| `Content-Security-Policy` | per-request from [`functions/_middleware.ts`](../functions/_middleware.ts) | Restricts the scripts, styles, and origins a page may load; detailed below. |
+| `Content-Security-Policy` | built into `dist/_headers` by [`bin/build-csp.ts`](../bin/build-csp.ts) | Restricts the scripts, styles, and origins a page may load; detailed below. |
 | `Reporting-Endpoints` | `csp-endpoint="https://jseverino.com/api/csp-report"` | Gives browsers the named endpoint used by CSP `report-to`. |
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (Cloudflare-managed) | Forces HTTPS for one year on the apex domain and all subdomains. Set at the Cloudflare zone level (SSL/TLS → Edge Certificates → HSTS) so it applies to every response without being duplicated in `_headers`. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
@@ -225,46 +227,66 @@ The policy starts from `default-src 'none'`: every fetch type the browser
 makes must be explicitly authorized by its own directive, so any future
 resource category (manifests, media, workers) fails closed unless the CSP
 is updated alongside it. From that default-deny baseline the policy
-allowlists only the third-party origins the site uses: Cloudflare Turnstile
-(`challenges.cloudflare.com`) and the Cloudflare Web Analytics beacon
-(`static.cloudflareinsights.com`).
+allowlists only what the site uses: itself, Cloudflare Turnstile
+(`challenges.cloudflare.com`), and Cloudflare Web Analytics
+(`static.cloudflareinsights.com` for the beacon script,
+`cloudflareinsights.com` for its reports). `script-src` is `'self'`, the hash
+of the one inline theme-bootstrap script, and those two script hosts. There is
+no `'unsafe-inline'`, no `'unsafe-eval'`, no nonce, no `'strict-dynamic'`, no
+`blob:`, and no broad `https:`. `style-src` is `'self'` plus the hash of the
+one inlined stylesheet (identical on every page, so one hash), and no
+`style="..."` attributes are emitted in production HTML.
 
-Production HTML uses a per-request nonce. The build stamps a placeholder
-(`nonce="__CSP_NONCE__"`) on the site's own `<script>` and `<style>` tags and
-fails if any other script or style tag is present; the Pages middleware
-([`functions/_middleware.ts`](../functions/_middleware.ts)) generates the
-nonce, swaps it in for the placeholder with `HTMLRewriter`, and emits a CSP
-containing that nonce. Only placeholder tags get a nonce, so markup that
-reaches a page from content never does.
-Cloudflare JavaScript Detections and the Web Analytics beacon, injected after
-the middleware, take the nonce from the header, and the beacon's host is
-allowlisted as well; no script hash is pinned, since a hash goes stale whenever
-Cloudflare reships the beacon. The site keeps a strict `script-src` without
-`'unsafe-inline'`. `style-src` is equally strict (`'self'` plus the same
-nonce, no `'unsafe-inline'`): Astro inlines the one site stylesheet as a single
-`<style>` block that carries the nonce, and no `style="..."` attributes are
-emitted in production HTML.
+The policy is built, not generated per request. After the build and the preview
+wrap, [`bin/build-csp.ts`](../bin/build-csp.ts) scans every built HTML page,
+hashes the inline script and stylesheet with SHA-256, and writes the policy into
+`dist/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`,
+`__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders in
+`public/_headers`. The theme-bootstrap script is the only inline executable
+script: an `is:inline` script in
+[`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) marked at
+build time with a `nonce="__CSP_INLINE__"` attribute that `build-csp` strips
+from the output. The build fails on any inline script or style the site did not
+emit, and on any external script outside same-origin,
+`https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`.
+It also fails if more than 4 inline script hashes or 4 style hashes exist, or
+if any `_headers` line exceeds 2000 characters. The policy module is
+[`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`,
+`inlineHashes`, `hashSource`).
+
+Astro's own `security.csp` option is not used. It hashes the scripts and styles
+at build time and delivers the policy in a `<meta>` element, which browsers
+ignore for `frame-ancestors`, `report-to`, and `report-uri`. It also does not
+pin Turnstile's external script by host. The build step does the same hashing
+and writes the policy into response headers instead, where all of those
+directives apply.
 
 Component scripts are emitted as external `/_astro/*.js` bundles
 (via `vite.build.assetsInlineLimit: 0` in
 [`astro.config.ts`](../astro.config.ts)), not inlined into HTML.
-The only inline `<script>` element in production HTML is the JSON-LD
-structured-data block, which browsers treat as data and never execute, but still
-receives a nonce. There is no inline executable JavaScript shipped to
-visitors, which lets `script-src` enforce the policy on every script
-the browser actually sees.
+Besides the theme-bootstrap script, the only inline `<script>` element in
+production HTML is the JSON-LD structured-data block, which browsers treat as
+data and never execute. There is no other inline executable JavaScript shipped
+to visitors, which lets `script-src` enforce the policy on every script the
+browser actually sees.
 
-The middleware's behavior (fresh nonce per request, the header set it emits,
-and the pass-through rules for non-HTML responses) is pinned by unit tests
-([`tests/unit/middleware.test.ts`](../tests/unit/middleware.test.ts)), as is the
+The one request-time CSP is the preview review proxy
+([`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)).
+It serves markup fetched while the request runs, so it generates a nonce for
+the bridge script sitedrift injects and adds a hash for each inline script and
+style in the fetched page. It is not served on production (`404` there).
+
+The policy builder and the inline scan are pinned by unit tests
+([`tests/unit/csp.test.ts`](../tests/unit/csp.test.ts)), as is the
 report receiver's normalization and noise filtering
 ([`tests/unit/csp-report-api.test.ts`](../tests/unit/csp-report-api.test.ts)).
+The edge suite asserts hash coverage of every inline script and style, that the
+policy is identical on every request, and the `/contact/` exemption.
 
 [`public/_headers`](../public/_headers) carries the other security headers
 (`X-Content-Type-Options`, `X-Frame-Options`, `X-Permitted-Cross-Domain-Policies`,
 `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`,
-`Cross-Origin-Resource-Policy`) but does not set a static CSP fallback; CSP
-is issued per-request by the middleware.
+`Cross-Origin-Resource-Policy`) alongside the CSP placeholders.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.
@@ -272,10 +294,8 @@ is issued per-request by the middleware.
 The enforced policy reports through `report-to csp-endpoint` and the
 `Reporting-Endpoints` header, plus `report-uri` for browsers without Reporting
 API support for CSP (Firefox); the others ignore it when `report-to` is
-present. A report-only companion policy stages what the enforced policy will
-become: `'strict-dynamic'` under the same nonce (so trust flows from the nonced
-scripts rather than a host allowlist) plus `require-trusted-types-for 'script'`.
-It is promoted once the report log shows it blocks nothing real. The report receiver
+present. The enforced policy also carries `require-trusted-types-for 'script'`
+on every page except `/contact/` (see Trusted Types below). The report receiver
 ([`functions/api/csp-report.ts`](../functions/api/csp-report.ts)) accepts both
 legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
 payload size, filters reports to `https://jseverino.com` documents, drops common
@@ -291,25 +311,26 @@ identical to one stored in the last hour is skipped, and each IP gets at most
 operational visibility without adding
 `report-sample` or collecting inline code snippets.
 
-**Trusted Types (report-only).** The middleware emits a second
-`Content-Security-Policy-Report-Only` header carrying
-`require-trusted-types-for 'script'`. Trusted Types defends against
-DOM-XSS by blocking dangerous sinks (`innerHTML`, `outerHTML`,
-`insertAdjacentHTML`, `document.write`, and the rest) unless they are routed
-through an explicit `TrustedTypePolicy`. The handful of first-party inline
-scripts (the header scroll fallback, the theme bootstrap) touch only
-`classList`, `dataset`, and `style`, and Astro emits no client-side
-DOM-sink usage, so for first-party code this directive runs clean. Every
-one of them carries the build's nonce placeholder, which the middleware
-replaces per request. Promotion to enforced is blocked by
-Cloudflare-injected scripts that aren't TT-compliant: the JS Detections
-fingerprint at `/cdn-cgi/challenge-platform/scripts/jsd/main.js` assigns
-to `innerHTML`, and the RUM beacon hits `/cdn-cgi/rum`. Disabling those
-features would resolve the conflict but would also lose Cloudflare's
-bot-scoring and real-user telemetry that this site relies on, so the
-directive stays in report-only. Violations land in the same
-`/api/csp-report` D1 sink with `disposition="report"` and can be
-filtered by `effective_directive` for first-party regression review.
+**Trusted Types.** `require-trusted-types-for 'script'` is part of the
+enforced policy on every page except the contact form. Trusted Types defends
+against DOM-XSS by blocking dangerous sinks (`innerHTML`, `outerHTML`,
+`insertAdjacentHTML`, `document.write`, script text and URLs) unless the value
+goes through an explicit `TrustedTypePolicy`. The site's own scripts touch only
+`classList`, `dataset`, `style`, and text, and the report log has shown no
+first-party violation since the lightbox stopped using a sink (2026-09-19).
+`/contact/` stays on a `Content-Security-Policy-Report-Only` header carrying the
+same directive: Turnstile's `api.js` assigns to `innerHTML`, script text, and
+script URLs without a policy, and that third-party script cannot be patched
+here. Violations land in the same `/api/csp-report` D1 sink with
+`disposition="report"`; reassess when Turnstile ships a compliant build.
+`public/_headers` gives `/contact/*` its own rule. Pages merges the headers of
+every matching rule, so the exception is a detach plus a new line: the rule
+removes the global policy (`! Content-Security-Policy`), sets one without
+Trusted Types, and adds
+`Content-Security-Policy-Report-Only: require-trusted-types-for 'script'`.
+`trustedTypesExempt` in
+[`src/lib/edge-expectations.ts`](../src/lib/edge-expectations.ts) is the
+exemption helper.
 
 ## DNS and transport
 
@@ -360,10 +381,12 @@ difference with a separate write token. What it declares, briefly:
   `jseverino.pages.dev` 301s to `https://jseverino.com` through a Bulk
   Redirect, and preview deployments sit behind Cloudflare Access.
 - **Nothing rewrites HTML.** Rocket Loader, Email Obfuscation, Server-Side
-  Excludes, Automatic HTTPS Rewrites, and Speed Brain are off, and no Cache
-  Rule caches HTML, because each would inject markup the nonce does not cover
-  or serve one visitor's nonce to another.
-- **Bot Fight Mode** is on; production verification runs from a residential IP.
+  Excludes, and Automatic HTTPS Rewrites must stay off, because each would
+  inject markup the build-time hashes do not cover.
+- **Bot Fight Mode must be off.** Its JavaScript Detections inject an inline
+  script with per-request values into HTML, which a static hash policy cannot
+  cover. It is set in the dashboard, not in `cloudflare/zone.json` (see
+  [docs/Cloudflare.md](./Cloudflare.md#bot-fight-mode)).
 
 [docs/Cloudflare.md](./Cloudflare.md) has the free-plan limits behind
 each choice, the token permissions, and the post-apply checks.
@@ -403,7 +426,7 @@ re-investigate them:
   `docs/Architecture.md` and the WordPress-to-Astro migration writeup,
   so the fingerprint discloses nothing new.
 
-Rescan after any change to `functions/_middleware.ts` or `public/_headers`
+Rescan after any change to `bin/build-csp.ts` or `public/_headers`
 to confirm Observatory hasn't regressed. The Pentest-Tools findings above
 will reappear on every rescan; they are inherent to the architecture and
 have been intentionally accepted.
@@ -423,8 +446,8 @@ audit confirms that those headers do not break a real browser session
 under the full third-party load (Cloudflare beacon, Turnstile challenge
 flow, Cloudflare-injected speculation rules). A zero-violation HAR run
 across all three surfaces is the operational gate against regressions
-in any enforced directive, and surfaces any first-party Trusted Types
-regression in the report-only stream. Full procedure in
+in any enforced directive, and surfaces any Trusted Types regression on
+`/contact/` in the report-only stream. Full procedure in
 [`docs/Release-Checklist.md`](./Release-Checklist.md#5-cloudflare-deploy-verification).
 
 ## Supply chain and CI
@@ -498,8 +521,8 @@ surface:
   three: raw HTML is limited to listed formatting tags with listed, plain-string
   attributes, `href`/`src` to `http`, `https`, `mailto`, or relative URLs, and
   anything else fails the build with its line. `site validate` runs the same
-  compile before a sync. The build also fails if any script or style tag lacks
-  the nonce placeholder.
+  compile before a sync. The build also fails if any inline script or style is
+  one the site did not emit (the CSP scan in `bin/build-csp.ts`).
 - **Images carry no metadata.** The sync writes each image's master stripped of
   EXIF, XMP, and ICC data and capped at the 1600 pixels the site serves, so
   neither the public repo nor the site carries what a camera or screenshot tool

@@ -3,11 +3,13 @@ sequenceDiagram
     autonumber
     actor Client as Browser Client
     participant Edge as Cloudflare Edge
-    participant Static as CDN Static Assets
+    participant Static as Static Assets
+    participant Fn as Pages Function
     participant D1 as D1 Database
 
-    Client->>Edge: Request Page
-    Edge->>Client: Inject Nonce & Issue CSP
-    Client->>Static: Fetch Assets
-    Client->>Edge: Submit Contact / CSP reports
-    Edge->>D1: Parameterized SQL Write
+    Client->>Edge: Request page
+    Edge->>Static: Serve HTML, CSS, JS
+    Static-->>Client: Page with policy headers (no Function)
+    Client->>Edge: Submit contact / CSP reports
+    Edge->>Fn: /api/* only
+    Fn->>D1: Parameterized SQL write

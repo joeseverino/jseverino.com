@@ -5,13 +5,14 @@
 // caller (HQ) drive the same functions.
 import fs from 'node:fs';
 import path from 'node:path';
+import { DetailedError } from '../detailed-error.ts';
 import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from '../local-paths.ts';
 import { checkContent, type CheckedDocument } from '../../content-sync/sync.ts';
 import { collectionFields, contentContract, contentContractFingerprint } from '../../../src/lib/content-contract.ts';
 import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
 import { isoDate } from '../../../src/lib/dates.ts';
-import { applyScalars, escapeRegExp } from './scalar.ts';
+import { applyScalars } from './scalar.ts';
 import { transactionalReplace, type TransactionOptions } from './transaction.ts';
 import { fingerprint, receipt, type MutationReceipt } from './receipt.ts';
 
@@ -32,14 +33,12 @@ export function writeupStore(env: NodeJS.ProcessEnv = process.env): WriteupStore
 
 export type WriteupErrorCode = 'not_found' | 'invalid' | 'stale_plan' | 'transaction_failed';
 
-export class WriteupError extends Error {
+export class WriteupError extends DetailedError {
   code: WriteupErrorCode;
-  details: Record<string, unknown>;
 
   constructor(code: WriteupErrorCode, message: string, details: Record<string, unknown> = {}) {
-    super(message);
+    super(message, details);
     this.code = code;
-    this.details = details;
   }
 }
 
@@ -234,11 +233,23 @@ export interface PublishReadiness {
   tagUsage?: Record<string, { totalWriteups: number; publishedWriteups: number }>;
 }
 
+// The writeup with this slug, or a not_found error.
+function findWriteup(writeups: readonly Writeup[], slug: string): Writeup {
+  const writeup = writeups.find((candidate) => candidate.slug === slug);
+  if (!writeup) throw new WriteupError('not_found', `writeup not found: ${slug}`);
+  return writeup;
+}
+
+// Write the replacements together or not at all; a failure rolls back and throws.
+function commit(store: WriteupStore, replacements: Map<string, string>, options?: TransactionOptions): void {
+  const outcome = transactionalReplace(store.writeupsDir, replacements, options);
+  if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
+}
+
 // The ship gate for one writeup with its place in the featured set.
 export async function prepare(store: WriteupStore, slug: string, { includeTagUsage = false } = {}): Promise<PublishReadiness> {
   const writeups = loadWriteups(store);
-  const writeup = writeups.find((w) => w.slug === slug);
-  if (!writeup) throw new WriteupError('not_found', `writeup not found: ${slug}`);
+  const writeup = findWriteup(writeups, slug);
   const [validation] = (await checkContent({ vaultRoot: store.vaultRoot, slug })).documents;
   const featured = writeups.filter((w) => w.featured).sort(byFeaturedOrder);
   const result: PublishReadiness = {
@@ -337,8 +348,7 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
   if (replacements.size === 0) {
     return { noOp: true, changedWriteups: [], changedFields: {}, featuredOrderAfter: order ?? featuredOrder(writeups).map((e) => e.slug) };
   }
-  const outcome = transactionalReplace(store.writeupsDir, replacements, options);
-  if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
+  commit(store, replacements, options);
 
   const changedWriteups = Object.keys(changedFields).sort();
   const featuredOrderAfter = order ?? featuredOrder(loadWriteups(store)).map((e) => e.slug);
@@ -368,7 +378,7 @@ export interface ReorderResult extends PlanResult {
 export function reorderFeatured(store: WriteupStore, slug: string, position: number, options: TransactionOptions = {}): ReorderResult {
   if (!Number.isInteger(position) || position < 0) throw new WriteupError('invalid', 'position must be an integer >= 0');
   const writeups = loadWriteups(store);
-  if (!writeups.some((w) => w.slug === slug)) throw new WriteupError('not_found', `writeup not found: ${slug}`);
+  findWriteup(writeups, slug);
   const others = writeups.filter((w) => w.featured).sort(byFeaturedOrder).map((w) => w.slug).filter((s) => s !== slug);
   if (position > others.length + 1) throw new WriteupError('invalid', `position ${position} out of range (max ${others.length + 1})`);
   const order = position === 0 ? others : [...others.slice(0, position - 1), slug, ...others.slice(position - 1)];
@@ -394,12 +404,10 @@ export function updateFrontmatter(
   if (unknown.length) throw new WriteupError('invalid', `unsupported fields: ${unknown.join(', ')}; editable: ${EDITABLE_FIELDS.join(', ')}`);
   const updates = Object.fromEntries(Object.entries({ ...fields, ...(touchLastReviewed ? { last_reviewed: today } : {}) })
     .filter(([, value]) => value !== undefined));
-  const writeup = loadWriteups(store).find((w) => w.slug === slug);
-  if (!writeup) throw new WriteupError('not_found', `writeup not found: ${slug}`);
+  const writeup = findWriteup(loadWriteups(store), slug);
   const { text, changed } = applyScalars(fs.readFileSync(writeup.path, 'utf8'), updates);
   if (changed.length === 0) return { slug, noOp: true, changedFields: [], values: {} };
-  const outcome = transactionalReplace(store.writeupsDir, new Map([[writeup.path, text]]));
-  if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
+  commit(store, new Map([[writeup.path, text]]));
   const before = summary(writeup);
   const values = Object.fromEntries(changed.map((key) => [key, updates[key] ?? null]));
   return {
@@ -439,19 +447,17 @@ const isHttpUrl = (href: string): boolean => {
 
 // Replace exactly one `[label](href)` in a writeup body; not a general editor.
 export function updateLink(store: WriteupStore, slug: string, label: string, expectedHref: string, replacementHref: string): LinkResult {
-  const writeup = loadWriteups(store).find((w) => w.slug === slug);
-  if (!writeup) throw new WriteupError('not_found', `writeup not found: ${slug}`);
+  const writeup = findWriteup(loadWriteups(store), slug);
   if (!label.trim()) throw new WriteupError('invalid', 'link label required');
   for (const [name, href] of [['expected', expectedHref], ['replacement', replacementHref]] as const) {
     if (!isHttpUrl(href)) throw new WriteupError('invalid', `${name} href must be an absolute HTTP(S) URL`);
   }
   const text = fs.readFileSync(writeup.path, 'utf8');
-  const pattern = new RegExp(`\\[${escapeRegExp(label)}\\]\\(${escapeRegExp(expectedHref)}(?:\\s+"[^"]*")?\\)`, 'g');
+  const pattern = new RegExp(`\\[${RegExp.escape(label)}\\]\\(${RegExp.escape(expectedHref)}(?:\\s+"[^"]*")?\\)`, 'g');
   const matches = text.match(pattern) ?? [];
   if (matches.length !== 1) throw new WriteupError('invalid', `expected exactly one matching link; found ${matches.length}`);
   const next = text.replace(pattern, () => `[${label}](${replacementHref})`);
-  const outcome = transactionalReplace(store.writeupsDir, new Map([[writeup.path, next]]));
-  if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
+  commit(store, new Map([[writeup.path, next]]));
   return {
     slug, label, oldHref: expectedHref, newHref: replacementHref,
     receipt: receipt({

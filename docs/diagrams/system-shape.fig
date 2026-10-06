@@ -12,7 +12,7 @@ GitHub [dashed] {
 
 Cloudflare [dashed] {
   Pages build [icon: cpu, note: Astro · AVIF · WebP]
-  Edge [icon: globe, anchor, note: CSP nonce · Functions]
+  Edge [icon: globe, anchor, note: CSP headers · Functions]
 }
 
 Obsidian vault > Content sync

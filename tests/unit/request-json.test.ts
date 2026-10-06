@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readRequestJson } from '../../functions/lib/request-json.ts';
+import { streamRequest } from './helpers/requests.ts';
 
 function streamedRequest(chunks: Uint8Array[], headers: Record<string, string> = {}) {
   let reads = 0;
@@ -13,9 +14,8 @@ function streamedRequest(chunks: Uint8Array[], headers: Record<string, string> =
     },
     cancel() { cancelled = true; },
   }, { highWaterMark: 0 });
-  const init = { method: 'POST', body, headers, duplex: 'half' };
   return {
-    request: new Request('https://example.test/', init),
+    request: streamRequest(body, headers),
     stats: () => ({ reads, cancelled, locked: body.locked }),
   };
 }
@@ -49,7 +49,7 @@ test('does not wait on a cancelled sender to finish rejecting an oversized strea
     start(controller) { controller.enqueue(encode('too big')); },
     cancel() { return new Promise(() => {}); },
   });
-  const request = new Request('https://example.test/', { method: 'POST', body, duplex: 'half' } as RequestInit);
+  const request = streamRequest(body);
   assert.deepEqual(await readRequestJson(request, 2), { ok: false, status: 413 });
   assert.equal(body.locked, false);
 });
@@ -65,7 +65,7 @@ test('rejects malformed JSON, malformed UTF-8, and missing bodies', async () => 
 
 test('turns a failed upload stream into a controlled client error', async () => {
   const body = new ReadableStream({ start(controller) { controller.error(new Error('upload interrupted')); } });
-  const request = new Request('https://example.test/', { method: 'POST', body, duplex: 'half' } as RequestInit);
+  const request = streamRequest(body);
   assert.deepEqual(await readRequestJson(request, 10), { ok: false, status: 400 });
   assert.equal(body.locked, false);
 });

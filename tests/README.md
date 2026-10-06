@@ -14,7 +14,7 @@ tests/
 ├── audits/        Node checks: assert an invariant, exit non-zero on failure
 │   └── registry.ts   the audit inventory: which audits exist, which gate runs each
 ├── unit/          node:test specs for pure logic (Markdown DSL, Functions, gate harness, audit rules)
-├── edge/          request specs against dist/ served by wrangler pages dev (middleware, Functions, _headers)
+├── edge/          request specs against dist/ served by wrangler pages dev (Functions, _headers, built policy)
 ├── playwright/    browser specs against dist/ through a preview server
 └── fixtures/      the synthetic content the visual suite builds
 ```
@@ -35,7 +35,7 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 | `npm run gate:check` | local and CI, first | the fast invariants: source parse, duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
 | `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO; CI skips the local-only vault parity check |
 | `npm run release:check` | local, macOS | `publish:check`, then Playwright E2E, visual baselines, the edge runtime suite, repository policy, and a clean-worktree check |
-| `npm run deploy:verify` | after a deploy | live headers and CSP, nonce rotation, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
+| `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
 
 The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md#gate-coverage) table.
 
@@ -66,13 +66,13 @@ The [audit table](./ARCHITECTURE.md#2-audits) says what each one asserts and how
 build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
 [`src/lib/markdown/`](../src/lib/markdown/) is pinned block by block to the
 HTML it must produce, and its guard to what it refuses. The Cloudflare Pages Functions (contact API, CSP report
-endpoint, header middleware) run request in, response out, with D1 and
+endpoint, preview proxy) run request in, response out, with D1 and
 Turnstile stubbed. The gate harness, the registry, the `site` CLI's publish and
 land flows, and each audit's rule are tested too. Node runs the specs directly
 by stripping types.
 
 **[`tests/edge/`](./edge/)**: the build served by `wrangler pages dev`, so the
-CSP middleware, the Functions, and `public/_headers` answer as they do on
+Functions and `public/_headers` answer as they do on
 Cloudflare. [Details](./ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
 
 **[`tests/playwright/`](./playwright/)**: specs against the compiled site. The

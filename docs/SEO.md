@@ -73,7 +73,7 @@ The sync ([`bin/content-sync/public-projection.ts`](../bin/content-sync/public-p
 
 ## Images
 
-Open Graph defaults to `/assets/og/og-default.png` unless a route supplies a different image. `og:image:width` and `og:image:height` are emitted alongside `og:image` whenever dimensions are known: from the image manifest for writeup heroes, or from `site.ts` for the default card.
+Open Graph defaults to `/assets/og/og-default.jpg` unless a route supplies a different image. `og:image:width` and `og:image:height` are emitted alongside `og:image` whenever dimensions are known: from the image manifest for writeup heroes, or from `site.ts` for the default card.
 
 Article and body images are optimized during sync and rendered with stable dimensions (`Picture.astro`, and `enhanceImages()` in [`src/lib/images.ts`](../src/lib/images.ts) for Markdown bodies), so images cause no layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
 
@@ -111,9 +111,9 @@ Canonical metadata still points at `jseverino.com`, and the
 
 ## Security Headers And SEO
 
-The production CSP is nonce-based through [`functions/_middleware.ts`](../functions/_middleware.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The middleware also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the old WordPress runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
+The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the old WordPress runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
-[`public/_headers`](../public/_headers) carries the other security headers; CSP itself is issued only by the middleware. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
+[`public/_headers`](../public/_headers) carries the other security headers; the CSP is written into the built `dist/_headers` from placeholders there. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
 
 ## Validation Checklist
 

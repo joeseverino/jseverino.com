@@ -13,6 +13,7 @@ import {
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SITE } from '../../src/lib/site-config.ts';
 import { abort } from './lib.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 const wkdEncryptionRe = new RegExp(
   `^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
@@ -68,5 +69,5 @@ try {
 
   console.log(`ok       signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`);
 } catch (error) {
-  fail((error as Error).message);
+  fail(errorMessage(error));
 }

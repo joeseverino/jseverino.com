@@ -31,6 +31,7 @@
 //   servesBuild serves the gate's own dist/; the runners pass PREBUILT=1 so it
 //               does not rebuild
 //   lock        audits sharing a lock never overlap ('astro': both write .astro/)
+//   ownCiJob    a dedicated CI job runs this audit, so publish:check skips it on the runner
 
 export type Gate = 'gate' | 'publish' | 'diagnose' | 'release';
 export type Phase = 'pre-build' | 'post-build';
@@ -51,6 +52,7 @@ export interface Audit {
   heavy?: boolean;
   servesBuild?: boolean;
   lock?: 'astro';
+  ownCiJob?: boolean;
 }
 
 export const AUDITS: readonly Audit[] = [
@@ -108,7 +110,7 @@ export const AUDITS: readonly Audit[] = [
     asserts: 'Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib.',
     exec: { cmd: 'npm', args: ['run', '-s', 'typecheck'] },
     lock: 'astro', gates: ['gate', 'publish', 'diagnose'], summary: 'silent',
-    fix: 'Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib, with Cloudflare-runtime globals declared in `functions/cloudflare.d.ts`. `astro check` covers the .astro files.',
+    fix: 'Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib. `astro check` covers the .astro files.',
   },
   {
     id: 'functions-parity', label: 'edge', name: 'Functions/Schema Parity', phase: 'pre-build',
@@ -174,7 +176,7 @@ export const AUDITS: readonly Audit[] = [
     id: 'repo-policy', label: 'repo-policy', name: 'Repository Policy', phase: 'pre-build',
     asserts: 'Node, npm, and lockfile pins agree; no secrets or build output tracked; stylesheet rules hold; TypeScript only, no explicit any or unexplained suppressions; actions SHA-pinned, runners fixed, every job time-boxed.',
     exec: { cmd: 'node', args: ['tests/audits/check-repository-policy.ts'] },
-    gates: ['gate', 'diagnose', 'release'],
+    gates: ['gate', 'publish', 'diagnose', 'release'],
     fix: 'Fix the reported rule: the Node and npm pins (.nvmrc, engines, packageManager), the lockfile, a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (SHA pin, fixed runner, timeout-minutes).',
   },
   {
@@ -214,17 +216,17 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'html-check', label: 'html', name: 'Structural HTML', phase: 'post-build',
-    asserts: 'No built page repeats an id, every <img> has alt, and no literal `::name` directive reaches the page text.',
+    asserts: 'No built page repeats an id, every <img> has alt, headings never skip a level, and no literal `::name` directive reaches the page text.',
     exec: { cmd: 'node', args: ['tests/audits/check-html.ts'] },
     gates: ['publish', 'diagnose'],
-    fix: 'A built page repeats an id attribute, ships an <img> without alt, or shows a literal `::name` directive. Fix the component or content at the reported page; decorative images use alt="", never a missing attribute; a leaked directive is a typo or one the page\'s renderer does not support.',
+    fix: 'A built page repeats an id attribute, ships an <img> without alt, skips a heading level (an h3 straight under the h1), or shows a literal `::name` directive. Fix the component or content at the reported page; decorative images use alt="", never a missing attribute; a leaked directive is a typo or one the page\'s renderer does not support.',
   },
   {
     id: 'routes-check', label: 'routes', name: 'Functions Routing', phase: 'post-build',
-    asserts: 'public/_routes.json stays inside the Pages limits and excludes no built HTML page or Function route; every exclude is a prefix with its static fallback page or an exact built file, and carries the static CSP in _headers.',
+    asserts: 'Only the Function routes invoke Functions: no built HTML page does, every Function route does, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*.',
     exec: { cmd: 'node', args: ['tests/audits/check-routes.ts'] },
     gates: ['publish', 'diagnose'],
-    fix: 'public/_routes.json excludes a path that serves HTML or a Function route, breaks the Pages limits, or lacks its static CSP or fallback page. Narrow the exclude (an excluded HTML page ships without the middleware CSP), add the static CSP rule for it to public/_headers, and rebuild so bin/build-static.ts writes the fallback.',
+    fix: 'public/_routes.json routes a page through Functions, omits a Function route, or lists a rule no Function route matches, or the built _headers is incomplete. Keep `include` to the Function routes under functions/, and re-run `npm run build:static` so bin/build-csp.ts fills the _headers placeholders.',
   },
   {
     id: 'seo-check', label: 'seo', name: 'SEO Metadata', phase: 'post-build',
@@ -235,13 +237,13 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'edge-tests', label: 'edge-runtime', name: 'Edge Runtime Tests', phase: 'post-build',
-    asserts: 'Served through `wrangler pages dev`: the CSP nonce, the _headers rules, _routes.json, a real 404, the contact refusals, and security.txt parity.',
+    asserts: 'Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity.',
     exec: {
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.edge.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    servesBuild: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
-    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP middleware, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
+    servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
+    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
   },
   {
     id: 'browser-tests', label: 'e2e', name: 'Playwright Browser Tests', phase: 'post-build',
@@ -267,3 +269,8 @@ export const AUDITS: readonly Audit[] = [
 
 export const auditsFor = (gate: Gate, phase?: Phase): Audit[] =>
   AUDITS.filter((a) => a.gates.includes(gate) && (!phase || a.phase === phase));
+
+// What publish:check runs. CI runs gate:check first and the edge suite in its
+// own job, so `afterGate` and `ci` drop the audits those already covered.
+export const publishAudits = (phase: Phase, { afterGate = false, ci = false } = {}): Audit[] =>
+  auditsFor('publish', phase).filter((a) => !(afterGate && a.gates.includes('gate')) && !(ci && a.ownCiJob));

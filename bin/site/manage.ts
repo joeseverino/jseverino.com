@@ -25,7 +25,8 @@ import {
   FIELDS, SITE, createWriteup, current, currentField, diff, fieldValue, hasStaged, load, loadSiteStatus, moveCursor, moveItem,
   reload, toggleFeatured, togglePublished, type Model, type Tab,
 } from './manage-model.ts';
-import { currentFrame, detailFrame, drawTabBar, listFrame, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
+import { currentFrame, detailFrame, drawTabBar, listFrame, rule, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 // MANAGE_TUI_KEYS replays a comma-separated key script through the real
 // handler without a TTY and prints only the final frame; MANAGE_TUI_SMOKE
@@ -40,7 +41,7 @@ function gatherSiteStatus(model: Model): string {
   if (!REPLAY) {
     process.stdout.write(
       '\x1b[2J\x1b[H\n' + drawTabBar(model) + '\n' +
-      `  ${'─'.repeat(Math.max(40, cols - 4))}\n\n` +
+      `  ${rule(cols)}\n\n` +
       `  ${DIM}gathering site status…${RESET}\n`,
     );
   }
@@ -232,7 +233,7 @@ function apply(model: Model): number {
   try {
     applyPlan(writeupStore(), plan);
   } catch (error) {
-    process.stdout.write(`  ${RED}✗${RESET} transactional save failed: ${(error as Error).message}\n`);
+    process.stdout.write(`  ${RED}✗${RESET} transactional save failed: ${errorMessage(error)}\n`);
     process.stdout.write(`${RED}${saveFailure(error)}${RESET}\n`);
     return 1;
   }

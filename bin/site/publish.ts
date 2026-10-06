@@ -10,19 +10,20 @@ import { pathToFileURL } from 'node:url';
 import { commitMessage, contentDiff, describeDiff, isEmpty, type ContentDiff } from '../content-diff.ts';
 import { runAudit } from '../lib/audits.ts';
 import { preflight, type CheckName } from '../lib/preflight.ts';
-import { SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from '../lib/run.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from '../lib/run.ts';
 import type { Audit } from '../../tests/audits/registry.ts';
-import { SITE_ORIGIN, writeupUrl } from '../../src/lib/site-config.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, requireReady, type Output } from './cli.ts';
 import { changedPaths, gh, git, refExists } from './git.ts';
 import type { SyncReport } from '../content-sync/writer.ts';
 import type { PublishCommitted, PublishResult } from './types.ts';
 import { readJson } from '../../src/lib/json.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
-export const branchName = (now: Date): string =>
-  `content/${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+const branchName = (now: Date): string =>
+  `${CONTENT_BRANCH_PREFIX}${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
 
 // A branch name free both locally and on origin.
 function freshBranch(root: string, now: Date): string {
@@ -53,11 +54,11 @@ async function linkDependencies(root: string, worktree: string, out: Output): Pr
     return;
   }
   out.step('deps', 'origin/main has a different lockfile; installing in the worktree');
-  await step('npm ci', 'npm', ['ci', '--no-audit', '--no-fund'], { cwd: worktree, timeout: 10 * 60_000 });
+  await step('npm ci', 'npm', ['ci', '--no-audit', '--no-fund'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
 }
 
 // The worktree's own sync (main's code), reporting the files it owns.
-export interface StageContext {
+interface StageContext {
   root: string;
   worktree: string;
   scratch: string;
@@ -81,11 +82,11 @@ export type GateContext = Pick<StageContext, 'root' | 'worktree' | 'out'> & { fu
 
 async function gateInWorktree({ worktree, full, out }: GateContext): Promise<void> {
   if (full) {
-    await step('publish gate', process.execPath, ['bin/publish-check.ts', '--no-sync'], { cwd: worktree, timeout: 30 * 60_000 });
+    await step('publish gate', process.execPath, ['bin/publish-check.ts', '--no-sync'], { cwd: worktree, timeout: GATE_TIMEOUT_MS });
     out.ok('gate', 'publish gate passed (--full)');
     return;
   }
-  await step('fast gate', process.execPath, ['bin/gate-check.ts'], { cwd: worktree, timeout: 10 * 60_000 });
+  await step('fast gate', process.execPath, ['bin/gate-check.ts'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
   // The worktree's own registry, so the audits are main's.
   const { AUDITS } = await import(pathToFileURL(path.join(worktree, 'tests/audits/registry.ts')).href) as { AUDITS: readonly Audit[] };
   for (const audit of AUDITS.filter((entry) => entry.localOnly && !entry.gates.includes('gate'))) {
@@ -104,7 +105,7 @@ function assertDeclared(worktree: string, declared: ReadonlySet<string>, when: s
   }
 }
 
-export function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string {
+function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string {
   const writeup = (slug: string): string => `- [\`${slug}\`](${writeupUrl(slug, origin)})`;
   const page = (slug: string): string => {
     if (slug === 'technology-groups') return '- `technology-groups` (the technology catalog)';
@@ -145,7 +146,7 @@ export function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string
 
 const DEFAULT_CHECKS: CheckName[] = ['deps', 'fetch', 'gh', 'vault', 'clean'];
 
-export interface PublishOptions {
+interface PublishOptions {
   root?: string;
   base?: string;
   from?: string | undefined;
@@ -161,7 +162,7 @@ export interface PublishOptions {
 // out: a createOutput(); sync/gate are injectable for tests.
 export async function publish({
   root = siteRoot,
-  base = 'main',
+  base = DEFAULT_BRANCH,
   from,
   dryRun = false,
   full = false,
@@ -255,7 +256,7 @@ async function publishInWorktree({ root, base, start, branch, worktree, scratch,
     pr = (gh(worktree, 'pr', 'create', '--base', base, '--head', branch, '--title', subject, '--body-file', bodyFile)
       .split('\n').at(-1) ?? '').trim();
   } catch (error) {
-    throw new SiteError(`${(error as Error).message}\norigin/${branch} was pushed and is still on the remote`, {
+    throw new SiteError(`${errorMessage(error)}\norigin/${branch} was pushed and is still on the remote`, {
       result: { branch, commit, remoteBranch: branch },
       fix: `open the PR: gh pr create --base ${base} --head ${branch}; or delete the branch: git push origin --delete ${branch}`,
     });
@@ -273,7 +274,7 @@ function cleanUp(root: string, worktree: string, branch: string, scratch: string
     try {
       action();
     } catch (error) {
-      const warning = `${what} failed (${(error as Error).message.split('\n')[0]}); ${fix}`;
+      const warning = `${what} failed (${errorMessage(error).split('\n')[0]}); ${fix}`;
       warnings.push(warning);
       out.warn('cleanup', warning);
     }

@@ -49,7 +49,8 @@ appears here.
 | `npm run make:content-index` | Emit the published-writeup JSON projection consumed by Severino HQ |
 | `npm run make:social` | Regenerate the GitHub social preview |
 | `npm run make:font` | Re-subset the Inter webfont to the site's characters and weights (needs python3 + fontTools) |
-| `npm run snapshot:github` | Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads (a weekly workflow refreshes it) |
+| `npm run snapshot:github` | Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads for repos |
+| `npm run snapshot:software` | Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails without writing if any lookup fails |
 | `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
 | `npm run scaffold:writeup-field` | Add a field once to the canonical writeup contract |
 | `npm run draft:cover-alt` | Draft writeup cover alt text via the Claude API |
@@ -61,8 +62,8 @@ appears here.
 | `npm run test:e2e:ui` | Playwright in interactive UI mode |
 | `npm run test:e2e:visual` | Visual-regression snapshots (macOS Chromium) |
 | `npm run test:e2e:visual:update` | Re-baseline visual snapshots after an intentional design change |
-| `npm run test:edge` | Serve the build through the Cloudflare runtime and assert headers, CSP nonces, cache rules, and the functions |
-| `npm run edge:serve` | Serve the build through `wrangler pages dev` for by-hand checks (middleware + functions active) |
+| `npm run test:edge` | Serve the build through the Cloudflare runtime and assert headers, the CSP hashes, cache rules, and the functions |
+| `npm run edge:serve` | Serve the build through `wrangler pages dev` for by-hand checks (headers + functions active) |
 | `npm run cloudflare:check` | Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift) |
 | `npm run cloudflare:plan` | The Cloudflare API calls an apply would make |
 | `npm run cloudflare:apply` | Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only) |
@@ -87,9 +88,9 @@ appears here.
 | `npm run check:css-vars` | No CSS custom property is defined but never used |
 | `npm run check:links` | Every internal reference in the built site resolves |
 | `npm run check:weight` | Per-page HTML and total CSS/JS stay inside their byte budgets |
-| `npm run check:html` | No duplicate ids; every image carries alt; no unprocessed `::directive` |
+| `npm run check:html` | No duplicate ids; every image carries alt; headings never skip a level; no unprocessed `::directive` |
 | `npm run check:seo` | Title, canonical, og:title, og:image, valid JSON-LD on every page |
-| `npm run check:routes` | `_routes.json` keeps assets out of Functions and every HTML page and Function route in |
+| `npm run check:routes` | `_routes.json` sends only the Function routes to Functions; every page is static and `_headers` is complete |
 | `npm run check:repo-policy` | Node pin, lockfile alignment, clean tree, TypeScript only, SHA-pinned Actions |
 | `npm run audit:assets` | Image count + weight report (the gates run it strict) |
 | `npm run help` | Print the live grouped list of all of the above |
@@ -128,7 +129,7 @@ audit) fails CI on drift. See
 **`npm run sync:edge-site`**: writes `functions/generated/site.ts`, the edge
 runtime's copy of the site identity in `src/lib/site-config.ts` (domain,
 origin, CSP report endpoint). Cloudflare bundles `functions/` on its own, so
-the middleware and the report receiver cannot import `src/lib`; they import
+the Functions and the report receiver cannot import `src/lib`; they import
 the projection instead. The contract-projections audit fails when it is
 stale.
 
@@ -166,10 +167,12 @@ build, and the post-build audits. Each phase's audits run concurrently and
 report in registry order. Fail-fast: stops at the first broken check, and
 stops whatever is still running.
 `-- --no-sync` skips the vault sync so a code-only change can be verified
-without dragging in unrelated content drift.
+without dragging in unrelated content drift. `-- --after-gate` skips the
+audits `gate:check` already ran; CI passes it, and on the runner the edge suite
+is left to its own job.
 
-**`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs:
-`CI=1` (so local-only audits skip, same as on the runner) and a scratch GPG
+**`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs
+(`gate:check`, then `publish:check`): `CI=1` (so local-only audits skip, same as on the runner) and a scratch GPG
 keyring seeded only from the committed WKD key. A gate that depends on
 authoring-machine state fails here instead of after a push.
 
@@ -190,8 +193,8 @@ results land in the job summary.
 **`npm run test:edge`**: the edge runtime suite (`tests/edge/`). Builds, serves
 the output through `wrangler pages dev` with the compatibility date declared in
 `tests/browser-test-env.ts`, and asserts what only Cloudflare's runtime
-produces: the per-request CSP nonce stamped on every script tag and rotating
-between requests, the `public/_headers` security and cache rules, a real 404,
+produces: the hash CSP covering every inline script and style, one identical
+policy on every request, the `/contact/` Trusted Types exemption, the `public/_headers` security and cache rules, a real 404,
 the contact function's refusals (no Turnstile token, wrong content type,
 malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
 WKD key's content type. CI's `edge` leg and the local `publish:check` and
@@ -208,7 +211,7 @@ lockfile's Playwright Chromium (`npx playwright install chromium`), with
 and its system dependencies before the audit. Per-page logs accompany the
 reports, including when Chrome fails to launch. Expect best
 practices in the 70s from any client Cloudflare distrusts: Bot Fight Mode's
-injected detection script uses deprecated browser APIs, and PageSpeed Insights
+injected detection script uses deprecated browser APIs (and Bot Fight Mode must stay off for the zone, since a hash CSP cannot cover it), and PageSpeed Insights
 is not served that script.
 
 **`npm run deploy:verify`**: run after a production deploy, from a residential IP;
@@ -218,9 +221,10 @@ waits for every required check (build, e2e, visual, edge, CodeQL, Cloudflare
 Pages) to pass,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
-is absent in production, the CSP nonce is stamped on every script tag and
-rotates between requests, an unknown route returns a real 404, `POST
-/api/contact` without a Turnstile token is refused, the live `security.txt`
+is absent in production, the live home page's inline script and stylesheet are covered by the
+CSP's hashes (`inline`), an unknown route returns a real 404, `POST
+/api/contact` without a Turnstile token is refused, the contact form carries a
+Turnstile site key, the live `security.txt`
 matches the committed file, and zero open CodeQL alerts. Every check
 runs even after an earlier one fails. `--origin <url>` verifies one
 Cloudflare Pages deployment instead (what `deploy.yml` runs), `--preview`

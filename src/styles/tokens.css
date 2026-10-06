@@ -97,16 +97,4 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 }
 /* tokens:end */
 
-@media (width <= 768px) {
-  :root {
-    --radius-md: 10px;
-  }
-}
-
-@media (width <= 599px) {
-  :root {
-    --header-height: 3.8rem;
-  }
-}
-
 }

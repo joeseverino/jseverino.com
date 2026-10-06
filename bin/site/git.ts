@@ -3,12 +3,13 @@
 import { git as gitQuery, statusEntries } from '../lib/git.ts';
 import { runSync } from '../lib/run.ts';
 import { SiteError } from './cli.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 function call(cmd: string, args: string[], spawn: () => string): string {
   try {
     return spawn();
   } catch (error) {
-    throw new SiteError(`${cmd} ${args.slice(0, 2).join(' ')} failed: ${(error as Error).message}`);
+    throw new SiteError(`${cmd} ${args.slice(0, 2).join(' ')} failed: ${errorMessage(error)}`);
   }
 }
 

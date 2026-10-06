@@ -4,13 +4,13 @@
 // reviewBy date. Reads the lockfile; no install needed.
 //
 //   node bin/audit.ts [--json]
-import { cli } from './lib/args.ts';
+import { cli, flag } from './lib/args.ts';
 import { run } from './lib/run.ts';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 import { isoDate } from '../src/lib/dates.ts';
 
-const json = cli({ usage: 'usage: node bin/audit.ts [--json]', options: { json: { type: 'boolean', default: false } } }).values.json;
+const json = cli({ usage: 'usage: node bin/audit.ts [--json]', options: { json: flag } }).values.json;
 const BLOCKING = new Set(['high', 'critical']);
 const today = isoDate();
 

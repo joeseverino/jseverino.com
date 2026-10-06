@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WRITEUPS_FOLDER, vaultRoot as vaultRootFor } from './lib/local-paths.ts';
 import { parseFrontmatter } from '../src/lib/frontmatter.ts';
-import { cli } from './lib/args.ts';
+import { cli, flag } from './lib/args.ts';
 import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
 
 const vaultRoot = vaultRootFor();
@@ -23,7 +23,7 @@ const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);
 const usage = 'usage: node bin/draft-cover-alt.ts <slug> [--apply]\n   or: node bin/draft-cover-alt.ts --all [--apply]';
 const { values, positionals } = cli({
   usage,
-  options: { all: { type: 'boolean', default: false }, apply: { type: 'boolean', default: false } },
+  options: { all: flag, apply: flag },
   allowPositionals: true,
 });
 const { all, apply } = values;

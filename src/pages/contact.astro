@@ -1,28 +1,8 @@
 ---
-import BaseLayout from '@layouts/BaseLayout.astro';
-import PageHero from '@components/PageHero.astro';
-import ContentBody from '@components/content/ContentBody.astro';
+import ContentPage from '@layouts/ContentPage.astro';
 import { getPage } from '@lib/content.ts';
 
 const page = await getPage('contact');
 ---
 
-<BaseLayout
-  seo={{
-    title: page.title,
-    description: page.description,
-    path: page.path,
-    breadcrumbs: [
-      { name: 'Home', url: '/' },
-      { name: page.title, url: page.path },
-    ],
-  }}
-  preconnect={['https://challenges.cloudflare.com']}
->
-  <main id="main" class="content-page">
-    <div class="content-flow">
-      <PageHero title={page.title} description={page.intro ?? page.description} />
-      <ContentBody entry={page.entry} />
-    </div>
-  </main>
-</BaseLayout>
+<ContentPage page={page} preconnect={['https://challenges.cloudflare.com']} prose={false} />

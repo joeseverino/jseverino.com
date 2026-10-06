@@ -51,7 +51,7 @@ export function orgRow(org: Org, { tenure, href }: { tenure?: string | undefined
 export const roleRow = (role: Role): string =>
   `<p class="resume-role"><strong>${role.title}</strong><span class="resume-dates">${role.dates}</span></p>`;
 
-export function lineRow(grammar: Grammar, line: string): string {
+function lineRow(grammar: Grammar, line: string): string {
   const role = grammar.matchRole(line);
   if (role) return roleRow(role);
 

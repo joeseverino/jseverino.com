@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import { writeupPath } from '@lib/site-config.ts';
+import { tagPath, writeupPath } from '@lib/site-config.ts';
 import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
-import { getAllTags, getWriteups, titleCase } from '@lib/content.ts';
+import { getAllTags, getWriteups } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getAllTags()).map((tag) => ({
@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 const { tag } = Astro.props;
 const allWriteups = await getWriteups();
 const writeups = allWriteups.filter((writeup) => writeup.technologies.includes(tag.slug));
-const tagName = titleCase(tag.slug);
+const tagName = tag.label;
 const projectLabel = writeups.length === 1 ? 'project' : 'projects';
 ---
 
@@ -23,7 +23,7 @@ const projectLabel = writeups.length === 1 ? 'project' : 'projects';
   seo={{
     title: `${tagName} Projects`,
     description: `Portfolio writeups tagged ${tagName}.`,
-    path: `/tag/${tag.slug}/`,
+    path: tagPath(tag.slug),
     pageType: 'itemList',
     itemListItems: writeups.map((writeup) => ({
       name: writeup.title,
@@ -32,7 +32,7 @@ const projectLabel = writeups.length === 1 ? 'project' : 'projects';
     breadcrumbs: [
       { name: 'Home', url: '/' },
       { name: 'Portfolio', url: '/portfolio/' },
-      { name: tagName, url: `/tag/${tag.slug}/` },
+      { name: tagName, url: tagPath(tag.slug) },
     ],
   }}
 >

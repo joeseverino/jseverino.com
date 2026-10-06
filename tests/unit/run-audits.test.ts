@@ -1,11 +1,14 @@
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { runAudits } from '../../bin/lib/audits.ts';
 import { summarize } from '../../bin/lib/audit-summary.ts';
 import type { Audit } from '../audits/registry.ts';
-import { tempDir } from './helpers/fs.ts';
+import { scratchDirs } from './helpers/fs.ts';
+
+const scratch = scratchDirs('run-audits-');
+after(scratch.cleanup);
 
 // An audit that waits `ms`, appends `id start` / `id end` to log, and exits `code`.
 const audit = (id: string, ms: number, code = 0, extra: Partial<Audit> = {}, log = ''): Audit => ({
@@ -34,7 +37,7 @@ test('stopOnFailure reports through the first failure and stops what is still ru
 });
 
 test('audits sharing a lock never overlap', async () => {
-  const log = path.join(tempDir('run-audits-'), 'log');
+  const log = path.join(scratch.make(), 'log');
   await runAudits([audit('a', 150, 0, { lock: 'astro' }, log), audit('b', 10, 0, { lock: 'astro' }, log)]);
   assert.deepEqual(fs.readFileSync(log, 'utf8').trim().split('\n'), ['a start', 'a end', 'b start', 'b end']);
 });

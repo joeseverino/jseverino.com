@@ -1,5 +1,6 @@
 ---
 import { getAllTags, getTechnologyGroups } from '@lib/content.ts';
+import { tagPath } from '@lib/site-config.ts';
 
 const collator = new Intl.Collator('en', { sensitivity: 'base' });
 const tagCounts = new Map((await getAllTags()).map((tag) => [tag.slug, tag.count]));
@@ -16,23 +17,26 @@ const groups = getTechnologyGroups()
 
 <div class="archive-taxonomy">
   {
-    groups.map((group) => (
-      <section class="archive-taxonomy-group" aria-labelledby={`taxonomy-${group.name.replace(/\W+/g, '-').toLowerCase()}`}>
-        <h2 id={`taxonomy-${group.name.replace(/\W+/g, '-').toLowerCase()}`} class="archive-taxonomy-title">
-          {group.name}
-        </h2>
-        <div class="archive-taxonomy-list">
-          {group.tags.map((tag) => {
-            const count = tagCounts.get(tag.slug) ?? 0;
-            return (
-              <a class="archive-tag" href={`/tag/${tag.slug}/`}>
-                <span>{tag.label}</span>
-                <span class="archive-tag-count" aria-label={`${count} projects`}>{count}</span>
-              </a>
-            );
-          })}
-        </div>
-      </section>
-    ))
+    groups.map((group) => {
+      const headingId = `taxonomy-${group.name.replace(/\W+/g, '-').toLowerCase()}`;
+      return (
+        <section class="archive-taxonomy-group" aria-labelledby={headingId}>
+          <h2 id={headingId} class="archive-taxonomy-title">
+            {group.name}
+          </h2>
+          <div class="archive-taxonomy-list">
+            {group.tags.map((tag) => {
+              const count = tagCounts.get(tag.slug) ?? 0;
+              return (
+                <a class="archive-tag" href={tagPath(tag.slug)} aria-label={`${tag.label}, ${count} ${count === 1 ? 'project' : 'projects'}`}>
+                  <span>{tag.label}</span>
+                  <span class="archive-tag-count">{count}</span>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      );
+    })
   }
 </div>

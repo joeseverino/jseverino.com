@@ -63,7 +63,7 @@ const navigation = navItems.map((item) => ({
     if (header && sentinel) {
       // One observed target, so one entry per callback.
       const observer = new IntersectionObserver(([entry]) => {
-        header.classList.toggle('scrolled', !entry!.isIntersecting);
+        if (entry) header.classList.toggle('scrolled', !entry.isIntersecting);
       }, { threshold: 0 });
       observer.observe(sentinel);
     }

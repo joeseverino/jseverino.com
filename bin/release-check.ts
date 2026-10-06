@@ -2,7 +2,8 @@
 import { auditsFor } from '../tests/audits/registry.ts';
 import { cli } from './lib/args.ts';
 import { runAudit } from './lib/audits.ts';
-import { run as spawnRun, type RunResult } from './lib/run.ts';
+import { statusEntries } from './lib/git.ts';
+import { GATE_TIMEOUT_MS, run as spawnRun, type RunResult } from './lib/run.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
 cli({ usage: 'usage: node bin/release-check.ts' });
@@ -13,13 +14,9 @@ function failed(label: string, result: Pick<RunResult, 'code' | 'timedOut'>): ne
   process.exit(result.code || 1);
 }
 
-async function gitStatus() {
-  const result = await spawnRun('git', ['status', '--porcelain=v1', '-z'], { cwd: siteRoot });
-  if (result.code !== 0) process.exit(result.code);
-  return result.stdout;
-}
+const gitStatus = (): string => statusEntries(siteRoot).join('\n');
 
-const initialStatus = await gitStatus();
+const initialStatus = gitStatus();
 
 if (process.platform !== 'darwin') {
   console.error(
@@ -31,7 +28,7 @@ if (process.platform !== 'darwin') {
 // The fast local build gate (its audits come from the shared registry).
 // Streams output live, for a person watching the gate.
 console.log('\n==> publish checks');
-const gate = await spawnRun(npm, ['run', '-s', 'publish:check'], { cwd: siteRoot, timeout: 30 * 60_000, stdio: 'inherit' });
+const gate = await spawnRun(npm, ['run', '-s', 'publish:check'], { cwd: siteRoot, timeout: GATE_TIMEOUT_MS, stdio: 'inherit' });
 if (gate.code !== 0) failed('publish checks', gate);
 
 // The release-only audits (repository policy, whitespace/conflict markers, the
@@ -44,7 +41,7 @@ for (const audit of auditsFor('release')) {
 }
 
 // Idempotence: nothing above may have changed tracked or untracked state.
-const finalStatus = await gitStatus();
+const finalStatus = gitStatus();
 if (finalStatus !== initialStatus) {
   console.error(
     '\nfailed: release checks changed tracked or untracked repository state; review git status and commit generated/synced output before release',

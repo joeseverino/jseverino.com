@@ -1,6 +1,6 @@
 // The content-sync modules: reference handling, the writer and prune, the
 // document rows, the education join, and a whole sync against a temp vault.
-import { describe, test } from 'node:test';
+import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,8 +21,11 @@ import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/con
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { tempDir, write } from './helpers/fs.ts';
+import { scratchDirs, write } from './helpers/fs.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
+
+const scratch = scratchDirs('content-sync-');
+after(scratch.cleanup);
 
 
 describe('asset references', () => {
@@ -55,7 +58,7 @@ describe('asset references', () => {
   });
 
   test('reference issues: missing images, refs outside images/, wikilinks, the cover', async () => {
-    const dir = tempDir('refs-');
+    const dir = scratch.make();
     write(path.join(dir, 'images/here.png'), 'x');
     const issues = await referenceIssues(
       '![ok](images/here.png)\n![gone](images/gone.png)\n[notes](./notes.md)\n![[embed.png]]\n',
@@ -88,7 +91,7 @@ describe('asset references', () => {
 
 describe('writer and prune', () => {
   test('prune removes what the run did not write, then empty folders; the report names both', async () => {
-    const root = tempDir('writer-');
+    const root = scratch.make();
     write(path.join(root, 'content/writeups/old/index.md'), 'stale');
     write(path.join(root, 'content/writeups/kept/index.md'), 'old');
     const writer = createWriter({ root });
@@ -172,6 +175,7 @@ describe('education', () => {
     const index = parseFrontmatter(indexPage.content);
     assert.equal(index.content.trim(), [
       'Intro prose.',
+      '<h2 class="visually-hidden">Institutions</h2>',
       orgRow({ name: 'School', location: 'City' }, { href: '/education/school/' }),
       roleRow({ title: 'BS Computing', dates: '2020' }),
       '- 1 course completed · 1 in progress',
@@ -189,7 +193,7 @@ describe('education', () => {
 });
 
 async function fixtureVault() {
-  const vault = tempDir('vault-');
+  const vault = scratch.make();
   const png = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#123456' } }).png().toBuffer();
   write(path.join(vault, '06 Pages/_technology-groups.md'), '## Tools\n\n| Slug | Label | Featured |\n| --- | --- | --- |\n| astro | Astro | yes |\n');
   write(path.join(vault, '06 Pages/about/index.md'), '---\ntitle: About\npublished: true\n---\n![Me](./images/me.png)\n');
@@ -210,7 +214,7 @@ async function fixtureVault() {
 describe('syncContent and checkContent against a temp vault', () => {
   test('writes the public snapshot, declares every file, and prunes the rest', async () => {
     const vault = await fixtureVault();
-    const root = tempDir('site-');
+    const root = scratch.make();
     write(path.join(root, 'src/content/writeups/gone/index.mdx'), '---\ntitle: Gone\n---\n');
     const result = await syncContent({
       layout: committedLayout(root),
@@ -240,7 +244,7 @@ describe('syncContent and checkContent against a temp vault', () => {
 
   test('a drafts sync previews a draft with a missing image as a warning, not a failure', async () => {
     const vault = await fixtureVault();
-    const root = tempDir('overlay-');
+    const root = scratch.make();
     // Drafts include the unpublished resume canonical, which renders through the grammar.
     write(path.join(vault, 'resume-engine/lib/grammar.ts'), [
       'export const linesForSite = (lines) => lines;',
@@ -270,7 +274,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
       'technologies:', '  - astro', '---', '', 'See [the notes](notes.md).', '',
     ].join('\n'));
-    const root = tempDir('site-');
+    const root = scratch.make();
     await assert.rejects(syncContent({
       layout: committedLayout(root),
       vaultRoot: vault,
@@ -309,7 +313,7 @@ describe('syncContent and checkContent against a temp vault', () => {
 
 describe('image masters', () => {
   test('a master is at most MASTER_WIDTH wide and carries no metadata', async () => {
-    const dir = tempDir('master-');
+    const dir = scratch.make();
     const source = path.join(dir, 'wide.jpg');
     write(source, await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#336699' } })
       .withExif({ IFD0: { Make: 'Camera', Software: 'Tool' } })
