@@ -1,27 +1,8 @@
 ---
-import ContentBody from '@components/content/ContentBody.astro';
-import BaseLayout from '@layouts/BaseLayout.astro';
-import PageHero from '@components/PageHero.astro';
+import ContentPage from '@layouts/ContentPage.astro';
 import { getPage } from '@lib/content.ts';
 
 const page = await getPage('education');
 ---
 
-<BaseLayout
-  seo={{
-    title: page.title,
-    description: page.description,
-    path: page.path,
-    breadcrumbs: [
-      { name: 'Home', url: '/' },
-      { name: page.title, url: page.path },
-    ],
-  }}
->
-  <main id="main" class="content-page document-page">
-    <div class="content-flow">
-      <PageHero title={page.title} description={page.intro ?? page.description} />
-      <div class="prose"><ContentBody entry={page.entry} /></div>
-    </div>
-  </main>
-</BaseLayout>
+<ContentPage page={page} mainClass="document-page" />

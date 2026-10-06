@@ -11,7 +11,7 @@ export async function GET(context: { site: string }) {
     items: (await getWriteups()).map((writeup) => ({
       title: writeup.title,
       description: writeup.description,
-      pubDate: new Date(`${writeup.date}T00:00:00Z`),
+      pubDate: new Date(writeup.date),
       link: writeupPath(writeup.slug),
     })),
   });

@@ -1,6 +1,14 @@
 @layer components {
 /* ── Responsive ─────────────────────────────────────────────────────── */
 
+/* The tokens layer sets 12px; this later layer eases the radius from 10px to
+   12px with the width. --menu-offset is where the menu panel starts: the height
+   the header has once the 2.5rem menu button (plus its padding) is what sizes it. */
+:root {
+  --radius-md: clamp(10px, 6px + 0.6vw, 12px);
+  --menu-offset: 3.8rem;
+}
+
 .nav-toggle {
   display: none;
   position: relative;
@@ -51,7 +59,7 @@
 
 .mobile-nav {
   position: fixed;
-  inset-block-start: var(--header-height);
+  inset-block-start: var(--menu-offset);
   inset-inline: 0;
   inset-block-end: 0;
   inline-size: auto;
@@ -84,7 +92,7 @@
      only the header-offset inset is nav-specific. */
   &::backdrop {
     position: fixed;
-    inset-block-start: var(--header-height);
+    inset-block-start: var(--menu-offset);
     inset-inline: 0;
     inset-block-end: 0;
   }
@@ -309,9 +317,30 @@ body:has(.lightbox[open]) {
   overflow: hidden;
 }
 
-/* ── Breakpoints ────────────────────────────────────────────────────── */
+/* ── Components that answer to their own width ──────────────────────── */
 
-@media (width <= 640px) {
+/* Each of these rearranges when the space it is given runs short, wherever it
+   sits, so none of it keys off the viewport. 33.5rem is the width these
+   full-width containers have at a 600px viewport, where the layout used to
+   switch. */
+.site-nav { container: site-nav / inline-size; }
+.page-hero { container: hero / inline-size; }
+.software-list { container: software / inline-size; }
+.archive-section { container: archive / inline-size; }
+.archive-taxonomy { container: taxonomy / inline-size; }
+
+@container site-nav (inline-size < 33.5rem) {
+  .primary-nav { display: none; }
+  .nav-toggle { display: inline-flex; }
+}
+
+@container hero (inline-size < 33.5rem) {
+  .page-hero > * { text-align: left; }
+  .page-intro { margin-inline: 0; }
+  .page-actions { justify-content: flex-start; }
+}
+
+@container software (inline-size < 33.5rem) {
   .sli {
     flex-direction: column;
     gap: var(--space-10);
@@ -323,22 +352,15 @@ body:has(.lightbox[open]) {
   }
 }
 
-@media (width <= 599px) {
-  .primary-nav { display: none; }
-  .nav-toggle { display: inline-flex; }
-  .site-nav { align-items: center; }
-  .project-grid { grid-template-columns: 1fr; }
-  .page-hero { text-align: left; }
-  .page-intro { margin-inline: 0; }
-  .page-actions { justify-content: flex-start; }
-
+@container archive (inline-size < 33.5rem) {
   .archive-section summary {
     align-items: flex-start;
     flex-direction: column;
     gap: 2px;
   }
+}
 
+@container taxonomy (inline-size < 33.5rem) {
   .archive-taxonomy-group { grid-template-columns: 1fr; }
-  .split { grid-template-columns: 1fr; }
 }
 }

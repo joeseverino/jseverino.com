@@ -1,4 +1,14 @@
 @layer components {
+/* Present to assistive technology, absent from the layout. */
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .svg-defs {
   position: absolute;
   inline-size: 0;
@@ -18,7 +28,7 @@
   color: var(--color-bg);
   font-weight: 600;
   border-radius: 0 0 var(--radius-sm) 0;
-  translate: 0 -100%;
+  translate: 0 calc(-100% - 0.5rem);
   transition: translate var(--motion-duration-fast) var(--motion-ease-standard);
 
   &:focus {

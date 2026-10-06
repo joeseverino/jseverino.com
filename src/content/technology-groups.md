@@ -5,7 +5,7 @@ Single source of truth for technology tag slugs and their human-readable labels.
 The `Featured` column controls the **home page technology cloud**: only rows
 marked `yes` (and referenced by at least one published writeup) appear there.
 Every slug still shows on its individual writeup pages and `/tag/<slug>/` pages
-regardless of the flag — the flag only curates the home page.
+regardless of the flag. The flag only curates the home page.
 
 Group taxonomy and ordering were seeded from the legacy WordPress site and now
 serve as the stable public tag model. Tags within a group are sorted

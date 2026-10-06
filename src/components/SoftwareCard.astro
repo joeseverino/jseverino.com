@@ -21,13 +21,13 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 <li class="software-card">
   <CardSurface>
     <div class="software-card-head">
-      <h3 class="software-card-title">
+      <h2 class="software-card-title">
         {titleHref ? (
           <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
         ) : (
           entry.title
         )}
-      </h3>
+      </h2>
       {(pkg || entry.selfHosted) && (
         <div class="software-badges">
           {pkg && (

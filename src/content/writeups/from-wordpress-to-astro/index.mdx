@@ -6,7 +6,7 @@ description: >-
   gate.
 published: true
 published_at: 2026-06-17T00:00:00.000Z
-last_reviewed: 2026-06-17T00:00:00.000Z
+last_reviewed: '2026-10-05'
 cover_image: ./images/pagespeed-perfect-scores-cover.png
 cover_alt: >-
   Google PageSpeed Insights reporting 100 for Performance, Accessibility, Best
@@ -63,7 +63,7 @@ Astro builds every page to a file ahead of time, and Cloudflare serves those fil
 Same article, same browser, cold load. WordPress pulled 20.2 MB of full-size PNGs. The Astro build serves 1.3 MB of responsive AVIF.
 :::
 
-**It is smaller and safer.** There is no public admin login, no plugin or theme code running in production, no upload endpoint, and no database serving readers. The site sends a [strict content security policy](https://github.com/joeseverino/jseverino.com/blob/main/functions/_middleware.ts) that never falls back to inline scripts, and it passes Google's CSP checker clean.
+**It is smaller and safer.** There is no public admin login, no plugin or theme code running in production, no upload endpoint, and no database serving readers. The site sends a [strict content security policy](https://github.com/joeseverino/jseverino.com/blob/25ddfc676bc13c62e7055774f9e0fa7014c875ce/functions/_middleware.ts) that never falls back to inline scripts, and it passes Google's CSP checker clean.
 
 **It is reviewable.** The public repository is the site, and I wrote the whole stack, so what runs is a small codebase anyone can read in a sitting. What ships is exactly what is in the commit. WordPress hid that behavior across a database, a theme, and a dozen plugins no one could audit at a glance. Each change also goes out as its own Cloudflare preview deployment, so I can review the real page before it is live.
 
