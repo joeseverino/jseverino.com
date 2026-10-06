@@ -28,6 +28,11 @@ export function directiveLeaks(html: string): string[] {
   return [...visibleText(html).matchAll(/(?:^|\s)::([a-z][a-z0-9-]*)/gim)].map(([, name = '']) => name);
 }
 
+// The words inside a heading's markup, read as the text between tags rather than
+// by stripping tags: this only labels a failure message.
+const headingText = (inner: string): string =>
+  [...inner.matchAll(/(?:^|>)([^<>]+)/g)].map(([, text = '']) => text.trim()).filter(Boolean).join(' ').slice(0, 40);
+
 // Each place a heading jumps more than one level deeper than the one before it
 // (the first heading counts as following level 0, so a page opens at h1).
 export function headingSkips(html: string): string[] {
@@ -35,7 +40,7 @@ export function headingSkips(html: string): string[] {
   let previous = 0;
   for (const [, digit = '', inner = ''] of html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)) {
     const level = Number(digit);
-    if (level > previous + 1) skips.push(`h${previous || 'start'} -> h${level} "${inner.replace(/<[^>]*>/g, '').trim().slice(0, 40)}"`);
+    if (level > previous + 1) skips.push(`h${previous || 'start'} -> h${level} "${headingText(inner)}"`);
     previous = level;
   }
   return skips;
