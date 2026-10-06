@@ -2,10 +2,9 @@
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import { site } from '@lib/site.ts';
-import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
 
 type Breadcrumb = { name: string; url: string };
-type ListItem = { name: string; url: string };
+type ListItem = Breadcrumb;
 
 type Props = {
   title?: string;
@@ -38,6 +37,8 @@ const {
 } = Astro.props;
 
 const canonical = new URL(path, site.url).href;
+const personId = `${site.url}/#person`;
+const websiteId = `${site.url}/#website`;
 // A content image becomes a 1200px JPEG card, the format every platform
 // reads; getImage reports its size without exposing the original.
 const card = typeof image === 'string'
@@ -59,7 +60,7 @@ const imageObject: Record<string, unknown> = {
 
 const person = {
   '@type': 'Person',
-  '@id': `${site.url}/#person`,
+  '@id': personId,
   name: site.name,
   url: site.url,
   image: personImage,
@@ -102,16 +103,16 @@ const primaryNode: JsonLdNode =
         datePublished: publishedTime,
         dateModified: modifiedTime || publishedTime,
         keywords: tags,
-        author: { '@id': `${site.url}/#person` },
-        publisher: { '@id': `${site.url}/#person` },
+        author: { '@id': personId },
+        publisher: { '@id': personId },
         mainEntityOfPage: { '@id': canonical },
       }
     : {
         '@type': 'WebSite',
-        '@id': `${site.url}/#website`,
+        '@id': websiteId,
         name: site.name,
         url: site.url,
-        publisher: { '@id': `${site.url}/#person` },
+        publisher: { '@id': personId },
       };
 
 const graph: JsonLdNode[] = [primaryNode, person];
@@ -125,7 +126,7 @@ if (pageType === 'profile') {
     url: canonical,
     name: fullTitle,
     description,
-    mainEntity: { '@id': `${site.url}/#person` },
+    mainEntity: { '@id': personId },
   });
 } else if (pageType === 'collection') {
   graph.push({
@@ -134,8 +135,8 @@ if (pageType === 'profile') {
     url: canonical,
     name: fullTitle,
     description,
-    isPartOf: { '@id': `${site.url}/#website` },
-    about: { '@id': `${site.url}/#person` },
+    isPartOf: { '@id': websiteId },
+    about: { '@id': personId },
   });
 } else if (pageType === 'itemList') {
   graph.push({
@@ -170,13 +171,16 @@ const jsonLd: JsonLd = {
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={ogImage} />
-{ogDimensions && <meta property="og:image:width" content={String(ogDimensions.width)} />}
-{ogDimensions && <meta property="og:image:height" content={String(ogDimensions.height)} />}
+{
+  ogDimensions && (
+    <>
+      <meta property="og:image:width" content={String(ogDimensions.width)} />
+      <meta property="og:image:height" content={String(ogDimensions.height)} />
+    </>
+  )
+}
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content={fullTitle} />
-<meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={ogImage} />
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {tags.map((tag) => <meta property="article:tag" content={tag} />)}
-<script is:inline nonce={CSP_NONCE_PLACEHOLDER} type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />
+<script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />

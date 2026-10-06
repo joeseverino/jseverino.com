@@ -1,11 +1,11 @@
 ---
 import contactContract from '../../contracts/contact.v1.json' with { type: 'json' };
 import { site } from '@lib/site.ts';
-import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
-const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
+const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn');
+if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socialLinks for its fallback link.');
 ---
 
 <div class="contact-intake">
@@ -27,7 +27,7 @@ const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
       <label for="contact-company">Company</label>
       <input type="text" id="contact-company" name="company" tabindex="-1" autocomplete="off" />
     </div>
-    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction} data-theme="light"></div>
+    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction} data-theme="auto"></div>
     <p class="contact-privacy">
       Messages are stored in a private database. See <a href="/privacy/" class="privacy-link">Privacy</a> for details and data requests.
     </p>
@@ -36,7 +36,7 @@ const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn')!;
   </form>
 </div>
 
-<script is:inline nonce={CSP_NONCE_PLACEHOLDER} async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+<script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
 
 <script>
   const form = document.querySelector<HTMLFormElement>('.contact-intake-form');

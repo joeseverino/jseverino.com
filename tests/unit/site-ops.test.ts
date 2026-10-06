@@ -142,6 +142,12 @@ describe('security headers', () => {
     assert.deepEqual(Object.values(result.checks), [true, true, true, true, true]);
   });
 
+  test('flags an unsafe-inline script source anywhere in script-src', async () => {
+    const unsafe = { ...headers, 'content-security-policy': "default-src 'none'; script-src 'self' 'unsafe-inline'; report-to csp-endpoint" };
+    const result = await checkSecurityHeaders(config({ fetch: fakeFetch(200, unsafe) }), '/contact/');
+    assert.equal(result.checks.noUnsafeInlineScript, false);
+  });
+
   test('flags a missing CSP', async () => {
     const result = await checkSecurityHeaders(config({ fetch: fakeFetch(200, {}) }), '/contact/');
     assert.equal(result.checks.hasCsp, false);

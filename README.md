@@ -25,7 +25,7 @@ no secrets.
 | Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
-| Edge | Cloudflare Pages Functions: per-request CSP nonces, the contact form, CSP reporting |
+| Edge | static pages on Cloudflare Pages under a build-time hash CSP; Pages Functions only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for contact submissions and CSP reports, behind Turnstile |
 | Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `npm run cloudflare:apply` |
 | Previews | Behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
@@ -36,12 +36,14 @@ no secrets.
 
 - No origin server, database-backed pages, admin panel, or accounts. The
   dynamic surface is a handful of small Functions.
-- A fresh CSP nonce on every HTML response, applied only to tags the build
-  marked, so markup that arrives through content never runs.
+- A hash-based CSP computed at build time: the build hashes the one inline
+  script and stylesheet and fails on any other inline code or foreign script, so
+  markup that arrives through content never runs. Pages are plain static assets
+  and never invoke a Function.
 - Contact submissions are verified with Turnstile (hostname and action), checked
   against a contract, and rate-limited inside the D1 statement.
-- Every deployment is verified by the default branch's code: headers, nonce,
-  cache rules, and every sitemap route.
+- Every deployment is verified by the default branch's code: headers, inline-code
+  hash coverage, cache rules, and every sitemap route.
 
 The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
 [`SECURITY.md`](./SECURITY.md).
@@ -59,8 +61,8 @@ accessibility.
 Every claim above can be checked from outside:
 
 ```sh
-# A new CSP nonce on every request
-for i in 1 2; do curl -sI https://jseverino.com/ | grep -io -m1 "nonce-[^']*" | head -1; done
+# One policy for every request: no nonce, script and style pinned by sha256 hash
+curl -sI https://jseverino.com/ | grep -i '^content-security-policy'
 
 # The disclosure policy is clear-signed; the key comes from Web Key Directory
 gpg --auto-key-locate clear,wkd --locate-keys security@jseverino.com
@@ -83,7 +85,7 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 
 ```text
 src/          Astro pages, components, and the synced content
-functions/    Pages Functions: CSP middleware, contact, CSP reports, preview review
+functions/    Pages Functions: contact, CSP reports, preview review
 public/       static assets, _headers, _routes.json, _redirects
 cloudflare/   zone settings and the D1 schema, as code
 contracts/    the content and contact contracts, and the generated OpenAPI

@@ -120,9 +120,9 @@ The project has two integration points. `npm run build:static`
 `sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
 output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
 and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts).
-`--nonce __CSP_NONCE__` stamps the placeholder the middleware replaces on every
-tag the viewer writes; the viewer has no inline script, so a preview runs under
-the same nonce CSP as production.
+`--nonce __CSP_INLINE__` is a build-time marker on every tag the viewer writes;
+`bin/build-csp.ts` hashes and strips it after the wrap, so
+the build's CSP covers the wrapped pages like any other.
 
 The scoped Pages Function,
 [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts), is
@@ -133,11 +133,12 @@ sitedrift's own `onRequest`, whose defaults are this route's guards:
 - only content-negotiation headers (`accept`, `accept-language`, conditional and
   range headers, `user-agent`) reach production; cookies, `authorization`, and
   Access headers never do, and production's `set-cookie` is dropped;
-- responses get the security headers back, and LIVE pages carry the preview's
-  own nonce.
+- responses get the security headers back, and LIVE pages are served under a
+  request-time CSP: a nonce for the bridge script sitedrift injects, plus a hash
+  for each inline script and style of the fetched page.
 
-[`tests/unit/csp-nonce.test.ts`](../tests/unit/csp-nonce.test.ts) wraps a page
-with the installed sitedrift and fails if any tag lacks the placeholder.
+`tests/unit/csp.test.ts` covers that request-time
+policy.
 
 `sitedrift` is pinned in `devDependencies` and the exact tarball is locked in
 `package-lock.json`.
@@ -162,7 +163,7 @@ Cloudflare bundles the `functions/` tree separately, so the Function still
 exists in production. It answers `404` there twice over: the production host
 check, and the missing generated config. The `sitedrift-production` WAF rule
 also blocks `/__sitedrift*` on the production hosts at the edge. The normal
-site, contact form, CSP report receiver, middleware, headers, and static assets
+site, contact form, CSP report receiver, headers, and static assets
 follow their production paths unchanged.
 
 Run the project-level guard before release:
@@ -184,7 +185,7 @@ the review wrapper while `main` remains the original Astro document.
 - Hosted frames execute trusted first-party preview code so the deployed site
   remains interactive.
 - Notes never leave the browser and are not available through the sitedrift MCP.
-- Existing CSP middleware and application Functions retain their routes.
+- Application Functions retain their routes; static pages never invoke one.
 - Pages preview hostnames remain excluded from indexing through
   `X-Robots-Tag: noindex`, and Cloudflare Access gates them.
 

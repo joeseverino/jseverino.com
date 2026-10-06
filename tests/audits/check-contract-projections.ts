@@ -4,6 +4,7 @@
 // differs.
 import { runSync } from '../../bin/lib/run.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 const checks: [name: string, script: string][] = [
   ['brand tokens', 'bin/sync-tokens.ts'],
@@ -16,7 +17,7 @@ for (const [name, script] of checks) {
   try {
     runSync(process.execPath, [script, '--check'], { cwd: siteRoot });
   } catch (error) {
-    console.error(`${name} is stale\n${(error as Error).message}`);
+    console.error(`${name} is stale\n${errorMessage(error)}`);
     process.exit(1);
   }
 }

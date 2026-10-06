@@ -11,9 +11,10 @@ import { WriteupError, snapshot, writeupStore, type WriteupDashboard, type Write
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { SiteError } from './cli.ts';
+import { SLUG, SiteError } from './cli.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import { collectionFields, type FieldSpec, type FieldType } from '../../src/lib/content-contract.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
 
@@ -33,7 +34,7 @@ const run = (bin: string, args: readonly string[], options: Pick<SpawnOptions, '
   outcome(spawnResult(bin, args, { cwd: siteRoot, ...options }));
 
 // The writeup snapshot, or a load failure the TUI shows instead of crashing.
-export function loadSnapshot(): WriteupDashboard {
+function loadSnapshot(): WriteupDashboard {
   try {
     return snapshot(writeupStore());
   } catch (error) {
@@ -52,7 +53,7 @@ function gateIssues(): { issues: Map<string, string[]>; error: string | null } {
   try {
     report = JSON.parse(result.stdout);
   } catch (error) {
-    const reason = (result.stderr.trim().split('\n').at(-1) || (error as Error).message).trim();
+    const reason = (result.stderr.trim().split('\n').at(-1) || errorMessage(error)).trim();
     return { issues, error: `the gate check printed no report (${reason})` };
   }
   for (const doc of report.documents ?? []) if (doc.collection === 'writeups') issues.set(doc.slug, doc.issues);
@@ -160,83 +161,42 @@ function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: R
   };
 }
 
-export function loadSiteStatus(): SiteStatus {
-  const status: SiteStatus = {
-    devServerOpen: isListening(DEV_PORT),
-    gitBranch: 'unknown',
-    gitChanges: 0,
-    gitAheadBehind: '',
-    commitHash: '',
-    commitSubject: '',
-    commitAge: '',
-    distStatus: 'unknown',
-    securityStatus: 'unknown',
-    liveCode: '',
-    loadedAt: new Date().toTimeString().slice(0, 8),
-  };
+// Trimmed stdout of a command, or null when it fails.
+function probe(command: string, args: string[]): string | null {
+  const result = run(command, args);
+  return result.ok ? result.stdout.trim() : null;
+}
 
+function builtStatus(distPath: string): string {
   try {
-    const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-    if (!branch.ok) throw new Error(branch.error);
-    status.gitBranch = branch.stdout.trim();
-    const git = run('git', ['status', '--porcelain']);
-    if (!git.ok) throw new Error(git.error);
-    const gitStatus = git.stdout.trim();
-    status.gitChanges = gitStatus ? gitStatus.split('\n').length : 0;
-  } catch {}
-
-  try {
-    const git = run('git', ['log', '-1', '--format=%h%x09%s%x09%cr']);
-    if (!git.ok) throw new Error(git.error);
-    const line = git.stdout.trim();
-    [status.commitHash = '', status.commitSubject = '', status.commitAge = ''] = line.split('\t');
-  } catch {}
-
-  try {
-    const git = run('git', ['rev-list', '--left-right', '--count', 'HEAD...@{u}']);
-    if (!git.ok) throw new Error(git.error);
-    const ab = git.stdout.trim();
-    const parts = ab.split(/\s+/);
-    if (parts.length === 2) {
-      status.gitAheadBehind = `${parts[0]} ahead, ${parts[1]} behind`;
-    }
+    return `Present (built ${statSync(distPath).mtime.toISOString().slice(0, 16).replace('T', ' ')})`;
   } catch {
-    status.gitAheadBehind = 'no upstream';
+    return 'Present';
   }
+}
 
+export function loadSiteStatus(): SiteStatus {
+  const branch = probe('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  const changes = branch === null ? null : probe('git', ['status', '--porcelain']);
+  const [commitHash = '', commitSubject = '', commitAge = ''] = (probe('git', ['log', '-1', '--format=%h%x09%s%x09%cr']) ?? '').split('\t');
+  const counts = probe('git', ['rev-list', '--left-right', '--count', 'HEAD...@{u}']);
+  const [ahead, behind, ...extra] = (counts ?? '').split(/\s+/);
+  const security = probe(process.execPath, ['tests/audits/check-security-txt.ts']);
   const distPath = resolveBuiltDir(siteRoot);
 
-  if (distPath) {
-    try {
-      const stats = statSync(distPath);
-      const mtime = stats.mtime.toISOString().slice(0, 16).replace('T', ' ');
-      status.distStatus = `Present (built ${mtime})`;
-    } catch {
-      status.distStatus = 'Present';
-    }
-  } else {
-    status.distStatus = 'not built';
-  }
-
-  try {
-    const site = run(process.execPath, ['tests/audits/check-security-txt.ts']);
-    if (!site.ok) throw new Error(site.error);
-    const output = site.stdout.trim();
-    const lines = output.split('\n');
-    status.securityStatus = (lines.at(-1) ?? '').replace(/^ok\s+/, '').trim();
-  } catch {
-    status.securityStatus = 'signature invalid or missing';
-  }
-
-  try {
-    const curl = run('curl', ['-s', '-o', '/dev/null', '-m', '2', '-w', '%{http_code}', SITE_ORIGIN]);
-    if (!curl.ok) throw new Error(curl.error);
-    status.liveCode = curl.stdout.trim();
-  } catch {
-    status.liveCode = '';
-  }
-
-  return status;
+  return {
+    devServerOpen: isListening(DEV_PORT),
+    gitBranch: branch ?? 'unknown',
+    gitChanges: changes ? changes.split('\n').length : 0,
+    gitAheadBehind: counts === null ? 'no upstream' : ahead && behind && extra.length === 0 ? `${ahead} ahead, ${behind} behind` : '',
+    commitHash,
+    commitSubject,
+    commitAge,
+    distStatus: distPath ? builtStatus(distPath) : 'not built',
+    securityStatus: security === null ? 'signature invalid or missing' : (security.split('\n').at(-1) ?? '').replace(/^ok\s+/, '').trim(),
+    liveCode: probe('curl', ['-s', '-o', '/dev/null', '-m', '2', '-w', '%{http_code}', SITE_ORIGIN]) ?? '',
+    loadedAt: new Date().toTimeString().slice(0, 8),
+  };
 }
 
 export function load(): Model {
@@ -374,7 +334,7 @@ export function togglePublished(model: Model): void {
 }
 
 export function createWriteup(model: Model, slug: string): boolean {
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+  if (!SLUG.test(slug)) {
     model.flash = `${RED}slug must be lowercase-kebab-case: '${slug}'${RESET}`;
     return false;
   }

@@ -9,6 +9,7 @@ import { EXIT, SiteError, assertSlug, translate, type Output } from './cli.ts';
 import type {
   ApplyPlanResult, ContractResult, DashboardResult, LinkCommandResult, PrepareResult, SetResult, TagResult, WriteupsResult,
 } from './types.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 // Store failures as CLI failures: a usage problem exits 2, the rest 1.
 export const guard = <T>(work: () => T | Promise<T>): Promise<T> => translate(work, WriteupError, (error) => new SiteError(error.message, {
@@ -65,7 +66,7 @@ function readPlan(file: string | undefined): WriteupPlan {
   try {
     return JSON.parse(text) as WriteupPlan;
   } catch (error) {
-    throw new SiteError(`plan is not JSON: ${(error as Error).message}`, { code: EXIT.usage });
+    throw new SiteError(`plan is not JSON: ${errorMessage(error)}`, { code: EXIT.usage });
   }
 }
 

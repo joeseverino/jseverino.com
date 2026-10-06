@@ -6,7 +6,7 @@ import SocialIconsDefs from '@components/SocialIconsDefs.astro';
 import { SURFACE } from '@lib/brand.ts';
 import { site } from '@lib/site.ts';
 import { WEB_ANALYTICS } from '@lib/site-config.ts';
-import { CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
+import { CSP_INLINE_MARKER } from '../../functions/lib/csp.ts';
 import '@styles/base.css';
 
 type Props = {
@@ -46,7 +46,7 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
         while parsing the head, so a deferred fixup lands too late to be read. */}
     <meta name="theme-color" data-scheme="light" media="(prefers-color-scheme: light)" content={SURFACE.light} />
     <meta name="theme-color" data-scheme="dark" media="(prefers-color-scheme: dark)" content={SURFACE.dark} />
-    <script is:inline nonce={CSP_NONCE_PLACEHOLDER}>
+    <script is:inline nonce={CSP_INLINE_MARKER}>
       (() => {
         let mode = 'auto';
         try {
@@ -71,11 +71,9 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
       crossorigin
     />
     <SeoHead {...seo} />
-    <link rel="alternate" type="application/rss+xml" title={`${site.name} — Portfolio`} href="/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name}: Portfolio`} href="/feed.xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
-    <link rel="icon" href="/assets/icons/favicon-32.png" sizes="32x32" />
-    <link rel="icon" href="/assets/icons/favicon-192.png" sizes="192x192" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   </head>
   <body class={bodyClass || undefined}>
@@ -92,7 +90,6 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
         defer
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon={beaconConfig}
-        nonce={CSP_NONCE_PLACEHOLDER}
       ></script>
     )}
   </body>

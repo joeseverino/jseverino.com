@@ -23,23 +23,33 @@ function run(command: string, args: readonly string[], cwd: string, extraEnv: No
   const { code } = spawnResult(command, args, {
     cwd,
     stdio: 'inherit',
-    env: { ASTRO_TELEMETRY_DISABLED: '1', SOURCE_DATE_EPOCH: '1700000000', ...extraEnv },
+    env: { ASTRO_TELEMETRY_DISABLED: '1', ...extraEnv },
   });
   if (code !== 0) throw new Error(`${command} ${args.join(' ')} exited ${code}`);
 }
 
-// Strip the two tokens that legitimately vary between builds without any source
-// change, so they don't drown out real differences.
+// Strip the tokens that legitimately vary between builds without any source
+// change, so they don't drown out real differences: the sitemap dates, the
+// site key, and the content hash Astro puts in every bundled file name (a
+// script that changes renames itself, and every page that loads it changes).
+const HASHED_BUNDLE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}\.(js|css)\b/g;
+const HASHED_IMAGE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)\b/g;
+
 function normalize(text: string): string {
   return text
     .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
-    .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"');
+    .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"')
+    .replace(HASHED_BUNDLE, '$1.HASH.$2')
+    .replace(HASHED_IMAGE, '$1.HASH.$2');
 }
+
+const normalizeName = (name: string): string =>
+  name.replace(/\.[A-Za-z0-9_-]{8}\.(js|css)$/, '.HASH.$1').replace(/\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)$/, '.HASH.$1');
 
 function collect(dir: string): Map<string, string> {
   return new Map(
     walkFiles(dir, { filter: (file) => TEXT_EXT.test(file) })
-      .map((file) => [path.relative(dir, file), normalize(fs.readFileSync(file, 'utf8'))]),
+      .map((file) => [normalizeName(path.relative(dir, file)), normalize(fs.readFileSync(file, 'utf8'))]),
   );
 }
 

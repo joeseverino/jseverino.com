@@ -4,8 +4,6 @@
 // Outputs:
 //   public/favicon.ico                          (16 + 32: clients that probe the root)
 //   public/assets/icons/favicon.svg             (scalable primary, real Inter outlines)
-//   public/assets/icons/favicon-32.png
-//   public/assets/icons/favicon-192.png
 //   public/assets/icons/apple-touch-icon.png    (180, full-bleed square for iOS masking)
 //   public/assets/brand/mark.svg                (scalable brand mark, navy badge)
 //   public/assets/brand/mark-512.png  mark-1024.png
@@ -41,9 +39,6 @@ fs.writeFileSync(
   wordmarkSvg({ tileHex: BRAND.navy, text: SITE.owner, glyph: BRAND.glyph, caps: true }),
 );
 
-// Favicon raster set.
-fs.writeFileSync(path.join(iconsDir, 'favicon-32.png'), rendered.favicon32);
-fs.writeFileSync(path.join(iconsDir, 'favicon-192.png'), rendered.favicon192);
 // iOS masks the touch icon itself, so ship a full-bleed square.
 fs.writeFileSync(path.join(iconsDir, 'apple-touch-icon.png'), rendered.appleTouchIcon);
 
@@ -55,4 +50,4 @@ fs.writeFileSync(path.join(brandDir, 'mark-1024-transparent.png'), rendered.mark
 // Root favicon.ico (16 + 32).
 fs.writeFileSync(path.join(root, 'public/favicon.ico'), rendered.faviconIco);
 
-console.log('Wrote favicon set + HD brand marks (favicon.ico/svg, 32/192, apple-touch, mark.svg + 512/1024, wordmark-caps.svg).');
+console.log('Wrote favicon set + HD brand marks (favicon.ico/svg, apple-touch, mark.svg + 512/1024, wordmark-caps.svg).');

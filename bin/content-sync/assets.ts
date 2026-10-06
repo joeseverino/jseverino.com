@@ -7,6 +7,7 @@ import path from 'node:path';
 import os from 'node:os';
 import sharp from 'sharp';
 import { isExternal } from '../../src/lib/refs.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`;
 const DESTINATION = String.raw`(<[^>\n]*>|[^)\s]+)`;
@@ -58,7 +59,7 @@ export function collectReferences(markdown: string): Reference[] {
 }
 
 // The asset references the sync copies: relative refs under images/.
-export const isAssetRef = (ref: string): boolean => ref.startsWith('images/');
+const isAssetRef = (ref: string): boolean => ref.startsWith('images/');
 
 // Relative references the sync cannot carry: they would 404 on the site.
 // site validate reports them; the sync refuses them the same way.
@@ -96,7 +97,7 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
     try {
       source = resolveAssetSource(sourceDir, ref);
     } catch (error) {
-      issues.push((error as Error).message);
+      issues.push(errorMessage(error));
       continue;
     }
     try {
@@ -114,13 +115,9 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
 // Run fn over items with at most `limit` in flight.
 export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(items.length);
-  let next = 0;
+  const queue = items.entries();
   const worker = async () => {
-    while (next < items.length) {
-      const index = next++;
-      // index < items.length, checked above.
-      results[index] = await fn(items[index] as T, index);
-    }
+    for (const [index, item] of queue) results[index] = await fn(item, index);
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
   return results;
@@ -142,7 +139,7 @@ export const MASTER_WIDTH = 1600;
 // is part of each cache key: a sharp or libvips upgrade re-encodes.
 const MASTER_LINEAGE = `master-${MASTER_WIDTH}-sharp-${sharp.versions.sharp}-vips-${sharp.versions.vips}`;
 
-export type MasterEncoder = (source: string) => Promise<Buffer>;
+type MasterEncoder = (source: string) => Promise<Buffer>;
 
 export function createMasterEncoder(cacheDir: string): MasterEncoder {
   const dir = path.join(cacheDir, MASTER_LINEAGE);

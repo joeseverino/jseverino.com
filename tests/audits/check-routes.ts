@@ -1,44 +1,34 @@
 #!/usr/bin/env node
-// public/_routes.json keeps static assets out of Pages Functions, so they never
-// spend the daily Functions quota. The CSP lives in the middleware, so an
-// exclude that covers an HTML page ships that page without its policy. Fails
-// when the file breaks the Pages limits, when an exclude covers a built HTML
-// page or a Function route, when a miss under an exclude could get the
-// nonce-dependent /404.html statically, or when an excluded path lacks its
-// static fallback page or the static CSP in _headers.
+// public/_routes.json sends only the Function routes to Pages Functions, so
+// every page is a static asset: no page view spends the daily Functions quota,
+// and a page cannot be taken down by a Function. Its Content-Security-Policy
+// comes from _headers, so this also checks that the built _headers is complete.
+// Fails when the file breaks the Pages limits, when a built HTML page or a Function route is
+// routed wrongly, when a rule matches no Function route, or when _headers keeps
+// a placeholder, lists a path twice, or lacks the policy rules.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { abort, builtPages, finish, siteRoot } from './lib.ts';
-import {
-  excludeFindings, fallbackFiles, fallbackFindings, functionPaths, htmlUrls, invokesFunctions, parseHeaders, readRoutes, shapeFindings,
-} from '../../bin/lib/pages-routes.ts';
-import { STATIC_CSP } from '../../src/lib/edge-expectations.ts';
+import { functionPaths, htmlUrls, invokesFunctions, matchesRule, parseHeaders, readRoutes, shapeFindings } from '../../bin/lib/pages-routes.ts';
 
 const { distDir, pages } = builtPages('check-routes');
 const routesFile = path.join(distDir, '_routes.json');
 if (!fs.existsSync(routesFile)) abort('check-routes', 'the build has no _routes.json; every asset request would run Functions.');
 const routes = readRoutes(routesFile);
 
-const problems = [...shapeFindings(routes), ...excludeFindings(routes, distDir)];
+const problems = shapeFindings(routes);
 for (const { rel } of pages) {
   for (const url of htmlUrls(rel)) {
-    if (!invokesFunctions(routes, url)) problems.push(`${url} is HTML but skips Functions, so it ships without a CSP`);
+    if (invokesFunctions(routes, url)) problems.push(`${url} is HTML but invokes Functions; pages are static assets`);
   }
 }
 const fnPaths = functionPaths(path.join(siteRoot, 'functions'));
 for (const url of fnPaths) {
-  if (!invokesFunctions(routes, url)) problems.push(`${url} is a Function route that _routes.json excludes`);
+  if (!invokesFunctions(routes, url)) problems.push(`${url} is a Function route that _routes.json does not include`);
 }
-
-const fallbacks = fallbackFiles(routes);
-for (const file of fallbacks) {
-  const full = path.join(distDir, file);
-  if (!fs.existsSync(full)) {
-    problems.push(`/${file} is missing, so a miss under /${path.dirname(file)}/ gets the nonce-dependent /404.html statically`);
-    continue;
-  }
-  for (const finding of fallbackFindings(fs.readFileSync(full, 'utf8'))) problems.push(`/${file} ${finding}, which the static CSP blocks`);
+for (const rule of routes.include) {
+  if (!fnPaths.some((url) => matchesRule(rule, url))) problems.push(`include ${rule} matches no Function route`);
 }
 
 const headersFile = path.join(distDir, '_headers');
@@ -48,12 +38,13 @@ const listed = headersText.split('\n').filter((line) => /^[^\s#]/.test(line));
 for (const rule of new Set(listed.filter((line, i) => listed.indexOf(line) !== i))) {
   problems.push(`_headers lists ${rule} more than once; Pages keeps only the last block`);
 }
-for (const rule of routes.exclude ?? []) {
-  if (!(headers.get(rule) ?? []).includes(`Content-Security-Policy: ${STATIC_CSP}`)) {
-    problems.push(`_headers sets no static Content-Security-Policy on ${rule}, so responses under it carry no policy`);
-  }
+if (headersText.includes('__')) problems.push('the built _headers still carries a build placeholder; bin/build-csp.ts did not run');
+const policy = (rule: string, prefix: string) => (headers.get(rule) ?? []).some((line) => line.startsWith(prefix));
+if (!policy('/*', 'Content-Security-Policy: ')) problems.push('_headers sets no Content-Security-Policy on /*');
+if (!policy('/contact/*', '! Content-Security-Policy') || !policy('/contact/*', 'Content-Security-Policy: ') || !policy('/contact/*', 'Content-Security-Policy-Report-Only: ')) {
+  problems.push('_headers does not give /contact/* its own policy (detach the global one, then set an enforced and a report-only line)');
 }
 
-finish(problems, `${pages.length} pages and ${fnPaths.length} Function routes invoke Functions; ${routes.exclude.length} static excludes carry the static CSP; ${fallbacks.length} fallback pages`, {
-  heading: 'check-routes: public/_routes.json is wrong for this build:',
+finish(problems, `${pages.length} pages are static; ${fnPaths.length} Function routes are the only routes that invoke Functions; _headers carries the policy`, {
+  heading: 'check-routes: public/_routes.json or _headers is wrong for this build:',
 });

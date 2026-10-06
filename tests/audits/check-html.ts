@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Structural HTML assertions over every built page: the static, all-pages
 // complement to the axe accessibility sweep (which runs deeper rules but only
-// on key pages in the browser suite). Three invariants, checked in bytes:
+// on key pages in the browser suite). Four invariants, checked in bytes:
 //
 //   • no duplicate id attributes on a page (breaks fragment links, label
 //     association, and aria-* references silently)
 //   • every <img> carries an alt attribute (empty alt marks a decorative
 //     image; a missing attribute is an authoring bug)
+//   • headings never skip a level going down the page (an h3 under an h1 hides
+//     the structure assistive technology navigates by)
 //   • no literal `::name` directive in the page text: a typo (::termnial) or a
 //     directive the page's pipeline does not render reaches readers verbatim
 
@@ -24,6 +26,19 @@ const visibleText = (html: string): string =>
 // `a::b` and `::1` are not directives.
 export function directiveLeaks(html: string): string[] {
   return [...visibleText(html).matchAll(/(?:^|\s)::([a-z][a-z0-9-]*)/gim)].map(([, name = '']) => name);
+}
+
+// Each place a heading jumps more than one level deeper than the one before it
+// (the first heading counts as following level 0, so a page opens at h1).
+export function headingSkips(html: string): string[] {
+  const skips: string[] = [];
+  let previous = 0;
+  for (const [, digit = '', inner = ''] of html.matchAll(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi)) {
+    const level = Number(digit);
+    if (level > previous + 1) skips.push(`h${previous || 'start'} -> h${level} "${inner.replace(/<[^>]*>/g, '').trim().slice(0, 40)}"`);
+    previous = level;
+  }
+  return skips;
 }
 
 export function duplicateIds(html: string): { ids: number; repeated: [string, number][] } {
@@ -55,12 +70,14 @@ if (import.meta.main) {
       }
     }
 
+    for (const skip of headingSkips(html)) problems.push(`${rel}: heading level skipped, ${skip}`);
+
     for (const name of directiveLeaks(html)) {
       problems.push(`${rel}: unprocessed directive "::${name}" (a typo, or a directive this page's renderer does not support)`);
     }
   }
 
-  finish(problems, `${pages.length} pages: ${idCount} ids unique per page, ${imgCount} images all carry alt, no unprocessed directives`, {
+  finish(problems, `${pages.length} pages: ${idCount} ids unique per page, ${imgCount} images all carry alt, headings never skip a level, no unprocessed directives`, {
     heading: 'check-html: structural problems in the built HTML:',
   });
 }

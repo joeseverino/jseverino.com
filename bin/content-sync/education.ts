@@ -56,11 +56,11 @@ export interface EducationInput {
 
 const SITE_COURSE_STATUSES = new Set(['active', 'completed']);
 
-export const publishableCourses = (institution: Institution): Course[] =>
+const publishableCourses = (institution: Institution): Course[] =>
   institution.courses.filter((course) => SITE_COURSE_STATUSES.has(course.status) && course.site_bullets);
 
 // The resume canonical's EDUCATION orgs with their degree row, in order.
-export function resumeEducationOrgs(grammar: Grammar, content: string): EducationOrg[] {
+function resumeEducationOrgs(grammar: Grammar, content: string): EducationOrg[] {
   const orgs: EducationOrg[] = [];
   let inEducation = false;
   for (const line of grammar.linesForSite(content.split('\n'))) {
@@ -81,13 +81,13 @@ export function resumeEducationOrgs(grammar: Grammar, content: string): Educatio
   return orgs;
 }
 
-export function courseRow(course: Course): string {
+function courseRow(course: Course): string {
   const code = course.code.replace(/(\d)/, ' $1');
   const dates = course.status === 'active' ? `${course.term} · in progress` : course.term;
   return `**${code} — ${course.title} (${dates})**`;
 }
 
-export function courseProgress(courses: readonly Course[]): string {
+function courseProgress(courses: readonly Course[]): string {
   const completed = courses.filter((course) => course.status === 'completed').length;
   const active = courses.filter((course) => course.status === 'active').length;
   return [
@@ -103,7 +103,8 @@ export function buildEducation({ grammar, shell, resume, dataset, projectPage }:
   const vaultInstitutions = new Map(dataset.institutions.map((entry) => [entry.institution, entry]));
   const links = new Map<string, string>();
   const pages: RenderedPage[] = [];
-  const rows = [shell.content.trim()].filter(Boolean);
+  // The organization rows are h3s (as on the resume), so a hidden h2 keeps the outline unbroken under the h1.
+  const rows = [shell.content.trim(), '<h2 class="visually-hidden">Institutions</h2>'].filter(Boolean);
 
   for (const org of resumeEducationOrgs(grammar, resume.content)) {
     const institution = vaultInstitutions.get(org.name);

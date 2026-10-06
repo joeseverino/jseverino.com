@@ -2,8 +2,12 @@
 // unknown or mistyped flag stops the script instead of being silently ignored.
 // Every script also answers --help with its usage.
 import { parseArgs, type ParseArgsOptionsConfig } from 'node:util';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 const help = { help: { type: 'boolean', short: 'h' } } as const;
+
+// A boolean option that is off unless passed, the shape nearly every script flag takes.
+export const flag = { type: 'boolean', default: false } as const;
 
 export interface ParseConfig<O extends ParseArgsOptionsConfig, P extends boolean> {
   options?: O;
@@ -31,7 +35,7 @@ export function cli<const O extends ParseArgsOptionsConfig = {}, const P extends
   try {
     parsed = parse(config);
   } catch (error) {
-    console.error(`${(error as Error).message}${usage ? `\n\n${usage}` : ''}`);
+    console.error(`${errorMessage(error)}${usage ? `\n\n${usage}` : ''}`);
     process.exit(2);
   }
   if ((parsed.values as { help?: boolean }).help) {

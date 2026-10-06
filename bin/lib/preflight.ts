@@ -12,6 +12,7 @@ import path from 'node:path';
 import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';
 import { run } from './run.ts';
 import { readJson } from '../../src/lib/json.ts';
+import { DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
 
 interface LockEntry {
   version?: string;
@@ -65,7 +66,7 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && npm ci` };
   },
   async fetch({ root }) {
-    const result = await run('git', ['fetch', '--quiet', 'origin', 'main'], { cwd: root, timeout: 60_000 });
+    const result = await run('git', ['fetch', '--quiet', 'origin', DEFAULT_BRANCH], { cwd: root, timeout: 60_000 });
     return result.code === 0
       ? { ok: true, detail: 'fetched origin/main' }
       : { ok: false, detail: `git fetch failed: ${result.stderr.trim()}`, fix: 'check the network and the origin remote, then retry' };
@@ -91,8 +92,6 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `${dirty.length} uncommitted tracked change(s): ${dirty.slice(0, 3).map((line) => line.slice(3)).join(', ')}`, fix: 'commit or stash them, then retry' };
   },
 };
-
-export const PREFLIGHT_CHECKS = Object.keys(CHECKS) as CheckName[];
 
 // Runs the named checks concurrently: { ok, checks: [{ name, ok, detail, fix }], failed }.
 export async function preflight(names: readonly CheckName[], { root }: { root: string }): Promise<Preflight> {

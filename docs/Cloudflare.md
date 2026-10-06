@@ -14,7 +14,7 @@ and applies the difference.
 | Response headers, cache rules | [`public/_headers`](../public/_headers) | every Pages deploy |
 | Redirects | [`public/_redirects`](../public/_redirects) | every Pages deploy |
 | Which requests run Functions | [`public/_routes.json`](../public/_routes.json) | every Pages deploy |
-| Per-request CSP nonce, contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
+| Contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
 | Zone settings, HSTS, DNSSEC, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare:check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
@@ -27,32 +27,24 @@ the tool looks both up from the zone name at runtime.
 
 ### Functions routing
 
-With a root `_middleware.ts`, every request runs Functions unless
-`_routes.json` says otherwise, and the free plan allows 100,000 Function
-requests a day. `_routes.json` sends the static paths (`/_astro/*`,
-`/assets/*`, `/embed/*`, `/schemas/*`, `/.well-known/*`, and the root files)
-straight to the asset server, so an image or a bundle never spends quota.
+Every HTML page is a plain static asset, served without invoking a Function.
+[`_routes.json`](../public/_routes.json) includes only `/api/*` and
+`/__sitedrift/*`, with an empty exclude list. A miss anywhere gets the root
+`404.html`, which carries the same policy as every page. The free plan allows
+100,000 Function requests a day, and page views no longer count against it: the
+quota covers only the contact form, CSP reports, and the preview proxy.
 
-Responses under the excludes skip the middleware, so `_headers` gives each
-excluded path a static CSP (`default-src 'none'` plus `self` for images,
-styles, and fonts). A miss under an excluded prefix (say `/assets/nope.png`)
-gets the nearest `404.html` from the asset server, never the middleware, so
-`bin/build-static.ts` writes a plain fallback page at `<prefix>/404.html` for
-each prefix: no script, no style, nothing that needs a nonce. Every other
-exclude names an exact file the build emits, so the site's own `404.html`,
-whose scripts and stylesheet carry the nonce placeholder, is never served
-statically.
+The Content-Security-Policy is built into `dist/_headers` at build time by
+[`bin/build-csp.ts`](../bin/build-csp.ts), so it does not depend on a Function
+running. Pages applies `_headers` to static assets only, not to Function
+responses, which set their own headers.
 
-[`check-routes.ts`](../tests/audits/check-routes.ts) fails the publish gate if
-an exclude covers a built HTML page or a Function route, if an exclude is a
-partial wildcard or a file the build lacks, or if an excluded path lacks its
-fallback page or its static CSP. The edge suite proves the routing, the
-fallback, and its headers under `wrangler pages dev`, and `deploy-verify`
-probes a miss under `/assets/` on every deployment.
-
-If the daily quota ever runs out and Pages fails open to static assets, HTML
-would ship without a CSP and with the literal nonce placeholder. Keeping assets
-off Functions is what keeps the quota far away.
+[`check-routes.ts`](../tests/audits/check-routes.ts) fails the publish gate if a
+Function route does not invoke Functions, if a built HTML page does, if an
+include rule matches no Function route, or if the built `_headers` has a leftover
+placeholder, lists a path twice, lacks a `Content-Security-Policy` on `/*`, or
+lacks the detach-plus-set override on `/contact/*`. The edge suite proves the
+routing and the headers under `wrangler pages dev`.
 
 ## Free-plan limits that shaped this
 
@@ -113,22 +105,22 @@ manual item until they are deleted.
 
 ## Features that stay off
 
-Each of these injects into or rewrites HTML after the middleware has set the
-nonce, or pins something per request, and so breaks the CSP or caches a nonce:
+Each of these injects into or rewrites HTML after the build, and so adds markup
+the build-time CSP hashes do not cover:
 
 - **Rocket Loader** rewrites every script tag and loads them through its own
-  script, which carries no nonce.
+  script.
 - **Email Obfuscation** injects a decoder script.
 - **Server-Side Excludes** and **Automatic HTTPS Rewrites** rewrite HTML. Every
   URL the site emits is already `https`.
 - **Cloudflare Fonts** rewrites font links. The site self-hosts its one font.
 - **Zaraz** injects scripts.
 - **Hotlink Protection** is redundant with `Cross-Origin-Resource-Policy`.
-- **Speed Brain** prefetches likely next pages through Speculation Rules,
-  which does nothing for Function-rendered HTML and is documented as
-  incompatible with a nonce CSP.
-- **Any Cache Rule that caches HTML** would serve one visitor's nonce to the
-  next. HTML is `DYNAMIC` (never edge-cached) and must stay that way.
+- **Speed Brain** prefetches likely next pages through Speculation Rules, which
+  the site does not use.
+
+No Cache Rule is a problem for CSP reasons: HTML is static and the policy is the
+same on every request, so HTML is cacheable.
 
 `browser_cache_ttl` is `0` (respect existing headers). Any other value
 overrides shorter origin TTLs, which is how `/favicon.ico` and
@@ -136,11 +128,12 @@ overrides shorter origin TTLs, which is how `/favicon.ico` and
 
 ## Bot Fight Mode
 
-Bot Fight Mode is on and cannot skip paths on the free plan. It injects
-JavaScript Detections, which reads the nonce from the CSP header, and it
-challenges datacenter IPs. So production checks (`npm run deploy:verify`) run
-from a residential IP, and CI's deploy verification targets each deployment's
-own `*.pages.dev` URL, which is outside the zone.
+Bot Fight Mode must be off for the zone. Its JavaScript Detections inject an
+inline script with per-request values into HTML, and a static hash CSP cannot
+cover that script. It is a dashboard setting, not declared in `zone.json`, and
+it cannot skip paths on the free plan. Bot Fight Mode also challenges
+datacenter IPs, which is why CI's deploy verification targets each deployment's
+own `*.pages.dev` URL, outside the zone.
 
 ## Turnstile
 
@@ -154,8 +147,9 @@ deployment included, fails verification.
 
 ## Web Analytics
 
-By default the zone injects the beacon, which picks up the nonce from the
-header; `static.cloudflareinsights.com` is also in `script-src`. To own the
+By default the zone injects the beacon. `static.cloudflareinsights.com` is in
+`script-src` and `cloudflareinsights.com` is in `connect-src`, so the beacon is
+allowed by host. To own the
 markup instead, set `WEB_ANALYTICS` in
 [`src/lib/site-config.ts`](../src/lib/site-config.ts) to
 `{ emitBeacon: true, token: '<site token>' }` and, in the same release, switch
@@ -205,7 +199,7 @@ curl -sI https://<hash>.jseverino.pages.dev/           # 302 to the Access login
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/api/contact          # 403 (GET)
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/wp-login.php         # 403
 curl -sI https://jseverino.com/assets/icons/favicon.svg | grep -i cache-control      # max-age=3600
-npm run deploy:verify                                  # from a residential IP
+npm run deploy:verify
 ```
 
 Then delete the `/wp-*` redirects from `public/_redirects` and run

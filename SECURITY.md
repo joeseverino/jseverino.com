@@ -29,5 +29,5 @@ Only the deployed site and the `main` branch are supported.
 ## Security architecture
 
 [`docs/Security.md`](./docs/Security.md) covers the design: the static origin,
-the contact form, the response headers and nonce-based CSP, the Cloudflare edge
+the contact form, the response headers and hash-based CSP, the Cloudflare edge
 posture, and the supply chain.

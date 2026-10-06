@@ -11,8 +11,9 @@ import {
   CONTACT_RUNTIME,
   validateContactPayload,
 } from '../lib/contact-contract.ts';
+import { SITE } from '../generated/site.ts';
 import type { D1Database } from '../lib/database.ts';
-import { requestMeta, truncate } from '../lib/request-meta.ts';
+import { ownPageUrl, requestMeta } from '../lib/request-meta.ts';
 import { readRequestJson, requestMediaType, type PostContext } from '../lib/request-json.ts';
 import { siteverifyAccepts, type Siteverify } from '../lib/turnstile.ts';
 
@@ -21,15 +22,7 @@ interface Env {
   TURNSTILE_SECRET_KEY: string;
 }
 
-function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
-}
+const json = (data: unknown, status = 200): Response => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 
 function parseBrowser(ua: string): string {
   if (/Edg\//.test(ua)) return 'Edge';
@@ -108,10 +101,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
     return json({ ok: false, error: 'Verification failed. Please try again.' }, 400);
   }
 
-  const sourceUrl = truncate(
-    submittedSourceUrl || (request.headers.get('Referer') ?? ''),
-    CONTACT_PROPERTIES.sourceUrl.maxLength ?? 0,
-  );
+  const sourceUrl = ownPageUrl(SITE.origin, submittedSourceUrl, request.headers.get('Referer'))?.slice(0, CONTACT_PROPERTIES.sourceUrl.maxLength) ?? null;
 
   try {
     // Turnstile stops most bots; this caps what one IP can store.
@@ -133,7 +123,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
         parseBrowser(userAgent),
         parseDevice(userAgent),
         country || null,
-        sourceUrl || null,
+        sourceUrl,
         CONTACT_RUNTIME.maxPerIpPerHour,
       )
       .run();

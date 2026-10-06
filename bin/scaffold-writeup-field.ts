@@ -3,7 +3,7 @@
 // MCP tool/CLI schemas, and the `site manage` TUI derive from this contract; this
 // command never patches consumers.
 import fs from 'node:fs';
-import { cli } from './lib/args.ts';
+import { cli, flag } from './lib/args.ts';
 import type { ContentContract, FieldSpec, FieldType } from '../src/lib/content-contract.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
@@ -17,12 +17,12 @@ const { values } = cli({
   options: {
     name: { type: 'string' },
     type: { type: 'string', default: 'string' },
-    required: { type: 'boolean', default: false },
-    editable: { type: 'boolean', default: false },
-    public: { type: 'boolean', default: false },
+    required: flag,
+    editable: flag,
+    public: flag,
     ownership: { type: 'string', default: 'vault' },
     'cli-flag': { type: 'string' },
-    apply: { type: 'boolean', default: false },
+    apply: flag,
   },
 });
 

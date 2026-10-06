@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-10-05",
+  "packages": {
+    "npm:branding-engine": {
+      "version": "0.8.1",
+      "downloadsPerMonth": 533
+    },
+    "pypi:severino-vault-engine": {
+      "version": "1.0.0"
+    },
+    "npm:sitedrift": {
+      "version": "0.4.0",
+      "downloadsPerMonth": 352
+    }
+  }
+}

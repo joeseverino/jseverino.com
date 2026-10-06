@@ -60,12 +60,13 @@ docs         <n> docs, <n> local links, <n> script refs, <n> repo paths resolve
 css-lint     passed
 css-vars     passed
 check        0 errors, 0 warnings
+repo-policy  Node, npm, lockfile, stylesheet, TypeScript-only, and workflow pins hold
 build        <n> pages built
 assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
 links        <n> pages, <n> internal references (<n> unique) resolve
 weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75KB, JS <n>KB/25KB
-html         <n> pages: <n> ids unique per page, <n> images all carry alt, no unprocessed directives
-routes       <n> pages and <n> Function routes invoke Functions; <n> static excludes carry the static CSP; <n> fallback pages
+html         <n> pages: <n> ids unique per page, <n> images all carry alt, headings never skip a level, no unprocessed directives
+routes       <n> Function routes invoke Functions; no built HTML page does; _headers has the CSP on /* and the /contact/* override
 seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 edge-runtime <n> passed (<n>s)
 ```
@@ -149,7 +150,7 @@ that are part of the release. Do not commit local caches, build output,
 
 The `deploy` workflow verifies every deployment on its `*.pages.dev` URL when
 the `Cloudflare Pages` check completes. After the merge, verify production from
-a residential IP on a clean, current `main`:
+a clean, current `main`:
 
 ```sh
 git switch main && git pull --ff-only
@@ -209,8 +210,8 @@ Confirm:
 - The HTML CSP does not include `script-src 'unsafe-inline'`.
 - `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
 - The HTML CSP includes `report-to csp-endpoint` and the `report-uri https://jseverino.com/api/csp-report` fallback.
-- No `__CSP_NONCE__` placeholder survives in the HTML, and every `<script>` carries the header nonce.
-- The report-only CSP carries `'strict-dynamic'` with the enforced nonce and `require-trusted-types-for 'script'`.
+- No `__CSP_INLINE__` marker survives in the HTML, and the hash of every inline script and style appears in the header (`deploy:verify`'s `inline` check).
+- The enforced CSP carries `script-src 'self' 'sha256-…'` plus the Turnstile and Web Analytics hosts, and `require-trusted-types-for 'script'`, with no `Content-Security-Policy-Report-Only` header. `/contact/` is the exception: no enforced Trusted Types, and a report-only header carrying it.
 - `strict-transport-security` includes `includeSubDomains`.
 - `x-content-type-options: nosniff` is present.
 - `referrer-policy: strict-origin-when-cross-origin` is present.
@@ -228,9 +229,9 @@ structured result with named pass/fail checks (`hasCsp`, `noUnsafeInlineScript`,
 **HAR audit (deep verification).** The MCP check confirms response headers
 arrive. A HAR audit confirms that those headers do not break a real browser
 session under the full third-party load. Run after any change to
-[`functions/_middleware.ts`](../functions/_middleware.ts) or
+[`bin/build-csp.ts`](../bin/build-csp.ts) or
 [`public/_headers`](../public/_headers), and as the operational gate for
-promoting Trusted Types from report-only to enforcing.
+touching the Trusted Types exemption for `/contact/`.
 
 Capture HARs from a clean browser profile (DevTools, Network, "Export
 HAR…" in Chromium; Develop, Show Web Inspector, Network, "Export" in
@@ -254,8 +255,8 @@ jq -r '.log.entries[]
 
 A clean run is: 2xx across the board (one 204 from `/cdn-cgi/rum?` is
 expected) and zero output from the second command. A POST to
-`/api/csp-report` means the browser tripped the enforcing CSP or the
-Trusted Types report-only directive: inspect the report body in the HAR
+`/api/csp-report` means the browser tripped the enforcing CSP or, on
+`/contact/`, the Trusted Types report-only directive: inspect the report body in the HAR
 (grep the entry's `request.postData.text` for `effective-directive`) or
 read the matching D1 row to identify the source.
 
@@ -285,10 +286,11 @@ npx wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS
 CSP reports from browser extensions are filtered by the report endpoint and
 should not be treated as site regressions.
 
-**Trusted Types promotion gate.** The site emits
-`require-trusted-types-for 'script'` in a
-`Content-Security-Policy-Report-Only` header. Filter just that directive's
-violations to decide whether to promote it into the enforcing CSP:
+**Trusted Types on `/contact/`.** Every other page enforces
+`require-trusted-types-for 'script'`; `/contact/` emits it in a
+`Content-Security-Policy-Report-Only` header because Turnstile's script trips it.
+Filter that directive's violations to see whether Turnstile still does, and
+whether anything first-party has joined it:
 
 ```sh
 npx wrangler d1 execute jseverino-contact --remote --command \
@@ -301,9 +303,9 @@ npx wrangler d1 execute jseverino-contact --remote --command \
 Promotion criteria: ~7 days of clean reports across `/`, `/contact/`, and
 at least one writeup (verified by the HAR audit in
 [§5](#5-cloudflare-deploy-verification)). When the query returns no rows
-across that window, move the directive from `cspReportOnly()` into the
-enforcing `csp()` function in
-[`functions/_middleware.ts`](../functions/_middleware.ts).
+across that window, remove the `/contact/*` override in
+[`public/_headers`](../public/_headers) so the global policy, which enforces
+the directive, applies to the page.
 
 ## 7. SEO And Accessibility Spot Checks
 

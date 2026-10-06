@@ -8,6 +8,7 @@ import {
   stripSignature,
 } from './lib/security-txt.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
 
 try {
   const body = stripSignature(fs.readFileSync(SECURITY_FILE, 'utf8'));
@@ -23,6 +24,6 @@ try {
   fs.writeFileSync(SECURITY_FILE, result.stdout);
   console.log(`signed ${path.relative(siteRoot, SECURITY_FILE)} with ${SIGNING_EMAIL}`);
 } catch (error) {
-  console.error(`sign-security: ${(error as Error).message}`);
+  console.error(`sign-security: ${errorMessage(error)}`);
   process.exit(1);
 }

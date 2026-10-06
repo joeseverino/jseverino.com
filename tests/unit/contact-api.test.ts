@@ -116,6 +116,21 @@ describe('request validation', () => {
     assert.equal(response.status, 400);
   });
 
+  test('stores the source only when it names this site, as a path without query or fragment', async () => {
+    const stored = async (sourceUrl: string | undefined, referer?: string) => {
+      const db = createD1Stub();
+      const payload = sourceUrl === undefined ? { ...validPayload, sourceUrl: undefined } : { ...validPayload, sourceUrl };
+      const response = await call(contactRequest(payload, referer ? { Referer: referer } : {}), db);
+      assert.equal(response.status, 200);
+      return db.queries.at(-1)?.values[8];
+    };
+    assert.equal(await stored('https://jseverino.com/contact/?utm=x#top'), 'https://jseverino.com/contact/');
+    assert.equal(await stored('https://evil.example/phish'), null);
+    assert.equal(await stored('https://evil.example/phish', 'https://jseverino.com/about/?a=1'), 'https://jseverino.com/about/');
+    assert.equal(await stored(undefined, 'https://evil.example/'), null);
+    assert.equal(await stored('https://jseverino.com.evil.example/contact/'), null);
+  });
+
   test('rejects a missing turnstile token with 400', async () => {
     const response = await call(contactRequest({ ...validPayload, turnstileToken: '' }));
     assert.equal(response.status, 400);

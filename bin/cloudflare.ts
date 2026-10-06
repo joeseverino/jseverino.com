@@ -10,10 +10,11 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { parse } from './lib/args.ts';
 import {
   apply, createClient, diff, drifted, loadDesired, plannedCalls, readLive,
-  type Call, type DesiredState, type Fetch, type Item,
+  type Call, type ClientOptions, type DesiredState, type Item,
 } from './lib/cloudflare.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { edgeRuntime } from '../tests/browser-test-env.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
 
 export const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 
@@ -69,11 +70,9 @@ const describeCall = (step: Call): string => `${step.method} ${step.path}${step.
 
 const COMMANDS = ['check', 'plan', 'apply'] as const;
 
-export interface MainOptions {
+export interface MainOptions extends Pick<ClientOptions, 'fetch' | 'wait'> {
   argv?: string[];
   env?: NodeJS.ProcessEnv;
-  fetch?: Fetch;
-  wait?: (ms: number) => Promise<unknown>;
   write?: (line: string) => void;
 }
 
@@ -82,7 +81,7 @@ export async function main({ argv = process.argv.slice(2), env = process.env, fe
   try {
     parsed = parse({ args: argv, allowPositionals: true, options: { json: { type: 'boolean' }, yes: { type: 'boolean' } } });
   } catch (error) {
-    write(`${error instanceof Error ? error.message : String(error)}\n\n${USAGE}`);
+    write(`${errorMessage(error)}\n\n${USAGE}`);
     return 2;
   }
   const { values, positionals } = parsed;
@@ -144,7 +143,7 @@ if (import.meta.main) {
   try {
     process.exitCode = await main();
   } catch (error) {
-    console.error(`cloudflare: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`cloudflare: ${errorMessage(error)}`);
     process.exitCode = 2;
   }
 }

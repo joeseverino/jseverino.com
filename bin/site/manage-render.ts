@@ -6,6 +6,12 @@ import { DEV_PORT } from './dev-server.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { FIELDS, current, diff, fieldValue, hasStaged, loadSiteStatus, type Item, type Model, type SiteStatus } from './manage-model.ts';
 
+// The horizontal rule under a frame's header and between its sections.
+export const rule = (cols: number): string => '─'.repeat(Math.max(40, cols - 4));
+
+// The divider between the featured list and the writeups that are not featured.
+const notFeaturedDivider = (cols: number): string => `  ${DIM}──── not featured ${'─'.repeat(Math.max(4, cols - 22))}${RESET}`;
+
 const TEST_COLUMNS = Number.parseInt(process.env.MANAGE_TUI_COLUMNS || '', 10);
 const TEST_ROWS = Number.parseInt(process.env.MANAGE_TUI_ROWS || '', 10);
 
@@ -78,14 +84,14 @@ export function listFrame(model: Model): string {
 
   out.push('');
   out.push(drawTabBar(model));
-  out.push(`  ${'─'.repeat(Math.max(40, cols - 4))}`);
+  out.push(`  ${rule(cols)}`);
   out.push(`  ${BOLD}site manage${RESET}${DIM}: ${GREEN}●${RESET}${DIM} published · ${MAGENTA}◌${RESET}${DIM} draft · ${RED}!${RESET}${DIM} gate issues · edits stay staged until you save${RESET}`);
   out.push('');
   out.push(`  ${BOLD}FEATURED${RESET}  ${DIM}home page renders this order${RESET}`);
 
   model.items.forEach((item, idx) => {
     if (idx === model.divider) {
-      out.push(`  ${DIM}──── not featured ${'─'.repeat(Math.max(4, cols - 22))}${RESET}`);
+      out.push(notFeaturedDivider(cols));
     }
     const selected = idx === model.cursor;
     const grabbed = selected && model.mode === 'move';
@@ -101,7 +107,7 @@ export function listFrame(model: Model): string {
     out.push(`  ${pointer} ${slot} ${stateIcon(model, item)} ${gateMark}${edited}${slugText}${tag.text}${title}`);
   });
   if (model.divider === model.items.length) {
-    out.push(`  ${DIM}──── not featured ${'─'.repeat(Math.max(4, cols - 22))}${RESET}`);
+    out.push(notFeaturedDivider(cols));
   }
   {
     const selNew = model.cursor === model.items.length;
@@ -128,7 +134,7 @@ export function listFrame(model: Model): string {
   );
   out.push('');
 
-  out.push(`  ${DIM}${'─'.repeat(Math.max(40, cols - 4))}${RESET}`);
+  out.push(`  ${DIM}${rule(cols)}${RESET}`);
   if (model.mode === 'move') {
     const slug = model.items[model.cursor]?.slug || '';
     out.push(`  ${BOLD}moving ${slug}${RESET}${DIM}: ↑/↓ move · crossing the line features/unfeatures · space or enter drops it${RESET}`);
@@ -161,7 +167,7 @@ export function detailFrame(model: Model): string {
 
   out.push('');
   out.push(drawTabBar(model));
-  out.push(`  ${'─'.repeat(Math.max(40, cols - 4))}`);
+  out.push(`  ${rule(cols)}`);
   out.push(`  ${BOLD}${item.slug}${RESET}  ${stateIcon(model, item)} ${DIM}${item.published ? 'published' : 'draft'} · ${slot}${RESET}`);
   out.push('');
 
@@ -195,7 +201,7 @@ export function detailFrame(model: Model): string {
     out.push(`  ${model.flash}`);
     out.push('');
   }
-  out.push(`  ${DIM}${'─'.repeat(Math.max(40, cols - 4))}${RESET}`);
+  out.push(`  ${DIM}${rule(cols)}${RESET}`);
   if (model.mode === 'edit') {
     out.push(`  ${DIM}type to edit · ←/→ move · enter stage · esc cancel · Ctrl+U clear · Ctrl+W delete word${RESET}`);
   } else {
@@ -212,7 +218,7 @@ export function siteFrame(model: Model): string {
   
   out.push('');
   out.push(drawTabBar(model));
-  out.push(`  ${'─'.repeat(Math.max(40, cols - 4))}`);
+  out.push(`  ${rule(cols)}`);
   out.push(`  ${BOLD}site manage${RESET}${DIM}: manage local servers, pre-flight checks, and publish${RESET}`);
   out.push('');
 
@@ -284,7 +290,7 @@ export function siteFrame(model: Model): string {
     out.push('');
   }
 
-  out.push(`  ${DIM}${'─'.repeat(Math.max(40, cols - 4))}${RESET}`);
+  out.push(`  ${DIM}${rule(cols)}${RESET}`);
   out.push(`  ${DIM}↑/↓ select · enter run · ←/→ switch tabs · r reload status · q quit${RESET}`);
   
   return out.join('\n');

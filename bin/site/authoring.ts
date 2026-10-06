@@ -67,7 +67,7 @@ const featuredOrder = (): FeaturedListing => {
 };
 
 // The 1-based slot a target names, 0 to unfeature.
-export function resolveSlot(order: readonly FeaturedEntry[], slug: string, target: string | undefined): number {
+function resolveSlot(order: readonly FeaturedEntry[], slug: string, target: string | undefined): number {
   const current = order.find((entry) => entry.slug === slug)?.slot ?? null;
   const n = order.length;
   const notFeatured = (): never => {

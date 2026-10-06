@@ -8,7 +8,7 @@
 // Playwright's response.headers() returns; headersToRecord() produces the same
 // shape from a fetch Response.
 import { SITE_ORIGIN as siteOrigin } from './site-config.ts';
-import { CSP_NONCE_ATTRIBUTE, CSP_NONCE_PLACEHOLDER } from '../../functions/lib/csp-nonce.ts';
+import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from '../../functions/lib/csp.ts';
 
 export { siteOrigin };
 export const cspReportPath = '/api/csp-report';
@@ -17,9 +17,7 @@ export const cspReportUri = `${siteOrigin}${cspReportPath}`;
 // Lower-cased header name to value: Playwright's response.headers() shape.
 export type HeaderRecord = Record<string, string>;
 
-const nonceRe = /'nonce-([A-Za-z0-9+/=]+)'/;
-
-export const nonceFromCsp = (csp: string | null | undefined): string | null => nonceRe.exec(csp ?? '')?.[1] ?? null;
+export const trustedTypesExempt = (pathname: string): boolean => pathname.replace(/\/+$/, '') === '/contact';
 
 export function headersToRecord(headers: Headers): HeaderRecord {
   const record: HeaderRecord = {};
@@ -29,14 +27,13 @@ export function headersToRecord(headers: Headers): HeaderRecord {
   return record;
 }
 
-// The per-request policies functions/_middleware.ts issues on every HTML
-// response: the enforced policy, and the report-only companion that stages
-// Trusted Types and 'strict-dynamic' until /api/csp-report shows them clean.
-export function cspFindings(headers: HeaderRecord): string[] {
+// The policy public/_headers gives every route, once bin/build-csp.ts has
+// filled in the hashes. Trusted Types is enforced on every page except the
+// contact form, which keeps it report-only because Turnstile's script trips it.
+export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   const findings: string[] = [];
   const csp = headers['content-security-policy'] ?? '';
-  const nonce = nonceFromCsp(csp);
-  if (!nonce) findings.push('content-security-policy carries no script nonce');
+  const directive = (name: string): string => new RegExp(`(?:^|;\\s*)${name}\\s([^;]*)`).exec(csp)?.[1] ?? '';
   for (const clause of [
     "default-src 'none'",
     "object-src 'none'",
@@ -48,20 +45,29 @@ export function cspFindings(headers: HeaderRecord): string[] {
   }
   // report-uri is the fallback for browsers that ignore report-to (Firefox).
   if (!csp.includes(`report-uri ${cspReportUri}`)) findings.push(`content-security-policy lacks the report-uri ${cspReportUri} fallback`);
-  if (/script-src[^;]*'unsafe-inline'/.test(csp)) findings.push("script-src falls back to 'unsafe-inline'");
-  // The Web Analytics beacon passes by nonce or host. A pinned hash goes stale
-  // whenever Cloudflare reships the beacon, silently.
-  if (!/script-src[^;]*https:\/\/static\.cloudflareinsights\.com/.test(csp)) findings.push('script-src does not allow the Web Analytics beacon host');
-  if (/'sha(256|384|512)-/.test(csp + (headers['content-security-policy-report-only'] ?? ''))) findings.push('a policy pins a script hash');
-  if (nonce && !new RegExp(`style-src[^;]*'nonce-${RegExp.escape(nonce)}'`).test(csp)) {
-    findings.push('style-src does not carry the request nonce the inlined stylesheet needs');
+  if (csp.includes('__')) findings.push('content-security-policy still carries a build placeholder');
+
+  // No nonces and no escape hatches: the page's own inline code is covered by
+  // hashes, everything else by 'self' and two named hosts.
+  const script = directive('script-src');
+  const style = directive('style-src');
+  if (!script.includes("'self'")) findings.push("script-src lacks 'self'");
+  if (!/'sha256-[A-Za-z0-9+/=]+'/.test(script)) findings.push('script-src carries no hash for the inline theme script');
+  for (const banned of ["'unsafe-inline'", "'unsafe-eval'", "'strict-dynamic'", 'blob:', 'nonce-']) {
+    if (script.includes(banned)) findings.push(`script-src carries ${banned}`);
+    if (style.includes(banned)) findings.push(`style-src carries ${banned}`);
   }
+  if (!style.includes("'self'")) findings.push("style-src lacks 'self'");
+  if (!/'sha256-[A-Za-z0-9+/=]+'/.test(style)) findings.push('style-src carries no hash for the inlined stylesheet');
 
   const reportOnly = headers['content-security-policy-report-only'] ?? '';
-  for (const clause of ["require-trusted-types-for 'script'", "'strict-dynamic'", 'report-to csp-endpoint']) {
-    if (!reportOnly.includes(clause)) findings.push(`the report-only policy lacks ${clause}`);
+  if (trustedTypesExempt(pathname)) {
+    if (csp.includes(TRUSTED_TYPES)) findings.push('the exempt page enforces Trusted Types');
+    if (!reportOnly.includes(TRUSTED_TYPES)) findings.push(`the report-only policy lacks ${TRUSTED_TYPES}`);
+  } else {
+    if (!csp.includes(TRUSTED_TYPES)) findings.push(`content-security-policy lacks ${TRUSTED_TYPES}`);
+    if (reportOnly) findings.push('a report-only policy is still issued');
   }
-  if (nonce && !reportOnly.includes(`'nonce-${nonce}'`)) findings.push('the report-only policy carries a different nonce than the enforced one');
 
   if (!(headers['reporting-endpoints'] ?? '').includes(cspReportPath)) {
     findings.push(`reporting-endpoints lacks ${cspReportPath}`);
@@ -99,39 +105,21 @@ export function hstsFindings(headers: HeaderRecord): string[] {
   return /includesubdomains/i.test(value) ? [] : [`strict-transport-security is ${value || '<missing>'}, expected includeSubDomains`];
 }
 
-// A page that renders but whose scripts (or its inlined stylesheet) carry a
-// different nonce than the header executes nothing and paints unstyled, and no
-// status code would notice. The middleware nonces only tags the build stamped
-// with the placeholder, so a surviving placeholder means the swap did not run.
-export const scriptTagCount = (html: string): number => (html.match(/<script\b/g) ?? []).length;
-export const styleTagCount = (html: string): number => (html.match(/<style\b/g) ?? []).length;
-
-export function nonceParityFindings(html: string, nonce: string | null): string[] {
-  if (!nonce) return ['no nonce to check script and style tags against'];
-  const scripts = scriptTagCount(html);
-  const styles = styleTagCount(html);
-  const stamped = html.split(`nonce="${nonce}"`).length - 1;
+// A page whose inline script or stylesheet is not covered by the policy that
+// ships beside it runs unthemed or unstyled, and no status code would notice.
+// Every inline script and style on the page must have its hash in the header,
+// and the build-time marker must not reach the response.
+export async function inlineHashFindings(html: string, csp: string | null | undefined): Promise<string[]> {
   const findings: string[] = [];
-  if (scripts === 0) findings.push('the page renders no script tags');
-  if (styles === 0) findings.push('the page renders no inlined stylesheet');
-  if (stamped !== scripts + styles) findings.push(`${stamped} of ${scripts} script and ${styles} style tags carry the header nonce`);
-  findings.push(...placeholderFindings(html));
+  const { scriptHashes, styleHashes } = await inlineHashes(html);
+  if (scriptHashes.length === 0) findings.push('the page carries no inline theme script');
+  if (styleHashes.length === 0) findings.push('the page carries no inlined stylesheet');
+  for (const hash of [...scriptHashes, ...styleHashes]) {
+    if (!(csp ?? '').includes(`'${hash}'`)) findings.push(`content-security-policy does not carry the hash of an inline tag (${hash})`);
+  }
+  if (html.includes(CSP_INLINE_MARKER)) findings.push(`the build-time ${CSP_INLINE_MARKER} marker reached the response`);
+  if (/<(?:script|style)\b[^>]*\snonce=/i.test(html)) findings.push('a script or style tag still carries a nonce attribute');
   return findings;
-}
-
-// The build-time attribute, matched as markup so page text that mentions the
-// placeholder is not a finding.
-export const placeholderFindings = (html: string): string[] =>
-  html.includes(CSP_NONCE_ATTRIBUTE) ? [`the build-time ${CSP_NONCE_PLACEHOLDER} placeholder reached the response`] : [];
-
-// The policy public/_headers sets on every path _routes.json excludes from
-// Functions. Those responses never pass the middleware; a miss under them is
-// the prefix's static fallback page, which needs no script or inline style.
-export const STATIC_CSP = "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
-
-export function staticCspFindings(headers: HeaderRecord): string[] {
-  const csp = headers['content-security-policy'];
-  return csp === STATIC_CSP ? [] : [`content-security-policy is ${csp ?? '<missing>'}, expected the static policy`];
 }
 
 export function cacheRuleFindings(headers: HeaderRecord, { immutable }: { immutable: boolean }): string[] {

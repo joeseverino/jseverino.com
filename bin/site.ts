@@ -5,11 +5,12 @@
 // stdout ({ ok, command, status, ..., next, error? }) with progress on stderr.
 // `manage` is the one interactive command and needs a terminal.
 import type { parseArgs, ParseArgsOptionsConfig } from 'node:util';
-import { parse } from './lib/args.ts';
+import { parse, flag } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
 import { EXIT, SiteError, createOutput, type Output } from './site/cli.ts';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import type { CommandName, CommandResults, SiteFailure, SiteHelp, SiteSuccessOf } from './site/types.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
 
 type Values<O extends ParseArgsOptionsConfig> =
   ReturnType<typeof parseArgs<{ options: O; allowPositionals: true; strict: true }>>['values'];
@@ -50,7 +51,7 @@ const SET_FIELDS = Object.entries(collectionFields('writeups'))
 const SET_OPTIONS = {
   ...Object.fromEntries(SET_FIELDS.map(([, flag]) => [flag, { type: 'string' as const }])),
   published: { type: 'string' as const },
-  'touch-last-reviewed': { type: 'boolean' as const, default: false },
+  'touch-last-reviewed': flag,
 } satisfies ParseArgsOptionsConfig;
 
 function setFields(values: Record<string, unknown>): Record<string, unknown> {
@@ -81,7 +82,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Check references, the frontmatter contract, and the catalog; writes nothing',
     usage: 'site validate [<slug>] [--draft]',
     help: 'Without a slug, every published writeup and page. --draft includes unpublished writeups and\ntolerates the two ship-time rules (published: true, published_at).',
-    options: { draft: { type: 'boolean', default: false } },
+    options: { draft: flag },
     positionals: [0, 1],
     run: async ({ values, positionals: [slug], out }) => (await authoring()).validate({ slug, draft: values.draft, out }),
   }),
@@ -89,7 +90,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Run the Astro dev server; --drafts previews unpublished content',
     usage: 'site dev [--drafts] [--host <host>] [--port <port>]',
     help: 'Drafts sync into the gitignored .cache/drafts overlay the dev server reads (SITE_CONTENT_ROOT);\nthe committed snapshot is never touched, so a draft cannot be committed or deployed.',
-    options: { drafts: { type: 'boolean', default: false }, host: { type: 'string' }, port: { type: 'string' } },
+    options: { drafts: flag, host: { type: 'string' }, port: { type: 'string' } },
     run: async ({ values, out }) => (await local()).dev({ drafts: values.drafts, host: values.host, port: values.port, out }),
   }),
   publish: define({
@@ -106,8 +107,8 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
       '  --from         cut the branch from this ref instead of origin/<base>',
     ].join('\n'),
     options: {
-      'dry-run': { type: 'boolean', default: false },
-      full: { type: 'boolean', default: false },
+      'dry-run': flag,
+      full: flag,
       base: { type: 'string', default: 'main' },
       from: { type: 'string' },
     },
@@ -169,7 +170,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
     usage: 'site draft-alt <slug> [--apply]',
     help: 'Needs ANTHROPIC_API_KEY. --apply writes the draft to the writeup\'s cover_alt.',
-    options: { apply: { type: 'boolean', default: false } },
+    options: { apply: flag },
     positionals: [1, 1],
     run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, apply: values.apply, out }),
   }),
@@ -197,7 +198,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Publish readiness for one writeup: the ship gate plus its featured slot',
     usage: 'site prepare <slug> [--tag-usage]',
     help: '--tag-usage adds how many writeups use each of its technologies.',
-    options: { 'tag-usage': { type: 'boolean', default: false } },
+    options: { 'tag-usage': flag },
     positionals: [1, 1],
     run: async ({ values, positionals: [slug = ''], out }) => (await writeupOps()).prepareWriteup({ slug, tagUsage: values['tag-usage'], out }),
   }),
@@ -241,14 +242,14 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site render <slug|-> [--document]',
     help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. html is the body the build ships. --document adds document: a self-contained page with the site article layout and styles inlined, for previews (the Obsidian plugin, HQ). Asset paths stay vault-relative.',
     positionals: [1, 1],
-    options: { document: { type: 'boolean', default: false } },
+    options: { document: flag },
     run: async ({ positionals: [slug = ''], values: { document }, out }) => (await import('./site/render.ts')).render({ slug, document, out }),
   }),
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
     usage: 'site contact [--limit <n>] [--pii]',
     help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii returns full names, emails, and messages and is written to the audit log.',
-    options: { limit: { type: 'string' }, pii: { type: 'boolean', default: false } },
+    options: { limit: { type: 'string' }, pii: flag },
     run: async ({ values, out }) => (await siteOps()).contact({ limit: values.limit, pii: values.pii, out }),
   }),
   csp: define({
@@ -256,10 +257,10 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site csp [--count] [--limit <n>] [--directive <name>] [--pii]',
     help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
     options: {
-      count: { type: 'boolean', default: false },
+      count: flag,
       limit: { type: 'string' },
       directive: { type: 'string' },
-      pii: { type: 'boolean', default: false },
+      pii: flag,
     },
     run: async ({ values, out }) => (await siteOps()).csp({ count: values.count, limit: values.limit, directive: values.directive, pii: values.pii, out }),
   }),
@@ -267,7 +268,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Apply cloudflare/d1.sql to the remote D1 database (needs --confirm)',
     usage: 'site d1-apply --confirm',
     help: 'The schema is CREATE ... IF NOT EXISTS, so it only adds. Needs CLOUDFLARE_API_TOKEN (op run).',
-    options: { confirm: { type: 'boolean', default: false } },
+    options: { confirm: flag },
     run: async ({ values, out }) => (await siteOps()).d1Apply({ confirm: values.confirm, out }),
   }),
   headers: define({
@@ -305,7 +306,7 @@ const commandHelp = (command: Command): string =>
   [`usage: ${command.usage} [--json]`, '', command.summary, ...(command.help ? ['', command.help] : []), '', EXIT_HELP].join('\n');
 
 const helpOptions = (command: Command): SiteHelp['options'] =>
-  Object.entries({ json: { type: 'boolean' as const, default: false }, ...command.options })
+  Object.entries({ json: flag, ...command.options })
     .map(([name, option]) => ({ name, type: option.type, ...('default' in option ? { default: option.default } : {}) }));
 
 function helpDocument(name: CommandName | undefined): SiteHelp {
@@ -347,11 +348,11 @@ async function runCommand<C extends CommandName>(name: C, rest: string[], json: 
   try {
     parsed = parse({
       args: rest,
-      options: { json: { type: 'boolean', default: false }, ...command.options },
+      options: { json: flag, ...command.options },
       allowPositionals: true,
     });
   } catch (error) {
-    throw new SiteError((error as Error).message, { code: EXIT.usage, fix: `site ${name} --help` });
+    throw new SiteError(errorMessage(error), { code: EXIT.usage, fix: `site ${name} --help` });
   }
   if (parsed.values.help) return printHelp(json, name);
   if (json && command.interactive) {

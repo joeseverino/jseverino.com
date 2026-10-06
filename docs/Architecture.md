@@ -18,9 +18,8 @@ The request-time execution and data boundary is at the edge:
 <sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
-The public serving layer is static. The only request-time code is Cloudflare Pages Functions, and [`public/_routes.json`](../public/_routes.json) keeps static paths (`/_astro/*`, `/assets/*`, and the other flat files) from invoking them:
+The public serving layer is static. Every HTML page is a plain static asset served without invoking a Function. The only request-time code is Cloudflare Pages Functions, and [`public/_routes.json`](../public/_routes.json) includes only `/api/*` and `/__sitedrift/*`, with an empty exclude list:
 
-- [`functions/_middleware.ts`](../functions/_middleware.ts) rewrites HTML responses to add CSP nonces and reporting directives.
 - [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact form submissions.
 - [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) receives CSP violation reports and stores filtered records in D1.
 - [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
@@ -71,15 +70,18 @@ is derived at build time, never hand-keyed:
 - [`src/lib/software.config.ts`](../src/lib/software.config.ts) is the only
   hand-maintained input: the skip list, featured set, order, writeup
   cross-links, and the PyPI/npm package mappings GitHub cannot know.
-- [`src/lib/software.ts`](../src/lib/software.ts) composes those with live
-  PyPI/npm version and download counts.
+- [`src/data/package-registry.json`](../src/data/package-registry.json) is the
+  matching snapshot of PyPI/npm versions and monthly downloads, so a build never
+  calls a registry either. `npm run snapshot:software` refreshes it and writes
+  nothing if any lookup fails.
+- [`src/lib/software.ts`](../src/lib/software.ts) composes those snapshots with
+  the curation config.
 
-Refresh it with `npm run snapshot:github` after editing repo descriptions or
-adding repos.
+Refresh them with `npm run snapshot:github` after editing repo descriptions or
+adding repos, and `npm run snapshot:software` after publishing a package.
 
-Build-time GitHub and registry requests have a five-second timeout, including
-response-body reads. npm version and download requests run concurrently and
-fail independently. Content, GitHub, and software loaders share pending work
+The snapshot scripts' registry requests have a five-second timeout, including
+response-body reads. Content, GitHub, and software loaders share pending work
 through [`async-cache.ts`](../src/lib/async-cache.ts); failed loads can be retried.
 
 ## 3. Sync Pipeline
@@ -233,7 +235,13 @@ The mobile navigation is a `popover="auto"` element. The toggle button uses `pop
 
 ### Header height
 
-`--header-height` is declared as a token (3.6rem desktop, 3.8rem at the same `(max-width: 599px)` breakpoint where the nav-toggle takes over). No JS measures or writes it. This keeps the inline `style` attribute on `<html>` empty, which keeps `style-src-attr` violations at zero without weakening the CSP.
+`--header-height` is declared as a token (3.6rem, the header's minimum height), and `--menu-offset` in `responsive.css` (3.8rem) is where the menu panel starts: the height the header has once the menu button sizes it. No JS measures or writes either. This keeps the inline `style` attribute on `<html>` empty, which keeps `style-src-attr` violations at zero without weakening the CSP.
+
+### Responsive behavior
+
+The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius scale with `clamp()`, and the card and split layouts size from their content (`min(100%, …)` inside `auto-fill` and `auto-fit` grids). The five parts that rearrange when space runs short (the primary nav, the page hero, the software list, the archive summary, and the technology rows) are containers declared in [`responsive.css`](../src/styles/responsive.css), and each answers to its own width at 33.5rem: the width these full-width containers have at a 600px viewport, where the layout used to switch. The other media queries are about capability or preference (hover, pointer, forced colors, reduced motion, scripting, color scheme), not size.
+
+A size container is a containing block for fixed-position descendants, so `main` and the content flow must not become containers: the resume page's fixed download button would anchor to them instead of the viewport.
 
 ## 8. Image Pipeline
 
@@ -278,22 +286,22 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 ## 10. Edge Security
 
-[`public/_headers`](../public/_headers) defines the static security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`). The Content-Security-Policy is not set there. Only the middleware issues it, per request, so every HTML response carries a fresh nonce.
+[`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without a Function. Pages applies `_headers` to static assets only, not to Function responses, which set their own headers.
 
-For every HTML response, [`functions/_middleware.ts`](../functions/_middleware.ts):
+[`bin/build-csp.ts`](../bin/build-csp.ts) runs from [`bin/build-static.ts`](../bin/build-static.ts) after the sitedrift preview wrap:
 
-1. **Skips bodyless responses.** It immediately returns the original response for `304 Not Modified` and `204 No Content` statuses, preventing broken caching behavior or empty documents.
-2. Generates a per-request nonce.
-3. Uses `HTMLRewriter` to swap the nonce in for the build-time placeholder (`nonce="__CSP_NONCE__"`, [`functions/lib/csp-nonce.ts`](../functions/lib/csp-nonce.ts)) on the `<script>` and `<style>` tags that carry it, and on no other tag. The placeholder is the allow-list of what may execute: the site's own `is:inline` scripts carry it in source, and the [`csp-nonce` integration](../src/integrations/csp-nonce.ts) stamps Astro's bundled module scripts and its inlined `<style>` in `<head>` after the build, failing the build if any other script or style tag is present. Markup that reaches a page from content therefore never gets a nonce. The site stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request and `style-src` stays nonce-strict.
-4. **Strips decompression headers.** `HTMLRewriter` decompresses the response stream but does not automatically remove the `Content-Encoding` or `Content-Length` headers. The middleware deletes them after transformation, since stale headers make the browser misread the uncompressed HTML as a blank page.
-5. Emits a `Content-Security-Policy` response header containing that same nonce.
-6. Emits `Reporting-Endpoints` plus the CSP `report-to` directive pointing at `/api/csp-report`, a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and a report-only companion policy that stages `'strict-dynamic'` and Trusted Types under the same nonce.
+1. Scans every built HTML page for inline scripts and styles.
+2. SHA-256 hashes the one inline theme-bootstrap script (an `is:inline` script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro), marked at build time with `nonce="__CSP_INLINE__"`, a marker `build-csp` strips from the output) and the one inlined stylesheet, which is identical on every page and so yields one hash. The stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request.
+3. **Fails the build** on any inline script or style the site did not emit, on any external script outside same-origin, `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`, on more than 4 inline script hashes or 4 style hashes, and on any `_headers` line over 2000 characters.
+4. Writes the finished policy into `dist/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`, `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders.
 
-The origin and report endpoint the middleware and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); the contract-projections audit fails when it is stale.
+The policy is `default-src 'none'` plus the site's own origin, the hashes, Turnstile, and Cloudflare Web Analytics, with no `'unsafe-inline'`, `'unsafe-eval'`, nonce, `'strict-dynamic'`, or `blob:`. It carries `report-to csp-endpoint` pointing at `/api/csp-report` (with a `Reporting-Endpoints` header), a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and Trusted Types enforcement. `/contact/*` has its own rule in `_headers`: Pages merges the headers of every matching rule, so the rule detaches the global policy (`! Content-Security-Policy`), sets one without Trusted Types, and adds a report-only `require-trusted-types-for 'script'` header, because Turnstile's script trips it. The policy module is [`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`, `inlineHashes`, `hashSource`). The only request-time CSP is the preview proxy's, which hashes the markup it fetches and nonces the bridge script sitedrift injects; it is not served on production.
 
-Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)) rather than inlined into HTML. The only inline `<script>` element in production HTML is the JSON-LD data block, which is data and still receives a nonce. CSP enforcement applies to every script the browser sees.
+The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); the contract-projections audit fails when it is stale.
 
-The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a nonce. The [nonce-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
+Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)) rather than inlined into HTML. Besides the hashed theme-bootstrap script, the only inline `<script>` element in production HTML is the JSON-LD data block, which is data. CSP enforcement applies to every script the browser sees.
+
+The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a hash. The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
 
 Raw HTML in content is limited by
 [`guard.ts`](../src/lib/markdown/guard.ts): listed formatting tags with
@@ -350,7 +358,7 @@ Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/ap
 
 Coverage:
 
-- **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted; unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
+- **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
 - **`POST /api/csp-report`**: left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
 
 The action is **Block**, the only one the free plan offers: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
@@ -361,8 +369,8 @@ The action is **Block**, the only one the free plan offers: non-compliant payloa
 
 [`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs `astro build`, then `sitedrift cloudflare`. On
 non-production Pages branches, sitedrift preserves the generated pages and
-installs its DEV-versus-LIVE review shell, and the build stamps the nonce
-placeholder on the viewer it wrote. On `main`, it exits without changing
+installs its DEV-versus-LIVE review shell, and the build marks the inline
+script on the viewer it wrote for hashing. On `main`, it exits without changing
 Astro's output. See [Deployment Preview Review](./Deployment-Preview-Review.md).
 Under `site --json` (`SITE_JSON=1`), `astro build` uses Astro's JSON logger;
 [Site CLI](./Site-CLI.md) has the detail.
@@ -397,11 +405,11 @@ dist/
 including every encoded content image, so those filenames can be cached
 `immutable` for one year. HTML is short-cached and revalidated.
 
-**External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block, which is data. The build stamps every `<script>` tag the site emits, including the external bundles, with the nonce placeholder the middleware replaces.
+**External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block, which is data. `bin/build-csp.ts` verifies at build time that no other inline script exists.
 
 **Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/`
 directory separately at deploy time; it is not part of the static `dist/` tree
-the Astro build writes. The middleware, contact endpoint, CSP report endpoint,
+the Astro build writes. The contact endpoint, CSP report endpoint,
 and scoped sitedrift proxy run as Workers at the edge. The sitedrift Function
 returns `404` on the production host and on any build without the
 preview-generated configuration, forwards only content-negotiation headers
@@ -533,7 +541,7 @@ This repo intentionally has no `wrangler.toml`. Pages projects with both dashboa
 ### Local preview against the real edge runtime
 
 `astro dev` is the day-to-day dev server. It does not run Pages Functions, so
-the middleware (CSP nonces/reporting), `/api/contact`, `/api/csp-report`, and
+`/api/contact`, `/api/csp-report`, and
 the hosted sitedrift proxy are inactive locally.
 
 To exercise the edge runtime locally, build first and serve the output through
@@ -544,7 +552,7 @@ npm run build:static
 npm run edge:serve
 ```
 
-The site is then served at `http://127.0.0.1:8788` with the middleware and Functions active, using the compatibility date declared in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge test suite (`tests/edge/`), which is what CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` remains the quick by-hand check.
+The site is then served at `http://127.0.0.1:8788` with the Functions active and the built `_headers` applied, using the compatibility date declared in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge test suite (`tests/edge/`), which is what CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` remains the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -572,7 +580,8 @@ GitHub Actions provide the remote quality gate:
   another, so a failure always reports as a failure on its own required check
   (a job skipped because an upstream job failed would report as passing).
   `build` runs `npm run gate:check`, then the publish gate
-  (`npm run publish:check -- --no-sync`) on the artifact `bin/build-static.ts`
+  (`npm run publish:check -- --no-sync --after-gate`, which skips the audits
+  the gate step just ran and the edge suite its own job runs) on the artifact `bin/build-static.ts`
   produces, the same one Cloudflare ships, so the committed tree must pass
   everything the local gate passes except the local-only vault parity check. A CycloneDX SBOM is uploaded on
   `main`. The `playwright` matrix: `e2e` serves the build with `astro preview`
@@ -581,7 +590,7 @@ GitHub Actions provide the remote quality gate:
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
   publish never moves a baseline; and `edge` serves the build through the
   Cloudflare runtime with `wrangler pages dev` and asserts what only that
-  runtime produces: the per-request CSP nonce on every script tag, the
+  runtime produces: the build-time CSP (hash coverage of every inline script and style, the same policy on every request, the `/contact/` exemption), the
   `public/_headers` security and cache rules, a real 404, the contact
   function's refusals, and byte-exact `security.txt`. On Linux the browser
   system packages install in the background while the site builds, and the
@@ -600,8 +609,7 @@ GitHub Actions provide the remote quality gate:
   (`CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET`), so it runs the verifier
   from the default branch and takes only the deployment URL from the event;
   the token is sent only to the project's `pages.dev` host. That host is
-  outside the zone, so Bot Fight Mode, which challenges GitHub-hosted runners
-  on `jseverino.com`, does not apply. `report` keeps one comment per pull
+  outside the zone, so zone-level bot challenges do not apply. `report` keeps one comment per pull
   request current: the completed `ci` run replaces its section and the
   deployment replaces its own, in whichever order they finish. The release
   confirmation against the production hostname stays `npm run deploy:verify`

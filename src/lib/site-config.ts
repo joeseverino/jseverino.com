@@ -30,16 +30,22 @@ export const SITE: SiteIdentity = {
 };
 
 export const SITE_ORIGIN = `https://${SITE.domain}`;
+
+// How the repository is worked in: the branch every PR targets and deploys from,
+// and the prefix `site publish` gives the content branches it opens.
+export const DEFAULT_BRANCH = 'main';
+export const CONTENT_BRANCH_PREFIX = 'content/';
 // The project's pages.dev host; each deployment is <hash>.<host>.
 export const PAGES_HOST = `${SITE.pagesProject}.pages.dev`;
 
 // Where a writeup lives, the one route every caller builds.
 export const writeupPath = (slug: string): string => `/portfolio/${slug}/`;
 export const writeupUrl = (slug: string, origin = SITE_ORIGIN): string => `${origin}${writeupPath(slug)}`;
+// Where a technology's writeups are listed.
+export const tagPath = (slug: string): string => `/tag/${slug}/`;
 
 // Cloudflare Web Analytics. Off: the zone injects the beacon into every HTML
-// response. On: the layout emits it with the nonce placeholder, so the repo
-// owns the markup; set the site token (public, it ships in every page either
+// response. On: the layout emits it, so the repo owns the markup; set the site token (public, it ships in every page either
 // way) and switch the zone's Web Analytics site to "Enable with JS Snippet
 // installation" in the same release, or pages carry two beacons.
 // docs/Cloudflare.md has the steps.

@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { errorMessage } from '../../../src/lib/error-message.ts';
 
 export type TransactionResult = { ok: true } | { ok: false; error: string; rolledBack: boolean };
 
@@ -69,14 +70,14 @@ export function transactionalReplace(
         try {
           fs.renameSync(stage(file, originals.get(file) as Buffer, 'rollback'), file);
         } catch (rollbackError) {
-          rollbackErrors.push(`${file}: ${(rollbackError as Error).message}`);
+          rollbackErrors.push(`${file}: ${errorMessage(rollbackError)}`);
         }
       }
-      const detail = (error as Error).message + (rollbackErrors.length ? `; rollback errors: ${rollbackErrors.join('; ')}` : '');
+      const detail = errorMessage(error) + (rollbackErrors.length ? `; rollback errors: ${rollbackErrors.join('; ')}` : '');
       return { ok: false, error: detail, rolledBack: rollbackErrors.length === 0 };
     }
   } catch (error) {
-    return { ok: false, error: (error as Error).message, rolledBack: true };
+    return { ok: false, error: errorMessage(error), rolledBack: true };
   } finally {
     if (lock !== undefined) {
       fs.closeSync(lock);

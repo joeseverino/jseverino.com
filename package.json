@@ -30,6 +30,7 @@
     "sync:edge-site": "node bin/sync-edge-site.ts",
     "sync:docs": "node bin/sync-docs.ts",
     "snapshot:github": "node bin/snapshot-github.ts",
+    "snapshot:software": "node bin/snapshot-software.ts",
     "diagnose": "node bin/diagnose.ts",
     "diff:build": "node bin/diff-build.ts",
     "gate:check": "node bin/gate-check.ts",

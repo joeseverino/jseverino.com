@@ -45,19 +45,10 @@ const MAX_FIELD_LENGTH = 2_048;
 const MAX_DIRECTIVE_LENGTH = 256;
 const MAX_USER_AGENT_LENGTH = 512;
 const MAX_STORED_PER_IP_PER_HOUR = 30;
+const RETENTION_DAYS = 60;
 const SITE_ORIGIN = SITE.origin;
-const IGNORED_BLOCKED_URI_PREFIXES = [
-  'chrome-extension:',
-  'moz-extension:',
-  'safari-web-extension:',
-  'edge-extension:',
-];
-const IGNORED_SOURCE_FILE_PREFIXES = [
-  'chrome-extension',
-  'moz-extension:',
-  'safari-web-extension:',
-  'edge-extension:',
-];
+// Reports whose blocked URI or source file is a browser extension's own.
+const EXTENSION_SCHEMES = ['chrome-extension:', 'moz-extension:', 'safari-extension:', 'safari-web-extension:', 'edge-extension:'];
 
 function noContent(status = 204): Response {
   return new Response(null, {
@@ -94,14 +85,12 @@ function isIgnoredReport(report: NormalizedReport): boolean {
   const sourceFile = report.sourceFile.toLowerCase();
   return (
     !isSiteDocument(report.documentUri) ||
-    IGNORED_BLOCKED_URI_PREFIXES.some((prefix) => blocked.startsWith(prefix)) ||
-    IGNORED_SOURCE_FILE_PREFIXES.some((prefix) => sourceFile.startsWith(prefix)) ||
+    EXTENSION_SCHEMES.some((scheme) => blocked.startsWith(scheme) || sourceFile.startsWith(scheme)) ||
     // Extensions like AdGuard inject inline <style>/<script> directly into the
     // page DOM, so the browser attributes the violation to our document instead
-    // of an extension scheme. Pages on this site ship zero inline styles and
-    // the only inline script is the nonce-bearing JSON-LD block, so any
-    // `inline`-blocked report whose source matches the document URI is an
-    // injection from a browser extension or page-level content filter.
+    // of an extension scheme. The site's own inline script and stylesheet are
+    // covered by hashes, so any `inline`-blocked report whose source matches the
+    // document URI is an injection from a browser extension or content filter.
     (blocked === 'inline' && report.sourceFile === report.documentUri)
   );
 }
@@ -183,11 +172,16 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
            AND source_file IS ?7 AND line_number IS ?8 AND column_number IS ?9)`,
   );
 
+  // Reports are diagnostics, not records: the same batch that stores new ones
+  // drops those past retention, so the table stays bounded with no scheduler.
+  const purge = env.DB.prepare(`DELETE FROM csp_reports WHERE created_at < datetime('now', ?1)`).bind(`-${RETENTION_DAYS} days`);
+
   try {
     // One batch is one round trip and one transaction, so the cap and the
     // duplicate check also see the rows earlier in the same request.
-    await env.DB.batch(
-      reports.map((report) =>
+    await env.DB.batch([
+      purge,
+      ...reports.map((report) =>
         insert.bind(
           report.documentUri || null,
           report.blockedUri || null,
@@ -206,7 +200,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
           MAX_STORED_PER_IP_PER_HOUR,
         ),
       ),
-    );
+    ]);
   } catch (error) {
     console.error('D1 CSP report insert failed', error);
     return noContent(500);

@@ -50,7 +50,7 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 
 ### Edge runtime
 [`functions/generated/site.ts`](../functions/generated/site.ts) is derived from
-`site-config.ts` by `npm run sync:edge-site`. Middleware and CSP reporting import
+`site-config.ts` by `npm run sync:edge-site`. The Functions (contact form and CSP reporting) import
 that projection; no second domain declaration needs manual synchronization.
 
 ### Signed / generated artifacts
@@ -58,7 +58,7 @@ that projection; no second domain declaration needs manual synchronization.
   then re-sign with `npm run sign:security` using the instance's `security@` key.
 - `public/.well-known/openpgpkey/hu/*`: the WKD key file (regenerate from the key).
 - Brand assets in `public/assets/brand/`, favicons in `public/assets/icons/`, and the
-  OG card `public/assets/og/og-default.png`: regenerate with `npm run make:icons`,
+  OG card `public/assets/og/og-default.jpg`: regenerate with `npm run make:icons`,
   `make:og`, `make:social` after syncing the upstream brand contract.
 - OG/social card copy (eyebrow, tagline, meta) in
   [`bin/make-og-image.ts`](../bin/make-og-image.ts) and

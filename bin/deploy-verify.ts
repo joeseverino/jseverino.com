@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import { SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import {
   cacheRuleFindings,
@@ -25,26 +25,23 @@ import {
   cspFindings,
   headersToRecord,
   hstsFindings,
-  nonceFromCsp,
-  nonceParityFindings,
-  placeholderFindings,
-  scriptTagCount,
-  staticCspFindings,
+  inlineHashFindings,
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
-import { cli as parseCli } from './lib/args.ts';
+import { cli as parseCli, flag } from './lib/args.ts';
 import { git } from './lib/git.ts';
 import { awaitChecks, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { runSync, status } from './lib/run.ts';
 import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
 
 const { values: cli } = parseCli({
   usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
   options: {
     origin: { type: 'string' },
-    preview: { type: 'boolean', default: false },
+    preview: flag,
     slug: { type: 'string' },
   },
 });
@@ -61,7 +58,7 @@ const onTarget = (url: string): string => {
 // requests, plus the Pages build itself.
 const PULL_REQUEST_ONLY = new Set(['dependency-review']);
 const requiredChecks = (): string[] => [...new Set([
-  ...requiredContexts(repository, 'main').filter((name) => !PULL_REQUEST_ONLY.has(name)),
+  ...requiredContexts(repository, DEFAULT_BRANCH).filter((name) => !PULL_REQUEST_ONLY.has(name)),
   'Cloudflare Pages',
 ])];
 
@@ -127,7 +124,7 @@ async function verifyHeaders(pathname: string): Promise<void> {
   }
   const headers = headersToRecord(response.headers);
   const hsts = deployment ? [] : hstsFindings(headers);
-  assertClean([...cspFindings(headers), ...staticHeaderFindings(headers), ...hsts], pathname);
+  assertClean([...cspFindings(headers, pathname), ...staticHeaderFindings(headers), ...hsts], pathname);
 }
 
 async function collectSitemapUrls(): Promise<string[]> {
@@ -173,22 +170,15 @@ async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> 
   return `${publicUrls.length} sitemap URLs returned 200`;
 }
 
-// The middleware mints a nonce per request and stamps it on every script tag.
-// A 200 whose scripts carry a different nonce than the header is a page that
-// renders but executes nothing, which no status-code check would notice.
-async function verifyNonce(): Promise<string> {
-  const first = await fetchChecked(`${origin}/`);
-  if (first.status !== 200) throw new Error(`/ returned ${first.status}, expected 200`);
-  const nonce = nonceFromCsp(headersToRecord(first.headers)['content-security-policy']);
-  const html = await first.text();
-  assertClean(nonceParityFindings(html, nonce), '/');
-
-  const second = await fetchChecked(`${origin}/`, { method: 'HEAD' });
-  const rotated = nonceFromCsp(headersToRecord(second.headers)['content-security-policy']);
-  if (!rotated || rotated === nonce) {
-    throw new Error('nonce did not rotate between two requests; middleware bypassed or response cached');
-  }
-  return `${scriptTagCount(html)} script tags and the inlined stylesheet carry the header nonce; nonce rotates per request`;
+// The policy hashes the page's one inline script and its inlined stylesheet. A
+// 200 whose inline tags are not in the header is a page that renders unthemed
+// or unstyled, which no status-code check would notice.
+async function verifyInlineHashes(): Promise<string> {
+  const response = await fetchChecked(`${origin}/`);
+  if (response.status !== 200) throw new Error(`/ returned ${response.status}, expected 200`);
+  const csp = headersToRecord(response.headers)['content-security-policy'];
+  assertClean(await inlineHashFindings(await response.text(), csp), '/');
+  return 'the inline theme script and the inlined stylesheet are covered by the policy hashes';
 }
 
 // public/_headers pins fingerprinted assets for a year and keeps chrome assets
@@ -215,14 +205,13 @@ async function verifyNotFound(): Promise<string> {
     throw new Error(`${probe} returned ${response.status}, expected 404`);
   }
 
-  // Under an excluded prefix the asset server answers without the middleware:
-  // the prefix's fallback page, under the static CSP from public/_headers.
+  // A miss under an asset prefix is the same static 404, under the same policy.
   const asset = `/assets/deploy-verify-${Date.now().toString(36)}.png`;
   const miss = await fetchChecked(`${origin}${asset}`);
   if (miss.status !== 404) throw new Error(`${asset} returned ${miss.status}, expected 404`);
   const headers = headersToRecord(miss.headers);
-  assertClean([...staticCspFindings(headers), ...staticHeaderFindings(headers), ...placeholderFindings(await miss.text())], asset);
-  return 'unknown route returns a real 404; a miss under /assets/ carries the static CSP and no nonce placeholder';
+  assertClean([...cspFindings(headers), ...staticHeaderFindings(headers)], asset);
+  return 'unknown route returns a real 404; a miss under /assets/ carries the policy and security headers';
 }
 
 // A well-formed submission with no Turnstile token must be refused before the
@@ -241,6 +230,15 @@ async function verifyContactGate(): Promise<string> {
   const payload: unknown = await response.json().catch(() => ({}));
   assertClean(contactRefusalFindings(response.status, payload), 'POST /api/contact without a Turnstile token');
   return 'POST without a Turnstile token is refused with 400';
+}
+
+// The widget's site key is a build-time variable. A Pages project that loses it
+// still builds and ships `data-sitekey=""`, and every submission then fails.
+async function verifyTurnstileKey(): Promise<string> {
+  const html = await (await fetchChecked(`${origin}/contact/`)).text();
+  const key = /data-sitekey="([^"]*)"/.exec(html)?.[1] ?? '';
+  assertClean(/^[\w-]{16,}$/.test(key) ? [] : [`the contact form carries data-sitekey="${key}"`], '/contact/ Turnstile site key');
+  return 'the contact form carries a Turnstile site key';
 }
 
 async function verifySecurityTxt(): Promise<string> {
@@ -309,7 +307,7 @@ async function run(name: string, check: () => string | Promise<string>): Promise
     status(name, detail);
     return true;
   } catch (error) {
-    const { message } = error as Error;
+    const message = errorMessage(error);
     results.push({ name, ok: false, detail: message });
     status(name, `FAILED: ${message}`);
     annotate('error', `deploy-verify: ${name}`, message);
@@ -356,7 +354,8 @@ async function verifyDeployment(): Promise<void> {
     if (sitemapOk) {
       await run('headers', async () => {
         await verifyHeaders('/');
-        return 'CSP, report-only staging, and static security headers passed on /';
+        await verifyHeaders('/contact/');
+        return 'CSP, Trusted Types staging, and static security headers passed on / and /contact/';
       });
       await run('routes', () => verifyLiveRoutes(publicUrls));
     } else {
@@ -368,12 +367,13 @@ async function verifyDeployment(): Promise<void> {
       // so the page-markup checks have no site page to read there.
       const reason = 'branch previews serve HTML through the sitedrift viewer';
       skip('production', reason);
-      skip('nonce', reason);
+      skip('inline', reason);
       skip('cache', reason);
     } else {
       await run('production', verifyProductionGuard);
-      await run('nonce', verifyNonce);
+      await run('inline', verifyInlineHashes);
       await run('cache', verifyCacheRules);
+      await run('turnstile', verifyTurnstileKey);
     }
     await run('not-found', verifyNotFound);
     await run('contact', verifyContactGate);
@@ -393,12 +393,12 @@ async function main(): Promise<void> {
   if (git(siteRoot, 'status', '--porcelain')) {
     throw new Error('worktree is not clean; commit the verified release candidate first');
   }
-  if (git(siteRoot, 'branch', '--show-current') !== 'main') {
+  if (git(siteRoot, 'branch', '--show-current') !== DEFAULT_BRANCH) {
     throw new Error('production deployment verification must run from main');
   }
 
   const sha = git(siteRoot, 'rev-parse', 'HEAD');
-  const remote = git(siteRoot, 'ls-remote', 'origin', 'refs/heads/main').split(/\s+/)[0] ?? '';
+  const remote = git(siteRoot, 'ls-remote', 'origin', `refs/heads/${DEFAULT_BRANCH}`).split(/\s+/)[0] ?? '';
   if (sha !== remote) {
     throw new Error(`local HEAD ${sha} does not match origin/main ${remote}`);
   }
@@ -428,8 +428,9 @@ async function main(): Promise<void> {
         .find((pathname) => /^\/portfolio\/[^/]+\/?$/.test(pathname));
       if (!writeupPath) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
       await verifyHeaders('/');
+      await verifyHeaders('/contact/');
       await verifyHeaders(writeupPath);
-      return `CSP, report-only staging, static security headers, and HSTS passed (/ and ${writeupPath})`;
+      return `CSP, Trusted Types staging, static security headers, and HSTS passed (/, /contact/, and ${writeupPath})`;
     });
     await run('routes', () => verifyLiveRoutes(publicUrls));
   } else {
@@ -438,7 +439,7 @@ async function main(): Promise<void> {
   }
 
   await run('production', verifyProductionGuard);
-  await run('nonce', verifyNonce);
+  await run('inline', verifyInlineHashes);
   await run('cache', verifyCacheRules);
   await run('not-found', verifyNotFound);
   await run('contact', verifyContactGate);
@@ -457,11 +458,11 @@ async function main(): Promise<void> {
   const summary = `all ${results.length} checks passed for ${sha.slice(0, 12)} against ${origin}`;
   annotate('notice', 'deploy-verify', summary);
   console.log(
-    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, nonce, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
+    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
   );
 }
 
 main().catch((error: unknown) => {
-  console.error(`\nfailed: ${(error as Error).message}`);
+  console.error(`\nfailed: ${errorMessage(error)}`);
   process.exit(1);
 });

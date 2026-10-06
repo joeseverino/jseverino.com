@@ -1,14 +1,14 @@
 // Orchestration for the Software tab. Composes three sources, none hand-keyed:
 //   1. GitHub (github.ts)            -> which repos, description, language, pushed
 //   2. curation config (.config.ts)  -> skip / featured / order / writeups / packages
-//   3. PyPI + npm registries         -> live version + monthly downloads
+//   3. package-registry.json         -> PyPI + npm version + monthly downloads (a snapshot)
 // The result is the derived list the page renders. Add a repo on GitHub (with a
 // description) and it appears; cut a release and the version updates.
 
 import { getGithubRepos } from './github.ts';
 import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
-import { fetchJson } from './fetch-json.ts';
+import registry from '../data/package-registry.json' with { type: 'json' };
 import {
   FEATURED,
   ORDER,
@@ -42,36 +42,14 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-async function fetchPypiVersion(name: string): Promise<string | undefined> {
-  try {
-    const data = await fetchJson<{ info?: { version?: string } }>(`https://pypi.org/pypi/${name}/json`);
-    return data.info?.version;
-  } catch {
-    return undefined;
-  }
-}
+// Versions and monthly downloads come from the committed registry snapshot
+// (`npm run snapshot:software`), so a build never calls PyPI or npm.
+const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
 
-async function fetchNpmInfo(
-  name: string,
-): Promise<Pick<SoftwarePackage, 'version' | 'downloadsPerMonth'>> {
-  const [version, downloads] = await Promise.allSettled([
-    fetchJson<{ 'dist-tags'?: { latest?: string } }>(`https://registry.npmjs.org/${name}`),
-    fetchJson<{ downloads?: number }>(`https://api.npmjs.org/downloads/point/last-month/${name}`),
-  ]);
-  return {
-    version: version.status === 'fulfilled' ? version.value?.['dist-tags']?.latest : undefined,
-    downloadsPerMonth: downloads.status === 'fulfilled' ? downloads.value?.downloads : undefined,
-  };
-}
-
-async function enrich(pkg: SoftwarePackage): Promise<void> {
-  if (pkg.registry === 'pypi') {
-    pkg.version = await fetchPypiVersion(pkg.name);
-  } else {
-    const info = await fetchNpmInfo(pkg.name);
-    pkg.version = info.version;
-    pkg.downloadsPerMonth = info.downloadsPerMonth;
-  }
+function enrich(pkg: SoftwarePackage): void {
+  const known = published[`${pkg.registry}:${pkg.name}`];
+  pkg.version = known?.version;
+  pkg.downloadsPerMonth = known?.downloadsPerMonth;
 }
 
 export const getSoftware = asyncCache(build);
@@ -102,9 +80,9 @@ async function build(): Promise<SoftwareEntry[]> {
       };
     });
 
-  // Fixture builds are hermetic: no registry calls, so no live numbers.
+  // Fixture builds carry no registry numbers.
   if (!fixtureContent) {
-    await Promise.all(entries.map((entry) => (entry.package ? enrich(entry.package) : undefined)));
+    for (const entry of entries) if (entry.package) enrich(entry.package);
   }
 
   // Explicit order first, then alphabetical by title. Never by last-pushed: any
@@ -120,17 +98,14 @@ export function getMoreSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
   return entries.filter((entry) => !entry.featured);
 }
 
-const MONTHS = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
+const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** 'YYYY-MM' -> 'Jun 2026'. Empty string for missing/invalid input. */
 export function formatUpdated(ym?: string): string {
-  if (!ym) return '';
-  const [year, month] = ym.split('-');
-  const label = MONTHS[Number(month) - 1];
-  return label ? `${label} ${year}` : '';
+  const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
+  return year && month && Number(month) >= 1 && Number(month) <= 12
+    ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1))
+    : '';
 }
 
 /** 'Python · Jun 2026' from an entry's language + updatedAt. */

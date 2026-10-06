@@ -9,7 +9,7 @@
 //                                              # resolve references and the contract; write nothing
 import fs from 'node:fs';
 import path from 'node:path';
-import { cli } from './lib/args.ts';
+import { cli, flag } from './lib/args.ts';
 import { cacheDir, draftsOverlay } from './lib/cache.ts';
 import { lifeVaultRoot, resumeEngineRoot, vaultRoot } from './lib/local-paths.ts';
 import { checkContent, committedLayout, overlayLayout, syncContent } from './content-sync/sync.ts';
@@ -21,12 +21,12 @@ const usage = `usage: node bin/sync-content.ts [--drafts] [--report <file>]
 const { values } = cli({
   usage,
   options: {
-    drafts: { type: 'boolean', default: false },
+    drafts: flag,
     report: { type: 'string' },
-    check: { type: 'boolean', default: false },
+    check: flag,
     slug: { type: 'string' },
-    draft: { type: 'boolean', default: false },
-    json: { type: 'boolean', default: false },
+    draft: flag,
+    json: flag,
   },
 });
 
