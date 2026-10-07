@@ -41,7 +41,7 @@ export function lockfileDrift(root: string): string[] {
   return drift;
 }
 
-export type CheckOutcome = { ok: true; detail: string } | { ok: false; detail: string; fix: string };
+type CheckOutcome = { ok: true; detail: string } | { ok: false; detail: string; fix: string };
 export type CheckName = 'deps' | 'fetch' | 'gh' | 'vault' | 'clean';
 export type PreflightCheck = CheckOutcome & { name: CheckName };
 export interface Preflight {

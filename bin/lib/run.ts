@@ -9,7 +9,7 @@ const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 export const JSON_LOGS_ENV = 'SITE_JSON';
 export const jsonLogs = (env: NodeJS.ProcessEnv = process.env): boolean => env[JSON_LOGS_ENV] === '1';
 // A cold content sync re-encodes every image; callers pass this explicitly.
-export const MINUTE_MS = 60_000;
+const MINUTE_MS = 60_000;
 export const SYNC_TIMEOUT_MS = 15 * MINUTE_MS;
 export const BUILD_TIMEOUT_MS = 10 * MINUTE_MS;
 export const GATE_TIMEOUT_MS = 30 * MINUTE_MS;

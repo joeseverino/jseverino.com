@@ -6,7 +6,7 @@ import type { Audit } from '../../tests/audits/registry.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
 // Why an audit does not run here, or null when it does.
-export interface SkipInputs {
+interface SkipInputs {
   ci?: boolean | undefined;
   platform?: NodeJS.Platform | undefined;
 }

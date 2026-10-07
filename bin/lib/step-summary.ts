@@ -51,7 +51,7 @@ export function appendSummary(markdown: string): boolean {
 }
 
 // Rows for one gate's job-summary table: add() each step, write() once at the end.
-export interface ReportRow {
+interface ReportRow {
   label: string;
   ok: Outcome;
   detail: string;

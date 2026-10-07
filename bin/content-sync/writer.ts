@@ -10,8 +10,6 @@ export interface SyncReport {
   removed: string[];
 }
 
-export type Writer = ReturnType<typeof createWriter>;
-
 export function createWriter({ root }: { root: string }) {
   const written = new Set<string>();
   const removed: string[] = [];

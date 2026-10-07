@@ -1,9 +1,9 @@
 // Cloudflare desired state (cloudflare/zone.json, validated against zone.schema.json) and the slices of v4 API responses read.
 
-export type Toggle = 'on' | 'off';
+type Toggle = 'on' | 'off';
 
 // Type aliases so Object.entries keeps the value types (an interface would widen them).
-export type ZoneSettings = {
+type ZoneSettings = {
   min_tls_version: '1.0' | '1.1' | '1.2' | '1.3';
   tls_1_3: 'on' | 'off' | 'zrt';
   always_use_https: Toggle;
@@ -19,7 +19,7 @@ export type ZoneSettings = {
   brotli: Toggle;
 };
 
-export type Hsts = {
+type Hsts = {
   enabled: boolean;
   max_age: number;
   include_subdomains: boolean;
@@ -33,7 +33,7 @@ export interface FirewallRuleSpec {
   action: 'block' | 'managed_challenge';
 }
 
-export interface RateLimitSpec {
+interface RateLimitSpec {
   id: string;
   description: string;
   expression: string;
@@ -44,7 +44,7 @@ export interface RateLimitSpec {
   mitigation_timeout: 10;
 }
 
-export type PagesDevRedirect = {
+type PagesDevRedirect = {
   list: string;
   source_url: string;
   target_url: string;
@@ -55,7 +55,7 @@ export type PagesDevRedirect = {
   include_subdomains: boolean;
 };
 
-export interface SchemaValidationSpec {
+interface SchemaValidationSpec {
   name: string;
   file: string;
   host: string;
@@ -67,7 +67,7 @@ export interface SchemaValidationSpec {
 // The bot_management fields this file owns. The endpoint is PUT-only, and a
 // PUT resets every field it leaves out, so apply sends these over the live
 // values of BOT_MANAGEMENT_KEPT.
-export type BotManagement = {
+type BotManagement = {
   enable_js: boolean;
   fight_mode: boolean;
   ai_training: string;
@@ -207,6 +207,3 @@ export interface LiveState {
   operationSettings: { mitigation_action?: string } | null;
   widgets: Widget[];
 }
-
-
-export type { Call, Item, ItemStatus, Method, Step } from './drift.ts';

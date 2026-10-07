@@ -18,7 +18,7 @@ const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 const REDIRECT_PHASE = 'http_request_redirect';
 
-export class ApiError extends Error {
+class ApiError extends Error {
   status: number;
 
   constructor(method: string, template: string, status: number, errors: ApiErrorEntry[] = []) {
@@ -94,7 +94,7 @@ export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: 
 
 const q = (value: string): string => encodeURIComponent(value);
 
-export async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
+async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const [zone] = await client.get<Zone[]>(`/zones?name=${q(desired.zone)}`);
   if (!zone) throw new Error(`the token cannot see a zone named ${desired.zone}`);
   client.ids.zone = zone.id;
@@ -433,7 +433,7 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
   ]);
 }
 
-export function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
+function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
   return [
     ...settingsItems(desired, live),
     botManagementItem(desired, live),
@@ -458,7 +458,7 @@ async function awaitBulk(client: Client, operationId: string): Promise<void> {
   throw new Error('list bulk operation did not complete in 30 s');
 }
 
-export function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
+function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
   return applySteps(items, {
     use: (ids) => Object.assign(client.ids, ids),
     log,

@@ -4,7 +4,7 @@ import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same,
 
 export const API_BASE = 'https://api.github.com';
 
-export interface RulesetSpec {
+interface RulesetSpec {
   name: string;
   target: 'branch';
   enforcement: 'active' | 'evaluate' | 'disabled';
@@ -57,7 +57,7 @@ export interface LiveState {
 
 export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
-export class GitHubError extends Error {
+class GitHubError extends Error {
   status: number;
 
   constructor(method: string, path: string, status: number, message?: string) {
@@ -112,7 +112,7 @@ export function createClient({ token, fetch = globalThis.fetch }: ClientOptions)
   };
 }
 
-export async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
+async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const base = `/repos/${desired.repository}`;
   const rulesets = await client.get<{ id: number; name: string }[]>(`${base}/rulesets`);
   const found = rulesets.find((entry) => entry.name === desired.ruleset.name);
@@ -148,7 +148,7 @@ function canonicalRuleset(ruleset: Record<string, unknown>): unknown {
 
 const toggle = (path: string, on: boolean) => ({ method: on ? 'PUT' : 'DELETE', path }) as const;
 
-export function diff(desired: DesiredState, live: LiveState): Item[] {
+function diff(desired: DesiredState, live: LiveState): Item[] {
   const base = `/repos/${desired.repository}`;
   const items: Item[] = [];
 
@@ -213,7 +213,7 @@ export function diff(desired: DesiredState, live: LiveState): Item[] {
   return items;
 }
 
-export const apply = (client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> =>
+const apply = (client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> =>
   applySteps(items, { log, call: async (step) => void (await client.request(step.method, step.path, step.body)) });
 
 export const createRun = (desired: DesiredState, client: Client): Run => ({

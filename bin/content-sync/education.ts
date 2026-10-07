@@ -6,7 +6,7 @@ import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar, type Org, type Role } from './documents.ts';
 
 // `severino-vault-mcp export education`: the fields this join reads.
-export interface Course {
+interface Course {
   code: string;
   title: string;
   term: string;
@@ -14,7 +14,7 @@ export interface Course {
   site_bullets?: string;
 }
 
-export interface Institution {
+interface Institution {
   institution: string;
   slug: string;
   description: string;
@@ -25,7 +25,7 @@ export interface EducationDataset {
   institutions: Institution[];
 }
 
-export interface EducationOrg extends Org {
+interface EducationOrg extends Org {
   degree?: Role;
 }
 

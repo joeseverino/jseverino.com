@@ -23,8 +23,6 @@ export interface ProjectionOptions {
   previousWriteup?: (slug: string) => ParsedFrontmatter | undefined;
 }
 
-export type PublicProjection = ReturnType<typeof createPublicProjection>;
-
 export function createPublicProjection({ today, previousWriteup = () => undefined }: ProjectionOptions) {
   return {
     page(data: FrontmatterData): FrontmatterData { return projectFrontmatter('pages', data); },

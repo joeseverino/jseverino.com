@@ -38,7 +38,7 @@ export class SiteOpsError extends DetailedError {}
 
 type Row = Record<string, unknown>;
 
-export interface D1Result {
+interface D1Result {
   database: string;
   results: Row[];
   meta: Row;
@@ -189,7 +189,7 @@ export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { conf
   return { applied: true, command, output };
 }
 
-export const SECURITY_HEADERS = [
+const SECURITY_HEADERS = [
   'content-security-policy',
   'reporting-endpoints',
   'strict-transport-security',

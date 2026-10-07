@@ -86,7 +86,7 @@ export interface Item {
   [field: string]: unknown;
 }
 
-export type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
+type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
 export type Tab = 'writeups' | 'site';
 
 export interface SiteStatus {

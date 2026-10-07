@@ -22,7 +22,7 @@ function ghApi<T>(pathname: string, params: Record<string, string | number> = {}
   return JSON.parse(runSync('gh', args)) as T;
 }
 
-export const checkRuns = (repository: string, sha: string): CheckRun[] =>
+const checkRuns = (repository: string, sha: string): CheckRun[] =>
   ghApi<{ check_runs: CheckRun[] }>(`repos/${repository}/commits/${sha}/check-runs`, { per_page: 100 }).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.

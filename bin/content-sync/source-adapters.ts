@@ -23,8 +23,6 @@ export interface SourceEntry {
   parsed: ParsedFrontmatter;
 }
 
-export type VaultSource = ReturnType<typeof createVaultSource>;
-
 export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultRoot: string; includeDrafts?: boolean }) {
   const pagesRoot = path.join(vaultRoot, PAGES_FOLDER);
   const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);

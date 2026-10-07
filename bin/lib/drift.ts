@@ -76,11 +76,11 @@ export const pick = (object: unknown, keys: readonly string[]): Record<string, u
   return Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]));
 };
 
-export const drifted = (items: Item[]): Item[] => items.filter((entry) => entry.status === 'drift' || entry.status === 'manual');
+const drifted = (items: Item[]): Item[] => items.filter((entry) => entry.status === 'drift' || entry.status === 'manual');
 
 const isCall = (step: Step): step is Call => 'method' in step;
 
-export const plannedCalls = (items: Item[]): Call[] =>
+const plannedCalls = (items: Item[]): Call[] =>
   items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
 
 // The calls an apply makes, in order. `use` steps bind an existing id and make
@@ -104,7 +104,7 @@ export async function applySteps(
   return made;
 }
 
-export function render(items: Item[], write: (line: string) => void): void {
+function render(items: Item[], write: (line: string) => void): void {
   const rows = items.map((entry) => [entry.status, entry.area, entry.name, entry.want, entry.have, entry.note]);
   const headers = ['status', 'area', 'item', 'want', 'have', 'note'];
   const clip = (text: string): string => (text.length > 60 ? `${text.slice(0, 57)}...` : text);
@@ -128,7 +128,7 @@ export interface Run {
   apply: (items: Item[], log: (line: string) => void) => Promise<unknown>;
 }
 
-export interface RunToolOptions extends ToolOptions {
+interface RunToolOptions extends ToolOptions {
   usage: string;
   // How the tool is invoked, for the hint after a drift.
   command: string;
@@ -137,7 +137,7 @@ export interface RunToolOptions extends ToolOptions {
   setup: () => Run;
 }
 
-export async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
   let parsed;
   try {
     parsed = parse({ args: argv, allowPositionals: true, options: { json: { type: 'boolean' }, yes: { type: 'boolean' } } });

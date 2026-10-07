@@ -6,7 +6,7 @@ export type RegistryPackage = { registry: 'pypi' | 'npm'; name: string };
 export type RegistryEntry = { version: string; downloadsPerMonth?: number };
 export type GetJson = <T>(url: string) => Promise<T>;
 
-export const packageKey = ({ registry, name }: RegistryPackage): string => `${registry}:${name}`;
+const packageKey = ({ registry, name }: RegistryPackage): string => `${registry}:${name}`;
 
 export async function lookup({ registry, name }: RegistryPackage, getJson: GetJson = fetchJson): Promise<RegistryEntry> {
   if (registry === 'pypi') {
