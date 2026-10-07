@@ -1,5 +1,4 @@
-// Minimal D1 stand-in for the Cloudflare Pages function tests: records every
-// executed query with its bound values and returns scripted results.
+// Records every executed query with its bound values and returns scripted results.
 
 export interface RecordedQuery {
   query: string;

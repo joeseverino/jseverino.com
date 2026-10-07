@@ -28,7 +28,7 @@ The content source calls the homepage `home`; its public URL is `/`.
 
 Article pages render the writeup title as the page `h1`. Writeup body sections therefore start at `##`, which renders as `h2`, and subsections use `###`, which renders as `h3`.
 
-The article CSS keeps the visual scale for those headings, so the outline is semantic without changing the typography.
+The article CSS keeps the visual scale for those headings, so typography is unchanged.
 
 ## Structured Data
 
@@ -60,7 +60,7 @@ The `Person` entity reads:
 - skills from [`src/lib/site.ts`](../src/lib/site.ts);
 - social profile URLs from [`src/lib/site.ts`](../src/lib/site.ts).
 
-This keeps visible identity, footer links, and structured data aligned.
+Visible identity, footer links, and structured data therefore share one source.
 
 ## Article Dates
 
@@ -79,7 +79,7 @@ Article and body images are optimized during sync and rendered with stable dimen
 
 ### Cover alt text
 
-Vault writeups carry a `cover_alt` frontmatter field that describes the *actual* image. The sync copies it into the synced content and [`src/lib/content.ts`](../src/lib/content.ts) surfaces it as `writeup.heroAlt`, which is the `<img alt>` used by `ProjectCard` and the article hero `<figure>`. When `cover_alt` is empty, the title is used as a fallback so nothing renders without an alt. `prepare_writeup_publish` in the vault MCP flags missing `cover_alt` as a nit so unpublished drafts don't ship with a duplicated-title alt.
+Vault writeups carry a `cover_alt` frontmatter field that describes the *actual* image. [`src/lib/content.ts`](../src/lib/content.ts) surfaces it as `writeup.heroAlt`, the `<img alt>` for `ProjectCard` and the article hero `<figure>`. An empty `cover_alt` falls back to the title. `prepare_writeup_publish` in the vault MCP flags a missing `cover_alt` so drafts don't ship with a duplicated-title alt. See [Accessibility](./Accessibility.md#image-alt-text).
 
 ## Discovery Files
 
@@ -90,12 +90,10 @@ Vault writeups carry a `cover_alt` frontmatter field that describes the *actual*
 ## Preview deployments
 
 Cloudflare Pages assigns a `*.pages.dev` URL to every branch and version
-preview. Those URLs would otherwise be indexable and would split ranking
-signal away from the canonical custom domain. [`public/_headers`](../public/_headers)
-adds an `X-Robots-Tag: noindex` to every response served from
-`https://:project.pages.dev/*` and `https://:version.:project.pages.dev/*`,
-which keeps preview deployments out of search results. The canonical
-`https://jseverino.com/` is unaffected.
+preview. Indexed, those URLs would split ranking signal away from the canonical
+domain. [`public/_headers`](../public/_headers) adds `X-Robots-Tag: noindex` to
+every response from `https://:project.pages.dev/*` and
+`https://:version.:project.pages.dev/*`. `https://jseverino.com/` is unaffected.
 
 Preview deployments (any branch but `main`) are wrapped by
 [sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel
@@ -104,14 +102,14 @@ and canonical differences, and checks H1 count, viewport, language, Open Graph,
 indexing directives, favicon, and image alt coverage on the deployed artifact
 before merge.
 
-Production builds carry no wrapper, and the wrapper does not make preview URLs indexable.
-Canonical metadata still points at `jseverino.com`, and the
-`X-Robots-Tag: noindex` preview rule remains authoritative. See
+Production builds carry no wrapper. The wrapper does not make preview URLs
+indexable: canonical metadata still points at `jseverino.com` and the
+`X-Robots-Tag: noindex` rule stays authoritative. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
 
 ## Security Headers And SEO
 
-The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the old WordPress runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
+The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the previous runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
 [`public/_headers`](../public/_headers) carries the other security headers; the CSP is written into the built `dist/_headers` from placeholders there. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
 

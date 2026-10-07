@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Project contracts/contact.v1.json into the API Shield OpenAPI document and
-// the edge runtime's typed copy.
+// Project contracts/contact.v1.json into the API Shield OpenAPI document and the edge typed copy.
 //
 //   node bin/sync-contact-openapi.ts           # write the projections
 //   node bin/sync-contact-openapi.ts --check   # fail if a projection is stale

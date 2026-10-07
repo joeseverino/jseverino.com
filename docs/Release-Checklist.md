@@ -7,8 +7,7 @@ require a deployed environment or human judgment.
 > Every audit, spec, and baseline named here is described in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md) (short tour: [`tests/README.md`](../tests/README.md)).
 
 Use it for every pull request that deploys to production, signed releases,
-and any change that affects
-content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO
+and any change that affects content sync, generated assets, Cloudflare headers, CSP, CSP reporting, SEO
 metadata, D1 schema, or the contact form.
 
 ## 1. Preflight
@@ -75,9 +74,8 @@ edge-runtime <n> passed (<n>s)
 `ok release-ready`.
 
 `release:check` snapshots the worktree before validation and fails if sync,
-cleanup, generation, or testing changes repository state. A pass therefore
-means the checked-out source and generated content were already internally
-consistent; no second status inspection is required.
+cleanup, generation, or testing changes repository state. A pass means the checked-out source and generated content were already
+consistent.
 
 To run all codebase validations and E2E browser tests without short-circuiting on the first error, run the diagnostic suite:
 
@@ -182,12 +180,12 @@ git tag -v v<version>
 git push origin v<version>
 ```
 
-`<version>` is the `version` in `package.json`, and the local verification must
-show a good signature. The push runs
+`<version>` is the `version` in `package.json`. The local verification must show
+a good signature. The push runs
 [`release.yml`](../.github/workflows/release.yml): it builds the tagged commit,
 packages the build output and a CycloneDX SBOM, attests both through Sigstore
 (build provenance and an SBOM attestation), and attaches all four files to the
-GitHub release. Anyone can check a release:
+GitHub release. To check a release:
 
 ```sh
 gh release download v<version> -R joeseverino/jseverino.com -p '*.tar.gz'
@@ -226,8 +224,8 @@ structured result with named pass/fail checks (`hasCsp`, `noUnsafeInlineScript`,
 `hasCspReportTo`, `hasCspReportUri`, `hasReportingEndpoints`) in place of the
 `curl` parse above, and exits non-zero when any check fails.
 
-**HAR audit (deep verification).** The MCP check confirms response headers
-arrive. A HAR audit confirms that those headers do not break a real browser
+**HAR audit (deep verification).** The header checks confirm responses carry
+the headers. A HAR audit confirms those headers do not break a real browser
 session under the full third-party load. Run after any change to
 [`bin/build-csp.ts`](../bin/build-csp.ts) or
 [`public/_headers`](../public/_headers), and as the operational gate for

@@ -1,5 +1,5 @@
 @layer components {
-/* ── Home content (page bodies wrapped by index.astro) ──────────────── */
+/* Home content (page bodies wrapped by index.astro) */
 
 .home-content {
   inline-size: var(--w-constrained);
@@ -9,7 +9,7 @@
   & > :first-child { margin-block-start: 0; }
 }
 
-/* ── Hero (::hero block on the home page) ───────────────────────────── */
+/* Hero (::hero block on the home page) */
 
 .hero {
   text-align: center;
@@ -39,7 +39,7 @@
   & > .actions { margin-block-start: 1.4rem; }
 }
 
-/* ── Buttons + action rows ──────────────────────────────────────────── */
+/* Buttons + action rows */
 
 .actions {
   display: flex;
@@ -80,7 +80,6 @@
     box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
-  /* Cover the complete resting hit area, including secondary-button borders. */
   &::after {
     content: '';
     position: absolute;
@@ -133,7 +132,7 @@
   }
 }
 
-/* ── Project cards ──────────────────────────────────────────────────── */
+/* Project cards */
 
 .project-grid {
   display: grid;
@@ -167,7 +166,6 @@
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-/* The list item keeps its hit area while its shared surface lifts. */
 @media (hover: hover) and (pointer: fine) {
   :where(.project-card, .software-card):hover > .card-surface {
     translate: 0 -6px;
@@ -249,7 +247,7 @@
   text-transform: uppercase;
 }
 
-/* ── Split / 2-column ───────────────────────────────────────────────── */
+/* Split / 2-column */
 
 .split {
   display: grid;
@@ -267,7 +265,7 @@
   }
 }
 
-/* ── Figures / images / captions (shared across home, prose, content-flow) ── */
+/* Figures / images / captions (shared across home, prose, content-flow) */
 
 figure {
   margin: 0;
@@ -296,7 +294,7 @@ figure {
   text-align: center;
 }
 
-/* ── Tag pills (writeup tags + grouped tag cloud) ───────────────────── */
+/* Tag pills (writeup tags + grouped tag cloud) */
 
 .tag-list {
   display: flex;
@@ -342,7 +340,7 @@ figure {
   margin-block-end: var(--space-50);
 }
 
-/* ── Writeup article ────────────────────────────────────────────────── */
+/* Writeup article */
 
 .article {
   inline-size: var(--w-constrained);
@@ -400,7 +398,7 @@ figure {
   margin-block-start: var(--space-30);
 }
 
-/* ── Prose (writeup body) ───────────────────────────────────────────── */
+/* Prose (writeup body) */
 
 .prose {
   line-height: 1.65;
@@ -409,7 +407,6 @@ figure {
 
   & h2 { font-size: var(--font-prose-md); }
 
-  /* h3/h4 demotion is shared with the base h5/h6 rules. */
 
   & a:not(.button) { text-decoration: underline; }
 
@@ -430,7 +427,7 @@ figure {
   }
 }
 
-/* ── Resume page (rows emitted by syncResume) ───────────────────────── */
+/* Resume page (rows emitted by syncResume) */
 
 :is(.resume-page, .document-page) .prose {
   & hr { display: none; }

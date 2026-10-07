@@ -123,17 +123,13 @@ export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (it
   return results;
 }
 
-// Master encodes in flight: one per core, within half the machine's memory
-// (an encode peaks near 120 MB; 256 MB leaves headroom for larger sources).
+// Encodes in flight: one per core, within half of memory (an encode peaks near 120 MB).
 const IMAGE_JOB_BYTES = 256 * 2 ** 20;
 export const defaultConcurrency = (): number =>
   Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / 2 / IMAGE_JOB_BYTES)));
 
-// The masters committed beside each document: at most MASTER_WIDTH wide (the
-// widest variant the site serves), converted to sRGB, every metadata block
-// (EXIF, XMP, ICC) dropped, re-encoded in the source's own format. Astro
-// encodes the variants from these, so nothing the camera or screenshot tool
-// wrote reaches the public repo or the site.
+// Masters committed beside each document: at most MASTER_WIDTH wide, sRGB, all metadata (EXIF, XMP, ICC)
+// dropped so nothing the camera or screenshot tool wrote reaches the public repo.
 export const MASTER_WIDTH = 1600;
 // Encoded bytes depend on the toolchain as well as the source, so the lineage
 // is part of each cache key: a sharp or libvips upgrade re-encodes.

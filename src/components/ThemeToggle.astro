@@ -1,8 +1,5 @@
 ---
-// Auto is the default and needs no JS: `color-scheme: light dark` on :root makes
-// every light-dark() token follow the OS on its own. This control only exists to
-// override that, so it stays hidden until the inline boot script in BaseLayout
-// marks :root with data-theme-mode.
+// Auto needs no JS. This control only overrides it, so it stays hidden until BaseLayout's boot script marks :root.
 const CHOICES = [
   { mode: 'auto', label: 'Match system theme' },
   { mode: 'light', label: 'Light theme' },
@@ -53,8 +50,7 @@ const CHOICES = [
     root.dataset.themeMode = mode;
     root.style.colorScheme = mode === 'auto' ? '' : mode;
 
-    // Auto hands the mobile browser chrome back to the media queries; an explicit
-    // choice pins the matching meta on and switches the other off.
+    // Auto defers theme-color to the media queries; an explicit choice pins one meta.
     metas.forEach((meta) => {
       const scheme = meta.dataset.scheme;
       meta.media =
@@ -84,8 +80,7 @@ const CHOICES = [
         if (mode === 'auto') localStorage.removeItem(STORAGE_KEY);
         else localStorage.setItem(STORAGE_KEY, mode);
       } catch {
-        // Storage blocked (private mode, cookies off): the choice still applies
-        // for this page view, it just won't survive navigation.
+        // Storage blocked: the choice applies to this page view only.
       }
     });
   }

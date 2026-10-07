@@ -1,11 +1,10 @@
 # Cloudflare
 
-The site runs on Cloudflare's free plan: Pages for the static build and the
-Functions, one D1 database, Turnstile, and the zone in front of it. Everything
-that can be code is code. The repo holds the Pages configuration files and a
-desired-state file for the zone and account, and
-[`bin/cloudflare.ts`](../bin/cloudflare.ts) checks the live state against it
-and applies the difference.
+The site runs on Cloudflare: Pages for the static build and the Functions, one
+D1 database, Turnstile, and the zone in front of it. The repo holds the Pages
+configuration files and a desired-state file for the zone and account.
+[`bin/cloudflare.ts`](../bin/cloudflare.ts) checks the live state against it and
+applies the difference.
 
 ## What runs where
 
@@ -15,10 +14,10 @@ and applies the difference.
 | Redirects | [`public/_redirects`](../public/_redirects) | every Pages deploy |
 | Which requests run Functions | [`public/_routes.json`](../public/_routes.json) | every Pages deploy |
 | Contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
-| Zone settings, HSTS, DNSSEC, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
+| Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare:check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
-| Bot Fight Mode, Web Analytics mode, Pages bindings and secrets, D1 | dashboard | by hand |
+| Web Analytics mode, Pages bindings and secrets, D1 | dashboard | by hand |
 
 [`cloudflare/zone.json`](../cloudflare/zone.json) is validated by
 [`cloudflare/zone.schema.json`](../cloudflare/zone.schema.json), whose
@@ -27,17 +26,17 @@ the tool looks both up from the zone name at runtime.
 
 ### Functions routing
 
-Every HTML page is a plain static asset, served without invoking a Function.
+Every HTML page is a static asset, served without invoking a Function.
 [`_routes.json`](../public/_routes.json) includes only `/api/*` and
 `/__sitedrift/*`, with an empty exclude list. A miss anywhere gets the root
-`404.html`, which carries the same policy as every page. The free plan allows
-100,000 Function requests a day, and page views no longer count against it: the
-quota covers only the contact form, CSP reports, and the preview proxy.
+`404.html`, which carries the same policy as every page. The limit is 100,000
+Function requests a day, used only by the contact form, CSP reports, and the
+preview proxy.
 
-The Content-Security-Policy is built into `dist/_headers` at build time by
-[`bin/build-csp.ts`](../bin/build-csp.ts), so it does not depend on a Function
-running. Pages applies `_headers` to static assets only, not to Function
-responses, which set their own headers.
+[`bin/build-csp.ts`](../bin/build-csp.ts) writes the Content-Security-Policy into
+`dist/_headers` at build time, so it does not depend on a Function running.
+Pages applies `_headers` to static assets only. Function responses set their own
+headers.
 
 [`check-routes.ts`](../tests/audits/check-routes.ts) fails the publish gate if a
 Function route does not invoke Functions, if a built HTML page does, if an
@@ -46,11 +45,11 @@ placeholder, lists a path twice, lacks a `Content-Security-Policy` on `/*`, or
 lacks the detach-plus-set override on `/contact/*`. The edge suite proves the
 routing and the headers under `wrangler pages dev`.
 
-## Free-plan limits that shaped this
+## Platform limits
 
-| Feature | Free limit | Used |
+| Feature | Limit | Used |
 |---|---|---|
-| WAF custom rules | 5, no regex | 4; one stays free for an incident |
+| WAF custom rules | 5, no regex | 2 here, 2 made in the dashboard; one stays free for an incident |
 | Rate-limiting rules | 1; path and verified-bot fields; per IP; 10 s period; 10 s block | 1: `/api/*`, 15 requests per 10 s |
 | Bulk Redirects | 15 rules | 1: `jseverino.pages.dev` → `https://jseverino.com` |
 | API Shield schema validation | Block is the only action | Block on `POST /api/contact` |
@@ -58,12 +57,11 @@ routing and the headers under `wrangler pages dev`.
 | `wrangler.toml` for Pages | compatibility date and flags, D1, vars, per-environment; no rate limiting | not used (below) |
 | Early Hints | always on for Pages, but Function-handled HTML gets no `Link` header | nothing to configure |
 
-Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in
-the zone. `*.pages.dev` is outside it, which is why the production alias
-`jseverino.pages.dev` is closed with a Bulk Redirect and preview deployments
-sit behind Access instead. The redirect matches the bare alias with subpath
-matching and does not include subdomains, so `<hash>.jseverino.pages.dev`
-previews keep working.
+Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in the
+zone, and `*.pages.dev` is outside it. The production alias `jseverino.pages.dev`
+is therefore closed with a Bulk Redirect, and preview deployments sit behind
+Access. The redirect matches the bare alias with subpath matching and excludes
+subdomains, so `<hash>.jseverino.pages.dev` previews keep working.
 
 ## Preview access
 
@@ -80,11 +78,11 @@ rules that name service tokens), with two tokens:
   repo.
 
 `zone.json` declares `pages.previewPolicy: "service-auth-only"`. `cloudflare:check`
-reports any other policy on the application (an email, a group, everyone, or
-no policy at all) as a manual item and exits 1. Apply never edits Access: the
-fix is in Zero Trust → Access → Applications. Each token is created and
-rotated under Zero Trust → Access → Service credentials; a rotated CI token goes into
-the repository secrets, and the proxy's into the proxy's own configuration.
+reports any other policy on the application (an email, a group, everyone, or no
+policy) as a manual item and exits 1. Apply never edits Access: fix it in Zero
+Trust → Access → Applications. Create and rotate each token under Zero Trust →
+Access → Service credentials. A rotated CI token goes into the repository
+secrets, and the proxy's into the proxy's own configuration.
 
 ## WAF rules
 
@@ -94,19 +92,15 @@ the dashboard during an incident is never touched.
 
 | Rule | Blocks |
 |---|---|
-| `api-method` | anything but `POST` under `/api/` |
-| `api-content-type` | `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
+| `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the Function already 404s there; this stops it at the edge) |
-| `scanner-noise` | `*.php`, `/wp-*`, `/.env*`, `/.git*`, `/xmlrpc.php` |
 
-The `/wp-admin/*` and `/wp-login.php` redirects in `public/_redirects` stay
-until `scanner-noise` is live. Once it is, `cloudflare:check` reports them as a
-manual item until they are deleted.
+At most five custom rules, dashboard rules included. `cloudflare:check` reports the total as `rule budget`.
 
 ## Features that stay off
 
-Each of these injects into or rewrites HTML after the build, and so adds markup
-the build-time CSP hashes do not cover:
+Each of these injects into or rewrites HTML after the build, adding markup the
+build-time CSP hashes do not cover:
 
 - **Rocket Loader** rewrites every script tag and loads them through its own
   script.
@@ -116,41 +110,48 @@ the build-time CSP hashes do not cover:
 - **Cloudflare Fonts** rewrites font links. The site self-hosts its one font.
 - **Zaraz** injects scripts.
 - **Hotlink Protection** is redundant with `Cross-Origin-Resource-Policy`.
-- **Speed Brain** prefetches likely next pages through Speculation Rules, which
-  the site does not use.
 
-No Cache Rule is a problem for CSP reasons: HTML is static and the policy is the
-same on every request, so HTML is cacheable.
+Speed Brain stays on. It prefetches likely next pages through a
+`speculation-rules` response header, which adds no markup.
 
-`browser_cache_ttl` is `0` (respect existing headers). Any other value
-overrides shorter origin TTLs, which is how `/favicon.ico` and
-`/assets/icons/*` were served with 4 hours instead of `_headers`' 1 hour.
+HTML is cacheable: it is static and the policy is the same on every request.
 
-## Bot Fight Mode
+`browser_cache_ttl` is `0` (respect existing headers). Any other value overrides
+shorter origin TTLs, such as the 1 hour `_headers` sets for `/favicon.ico` and
+`/assets/icons/*`.
 
-Bot Fight Mode must be off for the zone. Its JavaScript Detections inject an
-inline script with per-request values into HTML, and a static hash CSP cannot
-cover that script. It is a dashboard setting, not declared in `zone.json`, and
-it cannot skip paths on the free plan. Bot Fight Mode also challenges
-datacenter IPs, which is why CI's deploy verification targets each deployment's
-own `*.pages.dev` URL, outside the zone.
+## Bot management
+
+`botManagement` in `zone.json` declares the zone's `bot_management` settings.
+`enable_js` is `false`: JavaScript Detections inject an inline script with
+per-request values into HTML, and a static hash CSP cannot cover it. Turning Bot
+Fight Mode off in the dashboard leaves JavaScript Detections on; only
+`enable_js: false` turns them off, so the setting is declared. `fight_mode` is
+`false` because Bot Fight Mode challenges datacenter IPs. CI's deploy
+verification therefore targets each deployment's own `*.pages.dev` URL, outside
+the zone. Neither setting can skip paths.
+
+`ai_training`, `ai_search`, and `ai_user` are the three AI crawler policies on
+the Security → Bots page. The endpoint accepts only a PUT and resets every field
+the PUT leaves out. Apply therefore sends the declared fields over the live
+values of `ai_bots_protection`, `content_bots_protection`, and
+`crawler_protection`, so dashboard changes to those three survive an apply.
 
 ## Turnstile
 
 The contact handler ([`functions/api/contact.ts`](../functions/api/contact.ts))
 accepts a token only when siteverify reports `success`, the hostname
 `jseverino.com` (`SITE.domain`), and the action `contact` (the contract's
-`turnstileAction`, which the widget sends as `data-action`). The widget's
-allowed hostnames are `turnstile.domains` in `zone.json`; apply sets them, and
-they should name the same host. A token solved anywhere else, a preview
-deployment included, fails verification.
+`turnstileAction`, sent by the widget as `data-action`). The widget's allowed
+hostnames are `turnstile.domains` in `zone.json`, set by apply, and name the
+same host. A token solved anywhere else, a preview deployment included, fails
+verification.
 
 ## Web Analytics
 
-By default the zone injects the beacon. `static.cloudflareinsights.com` is in
-`script-src` and `cloudflareinsights.com` is in `connect-src`, so the beacon is
-allowed by host. To own the
-markup instead, set `WEB_ANALYTICS` in
+By default the zone injects the beacon, which the CSP allows by host
+(`static.cloudflareinsights.com` in `script-src`, `cloudflareinsights.com` in
+`connect-src`). To own the markup instead, set `WEB_ANALYTICS` in
 [`src/lib/site-config.ts`](../src/lib/site-config.ts) to
 `{ emitBeacon: true, token: '<site token>' }` and, in the same release, switch
 the Web Analytics site to **Enable with JS Snippet installation** so the zone
@@ -158,8 +159,8 @@ stops injecting. The token is public; it ships in every page either way.
 
 ## Running check, plan, and apply
 
-The token comes from `CLOUDFLARE_API_TOKEN` and nowhere else, and the tool
-never prints it. Keep the tokens in 1Password and pass them per command:
+The token comes from `CLOUDFLARE_API_TOKEN` only, and the tool never prints it.
+Keep the tokens in 1Password and pass them per command:
 
 ```sh
 CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- npm run cloudflare:check
@@ -181,6 +182,7 @@ Scope both tokens to the one zone and the one account.
 | Zone | DNS (DNSSEC) | Read | Edit |
 | Zone | Zone WAF (custom rules, rate limit) | Read | Edit |
 | Zone | API Gateway (schema validation) | Read | Edit |
+| Zone | Bot Management | Read | Edit |
 | Account | Account Rulesets (Bulk Redirect rule) | Read | Edit |
 | Account | Account Filter Lists (Bulk Redirect list) | Read | Edit |
 | Account | Cloudflare Pages | Read | Edit |
@@ -188,8 +190,7 @@ Scope both tokens to the one zone and the one account.
 | Account | Turnstile | Read | Edit |
 
 Unit tests drive all three commands against an in-memory API
-([`tests/unit/cloudflare.test.ts`](../tests/unit/cloudflare.test.ts)); nothing
-in the repo calls Cloudflare on its own.
+([`tests/unit/cloudflare.test.ts`](../tests/unit/cloudflare.test.ts)).
 
 ## After an apply
 
@@ -197,19 +198,21 @@ in the repo calls Cloudflare on its own.
 curl -sI https://jseverino.pages.dev/about/?x=1        # 301, location https://jseverino.com/about/?x=1
 curl -sI https://<hash>.jseverino.pages.dev/           # 302 to the Access login
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/api/contact          # 403 (GET)
-curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/wp-login.php         # 403
+curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/.env                 # 403
 curl -sI https://jseverino.com/assets/icons/favicon.svg | grep -i cache-control      # max-age=3600
 npm run deploy:verify
 ```
 
-Then delete the `/wp-*` redirects from `public/_redirects` and run
-`npm run cloudflare:check` until it exits 0.
+Then run `npm run cloudflare:check` until it exits 0.
+
+`pages.previewBranches` keeps the [`dist` branch](./Dist-Branch.md) out of preview
+deployments. The repository's own settings follow the same check, plan, and apply
+pattern in [GitHub Settings](./GitHub-Settings.md).
 
 ## No `wrangler.toml`
 
-A Pages `wrangler.toml` would pin the compatibility date in the repo, but it
-becomes the source of truth for every binding, so it would also have to carry
-the D1 database ID in a public repository. `cloudflare:check` already holds the
-project's compatibility date to the one the edge suite runs
-([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)), and apply sets
-it. That was the only benefit, so the repo stays without one.
+A Pages `wrangler.toml` would pin the compatibility date, but it becomes the
+source of truth for every binding and would carry the D1 database ID in a public
+repository. `cloudflare:check` already holds the project's compatibility date to
+the one the edge suite runs ([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)),
+and apply sets it.

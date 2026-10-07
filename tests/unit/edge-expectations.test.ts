@@ -1,9 +1,3 @@
-// The predicates the edge suite and deploy-verify assert against responses
-// (src/lib/edge-expectations.ts). They gate every deploy, so each is shown to
-// pass on a correct response and to name the fault on a broken one.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../functions/lib/csp.ts';

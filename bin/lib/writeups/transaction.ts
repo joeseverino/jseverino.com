@@ -1,6 +1,5 @@
-// All-or-nothing replacement of a set of files: stage every new body beside its
-// target, then, under a lock keyed to the root, confirm nothing changed on disk
-// and swap them in. Any failure restores the files already swapped.
+// All-or-nothing file replacement: stage bodies beside their targets, then under a root lock confirm nothing
+// changed and swap. Any failure restores the files already swapped.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';

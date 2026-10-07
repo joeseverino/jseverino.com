@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// Reproducible before/after build diff: builds a baseline ref and the current
-// working tree, then reports which built files differ: did this change alter
-// the shipped site? Uses a detached git worktree so the working tree is never
-// touched (no stash), and normalizes the two known non-deterministic tokens (the sitemap
-// build timestamp and the env-driven Turnstile sitekey) so only real diffs show.
+// Build a baseline ref (in a detached worktree, no stash) and the working tree, then
+// report which built files differ. Known varying tokens are normalized.
 //
 // Usage:
 //   node bin/diff-build.ts [baseline-ref]   # default baseline: HEAD
@@ -28,10 +25,7 @@ function run(command: string, args: readonly string[], cwd: string, extraEnv: No
   if (code !== 0) throw new Error(`${command} ${args.join(' ')} exited ${code}`);
 }
 
-// Strip the tokens that legitimately vary between builds without any source
-// change, so they don't drown out real differences: the sitemap dates, the
-// site key, and the content hash Astro puts in every bundled file name (a
-// script that changes renames itself, and every page that loads it changes).
+// Sitemap dates, the site key, and Astro's content hash in bundled file names vary without source changes.
 const HASHED_BUNDLE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}\.(js|css)\b/g;
 const HASHED_IMAGE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)\b/g;
 

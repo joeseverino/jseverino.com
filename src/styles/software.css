@@ -1,6 +1,4 @@
 @layer components {
-/* ── Portfolio software ─────────────────────────────────────────────── */
-
 .tabs-wrap { text-align: center; }
 
 .portfolio-tabs {
@@ -55,7 +53,7 @@
   border-block-start: 1px solid var(--color-border-faint);
 }
 
-/* Both panels render for no-JS and SEO; the script hides the inactive one. */
+/* Both panels render for no-JS and SEO. */
 .portfolio-panel {
   &[hidden] { display: none; }
 

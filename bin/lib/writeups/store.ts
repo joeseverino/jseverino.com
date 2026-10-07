@@ -1,8 +1,5 @@
-// The vault's writeup inventory as typed operations: read the writeups and the
-// technology catalog, and write frontmatter, links, and the featured order
-// transactionally. No console output and no process state: every operation
-// takes its paths in a WriteupStore, so the CLI, the manage TUI, and any other
-// caller (HQ) drive the same functions.
+// The vault's writeup inventory as typed operations. No console output or process state: every operation
+// takes its paths in a WriteupStore, so the CLI, the manage TUI, and HQ share them.
 import fs from 'node:fs';
 import path from 'node:path';
 import { DetailedError } from '../detailed-error.ts';
@@ -92,7 +89,7 @@ const stringList = (value: unknown): string[] => {
   return (Array.isArray(value) ? value : [value]).filter((item) => item !== null && item !== '').map(String);
 };
 
-export const summary = (writeup: Writeup): WriteupSummary => {
+const summary = (writeup: Writeup): WriteupSummary => {
   const { path: _path, body: _body, ...rest } = writeup;
   return { ...rest, technologies: [...rest.technologies], related_projects: [...rest.related_projects], related_assets: [...rest.related_assets] };
 };
@@ -272,7 +269,7 @@ export async function prepare(store: WriteupStore, slug: string, { includeTagUsa
 }
 
 // Frontmatter fields a write may set: the contract's editable fields.
-export const EDITABLE_FIELDS: readonly string[] = Object.entries(collectionFields('writeups'))
+const EDITABLE_FIELDS: readonly string[] = Object.entries(collectionFields('writeups'))
   .filter(([, spec]) => spec.editable === true)
   .map(([name]) => name);
 

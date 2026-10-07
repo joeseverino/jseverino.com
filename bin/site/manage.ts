@@ -1,11 +1,6 @@
-// site manage: every writeup on one screen. Reorder the featured list,
-// feature/unfeature, publish/unpublish, scaffold a writeup, edit frontmatter.
-// Changes stage locally and are written on save in one transactional plan
-// through the writeup store (bin/lib/writeups/store.ts). Gate issues come from the
-// same check `site validate` runs. The one interactive command: it refuses to
-// start without a terminal. The model is in ./manage-model.ts, the frames in
-// ./manage-render.ts, dev-server control in ./dev-server.ts; this file reads
-// keys, runs actions, and saves.
+// site manage: every writeup on one screen. Edits stage locally and save in one transactional plan through
+// the writeup store. The one interactive command: it refuses to start without a terminal.
+// Model in ./manage-model.ts, frames in ./manage-render.ts, dev server in ./dev-server.ts.
 
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -28,14 +23,11 @@ import {
 import { currentFrame, detailFrame, drawTabBar, listFrame, rule, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
-// MANAGE_TUI_KEYS replays a comma-separated key script through the real
-// handler without a TTY and prints only the final frame; MANAGE_TUI_SMOKE
-// renders one static frame. Used by tests/unit/site-manage.test.ts.
+// MANAGE_TUI_KEYS replays a comma-separated key script without a TTY and prints the final frame;
+// MANAGE_TUI_SMOKE renders one static frame. Used by tests/unit/site-manage.test.ts.
 const REPLAY = !!process.env.MANAGE_TUI_KEYS;
 
-// Status gathering shells out (git, check-security, curl) and takes ~1s, so
-// the Site tab keeps the first result and only regathers on r / Ctrl+R or
-// after an action; the "as of" timestamp shows how stale it is.
+// Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 function gatherSiteStatus(model: Model): string {
   const cols = terminalColumns();
   if (!REPLAY) {
@@ -109,7 +101,7 @@ function runCommandInline(bin: string, args: readonly string[], title: string): 
   // through "press any key"; block in a child that owns the terminal instead.
   spawnSync('bash', ['-c', 'read -rsn1'], { stdio: 'inherit' });
 
-  process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h'); // Restore TUI terminal modes
+  process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h');
   process.stdin.setRawMode(true);
   process.stdin.resume();
 }

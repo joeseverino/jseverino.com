@@ -5,7 +5,6 @@
 
 @layer tokens {
 
-/* Site-local font choice accompanies the font asset below. */
 html { --font-sans: Inter, system-ui, sans-serif; }
 
 /* The file is subset by `npm run make:font` to the site's characters and this
@@ -114,7 +113,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 
 @layer base {
 
-/* ── Reset + element defaults ───────────────────────────────────────── */
+/* Reset + element defaults */
 
 *,
 *::before,
@@ -138,7 +137,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Brand-navy selection; text flips to the page bg (white) for contrast. */
 ::selection {
   background: var(--color-primary);
   color: var(--color-bg);
@@ -164,7 +162,6 @@ a:focus {
   }
 }
 
-/* Form controls don't inherit font by default. */
 button,
 input,
 textarea,
@@ -176,7 +173,6 @@ img {
   max-inline-size: 100%;
   block-size: auto;
   vertical-align: bottom;
-  /* Photos aren't text: keep them out of select-all and drag-ghosting. */
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -216,7 +212,6 @@ h2 { font-size: var(--font-xl); }
 h3 { font-size: var(--font-lg); }
 h4 { font-size: var(--font-prose-md); }
 
-/* h5/h6 double as the demoted heading levels inside .prose. */
 h5,
 .prose h3 {
   font-size: var(--font-prose-sm);
@@ -258,8 +253,7 @@ table {
   margin-block: 1.5rem;
 }
 
-/* The rounded border lives on the inner box, not the figure, so the figcaption
-   sits below it as a normal caption (matching unattached figure captions). */
+/* The border lives on the inner box so the figcaption sits below it. */
 .table-box {
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -400,8 +394,6 @@ hr {
 }
 
 @layer components {
-/* ── Layout ─────────────────────────────────────────────────────────── */
-
 .page-shell {
   min-block-size: 100vh;
   display: flex;
@@ -610,13 +602,10 @@ main > * + * {
   text-align: center;
 }
 
-/* ── Site header ────────────────────────────────────────────────────── */
+/* Site header */
 
-/* Scroll progress as a number, so the two paths below (scroll-driven animation,
-   class + transition fallback) each set ONE value and the colors are composed in
-   a single place. A keyframe holding var() colors would resolve them once and
-   keep serving the stale pair after a theme switch, leaving a white scrim over a
-   dark page until the next reload, in Chromium and WebKit. */
+/* Scroll progress as a number so both paths set one value and colors compose in one place.
+   A keyframe holding var() colors resolves once and keeps the stale pair after a theme switch. */
 @property --header-scroll {
   syntax: '<number>';
   inherits: false;
@@ -628,8 +617,7 @@ main > * + * {
   inset-block-start: 0;
   z-index: 1000;
 
-  /* Backdrop lives on ::before so the box-shadow can transition independently
-     without the Safari sticky-pointer-events bug. */
+  /* Backdrop on ::before so the box-shadow transitions independently, avoiding the Safari sticky pointer-events bug. */
   &::before {
     content: '';
     position: absolute;
@@ -689,8 +677,7 @@ main > * + * {
   align-items: center;
 
   & svg {
-    /* Canvas is 352 tall with a 192-unit em, so the wordmark renders at the
-       old text brand's size (--font-md). currentColor drives the glyph fill. */
+    /* 352-tall canvas with a 192-unit em renders the wordmark at --font-md. */
     display: block;
     block-size: calc(var(--font-md) * 352 / 192);
     inline-size: auto;
@@ -752,7 +739,7 @@ main > * + * {
 }
 
 @layer components {
-/* ── Home content (page bodies wrapped by index.astro) ──────────────── */
+/* Home content (page bodies wrapped by index.astro) */
 
 .home-content {
   inline-size: var(--w-constrained);
@@ -762,7 +749,7 @@ main > * + * {
   & > :first-child { margin-block-start: 0; }
 }
 
-/* ── Hero (::hero block on the home page) ───────────────────────────── */
+/* Hero (::hero block on the home page) */
 
 .hero {
   text-align: center;
@@ -792,7 +779,7 @@ main > * + * {
   & > .actions { margin-block-start: 1.4rem; }
 }
 
-/* ── Buttons + action rows ──────────────────────────────────────────── */
+/* Buttons + action rows */
 
 .actions {
   display: flex;
@@ -833,7 +820,6 @@ main > * + * {
     box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
-  /* Cover the complete resting hit area, including secondary-button borders. */
   &::after {
     content: '';
     position: absolute;
@@ -886,7 +872,7 @@ main > * + * {
   }
 }
 
-/* ── Project cards ──────────────────────────────────────────────────── */
+/* Project cards */
 
 .project-grid {
   display: grid;
@@ -920,7 +906,6 @@ main > * + * {
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-/* The list item keeps its hit area while its shared surface lifts. */
 @media (hover: hover) and (pointer: fine) {
   :where(.project-card, .software-card):hover > .card-surface {
     translate: 0 -6px;
@@ -1002,7 +987,7 @@ main > * + * {
   text-transform: uppercase;
 }
 
-/* ── Split / 2-column ───────────────────────────────────────────────── */
+/* Split / 2-column */
 
 .split {
   display: grid;
@@ -1020,7 +1005,7 @@ main > * + * {
   }
 }
 
-/* ── Figures / images / captions (shared across home, prose, content-flow) ── */
+/* Figures / images / captions (shared across home, prose, content-flow) */
 
 figure {
   margin: 0;
@@ -1049,7 +1034,7 @@ figure {
   text-align: center;
 }
 
-/* ── Tag pills (writeup tags + grouped tag cloud) ───────────────────── */
+/* Tag pills (writeup tags + grouped tag cloud) */
 
 .tag-list {
   display: flex;
@@ -1095,7 +1080,7 @@ figure {
   margin-block-end: var(--space-50);
 }
 
-/* ── Writeup article ────────────────────────────────────────────────── */
+/* Writeup article */
 
 .article {
   inline-size: var(--w-constrained);
@@ -1153,7 +1138,7 @@ figure {
   margin-block-start: var(--space-30);
 }
 
-/* ── Prose (writeup body) ───────────────────────────────────────────── */
+/* Prose (writeup body) */
 
 .prose {
   line-height: 1.65;
@@ -1162,7 +1147,6 @@ figure {
 
   & h2 { font-size: var(--font-prose-md); }
 
-  /* h3/h4 demotion is shared with the base h5/h6 rules. */
 
   & a:not(.button) { text-decoration: underline; }
 
@@ -1183,7 +1167,7 @@ figure {
   }
 }
 
-/* ── Resume page (rows emitted by syncResume) ───────────────────────── */
+/* Resume page (rows emitted by syncResume) */
 
 :is(.resume-page, .document-page) .prose {
   & hr { display: none; }
@@ -1287,8 +1271,6 @@ figure {
 }
 
 @layer components {
-/* ── Contact form ───────────────────────────────────────────────────── */
-
 .contact-intake {
   max-inline-size: 720px;
   margin-block-start: var(--space-30);
@@ -1302,8 +1284,7 @@ figure {
   &[hidden] { display: none; }
 }
 
-/* Allow the form module to load before displaying a failure fallback.
-   Without scripting, the alternate contact link is available immediately. */
+/* Gives the form module time to load before showing the failure fallback. */
 @media (scripting: enabled) {
   .contact-fallback {
     visibility: hidden;
@@ -1406,8 +1387,6 @@ figure {
 }
 
 @layer components {
-/* ── Footer ─────────────────────────────────────────────────────────── */
-
 .site-footer {
   margin-block-start: var(--space-50);
   padding-block: var(--space-30);
@@ -1445,8 +1424,7 @@ figure {
   }
 }
 
-/* Hidden until the boot script marks :root, because with JS off the segments
-   do nothing, and auto already works on its own. */
+/* Hidden until the boot script marks :root; with JS off the segments do nothing. */
 .theme-toggle {
   display: none;
   align-items: center;
@@ -1533,8 +1511,6 @@ figure {
 }
 
 @layer components {
-/* ── Portfolio software ─────────────────────────────────────────────── */
-
 .tabs-wrap { text-align: center; }
 
 .portfolio-tabs {
@@ -1589,7 +1565,7 @@ figure {
   border-block-start: 1px solid var(--color-border-faint);
 }
 
-/* Both panels render for no-JS and SEO; the script hides the inactive one. */
+/* Both panels render for no-JS and SEO. */
 .portfolio-panel {
   &[hidden] { display: none; }
 
@@ -1831,11 +1807,7 @@ figure {
 }
 
 @layer components {
-/* ── Responsive ─────────────────────────────────────────────────────── */
-
-/* The tokens layer sets 12px; this later layer eases the radius from 10px to
-   12px with the width. --menu-offset is where the menu panel starts: the height
-   the header has once the 2.5rem menu button (plus its padding) is what sizes it. */
+/* Overrides the tokens layer's 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
 :root {
   --radius-md: clamp(10px, 6px + 0.6vw, 12px);
   --menu-offset: 3.8rem;
@@ -1920,8 +1892,7 @@ figure {
     display: flex;
   }
 
-  /* Appearance (blur + dim + fade) is shared with .lightbox::backdrop below;
-     only the header-offset inset is nav-specific. */
+  /* Appearance is shared with .lightbox::backdrop below; only the inset is nav-specific. */
   &::backdrop {
     position: fixed;
     inset-block-start: var(--menu-offset);
@@ -2014,8 +1985,7 @@ figure {
   }
 }
 
-/* Shared overlay behavior: one fade + backdrop treatment for the mobile nav and
-   image lightbox. The nav adds its own header-offset inset above. */
+/* One fade and backdrop treatment for the mobile nav and the lightbox. */
 .mobile-nav,
 .lightbox {
   opacity: 0;
@@ -2047,8 +2017,7 @@ figure {
   }
 }
 
-/* Image lightbox: native <dialog> opened with showModal() for a real modal
-   (focus trap, Escape, focus return). */
+/* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
 .prose .image-zoom {
   display: block;
   max-inline-size: 100%;
@@ -2149,12 +2118,9 @@ body:has(.lightbox[open]) {
   overflow: hidden;
 }
 
-/* ── Components that answer to their own width ──────────────────────── */
+/* Components that answer to their own width */
 
-/* Each of these rearranges when the space it is given runs short, wherever it
-   sits, so none of it keys off the viewport. 33.5rem is the width these
-   full-width containers have at a 600px viewport, where the layout used to
-   switch. */
+/* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
 .site-nav { container: site-nav / inline-size; }
 .page-hero { container: hero / inline-size; }
 .software-list { container: software / inline-size; }
@@ -2198,7 +2164,6 @@ body:has(.lightbox[open]) {
 }
 
 @layer components {
-/* Present to assistive technology, absent from the layout. */
 .visually-hidden {
   position: absolute;
   inline-size: 1px;
@@ -2238,7 +2203,7 @@ body:has(.lightbox[open]) {
   }
 }
 
-/* ── Forced colors ──────────────────────────────────────────────────── */
+/* Forced colors */
 
 @media (forced-colors: active) {
   :where(a, button, input, textarea, summary):focus {
@@ -2275,7 +2240,7 @@ body:has(.lightbox[open]) {
   }
 }
 
-/* ── Reduced motion ─────────────────────────────────────────────────── */
+/* Reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -1,28 +1,24 @@
-// Cloudflare desired state (cloudflare/zone.json) against the live zone and
-// account: read the live state, diff it item by item, and turn each drift into
-// the v4 API calls that fix it. bin/cloudflare.ts is the CLI over this.
-//
-// Paths are templates: `:zone`, `:account`, and ids created mid-apply (`:list`,
-// `:operation`) resolve from the client's id map, so plans, errors, and logs
-// never print an account or zone id. Rules this repo owns carry a ref starting
-// with `<owner>-`; every other rule is read for context and never written.
+// Cloudflare desired state (cloudflare/zone.json) against the live zone and account. bin/cloudflare.ts is the CLI.
+// Paths are templates (`:zone`, `:account`, mid-apply ids) so output never prints an id. Rules this repo
+// owns carry a ref starting with `<owner>-`; every other rule is read and never written.
 import { setTimeout as sleep } from 'node:timers/promises';
 import type {
-  AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, Call, DesiredState, FirewallRuleSpec, Item, ItemStatus, LiveRule, LiveState,
-  Method, Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, Step, ValidationSettings, Widget, Zone,
+  AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
+  Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, ValidationSettings, Widget, Zone,
 } from './cloudflare-types.ts';
-import { assertMatches, type JsonSchema } from './json-schema.ts';
-import { readJson } from '../../src/lib/json.ts';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run, type Step } from './drift.ts';
 
 export type * from './cloudflare-types.ts';
 
 export const API_BASE = 'https://api.cloudflare.com/client/v4';
 
 const FIREWALL_PHASE = 'http_request_firewall_custom';
+// Custom rules allowed in the phase, dashboard rules included.
+const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 const REDIRECT_PHASE = 'http_request_redirect';
 
-export class ApiError extends Error {
+class ApiError extends Error {
   status: number;
 
   constructor(method: string, template: string, status: number, errors: ApiErrorEntry[] = []) {
@@ -32,15 +28,7 @@ export class ApiError extends Error {
   }
 }
 
-export function loadDesired(file: string, schemaFile: string): DesiredState {
-  const desired: unknown = readJson(file);
-  const schema: JsonSchema = readJson(schemaFile);
-  assertMatches<DesiredState>(schema, desired, file);
-  return desired;
-}
-
-// What the client needs from fetch: a URL string and an init.
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
+export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 export interface ClientOptions {
   token: string | undefined;
@@ -91,7 +79,6 @@ export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: 
         throw error;
       }
     },
-    // Page-numbered list endpoints.
     async list<T>(template: string): Promise<T[]> {
       const results: T[] = [];
       for (let page = 1; ; page += 1) {
@@ -107,7 +94,7 @@ export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: 
 
 const q = (value: string): string => encodeURIComponent(value);
 
-export async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
+async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const [zone] = await client.get<Zone[]>(`/zones?name=${q(desired.zone)}`);
   if (!zone) throw new Error(`the token cannot see a zone named ${desired.zone}`);
   client.ids.zone = zone.id;
@@ -133,6 +120,7 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
     firewall: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${FIREWALL_PHASE}/entrypoint`),
     ratelimit: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${RATELIMIT_PHASE}/entrypoint`),
     redirect: await client.maybe<Ruleset>(`/accounts/:account/rulesets/phases/${REDIRECT_PHASE}/entrypoint`),
+    botManagement: await client.maybe<Record<string, unknown>>('/zones/:zone/bot_management'),
     list,
     listItems: list ? await client.get<LiveState['listItems']>(`/accounts/:account/rules/lists/${q(list.id)}/items`) : [],
     project: await client.maybe<PagesProject>(`/accounts/:account/pages/projects/${q(desired.pages.project)}`),
@@ -147,15 +135,6 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
   };
 }
 
-// --- diff ------------------------------------------------------------------
-
-const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
-const show = (value: unknown): string => (value === undefined || value === null ? 'absent' : typeof value === 'string' ? value : JSON.stringify(value));
-
-// status: see ItemStatus.
-function item(area: string, name: string, want: unknown, have: unknown, status: ItemStatus, steps: Step[] = [], note = ''): Item {
-  return { area, name, want: show(want), have: show(have), status, steps, note };
-}
 
 const ownedRef = (desired: DesiredState, id: string): string => `${desired.owner}-${id}`;
 const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule => typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);
@@ -209,16 +188,6 @@ const ruleView = (rule: Rule): Record<string, unknown> =>
       .map((key) => [key, key === 'ratelimit' ? pick(rule.ratelimit, ['characteristics', 'period', 'requests_per_period', 'mitigation_timeout']) : rule[key]]),
   );
 
-const changedKeys = (want: Record<string, unknown>, have: Record<string, unknown>): string[] => [...new Set([...Object.keys(want), ...Object.keys(have)])].filter((key) => !same(want[key], have[key]));
-
-// A JSON value's own fields; anything but an object has none.
-const fields = (value: unknown): Record<string, unknown> =>
-  typeof value === 'object' && value !== null ? Object.fromEntries(Object.entries(value)) : {};
-const pick = (object: unknown, keys: readonly string[]): Record<string, unknown> => {
-  const source = fields(object);
-  return Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]));
-};
-
 // One phase entrypoint: create, update, or delete the owned rules; leave the
 // rest. A missing entrypoint is created whole, which is safe because nothing
 // else lives in it yet.
@@ -232,6 +201,11 @@ function rulesetItems(desired: DesiredState, area: string, scope: 'zones' | 'acc
   }
   const rules = live.rules ?? [];
   const items: Item[] = [];
+  // Deletes come first so a plan at the phase's rule limit frees a slot before it needs one.
+  const wantedRefs = new Set(wanted.map((rule) => rule.ref));
+  for (const rule of rules.filter((entry): entry is LiveRule & OwnedRule => isOwned(desired, entry) && !wantedRefs.has(entry.ref))) {
+    items.push(item(area, rule.ref, null, 'present', 'drift', [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }], 'owned rule no longer in zone.json'));
+  }
   for (const rule of wanted) {
     const current = rules.find((entry) => entry.ref === rule.ref);
     if (!current) {
@@ -241,10 +215,6 @@ function rulesetItems(desired: DesiredState, area: string, scope: 'zones' | 'acc
     } else {
       items.push(item(area, rule.ref, 'present', 'present', 'ok'));
     }
-  }
-  const wantedRefs = new Set(wanted.map((rule) => rule.ref));
-  for (const rule of rules.filter((entry): entry is LiveRule & OwnedRule => isOwned(desired, entry) && !wantedRefs.has(entry.ref))) {
-    items.push(item(area, rule.ref, null, 'present', 'drift', [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }], 'owned rule no longer in zone.json'));
   }
   const unowned = rules.filter((entry) => !isOwned(desired, entry)).length;
   if (unowned > 0) items.push(item(area, 'unowned rules', 'left alone', `${unowned}`, 'ok', [], 'never edited or deleted'));
@@ -278,6 +248,28 @@ function settingsItems(desired: DesiredState, live: LiveState): Item[] {
         body: { value: { strict_transport_security: { ...header, ...want } } },
       }]));
   return items;
+}
+
+// The writable fields apply carries over from the live zone, so a PUT that
+// sets the declared ones does not reset the rest to their defaults.
+const BOT_MANAGEMENT_KEPT = ['ai_bots_protection', 'content_bots_protection', 'crawler_protection'] as const;
+
+function botManagementItem(desired: DesiredState, live: LiveState): Item {
+  const want = desired.botManagement;
+  if (!live.botManagement) return item('bot-management', 'bot_management', want, null, 'unavailable', [], 'not exposed for this zone');
+  const have = pick(live.botManagement, Object.keys(want));
+  if (same(have, want)) return item('bot-management', 'bot_management', want, have, 'ok');
+  const body = { ...pick(live.botManagement, BOT_MANAGEMENT_KEPT), ...want };
+  return item('bot-management', 'bot_management', want, have, 'drift', [{ method: 'PUT', path: '/zones/:zone/bot_management', body }],
+    `differs: ${changedKeys(want, have).join(', ')}`);
+}
+
+// Dashboard rules count against the limit, so the total is checked, not just this file's share.
+function firewallBudgetItem(desired: DesiredState, live: LiveState): Item {
+  const others = (live.firewall?.rules ?? []).filter((rule) => !isOwned(desired, rule)).length;
+  const total = others + desired.firewall.length;
+  return item('waf', 'rule budget', `at most ${FIREWALL_LIMIT}`, `${total} after apply`, total > FIREWALL_LIMIT ? 'manual' : 'ok', [],
+    total > FIREWALL_LIMIT ? `${others} dashboard rules plus ${desired.firewall.length} in zone.json; remove one` : '');
 }
 
 function dnssecItem(desired: DesiredState, live: LiveState): Item {
@@ -325,6 +317,18 @@ function pagesItems(desired: DesiredState, live: LiveState, compatibilityDate: s
         path: `/accounts/:account/pages/projects/${q(project)}`,
         body: { deployment_configs: { production: { compatibility_date: compatibilityDate }, preview: { compatibility_date: compatibilityDate } } },
       }], 'the edge suite runs this date (tests/browser-test-env.ts)')];
+
+  const config = fields(live.project.source?.config);
+  const branches = { include: config.preview_branch_includes ?? [], exclude: config.preview_branch_excludes ?? [] };
+  const wantBranches = desired.pages.previewBranches;
+  items.push(config.preview_deployment_setting === 'custom' && same(branches, wantBranches)
+    ? item('pages', 'preview branches', wantBranches, branches, 'ok')
+    : item('pages', 'preview branches', wantBranches, branches, 'drift', [{
+        method: 'PATCH',
+        path: `/accounts/:account/pages/projects/${q(project)}`,
+        // The whole source config goes back: a partial one would drop the repository link.
+        body: { source: { type: live.project.source?.type, config: { ...config, preview_deployment_setting: 'custom', preview_branch_includes: wantBranches.include, preview_branch_excludes: wantBranches.exclude } } },
+      }]));
 
   const previews = `*.${project}.pages.dev`;
   const apps = live.accessApps.filter((app) => app.domain === previews || (app.self_hosted_domains ?? []).includes(previews)
@@ -429,11 +433,13 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
   ]);
 }
 
-export function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
+function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
   return [
     ...settingsItems(desired, live),
+    botManagementItem(desired, live),
     dnssecItem(desired, live),
     ...rulesetItems(desired, 'waf', 'zones', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
+    firewallBudgetItem(desired, live),
     ...rulesetItems(desired, 'ratelimit', 'zones', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),
     ...redirectItems(desired, live),
     ...pagesItems(desired, live, compatibilityDate),
@@ -441,15 +447,6 @@ export function diff(desired: DesiredState, live: LiveState, { openapi, compatib
     turnstileItem(desired, live),
   ];
 }
-
-export const drifted = (items: Item[]): Item[] => items.filter((entry) => entry.status === 'drift' || entry.status === 'manual');
-
-// The calls an apply makes, in order. `use` steps bind an existing id and
-// make no call.
-const isCall = (step: Step): step is Call => 'method' in step;
-
-export const plannedCalls = (items: Item[]): Call[] =>
-  items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
 
 async function awaitBulk(client: Client, operationId: string): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
@@ -461,20 +458,21 @@ async function awaitBulk(client: Client, operationId: string): Promise<void> {
   throw new Error('list bulk operation did not complete in 30 s');
 }
 
-export async function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
-  const made: string[] = [];
-  for (const entry of items.filter((candidate) => candidate.status === 'drift')) {
-    for (const step of entry.steps) {
-      if (!isCall(step)) {
-        Object.assign(client.ids, step.use);
-        continue;
-      }
+function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
+  return applySteps(items, {
+    use: (ids) => Object.assign(client.ids, ids),
+    log,
+    async call(step) {
       const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
       for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = String(result[field]);
       if (step.awaitBulk) await awaitBulk(client, String(result.operation_id));
-      made.push(`${step.method} ${step.path}`);
-      log(`${step.method} ${step.path}`);
-    }
-  }
-  return made;
+    },
+  });
 }
+
+export const createRun = (desired: DesiredState, client: Client, context: { openapi: string; compatibilityDate: string }): Run => ({
+  target: desired.zone,
+  source: 'cloudflare/zone.json',
+  survey: async () => diff(desired, await readLive(client, desired), context),
+  apply: (items, log) => apply(client, items, { log }),
+});

@@ -1,6 +1,4 @@
-// The `site` CLI's machine contract: every command under --json prints exactly
-// one SiteResult on stdout. Exported for callers that drive the CLI and parse
-// its output.
+// The `site` CLI's machine contract: every command under --json prints one SiteResult on stdout.
 import type { ContentDiff } from '../content-diff.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import type { PreflightCheck } from '../lib/preflight.ts';

@@ -10,7 +10,6 @@ import { scratchDirs } from './helpers/fs.ts';
 const scratch = scratchDirs('run-audits-');
 after(scratch.cleanup);
 
-// An audit that waits `ms`, appends `id start` / `id end` to log, and exits `code`.
 const audit = (id: string, ms: number, code = 0, extra: Partial<Audit> = {}, log = ''): Audit => ({
   id, label: id, name: id, asserts: '', phase: 'pre-build', gates: ['gate'], fix: '',
   exec: {

@@ -3,96 +3,85 @@
 Every non-production Cloudflare Pages deployment of `jseverino.com` carries a
 compact [sitedrift](https://github.com/joeseverino/sitedrift) review layer. The
 preview deployment is DEV; the current `https://jseverino.com` release is LIVE.
-This turns each branch URL into a review environment instead of a standalone
-copy that must be compared manually.
 
 ## Case Study: One Brand Change, Fully Reviewed
 
-This case study connects two public tools I built:
-[`branding-engine`](https://github.com/joeseverino/branding-engine) generates a
-coherent brand system from structured inputs, and
+Two public tools: [`branding-engine`](https://github.com/joeseverino/branding-engine)
+generates a brand system from structured inputs, and
 [`sitedrift`](https://github.com/joeseverino/sitedrift) compares a development
-deployment with the current live site.
+deployment with the live site.
 
-For the demonstration, I temporarily changed the primary brand token in
-`src/lib/brand.ts` from navy to red. `branding-engine` propagated that one
-decision through the favicon, marks, header wordmark, interface color, Open
-Graph card, and GitHub social preview. The change was deployed only to a
-Cloudflare branch preview; production stayed navy.
+The demonstration changed the primary brand token in `src/lib/brand.ts` from
+navy to red. `branding-engine` propagated that one decision through the favicon,
+marks, header wordmark, interface color, Open Graph card, and GitHub social
+preview. Only a Cloudflare branch preview received the change; production stayed
+navy.
 
 ![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
 
 [Open the immutable red-brand comparison](https://6ef83545.jseverino.pages.dev/).
-Unlike a moving branch alias, this URL stays pinned to the demonstration build
-after the branch went back to navy. Preview deployments sit behind Cloudflare
-Access (see [Cloudflare](./Cloudflare.md)), so the link opens only for the owner.
+This URL stays pinned to the demonstration build. Preview deployments sit behind
+Cloudflare Access (see [Cloudflare](./Cloudflare.md)), so the link opens only for
+the owner.
 
 ### 1. Turn A Git Commit Into A Reviewable Artifact
 
 Cloudflare records the repository, branch, commit, deployment status, duration,
-and immutable URL together, so a reviewer can identify the exact code under
-review, and a doc can link to a deployment that does not move when the branch
-gets another push.
+and immutable URL together. A reviewer can identify the exact code under review,
+and a doc can link to a deployment that does not move on the next push.
 
 [![Cloudflare deployment details for the red-brand commit](./images/sitedrift-brand-demo/cloudflare-deployment.png)](https://6ef83545.jseverino.pages.dev/)
 
 ### 2. Add The Review Layer During The Normal Build
 
-There is no separate review server to operate. The ordinary Cloudflare build
-runs the repository's static build command, which has the installed sitedrift
-dependency wrap the 83 generated HTML files because this is a non-production
-branch. Cloudflare uploads the resulting static assets and scoped Function as
-part of the same successful deployment.
+No separate review server exists. The Cloudflare build runs the repository's
+static build command, which wraps the 83 generated HTML files with the installed
+sitedrift dependency on non-production branches. Cloudflare uploads the static
+assets and the scoped Function in the same deployment.
 
 ![Cloudflare build log showing sitedrift wrapping 83 preview pages](./images/sitedrift-brand-demo/cloudflare-build-log.png)
 
 ### 3. Confirm The Branch Works By Itself
 
 Solo mode presents DEV as a normal, interactive website with a compact review
-bar. The review layer must not break navigation, menus, scrolling, or the
-responsive layout it is reviewing.
+bar. The layer must not break navigation, menus, scrolling, or responsive layout.
 
 [![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://6ef83545.jseverino.pages.dev/)
 
 ### 4. Compare The Complete Result With Production
 
 Split mode places the red branch and navy production site on the same route and
-scroll position. The page structure and content remain aligned; the coordinated
-brand change appears in the mark, buttons, and other generated surfaces. `branding-engine`
-made the change; `sitedrift` shows how far it reached.
+scroll position. Structure and content stay aligned; the brand change appears in
+the mark, buttons, and other generated surfaces. `branding-engine` made the
+change; `sitedrift` shows how far it reached.
 
 ![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
 ### 5. Isolate Changed Pixels
 
 Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
-The sparse result shows that the branch changed branding rather than layout or
-content. It is a faster regression check than repeatedly switching browser tabs
-and relying on memory.
+The sparse result shows the branch changed branding, not layout or content.
 
 ![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
 ### 6. Check More Than Appearance
 
-Both deployments receive the same metadata preview and SEO checklist. In this
-case the title, description, canonical URL, headings, Open Graph fields,
-favicon, and image-alt coverage remain healthy. A visual redesign can therefore
-be reviewed without silently accepting an SEO regression.
+Both deployments receive the same metadata preview and SEO checklist. Here the
+title, description, canonical URL, headings, Open Graph fields, favicon, and
+image-alt coverage all pass, so the redesign carries no SEO regression.
 
 ![DEV and LIVE metadata previews and SEO checks](./images/sitedrift-brand-demo/seo-comparison.png)
 
-The response popover puts HTTP status, response time, transfer size, and deltas
-in one compact comparison. These are lightweight same-session diagnostics, not
-synthetic benchmarks, but they quickly expose a branch that fails, redirects,
-or becomes unexpectedly heavier.
+The response popover shows HTTP status, response time, transfer size, and
+deltas. These are same-session diagnostics, not benchmarks, and expose a branch
+that fails, redirects, or gets heavier.
 
 ![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
 
 ### 7. Leave Review Context Without Adding A Service
 
-Review notes are attached to the preview workflow but stored only in that
-browser's `localStorage`. The interface says so. The notes need no account
-system, write API, or database.
+Review notes live only in that browser's `localStorage`, and the interface says
+so. They need no account system, write API, or database.
 
 ![Browser-local review notes](./images/sitedrift-brand-demo/browser-local-notes.png)
 
@@ -110,23 +99,20 @@ system, write API, or database.
   coverage.
 - Review notes stored only in that browser's `localStorage`.
 
-The status and SEO panels compare the same route in the same browser
-session; they are not performance benchmarks.
-
 ## Repository Integration
 
-The project has two integration points. `npm run build:static`
+`npm run build:static`
 ([`bin/build-static.ts`](../bin/build-static.ts)) runs `astro build`, then
 `sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
 output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
 and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts).
 `--nonce __CSP_INLINE__` is a build-time marker on every tag the viewer writes;
-`bin/build-csp.ts` hashes and strips it after the wrap, so
-the build's CSP covers the wrapped pages like any other.
+`bin/build-csp.ts` hashes and strips it after the wrap, so the build's CSP covers
+wrapped pages like any other.
 
 The scoped Pages Function,
 [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts), is
-sitedrift's own `onRequest`, whose defaults are this route's guards:
+sitedrift's own `onRequest`. Its defaults are this route's guards:
 
 - `404` on the production host (and its `www.`) and on any build without
   sitedrift's generated config;
@@ -137,11 +123,9 @@ sitedrift's own `onRequest`, whose defaults are this route's guards:
   request-time CSP: a nonce for the bridge script sitedrift injects, plus a hash
   for each inline script and style of the fetched page.
 
-`tests/unit/csp.test.ts` covers that request-time
-policy.
+`tests/unit/csp.test.ts` covers that request-time policy.
 
-`sitedrift` is pinned in `devDependencies` and the exact tarball is locked in
-`package-lock.json`.
+`sitedrift` is pinned in `devDependencies` and locked in `package-lock.json`.
 
 ## Preview Build Flow
 
@@ -150,30 +134,28 @@ policy.
 <sup>Diagram source: [`docs/diagrams/preview-build-flow.mmd`](./diagrams/preview-build-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
-The branch alias and immutable deployment URL expose the same review interface.
-The immutable URL is preferred for verification because it cannot move to a
-newer build during testing.
+The branch alias and immutable deployment URL expose the same interface. Verify
+against the immutable URL, which cannot move to a newer build mid-test.
 
 ## Production Invariant
 
 The addon does not wrap production. `sitedrift cloudflare` exits without
 changing the Astro output when `CF_PAGES_BRANCH=main`.
 
-Cloudflare bundles the `functions/` tree separately, so the Function still
-exists in production. It answers `404` there twice over: the production host
-check, and the missing generated config. The `sitedrift-production` WAF rule
-also blocks `/__sitedrift*` on the production hosts at the edge. The normal
-site, contact form, CSP report receiver, headers, and static assets
-follow their production paths unchanged.
+Cloudflare bundles `functions/` separately, so the Function still exists in
+production. It answers `404` there on the production host check and on the
+missing generated config. The `sitedrift-production` WAF rule also blocks
+`/__sitedrift*` on the production hosts at the edge. The site, contact form, CSP
+report receiver, headers, and static assets are unchanged.
 
-Run the project-level guard before release:
+Run the guard before release:
 
 ```sh
 npm run check:preview
 ```
 
-It builds small simulated outputs and asserts that a feature branch receives
-the review wrapper while `main` remains the original Astro document.
+It builds simulated outputs and asserts that a feature branch receives the
+wrapper while `main` stays the original Astro document.
 
 ## Security Boundary
 
@@ -182,16 +164,14 @@ the review wrapper while `main` remains the original Astro document.
 - The LIVE destination is fixed at build time to `https://jseverino.com`.
 - It does not forward contact-form writes, arbitrary origins, cookies, or
   credentials.
-- Hosted frames execute trusted first-party preview code so the deployed site
-  remains interactive.
+- Hosted frames execute trusted first-party preview code.
 - Notes never leave the browser and are not available through the sitedrift MCP.
-- Application Functions retain their routes; static pages never invoke one.
-- Pages preview hostnames remain excluded from indexing through
-  `X-Robots-Tag: noindex`, and Cloudflare Access gates them.
+- Application Functions keep their routes; static pages never invoke one.
+- Preview hostnames carry `X-Robots-Tag: noindex` and sit behind Cloudflare
+  Access.
 
-This adds a read-only preview review surface. It does not add an account system,
-production content API, database binding, secret, upload endpoint, or public
-write path.
+The surface is read-only: no account system, production content API, database
+binding, secret, upload endpoint, or public write path.
 
 ## Review Procedure
 
@@ -215,8 +195,8 @@ npm run check:preview
 ```
 
 Review upstream release notes and verify an immutable Pages deployment before
-merging. Because preview HTML is transformed at build time and the proxy runs at
-the edge, sitedrift updates are both build-tooling and preview-runtime changes.
+merging. A sitedrift update changes both build tooling (HTML transform) and the
+preview runtime (edge proxy).
 
 ## Related Docs
 

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Every image the build ships: committed static assets and the variants
-// Astro encodes from content. Reports the count and weight; with
-// STRICT_ASSET_AUDIT=1 an image at or over the limit fails.
+// Every image the build ships, with count and weight. STRICT_ASSET_AUDIT=1 fails images at or over the limit.
 import fs from 'node:fs';
 import path from 'node:path';
 import { walkFiles } from '../../src/lib/walk.ts';

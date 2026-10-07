@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// Rehearse the CI build gate locally before pushing: run gate:check, then
-// publish:check, the way .github/workflows/ci.yml runs them: CI set (so localOnly audits skip, as on
-// the runner) and a scratch GPG keyring seeded only from the committed WKD
-// key, so the gate cannot lean on this machine's keyring, vault, or other
-// authoring-machine state.
+// Run gate:check then publish:check as ci.yml does: CI set (localOnly audits skip)
+// and a scratch GPG keyring seeded only from the committed WKD key.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

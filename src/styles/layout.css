@@ -1,6 +1,4 @@
 @layer components {
-/* ── Layout ─────────────────────────────────────────────────────────── */
-
 .page-shell {
   min-block-size: 100vh;
   display: flex;
@@ -209,13 +207,10 @@ main > * + * {
   text-align: center;
 }
 
-/* ── Site header ────────────────────────────────────────────────────── */
+/* Site header */
 
-/* Scroll progress as a number, so the two paths below (scroll-driven animation,
-   class + transition fallback) each set ONE value and the colors are composed in
-   a single place. A keyframe holding var() colors would resolve them once and
-   keep serving the stale pair after a theme switch, leaving a white scrim over a
-   dark page until the next reload, in Chromium and WebKit. */
+/* Scroll progress as a number so both paths set one value and colors compose in one place.
+   A keyframe holding var() colors resolves once and keeps the stale pair after a theme switch. */
 @property --header-scroll {
   syntax: '<number>';
   inherits: false;
@@ -227,8 +222,7 @@ main > * + * {
   inset-block-start: 0;
   z-index: 1000;
 
-  /* Backdrop lives on ::before so the box-shadow can transition independently
-     without the Safari sticky-pointer-events bug. */
+  /* Backdrop on ::before so the box-shadow transitions independently, avoiding the Safari sticky pointer-events bug. */
   &::before {
     content: '';
     position: absolute;
@@ -288,8 +282,7 @@ main > * + * {
   align-items: center;
 
   & svg {
-    /* Canvas is 352 tall with a 192-unit em, so the wordmark renders at the
-       old text brand's size (--font-md). currentColor drives the glyph fill. */
+    /* 352-tall canvas with a 192-unit em renders the wordmark at --font-md. */
     display: block;
     block-size: calc(var(--font-md) * 352 / 192);
     inline-size: auto;

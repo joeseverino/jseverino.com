@@ -1,6 +1,4 @@
 ---
-// The shape every document page shares: a hero, then the synced body. Pages
-// differ only in the few props below.
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHero from '@components/PageHero.astro';
 import ContentBody from '@components/content/ContentBody.astro';
@@ -8,15 +6,11 @@ import type { PageContent } from '@lib/content.ts';
 
 type Props = {
   page: PageContent;
-  /** Breadcrumb trail between Home and the page itself. */
   parents?: { name: string; url: string }[];
   pageType?: 'profile';
   preconnect?: string[];
-  /** Added to the `content-page` class on <main>. */
   mainClass?: string;
-  /** Show the page's intro under the title. */
   lede?: boolean;
-  /** Wrap the body in the `.prose` column. */
   prose?: boolean;
 };
 

@@ -1,8 +1,5 @@
-// site publish: the vault's current public content as a pull request against
-// main. The branch is cut from origin/main in a temporary worktree, so the
-// checkout (whatever branch it is on, however stale) is never touched; the
-// commit holds exactly the files the sync declares; the PR body speaks in
-// slugs and URLs. It opens the PR and stops: merging is a separate step.
+// site publish: the vault's public content as a PR against main, cut from origin/main in a temporary
+// worktree so the checkout is never touched. Opens the PR and stops; merging is separate.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

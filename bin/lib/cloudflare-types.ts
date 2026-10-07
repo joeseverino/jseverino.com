@@ -1,11 +1,9 @@
-// The Cloudflare desired state (cloudflare/zone.json, validated against
-// cloudflare/zone.schema.json on load) and the slices of the v4 API responses
-// bin/lib/cloudflare.ts reads. API shapes name only the fields this repo uses.
+// Cloudflare desired state (cloudflare/zone.json, validated against zone.schema.json) and the slices of v4 API responses read.
 
-export type Toggle = 'on' | 'off';
+type Toggle = 'on' | 'off';
 
 // Type aliases so Object.entries keeps the value types (an interface would widen them).
-export type ZoneSettings = {
+type ZoneSettings = {
   min_tls_version: '1.0' | '1.1' | '1.2' | '1.3';
   tls_1_3: 'on' | 'off' | 'zrt';
   always_use_https: Toggle;
@@ -21,7 +19,7 @@ export type ZoneSettings = {
   brotli: Toggle;
 };
 
-export type Hsts = {
+type Hsts = {
   enabled: boolean;
   max_age: number;
   include_subdomains: boolean;
@@ -35,7 +33,7 @@ export interface FirewallRuleSpec {
   action: 'block' | 'managed_challenge';
 }
 
-export interface RateLimitSpec {
+interface RateLimitSpec {
   id: string;
   description: string;
   expression: string;
@@ -46,7 +44,7 @@ export interface RateLimitSpec {
   mitigation_timeout: 10;
 }
 
-export type PagesDevRedirect = {
+type PagesDevRedirect = {
   list: string;
   source_url: string;
   target_url: string;
@@ -57,7 +55,7 @@ export type PagesDevRedirect = {
   include_subdomains: boolean;
 };
 
-export interface SchemaValidationSpec {
+interface SchemaValidationSpec {
   name: string;
   file: string;
   host: string;
@@ -65,6 +63,17 @@ export interface SchemaValidationSpec {
   endpoint: string;
   action: 'block';
 }
+
+// The bot_management fields this file owns. The endpoint is PUT-only, and a
+// PUT resets every field it leaves out, so apply sends these over the live
+// values of BOT_MANAGEMENT_KEPT.
+type BotManagement = {
+  enable_js: boolean;
+  fight_mode: boolean;
+  ai_training: string;
+  ai_search: string;
+  ai_user: string;
+};
 
 export interface DesiredState {
   $schema?: string;
@@ -75,13 +84,13 @@ export interface DesiredState {
   dnssec: 'active' | 'disabled';
   firewall: FirewallRuleSpec[];
   rateLimit: RateLimitSpec;
+  botManagement: BotManagement;
   pagesDevRedirect: PagesDevRedirect;
-  pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only' };
+  pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only'; previewBranches: { include: string[]; exclude: string[] } };
   schemaValidation: SchemaValidationSpec;
   turnstile: { domains: string[] };
 }
 
-// --- the v4 API, as read ----------------------------------------------------
 
 export interface ApiErrorEntry {
   code?: number;
@@ -171,6 +180,7 @@ export interface AccessApp {
 }
 
 export interface PagesProject {
+  source?: { type?: string; config?: Record<string, unknown> };
   deployment_configs?: Partial<Record<'production' | 'preview', { compatibility_date?: string }>>;
 }
 
@@ -186,6 +196,7 @@ export interface LiveState {
   firewall: Ruleset | null;
   ratelimit: Ruleset | null;
   redirect: Ruleset | null;
+  botManagement: Record<string, unknown> | null;
   list: RulesList | null;
   listItems: { redirect?: Record<string, unknown> }[];
   project: PagesProject | null;
@@ -195,33 +206,4 @@ export interface LiveState {
   operation: Operation | null;
   operationSettings: { mitigation_action?: string } | null;
   widgets: Widget[];
-}
-
-// --- the plan ----------------------------------------------------------------
-
-export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-// A call to make, or a `use` step that binds an existing id and makes none.
-export interface Call {
-  method: Method;
-  path: string;
-  body?: unknown;
-  saveAs?: Record<string, string>;
-  awaitBulk?: boolean;
-}
-
-export type Step = Call | { use: Record<string, string> };
-
-// ok | drift (apply fixes it) | manual (a person must) | unavailable (the API
-// does not expose it here; reported, not counted).
-export type ItemStatus = 'ok' | 'drift' | 'manual' | 'unavailable';
-
-export interface Item {
-  area: string;
-  name: string;
-  want: string;
-  have: string;
-  status: ItemStatus;
-  steps: Step[];
-  note: string;
 }

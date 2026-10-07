@@ -1,6 +1,4 @@
-// site manage's dev-server control against real processes: listeners are
-// LISTEN sockets only, and a stop signals only the process group a start
-// created, escalating to SIGKILL when SIGTERM is ignored. Needs lsof.
+// site manage dev-server control against real processes. Needs lsof.
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
@@ -16,7 +14,6 @@ after(() => {
   for (const child of strays) child.kill('SIGKILL');
 });
 
-// A detached node process listening on port; ignoreTerm makes it survive SIGTERM.
 async function server(port: number, { ignoreTerm = false } = {}): Promise<ChildProcess> {
   const code = `${ignoreTerm ? "process.on('SIGTERM', () => {});" : ''}require('node:net').createServer().listen(${port}, '127.0.0.1');`;
   const child = spawn(process.execPath, ['-e', code], { detached: true, stdio: 'ignore' });

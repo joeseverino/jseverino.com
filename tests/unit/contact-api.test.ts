@@ -1,9 +1,5 @@
-// Unit tests for the contact endpoint (functions/api/contact.ts): request in,
-// response out, with D1 and the Turnstile siteverify call stubbed. This is the
-// only place the validation ladder, honeypot, rate limit, and D1 failure paths
-// run before production; the Playwright contact spec mocks this API away.
-//
-//   npm run test:unit
+// Contact endpoint with D1 and Turnstile stubbed. The Playwright contact spec mocks this API away,
+// so this is the only pre-production run of the validation ladder, honeypot, rate limit and D1 failures.
 
 import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -150,7 +146,6 @@ describe('honeypot', () => {
   });
 });
 
-// A valid submission that verification turns away: 400, nothing written.
 async function assertRejectedUnstored(): Promise<void> {
   const db = createD1Stub();
   const response = await call(contactRequest(validPayload), db);

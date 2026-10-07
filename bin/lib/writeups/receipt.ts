@@ -1,5 +1,4 @@
-// Receipts for completed writes: evidence for audit and cache invalidation,
-// never a second source of truth.
+// Receipts for completed writes: audit and cache-invalidation evidence, never a second source of truth.
 import crypto from 'node:crypto';
 import { canonicalContractJson } from '../../../src/lib/content-contract.ts';
 

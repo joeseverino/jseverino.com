@@ -1,9 +1,6 @@
-// public/_routes.json decides which requests invoke Pages Functions and which
-// Pages serves straight from static assets. Every page is static, so only the
-// Function routes are included. Rules are pathnames where `*` matches any run of
-// characters, slashes included; an exclude beats an include. Limits per the
-// Pages docs: at least one include, at most 100 rules in total, 100 characters
-// per rule.
+// public/_routes.json: only Function routes are included, since every page is static. `*` matches any
+// run of characters, slashes included; an exclude beats an include. Pages limits: at least one include,
+// 100 rules total, 100 characters per rule.
 import fs from 'node:fs';
 import path from 'node:path';
 import { walkFiles } from '../../src/lib/walk.ts';

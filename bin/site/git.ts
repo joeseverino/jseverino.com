@@ -1,5 +1,4 @@
-// git and gh for the publish/land orchestration. Every failure is fatal and
-// carries the command's own stderr: nothing here is best-effort.
+// git and gh for publish/land. Every failure is fatal and carries the command's stderr.
 import { git as gitQuery, statusEntries } from '../lib/git.ts';
 import { runSync } from '../lib/run.ts';
 import { SiteError } from './cli.ts';

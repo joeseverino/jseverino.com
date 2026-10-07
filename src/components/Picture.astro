@@ -1,11 +1,6 @@
 ---
-// A responsive <picture>: an AVIF source and a WebP <img>, each at the widths
-// the layout serves (Astro drops any wider than the original). Astro sets the
-// intrinsic size, so the box is reserved before the image loads. Every
-// browser this site's CSS supports decodes both formats.
-//
-// The image's metadata is never read here: touching it marks the original as
-// referenced, and Astro would then ship the unprocessed file with its EXIF.
+// Never read the image's metadata here: it marks the original as referenced,
+// and Astro would ship the unprocessed file with its EXIF.
 // A URL string (the default social card) renders as a plain <img>.
 import type { ImageMetadata } from 'astro';
 import { Picture as AstroPicture } from 'astro:assets';
@@ -18,9 +13,7 @@ type Props = {
   sizes?: string | undefined;
   loading?: 'lazy' | 'eager' | undefined;
   fetchpriority?: 'high' | 'low' | 'auto' | undefined;
-  /** Display width override (`![alt|400](…)`); height follows the ratio. */
   width?: number | undefined;
-  /** Opt out of the figure lightbox (`![alt|nozoom](…)`). */
   noZoom?: boolean | undefined;
 };
 

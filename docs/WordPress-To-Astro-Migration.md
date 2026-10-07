@@ -1,20 +1,19 @@
 # WordPress To Astro Migration
 
 This document records the business and engineering case for moving
-`jseverino.com` from WordPress to Astro. Besides the framework, the migration
-changed how the site is operated: fewer moving parts, less public attack
-surface, lower transfer weight, and a repository that is the reviewable source
-of what ships.
+`jseverino.com` from WordPress to Astro. The migration also changed how the site
+is operated: fewer moving parts, less public attack surface, lower transfer
+weight, and a repository that is the reviewable source of what ships.
 
 ## Executive Summary
 
-The WordPress version proved that the content model worked: project writeups,
-portfolio taxonomy, images, and SEO metadata were already valuable. The issue
-was the platform overhead required to serve mostly static content.
+The WordPress version proved the content model: project writeups, portfolio
+taxonomy, images, and SEO metadata. The issue was the platform overhead of
+serving mostly static content.
 
-Astro was selected because the public site does not need runtime page
-rendering, database-backed routing, comments, uploads, a public admin panel, or
-visitor accounts. Static output gives the same reader experience with a smaller
+Astro was selected because the public site needs no runtime page rendering,
+database-backed routing, comments, uploads, public admin panel, or visitor
+accounts. Static output gives the same reader experience with a smaller
 operational surface.
 
 The result:
@@ -52,16 +51,19 @@ Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browse
 ```
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
-assets, applies headers (including a build-time hash CSP), and
-handles the [contact form endpoint](../functions/api/contact.ts) plus the [CSP report endpoint](../functions/api/csp-report.ts). Preview Pages deployments also carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for visual and SEO comparison against the live site. It no longer fronts a public WordPress page
-renderer.
+assets, applies headers (including a build-time hash CSP), and handles the
+[contact form endpoint](../functions/api/contact.ts) and the
+[CSP report endpoint](../functions/api/csp-report.ts). Preview deployments also
+carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for
+visual and SEO comparison against the live site. It no longer fronts a public
+WordPress page renderer.
 
 ## May 2026 Migration Comparison
 
-On May 24, 2026, a focused migration comparison was conducted between the
-production Astro site and the legacy WordPress origin, to check the migration
-decision against measurable signals: transferred bytes, request count, response
-time, security posture, and codebase reviewability.
+On May 24, 2026, the production Astro site was compared with the legacy
+WordPress origin to check the migration decision against measurable signals:
+transferred bytes, request count, response time, security posture, and codebase
+reviewability.
 
 Measurements used:
 
@@ -70,14 +72,13 @@ Measurements used:
 - `curl` timing for document-level response checks.
 - A locally captured legacy HAR for historical worst-case WordPress transfer.
 
-Synthetic Lighthouse scores are treated as supporting evidence only. They are
-sensitive to Cloudflare challenge scripts, analytics behavior, cache state,
-viewport, and network conditions.
+Synthetic Lighthouse scores are supporting evidence only. They are sensitive to
+Cloudflare challenge scripts, analytics behavior, cache state, viewport, and
+network conditions.
 
 ### Case Study: Custom Detection Engine Writeup
 
-This case study compares the live load performance of the same article on both
-platforms.
+Live load performance of the same article on both platforms:
 
 - Legacy: `https://wp.jseverino.com/portfolio/architecting-a-custom-detection-engine/`
 - Current: `https://jseverino.com/portfolio/architecting-a-custom-detection-engine/`
@@ -90,22 +91,21 @@ platforms.
 | Largest Lighthouse image | 343 KB PNG | 42.5 KB AVIF |
 | First-party failures | 0 | 0 |
 
-This Lighthouse article run showed approximately a 58.9% total byte-weight
-reduction:
+The Lighthouse article run shows a 58.9% total byte-weight reduction:
 
 ```text
 (1.16 MB - 476 KB) / 1.16 MB = 58.9%
 ```
 
-The historical HAR benchmark below represents a larger worst-case legacy load,
-where the WordPress page pulled many full-size PNG screenshots. The live
-Lighthouse comparison is the more conservative number; the HAR comparison shows
-why the image pipeline was still an important architecture decision.
+The historical HAR benchmark below is a larger worst-case legacy load, where the
+WordPress page pulled many full-size PNG screenshots. The Lighthouse comparison
+is the more conservative number; the HAR comparison shows why the image pipeline
+mattered.
 
 #### Historical Worst-Case Benchmark
 
-The old HAR contained 20 PNG image transfers totaling 18.42 MB. That represents
-the uncached cost of the legacy site:
+The old HAR contained 20 PNG image transfers totaling 18.42 MB, the uncached
+cost of the legacy site:
 
 | Legacy asset | Transfer |
 | --- | ---: |
@@ -117,9 +117,9 @@ the uncached cost of the legacy site:
 
 ### Case Study: Homepage Migration Baseline
 
-The May 24, 2026 migration baseline already showed the Astro homepage
-shipping less JavaScript, less total payload, faster first paint, stronger
-accessibility, and better SEO than the legacy WordPress homepage.
+The May 24, 2026 migration baseline showed the Astro homepage shipping less
+JavaScript, less total payload, faster first paint, stronger accessibility, and
+better SEO than the legacy WordPress homepage.
 
 | Measurement | Legacy WordPress | Astro migration baseline |
 | --- | ---: | ---: |
@@ -129,19 +129,18 @@ accessibility, and better SEO than the legacy WordPress homepage.
 | Lighthouse Accessibility | 96 | **100** |
 | Lighthouse SEO | 85 | **92** |
 
-That baseline was before the final homepage polish. The current PageSpeed
-snapshot below shows the homepage after those fixes: 100 Performance, 100
-Accessibility, 100 Best Practices, and 100 SEO on both mobile and desktop.
-The WordPress homepage remains useful as a comparison point, but the article
-comparison is more representative of the migration's asset-pipeline win because
-portfolio writeups carry the largest image payloads.
+That baseline predates the final homepage polish. The current PageSpeed
+snapshot below shows 100 Performance, 100 Accessibility, 100 Best Practices, and
+100 SEO on both mobile and desktop. The article comparison is more
+representative of the asset-pipeline win because portfolio writeups carry the
+largest image payloads.
 
 ### Codebase Profile
 
-At the time of the migration (May 2026), the application and infrastructure
-source was a small set of repository files. On the WordPress site, the
-equivalent was spread across a database, plugins, and a theme. The repository
-has since moved to TypeScript only; the table is the migration-time snapshot.
+At the migration (May 2026), the application and infrastructure source was a
+small set of repository files. On WordPress, the equivalent was spread across a
+database, plugins, and a theme. The repository has since moved to TypeScript
+only; the table is the migration-time snapshot.
 
 | Layer | Language / Type | Lines of Code |
 | --- | --- | ---: |
@@ -157,8 +156,8 @@ covered content rendering, responsive assets, and edge security.
 
 ### Server Response and Security
 
-Beyond asset weight, the migration improved raw delivery speed and security
-posture by removing the PHP/database dependency.
+Removing the PHP/database dependency also improved delivery speed and security
+posture.
 
 | Metric | Legacy WordPress | Current Astro |
 | --- | ---: | ---: |
@@ -167,22 +166,19 @@ posture by removing the PHP/database dependency.
 | Script Security | `'unsafe-inline'` required | **Hash-based CSP** |
 | Origin Surface | Public PHP/MySQL | **Static Edge** |
 
-The observed TTFB improvement comes from replacing dynamic PHP/database page
-rendering with static edge delivery. Exact response timing varies with cache
-state, Cloudflare routing, and client network conditions, so these numbers
-are a snapshot.
+The TTFB improvement comes from replacing dynamic PHP/database page rendering
+with static edge delivery. Timing varies with cache state, Cloudflare routing,
+and client network conditions, so these numbers are a snapshot.
 The [hash-based Content Security Policy](./Architecture.md#10-edge-security) also reduces script-injection risk; WordPress's reliance on inline scripts made that hard to maintain.
 
 ## Lighthouse Notes
 
-Lighthouse is useful for the current Astro site, but it is sensitive to the
-deployment environment. A common pitfall when measuring either the legacy
-WordPress site or a protected Astro staging environment is Cloudflare Access.
-If Access is active for the target origin, Lighthouse will measure the
-performance and weight of the Access login challenge rather than the actual
-site content.
+Lighthouse is sensitive to the deployment environment. If Cloudflare Access is
+active for the target origin, as on the legacy WordPress site or a protected
+Astro staging environment, Lighthouse measures the performance and weight of the
+Access login challenge instead of the site content.
 
-Use Lighthouse for current-site regression checks:
+Current-site regression check:
 
 ```sh
 lighthouse \
@@ -195,10 +191,10 @@ lighthouse \
 
 ### Measurement Caveats
 
-When performing automated measurements, verify that the origin is reachable
-without a challenge. During the May 24, 2026 audit, Cloudflare Access was
-temporarily disabled so the results reflected the site content instead of the
-login challenge. An "Access-blocked" measurement typically shows:
+Verify that the origin is reachable without a challenge before measuring.
+During the May 24, 2026 audit, Cloudflare Access was temporarily disabled so the
+results reflected the site content. An Access-blocked measurement typically
+shows:
 
 - **Inaccurate LCP:** The login challenge scripts can push Largest Contentful
   Paint well beyond 5 seconds.
@@ -219,9 +215,8 @@ The May 24, 2026 Astro article baseline reported:
 | First-viewport total byte weight | 476 KiB |
 | First-viewport network requests | 13 |
 
-This article baseline is kept as a migration artifact: it records
-the payload reduction at the time the WordPress-to-Astro decision was validated.
-Later homepage PageSpeed results measure a different surface. Together: the
+This article baseline records the payload reduction when the decision was
+validated. The homepage PageSpeed results measure a different surface: the
 migration cut the writeup pages' payload, and later homepage work brought the
 homepage to 100 in every PageSpeed category.
 
@@ -267,8 +262,8 @@ The remaining dynamic pieces are narrow and explicit:
 
 ## Operational Shift
 
-The most significant change is the move from a "Live Admin" model to a
-"Private-First" content model. In WordPress, content was authored and stored
+The largest change is from a "Live Admin" model to a "Private-First" content
+model. In WordPress, content was authored and stored
 within the public origin's database. In the Astro architecture, the public
 site is a read-only snapshot of a private editorial system.
 
@@ -283,12 +278,10 @@ site is a read-only snapshot of a private editorial system.
 
 ## Pre-flight Validation
 
-The migration replaced manual WordPress maintenance (plugin updates, theme
-checks, security scanning) with automated quality gates. Before any content
-update is published, the site is validated against the project's engineering
-standards.
-
-The `publish:check` script acts as the final gate:
+Automated quality gates replaced manual WordPress maintenance (plugin updates,
+theme checks, security scanning). Before any content update is published, the
+site is validated against the project's engineering standards. The
+`publish:check` script is the final gate:
 
 ```sh
 npm run publish:check
@@ -300,23 +293,23 @@ On a typical run (observed May 24, 2026), this validates:
 - **Optimization:** [Image weight limits](./Architecture.md#14-release-gate) (no single asset over
   1.5 MB).
 
-The operational work moved from monitoring a live runtime to verifying a static
-build. The current gates are described in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md).
+Operational work moved from monitoring a live runtime to verifying a static
+build. The current gates are in [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md).
 
 ## Business Outcome
 
-The site is optimized for trust, speed, maintainability, and auditability over
-CMS convenience. WordPress worked while the content model was evolving; Astro
-fits a site that is now a portfolio and technical writing archive.
+The site favors trust, speed, maintainability, and auditability over CMS
+convenience. WordPress worked while the content model was evolving; Astro fits a
+site that is now a portfolio and technical writing archive.
 
 The public repository also shows the static architecture, security headers, CSP
 handling, content sync, and responsive image processing behind the site.
 
 ## Measurement Artifacts
 
-The legacy HAR used for the comparison was captured locally. It is not committed to the repo because HAR files can contain response bodies,
-tokens, cookies, headers, and local browsing context. The summarized values in
-this document are the public-safe output of that measurement.
+The legacy HAR was captured locally and is not committed: HAR files can contain
+response bodies, tokens, cookies, headers, and local browsing context. The
+summarized values in this document are the public-safe output.
 
 Useful local extraction commands:
 

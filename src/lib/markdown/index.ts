@@ -1,6 +1,4 @@
-// The content renderer: Astro 7's Sätteri processor with the site's plugins.
-// astro.config.ts passes `processorOptions` to satteri(); tests compile with
-// the same options through Sätteri directly.
+// astro.config.ts passes `processorOptions` to satteri(); tests compile with the same options.
 import type { Features, HastPluginList, MdastPluginList } from 'satteri';
 import { blocks } from './blocks.ts';
 import { contentGuard } from './guard.ts';

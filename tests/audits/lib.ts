@@ -1,8 +1,5 @@
-// Shared plumbing for the audits. Every audit ends through finish(): the
-// problems under one heading and exit 1, or the aligned `ok` summary line the
-// gates print. The post-build audits read the build through builtPages(),
-// which resolves the outDir from src/lib/build-output.ts and enforces the
-// zero-pages floor: an empty or stale outDir fails as a broken build.
+// Shared audit plumbing. finish() exits 1 with problems under one heading or prints the `ok` line;
+// builtPages() fails an empty or stale outDir as a broken build.
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
@@ -27,7 +24,6 @@ export function finish(problems: readonly string[], ok: string, { heading, bulle
   console.log(`ok       ${ok}`);
 }
 
-// Stops an audit that cannot go on.
 export function abort(auditName: string, message: string): never {
   console.error(`${auditName}: ${message}`);
   process.exit(1);

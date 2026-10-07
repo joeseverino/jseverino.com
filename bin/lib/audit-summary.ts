@@ -1,6 +1,4 @@
-// Terse one-line summary of an audit's output, per its registry `summary`
-// kind. Shared by every gate that prints a status line per audit, so the same
-// audit reads the same way in publish:check, gate:check, and the job summary.
+// One-line summary of an audit's output, per its registry `summary` kind.
 import type { Audit } from '../../tests/audits/registry.ts';
 
 const nonEmptyLines = (output: string): string[] => output.split('\n').map((l) => l.trim()).filter(Boolean);

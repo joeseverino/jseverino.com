@@ -1,7 +1,5 @@
-// An in-memory stand-in for the Cloudflare v4 endpoints bin/lib/cloudflare.ts
-// uses, seeded from a fixture of API-shaped live state. Writes mutate the
-// state, so an apply can be re-checked and re-applied against it. Every call
-// is recorded; an unknown route fails the test instead of passing silently.
+// In-memory Cloudflare v4 fake seeded from an API-shaped fixture. Writes mutate state and every
+// call is recorded; an unknown route fails the test.
 
 import {
   API_BASE,
@@ -10,16 +8,15 @@ import {
 
 type Fields = Record<string, unknown>;
 
-// tests/fixtures/cloudflare/live-drifted.json: API-shaped state, stored the
-// way the fake serves it (settings by id, rulesets by scope/phase, list items
-// inside their list).
+// tests/fixtures/cloudflare/live-drifted.json: state stored the way the fake serves it.
 export interface FakeState {
   zone: { id: string; name: string; account: { id: string } };
   settings: Record<string, { value: unknown; editable?: boolean }>;
   dnssec: Fields;
+  botManagement: Fields;
   rulesets: Record<string, { id: string; phase?: string; rules: LiveRule[] }>;
   lists: (RulesList & { items: Fields[] })[];
-  project: { name: string; deployment_configs: Record<string, Fields> };
+  project: { name: string; source?: { type?: string; config?: Fields }; deployment_configs: Record<string, Fields> };
   accessApps: AccessApp[];
   schemas: ApiSchema[];
   validationSettings: ValidationSettings;
@@ -35,7 +32,6 @@ export interface RecordedCall {
   authorization: string | null;
 }
 
-// Capture groups, in order; every route's pattern defines the ones it reads.
 type Groups = [string, string];
 type Handler = (groups: Groups, url: URL, body: unknown) => Response;
 
@@ -83,6 +79,12 @@ export function createCloudflareFake(seed: FakeState, token: string) {
       current.value = body.value;
       return ok(setting(id));
     }),
+    route('GET', /^\/zones\/zone-0001\/bot_management$/, () => ok(state.botManagement)),
+    // The real endpoint resets every field a PUT leaves out.
+    route<Fields>('PUT', /^\/zones\/zone-0001\/bot_management$/, (_g, _u, body) => {
+      state.botManagement = { using_latest_model: state.botManagement.using_latest_model, ai_bots_protection: 'disabled', content_bots_protection: 'disabled', crawler_protection: 'disabled', ai_training: 'disabled', ai_search: 'disabled', ai_user: 'disabled', ...body };
+      return ok(state.botManagement);
+    }),
     route('GET', /^\/zones\/zone-0001\/dnssec$/, () => ok(state.dnssec)),
     route<Fields>('PATCH', /^\/zones\/zone-0001\/dnssec$/, (_g, _u, body) => ok(Object.assign(state.dnssec, body))),
     route('GET', /^\/(zones|accounts)\/[^/]+\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([scope, phase]) =>
@@ -124,7 +126,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
       return ok({ operation_id: newId('op') });
     }),
     route('GET', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, ([name]) => name === state.project.name ? ok(state.project) : fail(404, 'Project not found')),
-    route<{ deployment_configs?: Record<string, Fields> }>('PATCH', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, (_g, _u, body) => {
+    route<{ deployment_configs?: Record<string, Fields>; source?: { type?: string; config?: Fields } }>('PATCH', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, (_g, _u, body) => {
+      if (body.source) state.project.source = body.source;
       for (const [env, config] of Object.entries(body.deployment_configs ?? {})) {
         state.project.deployment_configs[env] = { ...state.project.deployment_configs[env], ...config };
       }

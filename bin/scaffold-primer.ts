@@ -5,8 +5,7 @@
 //   node bin/scaffold-primer.ts "Astro Content Layer" --tags astro,content
 //   node bin/scaffold-primer.ts --title "X primer" --tags y,z --vault /abs/path
 //
-// Writes a slim-frontmatter primer the MCP indexer auto-picks up as
-// ref-<kebab-stem>.
+// Writes a slim-frontmatter primer the MCP indexer picks up as ref-<kebab-stem>.
 
 import fs from 'node:fs';
 import path from 'node:path';

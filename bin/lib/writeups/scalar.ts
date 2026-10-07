@@ -1,6 +1,4 @@
-// In-place frontmatter scalar writes. A write replaces one `key:` line and
-// leaves every other byte alone, so hand formatting, comments, and key order in
-// the vault survive. Quoting follows the vault's constrained YAML subset.
+// In-place frontmatter scalar writes: replace one `key:` line, leave every other byte alone. Quoting follows the vault's YAML subset.
 
 const YAML_SPECIAL = [':', '#', '@', '|', '>', '{', '}', '[', ']', ',', '&', '*', '!', '%', '`'];
 

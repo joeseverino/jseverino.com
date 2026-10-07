@@ -1,5 +1,4 @@
 @layer components {
-/* Present to assistive technology, absent from the layout. */
 .visually-hidden {
   position: absolute;
   inline-size: 1px;
@@ -39,7 +38,7 @@
   }
 }
 
-/* ── Forced colors ──────────────────────────────────────────────────── */
+/* Forced colors */
 
 @media (forced-colors: active) {
   :where(a, button, input, textarea, summary):focus {
@@ -76,7 +75,7 @@
   }
 }
 
-/* ── Reduced motion ─────────────────────────────────────────────────── */
+/* Reduced motion */
 
 @media (prefers-reduced-motion: reduce) {
   *,

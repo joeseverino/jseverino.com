@@ -1,10 +1,6 @@
-// How a writeup's vault body becomes the body its page renders: the page draws
-// its title, lede, and cover from frontmatter, so the body's copies go. Pure
-// string transforms with no dependencies, shared by the sync and by anything
-// that previews a writeup the way the site will show it.
+// Pure string transforms shared by the sync and anything that previews a writeup.
 
-// A writeup page renders its title, lede, and cover from frontmatter, so the
-// body's own H1, opening blockquote, and leading image are dropped.
+// The page renders title, lede, and cover from frontmatter, so the body's H1, opening blockquote, and leading image go.
 export function stripArticleChrome(markdown: string): string {
   const body = markdown
     .trimStart()

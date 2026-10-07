@@ -1,5 +1,4 @@
-// site manage without a terminal: it refuses to start, and its frames render
-// through the MANAGE_TUI_SMOKE / MANAGE_TUI_KEYS harness against a temp vault.
+// Drives site manage via MANAGE_TUI_SMOKE / MANAGE_TUI_KEYS against a temp vault.
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

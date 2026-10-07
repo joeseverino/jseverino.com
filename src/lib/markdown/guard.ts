@@ -1,10 +1,6 @@
-// Content is data, never code. MDX would run `import`/`export` and `{…}`
-// expressions at build time and treat raw HTML as JSX, so this plugin rejects
-// all three outright: a document using them fails the build with its line, and
-// `site validate` reports the same before anything is synced.
-//
-// Raw HTML is limited to an allow-list of tags and string attributes; URL
-// attributes must be relative or http(s)/mailto.
+// Content is data, never code. MDX would run `import`/`export` and `{…}` at build
+// time and treat raw HTML as JSX, so these fail the build with their line.
+// Raw HTML is limited to an allow-list of tags; URL attributes must be relative or http(s)/mailto.
 import { defineMdastPlugin, type MdxJsxFlowElement, type MdxJsxTextElement } from 'satteri';
 
 const GLOBAL_ATTRIBUTES = ['class', 'title', 'aria-hidden', 'aria-label'];
@@ -23,7 +19,6 @@ const ALLOWED = new Map<string, ReadonlySet<string>>(
     ),
   }).map(([tag, attributes]) => [tag, new Set([...GLOBAL_ATTRIBUTES, ...attributes])]),
 );
-// The tags raw HTML may use.
 export const RAW_HTML_TAGS: ReadonlySet<string> = new Set(ALLOWED.keys());
 const URL_ATTRIBUTES = new Set(['href', 'src']);
 const SAFE_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
@@ -66,8 +61,6 @@ export const contentGuard = defineMdastPlugin({
   mdxTextExpression: (node) => fail(`{${node.value}} is an expression; escape the brace as \\{ to write it literally`, node),
   mdxJsxFlowElement: (node) => checkElement(node),
   mdxJsxTextElement: (node) => checkElement(node),
-  // Every node that carries a URL: inline links and images, and the
-  // definitions reference-style links and images resolve to.
   link: (node) => (isSafeUrl(node.url) ? undefined : fail(`link to ${node.url} uses a scheme other than http(s) or mailto`, node)),
   image: (node) => (isSafeUrl(node.url) ? undefined : fail(`image ${node.url} uses a scheme other than http(s) or mailto`, node)),
   definition: (node) => (isSafeUrl(node.url) ? undefined : fail(`link definition ${node.url} uses a scheme other than http(s) or mailto`, node)),

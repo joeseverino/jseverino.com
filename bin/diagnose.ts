@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// The collect-all gate: run every check, then report everything that is wrong
-// in one pass. Success prints one line; failure writes .validation-report.md
-// with a clipped excerpt of each failure plus the exact command to rerun it.
+// Collect-all gate: run every check, then report all failures in one pass to
+// .validation-report.md (clipped excerpts plus the rerun command).
 import fs from 'node:fs';
 import path from 'node:path';
 import { AUDITS, auditsFor, type Audit } from '../tests/audits/registry.ts';
@@ -16,15 +15,12 @@ import { siteRoot as root } from '../src/lib/site-root.ts';
 
 const reportPath = path.join(root, '.validation-report.md');
 
-// Remediation text comes from the registry; orchestration-only checks (build,
-// idempotence) carry their own `fix` on the result object.
-// One row of the report: a registry audit's result, or an orchestration step's.
+// Orchestration-only checks (build, idempotence) carry their own `fix`.
 type Check = Pick<AuditResult, 'id' | 'name' | 'skipped' | 'code' | 'stdout' | 'stderr' | 'duration'> & {
   rerun?: string;
   fix?: string;
 };
 
-// The --json document.
 export type DiagnoseDocument =
   | {
       ok: boolean;
@@ -58,7 +54,6 @@ const runTests = !values.fast && !values['no-tests'];
 const runBuild = !values.fast;
 const jsonMode = values.json;
 
-// In --json mode the only stdout is the final JSON document.
 const say: (text: string) => void = jsonMode ? () => {} : (text) => console.log(text);
 const sayErr: (text: string) => void = jsonMode ? () => {} : (text) => console.error(text);
 
@@ -67,7 +62,6 @@ const runCommand = (cmd: string, cmdArgs: readonly string[], options: RunOptions
 
 const getGitStatus = (): string => statusEntries(root).join('\n');
 
-// Playwright's long quiet browser run gets a heartbeat.
 function postBuildOptions(audit: Audit): RunAuditOptions {
   return {
     ...(audit.id === 'browser-tests' && !jsonMode
@@ -85,8 +79,6 @@ function printResult(res: Check): void {
 }
 
 
-// Keep the report reviewable when a check (Playwright especially) dumps
-// thousands of lines: keep the head and tail, point at the rerun command.
 function clipOutput(text: string, head = 20, tail = 60): string {
   const lines = text.trim().split('\n');
   if (lines.length <= head + tail + 1) return text.trim();
@@ -169,8 +161,6 @@ function renderReport(checks: readonly Check[], failed: readonly Check[]): strin
   ].join('\n');
 }
 
-// A step before the checks (cache clean, content sync) failed: nothing can be
-// verified, so write a report that says so. Returns the exit code.
 function setupFailure(name: string, result: RunResult): number {
   sayErr(styleText('red', `❌ Setup failed: ${name} exited with code ${result.code}`, { stream: process.stderr }));
   const output = (result.stderr || result.stdout || '').trim();
@@ -180,7 +170,6 @@ function setupFailure(name: string, result: RunResult): number {
   return 1;
 }
 
-// Clean generated output and sync the vault, saying what the sync changed.
 // Returns an exit code when a step fails, otherwise null.
 async function prepare(initialGitStatus: string): Promise<number | null> {
   say(styleText('blue', 'Phase 1: Syncing Content and Cleaning Caches...'));
@@ -202,9 +191,6 @@ async function prepare(initialGitStatus: string): Promise<number | null> {
   return null;
 }
 
-// Build the artifact the site ships (astro build plus the sitedrift wrap), then
-// run the audits and browser suites against it. Suites that serve the build
-// reuse it (PREBUILT).
 async function buildAndTest(checks: Check[]): Promise<void> {
   say(styleText('blue', 'Phase 3: Compiling Production Build...'));
   const build = await runCommand('node', ['bin/build-static.ts'], { env: browserTestEnv, timeout: BUILD_TIMEOUT_MS });
@@ -226,7 +212,6 @@ async function buildAndTest(checks: Check[]): Promise<void> {
   say('');
 }
 
-// Tests and the build must not mutate tracked or untracked state.
 function idempotenceCheck(initialGitStatus: string): Check {
   const finalGitStatus = getGitStatus();
   const mutated = finalGitStatus !== initialGitStatus;
@@ -241,7 +226,6 @@ function idempotenceCheck(initialGitStatus: string): Check {
   };
 }
 
-// Print the verdict, write or clear the report, and return the exit code.
 function conclude(checks: readonly Check[], startedAt: number): number {
   const failed = checks.filter((check) => check.code !== 0 && !check.skipped);
   const seconds = Math.round((Date.now() - startedAt) / 1000);
@@ -269,7 +253,6 @@ async function diagnose(): Promise<number> {
   const startedAt = Date.now();
   say(styleText('bold', 'Starting Deterministic E2E Codebase Diagnosis...\n'));
 
-  // Stale dependencies or a missing vault stop here, within seconds.
   const ready = await preflight(process.env.CI ? ['deps'] : ['deps', 'vault'], { root });
   if (!ready.ok) {
     for (const check of ready.failed) sayErr(styleText('red', `preflight: ${check.detail}\n  fix: ${check.fix}`, { stream: process.stderr }));

@@ -1,10 +1,6 @@
 #!/usr/bin/env node
-// Deterministic performance budget over the built output, the local complement
-// to the CI Lighthouse run. Three budgets, checked in bytes on disk:
-// per-page HTML, the stylesheet every page inlines, and total shipped JS. The
-// numbers are set from the measured baseline (~115 KB worst page with the
-// ~36 KB stylesheet inlined, ~5 KB JS) with headroom. Raising a budget is a
-// commit here.
+// Byte budgets over the built output: per-page HTML, the inlined stylesheet, total JS.
+// Set from the measured baseline with headroom.
 
 import fs from 'node:fs';
 import { walkFiles } from '../../src/lib/walk.ts';
@@ -33,10 +29,8 @@ for (const { file, rel } of htmlFiles) {
   }
 }
 
-// Astro inlines the one site stylesheet into every page (build.inlineStylesheets),
-// so the CSS budget is the largest <style> block any page carries. Any external
-// .css still counts too, except public/embed/bundle.css: that is the embeddable
-// distribution artifact (font inlined) and no page loads it.
+// Astro inlines the site stylesheet into every page, so the CSS budget is the largest <style> block.
+// External .css counts too, except public/embed/bundle.css (an embeddable artifact no page loads).
 const inlineCss = Math.max(
   0,
   ...htmlFiles.map(({ html }) => (html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '').length),

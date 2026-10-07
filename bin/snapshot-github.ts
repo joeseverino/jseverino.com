@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// Refresh the committed GitHub repo snapshot (src/data/github-repos.json), the
-// only source src/lib/github.ts reads: builds never call GitHub. Run it after
-// editing repo descriptions or adding repos, and commit the result.
+// Refresh src/data/github-repos.json, the only source src/lib/github.ts reads
+// (builds never call GitHub). Commit the result.
 //
 //   npm run snapshot:github
 //

@@ -1,8 +1,5 @@
 ---
-// The writeup article: title, date, hero, body, and technology tags. The
-// portfolio page and `site render` both render through this, so a preview
-// carries the same markup the site ships. The hero and body arrive as slots:
-// the page passes <Picture> and the content entry, the preview plain HTML.
+// Shared by the portfolio page and `site render`, so a preview carries the shipped markup. Hero and body are slots.
 import { formatDate, titleCase } from '@lib/content.ts';
 import { tagPath } from '@lib/site-config.ts';
 

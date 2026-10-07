@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Add one field to the canonical writeup contract. Zod, the public projection,
-// MCP tool/CLI schemas, and the `site manage` TUI derive from this contract; this
-// command never patches consumers.
+// Add one field to the canonical writeup contract. Consumers derive from it; none are patched.
 import fs from 'node:fs';
 import { cli, flag } from './lib/args.ts';
 import type { ContentContract, FieldSpec, FieldType } from '../src/lib/content-contract.ts';

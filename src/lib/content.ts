@@ -46,7 +46,6 @@ function collectionSlug(id: string): string {
 }
 
 const loadPages = asyncCache(() => {
-  // Drafts render in `site dev --drafts` (a gitignored overlay) but never in a build.
   return getCollection('pages', (page) => import.meta.env.DEV || page.data.published);
 });
 
@@ -68,8 +67,7 @@ export async function getPage(slug: string): Promise<PageContent> {
   return toPageContent(page);
 }
 
-// Institution detail pages generated under `education/` by sync-content,
-// one per Education-vault institution joined to the resume canonical.
+// Institution pages generated under `education/` by sync-content.
 export async function getEducationInstitutions(): Promise<PageContent[]> {
   const pages = await loadPages();
   return pages
@@ -77,9 +75,7 @@ export async function getEducationInstitutions(): Promise<PageContent[]> {
     .map(toPageContent);
 }
 
-// Every tag label and the unknown-slug warning read the catalog, so a build asks
-// for it hundreds of times. The parse is cached per file modification time, so a
-// dev edit still shows up without restarting the server.
+// Cached per file mtime: a build reads the catalog hundreds of times, and a dev edit still shows up.
 let catalog: { mtimeMs: number; groups: TechnologyGroup[] } | undefined;
 
 export function getTechnologyGroups(): TechnologyGroup[] {

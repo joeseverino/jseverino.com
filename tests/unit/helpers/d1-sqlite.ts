@@ -1,5 +1,4 @@
-// D1 backed by an in-memory SQLite database built from cloudflare/d1.sql, for the
-// tests that need the real statement semantics (conditional INSERTs, batches).
+// In-memory SQLite built from cloudflare/d1.sql, for real statement semantics (conditional INSERTs, batches).
 
 import fs from 'node:fs';
 import path from 'node:path';

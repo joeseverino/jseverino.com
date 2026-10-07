@@ -1,6 +1,4 @@
-// The one argv parser for bin/ scripts: util.parseArgs in strict mode, so an
-// unknown or mistyped flag stops the script instead of being silently ignored.
-// Every script also answers --help with its usage.
+// The argv parser for bin/ scripts: util.parseArgs in strict mode, so an unknown flag stops the script. Every script answers --help.
 import { parseArgs, type ParseArgsOptionsConfig } from 'node:util';
 import { errorMessage } from '../../src/lib/error-message.ts';
 

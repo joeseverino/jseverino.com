@@ -1,8 +1,4 @@
-// Property tests for the content renderer's security and fidelity invariants:
-// fast-check generates inputs and shrinks any counterexample to the smallest
-// one. Each property states what must hold for every input, not one example.
-//
-//   npm run test:unit
+// Property tests for the renderer: fast-check generates inputs and shrinks counterexamples.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,8 +16,6 @@ const respelled = (value: string) =>
   fc.tuple(fc.array(fc.boolean(), { minLength: value.length, maxLength: value.length }), fc.constantFrom('', ' ', '\t', '\n '))
     .map(([upper, pad]) => pad + [...value].map((char, index) => (upper[index] ? char.toUpperCase() : char)).join(''));
 
-// Rendered HTML parsed back into a tree, so assertions read text nodes and
-// elements, never markup.
 type Element = Extract<HastNode, { type: 'element' }>;
 const tree = (markup: string): HastNode => htmlToHast(markup, { fragment: true });
 const childrenOf = (node: HastNode): HastNode[] => ('children' in node ? (node.children as HastNode[]) : []);

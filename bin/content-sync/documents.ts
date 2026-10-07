@@ -1,8 +1,5 @@
-// The shared document grammar (schools/orgs, courses/roles, bullets, certs,
-// project meta) rendered to classed HTML rows. /resume/, any page marked
-// `document_layout: true`, and the education pages all render through here:
-// one row renderer, one CSS block. The line grammar and tenure math live in
-// resume-engine's lib/grammar.ts, which the PDF reads too.
+// Renders the shared document grammar to classed HTML rows for /resume/, `document_layout: true`
+// pages, and the education pages. The line grammar and tenure math live in resume-engine's lib/grammar.ts.
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';

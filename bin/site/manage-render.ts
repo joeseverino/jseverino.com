@@ -1,6 +1,4 @@
-// site manage's frames: pure functions of the model that return the screen as
-// a string. The terminal-size getters read the MANAGE_TUI_* test overrides;
-// the other terminal helpers are in ./tui.ts.
+// site manage's frames: pure functions of the model returning the screen as a string.
 import { RESET, BOLD, DIM, INVERT, GREEN, YELLOW, RED, CYAN, MAGENTA, truncate, lineEditor } from './tui.ts';
 import { DEV_PORT } from './dev-server.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';

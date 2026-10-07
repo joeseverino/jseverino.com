@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// `npm run help`: the npm scripts grouped by role. It reads package.json at
-// runtime: a removed script drops out, and one not listed below shows under
-// "Other" with a nudge to categorize it.
-//
-// The groups are also the source of the overview tables in docs/Commands.md
-// (bin/sync-docs.ts renders them), so each description is written once.
+// `npm run help`: npm scripts grouped by role, filtered against package.json.
+// Unlisted scripts show under "Other". The groups also feed docs/Commands.md
+// (rendered by bin/sync-docs.ts).
 import { styleText } from 'node:util';
 import { packageScripts } from '../src/lib/json.ts';
 
@@ -65,6 +62,10 @@ export const GROUPS = [
       'cloudflare:check': 'Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift)',
       'cloudflare:plan': 'The Cloudflare API calls an apply would make',
       'cloudflare:apply': 'Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only)',
+      'dist:publish': 'Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)',
+      'github:check': 'Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift)',
+      'github:plan': 'The GitHub API calls an apply would make',
+      'github:apply': 'Plan, or with `-- --yes` apply `.github/repo.json` (admin token)',
       'd1:apply': 'Apply `cloudflare/d1.sql` to the remote D1 database (idempotent)',
       'check:lighthouse': 'Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly)',
       'clean:generated': 'Remove build output and build caches',
@@ -96,7 +97,6 @@ export const GROUPS = [
   },
 ];
 
-// The groups with only the scripts package.json actually defines.
 type Scripts = Record<string, string>;
 
 export function groupedScripts(scripts: Scripts): { title: string; rows: [string, string][] }[] {

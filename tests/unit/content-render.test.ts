@@ -1,9 +1,4 @@
-// The content renderer (src/lib/markdown/): the block vocabulary, the inline
-// conventions, and the guard that keeps content from being code. Markdown in,
-// HTML out, through Sätteri with the site's plugins and no build. The guard
-// cases compile as MDX, the format content ships in, and expect a refusal.
-//
-//   npm run test:unit
+// Guard cases compile as MDX, the format content ships in, and expect a refusal.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';

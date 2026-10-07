@@ -1,7 +1,5 @@
-// The one place the sync touches disk. Every file written under the managed
-// roots is recorded, so the prune at the end removes only files this run did
-// not produce, and the report names exactly what the sync owns: publish stages
-// that set and nothing else.
+// The one place the sync touches disk. Every written file is recorded, so prune removes only files this run
+// did not produce and the report names exactly what the sync owns.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pruneOrphans } from './prune.ts';
@@ -11,8 +9,6 @@ export interface SyncReport {
   written: string[];
   removed: string[];
 }
-
-export type Writer = ReturnType<typeof createWriter>;
 
 export function createWriter({ root }: { root: string }) {
   const written = new Set<string>();

@@ -1,7 +1,5 @@
 ---
-// Tap-to-zoom for article figures. Progressive enhancement: with no JS the
-// images stay plain images; the script upgrades in-scope .prose images into
-// triggers for this single modal <dialog>. Styles live in base.css.
+// Progressive enhancement: without JS the images stay plain.
 ---
 
 <dialog class="lightbox" aria-label="Image viewer" tabindex="-1">
@@ -21,8 +19,6 @@
     let lastTrigger: HTMLElement | null = null;
     let restoreFocusOnClose = false;
 
-    // Wrap eligible images in real buttons only when JS can open the dialog.
-    // No-JS images stay plain images. Skip anything opted out via data-no-zoom.
     for (const img of document.querySelectorAll<HTMLImageElement>('.prose img')) {
       if (img.closest('[data-no-zoom]')) continue;
       const trigger = document.createElement('button');
@@ -40,8 +36,7 @@
       if (!img) return;
       lastTrigger = trigger;
       restoreFocusOnClose = restoreFocus;
-      // Reuse the variant the browser already rendered and cached (currentSrc),
-      // so the modal is instant rather than re-fetching the full-size fallback.
+      // currentSrc is already cached, so the modal opens without a refetch.
       view.src = img.currentSrc || img.src;
       view.alt = img.alt;
 
@@ -69,9 +64,7 @@
         open(trigger, false);
         return;
       }
-      // Once open, any click in the overlay dismisses it (backdrop, the
-      // surrounding space, the image zoom-out, the close button); only the
-      // caption is exempt so its text stays selectable.
+      // Any click dismisses except on the caption, so its text stays selectable.
       if (dialog.open && target.closest('dialog.lightbox') && !target.closest('.lightbox-caption')) {
         dialog.close();
       }

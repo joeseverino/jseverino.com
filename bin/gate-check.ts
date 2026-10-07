@@ -1,11 +1,6 @@
 #!/usr/bin/env node
-// The first step of CI's build job. Runs the registry audits that claim the
-// 'gate' gate: the fast pre-build invariants (source parse, repository policy,
-// docs integrity, stylesheet lint, the committed snapshot's manifest and draft
-// guards) that should fail in seconds, before the build starts. Collect-all,
-// so one report names every broken invariant, with the same one-line summaries
-// publish:check prints for the same audits. They run concurrently and report
-// in registry order.
+// First step of CI's build job: the registry audits that claim the 'gate' gate (fast
+// pre-build invariants). Collect-all, run concurrently, reported in registry order.
 import { auditsFor } from '../tests/audits/registry.ts';
 import { cli } from './lib/args.ts';
 import { runAudits } from './lib/audits.ts';
@@ -18,8 +13,6 @@ const report = createReport('Gate', 'Audit');
 await runAudits(auditsFor('gate'), {
   onResult(result, audit) {
     group(`${audit.label.padEnd(12)} ${audit.name}`);
-    // Full output lives inside the collapsed group in Actions; locally the
-    // one-line status is the whole story unless the audit failed.
     if (inActions && result.output.trim()) console.log(result.output.trimEnd());
     endGroup();
 

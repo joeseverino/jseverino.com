@@ -1,5 +1,4 @@
-// The gh CLI as functions, for scripts that run where gh is already
-// authenticated: locally, and in Actions through GH_TOKEN.
+// The gh CLI as functions, for scripts where gh is authenticated (locally, or in Actions via GH_TOKEN).
 import { setTimeout as delay } from 'node:timers/promises';
 import { runSync } from './run.ts';
 
@@ -23,7 +22,7 @@ function ghApi<T>(pathname: string, params: Record<string, string | number> = {}
   return JSON.parse(runSync('gh', args)) as T;
 }
 
-export const checkRuns = (repository: string, sha: string): CheckRun[] =>
+const checkRuns = (repository: string, sha: string): CheckRun[] =>
   ghApi<{ check_runs: CheckRun[] }>(`repos/${repository}/commits/${sha}/check-runs`, { per_page: 100 }).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.
@@ -42,6 +41,10 @@ export const requiredContexts = (repository: string, branch: string): string[] =
     .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
     .map((check) => check.context)),
 ];
+
+// GitHub's verdict on a commit's signature.
+export const commitVerification = (repository: string, ref: string): { verified: boolean; reason: string } =>
+  ghApi<{ commit: { verification: { verified: boolean; reason: string } } }>(`repos/${repository}/commits/${ref}`).commit.verification;
 
 export const openCodeScanningAlerts = (repository: string, tool: string): CodeScanningAlert[] =>
   ghApi<CodeScanningAlert[]>(`repos/${repository}/code-scanning/alerts`, { state: 'open', tool_name: tool, per_page: 100 });

@@ -25,11 +25,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # dependabot.yml already ignores semver-major updates; this guard keeps a
-      # major from auto-merging if that ignore is ever loosened. sitedrift is
-      # bundled into the production edge functions, so its updates (grouped on
-      # their own in dependabot.yml) wait for a human. The PR still waits on
-      # every required check before GitHub performs the merge.
+      # dependabot.yml ignores semver-major; this guard holds if that loosens. sitedrift is
+      # bundled into the edge functions, so its updates wait for a human. Required checks
+      # still gate the merge.
       - name: Enable auto-merge
         if: steps.metadata.outputs.update-type != 'version-update:semver-major' && !contains(steps.metadata.outputs.dependency-names, 'sitedrift')
         run: gh pr merge --auto --squash "$PR_URL"

@@ -6,7 +6,6 @@ async function fillContact(page: Page, name: string, email: string, message: str
   await page.locator('#contact-message').fill(message);
 }
 
-// Submits the form and waits for the status line to report kind and text.
 async function submitExpecting(page: Page, kind: 'error' | 'success', text: string): Promise<Locator> {
   await page.locator('.contact-submit').click();
   const status = page.locator('.contact-status');
@@ -51,9 +50,7 @@ test.describe('Contact Form Interactive Verification', () => {
     expect(requests).toBe(1);
   });
   test.beforeEach(async ({ page }) => {
-    // Block the Turnstile script so its always-pass test key cannot auto-solve
-    // mid-test. Each test then controls the token state deterministically instead
-    // of racing the widget.
+    // Block the Turnstile script so its always-pass test key cannot auto-solve mid-test.
     await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
     await page.goto('/contact/');
   });
@@ -77,7 +74,6 @@ test.describe('Contact Form Interactive Verification', () => {
   test('shows turnstile error message if challenge is not completed', async ({ page }) => {
     await fillContact(page, 'John Doe', 'john@example.com', 'Hello! This is a test message.');
 
-    // Submitting without solving turnstile shows the error.
     const status = await submitExpecting(page, 'error', 'Please complete the verification challenge');
 
     await page.locator('#contact-name').press('KeyA');

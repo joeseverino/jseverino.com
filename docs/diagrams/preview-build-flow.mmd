@@ -1,21 +1,11 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart TB
-    subgraph Build["Preview build"]
-        direction LR
-        Push["Feature branch push"] --> CF["Cloudflare Pages"]
-        CF --> Astro["Astro writes dist/"]
-        Astro --> Wrap["sitedrift wraps the preview"]
-    end
+    Push["Feature branch push"] --> CF["Cloudflare Pages build"]
+    CF --> Astro["Astro writes dist/"]
+    Astro --> Wrap["sitedrift wraps the preview"]
+    Wrap ==> Shell["Review shell at /"]
+    Shell --> Dev["DEV: the branch preview"]
+    Shell --> Live["LIVE: production proxy"]
 
-    subgraph Review["Deployed review environment"]
-        direction LR
-        Shell["/ review shell"]
-        Shell --> Dev["DEV: preserved branch preview"]
-        Shell --> Live["LIVE: production proxy"]
-    end
-
-    Wrap ==> Shell
-
-    %% the transform pivot, styled by .anchor in the shared theme
     classDef anchor stroke-width:2px;
     class Wrap anchor;

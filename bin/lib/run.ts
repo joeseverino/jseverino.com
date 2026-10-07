@@ -1,20 +1,15 @@
-// Shared process harness for the bin/ gate runners (diagnose, publish-check,
-// release-check): a per-command timeout (a hung Playwright run fails instead of
-// stalling an unattended run), spawn failures (missing binary) as a failed
-// result instead of an unresolved promise, and output either captured for
-// terse summaries or streamed live.
+// Process harness for the bin/ gate runners: per-command timeout, spawn failures as failed results,
+// output captured or streamed.
 import { spawn, spawnSync } from 'node:child_process';
 import { stripVTControlCharacters } from 'node:util';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 
-// `site --json` sets SITE_JSON=1 for every process it starts. The static build
-// and the astro-check audit then pass `--json` to Astro, whose logger prints
-// one {message,label,level} line per event instead of formatted text.
+// `site --json` sets SITE_JSON=1 so the static build and astro-check pass `--json` to Astro.
 export const JSON_LOGS_ENV = 'SITE_JSON';
 export const jsonLogs = (env: NodeJS.ProcessEnv = process.env): boolean => env[JSON_LOGS_ENV] === '1';
 // A cold content sync re-encodes every image; callers pass this explicitly.
-export const MINUTE_MS = 60_000;
+const MINUTE_MS = 60_000;
 export const SYNC_TIMEOUT_MS = 15 * MINUTE_MS;
 export const BUILD_TIMEOUT_MS = 10 * MINUTE_MS;
 export const GATE_TIMEOUT_MS = 30 * MINUTE_MS;
@@ -63,10 +58,8 @@ export function status(label: string, detail: string): void {
   console.log(`${label.padEnd(12)} ${detail}`);
 }
 
-// Synchronous companion to run(): the trimmed stdout of a command that must
-// succeed, or an error carrying its output. For short git/npm queries whose
-// output is an input to the next step. env merges over process.env; raw keeps
-// the output untrimmed (porcelain formats where a leading space is a field).
+// Synchronous run(): trimmed stdout of a command that must succeed, else an error carrying its output.
+// env merges over process.env; raw keeps the output untrimmed (porcelain).
 export function runSync(cmd: string, args: readonly string[], { cwd, env, raw = false }: RunSyncOptions = {}): string {
   const result = spawnResult(cmd, args, { cwd, env });
   if (result.code !== 0) {
@@ -96,16 +89,9 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
   };
 }
 
-// Spawn `cmd args` and always resolve (never reject) with:
-//   { code, stdout, stderr, output, duration, timedOut }
-// code is non-zero whenever the command failed: non-zero exit, signal kill,
-// timeout, or failure to spawn.
-// options: cwd, env (merged over process.env), timeout (ms, 0 disables),
-// heartbeatMs + onHeartbeat(elapsedMs) for quiet long-running captures,
-// signal to stop the command early (it then fails like a timeout),
-// stdio: 'capture' (default) buffers stdout/stderr; 'inherit' streams to the
-// terminal (stdout/stderr come back empty); 'stderr' streams both to stderr,
-// keeping stdout free for a caller's own machine-readable output.
+// Spawn `cmd args` and always resolve with { code, stdout, stderr, output, duration, timedOut }.
+// code is non-zero on non-zero exit, signal, timeout, or spawn failure. options: cwd, env, timeout (ms, 0
+// disables), heartbeatMs + onHeartbeat, signal, stdio ('capture' | 'inherit' | 'stderr').
 export function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
   const {
     cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture',

@@ -1,24 +1,7 @@
 #!/usr/bin/env node
-// Internal documentation integrity. Asserts that every relative link, image,
-// `npm run <script>` reference, and backticked repo path in the engineering
-// docs points at something that exists. Catches the drift that creeps in when a
-// file is renamed or a script is removed but a doc still points at the old name.
-//
-// Scope is the engineering docs only (README, SECURITY, CONTRIBUTING, docs/,
-// tests/*.md, and AGENTS.md when present). Site content under src/content is
-// excluded: it links to live routes and external URLs, which this audit does not resolve.
-//
-// Links inside fenced code blocks are treated as example syntax and skipped.
-// `npm run` references are validated everywhere, since command blocks are real.
-//
-// A backticked path is checked when its first segment is a top-level repo
-// entry (`bin/site.ts`, `docs/`, `dist/`). It resolves when git tracks it (or a
-// file under it), or when git ignores it (generated output: dist/, .cache/).
-// A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked
-// up to the directory before the placeholder.
-//
-// A `#fragment` on a link to a markdown file (or on an in-page link) must name
-// a heading in that file, slugged the way GitHub does, or an explicit id.
+// Engineering docs integrity: every relative link, image, `npm run` reference, backticked repo
+// path and #fragment resolves. src/content is excluded; fenced code is skipped for links;
+// `npm run` refs are checked everywhere. Backticked paths resolve if git tracks or ignores them.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -101,9 +84,7 @@ export function anchors(markdown: string): Set<string> {
 
 export interface RepoIndex {
   topLevel: Set<string>;
-  // Tracked files and every directory above one, without a trailing slash.
   tracked: Set<string>;
-  // The given paths git ignores.
   ignored(paths: readonly string[]): Set<string>;
 }
 
@@ -118,8 +99,7 @@ export function repoIndex(root: string): RepoIndex {
     const { stdout } = spawnResult('git', ['check-ignore', '--stdin'], { cwd: root, input: `${paths.join('\n')}\n` });
     return new Set(stdout.split('\n').filter(Boolean));
   };
-  // Ignored names count whether or not they exist yet (dist/ before a build),
-  // so the plain names .gitignore lists are candidates alongside what is on disk.
+  // Ignored names count even before they exist (dist/ before a build).
   const gitignored = fs.readFileSync(path.join(root, '.gitignore'), 'utf8').split('\n')
     .map((line) => line.trim().replace(/^\//, '').replace(/\/$/, ''))
     .filter((name) => /^[\w.-]+$/.test(name));
@@ -135,7 +115,6 @@ export function missingPaths<R extends PathRef>(refs: readonly R[], index: Pick<
   const key = (ref: PathRef) => ref.path.replace(/\/+$/, '');
   const untracked = refs.filter((ref) => !index.tracked.has(key(ref)));
   const keys = [...new Set(untracked.map(key))];
-  // With its slash too: a directory-only pattern (/dist/) matches a missing path only that way.
   const ignored = index.ignored([...keys, ...keys.map((k) => `${k}/`)]);
   return untracked.filter((ref) => !ignored.has(key(ref)) && !ignored.has(`${key(ref)}/`));
 }
@@ -178,8 +157,7 @@ if (import.meta.main) {
       }
 
       if (!inFence) {
-        // Blank inline code spans so example links like `![alt](./x.png)` in prose
-        // are not mistaken for real references. npm run refs below use the raw line.
+        // Blank inline code spans so example links in prose are not real references.
         const lineForLinks = line.replace(/`[^`]*`/g, '');
         for (const match of lineForLinks.matchAll(linkPattern)) {
           const raw = match[1] ?? match[2];

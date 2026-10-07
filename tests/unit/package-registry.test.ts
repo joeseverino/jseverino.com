@@ -1,9 +1,3 @@
-// The package-registry lookups behind `npm run snapshot:software`
-// (bin/lib/package-registry.ts): the parsing of each registry's answer and the
-// rule that one failed lookup writes nothing.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lookup, snapshotPackages, type GetJson } from '../../bin/lib/package-registry.ts';

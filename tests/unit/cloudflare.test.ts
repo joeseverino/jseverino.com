@@ -1,10 +1,3 @@
-// Unit tests for the Cloudflare desired-state tool (bin/cloudflare.ts over
-// bin/lib/cloudflare.ts): the committed cloudflare/zone.json against its
-// schema, then check, plan, and apply against an in-memory API seeded from
-// tests/fixtures/cloudflare/live-drifted.json. No network.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -14,46 +7,26 @@ import { loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { createCloudflareFake, type FakeState } from './helpers/cloudflare-fake.ts';
-import { readJson } from '../../src/lib/json.ts';
+import { fromRoot, read, runner, schemaTests } from './helpers/desired-state.ts';
 
 const TOKEN = 'fixture-token-never-printed';
-// Each fixture is read as the type it is committed as; the schema test below
-// holds zone.json to its schema, and the fake to the fixture's routes.
-const read = <T>(file: string): T => readJson<T>(path.join(siteRoot, file));
 const seed = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');
 const schema = read<JsonSchema>('cloudflare/zone.schema.json');
 const desired = read<DesiredState>('cloudflare/zone.json');
 
-// Every top-level DesiredState field, checked against the schema's properties
-// below, so a field added to one and not the other fails here.
+// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
-  $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, firewall: true,
+  $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, botManagement: true, firewall: true,
   rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-async function run(fake: ReturnType<typeof createCloudflareFake>, ...argv: string[]) {
-  const lines: string[] = [];
-  const code = await main({ argv, env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {}, write: (line: string) => lines.push(line) });
-  return { code, output: lines.join('\n') };
-}
-
-const checkJson = async (fake: ReturnType<typeof createCloudflareFake>) => {
-  const { code, output } = await run(fake, 'check', '--json');
-  return { code, report: JSON.parse(output) };
-};
+const { run, checkJson } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {} }));
 
 describe('cloudflare/zone.json', () => {
-  test('matches its schema', () => {
-    assert.deepEqual(validate(schema, desired), []);
-    assert.doesNotThrow(() => loadDesired(path.join(siteRoot, 'cloudflare/zone.json'), path.join(siteRoot, 'cloudflare/zone.schema.json')));
-  });
-
-  test('the DesiredState type names exactly the schema\'s properties', () => {
-    assert.deepEqual(Object.keys(DESIRED_FIELDS).sort(), Object.keys(schema.properties ?? {}).sort());
-  });
+  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
 
   test('the schema keeps one custom rule free and rejects unknown settings', () => {
-    const fifth = { ...desired, firewall: [...desired.firewall, desired.firewall[0]] };
+    const fifth = { ...desired, firewall: Array.from({ length: 5 }, () => desired.firewall[0]) };
     assert.ok(validate(schema, fifth).some((problem: string) => problem.includes('more than 4 items')));
     const extra = { ...desired, settings: { ...desired.settings, polish: 'lossy' } };
     assert.ok(validate(schema, extra).some((problem: string) => problem.includes('unexpected property polish')));
@@ -77,20 +50,34 @@ describe('check', () => {
     const { code, report } = await checkJson(fake);
     assert.equal(code, 1);
     const status = (name: string) => report.items.find((entry: { name: string }) => entry.name === name)?.status;
-    assert.equal(status('speed_brain'), 'drift');
+    assert.equal(status('automatic_https_rewrites'), 'drift');
     assert.equal(status('browser_cache_ttl'), 'drift');
     assert.equal(status('email_obfuscation'), 'drift');
     assert.equal(status('tls_1_3'), 'ok');
+    assert.equal(status('bot_management'), 'drift');
     assert.equal(status('hsts'), 'ok');
     assert.equal(status('server_side_exclude'), 'unavailable');
-    assert.equal(status('jseverino-com-api-method'), 'drift');
-    assert.equal(status('jseverino-com-scanner-noise'), 'drift');
+    assert.equal(status('jseverino-com-api-request'), 'drift');
+    assert.equal(status('jseverino-com-api-method'), 'drift', 'a rule zone.json no longer lists is deleted');
+    assert.equal(status('rule budget'), 'ok');
     assert.equal(status('jseverino-com-retired'), 'drift');
     assert.equal(status('jseverino-com-api-rate'), 'drift');
     assert.equal(status('compatibility_date'), 'drift');
     assert.equal(status('preview access'), 'ok');
+    assert.equal(status('preview branches'), 'drift');
     assert.equal(status('preview access policy'), 'manual');
     assert.equal(fake.writes().length, 0, 'check is read-only');
+  });
+
+  test('the rule budget counts dashboard rules and flags a total over the limit', async () => {
+    const crowded = structuredClone(seed);
+    const phase = crowded.rulesets['zones/http_request_firewall_custom'];
+    assert.ok(phase);
+    for (const n of [1, 2, 3]) phase.rules.push({ id: `rule-dashboard-${n}`, ref: `dashboard-${n}`, description: 'Made in the dashboard', expression: '(ip.src eq 192.0.2.2)', action: 'block', enabled: true });
+    const { report } = await checkJson(createCloudflareFake(crowded, TOKEN));
+    const budget = report.items.find((entry: { name: string }) => entry.name === 'rule budget');
+    assert.equal(budget.status, 'manual');
+    assert.match(budget.note, /4 dashboard rules plus 2 in zone\.json/);
   });
 
   test('a preview deployment without an Access app is a manual item', async () => {
@@ -146,9 +133,10 @@ describe('plan', () => {
     assert.equal(code, 0);
     const { calls } = JSON.parse(output);
     const lines = calls.map((call: { method: string; path: string }) => `${call.method} ${call.path}`);
-    assert.ok(lines.includes('PATCH /zones/:zone/settings/speed_brain'));
+    assert.ok(lines.includes('PATCH /zones/:zone/settings/automatic_https_rewrites'));
+    assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
-    assert.ok(lines.includes('PATCH /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
+    assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
     assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-retired'));
     assert.ok(lines.includes('PUT /zones/:zone/rulesets/phases/http_ratelimit/entrypoint'));
     assert.ok(lines.includes('POST /accounts/:account/rules/lists'));
@@ -156,6 +144,8 @@ describe('plan', () => {
     assert.ok(lines.includes('PUT /zones/:zone/schema_validation/settings/operations/:operation'));
     assert.ok(lines.includes('PUT /accounts/:account/challenges/widgets/:sitekey'));
     assert.equal(lines.filter((line: string) => line.includes('rule-incident')).length, 0, 'the unowned rule is never in a plan');
+    const rules = (verb: string) => lines.findIndex((line: string) => line.startsWith(`${verb} /zones/:zone/rulesets/ruleset-fw/rules`));
+    assert.ok(rules('DELETE') < rules('POST'), 'deletes come before creates, so a plan at the rule limit frees a slot first');
     assert.ok(!lines.some((line: string) => line.includes('settings/tls_1_3')), 'settings already right are left alone');
     assert.equal(fake.writes().length, 0);
   });
@@ -178,10 +168,9 @@ describe('apply --yes', () => {
     assert.ok(fake.writes().length > 0);
     assert.ok(fake.writes().every((call) => !call.path.includes('rule-incident')));
 
-    // The scanner rule blocks the WordPress paths at the zone, so the
-    // redirects in public/_redirects are the one thing left, for a person.
+    // Access is check-only, so its policy is the one item left, for a person.
     assert.equal(first.code, 1);
-    assert.match(first.output, /still +repo public\/_redirects/);
+    assert.deepEqual(first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')), ['still    pages preview access policy']);
 
     const firewall = fake.state.rulesets['zones/http_request_firewall_custom']?.rules ?? [];
     assert.deepEqual(firewall.find((rule) => rule.ref === incident?.ref), incident);
@@ -190,6 +179,12 @@ describe('apply --yes', () => {
       ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`),
     ].sort());
     assert.equal(fake.state.settings.browser_cache_ttl?.value, 0);
+    assert.deepEqual(fake.state.project.source?.config, { owner: 'fixture', repo_name: 'site', production_branch: 'main', preview_deployment_setting: 'custom', preview_branch_includes: ['*'], preview_branch_excludes: ['dist'] }, 'the repository link survives the branch change');
+    assert.deepEqual(
+      Object.fromEntries(Object.entries(fake.state.botManagement).filter(([key]) => key in desired.botManagement || key.endsWith('_protection'))),
+      { ...desired.botManagement, ai_bots_protection: 'block', content_bots_protection: 'block', crawler_protection: 'disabled' },
+      'the declared fields are set and the undeclared writable ones keep their live values',
+    );
     const header = fake.state.settings.security_header?.value as { strict_transport_security: { nosniff: boolean } };
     assert.equal(header.strict_transport_security.nosniff, false, 'HSTS keeps fields zone.json does not own');
     assert.equal(fake.state.validationSettings.validation_default_mitigation_action, 'none', 'the zone default is not this file\'s');

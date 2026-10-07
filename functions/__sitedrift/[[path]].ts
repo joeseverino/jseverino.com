@@ -1,8 +1,6 @@
-// sitedrift's preview review proxy (/__sitedrift/dev|live/*). Its defaults are
-// the guards this route needs: 404 on the production host and on any build
-// without the preview config, and only content-negotiation headers forwarded to
-// production. It is the one route that serves markup fetched while the request
-// runs, so it builds its Content Security Policy per request (withPreviewPolicy).
+// sitedrift's preview proxy. 404s on the production host and on builds without preview config,
+// and forwards only content-negotiation headers. It serves markup fetched at request time,
+// so it builds its CSP per request.
 import { createPreviewHandler } from 'sitedrift/cloudflare';
 import { SITE } from '../generated/site.ts';
 import { randomNonce, withPreviewPolicy } from '../lib/csp.ts';

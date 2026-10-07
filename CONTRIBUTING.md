@@ -6,7 +6,7 @@ accepted.
 
 Bug reports and corrections are welcome as
 [issues](https://github.com/joeseverino/jseverino.com/issues): name the page,
-the browser and platform, and what you expected versus what happened.
+the browser and platform, and expected versus actual behavior.
 Screenshots help for layout problems.
 
 Report security issues privately, as [`SECURITY.md`](./SECURITY.md) describes.

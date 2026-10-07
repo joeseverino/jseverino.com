@@ -5,7 +5,7 @@
   "description": "The zone and account posture bin/cloudflare.ts checks and applies. No account or zone IDs: both resolve at runtime from the zone name. See docs/Cloudflare.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["zone", "owner", "settings", "hsts", "dnssec", "firewall", "rateLimit", "pagesDevRedirect", "pages", "schemaValidation", "turnstile"],
+  "required": ["zone", "owner", "settings", "hsts", "dnssec", "botManagement", "firewall", "rateLimit", "pagesDevRedirect", "pages", "schemaValidation", "turnstile"],
   "properties": {
     "$schema": { "type": "string" },
     "zone": { "description": "Zone name; the zone and its account are looked up by it.", "type": "string", "pattern": "^[a-z0-9.-]+\\.[a-z]+$" },
@@ -25,8 +25,8 @@
         "always_use_https": { "$ref": "#/$defs/toggle" },
         "http3": { "$ref": "#/$defs/toggle" },
         "0rtt": { "$ref": "#/$defs/toggle" },
-        "speed_brain": { "description": "Off: speculation is useless for Function-rendered HTML and conflicts with a nonce CSP.", "$ref": "#/$defs/toggle" },
-        "rocket_loader": { "description": "Off: rewrites script tags, which breaks the nonce CSP.", "$ref": "#/$defs/toggle" },
+        "speed_brain": { "description": "On: prefetches likely next pages through a speculation-rules response header, which adds no markup.", "$ref": "#/$defs/toggle" },
+        "rocket_loader": { "description": "Off: rewrites script tags, which breaks the hashed inline script.", "$ref": "#/$defs/toggle" },
         "email_obfuscation": { "description": "Off: injects a decoder script into HTML.", "$ref": "#/$defs/toggle" },
         "server_side_exclude": { "description": "Off: rewrites HTML.", "$ref": "#/$defs/toggle" },
         "automatic_https_rewrites": { "description": "Off: rewrites HTML; every URL is already https.", "$ref": "#/$defs/toggle" },
@@ -48,14 +48,27 @@
       }
     },
     "dnssec": { "enum": ["active", "disabled"] },
+    "botManagement": {
+      "description": "The zone's bot_management settings (PUT /zones/:zone/bot_management). The endpoint resets every field a PUT leaves out, so apply sends these over the live values of the fields not declared here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enable_js", "fight_mode", "ai_training", "ai_search", "ai_user"],
+      "properties": {
+        "enable_js": { "description": "Off: JS Detections injects an inline script with per-request values, which no CSP hash can cover.", "type": "boolean" },
+        "fight_mode": { "description": "Off: Bot Fight Mode challenges visitors and turns JS Detections on.", "type": "boolean" },
+        "ai_training": { "description": "AI crawlers that collect content to train models.", "type": "string", "minLength": 1 },
+        "ai_search": { "description": "AI crawlers that index content for search.", "type": "string", "minLength": 1 },
+        "ai_user": { "description": "AI agents fetching a page for a person's request.", "type": "string", "minLength": 1 }
+      }
+    },
     "firewall": {
-      "description": "WAF custom rules (phase http_request_firewall_custom). The free plan allows 5; keep one free for incidents.",
+      "description": "WAF custom rules (phase http_request_firewall_custom). At most 5 including rules made in the dashboard, which check counts; keep one free for incidents.",
       "type": "array",
       "maxItems": 4,
       "items": { "$ref": "#/$defs/rule" }
     },
     "rateLimit": {
-      "description": "The free plan's one rate-limiting rule (phase http_ratelimit): path and verified-bot fields, per IP and colo, 10 s period and block.",
+      "description": "The one rate-limiting rule (phase http_ratelimit): path and verified-bot fields, per IP and colo, 10 s period and block.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "description", "expression", "action", "characteristics", "period", "requests_per_period", "mitigation_timeout"],
@@ -90,18 +103,28 @@
       "description": "The Pages project. Its compatibility date is checked against tests/browser-test-env.ts, the one the edge suite runs.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "previewAccess", "previewPolicy"],
+      "required": ["project", "previewAccess", "previewPolicy", "previewBranches"],
       "properties": {
         "project": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "previewAccess": { "description": "An Access application covers the preview hostnames (Settings → General → Enable access policy).", "type": "boolean" },
         "previewPolicy": {
           "description": "Every policy on the preview Access application is Service Auth whose include rules are service tokens only: previews are reached by CI's token and the tailnet proxy's, never by a person's identity. Check-only: apply never edits Access.",
           "enum": ["service-auth-only"]
+        },
+        "previewBranches": {
+          "description": "Branches that get a preview deployment. The dist branch holds built output, so it is excluded: a build of it would fail.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["include", "exclude"],
+          "properties": {
+            "include": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+            "exclude": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
         }
       }
     },
     "schemaValidation": {
-      "description": "API Shield schema validation for the contact endpoint. Block is the only action on the free plan.",
+      "description": "API Shield schema validation for the contact endpoint. Block is the only action offered.",
       "type": "object",
       "additionalProperties": false,
       "required": ["name", "file", "host", "method", "endpoint", "action"],

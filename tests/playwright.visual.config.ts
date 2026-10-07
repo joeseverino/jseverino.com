@@ -1,10 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
-// The visual suite. It builds tests/fixtures/content (synthetic writeups and
-// pages, a fixed GitHub snapshot, fixture images) into dist-visual/, so a
-// content publish never moves a baseline; real content stays covered by e2e
-// and the build audits. Baselines are macOS Chromium renders.
+// The visual suite builds tests/fixtures/content into dist-visual/, so a content
+// publish never moves a baseline. Baselines are macOS Chromium renders.
 const PORT = 4322;
 const astro = 'npx astro';
 const config = '--config tests/fixtures/astro.config.ts';

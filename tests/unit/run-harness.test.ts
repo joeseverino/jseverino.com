@@ -1,10 +1,5 @@
-// Unit tests for the shared gate harness (bin/lib/run.ts). These cover the
-// failure modes a green gate run never exercises: non-zero exits, a binary
-// that does not exist, and a command that hangs past its timeout. All three
-// must resolve as failed results (never hang, never reject), because every
-// gate (diagnose, publish-check, release-check) sits on this wrapper.
-//
-//   npm run test:unit
+// The gate harness failure modes a green run never hits: non-zero exit, missing binary, timeout.
+// All must resolve as failed results, never hang or reject.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';

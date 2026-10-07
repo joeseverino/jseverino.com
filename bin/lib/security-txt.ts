@@ -3,9 +3,7 @@ import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { spawnResult, type SpawnOptions, type SpawnResult } from './run.ts';
 
-// Shared, side-effect-free helpers for the security.txt signer (bin/sign-security.ts)
-// and verifier (tests/audits/check-security-txt.ts). Both must agree on how the
-// signed body is extracted, so that logic lives here once.
+// Shared by the security.txt signer (bin/sign-security.ts) and verifier (tests/audits/check-security-txt.ts).
 
 export const SECURITY_FILE = path.join(siteRoot, 'public/.well-known/security.txt');
 export const WKD_DIR = path.join(siteRoot, 'public/.well-known/openpgpkey/hu');

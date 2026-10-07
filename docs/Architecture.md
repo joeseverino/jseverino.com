@@ -1,19 +1,19 @@
 # Technical Architecture
 
-This document explains how `jseverino.com` is built, where data enters the system, what the build transforms, and which parts run at Cloudflare's edge.
+How `jseverino.com` is built: where data enters, what the build transforms, and what runs at Cloudflare's edge.
 
 ## 1. System Shape
 
 The site is a static Astro build deployed to Cloudflare Pages.
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 The request-time execution and data boundary is at the edge:
 
-![Browser requests pass through the Cloudflare edge to static assets and parameterized D1 writes](./diagrams/edge-request-flow.png)
+![Pages are served from static assets; API requests pass the WAF, rate limit, and schema checks at the edge before a Function writes to D1](./diagrams/edge-request-flow.png)
 
 <sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
@@ -27,7 +27,7 @@ The public serving layer is static. Every HTML page is a plain static asset serv
   in production: with no generated sitedrift configuration, the route returns
   `404`.
 
-There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
+There is no public admin panel, user account system, comment system, upload endpoint, or origin application server. Measurements are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
 ## 2. Source Of Truth
 
@@ -57,27 +57,24 @@ surface becomes stale.
 
 ### Portfolio Software list
 
-The Software tab of `/portfolio` is not vault-synced. Its repo facts (which
+The Software tab of `/portfolio` is not vault-synced. Repo facts (which
 repos, description, primary language, last push) come from the GitHub
-account's public repos: edit a repo's GitHub description and the card copy
-follows on the next snapshot. The list
+account's public repos, so editing a repo's GitHub description updates the card on the next snapshot. The list
 is derived at build time, never hand-keyed:
 
 - [`src/lib/github.ts`](../src/lib/github.ts) reads the committed snapshot
   [`src/data/github-repos.json`](../src/data/github-repos.json). Builds never
-  call GitHub, so they need no token and a rate limit cannot change the
-  artifact. `npm run snapshot:github` refreshes it; commit the result.
+  call GitHub, so they need no token and a rate limit cannot change the artifact. `npm run snapshot:github` refreshes it; commit the result.
 - [`src/lib/software.config.ts`](../src/lib/software.config.ts) is the only
   hand-maintained input: the skip list, featured set, order, writeup
   cross-links, and the PyPI/npm package mappings GitHub cannot know.
 - [`src/data/package-registry.json`](../src/data/package-registry.json) is the
-  matching snapshot of PyPI/npm versions and monthly downloads, so a build never
-  calls a registry either. `npm run snapshot:software` refreshes it and writes
+  matching snapshot of PyPI/npm versions and monthly downloads. `npm run snapshot:software` refreshes it and writes
   nothing if any lookup fails.
 - [`src/lib/software.ts`](../src/lib/software.ts) composes those snapshots with
   the curation config.
 
-Refresh them with `npm run snapshot:github` after editing repo descriptions or
+Run `npm run snapshot:github` after editing repo descriptions or
 adding repos, and `npm run snapshot:software` after publishing a package.
 
 The snapshot scripts' registry requests have a five-second timeout, including
@@ -178,7 +175,7 @@ component, and each run of prose in the page's wrapper. The syntax is in the
 
 ## 6. Site Chrome And Taxonomy
 
-Global site chrome is repo configuration; the vault holds none of it. It lives in [`src/lib/site.ts`](../src/lib/site.ts), a typed object derived from the cross-runtime identity primitive [`src/lib/site-config.ts`](../src/lib/site-config.ts). Because it is plain TypeScript, `astro check` validates the shape at build time and the header, footer, and `SeoHead` import it directly with no async content load.
+Site chrome is repo configuration; the vault holds none of it. It lives in [`src/lib/site.ts`](../src/lib/site.ts), a typed object derived from the identity primitive [`src/lib/site-config.ts`](../src/lib/site-config.ts). `astro check` validates its shape, and the header, footer, and `SeoHead` import it directly with no async content load.
 
 `site.ts` covers:
 
@@ -198,11 +195,11 @@ Technology labels and groupings come from [`src/content/technology-groups.md`](.
 
 ### Browser contract
 
-The production target is current evergreen Chromium, Firefox, and Safari/WebKit rather than legacy engines. Native CSS nesting, logical properties, `:has()`, `color-mix()`, and the Popover API are baseline requirements. Scroll-driven header animation is progressive: browsers without it use the `IntersectionObserver` fallback.
+The production target is current evergreen Chromium, Firefox, and Safari/WebKit. Native CSS nesting, logical properties, `:has()`, `color-mix()`, and the Popover API are baseline requirements. Scroll-driven header animation is progressive: browsers without it use the `IntersectionObserver` fallback.
 
-Playwright exercises the current bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. This is the compatibility contract enforced by CI; no CSS transpilation or legacy polyfill bundle is shipped.
+Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
 
-`stylelint.config.ts` extends the standard modern CSS ruleset while documenting the small set of project-specific exceptions. `npm run check:css-vars` independently fails when a custom property is defined but never referenced. Both run as part of `npm run check` and affect development/CI only.
+`stylelint.config.ts` extends the standard modern CSS ruleset and documents the project-specific exceptions. `npm run check:css-vars` fails when a custom property is defined but never referenced. Both run in `npm run check` and affect development and CI only.
 
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links
@@ -227,19 +224,19 @@ follow URL hash changes, preserve query parameters, and support arrows, Home,
 and End. These states use the existing DOM rather than a second client-side
 copy of the portfolio data.
 
-Both paths set one registered custom property, `--header-scroll` (a `<number>`, 0 to 1); the scrim color and shadow are composed from it in a single rule. The keyframe deliberately carries **no color**. Chromium and WebKit both resolve a keyframe's `var()` colors once and keep serving that resolved value when `color-scheme` changes, so an earlier version that animated `color-mix(… var(--color-bg) …)` directly left a white header bar over a dark page until the next reload. Anything animated that depends on a themeable token has to interpolate a number and compose the color outside the keyframe. [`tests/playwright/theme.spec.ts`](../tests/playwright/theme.spec.ts) pins the behavior.
+Both paths set one registered custom property, `--header-scroll` (a `<number>`, 0 to 1); one rule composes the scrim color and shadow from it. The keyframe carries **no color**: Chromium and WebKit resolve a keyframe's `var()` colors once and keep that value when `color-scheme` changes. Anything animated that depends on a themeable token interpolates a number and composes the color outside the keyframe. [`tests/playwright/theme.spec.ts`](../tests/playwright/theme.spec.ts) pins the behavior.
 
 ### Mobile menu
 
-The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget` for open/close; Escape and light-dismiss are native. The script only mirrors `aria-expanded` and `aria-label` on the toggle from the popover `toggle` event. There is no custom focus-trap, backdrop element, or scroll-lock plumbing; the `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` handle those.
+The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape and light-dismiss are native. The script only mirrors `aria-expanded` and `aria-label` on the toggle from the popover `toggle` event. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
 
 ### Header height
 
-`--header-height` is declared as a token (3.6rem, the header's minimum height), and `--menu-offset` in `responsive.css` (3.8rem) is where the menu panel starts: the height the header has once the menu button sizes it. No JS measures or writes either. This keeps the inline `style` attribute on `<html>` empty, which keeps `style-src-attr` violations at zero without weakening the CSP.
+`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `responsive.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
 
 ### Responsive behavior
 
-The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius scale with `clamp()`, and the card and split layouts size from their content (`min(100%, …)` inside `auto-fill` and `auto-fit` grids). The five parts that rearrange when space runs short (the primary nav, the page hero, the software list, the archive summary, and the technology rows) are containers declared in [`responsive.css`](../src/styles/responsive.css), and each answers to its own width at 33.5rem: the width these full-width containers have at a 600px viewport, where the layout used to switch. The other media queries are about capability or preference (hover, pointer, forced colors, reduced motion, scripting, color scheme), not size.
+The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius scale with `clamp()`, and the card and split layouts size from their content (`min(100%, …)` inside `auto-fill` and `auto-fit` grids). The five parts that rearrange when space runs short (the primary nav, the page hero, the software list, the archive summary, and the technology rows) are containers declared in [`responsive.css`](../src/styles/responsive.css), and each answers to its own width at 33.5rem (the width of a full-width container at a 600px viewport). The other media queries are about capability or preference (hover, pointer, forced colors, reduced motion, scripting, color scheme), not size.
 
 A size container is a containing block for fixed-position descendants, so `main` and the content flow must not become containers: the resume page's fixed download button would anchor to them instead of the viewport.
 
@@ -256,15 +253,14 @@ settings (AVIF quality 60, WebP 82) live in the image service config in
 [`astro.config.ts`](../astro.config.ts), and the widths in
 [`src/lib/images.ts`](../src/lib/images.ts).
 
-`Picture.astro` never reads an image's metadata itself. Astro tracks reads of
-it, and an image read outside its pipeline ships its unprocessed original; the
+`Picture.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and the
 asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
 Encodes are cached in `node_modules/.astro`, which Cloudflare Pages keeps
 between builds (Settings, Build, Build cache) and CI restores with
 `actions/cache` (the `astro-cache` input of the setup action), so a build
-re-encodes only new or changed images. The efficiency of the approach is documented in the
+re-encodes only new or changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
 ## 9. SEO And Metadata
@@ -299,16 +295,11 @@ The policy is `default-src 'none'` plus the site's own origin, the hashes, Turns
 
 The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); the contract-projections audit fails when it is stale.
 
-Component scripts are emitted as external `/_astro/*.js` bundles (forced via `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)) rather than inlined into HTML. Besides the hashed theme-bootstrap script, the only inline `<script>` element in production HTML is the JSON-LD data block, which is data. CSP enforcement applies to every script the browser sees.
+Component scripts are external `/_astro/*.js` bundles (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). Besides the hashed theme-bootstrap script, the only inline `<script>` in production HTML is the JSON-LD data block.
 
-The policy allows first-party bundles, Cloudflare Web Analytics, and Cloudflare Turnstile, and nothing inline without a hash. The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
+The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
 
-Raw HTML in content is limited by
-[`guard.ts`](../src/lib/markdown/guard.ts): listed formatting tags with
-listed, plain-string attributes, `href`/`src` limited to `http`, `https`,
-`mailto`, or relative URLs. Any other tag (`<script>`, `<style>`,
-`<iframe>`, ...), an event handler, an expression, or an `import` fails the
-build.
+[`guard.ts`](../src/lib/markdown/guard.ts) limits raw HTML in content to listed formatting tags with listed, plain-string attributes, and `href`/`src` to `http`, `https`, `mailto`, or relative URLs. Any other tag (`<script>`, `<style>`, `<iframe>`, ...), an event handler, an expression, or an `import` fails the build.
 
 Client scripts do not assign `innerHTML`, `outerHTML`, or call
 `insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
@@ -316,14 +307,9 @@ sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
 Button blocks render the Markdown links they hold, so the guard checks their
 URL schemes like any other link.
 
-The CSP report endpoint accepts both legacy CSP report payloads and modern Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com` and drops browser-extension noise on **two** axes: blocked URIs that use a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches the case where an extension-injected content script triggers a violation against a same-origin URI, which would otherwise look legitimate from the blocked-URI alone. Reports are capped in size before parsing and are written to the same D1 binding as the contact form. The endpoint is unauthenticated, so writes are bounded: every report in a request goes out as one D1 batch, a report identical to one stored in the last hour is skipped, and each IP gets at most 30 stored reports per hour, with both checks inside the INSERT itself.
+The CSP report endpoint accepts legacy CSP report payloads and Reporting API `csp-violation` payloads. It stores only reports whose document URL belongs to `https://jseverino.com`. It drops browser-extension noise on two axes: blocked URIs using a `chrome-extension:`, `moz-extension:`, `safari-web-extension:`, or `edge-extension:` scheme, and reports whose `source_file` starts with one of those schemes. The source-file filter catches an extension-injected content script that triggers a violation against a same-origin URI, which the blocked URI alone would not reveal. Reports are size-capped before parsing and written to the same D1 binding as the contact form. The endpoint is unauthenticated, so writes are bounded: each request's reports go out as one D1 batch, a report identical to one stored in the last hour is skipped, and each IP gets at most 30 stored reports per hour, with both checks inside the INSERT.
 
-The contact page provides a LinkedIn fallback until its submission handler is
-installed. With JavaScript enabled, CSS delays the fallback for three seconds
-to avoid flashing it during normal module loading. With JavaScript disabled it
-appears immediately; with the bundle blocked it appears after the delay. The
-form stays hidden until its handler is ready and declares POST explicitly so entered
-messages never default to a GET query string.
+The contact page shows a LinkedIn fallback until its submission handler is installed. With JavaScript enabled, CSS delays the fallback three seconds. With JavaScript disabled it appears immediately; with the bundle blocked it appears after the delay. The form stays hidden until its handler is ready and declares POST explicitly, so messages never default to a GET query string.
 
 Submission is marked busy, ignores repeat submissions while pending, and times
 out after fifteen seconds. Success clears the form; failures retain entered
@@ -361,7 +347,7 @@ Coverage:
 - **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
 - **`POST /api/csp-report`**: left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
 
-The action is **Block**, the only one the free plan offers: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
+The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
 
 ## 11. Build Output
 
@@ -405,11 +391,9 @@ dist/
 including every encoded content image, so those filenames can be cached
 `immutable` for one year. HTML is short-cached and revalidated.
 
-**External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules rather than being inlined into HTML. This is set by `vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts). The only inline `<script>` element in any HTML response is the JSON-LD structured-data block, which is data. `bin/build-csp.ts` verifies at build time that no other inline script exists.
+**External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). `bin/build-csp.ts` verifies at build time that the JSON-LD block is the only other inline script.
 
-**Functions are not in `dist/`.** Cloudflare Pages bundles the `functions/`
-directory separately at deploy time; it is not part of the static `dist/` tree
-the Astro build writes. The contact endpoint, CSP report endpoint,
+**Functions are not in `dist/`.** Cloudflare Pages bundles `functions/` separately at deploy time. The contact endpoint, CSP report endpoint,
 and scoped sitedrift proxy run as Workers at the edge. The sitedrift Function
 returns `404` on the production host and on any build without the
 preview-generated configuration, forwards only content-negotiation headers
@@ -418,7 +402,7 @@ headers on what it proxies.
 
 ### Resource hints
 
-[`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) emits three categories of resource hints in `<head>`, each saving real wall-clock time on first paint:
+[`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) emits three resource hints in `<head>`:
 
 | Hint | Target | Purpose |
 |---|---|---|
@@ -426,9 +410,7 @@ headers on what it proxies.
 | `<link rel="preconnect">` | `https://challenges.cloudflare.com` (contact page only) | Warms DNS + TLS for Cloudflare Turnstile, which loads `turnstile/v0/api.js` from this origin on the contact page. |
 | `<link rel="preload" as="font">` | `/assets/fonts/inter/inter-variable-latin.woff2` | Starts fetching the subset variable font during HTML parsing, before the CSS that declares `@font-face` is parsed. Prevents the brief unstyled-text flash. `crossorigin` matches the fetch mode the browser will use for the actual font request. |
 
-Per-page preconnect origins are passed into `BaseLayout` via the `preconnect` prop; for example, `src/pages/contact.astro` passes `preconnect={['https://challenges.cloudflare.com']}`. The site-wide insights beacon preconnect is always emitted; per-page entries are appended after it.
-
-Resource hints are advisory: a browser may skip them under tight CPU or memory budgets.
+Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src/pages/contact.astro` passes `preconnect={['https://challenges.cloudflare.com']}`. The insights beacon preconnect is always emitted, with per-page entries after it. Browsers may skip resource hints.
 
 ## 12. Asset Organization
 
@@ -447,9 +429,9 @@ Resource hints are advisory: a browser may skip them under tight CPU or memory b
 This is the central distinction:
 
 - **Vault-synced** images are not under `public/`. Each sits beside its document in `src/content/<collection>/<slug>/images/`, written by `sync:content`, and Astro encodes it. **Direct edits in the repo are wiped on the next sync; edit the vault.**
-- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `brand/`, `og/`) is site chrome. These assets belong to the site as a whole, not to a single editorial page. They are tracked in the repo because they don't change often and don't need vault versioning.
+- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `brand/`, `og/`) is site chrome: assets that belong to the whole site and change rarely.
 
-A new asset that's specific to one page or writeup belongs in the vault. A new site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the corresponding `public/assets/<bucket>/` directory in the repo.
+An asset specific to one page or writeup belongs in the vault. A site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the matching `public/assets/<bucket>/` directory.
 
 ### Brand assets: one source of truth
 
@@ -463,13 +445,13 @@ The design tokens follow the same model. `severino-brand/brand/tokens.json` is t
 
 To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
 
-For the full story (how the brand went from an inherited WordPress purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
+For the full story (how the brand went from an inherited theme purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
 
 ### Stable URLs
 
 Repo-managed assets resolve under `/assets/<bucket>/<filename>` and are not fingerprinted; Astro fingerprints what goes through `_astro/` (component bundles, CSS, and content images).
 
-This stability is intentional for assets that external links may bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf` (linked from LinkedIn, recruiter outreach, etc.).
+Stable URLs suit assets that external links bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf`.
 
 ### Cache behavior
 
@@ -483,11 +465,7 @@ This stability is intentional for assets that external links may bookmark, like 
 
 ### When to add a new bucket
 
-The convention scales by adding a new top-level bucket under `public/assets/`. Examples:
-- A `videos/` bucket if MP4/WebM downloads ever ship.
-- A `data/` bucket for JSON exports or downloadable datasets.
-
-Avoid using existing buckets for unrelated content (e.g., putting a video under `docs/`); the bucket name is the convention contract.
+Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/WebM downloads or `data/` for JSON exports. Keep existing buckets to their own content; a video does not go under `docs/`.
 
 ## 13. Runtime Configuration
 
@@ -522,7 +500,7 @@ The same database holds:
 |---|---|---|
 | `TURNSTILE_SECRET_KEY` | Server (Pages Function env) | [`functions/api/contact.ts`](../functions/api/contact.ts) |
 
-This is the secret half of the Cloudflare Turnstile keypair. It must never appear in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.env.example`](../.env.example) to `.dev.vars` (gitignored); `wrangler pages dev` reads it automatically.
+The secret half of the Turnstile keypair. It never appears in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.env.example`](../.env.example) to `.dev.vars` (gitignored); `wrangler pages dev` reads it.
 
 ### Build environment variables
 
@@ -530,13 +508,13 @@ This is the secret half of the Cloudflare Turnstile keypair. It must never appea
 |---|---|---|
 | `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
 
-`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair and is safe to ship in HTML. It is set as a build environment variable in the Pages project so the static build can embed it into the contact form. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable in the Pages project, embedded into the contact form at build. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
 
 The build reads no GitHub token: the Software list comes from the committed snapshot. Removing a leftover `GITHUB_TOKEN` build variable is in the [Release Checklist](./Release-Checklist.md).
 
 ### No `wrangler.toml`
 
-This repo intentionally has no `wrangler.toml`. Pages projects with both dashboard config and a `wrangler.toml` create a precedence conflict; keeping the binding and environment configuration in the Cloudflare dashboard puts the runtime config in one place and out of the public repository. The one thing a `wrangler.toml` would add, a pinned compatibility date, is covered by `npm run cloudflare:check`, which holds the project's date to the edge suite's ([docs/Cloudflare.md](./Cloudflare.md#no-wranglertoml)).
+The repo has no `wrangler.toml`: a Pages project with both dashboard config and a `wrangler.toml` has a precedence conflict, so the binding and environment configuration stay in the dashboard. A pinned compatibility date, the one thing a `wrangler.toml` would add, is covered by `npm run cloudflare:check`, which holds the project's date to the edge suite's ([docs/Cloudflare.md](./Cloudflare.md#no-wranglertoml)).
 
 ### Local preview against the real edge runtime
 
@@ -552,7 +530,7 @@ npm run build:static
 npm run edge:serve
 ```
 
-The site is then served at `http://127.0.0.1:8788` with the Functions active and the built `_headers` applied, using the compatibility date declared in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge test suite (`tests/edge/`), which is what CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` remains the quick by-hand check.
+The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -563,7 +541,7 @@ Every gate derives its checks from [`tests/audits/registry.ts`](../tests/audits/
 - [`bin/release-check.ts`](../bin/release-check.ts) (`npm run release:check`, macOS) runs `publish:check`, then the `release` audits (the browser suites, repository policy, `git diff --check`), and fails if validation changed the worktree.
 - [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping and writes one report.
 
-Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures instead of hanging. Preview review on Cloudflare and the live post-deploy checks stay separate because they depend on external state or human judgment.
+Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures. Preview review and the live post-deploy checks stay separate: they depend on external state or human judgment.
 
 [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) is the post-deploy production
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
@@ -628,23 +606,16 @@ GitHub Actions provide the remote quality gate:
 Dependabot's version-update schedule is weekly for npm and monthly for GitHub
 Actions, with minor/patch grouping and a seven-day cooldown (security updates
 are exempt). Auto-merge covers ordinary non-major
-maintenance as well as security updates; it is not a security-only policy.
-Major version updates are ignored by the scheduled configuration and require
+updates as well as security updates. Major updates are ignored by the scheduled configuration and need
 manual maintenance. For dependency review to block merging, the main ruleset
-must require the `dependency-review` status check; a failing optional check
-does not enforce that policy.
+must require the `dependency-review` status check.
 
 Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR, and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
 
-Dependabot auto-merge uses the repository `GITHUB_TOKEN`. GitHub suppresses
-new workflow runs caused by that token, so the squash commit does not emit the
-normal `push` CI run. The `recover-main-ci` job in
+Dependabot auto-merge uses the repository `GITHUB_TOKEN`, and GitHub suppresses workflow runs that token causes, so the squash commit emits no `push` CI run. The `recover-main-ci` job in
 [`deploy.yml`](../.github/workflows/deploy.yml) recovers it from the completed
-external Cloudflare Pages check. It verifies that the check came from the Cloudflare app, its SHA is current
-`main`, the associated merged PR belongs to Dependabot, and no CI run already
-exists for that SHA before dispatching `ci.yml`. `workflow_dispatch` is one of
-the event types GitHub permits `GITHUB_TOKEN` to create, and the duplicate guard
-keeps ordinary pushes and manual reruns single-shot.
+Cloudflare Pages check. It verifies that the check came from the Cloudflare app, its SHA is current
+`main`, the merged PR belongs to Dependabot, and no CI run exists for that SHA, then dispatches `ci.yml` (`workflow_dispatch` is an event type `GITHUB_TOKEN` may create).
 
 CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

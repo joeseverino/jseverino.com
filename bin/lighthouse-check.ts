@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// Lighthouse against the live site. URLs, the device preset, Chrome flags, and
-// the score thresholds all come from tests/lighthouserc.json, so the config has one
-// home; this runner exists because @lhci/cli pins an older Lighthouse than the
-// one PageSpeed Insights scores with, and the gap shows up as phantom
-// deductions. Reports land in the config's outputDir; the per-page scores go
-// to the job summary in CI.
+// Lighthouse against the live site, configured by tests/lighthouserc.json. Exists
+// because @lhci/cli pins an older Lighthouse than PageSpeed Insights uses, which
+// shows up as phantom deductions.
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
@@ -19,7 +16,6 @@ if (!fs.existsSync(chromePath)) {
   console.error('Lighthouse browser missing. Run `npx playwright install chromium` or set CHROME_PATH.');
   process.exit(1);
 }
-// tests/lighthouserc.json: the fields this runner honors.
 interface LighthouseConfig {
   collect: { url: string[]; settings?: { preset?: string; chromeFlags?: string } };
   upload?: { outputDir?: string };

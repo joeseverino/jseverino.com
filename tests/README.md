@@ -1,10 +1,10 @@
 # Tests & Validation
 
-Every change passes four layers before and after it ships: Node audits that
-assert invariants about the source and the build, unit tests for the pure
-logic, Playwright specs that drive the **built** output in a browser and through
-the Cloudflare runtime, and post-deploy probes against each deployment. This
-directory holds the first three; [`bin/`](../bin/) sequences them into gates.
+Every change passes four layers: Node audits that assert invariants about the
+source and the build, unit tests for the pure logic, Playwright specs that drive
+the **built** output in a browser and through the Cloudflare runtime, and
+post-deploy probes against each deployment. This directory holds the first
+three; [`bin/`](../bin/) sequences them into gates.
 
 > This file is the tour. Every audit with its fix, every spec, and the CI
 > workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
@@ -25,9 +25,9 @@ every gate that claims it.
 
 ## How it fits together
 
-![Testing gates from the local gates through the pull request, site land, and production verification](../docs/diagrams/testing-gates.png)
+![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](../docs/diagrams/validation-flow.png)
 
-<sup>Diagram source: [`docs/diagrams/testing-gates.mmd`](../docs/diagrams/testing-gates.mmd),
+<sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](../docs/diagrams/validation-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 | Gate | Runs | Covers |
@@ -41,8 +41,7 @@ The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md
 
 ### The one-stop gate: `npm run diagnose`
 
-Runs **every** audit in the registry without stopping at the first failure, so
-one pass reports every problem in the worktree:
+Runs **every** audit in the registry without stopping at the first failure:
 
 - **Green** prints one summary line.
 - **Red** writes `.validation-report.md`: one row per failure, the fix, and the

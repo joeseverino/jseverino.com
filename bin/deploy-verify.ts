@@ -1,19 +1,16 @@
 #!/usr/bin/env node
-// Post-merge production verification, run from a residential IP (Bot Fight
-// Mode challenges GitHub's runners). The response expectations come from
-// src/lib/edge-expectations.ts, the same functions tests/edge asserts before
-// a deploy, so "correct" means one thing on both sides of the release.
+// Post-merge production verification. Run from a residential IP (Bot Fight Mode
+// challenges GitHub's runners). Expectations come from src/lib/edge-expectations.ts,
+// shared with tests/edge.
 //
 //   node bin/deploy-verify.ts                        # production, from a clean main
 //   node bin/deploy-verify.ts --origin <url> [--preview]
 //   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
 //
-// --origin verifies one Cloudflare Pages deployment (its <hash>.pages.dev URL,
-// outside the zone, so Bot Fight Mode does not challenge a runner). It checks
-// the served responses only: no git, audit, check-run, or code-scanning
-// preconditions, and no HSTS (set at the zone, absent on pages.dev). --preview
-// marks a branch preview, where sitedrift wraps every HTML route. --slug
-// verifies one writeup after a publish: listed, served with headers, images resolve.
+// --origin verifies one Pages deployment (<hash>.pages.dev, outside the zone): served
+// responses only, no git/audit/check-run preconditions, no HSTS. --preview marks a
+// branch preview, where sitedrift wraps every HTML route. --slug verifies one writeup
+// after a publish.
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
@@ -29,8 +26,9 @@ import {
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
 import { cli as parseCli, flag } from './lib/args.ts';
+import { routeFile } from './lib/dist.ts';
 import { git } from './lib/git.ts';
-import { awaitChecks, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
+import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { runSync, status } from './lib/run.ts';
 import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
@@ -90,8 +88,7 @@ async function waitForChecks(sha: string): Promise<string> {
   group('remote      waiting for required checks and the Cloudflare Pages build');
   try {
     return await pollChecks(sha, deadline, started, (report) => {
-      // Only log when the pending set changes; a line every ten seconds
-      // buries the results under ninety copies of the same sentence.
+      // Log only when the pending set changes.
       if (report === lastReport) return;
       lastReport = report;
       status('remote', `${report} (${Math.round((Date.now() - started) / 1000)}s)`);
@@ -141,9 +138,7 @@ async function collectSitemapUrls(): Promise<string[]> {
   return publicUrls;
 }
 
-// A deployment that just finished can answer 404 for a page while it reaches
-// every edge, so a failed route is checked once more before it counts. A page
-// that is really missing fails both times.
+// A fresh deployment can 404 while it propagates, so a failed route is retried once.
 const ROUTE_RETRY_MS = 5_000;
 
 async function routeStatuses(urls: readonly string[]): Promise<{ url: string; status: number }[]> {
@@ -170,9 +165,7 @@ async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> 
   return `${publicUrls.length} sitemap URLs returned 200`;
 }
 
-// The policy hashes the page's one inline script and its inlined stylesheet. A
-// 200 whose inline tags are not in the header is a page that renders unthemed
-// or unstyled, which no status-code check would notice.
+// A 200 whose inline tags are not in the CSP header renders unthemed or unstyled.
 async function verifyInlineHashes(): Promise<string> {
   const response = await fetchChecked(`${origin}/`);
   if (response.status !== 200) throw new Error(`/ returned ${response.status}, expected 200`);
@@ -181,8 +174,6 @@ async function verifyInlineHashes(): Promise<string> {
   return 'the inline theme script and the inlined stylesheet are covered by the policy hashes';
 }
 
-// public/_headers pins fingerprinted assets for a year and keeps chrome assets
-// revalidating; the home page names one of each.
 async function verifyCacheRules(): Promise<string> {
   const home = await fetchChecked(`${origin}/`);
   const html = await home.text();
@@ -205,7 +196,6 @@ async function verifyNotFound(): Promise<string> {
     throw new Error(`${probe} returned ${response.status}, expected 404`);
   }
 
-  // A miss under an asset prefix is the same static 404, under the same policy.
   const asset = `/assets/deploy-verify-${Date.now().toString(36)}.png`;
   const miss = await fetchChecked(`${origin}${asset}`);
   if (miss.status !== 404) throw new Error(`${asset} returned ${miss.status}, expected 404`);
@@ -214,26 +204,58 @@ async function verifyNotFound(): Promise<string> {
   return 'unknown route returns a real 404; a miss under /assets/ carries the policy and security headers';
 }
 
-// A well-formed submission with no Turnstile token must be refused before the
-// honeypot, the Turnstile call, and the D1 write, so this probe stores nothing.
-async function verifyContactGate(): Promise<string> {
-  const response = await fetchChecked(`${origin}/api/contact`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: 'deploy-verify',
-      email: `deploy-verify@${SITE.domain}`,
-      message: 'Automated post-deploy probe. No verification token supplied.',
-      sourceUrl: `${origin}/contact/`,
-    }),
-  });
-  const payload: unknown = await response.json().catch(() => ({}));
-  assertClean(contactRefusalFindings(response.status, payload), 'POST /api/contact without a Turnstile token');
-  return 'POST without a Turnstile token is refused with 400';
+// The dist branch holds the HTML the build produced; the site must serve the same bytes.
+// A push to main publishes it a few minutes after the deploy, so a mismatch is retried.
+async function verifyDist(urls: string[]): Promise<string> {
+  const deadline = Date.now() + 6 * 60_000;
+  for (;;) {
+    git(siteRoot, 'fetch', '--quiet', 'origin', 'dist');
+    const stale: string[] = [];
+    for (const url of urls) {
+      const { pathname } = new URL(url);
+      const published = runSync('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot, raw: true });
+      if (published !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
+    }
+    if (stale.length === 0) {
+      const { verified, reason } = commitVerification(repository, 'dist');
+      if (!verified) throw new Error(`the dist branch tip is not signed (${reason})`);
+      return `${urls.length} pages match the dist branch byte for byte, at a verified commit`;
+    }
+    if (Date.now() > deadline) throw new Error(`${stale.length} pages differ from the dist branch: ${stale.slice(0, 5).join(', ')}`);
+    await sleep(20_000);
+  }
 }
 
-// The widget's site key is a build-time variable. A Pages project that loses it
-// still builds and ships `data-sitekey=""`, and every submission then fails.
+// On the zone, API Shield refuses a body without turnstileToken before the function runs; a deployment
+// outside the zone reaches the function. Neither probe stores anything: the function refuses first.
+async function verifyContactGate(): Promise<string> {
+  const submit = async (extra: Record<string, string>) => {
+    const response = await fetchChecked(`${origin}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'deploy-verify',
+        email: `deploy-verify@${SITE.domain}`,
+        message: 'Automated post-deploy probe. No valid verification token supplied.',
+        sourceUrl: `${origin}/contact/`,
+        ...extra,
+      }),
+    });
+    return { status: response.status, payload: await response.json().catch(() => ({})) as unknown };
+  };
+
+  const tokenless = await submit({});
+  if (deployment) {
+    assertClean(contactRefusalFindings(tokenless.status, tokenless.payload), 'POST /api/contact without a Turnstile token');
+    return 'POST without a Turnstile token is refused with 400';
+  }
+  if (tokenless.status !== 403) throw new Error(`POST /api/contact without a Turnstile token: status ${tokenless.status}, expected API Shield to refuse it with 403`);
+  const invalid = await submit({ turnstileToken: 'deploy-verify' });
+  assertClean(contactRefusalFindings(invalid.status, invalid.payload), 'POST /api/contact with an invalid Turnstile token');
+  return 'API Shield refuses a body without a token (403); the function refuses an invalid one (400)';
+}
+
+// The site key is a build-time variable; losing it still builds but ships `data-sitekey=""`.
 async function verifyTurnstileKey(): Promise<string> {
   const html = await (await fetchChecked(`${origin}/contact/`)).text();
   const key = /data-sitekey="([^"]*)"/.exec(html)?.[1] ?? '';
@@ -264,8 +286,6 @@ async function verifyProductionGuard(): Promise<string> {
   return `sitedrift route is ${sitedrift.status === 403 ? 'blocked at the zone' : 'absent'}`;
 }
 
-// One writeup, after a publish: listed in the sitemap, served with the
-// security headers, and every image it references resolves.
 async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promise<string> {
   const pathname = writeupPath(slug);
   if (!publicUrls.some((url) => new URL(url).pathname === pathname)) {
@@ -290,8 +310,7 @@ async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promi
   return `${pathname} is listed, served with headers, and its ${images.length} image URLs resolve`;
 }
 
-// CodeQL findings only: Scorecard's Vulnerabilities finding stays open while an
-// accepted advisory is in the lockfile, and npm run audit gates those.
+// CodeQL only: Scorecard's Vulnerabilities finding stays open while an accepted advisory is in the lockfile.
 function verifyCodeScanning(): string {
   const alerts = openCodeScanningAlerts(repository, 'CodeQL');
   if (alerts.length > 0) {
@@ -363,8 +382,7 @@ async function verifyDeployment(): Promise<void> {
       skip('routes', 'sitemap unavailable');
     }
     if (cli.preview) {
-      // Branch previews serve every HTML route through the sitedrift viewer,
-      // so the page-markup checks have no site page to read there.
+      // Previews serve every HTML route through the sitedrift viewer.
       const reason = 'branch previews serve HTML through the sitedrift viewer';
       skip('production', reason);
       skip('inline', reason);
@@ -412,9 +430,7 @@ async function main(): Promise<void> {
 
   const deployed = await run('remote', () => waitForChecks(sha));
 
-  // Headers are checked on the root page and on one deep writeup page, taken
-  // from the live sitemap rather than a pinned slug so renaming a writeup
-  // can't break deploy verification.
+  // Deep page comes from the live sitemap, not a pinned slug.
   let publicUrls: string[] = [];
   const sitemapOk = await run('sitemap', async () => {
     publicUrls = await collectSitemapUrls();
@@ -433,9 +449,11 @@ async function main(): Promise<void> {
       return `CSP, Trusted Types staging, static security headers, and HSTS passed (/, /contact/, and ${writeupPath})`;
     });
     await run('routes', () => verifyLiveRoutes(publicUrls));
+    await run('dist', () => verifyDist(publicUrls));
   } else {
     skip('headers', 'sitemap unavailable');
     skip('routes', 'sitemap unavailable');
+    skip('dist', 'sitemap unavailable');
   }
 
   await run('production', verifyProductionGuard);
@@ -458,7 +476,7 @@ async function main(): Promise<void> {
   const summary = `all ${results.length} checks passed for ${sha.slice(0, 12)} against ${origin}`;
   annotate('notice', 'deploy-verify', summary);
   console.log(
-    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
+    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, dist branch, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
   );
 }
 

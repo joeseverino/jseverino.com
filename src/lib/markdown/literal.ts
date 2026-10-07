@@ -1,7 +1,5 @@
-// Directive syntax also defines inline `:name` text directives, which would
-// read a MAC address's `:1e` as one. Content never uses them, so each is put
-// back as the exact source text it was parsed from. It runs as its own pass:
-// a later pass can then move a node whose text this one restored.
+// Inline `:name` text directives would read a MAC address's `:1e` as one; restore the source text.
+// Its own pass, so a later pass can move a node whose text this one restored.
 import { defineMdastPlugin } from 'satteri';
 
 export const literalText = defineMdastPlugin({

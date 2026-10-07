@@ -1,5 +1,3 @@
-// The writeup store against a scratch vault: reads, the featured order, and
-// transactional frontmatter, link, and plan writes.
 import { after, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

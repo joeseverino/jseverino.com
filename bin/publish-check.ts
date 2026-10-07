@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// The fast local build gate: clean, sync, pre-build audits, the production
-// build, post-build audits. Fail-fast: it stops at the first broken step.
-// Each phase's audits run concurrently and report in registry order.
+// The fast local build gate: clean, sync, pre-build audits, production build,
+// post-build audits. Fail-fast; each phase's audits run concurrently.
 import { publishAudits, type Audit } from '../tests/audits/registry.ts';
 import { cli, flag } from './lib/args.ts';
 import { runAudits } from './lib/audits.ts';
@@ -11,11 +10,9 @@ import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run as spawnRun, status as printStat
 import { annotate, createReport, type Outcome } from './lib/step-summary.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
-// --no-sync runs every gate EXCEPT the vault sync, so a code/refactor change can
-// be verified without sync-content rewriting src/content from the vault (which
-// could drag in unrelated vault drift). Use it when you haven't touched content.
-// --after-gate skips the audits gate:check already ran (CI runs it as the step
-// before this one); on the runner the edge suite is also left to its own job.
+// --no-sync skips the vault sync, so code changes verify without vault drift.
+// --after-gate skips audits gate:check already ran; on the runner the edge suite
+// also runs in its own job.
 const { values } = cli({
   usage: 'usage: node bin/publish-check.ts [--no-sync] [--after-gate]',
   options: { 'no-sync': flag, 'after-gate': flag },
@@ -62,10 +59,8 @@ async function audits(entries: readonly Audit[]): Promise<void> {
   if (last?.ok === false && entry) stop(entry.label, last);
 }
 
-// 1. Clean build output and caches.
 await step('clean generated output', ['bin/clean-generated.ts']);
 
-// 2. Sync the public content snapshot from the vault (unless --no-sync).
 if (noSync) {
   status('sync', 'skipped (--no-sync)', null);
 } else {
@@ -74,12 +69,9 @@ if (noSync) {
 }
 status('content', describeDiff(contentDiff({ cwd: siteRoot })));
 
-// 3. Pre-build audits (source + synced content). astro-check needs the sync,
-//    so all pre-build audits run after it.
+// astro-check needs the sync, so pre-build audits run after it.
 await audits(publishAudits('pre-build', selection));
 
-// 4. Production build: the same build-static Cloudflare runs (content index,
-//    astro build, sitedrift wrap), so the audits below see the shipped artifact.
 const build = await step('build static', ['bin/build-static.ts'], {
   env: { ASTRO_TELEMETRY_DISABLED: '1' },
   timeout: BUILD_TIMEOUT_MS,
@@ -88,7 +80,6 @@ const build = await step('build static', ['bin/build-static.ts'], {
 const pageCount = build.output.match(/(?:\[build\] |"message":")(\d+) page\(s\) built/);
 status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
 
-// 5. Post-build audits (operate on the emitted dist/).
 await audits(publishAudits('post-build', selection));
 
 writeSummary();

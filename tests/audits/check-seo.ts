@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// Static SEO assertions over the built HTML. Every rendered page must carry the
-// head tags that search engines and link unfurlers depend on. Runs after the
-// build in the outDir (dist).
 
 import { builtPages, finish } from './lib.ts';
 

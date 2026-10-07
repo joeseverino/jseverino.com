@@ -1,10 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import { browserTestEnv, edgeRuntime, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
-// The edge suite. `astro preview` serves static files only; the CSP
-// middleware, the Pages Functions, and the public/_headers rules exist only on
-// Cloudflare's runtime. `wrangler pages dev` runs that runtime against the
-// built output, so tests/edge asserts the served responses before deploy.
+// `astro preview` serves static files only. `wrangler pages dev` runs the CSP middleware,
+// Pages Functions, and public/_headers against the build, so tests/edge asserts them.
 const origin = `http://127.0.0.1:${edgeRuntime.port}`;
 
 export default defineConfig({
@@ -20,8 +18,7 @@ export default defineConfig({
   projects: [{ name: 'edge' }],
   webServer: {
     cwd: webServerCwd,
-    // PREBUILT is set by bin/diagnose.ts after its own build-static run, so
-    // the suite serves that artifact instead of rebuilding it.
+    // PREBUILT is set by bin/diagnose.ts after its own build.
     command: [
       process.env.PREBUILT ? null : 'npm run build:static',
       'node bin/edge-serve.ts',

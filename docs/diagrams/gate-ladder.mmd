@@ -1,70 +1,14 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart TB
-    A["Source change"] --> G0
-    G0 --> B
-    B --> CI0
-    B -.-> C
-    CI0 --> P
-    P --> D["PR merged (site land)"]
-    D --> E
+    A["Source change"] --> G["gate:check<br/>fast pre-build audits"]
+    G --> B["publish:check<br/>security.txt, WCAG contrast<br/>vault / Zod / MCP parity<br/>functions + edge parity<br/>unit suite, sitedrift guard<br/>CSS lint, astro check + build<br/>asset + page weight, links<br/>HTML, SEO, routes"]
+    B -.-> C["release:check (optional)<br/>Playwright e2e + visual<br/>repository policy<br/>git diff --check, clean worktree"]
+    B --> PR["Pull request"]
+    PR --> CI["CI<br/>build, e2e, visual, edge, CodeQL"]
+    PR --> PV["Preview<br/>deploy-verify --origin"]
+    CI --> M["Merge: site land"]
+    PV --> M
+    M --> E["deploy:verify<br/>remote CI green<br/>live HSTS + CSP headers<br/>sitemap 200s<br/>dist matches live<br/>open CodeQL alerts"]
 
-    subgraph fast ["Gate Check (Fast Pre-Build Audits)"]
-        G0["npm run gate:check"]
-    end
-
-    subgraph publish ["Publish Check (Local Build Gate)"]
-        B["npm run publish:check"]
-        B1["security.txt signature"]
-        B2["WCAG contrast"]
-        B3["vault / Zod / MCP parity"]
-        B9["functions types + edge parity"]
-        B8["unit suite: DSL + functions + harness"]
-        B4["sitedrift preview guard"]
-        B5["CSS lint + unused-var check"]
-        B6["astro check + build"]
-        B7["asset weight + links + page weight + HTML + SEO + routes"]
-    end
-
-    subgraph release ["Release Check (Optional Local Gate)"]
-        C["npm run release:check"]
-        C1["Playwright E2E + visual"]
-        C2["repository policy"]
-        C3["git diff --check (whitespace/markers)"]
-        C4["worktree left clean"]
-    end
-
-    subgraph ci ["CI (PR), independent jobs"]
-        CI0["pull request to main"]
-        CI1["build"]
-        CI2["e2e"]
-        CI3["visual"]
-        CI4["edge"]
-    end
-
-    subgraph preview ["Preview Deploy Verification"]
-        P["deploy.yml verify"]
-        P1["deploy-verify --origin on the Pages deployment"]
-    end
-
-    subgraph deploy ["Post-merge, production"]
-        E["npm run deploy:verify"]
-        E1["remote CI green"]
-        E2["live HSTS / CSP headers"]
-        E3["live sitemap 200s"]
-        E4["open CodeQL alerts"]
-    end
-
-    %% Force vertical layout nesting
-    B ~~~ B1 ~~~ B2 ~~~ B3 ~~~ B9 ~~~ B8 ~~~ B4 ~~~ B5 ~~~ B6 ~~~ B7
-    B7 ~~~ C
-    C ~~~ C1 ~~~ C2 ~~~ C3 ~~~ C4
-    CI0 ~~~ CI1
-    CI0 ~~~ CI2
-    CI0 ~~~ CI3
-    CI0 ~~~ CI4
-    P ~~~ P1
-    E ~~~ E1 ~~~ E2 ~~~ E3 ~~~ E4
-
-    %% the pivot: everything before is local, everything after is the PR and production
     classDef anchor stroke-width:2px;
-    class D anchor;
+    class PR,M anchor;

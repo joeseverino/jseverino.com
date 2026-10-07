@@ -1,10 +1,6 @@
-// site land: merge one content PR and see it live. Reads the required
-// status checks from main's ruleset and waits until each has reported and
-// passed on the PR head, squash-merges (invoking land is the explicit request to merge),
-// waits for the merge commit's Cloudflare Pages deployment, then verifies each
-// published or edited writeup on production and that each removed one is
-// gone. hq sync runs last, best-effort. Every wait polls real state against
-// one deadline; nothing sleeps a fixed time hoping the deploy finished.
+// site land: merge one content PR and see it live. Waits for main's required checks on the PR head,
+// squash-merges, waits for the Cloudflare Pages deployment, then verifies each changed writeup on production.
+// Every wait polls real state against one deadline.
 import fs from 'node:fs';
 import path from 'node:path';
 import { contentDiff } from '../content-diff.ts';

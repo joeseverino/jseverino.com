@@ -1,8 +1,5 @@
-// Fixed operations on the live site: read-only Cloudflare D1 queries (contact
-// submissions, CSP reports), the additive D1 schema apply, and a live
-// security-header check. Not a shell: every statement is internal and
-// parameter-bounded, and the schema write refuses without confirm. The
-// process runner, fetch, and audit log are injected through SiteOpsConfig.
+// Fixed operations on the live site: read-only D1 queries, the additive schema apply, and a security-header
+// check. Not a shell: statements are internal, and the schema write refuses without confirm.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -41,7 +38,7 @@ export class SiteOpsError extends DetailedError {}
 
 type Row = Record<string, unknown>;
 
-export interface D1Result {
+interface D1Result {
   database: string;
   results: Row[];
   meta: Row;
@@ -192,7 +189,7 @@ export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { conf
   return { applied: true, command, output };
 }
 
-export const SECURITY_HEADERS = [
+const SECURITY_HEADERS = [
   'content-security-policy',
   'reporting-endpoints',
   'strict-transport-security',

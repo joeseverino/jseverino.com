@@ -1,10 +1,8 @@
 name: deploy
 
-# Cloudflare Pages builds each push on its own infrastructure and reports back
-# as the `Cloudflare Pages` check-run. Nothing here waits on it: the completed
-# check-run starts this workflow, which verifies that one deployment and keeps
-# the pull request's single CI comment current. A completed ci run updates the
-# same comment with the job summaries.
+# Cloudflare Pages builds each push and reports as the `Cloudflare Pages` check-run. Its
+# completion starts this workflow, which verifies that deployment and keeps the pull
+# request's single CI comment current; a completed ci run updates it with job summaries.
 on:
   check_run:
     types: [completed]

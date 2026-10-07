@@ -1,6 +1,4 @@
-// site manage's state: the writeup rows and staged edits, the Site tab's
-// status, and what reads them (the writeup store, the gate check, git).
-// Nothing here draws or reads keys.
+// site manage's state: writeup rows, staged edits, and Site tab status. Nothing here draws or reads keys.
 import { statSync } from 'node:fs';
 import path from 'node:path';
 import { GREEN, RED, RESET, YELLOW } from './tui.ts';
@@ -88,7 +86,7 @@ export interface Item {
   [field: string]: unknown;
 }
 
-export type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
+type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
 export type Tab = 'writeups' | 'site';
 
 export interface SiteStatus {
@@ -222,11 +220,11 @@ export function load(): Model {
     cursor: 0,
     tab: 'writeups',
     mode: 'list', // list | move | detail | edit | new | confirm-quit
-    field: 0, // detail-view field cursor
-    input: '', // line-editor buffer (edit + new modes)
+    field: 0,
+    input: '',
     inputCursor: 0,
     flash: gate.error ? `${RED}gate issues unavailable: ${gate.error}${RESET}` : '',
-    created: [], // slugs scaffolded this session (already on disk)
+    created: [],
     issues: gate.issues,
     origFeatured: featured.map((w) => w.slug),
     origPublished: new Map(items.map((i) => [i.slug, i.published])),

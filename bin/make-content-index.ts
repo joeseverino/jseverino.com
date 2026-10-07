@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Emit public/content-index.json, a machine-readable index of published
-// writeups for Severino HQ to pull (gated by a Cloudflare Access service token).
-// The data is already public. Sorted with stable keys so builds diff cleanly.
-// The file is build output (gitignored); build-static writes it before astro build.
+// Emit public/content-index.json for Severino HQ to pull (gated by a Cloudflare
+// Access service token). Gitignored build output; sorted with stable keys.
 import fs from 'node:fs';
 import path from 'node:path';
 import { cli } from './lib/args.ts';
@@ -14,7 +12,6 @@ const outFile = path.join(siteRoot, 'public/content-index.json');
 
 cli({ usage: 'usage: node bin/make-content-index.ts' });
 
-// public/content-index.json, as Severino HQ reads it.
 export interface ContentIndexItem {
   slug: string;
   title: string;
@@ -33,7 +30,7 @@ export interface ContentIndex {
 function buildIndex(): ContentIndex {
   const items: ContentIndexItem[] = [];
   for (const { slug, data } of snapshotWriteups()) {
-    if (data.published !== true) continue; // published-only; drafts excluded
+    if (data.published !== true) continue;
 
     const publishedAt =
       data.published_at instanceof Date
@@ -44,7 +41,6 @@ function buildIndex(): ContentIndex {
 
     items.push({
       slug,
-      // The committed snapshot passed the contract: both are strings when present.
       title: String(data.title ?? ''),
       description: String(data.description ?? '').trim(),
       published_at: publishedAt,
@@ -55,7 +51,6 @@ function buildIndex(): ContentIndex {
     });
   }
 
-  // Deterministic: newest first, slug as tiebreak.
   items.sort((a, b) => {
     const at = a.published_at ?? '';
     const bt = b.published_at ?? '';

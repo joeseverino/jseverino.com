@@ -1,23 +1,12 @@
-// /education/ derives from two governed sources, each owning only what it
-// alone knows:
-//
-//   • The resume canonical's EDUCATION section (the same lines behind the PDF
-//     and /resume/) owns institution identity: name, location, degree, dates.
-//   • `severino-vault-mcp export education` owns coursework: institutions with slug and
-//     description, courses with code/title/term/status and their `## Site`
-//     bullets, joined to the resume org by institution name. The vault is never
-//     parsed here; the engine that governs MCP writes emits the dataset.
-//
-// A course renders once its status is active or completed AND it has Site
-// bullets. The 06 Pages page marked `education_index: true` is the shell
-// (title, description, intro, lead prose); its published flag gates the tree.
-// Resume-only institutions with no vault presence stay off /education/.
+// /education/ joins the resume canonical's EDUCATION section (institution identity) with
+// `severino-vault-mcp export education` (coursework). A course renders once it is active or
+// completed and has `## Site` bullets; the page marked `education_index: true` is the shell and gates the tree.
 import { stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar, type Org, type Role } from './documents.ts';
 
 // `severino-vault-mcp export education`: the fields this join reads.
-export interface Course {
+interface Course {
   code: string;
   title: string;
   term: string;
@@ -25,7 +14,7 @@ export interface Course {
   site_bullets?: string;
 }
 
-export interface Institution {
+interface Institution {
   institution: string;
   slug: string;
   description: string;
@@ -36,7 +25,7 @@ export interface EducationDataset {
   institutions: Institution[];
 }
 
-export interface EducationOrg extends Org {
+interface EducationOrg extends Org {
   degree?: Role;
 }
 

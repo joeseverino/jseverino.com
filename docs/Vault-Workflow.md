@@ -1,6 +1,6 @@
 # Vault Workflow
 
-The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. The move from a live admin to this private-first pipeline is recorded in [WordPress to Astro](./WordPress-To-Astro-Migration.md#operational-shift).
+The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. Background: [WordPress to Astro](./WordPress-To-Astro-Migration.md#operational-shift).
 
 ![Published writeups and pages pass through the content sync into src/content and the generated schema before Cloudflare Pages builds them](./diagrams/vault-workflow.png)
 
@@ -70,7 +70,7 @@ Vault-only fields such as internal IDs, system names, sensitivity labels, relate
 
 ## Site Identity
 
-Site identity lives in repo configuration. The display name, job title, summary, skills, social links, and navigation live in [`src/lib/site.ts`](../src/lib/site.ts), derived from the five instance primitives (`domain`, `owner`, `github`, `d1`, `focus`) in [`src/lib/site-config.ts`](../src/lib/site-config.ts). The header, footer, and JSON-LD import that typed object directly, and `astro check` validates its shape at build time. This keeps the vault scoped to prose content; see [`Blueprint-Setup.md`](./Blueprint-Setup.md) for the per-instance values.
+Site identity lives in repo configuration. The display name, job title, summary, skills, social links, and navigation live in [`src/lib/site.ts`](../src/lib/site.ts), derived from the five instance primitives (`domain`, `owner`, `github`, `d1`, `focus`) in [`src/lib/site-config.ts`](../src/lib/site-config.ts). The header, footer, and JSON-LD import that typed object directly, and `astro check` validates its shape. The vault holds prose content only; see [`Blueprint-Setup.md`](./Blueprint-Setup.md) for the per-instance values.
 
 ## Technology Taxonomy
 
@@ -95,7 +95,7 @@ The sync script:
 
 ### What does NOT live in the vault
 
-The vault is for editorial content and assets attached to a specific page or writeup. Site-wide chrome (favicons, web fonts, the default Open Graph image, downloadable documents) lives in the repo under `public/assets/`, not in the vault. Those assets are referenced from vault markdown by their stable public URL:
+The vault holds editorial content and assets attached to a specific page or writeup. Site-wide chrome (favicons, web fonts, the default Open Graph image, downloadable documents) lives in the repo under `public/assets/`. Vault markdown references those assets by their stable public URL:
 
 ```md
 [Download Resume](/assets/docs/joseph-severino-resume.pdf)
@@ -112,7 +112,7 @@ npm run build:static
 npm run publish:check
 ```
 
-`npm run publish:check` is the preferred final local gate before committing generated content changes.
+`npm run publish:check` is the final local gate before committing generated content changes.
 
 The sync and the local-only audits find the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
 
@@ -126,7 +126,7 @@ The sync and the local-only audits find the vaults and sibling repos through [`b
 
 Cloudflare Pages builds from the committed repository. It does not read the private vault and does not run `sync:content`.
 
-That means published content changes must be synced and committed before deploy. `site publish` does that on a fresh branch and opens the pull request; see [`Site-CLI.md`](./Site-CLI.md).
+Published content changes must be synced and committed before deploy. `site publish` does that on a fresh branch and opens the pull request; see [`Site-CLI.md`](./Site-CLI.md).
 
 ## Related Docs
 

@@ -1,4 +1,3 @@
-/** Bound build-time requests, including reading the response body. */
 export async function fetchJson<T>(
   url: string,
   init: RequestInit = {},

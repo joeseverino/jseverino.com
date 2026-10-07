@@ -4,8 +4,7 @@ import NavLinks from '@components/NavLinks.astro';
 import SocialLinks from '@components/SocialLinks.astro';
 import wordmark from '../../public/assets/brand/wordmark-caps.svg?raw';
 
-// The wrapper <svg> in the template owns sizing + accessibility, so inline only
-// the tile and glyph geometry and drop the asset's own <svg> shell.
+// The template's <svg> owns sizing and accessibility; inline only the geometry.
 const wordmarkInner = wordmark.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
 
 const current = Astro.url.pathname;
@@ -61,7 +60,6 @@ const navigation = navItems.map((item) => ({
     const header = document.querySelector('[data-sticky-header]');
     const sentinel = document.querySelector('#scroll-sentinel');
     if (header && sentinel) {
-      // One observed target, so one entry per callback.
       const observer = new IntersectionObserver(([entry]) => {
         if (entry) header.classList.toggle('scrolled', !entry.isIntersecting);
       }, { threshold: 0 });

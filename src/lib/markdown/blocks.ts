@@ -1,18 +1,12 @@
-// The block vocabulary: container directives (`:::figure … :::`) render to the
-// site's markup, leaf directives (`::featured-projects`) to components the
-// page provides, and nothing else is a directive.
+// Container directives (`:::figure`) render to site markup, leaf directives to page components; nothing else is a directive.
 import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
 import type { ListItem, Paragraph, PhrasingContent, RootContent } from 'mdast';
 
 type ContainerDirective = Extract<MdastNode, { type: 'containerDirective' }>;
 
-// Leaf directives a page may place; each renders the component of that name
-// from the page's `components` map.
 export const PLACEHOLDERS = ['featured-projects', 'technology-cloud', 'contact-form'] as const;
 const placeholders: ReadonlySet<string> = new Set(PLACEHOLDERS);
 
-// A top-level run of prose between placeholders renders through this element,
-// so a page can wrap each run in its own container.
 export const CONTENT_RUN = 'content-run';
 
 type Children = readonly RootContent[];
@@ -25,7 +19,6 @@ const line = (node: Positioned): string => (node.position ? ` (line ${node.posit
 
 const isParagraph = (node: RootContent | undefined): node is Paragraph => node?.type === 'paragraph';
 
-// Caption paragraphs flatten to one run of inline content, as a figcaption holds.
 function inline(nodes: Children): PhrasingContent[] {
   return nodes.flatMap((node, index) => {
     const content = isParagraph(node) ? node.children : [];
@@ -33,8 +26,6 @@ function inline(nodes: Children): PhrasingContent[] {
   });
 }
 
-// `:::figure` holds an image line, then an optional caption: on the lines
-// right after the image, or in the paragraphs after a blank line.
 function figure(node: ContainerDirective): MdastNode | readonly RootContent[] {
   const [first, ...rest] = node.children;
   const [image, ...trailing] = isParagraph(first) ? first.children : [];
@@ -45,7 +36,6 @@ function figure(node: ContainerDirective): MdastNode | readonly RootContent[] {
   return element('figure', captionContent.length ? [image, element('figcaption', captionContent)] : [image]);
 }
 
-// `:::table` holds a table, then an optional caption.
 function table(node: ContainerDirective): MdastNode | readonly RootContent[] {
   const [grid, ...caption] = node.children;
   if (grid?.type !== 'table') return node.children;
@@ -55,7 +45,6 @@ function table(node: ContainerDirective): MdastNode | readonly RootContent[] {
   });
 }
 
-// A paragraph that is exactly one link becomes a button.
 function button(paragraph: RootContent | undefined, className: string): MdastNode | undefined {
   if (!isParagraph(paragraph) || paragraph.children.length !== 1) return undefined;
   const [link] = paragraph.children;
@@ -78,7 +67,6 @@ function single(node: ContainerDirective): MdastNode | readonly RootContent[] {
   return link ? element('div', [link], { className: ['actions'] }) : [];
 }
 
-// A side holding only an image renders the image bare, without a paragraph.
 function side(node: ContainerDirective): MdastNode {
   const [only] = node.children;
   const bare = node.children.length === 1 && isParagraph(only) && only.children.length === 1 && only.children[0]?.type === 'image';

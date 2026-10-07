@@ -80,7 +80,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     try {
       await navigator.clipboard.writeText(button.dataset.copy ?? '');
     } catch {
-      return; // The visible command remains available to copy by hand.
+      return;
     }
     const label = button.querySelector('.copy-label');
     if (!label) return;

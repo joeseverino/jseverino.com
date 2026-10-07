@@ -3,12 +3,12 @@
   "zone": "jseverino.com",
   "owner": "jseverino-com",
   "settings": {
-    "min_tls_version": "1.2",
+    "min_tls_version": "1.3",
     "tls_1_3": "on",
     "always_use_https": "on",
     "http3": "on",
     "0rtt": "off",
-    "speed_brain": "off",
+    "speed_brain": "on",
     "rocket_loader": "off",
     "email_obfuscation": "off",
     "server_side_exclude": "off",
@@ -24,29 +24,24 @@
     "preload": false
   },
   "dnssec": "active",
+  "botManagement": {
+    "enable_js": false,
+    "fight_mode": false,
+    "ai_training": "disallow",
+    "ai_search": "disabled",
+    "ai_user": "disabled"
+  },
   "firewall": [
     {
-      "id": "api-method",
-      "description": "The API accepts POST only",
-      "expression": "(starts_with(http.request.uri.path, \"/api/\") and http.request.method ne \"POST\")",
-      "action": "block"
-    },
-    {
-      "id": "api-content-type",
-      "description": "API bodies carry the media type their handler reads",
-      "expression": "(http.request.uri.path eq \"/api/contact\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\")) or (http.request.uri.path eq \"/api/csp-report\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/csp-report*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/reports+json*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\"))",
+      "id": "api-request",
+      "description": "API requests are POST, with the media type their handler reads",
+      "expression": "(starts_with(http.request.uri.path, \"/api/\") and http.request.method ne \"POST\") or (http.request.uri.path eq \"/api/contact\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\")) or (http.request.uri.path eq \"/api/csp-report\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/csp-report*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/reports+json*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\"))",
       "action": "block"
     },
     {
       "id": "sitedrift-production",
       "description": "The preview review proxy never answers on the production hosts",
       "expression": "(http.host in {\"jseverino.com\" \"www.jseverino.com\"} and starts_with(http.request.uri.path, \"/__sitedrift\"))",
-      "action": "block"
-    },
-    {
-      "id": "scanner-noise",
-      "description": "PHP, WordPress, dotenv, and git probes",
-      "expression": "(ends_with(lower(http.request.uri.path), \".php\") or starts_with(lower(http.request.uri.path), \"/wp-\") or starts_with(http.request.uri.path, \"/.env\") or starts_with(http.request.uri.path, \"/.git\") or http.request.uri.path eq \"/xmlrpc.php\")",
       "action": "block"
     }
   ],
@@ -73,7 +68,8 @@
   "pages": {
     "project": "jseverino",
     "previewAccess": true,
-    "previewPolicy": "service-auth-only"
+    "previewPolicy": "service-auth-only",
+    "previewBranches": { "include": ["*"], "exclude": ["dist"] }
   },
   "schemaValidation": {
     "name": "jseverino-com-contact",

@@ -1,15 +1,7 @@
 #!/usr/bin/env node
-// Derive the site's vendored brand/design tokens from the upstream brand kit.
-//
-// Upstream: the lockfile-pinned severino-brand contract.
-// The package derives semantic roles + CSS once from brand/tokens.json; this
-// consumer only serializes those normalized values into self-contained inputs.
-//
-// Run on demand (`npm run sync:tokens`), review the diff, commit. CI executes
-// the same projection with `--check`; deployment consumes only the committed
-// results. Each target is rewritten between markers; everything outside them
-// is hand-managed.
-//
+// Derive the vendored brand/design tokens from the lockfile-pinned severino-brand
+// contract. Run `npm run sync:tokens`, review, commit; CI runs it with `--check`.
+// Each target is rewritten between markers; the rest is hand-managed.
 import path from 'node:path';
 import { syncTargets, toJs, webContract } from 'severino-brand';
 import { checkMode } from './lib/args.ts';

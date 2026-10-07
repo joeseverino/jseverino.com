@@ -1,14 +1,6 @@
 #!/usr/bin/env node
-// Compute WCAG 2.1 contrast ratios for every color-on-background pair the
-// site CSS actually renders. Expands base.css and reads `--color-*` tokens, parses
-// rules that set `color:` and `background:` (or `background-color:`), and
-// reports pass/fail against WCAG AA (4.5:1 normal text, 3:1 large text).
-//
-// Tokens are dual-valued (`light-dark(light, dark)`), so every pair is measured
-// once per theme. Checking only the light arm is the failure this guards: dark
-// values that fall below AA would otherwise ship unnoticed.
-//
-// Wired into `publish:check`. Standalone usage: `node tests/audits/check-contrast.ts`.
+// WCAG 2.1 contrast for every color-on-background pair the site CSS renders, against AA.
+// Tokens are `light-dark()` pairs, so each pair is measured once per theme.
 
 import path from 'node:path';
 import { BRAND } from '../../src/lib/brand.ts';
@@ -28,7 +20,6 @@ function srgbChannelToLinear(channel: number): number {
 
 function relativeLuminance(hex: string): number {
   const short = hex.replace('#', '');
-  // #abc is #aabbcc.
   const value = short.length === 3 ? [...short].map((digit) => digit + digit).join('') : short;
   const r = parseInt(value.slice(0, 2), 16);
   const g = parseInt(value.slice(2, 4), 16);
@@ -50,9 +41,8 @@ function contrastRatio(hexA: string, hexB: string): number {
 
 const css = readCssEntry(cssPath);
 
-// Scoped to the generated token block: that is the only place --color-* is
-// declared, and scoping means a later override elsewhere can't silently shadow
-// the value measured here.
+// Scoped to the generated token block, the only place --color-* is declared, so a later override
+// elsewhere cannot shadow the measured value.
 const blockStart = css.indexOf('tokens:start');
 const blockEnd = css.indexOf('tokens:end');
 if (blockStart === -1 || blockEnd === -1) fail(`no tokens:start/tokens:end block in ${cssPath}`);
@@ -62,9 +52,8 @@ const HEX = '#[0-9a-fA-F]{3,6}';
 const LIGHT_DARK = new RegExp(`^light-dark\\(\\s*(${HEX})\\s*,\\s*(${HEX})\\s*\\)$`);
 const PLAIN = new RegExp(`^${HEX}$`);
 
-// Collect --color-* assignments as { light, dark }. Values that aren't opaque
-// hex (color-mix, rgb with alpha) can't be measured against a backdrop here and
-// are skipped; a pair that names one fails loudly below rather than passing.
+// Collect --color-* as { light, dark }. Non-opaque values (color-mix, rgb with alpha) are skipped;
+// a pair naming one fails loudly below.
 const tokens = new Map<string, { light: string; dark: string }>();
 for (const [, name, raw = ''] of tokenBlock.matchAll(/--color-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
   const value = raw.trim();
@@ -73,8 +62,7 @@ for (const [, name, raw = ''] of tokenBlock.matchAll(/--color-([a-z0-9-]+)\s*:\s
   else if (PLAIN.test(value)) tokens.set(`--color-${name}`, { light: value.toLowerCase(), dark: value.toLowerCase() });
 }
 
-// --color-primary lives in brand.ts, outside the design-system tokens (brand
-// identity vs design system), so it's folded in from the same source
+// --color-primary lives in brand.ts, outside the design tokens, so fold it in from the source
 // src/styles/brand.css is generated from.
 tokens.set('--color-primary', {
   light: BRAND.navy.toLowerCase(),
@@ -86,8 +74,7 @@ tokens.set('--color-primary-deep', {
 });
 if (tokens.size === 0) fail(`no --color-* tokens found in ${cssPath}`);
 
-// Predetermined pairs the site renders. Add new ones here when a new
-// component introduces a novel combination, mirroring docs/Accessibility.md.
+// Pairs the site renders; add one when a component introduces a new combination.
 const pairs = [
   { name: 'body text on background', fg: '--color-text', bg: '--color-bg' },
   { name: 'muted text on background', fg: '--color-muted', bg: '--color-bg' },

@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Turns an OpenSSF Scorecard JSON result into the job summary: the aggregate
-// score and one row per check, lowest first, with Scorecard's own reason. The
-// SARIF the workflow uploads to code scanning lists only the checks that
-// produced findings; the JSON carries every check and the aggregate.
+// Turn an OpenSSF Scorecard JSON result into the job summary: aggregate score and
+// one row per check, lowest first. The SARIF lists only checks with findings.
 //
 //   node bin/scorecard-summary.ts scorecard.json
 import { status } from './lib/run.ts';
@@ -10,7 +8,6 @@ import { appendSummary, table } from './lib/step-summary.ts';
 import { readJson } from '../src/lib/json.ts';
 
 const file = process.argv[2] ?? 'scorecard.json';
-// The fields of Scorecard's --format=json result this summary reads.
 interface ScorecardResult {
   score: number;
   checks: { name: string; score: number; reason: string }[];

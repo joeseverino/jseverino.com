@@ -1,9 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// Runs under tests/playwright.visual.config.ts against the fixture build
-// (tests/fixtures/content), never real content: these routes are fixture
-// slugs, so a publish cannot move a baseline. After an intended fixture or
-// layout change, re-baseline with `npm run test:e2e:visual:update`.
+// Runs against the fixture build (tests/fixtures/content), never real content.
+// After an intended change, re-baseline with `npm run test:e2e:visual:update`.
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 } as const;
 const MOBILE_VIEWPORT = { width: 412, height: 880 } as const;
@@ -17,8 +15,7 @@ const SCREENSHOT_OPTIONS = {
   maxDiffPixelRatio: 0.01,
 } as const;
 
-// Deterministic readiness instead of networkidle: web fonts resolved and every
-// eagerly loaded image decoded.
+// Readiness: fonts resolved and eager images decoded, instead of networkidle.
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   await expect
@@ -32,9 +29,8 @@ async function open(page: Page, path: string, viewport: { width: number; height:
   await settle(page);
 }
 
-// The Turnstile widget renders on its own schedule and changes height when it
-// does. Aborting its script leaves the reserved box empty, so the baseline
-// pins this site's layout instead of Cloudflare's render timing.
+// The Turnstile widget changes height when it renders. Aborting its script keeps the
+// reserved box empty so the baseline pins this site's layout.
 const withoutTurnstile = (page: Page) =>
   page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
 
@@ -81,9 +77,7 @@ test.describe('visual regression', () => {
     await expect(page).toHaveScreenshot('portfolio-archive-open.png', SCREENSHOT_OPTIONS);
   });
 
-  // Full-page so the featured cards and the compact list are both covered. The
-  // fixture snapshot is fixed and fixture builds skip the registries, so
-  // nothing here needs masking.
+  // Full-page so featured cards and the compact list are both covered.
   test('portfolio software tab (desktop)', async ({ page }) => {
     await open(page, '/portfolio/#software');
     await expect(page.locator('[data-panel="software"]')).toBeVisible();
@@ -116,9 +110,7 @@ test.describe('visual regression', () => {
     await expect(page).toHaveScreenshot('resume-sticky-action.png', SCREENSHOT_OPTIONS);
   });
 
-  // Dark flips tokens in the same stylesheet, so the layout matches light; these
-  // baselines pin the resolved palette: page and raised surface, tinted table,
-  // form fields, and the terminal group, which keeps its colors.
+  // Dark flips tokens in the same stylesheet; these baselines pin the resolved palette.
   test.describe('dark', () => {
     test.use({ colorScheme: 'dark' });
 

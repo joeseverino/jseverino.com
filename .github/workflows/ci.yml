@@ -16,10 +16,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Every job starts at once and none depends on another, so a failure reports as
-# a failure on its own check: a required check is never left skipped (which
-# counts as passing) because something upstream failed. Cloudflare Pages builds
-# and deploys on its own; the deploy workflow verifies it and comments.
+# Every job starts at once and none depends on another, so a failure reports on its own
+# check and a required check is never left skipped (which counts as passing). Cloudflare
+# Pages builds and deploys on its own; the deploy workflow verifies it.
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -33,8 +32,6 @@ jobs:
         with:
           astro-cache: 'true'
 
-      # Cheap invariants first: an unpinned action or a misaligned lockfile
-      # fails here in seconds, collect-all, before the build starts.
       - name: Gate audits
         run: npm run -s gate:check
         env:
@@ -75,11 +72,9 @@ jobs:
           retention-days: 1
           if-no-files-found: ignore
 
-  # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, and
-  # `edge`, so the ruleset's required checks match by name. The edge leg serves
-  # the build through the Cloudflare runtime (wrangler) and needs no browser;
-  # the visual leg builds tests/fixtures/content and runs on macOS because the
-  # baselines are macOS Chromium renders.
+  # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, `edge` so the
+  # ruleset's required checks match. The visual leg runs on macOS because the baselines
+  # are macOS Chromium renders.
   playwright:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
@@ -130,9 +125,8 @@ jobs:
           path: ${{ runner.os == 'macOS' && '~/Library/Caches/ms-playwright' || '~/.cache/ms-playwright' }}
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browsers }}
 
-      # The apt install (Linux system packages for the browsers; a no-op on
-      # macOS) runs in the background while the site builds, then the suite
-      # serves that build (PREBUILT) instead of building it again.
+      # The apt install runs in the background while the site builds, then the suite serves
+      # that build (PREBUILT).
       - name: Install browsers and build
         run: |
           set -euo pipefail

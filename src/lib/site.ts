@@ -1,8 +1,6 @@
 import { SITE, SITE_ORIGIN, SITE_REPOSITORY } from './site-config.ts';
 
-// Typed, Astro-facing site identity. Bare instance primitives live in site-config.ts
-// (importable by node scripts too); everything here is derived from them or is
-// editorial chrome owned by the repo.
+// Astro-facing identity derived from site-config.ts, plus editorial chrome.
 const focusLabel = SITE.focus.join(' • ');
 const summary =
   'Joe Severino is a Technical Solutions Engineer at World Wide Technology focused on infrastructure, detection engineering, and secure operations.';
@@ -16,7 +14,6 @@ export const site = {
   defaultOgImage: '/assets/og/og-default.jpg',
   defaultOgImageWidth: 1200,
   defaultOgImageHeight: 630,
-  // Rendered from the resume canonical by resume-engine; the resume page links it.
   resumePdf: '/assets/docs/joseph-severino-resume.pdf',
   jobTitle: 'Technical Solutions Engineer',
   employer: 'World Wide Technology',
