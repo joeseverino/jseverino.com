@@ -8,7 +8,7 @@
     "always_use_https": "on",
     "http3": "on",
     "0rtt": "off",
-    "speed_brain": "off",
+    "speed_brain": "on",
     "rocket_loader": "off",
     "email_obfuscation": "off",
     "server_side_exclude": "off",

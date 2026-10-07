@@ -77,7 +77,7 @@ describe('check', () => {
     const { code, report } = await checkJson(fake);
     assert.equal(code, 1);
     const status = (name: string) => report.items.find((entry: { name: string }) => entry.name === name)?.status;
-    assert.equal(status('speed_brain'), 'drift');
+    assert.equal(status('automatic_https_rewrites'), 'drift');
     assert.equal(status('browser_cache_ttl'), 'drift');
     assert.equal(status('email_obfuscation'), 'drift');
     assert.equal(status('tls_1_3'), 'ok');
@@ -147,7 +147,7 @@ describe('plan', () => {
     assert.equal(code, 0);
     const { calls } = JSON.parse(output);
     const lines = calls.map((call: { method: string; path: string }) => `${call.method} ${call.path}`);
-    assert.ok(lines.includes('PATCH /zones/:zone/settings/speed_brain'));
+    assert.ok(lines.includes('PATCH /zones/:zone/settings/automatic_https_rewrites'));
     assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
     assert.ok(lines.includes('PATCH /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));

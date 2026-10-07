@@ -112,8 +112,10 @@ the build-time CSP hashes do not cover:
 - **Cloudflare Fonts** rewrites font links. The site self-hosts its one font.
 - **Zaraz** injects scripts.
 - **Hotlink Protection** is redundant with `Cross-Origin-Resource-Policy`.
-- **Speed Brain** prefetches likely next pages through Speculation Rules, which
-  the site does not use.
+
+Speed Brain stays on. It prefetches likely next pages through a
+`speculation-rules` response header, which adds no markup, so the HTML served is
+the HTML built.
 
 No Cache Rule is a problem for CSP reasons: HTML is static and the policy is the
 same on every request, so HTML is cacheable.

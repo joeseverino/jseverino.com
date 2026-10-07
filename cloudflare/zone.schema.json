@@ -25,7 +25,7 @@
         "always_use_https": { "$ref": "#/$defs/toggle" },
         "http3": { "$ref": "#/$defs/toggle" },
         "0rtt": { "$ref": "#/$defs/toggle" },
-        "speed_brain": { "description": "Off: speculation is useless for Function-rendered HTML and conflicts with a nonce CSP.", "$ref": "#/$defs/toggle" },
+        "speed_brain": { "description": "On: prefetches likely next pages through a speculation-rules response header, which adds no markup.", "$ref": "#/$defs/toggle" },
         "rocket_loader": { "description": "Off: rewrites script tags, which breaks the hashed inline script.", "$ref": "#/$defs/toggle" },
         "email_obfuscation": { "description": "Off: injects a decoder script into HTML.", "$ref": "#/$defs/toggle" },
         "server_side_exclude": { "description": "Off: rewrites HTML.", "$ref": "#/$defs/toggle" },
