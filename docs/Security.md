@@ -371,7 +371,7 @@ with a read-only token and exits non-zero while anything differs, and
 `npm run cloudflare:plan` / `cloudflare:apply` preview and write the
 difference with a separate write token. What it declares, briefly:
 
-- **TLS:** minimum TLS 1.2, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
+- **TLS:** minimum TLS 1.3, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
 - **WAF custom rules** (four of the free plan's five, one kept free for an
   incident): `POST` only under `/api/`, the right content type per endpoint,
   the preview proxy blocked on the production hosts, and PHP, dotenv, and git
