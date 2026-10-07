@@ -27,7 +27,7 @@ The public serving layer is static. Every HTML page is a plain static asset serv
   in production: with no generated sitedrift configuration, the route returns
   `404`.
 
-There is no WordPress runtime, public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
+There is no public admin panel, user account system, comment system, upload endpoint, or origin application server. A May 2026 migration comparison measured lower document TTFB and substantially lower page weight after this change; details are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
 ## 2. Source Of Truth
 
@@ -463,7 +463,7 @@ The design tokens follow the same model. `severino-brand/brand/tokens.json` is t
 
 To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
 
-For the full story (how the brand went from an inherited WordPress purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
+For the full story (how the brand went from an inherited theme purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
 
 ### Stable URLs
 

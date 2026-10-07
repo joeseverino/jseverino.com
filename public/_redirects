@@ -5,13 +5,7 @@
 # To make a path return 404, leave it unmatched and rely on the
 # `404.html` file at the site root, which Pages auto-serves with status 404.
 
-# WordPress admin paths redirect home; there is no admin on a static site.
-# Superseded by the scanner-noise WAF rule in cloudflare/zone.json: once it is
-# live, `npm run cloudflare:check` flags these lines for deletion.
-/wp-admin/*          /                                   302
-/wp-login.php        /                                   302
-
-# WordPress taxonomy URL: the old /category/portfolio/ archive is /portfolio/.
+# The old /category/portfolio/ archive is /portfolio/.
 /category/portfolio/   /portfolio/                       301
 
 # Renamed writeup slug (2026-06-10): the old URL and its assets still resolve.

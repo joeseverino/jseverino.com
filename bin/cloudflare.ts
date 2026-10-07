@@ -10,7 +10,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { parse } from './lib/args.ts';
 import {
   apply, createClient, diff, drifted, loadDesired, plannedCalls, readLive,
-  type Call, type ClientOptions, type DesiredState, type Item,
+  type Call, type ClientOptions, type Item,
 } from './lib/cloudflare.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { edgeRuntime } from '../tests/browser-test-env.ts';
@@ -44,19 +44,6 @@ one account.
 
 const desiredFile = fromRoot('cloudflare/zone.json');
 const schemaFile = fromRoot('cloudflare/zone.schema.json');
-
-// Repo-side follow-ups a live zone unlocks: the scanner rule replaces the
-// WordPress redirects in public/_redirects, which go once it is live.
-function repoItems(desired: DesiredState, items: Item[]): Item[] {
-  const rule = items.find((entry) => entry.name === `${desired.owner}-scanner-noise`);
-  const redirects = fs.readFileSync(fromRoot('public/_redirects'), 'utf8');
-  const stale = redirects.split('\n').filter((line) => /^\/wp-/.test(line));
-  if (rule?.status !== 'ok' || stale.length === 0) return [];
-  return [{
-    area: 'repo', name: 'public/_redirects', want: 'no /wp-* redirects', have: `${stale.length} lines`, status: 'manual', steps: [],
-    note: 'the scanner-noise rule blocks these paths at the zone now; delete the redirects',
-  }];
-}
 
 function render(items: Item[], write: (line: string) => void): void {
   const rows = items.map((entry) => [entry.status, entry.area, entry.name, entry.want, entry.have, entry.note]);
@@ -103,10 +90,7 @@ export async function main({ argv = process.argv.slice(2), env = process.env, fe
     compatibilityDate: edgeRuntime.compatibilityDate,
   };
   const client = createClient({ token: env.CLOUDFLARE_API_TOKEN, fetch, wait });
-  const survey = async () => {
-    const items = diff(desired, await readLive(client, desired), context);
-    return [...items, ...repoItems(desired, items)];
-  };
+  const survey = async () => diff(desired, await readLive(client, desired), context);
 
   const items = await survey();
   const drift = drifted(items);

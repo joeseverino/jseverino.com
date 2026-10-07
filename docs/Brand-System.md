@@ -6,7 +6,7 @@ site, the brand kit, and the command-line tools.
 
 ## Two Colors
 
-The site started on WordPress with a purple accent. The purple was the theme's
+The site started with a purple accent. The purple was the theme's
 default, kept from the day the theme was installed. The logo was a yellow `JS`
 with no source file and no record of how it was made. Neither color was chosen,
 and they did not match.

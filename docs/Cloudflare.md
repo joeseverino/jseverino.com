@@ -97,11 +97,7 @@ the dashboard during an incident is never touched.
 | `api-method` | anything but `POST` under `/api/` |
 | `api-content-type` | `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the Function already 404s there; this stops it at the edge) |
-| `scanner-noise` | `*.php`, `/wp-*`, `/.env*`, `/.git*`, `/xmlrpc.php` |
-
-The `/wp-admin/*` and `/wp-login.php` redirects in `public/_redirects` stay
-until `scanner-noise` is live. Once it is, `cloudflare:check` reports them as a
-manual item until they are deleted.
+| `scanner-noise` | `*.php`, `/.env*`, `/.git*` |
 
 ## Features that stay off
 
@@ -207,13 +203,12 @@ in the repo calls Cloudflare on its own.
 curl -sI https://jseverino.pages.dev/about/?x=1        # 301, location https://jseverino.com/about/?x=1
 curl -sI https://<hash>.jseverino.pages.dev/           # 302 to the Access login
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/api/contact          # 403 (GET)
-curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/wp-login.php         # 403
+curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/.env                 # 403
 curl -sI https://jseverino.com/assets/icons/favicon.svg | grep -i cache-control      # max-age=3600
 npm run deploy:verify
 ```
 
-Then delete the `/wp-*` redirects from `public/_redirects` and run
-`npm run cloudflare:check` until it exits 0.
+Then run `npm run cloudflare:check` until it exits 0.
 
 ## No `wrangler.toml`
 

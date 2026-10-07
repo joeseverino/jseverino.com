@@ -52,8 +52,8 @@
     },
     {
       "id": "scanner-noise",
-      "description": "PHP, WordPress, dotenv, and git probes",
-      "expression": "(ends_with(lower(http.request.uri.path), \".php\") or starts_with(lower(http.request.uri.path), \"/wp-\") or starts_with(http.request.uri.path, \"/.env\") or starts_with(http.request.uri.path, \"/.git\") or http.request.uri.path eq \"/xmlrpc.php\")",
+      "description": "PHP, dotenv, and git probes",
+      "expression": "(ends_with(lower(http.request.uri.path), \".php\") or starts_with(http.request.uri.path, \"/.env\") or starts_with(http.request.uri.path, \"/.git\"))",
       "action": "block"
     }
   ],

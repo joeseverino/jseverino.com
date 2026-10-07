@@ -374,8 +374,8 @@ difference with a separate write token. What it declares, briefly:
 - **TLS:** minimum TLS 1.2, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
 - **WAF custom rules** (four of the free plan's five, one kept free for an
   incident): `POST` only under `/api/`, the right content type per endpoint,
-  the preview proxy blocked on the production hosts, and PHP, WordPress,
-  dotenv, and git probes blocked.
+  the preview proxy blocked on the production hosts, and PHP, dotenv, and git
+  probes blocked.
 - **Rate limit:** 15 `/api/*` requests per 10 seconds per IP, then a 10-second block.
 - **`*.pages.dev` is outside the zone.** The production alias
   `jseverino.pages.dev` 301s to `https://jseverino.com` through a Bulk
@@ -535,11 +535,12 @@ surface:
   `WEB_ANALYTICS.emitBeacon` in `src/lib/site-config.ts` is on). No
   cookies, no cross-site identifiers, no consent banner.
 
-## What switching from WordPress changed
+## What the static build removed
 
-This site ran on WordPress until early 2026. The migration to a static Astro
-build was mainly a security decision: most of what had to be defended no
-longer exists.
+The site is a static Astro build, chosen mainly for security: most of what a
+server-rendered site has to defend (an admin login, a plugin ecosystem, a
+database behind every page view) does not exist here. The measurements are in the
+[migration comparison](./WordPress-To-Astro-Migration.md).
 Detail in the [technical architecture](./Architecture.md).
 
 ## security.txt and the disclosure key

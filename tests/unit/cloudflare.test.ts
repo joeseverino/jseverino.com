@@ -180,10 +180,9 @@ describe('apply --yes', () => {
     assert.ok(fake.writes().length > 0);
     assert.ok(fake.writes().every((call) => !call.path.includes('rule-incident')));
 
-    // The scanner rule blocks the WordPress paths at the zone, so the
-    // redirects in public/_redirects are the one thing left, for a person.
+    // Access is check-only, so its policy is the one item left, for a person.
     assert.equal(first.code, 1);
-    assert.match(first.output, /still +repo public\/_redirects/);
+    assert.deepEqual(first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')), ['still    pages preview access policy']);
 
     const firewall = fake.state.rulesets['zones/http_request_firewall_custom']?.rules ?? [];
     assert.deepEqual(firewall.find((rule) => rule.ref === incident?.ref), incident);

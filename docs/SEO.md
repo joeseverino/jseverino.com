@@ -111,7 +111,7 @@ Canonical metadata still points at `jseverino.com`, and the
 
 ## Security Headers And SEO
 
-The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the old WordPress runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
+The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the previous runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
 [`public/_headers`](../public/_headers) carries the other security headers; the CSP is written into the built `dist/_headers` from placeholders there. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
 
