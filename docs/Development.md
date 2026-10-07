@@ -42,7 +42,7 @@ Every gate reads its audits from
 (e2e across Chromium, Firefox, and WebKit, and the visual baselines) run in CI;
 `npm run publish:check:ci` rehearses the CI conditions locally.
 
-![Validation flow from source change through the local gates, the pull request with CI and the preview verification, the merge, and production verification](./diagrams/validation-flow.png)
+![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](./diagrams/validation-flow.png)
 
 <sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](./diagrams/validation-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>

@@ -1,15 +1,18 @@
-%%{init: { "sequence": { "mirrorActors": false } } }%%
+%%{init: { "sequence": { "mirrorActors": false, "width": 190, "messageMargin": 42 }, "themeVariables": { "noteBkgColor": "#eff3fb", "noteBorderColor": "#4C63A0", "noteTextColor": "#0b0620" } } }%%
 sequenceDiagram
     autonumber
-    actor Client as Browser Client
-    participant Edge as Cloudflare Edge
-    participant Static as Static Assets
+    actor Client as Browser
+    participant Edge as Cloudflare edge
+    participant Static as Static assets
     participant Fn as Pages Function
-    participant D1 as D1 Database
+    participant D1 as D1
 
-    Client->>Edge: Request page
-    Edge->>Static: Serve HTML, CSS, JS
-    Static-->>Client: Page with policy headers (no Function)
-    Client->>Edge: Submit contact / CSP reports
-    Edge->>Fn: /api/* only
+    Client->>Edge: GET a page
+    Edge->>Static: Read the file
+    Static-->>Edge: HTML, CSS, JS
+    Edge-->>Client: Page with policy headers, no Function runs
+    Client->>Edge: POST /api/contact or /api/csp-report
+    Note over Edge,Static: WAF, rate limit, schema validation
+    Edge->>Fn: API requests only
     Fn->>D1: Parameterized SQL write
+    Fn-->>Client: JSON result

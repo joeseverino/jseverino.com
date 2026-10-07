@@ -7,7 +7,7 @@
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./docs/diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./docs/diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>

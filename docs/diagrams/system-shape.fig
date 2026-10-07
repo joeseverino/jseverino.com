@@ -3,19 +3,21 @@ direction: right
 
 Mac [dashed] {
   Obsidian vault [icon: file, note: private]
-  Content sync [icon: terminal, note: MDX · image masters]
+  Content sync [icon: terminal, note: MDX · images]
 }
 
 GitHub [dashed] {
   Repository [icon: code, note: public snapshot]
+  dist branch [icon: file, note: built site]
 }
 
 Cloudflare [dashed] {
-  Pages build [icon: cpu, note: Astro · AVIF · WebP]
-  Edge [icon: globe, anchor, note: CSP headers · Functions]
+  Pages build [icon: cpu, note: Astro · AVIF]
+  Edge [icon: globe, anchor, note: CSP · Functions]
 }
 
 Obsidian vault > Content sync
 Content sync > Repository: pull request
 Repository > Pages build
+Repository > dist branch
 Pages build > Edge

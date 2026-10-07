@@ -6,14 +6,14 @@ How `jseverino.com` is built: where data enters, what the build transforms, and 
 
 The site is a static Astro build deployed to Cloudflare Pages.
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository, which Cloudflare builds and serves at the edge](./diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 The request-time execution and data boundary is at the edge:
 
-![Browser requests pass through the Cloudflare edge to static assets and parameterized D1 writes](./diagrams/edge-request-flow.png)
+![Pages are served from static assets; API requests pass the WAF, rate limit, and schema checks at the edge before a Function writes to D1](./diagrams/edge-request-flow.png)
 
 <sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>

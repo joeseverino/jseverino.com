@@ -25,9 +25,9 @@ every gate that claims it.
 
 ## How it fits together
 
-![Testing gates from the local gates through the pull request, site land, and production verification](../docs/diagrams/testing-gates.png)
+![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](../docs/diagrams/validation-flow.png)
 
-<sup>Diagram source: [`docs/diagrams/testing-gates.mmd`](../docs/diagrams/testing-gates.mmd),
+<sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](../docs/diagrams/validation-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
 | Gate | Runs | Covers |

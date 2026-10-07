@@ -1,23 +1,18 @@
 %%{init: { "htmlLabels": false } }%%
-flowchart LR
-    A["Source change"] --> B["npm run gate:check"] --> C["npm run publish:check"] --> D["Push branch, open PR"]
+flowchart TB
+    A["Source change"] --> B["gate:check"] --> C["publish:check"] --> D["Push branch, open PR"]
+    G["diagnose: every check, one pass"] -.-> C
+    R["release:check (optional)"] -.-> D
     D --> CI
-    D --> P["Cloudflare Pages preview"]
-    P --> V["deploy.yml verify: deploy-verify --origin hash.jseverino.pages.dev"]
-    CI --> M["Merge on Joe's go: site land"]
+    D --> P["Cloudflare Pages preview"] --> V["deploy-verify --origin on the preview"]
+    CI --> M["Merge: site land"]
     V --> M
-    M --> PR["Production deploy"] --> F["npm run deploy:verify from a residential IP"]
-    R["npm run release:check (optional, local)"] -.-> D
-    G["npm run diagnose: every check, one pass"] -.-> C
+    M --> PD["Production deploy, dist publish"] --> F["deploy:verify"]
 
-    subgraph CI ["CI on the PR (independent jobs)"]
-        CB["build"]
-        CE["e2e"]
-        CV["visual"]
-        CG["edge"]
-        CQ["CodeQL"]
+    subgraph CI ["CI on the PR, independent jobs"]
+        direction LR
+        CB["build"] ~~~ CE["e2e"] ~~~ CV["visual"] ~~~ CG["edge"] ~~~ CQ["CodeQL"]
     end
 
-    %% the pivot: local gates before, the PR and production after
     classDef anchor stroke-width:2px;
     class D,M anchor;
