@@ -66,6 +66,17 @@ export interface SchemaValidationSpec {
   action: 'block';
 }
 
+// The bot_management fields this file owns. The endpoint is PUT-only, and a
+// PUT resets every field it leaves out, so apply sends these over the live
+// values of BOT_MANAGEMENT_KEPT.
+export type BotManagement = {
+  enable_js: boolean;
+  fight_mode: boolean;
+  ai_training: string;
+  ai_search: string;
+  ai_user: string;
+};
+
 export interface DesiredState {
   $schema?: string;
   zone: string;
@@ -75,6 +86,7 @@ export interface DesiredState {
   dnssec: 'active' | 'disabled';
   firewall: FirewallRuleSpec[];
   rateLimit: RateLimitSpec;
+  botManagement: BotManagement;
   pagesDevRedirect: PagesDevRedirect;
   pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only' };
   schemaValidation: SchemaValidationSpec;
@@ -186,6 +198,7 @@ export interface LiveState {
   firewall: Ruleset | null;
   ratelimit: Ruleset | null;
   redirect: Ruleset | null;
+  botManagement: Record<string, unknown> | null;
   list: RulesList | null;
   listItems: { redirect?: Record<string, unknown> }[];
   project: PagesProject | null;

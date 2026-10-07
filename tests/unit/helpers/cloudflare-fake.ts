@@ -17,6 +17,7 @@ export interface FakeState {
   zone: { id: string; name: string; account: { id: string } };
   settings: Record<string, { value: unknown; editable?: boolean }>;
   dnssec: Fields;
+  botManagement: Fields;
   rulesets: Record<string, { id: string; phase?: string; rules: LiveRule[] }>;
   lists: (RulesList & { items: Fields[] })[];
   project: { name: string; deployment_configs: Record<string, Fields> };
@@ -82,6 +83,12 @@ export function createCloudflareFake(seed: FakeState, token: string) {
       if (!current) return fail(404, 'Invalid setting');
       current.value = body.value;
       return ok(setting(id));
+    }),
+    route('GET', /^\/zones\/zone-0001\/bot_management$/, () => ok(state.botManagement)),
+    // The real endpoint resets every field a PUT leaves out.
+    route<Fields>('PUT', /^\/zones\/zone-0001\/bot_management$/, (_g, _u, body) => {
+      state.botManagement = { using_latest_model: state.botManagement.using_latest_model, ai_bots_protection: 'disabled', content_bots_protection: 'disabled', crawler_protection: 'disabled', ai_training: 'disabled', ai_search: 'disabled', ai_user: 'disabled', ...body };
+      return ok(state.botManagement);
     }),
     route('GET', /^\/zones\/zone-0001\/dnssec$/, () => ok(state.dnssec)),
     route<Fields>('PATCH', /^\/zones\/zone-0001\/dnssec$/, (_g, _u, body) => ok(Object.assign(state.dnssec, body))),

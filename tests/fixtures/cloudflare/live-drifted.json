@@ -20,6 +20,7 @@
     }
   },
   "dnssec": { "status": "active" },
+  "botManagement": { "enable_js": true, "fight_mode": false, "ai_bots_protection": "block", "content_bots_protection": "block", "crawler_protection": "disabled", "ai_training": "disabled", "ai_search": "disabled", "ai_user": "disabled", "using_latest_model": true },
   "rulesets": {
     "zones/http_request_firewall_custom": {
       "id": "ruleset-fw",

@@ -27,7 +27,7 @@ const desired = read<DesiredState>('cloudflare/zone.json');
 // Every top-level DesiredState field, checked against the schema's properties
 // below, so a field added to one and not the other fails here.
 const DESIRED_FIELDS = {
-  $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, firewall: true,
+  $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, botManagement: true, firewall: true,
   rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
@@ -81,6 +81,7 @@ describe('check', () => {
     assert.equal(status('browser_cache_ttl'), 'drift');
     assert.equal(status('email_obfuscation'), 'drift');
     assert.equal(status('tls_1_3'), 'ok');
+    assert.equal(status('bot_management'), 'drift');
     assert.equal(status('hsts'), 'ok');
     assert.equal(status('server_side_exclude'), 'unavailable');
     assert.equal(status('jseverino-com-api-method'), 'drift');
@@ -147,6 +148,7 @@ describe('plan', () => {
     const { calls } = JSON.parse(output);
     const lines = calls.map((call: { method: string; path: string }) => `${call.method} ${call.path}`);
     assert.ok(lines.includes('PATCH /zones/:zone/settings/speed_brain'));
+    assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
     assert.ok(lines.includes('PATCH /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
     assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-retired'));
@@ -190,6 +192,11 @@ describe('apply --yes', () => {
       ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`),
     ].sort());
     assert.equal(fake.state.settings.browser_cache_ttl?.value, 0);
+    assert.deepEqual(
+      Object.fromEntries(Object.entries(fake.state.botManagement).filter(([key]) => key in desired.botManagement || key.endsWith('_protection'))),
+      { ...desired.botManagement, ai_bots_protection: 'block', content_bots_protection: 'block', crawler_protection: 'disabled' },
+      'the declared fields are set and the undeclared writable ones keep their live values',
+    );
     const header = fake.state.settings.security_header?.value as { strict_transport_security: { nosniff: boolean } };
     assert.equal(header.strict_transport_security.nosniff, false, 'HSTS keeps fields zone.json does not own');
     assert.equal(fake.state.validationSettings.validation_default_mitigation_action, 'none', 'the zone default is not this file\'s');

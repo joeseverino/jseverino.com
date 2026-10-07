@@ -133,6 +133,7 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
     firewall: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${FIREWALL_PHASE}/entrypoint`),
     ratelimit: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${RATELIMIT_PHASE}/entrypoint`),
     redirect: await client.maybe<Ruleset>(`/accounts/:account/rulesets/phases/${REDIRECT_PHASE}/entrypoint`),
+    botManagement: await client.maybe<Record<string, unknown>>('/zones/:zone/bot_management'),
     list,
     listItems: list ? await client.get<LiveState['listItems']>(`/accounts/:account/rules/lists/${q(list.id)}/items`) : [],
     project: await client.maybe<PagesProject>(`/accounts/:account/pages/projects/${q(desired.pages.project)}`),
@@ -278,6 +279,20 @@ function settingsItems(desired: DesiredState, live: LiveState): Item[] {
         body: { value: { strict_transport_security: { ...header, ...want } } },
       }]));
   return items;
+}
+
+// The writable fields apply carries over from the live zone, so a PUT that
+// sets the declared ones does not reset the rest to their defaults.
+const BOT_MANAGEMENT_KEPT = ['ai_bots_protection', 'content_bots_protection', 'crawler_protection'] as const;
+
+function botManagementItem(desired: DesiredState, live: LiveState): Item {
+  const want = desired.botManagement;
+  if (!live.botManagement) return item('bot-management', 'bot_management', want, null, 'unavailable', [], 'not exposed for this zone');
+  const have = pick(live.botManagement, Object.keys(want));
+  if (same(have, want)) return item('bot-management', 'bot_management', want, have, 'ok');
+  const body = { ...pick(live.botManagement, BOT_MANAGEMENT_KEPT), ...want };
+  return item('bot-management', 'bot_management', want, have, 'drift', [{ method: 'PUT', path: '/zones/:zone/bot_management', body }],
+    `differs: ${changedKeys(want, have).join(', ')}`);
 }
 
 function dnssecItem(desired: DesiredState, live: LiveState): Item {
@@ -432,6 +447,7 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
 export function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
   return [
     ...settingsItems(desired, live),
+    botManagementItem(desired, live),
     dnssecItem(desired, live),
     ...rulesetItems(desired, 'waf', 'zones', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
     ...rulesetItems(desired, 'ratelimit', 'zones', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),

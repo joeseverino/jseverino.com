@@ -383,10 +383,11 @@ difference with a separate write token. What it declares, briefly:
 - **Nothing rewrites HTML.** Rocket Loader, Email Obfuscation, Server-Side
   Excludes, and Automatic HTTPS Rewrites must stay off, because each would
   inject markup the build-time hashes do not cover.
-- **Bot Fight Mode must be off.** Its JavaScript Detections inject an inline
-  script with per-request values into HTML, which a static hash policy cannot
-  cover. It is set in the dashboard, not in `cloudflare/zone.json` (see
-  [docs/Cloudflare.md](./Cloudflare.md#bot-fight-mode)).
+- **JavaScript Detections and Bot Fight Mode must be off.** The detections
+  inject an inline script with per-request values into HTML, which a static hash
+  policy cannot cover. Both are declared as `botManagement` in
+  `cloudflare/zone.json` and applied with `npm run cloudflare:apply` (see
+  [docs/Cloudflare.md](./Cloudflare.md#bot-management)).
 
 [docs/Cloudflare.md](./Cloudflare.md) has the free-plan limits behind
 each choice, the token permissions, and the post-apply checks.

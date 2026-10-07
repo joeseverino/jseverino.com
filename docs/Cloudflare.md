@@ -15,10 +15,10 @@ and applies the difference.
 | Redirects | [`public/_redirects`](../public/_redirects) | every Pages deploy |
 | Which requests run Functions | [`public/_routes.json`](../public/_routes.json) | every Pages deploy |
 | Contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
-| Zone settings, HSTS, DNSSEC, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
+| Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
 | Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare:check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
-| Bot Fight Mode, Web Analytics mode, Pages bindings and secrets, D1 | dashboard | by hand |
+| Web Analytics mode, Pages bindings and secrets, D1 | dashboard | by hand |
 
 [`cloudflare/zone.json`](../cloudflare/zone.json) is validated by
 [`cloudflare/zone.schema.json`](../cloudflare/zone.schema.json), whose
@@ -126,14 +126,23 @@ same on every request, so HTML is cacheable.
 overrides shorter origin TTLs, which is how `/favicon.ico` and
 `/assets/icons/*` were served with 4 hours instead of `_headers`' 1 hour.
 
-## Bot Fight Mode
+## Bot management
 
-Bot Fight Mode must be off for the zone. Its JavaScript Detections inject an
-inline script with per-request values into HTML, and a static hash CSP cannot
-cover that script. It is a dashboard setting, not declared in `zone.json`, and
-it cannot skip paths on the free plan. Bot Fight Mode also challenges
-datacenter IPs, which is why CI's deploy verification targets each deployment's
-own `*.pages.dev` URL, outside the zone.
+`botManagement` in `zone.json` declares the zone's `bot_management` settings.
+`enable_js` is `false`: JavaScript Detections inject an inline script with
+per-request values into HTML, and a static hash CSP cannot cover that script.
+On the free plan, turning Bot Fight Mode off in the dashboard does not turn
+JavaScript Detections off; only `enable_js: false` does, which is why the
+setting is declared rather than left to the dashboard. `fight_mode` is `false`
+for the same reason, and because Bot Fight Mode challenges datacenter IPs, which
+is why CI's deploy verification targets each deployment's own `*.pages.dev` URL,
+outside the zone. Neither setting can skip paths on the free plan.
+
+`ai_training`, `ai_search`, and `ai_user` are the three AI crawler policies on
+the Security → Bots page. The endpoint accepts only a PUT and resets every field
+a PUT leaves out, so apply sends the declared fields over the live values of
+`ai_bots_protection`, `content_bots_protection`, and `crawler_protection`, and a
+change made in the dashboard to those three survives an apply.
 
 ## Turnstile
 
@@ -181,6 +190,7 @@ Scope both tokens to the one zone and the one account.
 | Zone | DNS (DNSSEC) | Read | Edit |
 | Zone | Zone WAF (custom rules, rate limit) | Read | Edit |
 | Zone | API Gateway (schema validation) | Read | Edit |
+| Zone | Bot Management | Read | Edit |
 | Account | Account Rulesets (Bulk Redirect rule) | Read | Edit |
 | Account | Account Filter Lists (Bulk Redirect list) | Read | Edit |
 | Account | Cloudflare Pages | Read | Edit |

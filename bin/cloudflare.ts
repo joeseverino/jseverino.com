@@ -30,12 +30,14 @@ the agent Environment) and is never printed. Scope it to the one zone and the
 one account.
 
   check / plan (read):
-    Zone     Zone, Zone Settings, DNS, Zone WAF, API Gateway        Read
+    Zone     Zone, Zone Settings, DNS, Zone WAF, API Gateway,
+             Bot Management                                         Read
     Account  Account Rulesets, Account Filter Lists, Cloudflare Pages,
              Access: Apps and Policies, Turnstile                   Read
   apply (edit):
     Zone     Zone                                                   Read
-    Zone     Zone Settings, DNS, Zone WAF, API Gateway              Edit
+    Zone     Zone Settings, DNS, Zone WAF, API Gateway,
+             Bot Management                                         Edit
     Account  Account Rulesets, Account Filter Lists, Cloudflare Pages,
              Turnstile                                              Edit
     Account  Access: Apps and Policies                              Read`;
