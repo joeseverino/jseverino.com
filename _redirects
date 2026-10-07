@@ -1,0 +1,19 @@
+# Cloudflare Pages redirects: https://developers.cloudflare.com/pages/configuration/redirects/
+# Format:  <source>  <destination>  [<status>]
+#
+# Note: Pages only supports 3xx (redirect) and 200 (rewrite) statuses here.
+# To make a path return 404, leave it unmatched and rely on the
+# `404.html` file at the site root, which Pages auto-serves with status 404.
+
+# The old /category/portfolio/ archive is /portfolio/.
+/category/portfolio/   /portfolio/                       301
+
+# Renamed writeup slug (2026-06-10): the old URL and its assets still resolve.
+/portfolio/building-local-dns-filtering-with-adguard-home-and-docker-engine/    /portfolio/building-local-dns-filtering/    301
+/assets/writeups/building-local-dns-filtering-with-adguard-home-and-docker-engine/*    /assets/writeups/building-local-dns-filtering/:splat    301
+
+# Resume PDF renamed to kebab-case (2026-07-11).
+/assets/docs/Joseph_Severino_Resume.pdf  /assets/docs/joseph-severino-resume.pdf  301
+
+# The default social card is a JPEG now (2026-10-05); links that cached the PNG still resolve.
+/assets/og/og-default.png  /assets/og/og-default.jpg  301

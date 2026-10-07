@@ -1,0 +1,12 @@
+User-agent: *
+Content-Signal: search=yes,ai-train=no
+Allow: /
+
+User-agent: GPTBot
+User-agent: CCBot
+User-agent: Google-Extended
+User-agent: ClaudeBot
+User-agent: Bytespider
+Disallow: /
+
+Sitemap: https://jseverino.com/sitemap-index.xml

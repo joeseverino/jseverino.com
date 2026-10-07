@@ -1,0 +1,257 @@
+{
+  "generator": "make-content-index",
+  "count": 16,
+  "items": [
+    {
+      "slug": "from-icloud-passwords-to-1password",
+      "title": "From iCloud Passwords to 1Password: Logins, SSH Certificates, and Homelab Secrets in One Place",
+      "description": "How a free 1Password account replaced iCloud Passwords and became the source for my homelab's secrets, SSH certificates signed with Touch ID, and the vaults my AI agents are allowed to read.",
+      "published_at": "2026-10-02T00:00:00.000Z",
+      "technologies": [
+        "1password",
+        "claude-code",
+        "docker",
+        "portainer",
+        "secrets-management",
+        "ssh",
+        "systemd",
+        "ubuntu-server",
+        "webauthn"
+      ],
+      "url": "https://jseverino.com/portfolio/from-icloud-passwords-to-1password/"
+    },
+    {
+      "slug": "from-wordpress-to-astro",
+      "title": "From WordPress to Astro: Building a Static Publishing System for jseverino.com",
+      "description": "Why jseverino.com left WordPress for static Astro on Cloudflare Pages: lighter pages, less attack surface, and a one-command publish flow behind a full test gate.",
+      "published_at": "2026-06-17T00:00:00.000Z",
+      "technologies": [
+        "astro",
+        "cloudflare",
+        "cloudflare-pages",
+        "markdown",
+        "typescript",
+        "wordpress"
+      ],
+      "url": "https://jseverino.com/portfolio/from-wordpress-to-astro/"
+    },
+    {
+      "slug": "building-a-custom-mcp-layer",
+      "title": "Building a Custom MCP Layer for My Technical Vault and Workflow",
+      "description": "A local MCP server that lets any AI assistant on my Mac search my Obsidian vault for runbooks and infrastructure notes, with a sensitivity gate that keeps restricted docs from leaving the machine without an explicit unlock.",
+      "published_at": "2026-05-29T00:00:00.000Z",
+      "technologies": [
+        "claude-code",
+        "django",
+        "docker",
+        "lm-studio",
+        "mcp",
+        "obsidian",
+        "python",
+        "tailscale",
+        "yaml"
+      ],
+      "url": "https://jseverino.com/portfolio/building-a-custom-mcp-layer/"
+    },
+    {
+      "slug": "zero-trust-private-infrastructure",
+      "title": "Zero-Trust Private Infrastructure with Tailscale, Caddy, and Layered Firewalls",
+      "description": "A private cloud and homelab architecture using Tailscale, Caddy, private DNS, browser-trusted TLS, nftables, and DOCKER-USER filtering to keep internal services reachable to trusted devices only.",
+      "published_at": "2026-05-10T00:00:00.000Z",
+      "technologies": [
+        "adguard-home",
+        "caddy",
+        "cloudflare",
+        "digitalocean",
+        "docker",
+        "lets-encrypt",
+        "nftables",
+        "portainer",
+        "ssh",
+        "tailscale",
+        "ubuntu-server",
+        "uptime-kuma",
+        "wireguard",
+        "zero-trust"
+      ],
+      "url": "https://jseverino.com/portfolio/zero-trust-private-infrastructure/"
+    },
+    {
+      "slug": "building-local-dns-filtering",
+      "title": "Deploying Local DNS Filtering with AdGuard Home and Docker Engine",
+      "description": "A self-hosted DNS filtering setup built on Docker Engine with host networking for per-device query visibility, Tailscale peer routing for tailnet-wide filtering, and internal HTTPS through Nginx Proxy Manager backed by a private Root CA.",
+      "published_at": "2026-05-08T00:00:00.000Z",
+      "technologies": [
+        "adguard-home",
+        "dns-over-https",
+        "docker-engine",
+        "hyper-v",
+        "nginx-proxy-manager",
+        "private-root-ca",
+        "tailscale",
+        "ubuntu-server"
+      ],
+      "url": "https://jseverino.com/portfolio/building-local-dns-filtering/"
+    },
+    {
+      "slug": "building-a-homelab",
+      "title": "Building a Homelab with Tailscale, Docker, Local HTTPS, and a Private Root CA",
+      "description": "A retired Dell OptiPlex turned into an always-on private homelab for remote LAN access, containerized services, reverse proxying, and trusted internal HTTPS.",
+      "published_at": "2026-05-06T00:00:00.000Z",
+      "technologies": [
+        "debian",
+        "docker",
+        "nginx-proxy-manager",
+        "openssl",
+        "private-root-ca",
+        "rdp",
+        "ssh",
+        "subnet-routing",
+        "tailscale",
+        "utm",
+        "windows-11-pro",
+        "wireguard"
+      ],
+      "url": "https://jseverino.com/portfolio/building-a-homelab/"
+    },
+    {
+      "slug": "building-study-quiz",
+      "title": "Building Study Quiz: A Local-First Exam Prep App",
+      "description": "Study Quiz is a browser-based study app I built to turn private question banks into active recall sessions. It imports JSON decks locally, tracks progress in the browser, reviews missed questions, and exports save states without uploading study material to a server.",
+      "published_at": "2026-05-03T00:00:00.000Z",
+      "technologies": [
+        "browser-local-storage",
+        "css",
+        "html",
+        "javascript",
+        "json",
+        "local-first-architecture"
+      ],
+      "url": "https://jseverino.com/portfolio/building-study-quiz/"
+    },
+    {
+      "slug": "architecting-a-custom-detection-engine",
+      "title": "Architecting a Custom Detection Engine with File Integrity and Security Event Monitoring",
+      "description": "A custom application-layer detection engine with file integrity monitoring, security event logging, Zero Trust-protected testing, and Git-based deployment.",
+      "published_at": "2026-04-26T00:00:00.000Z",
+      "technologies": [
+        "cloudflare",
+        "file-integrity-monitoring",
+        "git",
+        "github",
+        "php",
+        "security-event-monitoring",
+        "smtp",
+        "wordpress",
+        "zero-trust",
+        "zsh"
+      ],
+      "url": "https://jseverino.com/portfolio/architecting-a-custom-detection-engine/"
+    },
+    {
+      "slug": "securing-my-wordpress-site",
+      "title": "Securing My WordPress Site with Cloudflare, CSP, and Passkey Authentication",
+      "description": "A WordPress hardening project that combines Cloudflare edge security, a custom security plugin, browser-enforced policies, reduced default exposure, and a passkey-only admin login.",
+      "published_at": "2026-04-23T00:00:00.000Z",
+      "technologies": [
+        "cloudflare",
+        "csp",
+        "php",
+        "phpmyadmin",
+        "ssh",
+        "webauthn",
+        "wordpress",
+        "zero-trust"
+      ],
+      "url": "https://jseverino.com/portfolio/securing-my-wordpress-site/"
+    },
+    {
+      "slug": "validating-the-vsftpd-2-3-4-backdoor",
+      "title": "Validating the vsftpd 2.3.4 Backdoor in an Isolated Lab",
+      "description": "A mini lab that identifies vsftpd 2.3.4 through service enumeration, validates the known backdoor, and captures the FTP trigger packet in Wireshark.",
+      "published_at": "2026-04-21T00:00:00.000Z",
+      "technologies": [
+        "kali-linux",
+        "metasploit-framework",
+        "mitre-attack",
+        "nmap",
+        "wireshark"
+      ],
+      "url": "https://jseverino.com/portfolio/validating-the-vsftpd-2-3-4-backdoor/"
+    },
+    {
+      "slug": "exploiting-php-cgi-argument-injection",
+      "title": "Exploiting PHP CGI Argument Injection in an Isolated Lab",
+      "description": "A web exploitation lab that enumerates an exposed service, validates PHP CGI argument injection, and analyzes the exploit request in Wireshark.",
+      "published_at": "2026-04-19T00:00:00.000Z",
+      "technologies": [
+        "kali-linux",
+        "metasploit-framework",
+        "mitre-attack",
+        "nmap",
+        "php",
+        "wireshark"
+      ],
+      "url": "https://jseverino.com/portfolio/exploiting-php-cgi-argument-injection/"
+    },
+    {
+      "slug": "marks-spencer-cyberattack-diamond-model-analysis",
+      "title": "Marks & Spencer Cyberattack – Diamond Model Analysis",
+      "description": "Analyzing the 2025 Marks & Spencer cyberattack using the Diamond Model, mapping identity-based intrusion techniques to MITRE ATT&CK and aligning remediation strategies with NIST controls.",
+      "published_at": "2026-03-29T00:00:00.000Z",
+      "technologies": [
+        "diamond-model",
+        "mitre-attack",
+        "nist"
+      ],
+      "url": "https://jseverino.com/portfolio/marks-spencer-cyberattack-diamond-model-analysis/"
+    },
+    {
+      "slug": "simulating-arp-spoofing",
+      "title": "Simulating ARP Spoofing with Mininet and Demonstrating Enterprise Mitigations",
+      "description": "A networking security lab that simulates ARP spoofing in Mininet, analyzes packet captures in Wireshark, and demonstrates enterprise mitigations using DHCP Snooping and Dynamic ARP Inspection in Cisco Packet Tracer.",
+      "published_at": "2026-03-15T00:00:00.000Z",
+      "technologies": [
+        "cisco-packet-tracer",
+        "mininet",
+        "python",
+        "wireshark"
+      ],
+      "url": "https://jseverino.com/portfolio/simulating-arp-spoofing/"
+    },
+    {
+      "slug": "deploying-a-wazuh-siem-lab",
+      "title": "Deploying a Wazuh SIEM Lab for Endpoint Monitoring and Vulnerability Detection",
+      "description": "A Wazuh SIEM lab used to monitor a Windows endpoint, detect vulnerabilities, investigate malware alerts, and configure automated email notifications.",
+      "published_at": "2026-03-08T00:00:00.000Z",
+      "technologies": [
+        "smtp",
+        "ubuntu-server",
+        "vulnerability-detection",
+        "wazuh",
+        "windows"
+      ],
+      "url": "https://jseverino.com/portfolio/deploying-a-wazuh-siem-lab/"
+    },
+    {
+      "slug": "oop-football-score-simulator",
+      "title": "OOP Football Score Simulator",
+      "description": "An Object-Oriented Python project that simulates American football games with team records, realistic scoring, and automatic stat updates.",
+      "published_at": "2025-08-19T00:00:00.000Z",
+      "technologies": [
+        "python"
+      ],
+      "url": "https://jseverino.com/portfolio/oop-football-score-simulator/"
+    },
+    {
+      "slug": "math-quiz-game",
+      "title": "Math Quiz Game",
+      "description": "A simple command-line math quiz game written in Python. The program prompts the user to select a difficulty level (1–3) and then challenges them with 10 random addition problems. The player has up to 3 attempts for each question, and their final score is displayed at the end.",
+      "published_at": "2025-08-10T00:00:00.000Z",
+      "technologies": [
+        "python"
+      ],
+      "url": "https://jseverino.com/portfolio/math-quiz-game/"
+    }
+  ]
+}

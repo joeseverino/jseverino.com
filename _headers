@@ -1,0 +1,88 @@
+# Cloudflare Pages headers.
+# Pages MERGES the headers of every matching rule rather than letting the most
+# specific one win. For a single-value header like Cache-Control that means
+# overlapping path rules combine, so they must not contradict: the immutable rule
+# is scoped to write-once dirs and must never be a broad /assets/*, or it re-adds
+# immutable to the in-place chrome assets and pins a stale logo for a year.
+
+# Fingerprinted Astro assets and synced static assets.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
+
+# Unversioned files (resume PDF, signed docs): short cache so an update
+# propagates within an hour instead of riding the immutable rule below.
+/assets/docs/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+# Chrome assets that change in place (favicons, brand marks, OG cards). Stable
+# filenames whose contents get replaced on a rebrand, so they get a short
+# must-revalidate cache and are deliberately kept out of the immutable rule below.
+/favicon.ico
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/icons/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/brand/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+/assets/og/*
+  Cache-Control: public, max-age=3600, must-revalidate
+  ! Access-Control-Allow-Origin
+
+# The webfont keeps the 1-year immutable cache (content images are under
+# /_astro/, content-hashed). Scoped per-dir, not a broad /assets/*, so it never
+# overlaps the chrome paths above: a stale logo pinned for a year is the failure
+# mode that scoping prevents.
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  ! Access-Control-Allow-Origin
+
+# WKD key: explicit content-type since the binary key file has no
+# extension, and a short cache so revocations propagate within minutes.
+/.well-known/openpgpkey/*
+  Content-Type: application/octet-stream
+  Cache-Control: public, max-age=300, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=300, must-revalidate
+
+# Keep branch and deployment preview URLs out of search indexes. The canonical
+# custom domain still indexes normally.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+https://:version.:project.pages.dev/*
+  X-Robots-Tag: noindex
+
+# Security headers for every route.
+# The Content-Security-Policy hashes the one inline script and the inlined
+# stylesheet each page carries, so bin/build-csp.ts fills the placeholders below
+# when it builds dist/_headers. Pages MERGES the rules that match a path, so the
+# contact page detaches the global policy and sets its own: Turnstile's script
+# writes to Trusted Types sinks without a policy, so there that directive is
+# reported rather than enforced.
+# Strict-Transport-Security is set at the Cloudflare zone level (SSL/TLS →
+# Edge Certificates → HSTS) so it applies to every response without being
+# duplicated here.
+/*
+  ! Access-Control-Allow-Origin
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-haHyrvl1nSgzYexen+IsXjpu9os9rZu/8Yj2uk2x/6g=' https://challenges.cloudflare.com https://static.cloudflareinsights.com; require-trusted-types-for 'script'; style-src 'self' 'sha256-vFEYtQMeYRzrGsVpxWvS3QyYKnyMVNBTVq5oGAjx5Jc='; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-to csp-endpoint; report-uri https://jseverino.com/api/csp-report
+  Reporting-Endpoints: csp-endpoint="https://jseverino.com/api/csp-report"
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  X-Permitted-Cross-Domain-Policies: none
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-site
+  Permissions-Policy: accelerometer=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), unload=(), usb=(), xr-spatial-tracking=()
+
+/contact/*
+  ! Content-Security-Policy
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-haHyrvl1nSgzYexen+IsXjpu9os9rZu/8Yj2uk2x/6g=' https://challenges.cloudflare.com https://static.cloudflareinsights.com; style-src 'self' 'sha256-vFEYtQMeYRzrGsVpxWvS3QyYKnyMVNBTVq5oGAjx5Jc='; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com; frame-src 'self' https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests; report-to csp-endpoint; report-uri https://jseverino.com/api/csp-report
+  Content-Security-Policy-Report-Only: require-trusted-types-for 'script'; report-to csp-endpoint; report-uri https://jseverino.com/api/csp-report
