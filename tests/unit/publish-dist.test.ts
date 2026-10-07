@@ -20,9 +20,8 @@ const head = () => git(repo, 'rev-parse', 'HEAD');
 const publish = (push = true) => publishDist({ repo, dir: site, branch: 'dist', sha: head(), push });
 const tree = () => git(origin, 'ls-tree', '-r', '--name-only', 'dist').split('\n');
 
-// The two API calls the publisher makes, run against the bare origin: create a commit from a tree
-// and parents, then move or create a ref. The commit it returns is made by an identity the
-// publisher never set, which is how a signed API commit differs from a local one.
+// The API calls the publisher makes, run against the bare origin. The commit comes back from an
+// identity the publisher never set, as a signed API commit does.
 const API_IDENTITY = { GIT_AUTHOR_NAME: 'api', GIT_AUTHOR_EMAIL: 'api@example.com', GIT_COMMITTER_NAME: 'api', GIT_COMMITTER_EMAIL: 'api@example.com' };
 const apiCalls: { method: string; route: string }[] = [];
 const fakeApi = async (url: string, init: RequestInit) => {

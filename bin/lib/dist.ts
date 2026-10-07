@@ -1,7 +1,5 @@
-// Publishes a built site as one commit on a branch, built from the directory with a
-// temporary index, so no checkout or worktree of that branch is needed. With a token and
-// repository the commit is created through the API, which GitHub signs; without them it
-// is pushed as built here, unsigned.
+// Publishes a built site as one commit on a branch, from a temporary index, with no checkout of
+// that branch. With a token and repository the commit is made through the API, which signs it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -61,8 +59,7 @@ export async function publishDist({ repo, dir, branch, sha, push = false, token,
       return { status: 'pushed', commit };
     }
 
-    // The tree goes up under a ref that is not a branch, so nothing builds it; the API commit
-    // names that tree, and GitHub signs commits it creates for the Actions token.
+    // The tree goes up under a non-branch ref so nothing builds it; the API commit names that tree.
     const staging = `refs/dist-staging/${sha.slice(0, 12)}`;
     git([...auth, 'push', '--quiet', 'origin', `${commit}:${staging}`]);
     try {
