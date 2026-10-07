@@ -8,8 +8,8 @@ import { fromRoot, read, runner, schemaTests } from './helpers/desired-state.ts'
 
 const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');
-const schema = read<JsonSchema>('github/repo.schema.json');
-const desired = read<DesiredState>('github/repo.json');
+const schema = read<JsonSchema>('.github/repo.schema.json');
+const desired = read<DesiredState>('.github/repo.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
@@ -18,8 +18,8 @@ const { run, checkJson } = runner(main, (fake: ReturnType<typeof createGithubFak
 
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
-describe('github/repo.json', () => {
-  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('github/repo.json'), fromRoot('github/repo.schema.json')) });
+describe('.github/repo.json', () => {
+  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
 
   test('squash is the only merge method, in the settings and in the ruleset', () => {
     const { settings, ruleset } = desired;

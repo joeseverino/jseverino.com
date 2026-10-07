@@ -1,6 +1,6 @@
 # Cloudflare
 
-The site runs on Cloudflare's free plan: Pages for the static build and the
+The site runs on Cloudflare: Pages for the static build and the
 Functions, one D1 database, Turnstile, and the zone in front of it. Everything
 that can be code is code. The repo holds the Pages configuration files and a
 desired-state file for the zone and account, and
@@ -30,7 +30,7 @@ the tool looks both up from the zone name at runtime.
 Every HTML page is a plain static asset, served without invoking a Function.
 [`_routes.json`](../public/_routes.json) includes only `/api/*` and
 `/__sitedrift/*`, with an empty exclude list. A miss anywhere gets the root
-`404.html`, which carries the same policy as every page. The free plan allows
+`404.html`, which carries the same policy as every page. The limit is
 100,000 Function requests a day, and page views no longer count against it: the
 quota covers only the contact form, CSP reports, and the preview proxy.
 
@@ -46,11 +46,11 @@ placeholder, lists a path twice, lacks a `Content-Security-Policy` on `/*`, or
 lacks the detach-plus-set override on `/contact/*`. The edge suite proves the
 routing and the headers under `wrangler pages dev`.
 
-## Free-plan limits that shaped this
+## Platform limits that shaped this
 
-| Feature | Free limit | Used |
+| Feature | Limit | Used |
 |---|---|---|
-| WAF custom rules | 5, no regex | 4; one stays free for an incident |
+| WAF custom rules | 5, no regex | 2 here, 2 made in the dashboard; one stays free for an incident |
 | Rate-limiting rules | 1; path and verified-bot fields; per IP; 10 s period; 10 s block | 1: `/api/*`, 15 requests per 10 s |
 | Bulk Redirects | 15 rules | 1: `jseverino.pages.dev` → `https://jseverino.com` |
 | API Shield schema validation | Block is the only action | Block on `POST /api/contact` |
@@ -97,7 +97,7 @@ the dashboard during an incident is never touched.
 | `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the Function already 404s there; this stops it at the edge) |
 
-The free plan allows five custom rules, dashboard rules included. `cloudflare:check` reports the total as `rule budget`.
+At most five custom rules, dashboard rules included. `cloudflare:check` reports the total as `rule budget`.
 
 ## Features that stay off
 
@@ -129,12 +129,12 @@ overrides shorter origin TTLs, which is how `/favicon.ico` and
 `botManagement` in `zone.json` declares the zone's `bot_management` settings.
 `enable_js` is `false`: JavaScript Detections inject an inline script with
 per-request values into HTML, and a static hash CSP cannot cover that script.
-On the free plan, turning Bot Fight Mode off in the dashboard does not turn
+Turning Bot Fight Mode off in the dashboard does not turn
 JavaScript Detections off; only `enable_js: false` does, which is why the
 setting is declared rather than left to the dashboard. `fight_mode` is `false`
 for the same reason, and because Bot Fight Mode challenges datacenter IPs, which
 is why CI's deploy verification targets each deployment's own `*.pages.dev` URL,
-outside the zone. Neither setting can skip paths on the free plan.
+outside the zone. Neither setting can skip paths.
 
 `ai_training`, `ai_search`, and `ai_user` are the three AI crawler policies on
 the Security → Bots page. The endpoint accepts only a PUT and resets every field

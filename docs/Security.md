@@ -74,7 +74,7 @@ single-purpose, and layered:
 | Control | What it does |
 |---|---|
 | **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the function runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
-| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one the free plan offers (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `npm run cloudflare:check` reports when the live zone differs. |
+| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `npm run cloudflare:check` reports when the live zone differs. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API (with an idempotency key) before anything is stored. The response must name this site's hostname and the contact widget's action, so a token solved on another site or widget is refused. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, checked by a `COUNT(*)` inside the `INSERT` itself, so concurrent requests cannot race past it. Excess returns HTTP 429. |
@@ -372,7 +372,7 @@ with a read-only token and exits non-zero while anything differs, and
 difference with a separate write token. What it declares, briefly:
 
 - **TLS:** minimum TLS 1.3, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
-- **WAF custom rules** (two of the free plan's five; dashboard rules take the
+- **WAF custom rules** (two of five; dashboard rules take the
   rest and one slot is kept free for an incident): `POST` only under `/api/` with
   the right content type per endpoint, and the preview proxy blocked on the
   production hosts.
@@ -389,7 +389,7 @@ difference with a separate write token. What it declares, briefly:
   `cloudflare/zone.json` and applied with `npm run cloudflare:apply` (see
   [docs/Cloudflare.md](./Cloudflare.md#bot-management)).
 
-[docs/Cloudflare.md](./Cloudflare.md) has the free-plan limits behind
+[docs/Cloudflare.md](./Cloudflare.md) has the platform limits behind
 each choice, the token permissions, and the post-apply checks.
 
 ## External verification

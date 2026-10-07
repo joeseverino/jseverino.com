@@ -1,5 +1,5 @@
 {
-  "_comment": "Live repository state shaped like the REST API responses, with the drift github/repo.json exists to remove: merge commits allowed, no SHA pinning, a ruleset missing one required check.",
+  "_comment": "Live repository state shaped like the REST API responses, with the drift .github/repo.json exists to remove: merge commits allowed, no SHA pinning, a ruleset missing one required check.",
   "repo": {
     "allow_squash_merge": true,
     "allow_merge_commit": true,

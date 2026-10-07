@@ -62,13 +62,13 @@
       }
     },
     "firewall": {
-      "description": "WAF custom rules (phase http_request_firewall_custom). The free plan allows 5 including rules made in the dashboard, which check counts; keep one free for incidents.",
+      "description": "WAF custom rules (phase http_request_firewall_custom). At most 5 including rules made in the dashboard, which check counts; keep one free for incidents.",
       "type": "array",
       "maxItems": 4,
       "items": { "$ref": "#/$defs/rule" }
     },
     "rateLimit": {
-      "description": "The free plan's one rate-limiting rule (phase http_ratelimit): path and verified-bot fields, per IP and colo, 10 s period and block.",
+      "description": "The one rate-limiting rule (phase http_ratelimit): path and verified-bot fields, per IP and colo, 10 s period and block.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "description", "expression", "action", "characteristics", "period", "requests_per_period", "mitigation_timeout"],
@@ -124,7 +124,7 @@
       }
     },
     "schemaValidation": {
-      "description": "API Shield schema validation for the contact endpoint. Block is the only action on the free plan.",
+      "description": "API Shield schema validation for the contact endpoint. Block is the only action offered.",
       "type": "object",
       "additionalProperties": false,
       "required": ["name", "file", "host", "method", "endpoint", "action"],

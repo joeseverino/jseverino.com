@@ -1,4 +1,4 @@
-// The GitHub repository posture in github/repo.json against the live repository.
+// The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
 import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Fetch, type Item, type Run } from './drift.ts';
 
@@ -224,7 +224,7 @@ export const apply = (client: Client, items: Item[], { log = () => {} }: { log?:
 
 export const createRun = (desired: DesiredState, client: Client): Run => ({
   target: desired.repository,
-  source: 'github/repo.json',
+  source: '.github/repo.json',
   survey: async () => diff(desired, await readLive(client, desired)),
   apply: (items, log) => apply(client, items, { log }),
 });

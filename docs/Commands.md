@@ -68,9 +68,9 @@ appears here.
 | `npm run cloudflare:plan` | The Cloudflare API calls an apply would make |
 | `npm run cloudflare:apply` | Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only) |
 | `npm run dist:publish` | Commit a build directory to the `dist` branch (CI publishes it on every push to `main`) |
-| `npm run github:check` | Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `github/repo.json` (exit 1 on drift) |
+| `npm run github:check` | Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift) |
 | `npm run github:plan` | The GitHub API calls an apply would make |
-| `npm run github:apply` | Plan, or with `-- --yes` apply `github/repo.json` (admin token) |
+| `npm run github:apply` | Plan, or with `-- --yes` apply `.github/repo.json` (admin token) |
 | `npm run d1:apply` | Apply `cloudflare/d1.sql` to the remote D1 database (idempotent) |
 | `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly) |
 | `npm run clean:generated` | Remove build output and build caches |

@@ -31,7 +31,7 @@ jobs:
           astro-cache: 'true'
 
       # The same command Cloudflare Pages runs. The site key is public and set as a
-      # repository variable (github/repo.json), because Pages holds it as a project variable.
+      # repository variable (.github/repo.json), because Pages holds it as a project variable.
       - name: Build
         run: npm run build
         env:

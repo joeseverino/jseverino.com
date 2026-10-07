@@ -361,7 +361,7 @@ Coverage:
 - **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
 - **`POST /api/csp-report`**: left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
 
-The action is **Block**, the only one the free plan offers: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
+The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
 
 ## 11. Build Output
 

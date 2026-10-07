@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://jseverino.com/github/repo.schema.json",
+  "$id": "https://jseverino.com/.github/repo.schema.json",
   "title": "GitHub repository desired state",
   "description": "The repository settings, security features, Actions permissions, and branch ruleset bin/github.ts checks and applies. See docs/GitHub-Settings.md.",
   "type": "object",

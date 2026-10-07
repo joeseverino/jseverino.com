@@ -1,9 +1,9 @@
 # GitHub Settings
 
 The repository's merge rules, security features, Actions permissions, and the
-`main` ruleset are declared in [`github/repo.json`](../github/repo.json) and
+`main` ruleset are declared in [`.github/repo.json`](../.github/repo.json) and
 checked against the live repository by `bin/github.ts`. The file is validated by
-[`github/repo.schema.json`](../github/repo.schema.json) and holds no tokens; the
+[`.github/repo.schema.json`](../.github/repo.schema.json) and holds no tokens; the
 only ids in it are the public app ids of two required status checks. The
 Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 
@@ -22,7 +22,7 @@ live ruleset is configured. The rule that nothing is pushed to `main` directly
 is kept by convention (see [Development](./Development.md)), not by the ruleset.
 
 A new CI job that must gate merges is added to the ruleset's
-`required_status_checks` in `github/repo.json`, then applied.
+`required_status_checks` in `.github/repo.json`, then applied.
 
 ## Running check, plan, and apply
 
@@ -36,7 +36,7 @@ The token comes from `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`, and
 is never printed. It needs repository Administration: read for `check` and
 `plan`, write for `apply`; a classic token with the `repo` scope covers both.
 
-Apply changes only what `github/repo.json` declares. The ruleset is replaced as
+Apply changes only what `.github/repo.json` declares. The ruleset is replaced as
 a whole, matched by name; no other ruleset is touched. Unit tests drive all
 three commands against an in-memory API
 ([`tests/unit/github.test.ts`](../tests/unit/github.test.ts)); nothing in the

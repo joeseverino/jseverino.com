@@ -13,7 +13,7 @@ export type * from './cloudflare-types.ts';
 export const API_BASE = 'https://api.cloudflare.com/client/v4';
 
 const FIREWALL_PHASE = 'http_request_firewall_custom';
-// Custom rules the free plan allows in the phase, dashboard rules included.
+// Custom rules allowed in the phase, dashboard rules included.
 const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 const REDIRECT_PHASE = 'http_request_redirect';
@@ -264,7 +264,7 @@ function botManagementItem(desired: DesiredState, live: LiveState): Item {
     `differs: ${changedKeys(want, have).join(', ')}`);
 }
 
-// Dashboard rules count against the plan's limit, so the total is checked, not just this file's share.
+// Dashboard rules count against the limit, so the total is checked, not just this file's share.
 function firewallBudgetItem(desired: DesiredState, live: LiveState): Item {
   const others = (live.firewall?.rules ?? []).filter((rule) => !isOwned(desired, rule)).length;
   const total = others + desired.firewall.length;

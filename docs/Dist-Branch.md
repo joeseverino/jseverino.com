@@ -11,7 +11,7 @@ The branch is generated; nothing is edited on it.
 |---|---|
 | [`dist.yml`](../.github/workflows/dist.yml) | On each push to `main`, runs `npm run build` (the command Cloudflare Pages runs) and publishes the output |
 | [`bin/publish-dist.ts`](../bin/publish-dist.ts) | Builds a git tree from the output directory with a temporary index and commits it on top of `origin/dist`; no commit when the tree is unchanged |
-| `PUBLIC_TURNSTILE_SITE_KEY` | The one build-time variable the pages need. Cloudflare Pages holds it as a project variable; the workflow reads it from a repository variable declared in [`github/repo.json`](../github/repo.json) |
+| `PUBLIC_TURNSTILE_SITE_KEY` | The one build-time variable the pages need. Cloudflare Pages holds it as a project variable; the workflow reads it from a repository variable declared in [`.github/repo.json`](../.github/repo.json) |
 
 The publish job is the only one with `contents: write`, and it runs only for pushes
 to `main`, so pull-request code never holds the write token. The commit is created
