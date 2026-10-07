@@ -226,21 +226,33 @@ async function verifyDist(urls: string[]): Promise<string> {
   }
 }
 
-// Must be refused before the honeypot, Turnstile call, and D1 write, so the probe stores nothing.
+// On the zone, API Shield refuses a body without turnstileToken before the function runs; a deployment
+// outside the zone reaches the function. Neither probe stores anything: the function refuses first.
 async function verifyContactGate(): Promise<string> {
-  const response = await fetchChecked(`${origin}/api/contact`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: 'deploy-verify',
-      email: `deploy-verify@${SITE.domain}`,
-      message: 'Automated post-deploy probe. No verification token supplied.',
-      sourceUrl: `${origin}/contact/`,
-    }),
-  });
-  const payload: unknown = await response.json().catch(() => ({}));
-  assertClean(contactRefusalFindings(response.status, payload), 'POST /api/contact without a Turnstile token');
-  return 'POST without a Turnstile token is refused with 400';
+  const submit = async (extra: Record<string, string>) => {
+    const response = await fetchChecked(`${origin}/api/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'deploy-verify',
+        email: `deploy-verify@${SITE.domain}`,
+        message: 'Automated post-deploy probe. No valid verification token supplied.',
+        sourceUrl: `${origin}/contact/`,
+        ...extra,
+      }),
+    });
+    return { status: response.status, payload: await response.json().catch(() => ({})) as unknown };
+  };
+
+  const tokenless = await submit({});
+  if (deployment) {
+    assertClean(contactRefusalFindings(tokenless.status, tokenless.payload), 'POST /api/contact without a Turnstile token');
+    return 'POST without a Turnstile token is refused with 400';
+  }
+  if (tokenless.status !== 403) throw new Error(`POST /api/contact without a Turnstile token: status ${tokenless.status}, expected API Shield to refuse it with 403`);
+  const invalid = await submit({ turnstileToken: 'deploy-verify' });
+  assertClean(contactRefusalFindings(invalid.status, invalid.payload), 'POST /api/contact with an invalid Turnstile token');
+  return 'API Shield refuses a body without a token (403); the function refuses an invalid one (400)';
 }
 
 // The site key is a build-time variable; losing it still builds but ships `data-sitekey=""`.

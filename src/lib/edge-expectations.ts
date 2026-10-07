@@ -121,7 +121,7 @@ export function cacheRuleFindings(headers: HeaderRecord, { immutable }: { immuta
   return findings;
 }
 
-// The contact function must refuse a missing Turnstile token before the honeypot, Turnstile call, and D1 write.
+// The contact function refuses a missing or invalid Turnstile token with 400 before the honeypot and the D1 write.
 export function contactRefusalFindings(status: number, payload: unknown): string[] {
   const findings: string[] = [];
   const body: { ok?: unknown; error?: unknown } = payload && typeof payload === 'object' ? payload : {};

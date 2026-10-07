@@ -50,7 +50,14 @@ export function loadDesired<T>(file: string, schemaFile: string): T {
   return desired;
 }
 
-export const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+// Objects with their keys sorted at every depth: APIs return fields in an order of their own.
+export const stable = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(stable);
+  if (typeof value !== 'object' || value === null) return value;
+  return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, entry]) => [key, stable(entry)]));
+};
+
+export const same = (a: unknown, b: unknown): boolean => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
 const show = (value: unknown): string => (value === undefined || value === null ? 'absent' : typeof value === 'string' ? value : JSON.stringify(value));
 
 export function item(area: string, name: string, want: unknown, have: unknown, status: ItemStatus, steps: Step[] = [], note = ''): Item {

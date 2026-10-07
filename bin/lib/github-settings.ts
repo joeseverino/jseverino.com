@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Fetch, type Item, type Run } from './drift.ts';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, stable, type Fetch, type Item, type Run } from './drift.ts';
 
 export const API_BASE = 'https://api.github.com';
 
@@ -127,12 +127,6 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
   };
 }
 
-
-const stable = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(stable);
-  if (typeof value !== 'object' || value === null) return value;
-  return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, entry]) => [key, stable(entry)]));
-};
 
 const byKey = (key: string) => (a: unknown, b: unknown): number => String(fields(a)[key]).localeCompare(String(fields(b)[key]));
 
