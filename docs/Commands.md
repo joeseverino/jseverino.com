@@ -117,7 +117,7 @@ dev server at it with `SITE_CONTENT_ROOT`; the committed snapshot is left alone.
 Obsidian vault into `src/content/` and their assets into `public/assets/`.
 The synced snapshot is committed, so the public repo never depends on the
 private vault. Never edit the synced files by hand; the next sync overwrites
-them. The sync keeps its caches under the gitignored `.cache/`. See [`Vault-Workflow.md`](./Vault-Workflow.md).
+them. Caches live under the gitignored `.cache/`. See [`Vault-Workflow.md`](./Vault-Workflow.md).
 
 **`npm run sync:tokens`**: serializes the lockfile-pinned `severino-brand`
 web contract into committed build inputs: the `:root` block in
@@ -149,9 +149,9 @@ once, in code.
 without stopping at the first failure: green prints one line; red writes
 `.validation-report.md` with one row per failure, a remediation, and the exact
 command to rerun that single check (long output is clipped; the rerun command
-shows the rest). Audits run concurrently, capped by memory: on a
-machine with under 12 GB the three browser suites run one at a time, so an
-8 GB laptop never swaps.
+shows the rest). Audits run concurrently, capped by memory: on a machine with
+under 12 GB the three browser suites run one at a time, so an 8 GB laptop never
+swaps.
 
 - `-- --fast`: only the static checks (~7s); skips build and browser tests.
 - `-- --no-tests`: static checks and the build; skips the browser suites.
@@ -170,14 +170,14 @@ every `publish`-gated audit from
 build, and the post-build audits. Each phase's audits run concurrently and
 report in registry order. Fail-fast: stops at the first broken check, and
 stops whatever is still running.
-`-- --no-sync` skips the vault sync so a code-only change can be verified
-without dragging in unrelated content drift. `-- --after-gate` skips the
+`-- --no-sync` skips the vault sync, so a code-only change is verified without
+unrelated content drift. `-- --after-gate` skips the
 audits `gate:check` already ran; CI passes it, and on the runner the edge suite
 is left to its own job.
 
 **`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs
-(`gate:check`, then `publish:check`): `CI=1` (so local-only audits skip, same as on the runner) and a scratch GPG
-keyring seeded only from the committed WKD key. A gate that depends on
+(`gate:check`, then `publish:check`) with `CI=1` (local-only audits skip, as on
+the runner) and a scratch GPG keyring seeded only from the committed WKD key. A gate that depends on
 authoring-machine state fails here instead of after a push.
 
 **`npm run release:check`**: an optional full local gate before opening a PR: runs
@@ -213,10 +213,11 @@ non-zero on an audit execution failure or an `error`-level threshold. Uses the
 lockfile's Playwright Chromium (`npx playwright install chromium`), with
 `CHROME_PATH` available for an explicit browser override. CI installs Chromium
 and its system dependencies before the audit. Per-page logs accompany the
-reports, including when Chrome fails to launch. Expect best
-practices in the 70s from any client Cloudflare distrusts: Bot Fight Mode's
-injected detection script uses deprecated browser APIs (and Bot Fight Mode must stay off for the zone, since a hash CSP cannot cover it), and PageSpeed Insights
-is not served that script.
+reports, including when Chrome fails to launch. Expect best practices in the
+70s from any client Cloudflare distrusts: Bot Fight Mode's injected detection
+script uses deprecated browser APIs (Bot Fight Mode must stay off for the zone,
+since a hash CSP cannot cover it), and PageSpeed Insights is not served that
+script.
 
 **`npm run deploy:verify`**: run after a production deploy, from a residential IP;
 Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run

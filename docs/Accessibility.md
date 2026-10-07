@@ -1,6 +1,6 @@
 # Accessibility
 
-Accessibility here is a property of the rendered HTML and CSS. This file records the posture so a change can be checked against it.
+Accessibility is a property of the rendered HTML and CSS. This file records the posture that changes are checked against.
 
 ## Document Structure
 
@@ -10,7 +10,7 @@ Accessibility here is a property of the rendered HTML and CSS. This file records
 
 ## Skip Link
 
-`BaseLayout.astro` renders a `<a class="skip-link" href="#main">` as the first focusable element on every page. The element is visually translated off-screen by default and slides into view when it receives focus, satisfying WCAG 2.4.1 (Bypass Blocks) without permanently consuming layout. Its style lives in [`src/styles/accessibility.css`](../src/styles/accessibility.css) under `.skip-link`.
+`BaseLayout.astro` renders a `<a class="skip-link" href="#main">` as the first focusable element on every page. It sits off-screen until focused, then slides into view (WCAG 2.4.1, Bypass Blocks), so it takes no layout space. Its style lives in [`src/styles/accessibility.css`](../src/styles/accessibility.css) under `.skip-link`.
 
 ## Landmarks And ARIA
 
@@ -36,7 +36,7 @@ Mobile navigation uses the native `popover` API. The browser restores focus when
 
 ## Reduced Motion
 
-A `@media (prefers-reduced-motion: reduce)` block in [`src/styles/accessibility.css`](../src/styles/accessibility.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. These declarations use `!important` so component-level transition selectors cannot override the user preference. Users who set the OS preference get static visuals without per-element opt-outs.
+A `@media (prefers-reduced-motion: reduce)` block in [`src/styles/accessibility.css`](../src/styles/accessibility.css) collapses every animation and transition to `0.01ms` and forces `scroll-behavior: auto`. These declarations use `!important` so component-level transition selectors cannot override the preference.
 
 ## Forced Colors
 
@@ -60,14 +60,14 @@ Nothing on the site requires a pointer to operate.
 
 The site renders in light or dark. Both come from one set of dual-valued tokens in [`src/styles/tokens.css`](../src/styles/tokens.css): `:root` declares `color-scheme: light dark`, and each themeable token holds a `light-dark(light, dark)` pair. There is no dark stylesheet and no `[data-theme]` cascade to keep in sync.
 
-Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against the OS preference on its own. A visitor who never touches the control gets a working dark theme from `prefers-color-scheme` alone.
+Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against `prefers-color-scheme`.
 
-The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) exists only to override that. Auto, Light, and Dark are offered rather than a light/dark pair so that an explicit choice can be released back to the OS. Details:
+The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, not a light/dark pair, so an explicit choice can be released back to the OS. Details:
 
 - The control is a `role="group"` of three buttons, each carrying `aria-label` and `aria-pressed`. Segments are 28x24 CSS px, above the WCAG 2.2 target-size minimum (2.5.8).
 - An explicit choice sets `color-scheme` on `<html>` and persists to `localStorage`; auto clears both.
 - A blocking inline script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) applies a stored choice before first paint, so an overridden theme never flashes the OS theme first. It also stamps `data-theme-mode` on `<html>`, which is what reveals the control.
-- `<meta name="color-scheme" content="light dark">` sits in the head alongside that script. It duplicates the `color-scheme` in `base.css` deliberately: the stylesheet governs only once it has loaded, and until then the document scheme is `normal`, so the browser paints a white canvas with light scrollbars and form controls even on a dark-mode OS. The meta is parsed first, so the very first frame is already dark.
+- `<meta name="color-scheme" content="light dark">` sits in the head alongside that script. It duplicates the `color-scheme` in `base.css` deliberately: until the stylesheet loads the document scheme is `normal`, which paints a white canvas with light scrollbars and form controls on a dark-mode OS. The meta is parsed first, so the first frame is already dark.
 - With JavaScript off, the control does not render at all, because it could not do anything. Auto is unaffected.
 - `<meta name="theme-color">` ships as a light and a dark pair scoped by `prefers-color-scheme`, carrying the page background for each theme (`SURFACE` in [`src/lib/brand.ts`](../src/lib/brand.ts), projected from `--color-bg`) so the browser toolbar blends into the page. The metas sit above the boot script in the head, and the script re-points them for an explicit choice: browsers sample `theme-color` while parsing the head, so a deferred fixup lands after it has already been read. Safari on macOS samples once per load and does not re-read on an in-place toggle; the tint corrects on the next navigation.
 - The code-block and terminal palette (`--code-*`, `--term-*`) stays dark in both themes, like a real terminal.
@@ -121,20 +121,19 @@ CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-de
 ```
 
 Playwright runs the functional accessibility and layout checks in Chromium,
-Firefox, and WebKit desktop/mobile projects. Chromium on macOS owns the visual
-baselines to avoid engine- and OS-specific font-rasterization noise. When an
-intentional design change alters a baseline, inspect the expected, actual, and
-diff images first, then run `npm run test:e2e:visual:update --
+Firefox, and WebKit desktop and mobile projects. Chromium on macOS owns the
+visual baselines to avoid engine- and OS-specific font-rasterization noise. When
+an intentional design change alters a baseline, inspect the expected, actual,
+and diff images, then run `npm run test:e2e:visual:update --
 --project=chromium-desktop`. Commit the reviewed PNG changes with the frontend
-change; GitHub's image diff becomes the version-to-version visual audit trail.
-Never update snapshots only to make CI green. A manual keyboard pass through
-the home, a portfolio article, the portfolio listing, and the contact form
-remains useful before large interaction changes.
+change. Never update snapshots only to make CI green. A manual keyboard pass
+through the home, a portfolio article, the portfolio listing, and the contact
+form remains useful before large interaction changes.
 
-Three layers of this posture are machine-enforced on every gate run: static
-WCAG contrast math over the color tokens (`npm run check:contrast`),
-structural HTML over every built page (unique ids, alt on every image, no
-unprocessed `::directive` text; `npm run check:html`), and an axe-core WCAG A/AA sweep over the key page
+Three layers are machine-enforced on every gate run: WCAG contrast math over the
+color tokens (`npm run check:contrast`), structural HTML over every built page
+(unique ids, alt on every image, no unprocessed `::directive` text;
+`npm run check:html`), and an axe-core WCAG A/AA sweep over the key page
 archetypes in a real browser
 ([`tests/playwright/a11y.single.spec.ts`](../tests/playwright/a11y.single.spec.ts)).
 

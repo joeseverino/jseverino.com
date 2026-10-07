@@ -14,8 +14,7 @@ npm run site -- <command>     # or `npm link` once, then: site <command>
 
 ## Built for an agent caller
 
-An AI agent runs these commands as often as a person does, so every
-non-interactive command:
+Every non-interactive command:
 
 - answers `--help` and rejects unknown flags (exit 2);
 - never prompts: a missing confirmation or argument is an error naming the
@@ -116,11 +115,10 @@ the vault only through the store and `site new`, which copies the template.
 
 ## `site manage`: the TUI
 
-The one interactive command; it refuses to start without a terminal. One
-full-screen terminal app over the whole publishing surface: a
+The one interactive command; it refuses to start without a terminal. A full-screen terminal app over the whole publishing surface: a
 **Writeups** tab for content state and a **Site** tab for operations. `←`/`→`
 (or Tab) switch between them. Nothing on the Writeups tab is written until
-you press `s`: changes are staged locally and then applied through the vault
+`s` is pressed: changes are staged locally and then applied through the vault
 MCP, so the TUI cannot produce a frontmatter state the publish gate would
 not. The terminal window title tracks where you are and restores the shell's
 title on exit.

@@ -1,8 +1,8 @@
 # Validation Architecture (Full Reference)
 
-This is the complete reference for how `jseverino.com` is verified. For a short,
-visual tour start with [`tests/README.md`](./README.md); come here for the exact
-assertion a check makes, the command that runs it, or how to fix a failure.
+The complete reference for how `jseverino.com` is verified: the exact assertion
+each check makes, the command that runs it, and how to fix a failure. A short
+tour is in [`tests/README.md`](./README.md).
 
 Verification lives in three directories, plus orchestrators in `bin/` that sequence
 them:
@@ -26,18 +26,17 @@ Every gate derives its check list from that one module:
 - **`diagnose`** runs the `diagnose` audits (everything: the complete gate).
 - **`release:check`** runs `publish:check` plus the `release` audits.
 
-So a check added to the registry is automatically picked up by every gate that
-claims it; a check can never live in one gate but be silently missing from
-another. Each gate keeps its own *orchestration* (ordering around sync/build,
-fail-fast vs. collect-all, the report); the registry holds the inventory, the
-gates hold the run logic. The [audit table](#2-audits) is generated from the registry, so what
-it says each audit asserts is what runs.
+A check added to the registry is picked up by every gate that claims it. Each
+gate keeps its own *orchestration* (ordering around sync/build, fail-fast vs.
+collect-all, the report); the registry holds the inventory. The
+[audit table](#2-audits) is generated from the registry, so what it says each
+audit asserts is what runs.
 
-The gates also share one process harness, [`bin/lib/run.ts`](../bin/lib/run.ts):
+The gates share one process harness, [`bin/lib/run.ts`](../bin/lib/run.ts):
 every spawned check gets a timeout (a hung Playwright run fails instead of
-stalling the gate forever; per-check overrides live in the registry's `timeout`
-field), a missing binary surfaces as a failed check rather than a hang, and
-output is either captured for terse summaries or streamed live.
+stalling the gate; per-check overrides live in the registry's `timeout` field),
+a missing binary surfaces as a failed check rather than a hang, and output is
+either captured for terse summaries or streamed live.
 
 ## Naming: `audit-` vs `check-`
 
@@ -48,7 +47,7 @@ The prefix in `tests/audits/` says how a script fails:
 
 ## Adding a new audit
 
-Six steps; the gates enforce most of them, so a missed step fails a gate:
+Six steps; the gates enforce most of them:
 
 1. **Write the script** in `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in [`src/lib/site-root.ts`](../src/lib/site-root.ts), never the cwd, and list files with `walkFiles()` from [`src/lib/walk.ts`](../src/lib/walk.ts) rather than a private recursion. Post-build audits get the built pages from `builtPages()` in [`lib.ts`](./audits/lib.ts) rather than re-resolving the outDir; the outDir decision itself is single-sourced in [`src/lib/build-output.ts`](../src/lib/build-output.ts). End through `finish()`: exit non-zero on violation, or print one summary line in the aligned form `ok␣␣␣␣␣␣␣<detail>`, which the gates show as the audit's status (`summarize()` in [`bin/lib/audit-summary.ts`](../bin/lib/audit-summary.ts)). Export the pure logic and guard the run with `import.meta.main` so a unit spec can import it.
 2. **Register it** in [`registry.ts`](./audits/registry.ts): id, label, name, the one-line `asserts`, phase (`pre-build`/`post-build`), exec, gates, the one-line `fix`. The unit suite ([`registry.test.ts`](./unit/registry.test.ts)) validates the entry shape and that the exec target exists; every gate picks the audit up from here automatically.
@@ -75,7 +74,7 @@ Which audits each gate runs is the [gate coverage](#gate-coverage) table below.
 
    `npm run publish:check:ci` ([`bin/ci-rehearsal.ts`](../bin/ci-rehearsal.ts)) rehearses the runner's conditions locally (`CI=1` plus a scratch GPG keyring seeded only from the committed WKD key), so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
 2. **`npm run release:check`**: final local gate. Runs `publish:check`, then the `release` audits (the browser suites, the edge runtime suite, repository policy), and confirms the validation run did not mutate tracked or untracked files. **Requires macOS**, because the visual baselines are rasterized by macOS Chromium.
-3. **`npm run diagnose`**: runs everything without short-circuiting, so one pass reports every problem in the worktree (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
+3. **`npm run diagnose`**: runs everything without short-circuiting and reports every problem in one pass (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
    - `npm run diagnose -- --no-tests` runs static checks and the build, skipping the browser tests.
    - `npm run -s diagnose -- --json` emits a single JSON document (per-check status, durations, rerun commands for failures) instead of console output, for agents and CI to consume without parsing prose.
@@ -236,7 +235,7 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 ### `check-duplication.ts`
 
-Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting and comments never matter, and import lines are skipped) and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; between two test files the bar is 40 tokens over 4 lines, since specs repeat a little setup. The fix is always one shared primitive both sites import. Generated projections (`src/generated/`, `functions/generated/`) and the fixture content are exempt; nothing else is. It is a small audit rather than a jscpd dependency: the scanner is already here through `typescript`, and the rule fits in one file.
+Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting and comments never matter, and import lines are skipped) and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; between two test files the bar is 40 tokens over 4 lines, since specs repeat a little setup. The fix is always one shared primitive both sites import. Generated projections (`src/generated/`, `functions/generated/`) and the fixture content are exempt; nothing else is. The scanner comes from the existing `typescript` dependency, so no jscpd is needed.
 
 ### `check-functions-parity.ts`
 
@@ -255,7 +254,7 @@ Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'mai
 Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--variable)` usages from the stylesheets **and** from every `.astro` and `.ts` file under `src/` (a token consumed only in a template or script still counts), and fails listing any custom property that is defined but never consumed.
 
 ### `audit-assets.ts`
-Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). The registry runs it with `STRICT_ASSET_AUDIT=1`, so an oversized image fails `publish:check`/`diagnose`; run it bare (`node tests/audits/audit-assets.ts`) for a warn-only report. It is still the one *audit* by construction (it measures and reports), but the gates opt into strict so weight regressions can't slip through.
+Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). The registry runs it with `STRICT_ASSET_AUDIT=1`, so an oversized image fails `publish:check`/`diagnose`; run it bare (`node tests/audits/audit-assets.ts`) for a warn-only report. It stays the one *audit* (it measures and reports); the gates opt into strict so weight regressions fail.
 
 ### `check-repository-policy.ts`
 Structural health:
@@ -284,7 +283,7 @@ Asserts internal documentation integrity across the engineering docs (`README.md
 Links and paths inside fenced code blocks are example syntax and skipped; `npm run` references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which this audit does not resolve).
 
 ### `check-links.ts`
-Runs **after the build**. The sitemap smoke test proves every page exists; this proves every internal reference *inside* the pages resolves. It walks the emitted HTML, collects `href`/`src`/`poster`/`srcset` references (including same-origin absolute URLs like the canonical link), and asserts each one maps to a file the build emitted. Routes served by Pages functions (`/api/…`, `/cdn-cgi/…`) are allowlisted. A typo'd in-content link fails here, before deploy, instead of surfacing in the live traversal after.
+Runs **after the build**. The sitemap smoke test proves every page exists; this proves every internal reference *inside* the pages resolves. It walks the emitted HTML, collects `href`/`src`/`poster`/`srcset` references (including same-origin absolute URLs like the canonical link), and asserts each one maps to a file the build emitted. Routes served by Pages functions (`/api/…`, `/cdn-cgi/…`) are allowlisted. A typo'd in-content link fails here, before deploy.
 
 ### `check-page-weight.ts`
 Runs **after the build**. The deterministic complement to the CI Lighthouse run. Three byte budgets over the emitted output: per-page HTML (150 KB), CSS (75 KB: the stylesheet every page inlines, plus any external `.css`), and total JS (25 KB), set from the measured baseline (~115 KB worst page carrying the ~36 KB inlined stylesheet, ~5 KB JS) with headroom. A failure means a page, the stylesheet, or the scripts grew past budget. Raising a budget is a commit to `tests/audits/check-page-weight.ts`.
@@ -317,7 +316,7 @@ Runs on Node's test runner via type stripping, with no extra dependency:
 npm run test:unit
 ```
 
-The specs double as executable documentation of the block grammar: each case pairs a markdown input with the HTML it must produce, so a processor upgrade either keeps the contract or fails loudly. Registered in the audit registry as a `pre-build` gate, so `publish:check` and `diagnose` run it automatically.
+Each case pairs a markdown input with the HTML it must produce, so the specs document the block grammar and a processor upgrade either keeps the contract or fails. The registry lists it as a `pre-build` audit, so `publish:check` and `diagnose` run it.
 
 ---
 
@@ -331,7 +330,7 @@ The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwri
 - **Console health**: fails on browser console errors during navigation (with narrow allowances for preconnect noise).
 - **Interactivity**: hero renders, header shadow toggles on scroll, primary links resolve.
 
-Sitemap route health moved to `routes.single.spec.ts`: it uses only `request`, so running it per engine tripled the work for no coverage.
+Sitemap route health lives in `routes.single.spec.ts`.
 
 ### `menu.mobile.spec.ts`
 - **Overlay logic**: the popover toggles open/closed, locks body overflow, and closes on `Escape`, on link navigation, or on a backdrop click.
@@ -436,7 +435,7 @@ The HTML report after a full run:
 
 `visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, **baselines are owned by Chromium on macOS**. It runs under [`tests/playwright.visual.config.ts`](./playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; fixture images from [`fixtures/make-images.ts`](./fixtures/make-images.ts)) into `dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) rather than `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `test-results/visual/`; CI uploads them with the HTML report.
 
-The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/) are review artifacts, meant to be checked in the diff before any visual change merges.
+The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/) are review artifacts: check them in the diff before any visual change merges.
 
 ### What each baseline protects
 
@@ -451,8 +450,6 @@ The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/v
 | Portfolio Software (desktop / mobile) | Full-page Software tab: featured cards, install lines, the More-projects list, and mobile stacking. Live versions, downloads, and dates are masked so the baseline pins layout, not numbers. |
 
 ### Committed baselines
-
-These are the PNGs that ship in the repo and that every run is measured against.
 
 **Home, desktop and mobile** (narrow layout is protected independently):
 

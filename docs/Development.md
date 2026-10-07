@@ -19,9 +19,9 @@ npm run build:static && npm run edge:serve   # the build on the Cloudflare runti
 ## Code
 
 Everything is TypeScript, run directly by Node 24, which strips the types: no
-build step and no loader. That rules out syntax Node cannot strip (enums,
-namespaces, parameter properties), so `erasableSyntaxOnly` is on and every
-relative import names its `.ts` file. `npm run typecheck` is the one strict
+build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
+properties) is out, so `erasableSyntaxOnly` is on and every relative import
+names its `.ts` file. `npm run typecheck` is the one strict
 check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, `functions/lib/`, or a test helper, and the
 gate fails on duplicated code.

@@ -50,8 +50,8 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 
 ### Edge runtime
 [`functions/generated/site.ts`](../functions/generated/site.ts) is derived from
-`site-config.ts` by `npm run sync:edge-site`. The Functions (contact form and CSP reporting) import
-that projection; no second domain declaration needs manual synchronization.
+`site-config.ts` by `npm run sync:edge-site`. The Functions (contact form and CSP
+reporting) import that projection, so the domain is declared once.
 
 ### Signed / generated artifacts
 - [`public/.well-known/security.txt`](../public/.well-known/security.txt): all URLs,

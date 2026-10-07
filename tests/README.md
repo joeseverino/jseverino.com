@@ -1,10 +1,10 @@
 # Tests & Validation
 
-Every change passes four layers before and after it ships: Node audits that
-assert invariants about the source and the build, unit tests for the pure
-logic, Playwright specs that drive the **built** output in a browser and through
-the Cloudflare runtime, and post-deploy probes against each deployment. This
-directory holds the first three; [`bin/`](../bin/) sequences them into gates.
+Every change passes four layers: Node audits that assert invariants about the
+source and the build, unit tests for the pure logic, Playwright specs that drive
+the **built** output in a browser and through the Cloudflare runtime, and
+post-deploy probes against each deployment. This directory holds the first
+three; [`bin/`](../bin/) sequences them into gates.
 
 > This file is the tour. Every audit with its fix, every spec, and the CI
 > workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
@@ -41,8 +41,7 @@ The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md
 
 ### The one-stop gate: `npm run diagnose`
 
-Runs **every** audit in the registry without stopping at the first failure, so
-one pass reports every problem in the worktree:
+Runs **every** audit in the registry without stopping at the first failure:
 
 - **Green** prints one summary line.
 - **Red** writes `.validation-report.md`: one row per failure, the fix, and the

@@ -6,10 +6,8 @@ site, the brand kit, and the command-line tools.
 
 ## Two Colors
 
-The site started with a purple accent. The purple was the theme's
-default, kept from the day the theme was installed. The logo was a yellow `JS`
-with no source file and no record of how it was made. Neither color was chosen,
-and they did not match.
+The site started with the theme's default purple accent and a yellow `JS` logo
+with no source file. Neither color was chosen, and they did not match.
 
 ## Choosing A Color
 
@@ -18,14 +16,14 @@ Navy (`#1E3A8A`) was picked: it suits a security and networking portfolio, and i
 reads cleanly as a white glyph on a solid tile at favicon sizes. Severino HQ, the
 private operations app, uses its own teal (`#1f4d57`) with the same monogram.
 
-The navy went into both places at once: the favicon and mark tile, and the
-site's theme color (`--color-primary`, `<meta name="theme-color">`). The logo and
-the interface now come from the same value.
+The navy is the favicon and mark tile and the site's theme color
+(`--color-primary`, `<meta name="theme-color">`), so logo and interface share
+one value.
 
 ## Generated Assets
 
-The mark is generated. The `JS` monogram is
-built from Inter (weight 800) glyph outlines and laid out into an SVG. One token
+The `JS` monogram is built from Inter (weight 800) glyph outlines and laid out
+into an SVG. One token
 file, [`src/lib/brand.ts`](../src/lib/brand.ts), holds the identity (the navy,
 the glyph), and three consumers read it: the favicon generator, the social-card
 renderer, and the CSS that sets the theme color. Changing the color in that file
@@ -33,9 +31,9 @@ changes the favicon, the Open Graph card, and the interface together.
 
 ## SVG First
 
-The wordmark lockup (the tile plus the name) was once a PNG screenshotted from a
-browser. It is now composed from the same Inter outlines into `wordmark.svg`, and
-the light and dark PNGs are rasterized from that SVG. An all-caps lockup matches
+The wordmark lockup (the tile plus the name) is composed from the same Inter
+outlines into `wordmark.svg`, and the light and dark PNGs are rasterized from
+that SVG. An all-caps lockup matches
 how the header sets the name. Geometry is vector; only assets that must be raster
 (social cards, platform icons) are raster.
 
@@ -70,14 +68,13 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 - **The `brand` tool** wraps the engine for everyday use from the terminal.
 
 The engine itself is the public, reusable piece:
-[`branding-engine`](https://github.com/joeseverino/branding-engine). Anyone can
-render their own kit from one accent color and a set of initials.
+[`branding-engine`](https://github.com/joeseverino/branding-engine). It renders a kit from one accent
+color and a set of initials.
 
 ## Proving A Brand Change Before Shipping It
 
-Consistent assets do not show how a redesign looks once deployed. I used
-[`sitedrift`](https://github.com/joeseverino/sitedrift), another tool I built,
-to check that.
+Consistent assets do not show how a redesign looks once deployed.
+[`sitedrift`](https://github.com/joeseverino/sitedrift) checks that.
 
 For a temporary Cloudflare branch deployment, the site's primary token changed
 from navy to red. `branding-engine` regenerated the favicon, marks, wordmark,
@@ -201,9 +198,8 @@ The assembly is owned once so an embedder does not re-derive it:
   `src/styles/brand.css`, so the site and any embedder share one definition.
 - [`src/lib/web-styles.ts`](../src/lib/web-styles.ts) exports
   **`previewStyles({ baseCss, fontUrl })`**: the expanded CSS entrypoint, the
-  brand vars, and a resolvable Inter `@font-face`, as one `<style>` blob. An
-  embedder calls this one function and gets the brand vars with it. `baseCss` and `fontUrl` are passed
-  in because each embedder obtains them its own way (esbuild text/dataurl import,
+  brand vars, and a resolvable Inter `@font-face`, as one `<style>` blob. `baseCss`
+  and `fontUrl` are passed in because each embedder obtains them its own way (esbuild text/dataurl import,
   a fetch, a file read); only the assembly is shared.
 
 The `severino-obsidian` plugin's preview pane is the first consumer: it imports

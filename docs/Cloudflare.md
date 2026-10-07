@@ -1,11 +1,10 @@
 # Cloudflare
 
-The site runs on Cloudflare: Pages for the static build and the
-Functions, one D1 database, Turnstile, and the zone in front of it. Everything
-that can be code is code. The repo holds the Pages configuration files and a
-desired-state file for the zone and account, and
-[`bin/cloudflare.ts`](../bin/cloudflare.ts) checks the live state against it
-and applies the difference.
+The site runs on Cloudflare: Pages for the static build and the Functions, one
+D1 database, Turnstile, and the zone in front of it. The repo holds the Pages
+configuration files and a desired-state file for the zone and account.
+[`bin/cloudflare.ts`](../bin/cloudflare.ts) checks the live state against it and
+applies the difference.
 
 ## What runs where
 
@@ -27,17 +26,17 @@ the tool looks both up from the zone name at runtime.
 
 ### Functions routing
 
-Every HTML page is a plain static asset, served without invoking a Function.
+Every HTML page is a static asset, served without invoking a Function.
 [`_routes.json`](../public/_routes.json) includes only `/api/*` and
 `/__sitedrift/*`, with an empty exclude list. A miss anywhere gets the root
-`404.html`, which carries the same policy as every page. The limit is
-100,000 Function requests a day, and page views no longer count against it: the
-quota covers only the contact form, CSP reports, and the preview proxy.
+`404.html`, which carries the same policy as every page. The limit is 100,000
+Function requests a day, used only by the contact form, CSP reports, and the
+preview proxy.
 
-The Content-Security-Policy is built into `dist/_headers` at build time by
-[`bin/build-csp.ts`](../bin/build-csp.ts), so it does not depend on a Function
-running. Pages applies `_headers` to static assets only, not to Function
-responses, which set their own headers.
+[`bin/build-csp.ts`](../bin/build-csp.ts) writes the Content-Security-Policy into
+`dist/_headers` at build time, so it does not depend on a Function running.
+Pages applies `_headers` to static assets only. Function responses set their own
+headers.
 
 [`check-routes.ts`](../tests/audits/check-routes.ts) fails the publish gate if a
 Function route does not invoke Functions, if a built HTML page does, if an
@@ -46,7 +45,7 @@ placeholder, lists a path twice, lacks a `Content-Security-Policy` on `/*`, or
 lacks the detach-plus-set override on `/contact/*`. The edge suite proves the
 routing and the headers under `wrangler pages dev`.
 
-## Platform limits that shaped this
+## Platform limits
 
 | Feature | Limit | Used |
 |---|---|---|
@@ -58,12 +57,11 @@ routing and the headers under `wrangler pages dev`.
 | `wrangler.toml` for Pages | compatibility date and flags, D1, vars, per-environment; no rate limiting | not used (below) |
 | Early Hints | always on for Pages, but Function-handled HTML gets no `Link` header | nothing to configure |
 
-Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in
-the zone. `*.pages.dev` is outside it, which is why the production alias
-`jseverino.pages.dev` is closed with a Bulk Redirect and preview deployments
-sit behind Access instead. The redirect matches the bare alias with subpath
-matching and does not include subdomains, so `<hash>.jseverino.pages.dev`
-previews keep working.
+Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in the
+zone, and `*.pages.dev` is outside it. The production alias `jseverino.pages.dev`
+is therefore closed with a Bulk Redirect, and preview deployments sit behind
+Access. The redirect matches the bare alias with subpath matching and excludes
+subdomains, so `<hash>.jseverino.pages.dev` previews keep working.
 
 ## Preview access
 
@@ -80,11 +78,11 @@ rules that name service tokens), with two tokens:
   repo.
 
 `zone.json` declares `pages.previewPolicy: "service-auth-only"`. `cloudflare:check`
-reports any other policy on the application (an email, a group, everyone, or
-no policy at all) as a manual item and exits 1. Apply never edits Access: the
-fix is in Zero Trust → Access → Applications. Each token is created and
-rotated under Zero Trust → Access → Service credentials; a rotated CI token goes into
-the repository secrets, and the proxy's into the proxy's own configuration.
+reports any other policy on the application (an email, a group, everyone, or no
+policy) as a manual item and exits 1. Apply never edits Access: fix it in Zero
+Trust → Access → Applications. Create and rotate each token under Zero Trust →
+Access → Service credentials. A rotated CI token goes into the repository
+secrets, and the proxy's into the proxy's own configuration.
 
 ## WAF rules
 
@@ -101,8 +99,8 @@ At most five custom rules, dashboard rules included. `cloudflare:check` reports 
 
 ## Features that stay off
 
-Each of these injects into or rewrites HTML after the build, and so adds markup
-the build-time CSP hashes do not cover:
+Each of these injects into or rewrites HTML after the build, adding markup the
+build-time CSP hashes do not cover:
 
 - **Rocket Loader** rewrites every script tag and loads them through its own
   script.
@@ -114,50 +112,46 @@ the build-time CSP hashes do not cover:
 - **Hotlink Protection** is redundant with `Cross-Origin-Resource-Policy`.
 
 Speed Brain stays on. It prefetches likely next pages through a
-`speculation-rules` response header, which adds no markup, so the HTML served is
-the HTML built.
+`speculation-rules` response header, which adds no markup.
 
-No Cache Rule is a problem for CSP reasons: HTML is static and the policy is the
-same on every request, so HTML is cacheable.
+HTML is cacheable: it is static and the policy is the same on every request.
 
-`browser_cache_ttl` is `0` (respect existing headers). Any other value
-overrides shorter origin TTLs, which is how `/favicon.ico` and
-`/assets/icons/*` were served with 4 hours instead of `_headers`' 1 hour.
+`browser_cache_ttl` is `0` (respect existing headers). Any other value overrides
+shorter origin TTLs, such as the 1 hour `_headers` sets for `/favicon.ico` and
+`/assets/icons/*`.
 
 ## Bot management
 
 `botManagement` in `zone.json` declares the zone's `bot_management` settings.
 `enable_js` is `false`: JavaScript Detections inject an inline script with
-per-request values into HTML, and a static hash CSP cannot cover that script.
-Turning Bot Fight Mode off in the dashboard does not turn
-JavaScript Detections off; only `enable_js: false` does, which is why the
-setting is declared rather than left to the dashboard. `fight_mode` is `false`
-for the same reason, and because Bot Fight Mode challenges datacenter IPs, which
-is why CI's deploy verification targets each deployment's own `*.pages.dev` URL,
-outside the zone. Neither setting can skip paths.
+per-request values into HTML, and a static hash CSP cannot cover it. Turning Bot
+Fight Mode off in the dashboard leaves JavaScript Detections on; only
+`enable_js: false` turns them off, so the setting is declared. `fight_mode` is
+`false` because Bot Fight Mode challenges datacenter IPs. CI's deploy
+verification therefore targets each deployment's own `*.pages.dev` URL, outside
+the zone. Neither setting can skip paths.
 
 `ai_training`, `ai_search`, and `ai_user` are the three AI crawler policies on
 the Security → Bots page. The endpoint accepts only a PUT and resets every field
-a PUT leaves out, so apply sends the declared fields over the live values of
-`ai_bots_protection`, `content_bots_protection`, and `crawler_protection`, and a
-change made in the dashboard to those three survives an apply.
+the PUT leaves out. Apply therefore sends the declared fields over the live
+values of `ai_bots_protection`, `content_bots_protection`, and
+`crawler_protection`, so dashboard changes to those three survive an apply.
 
 ## Turnstile
 
 The contact handler ([`functions/api/contact.ts`](../functions/api/contact.ts))
 accepts a token only when siteverify reports `success`, the hostname
 `jseverino.com` (`SITE.domain`), and the action `contact` (the contract's
-`turnstileAction`, which the widget sends as `data-action`). The widget's
-allowed hostnames are `turnstile.domains` in `zone.json`; apply sets them, and
-they should name the same host. A token solved anywhere else, a preview
-deployment included, fails verification.
+`turnstileAction`, sent by the widget as `data-action`). The widget's allowed
+hostnames are `turnstile.domains` in `zone.json`, set by apply, and name the
+same host. A token solved anywhere else, a preview deployment included, fails
+verification.
 
 ## Web Analytics
 
-By default the zone injects the beacon. `static.cloudflareinsights.com` is in
-`script-src` and `cloudflareinsights.com` is in `connect-src`, so the beacon is
-allowed by host. To own the
-markup instead, set `WEB_ANALYTICS` in
+By default the zone injects the beacon, which the CSP allows by host
+(`static.cloudflareinsights.com` in `script-src`, `cloudflareinsights.com` in
+`connect-src`). To own the markup instead, set `WEB_ANALYTICS` in
 [`src/lib/site-config.ts`](../src/lib/site-config.ts) to
 `{ emitBeacon: true, token: '<site token>' }` and, in the same release, switch
 the Web Analytics site to **Enable with JS Snippet installation** so the zone
@@ -165,8 +159,8 @@ stops injecting. The token is public; it ships in every page either way.
 
 ## Running check, plan, and apply
 
-The token comes from `CLOUDFLARE_API_TOKEN` and nowhere else, and the tool
-never prints it. Keep the tokens in 1Password and pass them per command:
+The token comes from `CLOUDFLARE_API_TOKEN` only, and the tool never prints it.
+Keep the tokens in 1Password and pass them per command:
 
 ```sh
 CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- npm run cloudflare:check
@@ -196,8 +190,7 @@ Scope both tokens to the one zone and the one account.
 | Account | Turnstile | Read | Edit |
 
 Unit tests drive all three commands against an in-memory API
-([`tests/unit/cloudflare.test.ts`](../tests/unit/cloudflare.test.ts)); nothing
-in the repo calls Cloudflare on its own.
+([`tests/unit/cloudflare.test.ts`](../tests/unit/cloudflare.test.ts)).
 
 ## After an apply
 
@@ -218,9 +211,8 @@ pattern in [GitHub Settings](./GitHub-Settings.md).
 
 ## No `wrangler.toml`
 
-A Pages `wrangler.toml` would pin the compatibility date in the repo, but it
-becomes the source of truth for every binding, so it would also have to carry
-the D1 database ID in a public repository. `cloudflare:check` already holds the
-project's compatibility date to the one the edge suite runs
-([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)), and apply sets
-it. That was the only benefit, so the repo stays without one.
+A Pages `wrangler.toml` would pin the compatibility date, but it becomes the
+source of truth for every binding and would carry the D1 database ID in a public
+repository. `cloudflare:check` already holds the project's compatibility date to
+the one the edge suite runs ([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)),
+and apply sets it.

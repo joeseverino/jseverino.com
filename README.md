@@ -58,7 +58,7 @@ accessibility.
 
 ## Verify it yourself
 
-Every claim above can be checked from outside:
+Each claim above can be checked from outside:
 
 ```sh
 # One policy for every request: no nonce, script and style pinned by sha256 hash
