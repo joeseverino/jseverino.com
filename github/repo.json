@@ -24,6 +24,9 @@
     "default_workflow_permissions": "read",
     "can_approve_pull_request_reviews": false
   },
+  "variables": {
+    "PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADTQtbds55AEvEO4"
+  },
   "ruleset": {
     "name": "main",
     "target": "branch",

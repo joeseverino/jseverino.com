@@ -42,6 +42,10 @@ export const requiredContexts = (repository: string, branch: string): string[] =
     .map((check) => check.context)),
 ];
 
+// GitHub's verdict on a commit's signature.
+export const commitVerification = (repository: string, ref: string): { verified: boolean; reason: string } =>
+  ghApi<{ commit: { verification: { verified: boolean; reason: string } } }>(`repos/${repository}/commits/${ref}`).commit.verification;
+
 export const openCodeScanningAlerts = (repository: string, tool: string): CodeScanningAlert[] =>
   ghApi<CodeScanningAlert[]>(`repos/${repository}/code-scanning/alerts`, { state: 'open', tool_name: tool, per_page: 100 });
 

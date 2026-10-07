@@ -1,0 +1,44 @@
+name: dist
+
+# Commits the built site to the dist branch after each push to main, so the HTML Cloudflare
+# serves can be read in the repository. deploy-verify compares the branch with the live site.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time; a newer push queues behind it and builds its own commit.
+concurrency:
+  group: dist
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+        with:
+          astro-cache: 'true'
+
+      # The same command Cloudflare Pages runs. The site key is public and set as a
+      # repository variable (github/repo.json), because Pages holds it as a project variable.
+      - name: Build
+        run: npm run build
+        env:
+          ASTRO_TELEMETRY_DISABLED: '1'
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+
+      - name: Publish
+        run: node bin/publish-dist.ts dist --push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -41,6 +41,7 @@ export interface DesiredState {
     default_workflow_permissions: 'read' | 'write';
     can_approve_pull_request_reviews: boolean;
   };
+  variables: Record<string, string>;
   ruleset: RulesetSpec;
 }
 
@@ -50,6 +51,7 @@ export interface LiveState {
   privateReporting: boolean;
   permissions: Record<string, unknown>;
   workflow: Record<string, unknown>;
+  variables: Record<string, string>;
   ruleset: (Record<string, unknown> & { id: number }) | null;
 }
 
@@ -90,7 +92,8 @@ export function createClient({ token, fetch = globalThis.fetch }: ClientOptions)
       const payload: { message?: string } = await response.json().catch(() => ({}));
       throw new GitHubError(method, path, response.status, payload.message);
     }
-    return response.status === 204 ? undefined : ((await response.json()) as T);
+    const text = await response.text();
+    return text ? (JSON.parse(text) as T) : undefined;
   }
 
   return {
@@ -119,6 +122,7 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
     privateReporting: Boolean(fields(await client.get(`${base}/private-vulnerability-reporting`)).enabled),
     permissions: await client.get<Record<string, unknown>>(`${base}/actions/permissions`),
     workflow: await client.get<Record<string, unknown>>(`${base}/actions/permissions/workflow`),
+    variables: Object.fromEntries((await client.get<{ variables: { name: string; value: string }[] }>(`${base}/actions/variables?per_page=100`)).variables.map(({ name, value }) => [name, value])),
     ruleset: found ? await client.get<Record<string, unknown> & { id: number }>(`${base}/rulesets/${found.id}`) : null,
   };
 }
@@ -192,6 +196,14 @@ export function diff(desired: DesiredState, live: LiveState): Item[] {
     ? item('actions', 'workflow token', workflow, workflowNow, 'ok')
     : item('actions', 'workflow token', workflow, workflowNow, 'drift',
         [{ method: 'PUT', path: `${base}/actions/permissions/workflow`, body: workflow }], `differs: ${changedKeys(workflow, workflowNow).join(', ')}`));
+
+  for (const [name, value] of Object.entries(desired.variables)) {
+    const have = live.variables[name];
+    items.push(have === value
+      ? item('variables', name, value, have, 'ok')
+      : item('variables', name, value, have, 'drift',
+          [have === undefined ? { method: 'POST', path: `${base}/actions/variables`, body: { name, value } } : { method: 'PATCH', path: `${base}/actions/variables/${name}`, body: { name, value } }]));
+  }
 
   const name = `ruleset ${desired.ruleset.name}`;
   if (!live.ruleset) {

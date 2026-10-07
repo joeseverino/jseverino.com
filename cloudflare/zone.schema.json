@@ -103,13 +103,23 @@
       "description": "The Pages project. Its compatibility date is checked against tests/browser-test-env.ts, the one the edge suite runs.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "previewAccess", "previewPolicy"],
+      "required": ["project", "previewAccess", "previewPolicy", "previewBranches"],
       "properties": {
         "project": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "previewAccess": { "description": "An Access application covers the preview hostnames (Settings → General → Enable access policy).", "type": "boolean" },
         "previewPolicy": {
           "description": "Every policy on the preview Access application is Service Auth whose include rules are service tokens only: previews are reached by CI's token and the tailnet proxy's, never by a person's identity. Check-only: apply never edits Access.",
           "enum": ["service-auth-only"]
+        },
+        "previewBranches": {
+          "description": "Branches that get a preview deployment. The dist branch holds built output, so it is excluded: a build of it would fail.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["include", "exclude"],
+          "properties": {
+            "include": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+            "exclude": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
         }
       }
     },

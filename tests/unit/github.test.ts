@@ -12,7 +12,7 @@ const schema = read<JsonSchema>('github/repo.schema.json');
 const desired = read<DesiredState>('github/repo.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
-const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, security: true, actions: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
+const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
@@ -46,6 +46,7 @@ describe('check', () => {
     assert.equal(status(report, 'vulnerability_alerts'), 'ok');
     assert.equal(status(report, 'permissions'), 'drift');
     assert.equal(status(report, 'workflow token'), 'ok');
+    assert.equal(status(report, 'PUBLIC_TURNSTILE_SITE_KEY'), 'drift');
     assert.equal(status(report, 'ruleset main'), 'ok', 'the fixture lists the same rules and checks in another order');
     assert.equal(fake.writes().length, 0, 'check is read-only');
   });
@@ -85,6 +86,7 @@ describe('plan', () => {
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
       `PATCH ${repo}`,
+      `POST ${repo}/actions/variables`,
       `PUT ${repo}/actions/permissions`,
       `PUT ${repo}/private-vulnerability-reporting`,
     ]);
@@ -116,6 +118,7 @@ describe('apply --yes', () => {
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
     assert.equal(fake.state.permissions.sha_pinning_required, true);
+    assert.deepEqual(fake.state.variables.map((entry) => entry.name).sort(), ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'], 'variables not in repo.json are left alone');
 
     const before = fake.writes().length;
     const second = await run(fake, 'apply', '--yes');

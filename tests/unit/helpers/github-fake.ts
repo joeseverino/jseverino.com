@@ -11,6 +11,7 @@ export interface FakeState {
   privateReporting: boolean;
   permissions: Fields;
   workflow: Fields;
+  variables: { name: string; value: string }[];
   rulesets: (Fields & { id: number; name: string })[];
 }
 
@@ -57,6 +58,14 @@ export function createGithubFake(seed: FakeState, token: string) {
     ['PUT', /^\/actions\/permissions$/, (_id, body) => (Object.assign(state.permissions, body), empty())],
     ['GET', /^\/actions\/permissions\/workflow$/, () => json(state.workflow)],
     ['PUT', /^\/actions\/permissions\/workflow$/, (_id, body) => (Object.assign(state.workflow, body), empty())],
+    ['GET', /^\/actions\/variables$/, () => json({ total_count: state.variables.length, variables: state.variables })],
+    ['POST', /^\/actions\/variables$/, (_id, body) => (state.variables.push(body as { name: string; value: string }), empty(201))],
+    ['PATCH', /^\/actions\/variables\/([A-Z_]+)$/, (name, body) => {
+      const found = state.variables.find((entry) => entry.name === name);
+      if (!found) return notFound();
+      Object.assign(found, body);
+      return empty();
+    }],
     ['GET', /^\/rulesets$/, () => json(state.rulesets.map(({ id, name }) => ({ id, name })))],
     ['POST', /^\/rulesets$/, (_id, body) => {
       const created = { id: nextId++, ...body } as Fields & { id: number; name: string };

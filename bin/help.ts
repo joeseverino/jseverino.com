@@ -62,6 +62,7 @@ export const GROUPS = [
       'cloudflare:check': 'Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift)',
       'cloudflare:plan': 'The Cloudflare API calls an apply would make',
       'cloudflare:apply': 'Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only)',
+      'dist:publish': 'Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)',
       'github:check': 'Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `github/repo.json` (exit 1 on drift)',
       'github:plan': 'The GitHub API calls an apply would make',
       'github:apply': 'Plan, or with `-- --yes` apply `github/repo.json` (admin token)',

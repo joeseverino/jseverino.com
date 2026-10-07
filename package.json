@@ -38,6 +38,7 @@
     "publish:check:ci": "node bin/ci-rehearsal.ts",
     "release:check": "node bin/release-check.ts",
     "deploy:verify": "node bin/deploy-verify.ts",
+    "dist:publish": "node bin/publish-dist.ts",
     "cloudflare:check": "node bin/cloudflare.ts check",
     "cloudflare:plan": "node bin/cloudflare.ts plan",
     "cloudflare:apply": "node bin/cloudflare.ts apply",

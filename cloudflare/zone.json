@@ -80,7 +80,8 @@
   "pages": {
     "project": "jseverino",
     "previewAccess": true,
-    "previewPolicy": "service-auth-only"
+    "previewPolicy": "service-auth-only",
+    "previewBranches": { "include": ["*"], "exclude": ["dist"] }
   },
   "schemaValidation": {
     "name": "jseverino-com-contact",

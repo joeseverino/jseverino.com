@@ -555,7 +555,8 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
    - `reporting-endpoints` and `report-to` routed to `/api/csp-report`, Trusted Types enforced with report-only on `/contact/`,
    - sitedrift proxy paths return `404`.
 5. **Live sitemap traversal**: HEAD every route from `sitemap-index.xml`; zero dead links.
-6. **CodeQL**: no open scanning alerts.
+6. **Dist branch**: every sitemap page matches the `dist` branch byte for byte, at a verified commit (retried for six minutes while the publish catches up; see [Dist Branch](../docs/Dist-Branch.md)).
+7. **CodeQL**: no open scanning alerts.
 
 ---
 
@@ -563,6 +564,7 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 
 | Workflow | Trigger | Enforces |
 | :--- | :--- | :--- |
+| `dist.yml` | push to `main` | Commits the build output to the `dist` branch; the only job with `contents: write` |
 | `ci.yml` | push/PR to `main` | Independent jobs, so a failure reports on its own required check: `build` (`gate:check`, then `publish:check -- --no-sync --after-gate`, plus a CycloneDX SBOM on `main`) and the `playwright` matrix (`e2e` on three workers, `visual` against `tests/fixtures/content` on macOS, and `edge`, which serves the build through `wrangler pages dev` and asserts the hash CSP, `_headers` rules, real 404, contact refusals, and `security.txt` parity). The Linux legs install browser system packages while the site builds, then serve that build. Every job writes a summary. |
 | `deploy.yml` | Cloudflare Pages check-run completed; `ci` completed | `verify` runs the default branch's `bin/deploy-verify.ts --origin` against the deployment's `*.pages.dev` URL, with the Access service token and no branch code; `report` keeps one PR comment current (CI summaries and the deployment, in whichever order they finish); `recover-main-ci` dispatches the CI run GitHub suppresses after a Dependabot auto-merge. |
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. Skipped on content-only PRs (`changes.yml` classifies the paths). |

@@ -212,8 +212,9 @@ npm run deploy:verify
 
 Then run `npm run cloudflare:check` until it exits 0.
 
-The repository's own settings follow the same check, plan, and apply pattern in
-[GitHub Settings](./GitHub-Settings.md).
+`pages.previewBranches` keeps the [`dist` branch](./Dist-Branch.md) out of preview
+deployments. The repository's own settings follow the same check, plan, and apply
+pattern in [GitHub Settings](./GitHub-Settings.md).
 
 ## No `wrangler.toml`
 

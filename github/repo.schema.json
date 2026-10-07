@@ -5,7 +5,7 @@
   "description": "The repository settings, security features, Actions permissions, and branch ruleset bin/github.ts checks and applies. See docs/GitHub-Settings.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["repository", "settings", "security", "actions", "ruleset"],
+  "required": ["repository", "settings", "security", "actions", "variables", "ruleset"],
   "properties": {
     "$schema": { "type": "string" },
     "repository": { "description": "owner/name.", "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
@@ -49,6 +49,11 @@
         "default_workflow_permissions": { "enum": ["read", "write"] },
         "can_approve_pull_request_reviews": { "type": "boolean" }
       }
+    },
+    "variables": {
+      "description": "Actions variables (not secrets), by name. The dist workflow builds with the public Turnstile site key that Cloudflare Pages holds as a project variable. Variables not listed here are left alone.",
+      "type": "object",
+      "additionalProperties": { "type": "string" }
     },
     "ruleset": {
       "description": "The branch ruleset on the default branch, as the REST API returns it, without ids. Compared as a whole: rules and status checks in any order.",

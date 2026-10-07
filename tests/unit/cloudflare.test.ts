@@ -63,6 +63,7 @@ describe('check', () => {
     assert.equal(status('jseverino-com-api-rate'), 'drift');
     assert.equal(status('compatibility_date'), 'drift');
     assert.equal(status('preview access'), 'ok');
+    assert.equal(status('preview branches'), 'drift');
     assert.equal(status('preview access policy'), 'manual');
     assert.equal(fake.writes().length, 0, 'check is read-only');
   });
@@ -164,6 +165,7 @@ describe('apply --yes', () => {
       ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`),
     ].sort());
     assert.equal(fake.state.settings.browser_cache_ttl?.value, 0);
+    assert.deepEqual(fake.state.project.source?.config, { owner: 'fixture', repo_name: 'site', production_branch: 'main', preview_deployment_setting: 'custom', preview_branch_includes: ['*'], preview_branch_excludes: ['dist'] }, 'the repository link survives the branch change');
     assert.deepEqual(
       Object.fromEntries(Object.entries(fake.state.botManagement).filter(([key]) => key in desired.botManagement || key.endsWith('_protection'))),
       { ...desired.botManagement, ai_bots_protection: 'block', content_bots_protection: 'block', crawler_protection: 'disabled' },

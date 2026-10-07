@@ -86,7 +86,7 @@ export interface DesiredState {
   rateLimit: RateLimitSpec;
   botManagement: BotManagement;
   pagesDevRedirect: PagesDevRedirect;
-  pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only' };
+  pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only'; previewBranches: { include: string[]; exclude: string[] } };
   schemaValidation: SchemaValidationSpec;
   turnstile: { domains: string[] };
 }
@@ -180,6 +180,7 @@ export interface AccessApp {
 }
 
 export interface PagesProject {
+  source?: { type?: string; config?: Record<string, unknown> };
   deployment_configs?: Partial<Record<'production' | 'preview', { compatibility_date?: string }>>;
 }
 

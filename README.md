@@ -118,6 +118,7 @@ and gate issues on one screen.
 | [Development](./docs/Development.md) | setup, code rules, gates, test policy, CI |
 | [Security](./docs/Security.md) | the security design end to end |
 | [Cloudflare](./docs/Cloudflare.md) | what runs where, free-plan limits, `cloudflare:check` and `apply` |
+| [Dist Branch](./docs/Dist-Branch.md) | the built site, one commit per deploy, checked against the live site |
 | [GitHub Settings](./docs/GitHub-Settings.md) | merge rules, security features, and the `main` ruleset, `github:check` and `apply` |
 | [Vault Workflow](./docs/Vault-Workflow.md) | the private-to-public sync contract |
 | [Site CLI](./docs/Site-CLI.md) | publishing and the `site manage` TUI |

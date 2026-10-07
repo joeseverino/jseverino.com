@@ -26,8 +26,9 @@ import {
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
 import { cli as parseCli, flag } from './lib/args.ts';
+import { routeFile } from './lib/dist.ts';
 import { git } from './lib/git.ts';
-import { awaitChecks, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
+import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { runSync, status } from './lib/run.ts';
 import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
@@ -201,6 +202,28 @@ async function verifyNotFound(): Promise<string> {
   const headers = headersToRecord(miss.headers);
   assertClean([...cspFindings(headers), ...staticHeaderFindings(headers)], asset);
   return 'unknown route returns a real 404; a miss under /assets/ carries the policy and security headers';
+}
+
+// The dist branch holds the HTML the build produced; the site must serve the same bytes.
+// A push to main publishes it a few minutes after the deploy, so a mismatch is retried.
+async function verifyDist(urls: string[]): Promise<string> {
+  const deadline = Date.now() + 6 * 60_000;
+  for (;;) {
+    git(siteRoot, 'fetch', '--quiet', 'origin', 'dist');
+    const stale: string[] = [];
+    for (const url of urls) {
+      const { pathname } = new URL(url);
+      const published = runSync('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot, raw: true });
+      if (published !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
+    }
+    if (stale.length === 0) {
+      const { verified, reason } = commitVerification(repository, 'dist');
+      if (!verified) throw new Error(`the dist branch tip is not signed (${reason})`);
+      return `${urls.length} pages match the dist branch byte for byte, at a verified commit`;
+    }
+    if (Date.now() > deadline) throw new Error(`${stale.length} pages differ from the dist branch: ${stale.slice(0, 5).join(', ')}`);
+    await sleep(20_000);
+  }
 }
 
 // Must be refused before the honeypot, Turnstile call, and D1 write, so the probe stores nothing.
@@ -414,9 +437,11 @@ async function main(): Promise<void> {
       return `CSP, Trusted Types staging, static security headers, and HSTS passed (/, /contact/, and ${writeupPath})`;
     });
     await run('routes', () => verifyLiveRoutes(publicUrls));
+    await run('dist', () => verifyDist(publicUrls));
   } else {
     skip('headers', 'sitemap unavailable');
     skip('routes', 'sitemap unavailable');
+    skip('dist', 'sitemap unavailable');
   }
 
   await run('production', verifyProductionGuard);
@@ -439,7 +464,7 @@ async function main(): Promise<void> {
   const summary = `all ${results.length} checks passed for ${sha.slice(0, 12)} against ${origin}`;
   annotate('notice', 'deploy-verify', summary);
   console.log(
-    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
+    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, dist branch, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
   );
 }
 

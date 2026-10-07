@@ -16,7 +16,7 @@ export interface FakeState {
   botManagement: Fields;
   rulesets: Record<string, { id: string; phase?: string; rules: LiveRule[] }>;
   lists: (RulesList & { items: Fields[] })[];
-  project: { name: string; deployment_configs: Record<string, Fields> };
+  project: { name: string; source?: { type?: string; config?: Fields }; deployment_configs: Record<string, Fields> };
   accessApps: AccessApp[];
   schemas: ApiSchema[];
   validationSettings: ValidationSettings;
@@ -126,7 +126,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
       return ok({ operation_id: newId('op') });
     }),
     route('GET', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, ([name]) => name === state.project.name ? ok(state.project) : fail(404, 'Project not found')),
-    route<{ deployment_configs?: Record<string, Fields> }>('PATCH', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, (_g, _u, body) => {
+    route<{ deployment_configs?: Record<string, Fields>; source?: { type?: string; config?: Fields } }>('PATCH', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, (_g, _u, body) => {
+      if (body.source) state.project.source = body.source;
       for (const [env, config] of Object.entries(body.deployment_configs ?? {})) {
         state.project.deployment_configs[env] = { ...state.project.deployment_configs[env], ...config };
       }

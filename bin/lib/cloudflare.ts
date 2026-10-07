@@ -307,6 +307,18 @@ function pagesItems(desired: DesiredState, live: LiveState, compatibilityDate: s
         body: { deployment_configs: { production: { compatibility_date: compatibilityDate }, preview: { compatibility_date: compatibilityDate } } },
       }], 'the edge suite runs this date (tests/browser-test-env.ts)')];
 
+  const config = fields(live.project.source?.config);
+  const branches = { include: config.preview_branch_includes ?? [], exclude: config.preview_branch_excludes ?? [] };
+  const wantBranches = desired.pages.previewBranches;
+  items.push(config.preview_deployment_setting === 'custom' && same(branches, wantBranches)
+    ? item('pages', 'preview branches', wantBranches, branches, 'ok')
+    : item('pages', 'preview branches', wantBranches, branches, 'drift', [{
+        method: 'PATCH',
+        path: `/accounts/:account/pages/projects/${q(project)}`,
+        // The whole source config goes back: a partial one would drop the repository link.
+        body: { source: { type: live.project.source?.type, config: { ...config, preview_deployment_setting: 'custom', preview_branch_includes: wantBranches.include, preview_branch_excludes: wantBranches.exclude } } },
+      }]));
+
   const previews = `*.${project}.pages.dev`;
   const apps = live.accessApps.filter((app) => app.domain === previews || (app.self_hosted_domains ?? []).includes(previews)
     || (app.destinations ?? []).some((destination) => destination.uri === previews));
