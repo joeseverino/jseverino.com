@@ -33,13 +33,6 @@ export function createGithubFake(seed: FakeState, token: string) {
   const empty = (status = 204) => new Response(null, { status });
   const notFound = () => json({ message: 'Not Found' }, 404);
   const ruleset = (id: string) => state.rulesets.find((entry) => String(entry.id) === id);
-  const merge = (target: Fields, body: Fields) => {
-    for (const [key, value] of Object.entries(body)) {
-      const current = target[key];
-      target[key] = typeof value === 'object' && value !== null && typeof current === 'object' && current !== null ? merge(current as Fields, value as Fields) : value;
-    }
-    return target;
-  };
   const toggle = (flag: 'vulnerabilityAlerts' | 'privateReporting', on: boolean) => {
     state[flag] = on;
     return empty();
@@ -47,7 +40,12 @@ export function createGithubFake(seed: FakeState, token: string) {
 
   const routes: [string, RegExp, (id: string, body: Fields) => Response][] = [
     ['GET', /^$/, () => json(state.repo)],
-    ['PATCH', /^$/, (_id, body) => json(merge(state.repo, body))],
+    ['PATCH', /^$/, (_id, body) => {
+      const { security_and_analysis: analysis, ...fields } = body;
+      Object.assign(state.repo, fields);
+      if (analysis) state.repo.security_and_analysis = { ...(state.repo.security_and_analysis as Fields), ...(analysis as Fields) };
+      return json(state.repo);
+    }],
     ['GET', /^\/vulnerability-alerts$/, () => (state.vulnerabilityAlerts ? empty() : notFound())],
     ['PUT', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', true)],
     ['DELETE', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', false)],
