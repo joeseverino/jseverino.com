@@ -1,6 +1,4 @@
-// An Error that carries structured details for whoever reports it. The script
-// libraries throw subclasses of this so one catch can print the message and
-// hand the details to --json output.
+// An Error with structured details; script libraries subclass it so one catch can print it and emit --json.
 export class DetailedError extends Error {
   details: Record<string, unknown>;
 

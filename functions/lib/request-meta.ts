@@ -20,9 +20,8 @@ export function requestMeta(request: Request, maxUserAgentLength: number): Reque
   };
 }
 
-// Where a request came from, as one of this site's own page URLs without query
-// or fragment. The submitted value and the Referer are both client input, so a
-// candidate counts only when it names this origin; otherwise there is no source.
+// A source page URL on this origin, without query or fragment. The submitted value and
+// the Referer are both client input, so anything off-origin is no source.
 export function ownPageUrl(origin: string, ...candidates: (string | null | undefined)[]): string | null {
   for (const candidate of candidates) {
     if (!candidate) continue;
@@ -30,7 +29,6 @@ export function ownPageUrl(origin: string, ...candidates: (string | null | undef
       const url = new URL(candidate);
       if (url.origin === origin) return `${origin}${url.pathname}`;
     } catch {
-      // Not a URL: try the next candidate.
     }
   }
   return null;

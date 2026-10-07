@@ -1,9 +1,7 @@
 #!/usr/bin/env node
-// Serves the built output through the Cloudflare runtime, the way production
-// serves it: the CSP middleware, the Pages Functions, and public/_headers are
-// all active. `astro preview` runs none of them. The edge test suite and
-// `npm run edge:serve` both start the runtime here, so the port and the
-// compatibility date have one home (tests/browser-test-env.ts).
+// Serve the build through the Cloudflare runtime so the CSP middleware, Pages
+// Functions, and public/_headers are active (`astro preview` runs none). Port and
+// compatibility date live in tests/browser-test-env.ts.
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { buildOutDir } from '../src/lib/build-output.ts';

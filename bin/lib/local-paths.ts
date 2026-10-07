@@ -1,7 +1,4 @@
-// Where the authoring machine keeps the sources that live outside this repo.
-// One answer for every script: an explicit override, then the default layout
-// under the home directory. Nothing here is relative to the repo, so a clone
-// or worktree anywhere resolves the same paths.
+// Sources outside this repo: an explicit override, then the default layout under the home directory.
 //
 //   VAULT_DIR, then NOTES_HOME   Labs vault          ~/Documents/Code/Severino Labs
 //   LIFE_VAULT_DIR               Life vault          ~/Documents/Life

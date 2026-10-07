@@ -1,6 +1,4 @@
-// The vault → repo projection. syncContent writes the public snapshot through
-// one writer and returns exactly the files it owns; checkContent resolves the
-// same references and contract without writing anything.
+// Vault to repo projection. checkContent resolves the same references and contract as syncContent without writing.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';

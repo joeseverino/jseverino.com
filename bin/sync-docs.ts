@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Generated documentation blocks. The command overview in docs/Commands.md and
-// the gate-coverage and audit tables in tests/ARCHITECTURE.md are projections
-// of bin/help.ts and tests/audits/registry.ts; this renders them between their
-// markers; --check fails the gate when a block is stale.
+// Render the generated blocks in docs/Commands.md and tests/ARCHITECTURE.md from
+// bin/help.ts and tests/audits/registry.ts, between their markers.
 //
 //   node bin/sync-docs.ts            # rewrite the blocks in place
 //   node bin/sync-docs.ts --check    # exit 1 if any block is stale
@@ -38,10 +36,8 @@ function gateCoverage() {
   );
 }
 
-// One row per audit: what a pass guarantees, how to run it alone, and the fix.
 function auditReference() {
   const scripts = packageScripts();
-  // The npm script that runs exactly this command (quotes and npx aside), else the command.
   const normal = (command: string): string => command.replace(/['"]/g, '').replace(/^npx /, '');
   const scriptFor = (audit: Audit): string => {
     const command = normal([audit.exec.cmd, ...audit.exec.args].join(' '));

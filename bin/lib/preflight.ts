@@ -1,12 +1,4 @@
-// The checks a long-running command runs first, so it fails in seconds with
-// the exact fix instead of minutes into the work. Each command names the ones
-// it needs:
-//
-//   deps    node_modules matches package-lock.json
-//   fetch   origin/main is current
-//   gh      the gh CLI is authenticated
-//   vault   the vault's writeup and page folders exist
-//   clean   no uncommitted changes to tracked files
+// Checks a command runs first so it fails fast with the fix: deps, fetch, gh, vault, clean.
 import fs from 'node:fs';
 import path from 'node:path';
 import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';

@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Any link that opens a new tab must carry rel="noopener" so the opened page
-// cannot reach back through window.opener. Engine-independent, so *.single.
+// Links that open a new tab must carry rel="noopener". Engine-independent, so *.single.
 
 const pages = ['/', '/about/', '/portfolio/', '/resume/'];
 

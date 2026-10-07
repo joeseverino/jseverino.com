@@ -1,5 +1,3 @@
-// Live-site operations with a recorded wrangler runner and a fake fetch: SQL
-// stays fixed, PII stays redacted unless asked for, and releases are audited.
 import { after, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

@@ -1,6 +1,4 @@
-// The Cloudflare desired state (cloudflare/zone.json, validated against
-// cloudflare/zone.schema.json on load) and the slices of the v4 API responses
-// bin/lib/cloudflare.ts reads. API shapes name only the fields this repo uses.
+// Cloudflare desired state (cloudflare/zone.json, validated against zone.schema.json) and the slices of v4 API responses read.
 
 export type Toggle = 'on' | 'off';
 
@@ -93,7 +91,6 @@ export interface DesiredState {
   turnstile: { domains: string[] };
 }
 
-// --- the v4 API, as read ----------------------------------------------------
 
 export interface ApiErrorEntry {
   code?: number;
@@ -210,6 +207,5 @@ export interface LiveState {
   widgets: Widget[];
 }
 
-// --- the plan ----------------------------------------------------------------
 
 export type { Call, Item, ItemStatus, Method, Step } from './drift.ts';

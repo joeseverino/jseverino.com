@@ -15,8 +15,7 @@ export interface D1Database {
   batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
 }
 
-// Row shapes of cloudflare/d1.sql, one per table; check-functions-parity holds
-// each to its CREATE TABLE. SQLite returns INTEGER as number, TEXT as string.
+// Row shapes of cloudflare/d1.sql; check-functions-parity holds each to its CREATE TABLE.
 
 // D1 table contact_submissions
 export interface ContactSubmissionRow {

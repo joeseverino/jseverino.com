@@ -1,7 +1,4 @@
-// Job-summary and log helpers for the bin/ runners when they execute inside
-// GitHub Actions: a markdown table on the run page, collapsible log groups,
-// and error annotations. Every function is inert anywhere else, so a local
-// run prints exactly what it printed before.
+// Job-summary and log helpers for the bin/ runners. Inert outside GitHub Actions.
 import fs from 'node:fs';
 
 export const inActions = process.env.GITHUB_ACTIONS === 'true';
@@ -44,10 +41,8 @@ export function table(headers: readonly string[], rows: readonly (readonly unkno
   ].join('\n');
 }
 
-// Returns false outside Actions so callers can skip work that only feeds the
-// summary. JOB_SUMMARY_FILE receives a second copy: the step summary file is
-// private to its step, so a job that wants to hand its summary to a later job
-// (the PR comment) needs one it can upload.
+// Returns false outside Actions. JOB_SUMMARY_FILE gets a second copy because the step summary file
+// is private to its step and a later job (the PR comment) needs one it can upload.
 export function appendSummary(markdown: string): boolean {
   const targets = [process.env.GITHUB_STEP_SUMMARY, process.env.JOB_SUMMARY_FILE].filter((file): file is string => Boolean(file));
   if (targets.length === 0) return false;
@@ -55,8 +50,7 @@ export function appendSummary(markdown: string): boolean {
   return true;
 }
 
-// Rows for one gate's job-summary table: add() each step as it finishes,
-// write() once at the end. ok is true, false, or null (skipped).
+// Rows for one gate's job-summary table: add() each step, write() once at the end.
 export interface ReportRow {
   label: string;
   ok: Outcome;

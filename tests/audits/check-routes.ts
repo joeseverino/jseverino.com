@@ -1,11 +1,7 @@
 #!/usr/bin/env node
-// public/_routes.json sends only the Function routes to Pages Functions, so
-// every page is a static asset: no page view spends the daily Functions quota,
-// and a page cannot be taken down by a Function. Its Content-Security-Policy
-// comes from _headers, so this also checks that the built _headers is complete.
-// Fails when the file breaks the Pages limits, when a built HTML page or a Function route is
-// routed wrongly, when a rule matches no Function route, or when _headers keeps
-// a placeholder, lists a path twice, or lacks the policy rules.
+// public/_routes.json sends only Function routes to Pages Functions, so every page is a static
+// asset: no page view spends the Functions quota. Also checks the built _headers is complete
+// (no placeholder, no duplicate path, policy rules present).
 
 import fs from 'node:fs';
 import path from 'node:path';

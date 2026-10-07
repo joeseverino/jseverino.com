@@ -1,6 +1,4 @@
-// The repo-side commands: the dev server, repository status, and thin fronts
-// for the repo scripts that already own their logic (deploy-verify,
-// seo-preview, draft-cover-alt).
+// Repo-side commands: the dev server, status, and thin fronts for existing repo scripts.
 import fs from 'node:fs';
 import path from 'node:path';
 import { draftsOverlay } from '../lib/cache.ts';

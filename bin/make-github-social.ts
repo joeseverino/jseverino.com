@@ -1,6 +1,5 @@
-// Generates the 1280x640 GitHub repo social preview at .github/social-preview.png.
-// Upload via the repo's Settings -> Social preview. Not served from the site.
-// Run with: node bin/make-github-social.ts
+// Generates the 1280x640 GitHub social preview at .github/social-preview.png
+// (uploaded manually in repo settings). Run with: node bin/make-github-social.ts
 import path from 'node:path';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { brandCardColors } from '../src/lib/brand.ts';

@@ -1,7 +1,5 @@
-// The Astro dev server as `site manage` controls it: which processes listen
-// on the port, starting `site dev` in its own process group, and stopping only
-// what that start created. A browser tab holding a connection to the port is
-// a client socket, so listeners are matched in the LISTEN state only.
+// The Astro dev server as `site manage` controls it. Listeners are matched in the LISTEN state only,
+// so a browser tab's client socket is never mistaken for the server.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

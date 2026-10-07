@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// What a content change means, by slug: which writeups it publishes, edits, or
-// removes, which pages it touches, and how many generated files ride along.
-// One classifier for publish (commit message, PR body), land (what to verify),
-// and publish:check (its content status line).
+// Classify a content change by slug: writeups published, edited, or removed, pages
+// touched, generated files riding along. Shared by publish, land, and publish:check.
 //
 //   node bin/content-diff.ts [--range <a..b> | --cached] [--json]
 import { cli, flag } from './lib/args.ts';
@@ -10,7 +8,6 @@ import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
-// Everything the content sync owns.
 export const CONTENT_PATHS = ['src/content'];
 
 export type FileStatus = 'A' | 'M' | 'D';
@@ -52,8 +49,6 @@ function changedFiles({ cwd = siteRoot, range, cached = false }: DiffOptions = {
   });
 }
 
-// Each document is <collection>/<slug>/index.mdx; the image masters the sync
-// prepares sit in its images/ folder.
 const WRITEUP_INDEX = /^src\/content\/writeups\/([^/]+)\/index\.mdx$/;
 const WRITEUP_FILE = /^src\/content\/writeups\/([^/]+)\//;
 const PAGE_FILE = /^src\/content\/pages\/(.+?)\/(?:index\.mdx|images\/)/;
@@ -106,7 +101,6 @@ export function describeDiff(diff: ContentDiff): string {
     .join('; ');
 }
 
-// A lone change names itself; several summarize by count with the slugs in the body.
 export function commitMessage(diff: ContentDiff): string {
   // [verb for a lone change, count label, body heading, slugs]
   const groups = ([

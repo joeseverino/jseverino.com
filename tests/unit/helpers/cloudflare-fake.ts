@@ -1,7 +1,5 @@
-// An in-memory stand-in for the Cloudflare v4 endpoints bin/lib/cloudflare.ts
-// uses, seeded from a fixture of API-shaped live state. Writes mutate the
-// state, so an apply can be re-checked and re-applied against it. Every call
-// is recorded; an unknown route fails the test instead of passing silently.
+// In-memory Cloudflare v4 fake seeded from an API-shaped fixture. Writes mutate state and every
+// call is recorded; an unknown route fails the test.
 
 import {
   API_BASE,
@@ -10,9 +8,7 @@ import {
 
 type Fields = Record<string, unknown>;
 
-// tests/fixtures/cloudflare/live-drifted.json: API-shaped state, stored the
-// way the fake serves it (settings by id, rulesets by scope/phase, list items
-// inside their list).
+// tests/fixtures/cloudflare/live-drifted.json: state stored the way the fake serves it.
 export interface FakeState {
   zone: { id: string; name: string; account: { id: string } };
   settings: Record<string, { value: unknown; editable?: boolean }>;
@@ -36,7 +32,6 @@ export interface RecordedCall {
   authorization: string | null;
 }
 
-// Capture groups, in order; every route's pattern defines the ones it reads.
 type Groups = [string, string];
 type Handler = (groups: Groups, url: URL, body: unknown) => Response;
 

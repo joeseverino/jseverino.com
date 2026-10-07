@@ -1,10 +1,3 @@
-// Unit tests for the GitHub repository desired-state tool (bin/github.ts over
-// bin/lib/github-settings.ts): the committed github/repo.json against its
-// schema, then check, plan, and apply against an in-memory API seeded from
-// tests/fixtures/github/live-drifted.json. No network.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { main } from '../../bin/github.ts';
@@ -18,8 +11,7 @@ const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');
 const schema = read<JsonSchema>('github/repo.schema.json');
 const desired = read<DesiredState>('github/repo.json');
 
-// Every top-level DesiredState field, checked against the schema's properties
-// below, so a field added to one and not the other fails here.
+// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, security: true, actions: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));

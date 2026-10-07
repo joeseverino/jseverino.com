@@ -1,4 +1,3 @@
-// site render: the build's renderer over a vault writeup or stdin.
 import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

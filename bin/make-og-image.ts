@@ -1,6 +1,5 @@
-// Generates the 1200x630 Open Graph social card at public/assets/og/og-default.jpg:
-// rendered once as a PNG, then encoded as a JPEG (about 100 KB against 850 KB), the
-// format every platform reads and the one content cards already use.
+// Generates the 1200x630 Open Graph card at public/assets/og/og-default.jpg
+// (PNG render re-encoded as JPEG, about 100 KB vs 850 KB).
 // Run with: node bin/make-og-image.ts
 import fs from 'node:fs';
 import os from 'node:os';

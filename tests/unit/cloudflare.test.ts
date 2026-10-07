@@ -1,10 +1,3 @@
-// Unit tests for the Cloudflare desired-state tool (bin/cloudflare.ts over
-// bin/lib/cloudflare.ts): the committed cloudflare/zone.json against its
-// schema, then check, plan, and apply against an in-memory API seeded from
-// tests/fixtures/cloudflare/live-drifted.json. No network.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -21,8 +14,7 @@ const seed = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');
 const schema = read<JsonSchema>('cloudflare/zone.schema.json');
 const desired = read<DesiredState>('cloudflare/zone.json');
 
-// Every top-level DesiredState field, checked against the schema's properties
-// below, so a field added to one and not the other fails here.
+// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
   $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, botManagement: true, firewall: true,
   rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,

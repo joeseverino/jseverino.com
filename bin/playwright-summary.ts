@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// Turns Playwright's JSON report into a per-project table on the job summary.
-// Runs after the suite with `if: always()`, so a red job still gets its table.
-// The exit code stays zero: the test step already decided the job's outcome.
+// Turn Playwright's JSON report into a per-project job-summary table. Runs with
+// `if: always()` and exits zero: the test step decides the job's outcome.
 //
 //   node bin/playwright-summary.ts "Cross-browser suite" [test-results/results.json]
 import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';

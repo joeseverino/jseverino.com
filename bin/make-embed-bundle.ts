@@ -1,16 +1,9 @@
 #!/usr/bin/env node
-// Emit the one embeddable stylesheet.
-//
-// The "load BOTH" contract (src/lib/web-styles.ts) says an embedder needs
-// base.css + the brand vars + a resolvable Inter TOGETHER. previewStyles()
-// shares the assembly, but each embedder supplies baseCss/fontUrl its own way.
-// This emits the whole contract as one artifact:
+// Emit the one embeddable stylesheet (the "load BOTH" contract in src/lib/web-styles.ts):
 //
 //   public/embed/bundle.css  =  base.css (which imports the brand vars) + @font-face (base64 Inter)
 //
-// Deployed at https://jseverino.com/embed/bundle.css. The vault theme and the
-// Obsidian cockpit load that one URL (or this file), so none can miss the
-// brand vars.
+// Served at https://jseverino.com/embed/bundle.css for the vault theme and Obsidian.
 //
 //   node bin/make-embed-bundle.ts           # (re)write public/embed/bundle.css
 //   node bin/make-embed-bundle.ts --check   # fail if the committed copy is stale

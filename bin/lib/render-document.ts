@@ -1,7 +1,5 @@
-// A writeup as a self-contained preview page: Astro's container renders
-// WriteupPreview (the shipped ArticleView markup) inside a Vite SSR server
-// built from the site's own Astro config, with base.css bundled by Vite and
-// Inter inlined, so the page works from a file or a sandboxed iframe.
+// A writeup as a self-contained preview page: Astro's container renders WriteupPreview in a Vite SSR server,
+// with base.css bundled and Inter inlined so it works from a file or sandboxed iframe.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

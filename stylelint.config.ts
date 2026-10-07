@@ -1,7 +1,6 @@
 export default {
   extends: ['stylelint-config-standard'],
   rules: {
-    // Preserve the file's deliberate grouping and compact one-line rules.
     'at-rule-empty-line-before': null,
     'color-hex-length': null,
     'comment-empty-line-before': null,
@@ -9,19 +8,16 @@ export default {
     'declaration-block-single-line-max-declarations': null,
     'declaration-empty-line-before': null,
 
-    // Native nesting creates false ordering positives across component blocks.
+    // Native nesting creates false ordering positives.
     'no-descending-specificity': null,
 
-    // Logical longhands and the WebKit backdrop prefix are intentional compatibility choices.
+    // Logical longhands and the WebKit backdrop prefix are intentional.
     'declaration-block-no-redundant-longhand-properties': null,
     'property-no-vendor-prefix': null,
 
-    // Existing semantic class names and case-sensitive font family names are intentional.
     'selector-class-pattern': null,
     'value-keyword-case': null,
 
-    // Structural leanness: repeated selectors and empty rules add cascade
-    // ambiguity without adding behavior.
     'no-duplicate-selectors': true,
     'block-no-empty': true,
   },

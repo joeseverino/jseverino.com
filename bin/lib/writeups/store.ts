@@ -1,8 +1,5 @@
-// The vault's writeup inventory as typed operations: read the writeups and the
-// technology catalog, and write frontmatter, links, and the featured order
-// transactionally. No console output and no process state: every operation
-// takes its paths in a WriteupStore, so the CLI, the manage TUI, and any other
-// caller (HQ) drive the same functions.
+// The vault's writeup inventory as typed operations. No console output or process state: every operation
+// takes its paths in a WriteupStore, so the CLI, the manage TUI, and HQ share them.
 import fs from 'node:fs';
 import path from 'node:path';
 import { DetailedError } from '../detailed-error.ts';

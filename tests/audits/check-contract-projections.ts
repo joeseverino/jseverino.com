@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Every generated projection matches its canonical source: each sync/make
-// script re-derives its output with --check and fails when a committed copy
-// differs.
+// Every generated projection matches its canonical source (each sync script re-derives with --check).
 import { runSync } from '../../bin/lib/run.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';

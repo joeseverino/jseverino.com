@@ -1,6 +1,4 @@
 @layer components {
-/* ── Footer ─────────────────────────────────────────────────────────── */
-
 .site-footer {
   margin-block-start: var(--space-50);
   padding-block: var(--space-30);
@@ -38,8 +36,7 @@
   }
 }
 
-/* Hidden until the boot script marks :root, because with JS off the segments
-   do nothing, and auto already works on its own. */
+/* Hidden until the boot script marks :root; with JS off the segments do nothing. */
 .theme-toggle {
   display: none;
   align-items: center;

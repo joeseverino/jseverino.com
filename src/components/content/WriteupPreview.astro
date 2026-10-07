@@ -1,8 +1,5 @@
 ---
-// A self-contained preview page for one writeup: the article markup the site
-// ships (ArticleView) with the site's styles inlined, so it renders from a file
-// or a sandboxed iframe with no server. `site render` renders this through
-// Astro's container and inlines the bundled site CSS into the head.
+// ArticleView with the site CSS inlined, so it renders from a file or sandboxed iframe. Used by `site render`.
 import ArticleView from './ArticleView.astro';
 
 type Props = {

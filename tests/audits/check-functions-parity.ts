@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// Contract lineage across the serverless boundary. The request shape is
-// declared once in contracts/contact.v1.json; OpenAPI and the handler derive
-// from it. D1 remains a persistence contract and is checked against INSERTs.
+// Contract lineage across the serverless boundary: contracts/contact.v1.json is canonical,
+// OpenAPI and the handler derive from it, and D1 is checked against the handler INSERTs.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,7 +14,6 @@ const fail = (message: string): void => {
   failures.push(message);
 };
 
-// --- 1. Canonical request contract -> OpenAPI + handler ---------------------
 
 const contract: { request: unknown } = JSON.parse(read('contracts/contact.v1.json'));
 const openapi: { components?: { schemas?: { ContactSubmission?: unknown } } } = JSON.parse(read('contracts/contact.openapi.json'));
@@ -35,7 +33,6 @@ if (!submission) {
   }
 }
 
-// --- 2. Handler INSERTs <-> D1 schema ---------------------------------------
 
 const sql = read('cloudflare/d1.sql');
 const tables = new Map<string, Set<string>>();
@@ -49,7 +46,6 @@ for (const [, table = '', body = ''] of sql.matchAll(/CREATE TABLE IF NOT EXISTS
 }
 if (tables.size === 0) fail('cloudflare/d1.sql defines no CREATE TABLE statements');
 
-// Each table's row type in functions/lib/database.ts names exactly its columns.
 const rows = read('functions/lib/database.ts');
 let rowTypes = 0;
 for (const [, table = '', body = ''] of rows.matchAll(/\/\/ D1 table (\w+)\nexport interface \w+ \{([\s\S]*?)\n\}/g)) {

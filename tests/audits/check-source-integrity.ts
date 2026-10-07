@@ -11,8 +11,7 @@ const failures: string[] = [];
 
 function inspect(file: string): void {
   const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
-  // parseDiagnostics is internal to the compiler API: the syntax errors alone,
-  // without a type-checking program.
+  // parseDiagnostics is internal to the compiler API: syntax errors only, no type-checking program.
   const { parseDiagnostics } = source as ts.SourceFile & { parseDiagnostics: readonly ts.DiagnosticWithLocation[] };
   for (const diagnostic of parseDiagnostics) {
     const point = source.getLineAndCharacterOfPosition(diagnostic.start ?? 0);

@@ -1,6 +1,4 @@
-// Cloudflare Access service-token headers for requests to this project's Pages
-// deployments, which sit behind the preview access policy. Sent only to the
-// project's pages.dev host and its deployment subdomains.
+// Access service-token headers for this project's Pages deployments, sent only to its pages.dev host and subdomains.
 import { PAGES_HOST } from '../../src/lib/site-config.ts';
 
 export const ACCESS_ID_ENV = 'CF_ACCESS_CLIENT_ID';

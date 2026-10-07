@@ -1,10 +1,6 @@
 #!/usr/bin/env node
-// Internal link integrity over the built HTML. The sitemap routes test proves
-// every page exists; this proves every internal reference *inside* the pages
-// (href, src, srcset, poster, including same-origin absolute URLs like the
-// canonical link) resolves to a file the build actually emitted. A typo'd
-// in-content link fails here, before deploy, instead of surfacing in the live
-// sitemap traversal after.
+// Internal link integrity over the built HTML: every href, src, srcset and poster (including
+// same-origin absolute URLs) resolves to an emitted file.
 
 import fs from 'node:fs';
 import path from 'node:path';

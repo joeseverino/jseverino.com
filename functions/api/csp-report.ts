@@ -1,10 +1,5 @@
-// Cloudflare Pages Function: POST /api/csp-report
-//
-// Receives browser CSP violation reports from the enforced site policy and
-// stores a compact, normalized record in D1 for review. The endpoint is open
-// by necessity, so writes are bounded: one batch per request, a report
-// identical to one stored in the last hour is skipped, and each IP gets a
-// fixed number of stored reports per hour.
+// POST /api/csp-report. The endpoint is open, so writes are bounded: one batch per request,
+// identical reports within the hour skipped, a fixed hourly cap per IP.
 
 import { SITE } from '../generated/site.ts';
 import type { D1Database } from '../lib/database.ts';
@@ -86,11 +81,9 @@ function isIgnoredReport(report: NormalizedReport): boolean {
   return (
     !isSiteDocument(report.documentUri) ||
     EXTENSION_SCHEMES.some((scheme) => blocked.startsWith(scheme) || sourceFile.startsWith(scheme)) ||
-    // Extensions like AdGuard inject inline <style>/<script> directly into the
-    // page DOM, so the browser attributes the violation to our document instead
-    // of an extension scheme. The site's own inline script and stylesheet are
-    // covered by hashes, so any `inline`-blocked report whose source matches the
-    // document URI is an injection from a browser extension or content filter.
+    // Extensions like AdGuard inject inline tags into the DOM, so the browser blames our document.
+    // Our own inline script and style are hash-covered, so any inline-blocked report whose source
+    // is the document URI is an injection.
     (blocked === 'inline' && report.sourceFile === report.documentUri)
   );
 }
@@ -172,13 +165,11 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
            AND source_file IS ?7 AND line_number IS ?8 AND column_number IS ?9)`,
   );
 
-  // Reports are diagnostics, not records: the same batch that stores new ones
-  // drops those past retention, so the table stays bounded with no scheduler.
+  // Reports are diagnostics: the batch that stores new ones also drops those past retention.
   const purge = env.DB.prepare(`DELETE FROM csp_reports WHERE created_at < datetime('now', ?1)`).bind(`-${RETENTION_DAYS} days`);
 
   try {
-    // One batch is one round trip and one transaction, so the cap and the
-    // duplicate check also see the rows earlier in the same request.
+    // One batch is one transaction, so the cap and duplicate check see earlier rows of this request.
     await env.DB.batch([
       purge,
       ...reports.map((report) =>

@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-// Functional coverage for the Software tab of /portfolio. The tab toggle is
-// plain DOM + a small script (engine-independent), so this runs chromium-only
-// (.single). The data itself is build-time derived (GitHub + PyPI/npm); these
-// assertions pin behaviour and structure, not specific version numbers.
+// The tab toggle is plain DOM plus a small script, so this runs chromium-only (.single).
+// Asserts structure, not specific version numbers.
 
 test.describe('portfolio software tab', () => {
   test('tabs follow URL changes and preserve query parameters', async ({ page }) => {

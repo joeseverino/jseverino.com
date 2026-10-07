@@ -1,37 +1,6 @@
-// The verification audits. Every gate derives its checks from this list, so a
-// check added here runs in every gate that claims it:
-//
-//   • gate:check     runs gates.includes('gate')     (fast pre-build invariants, collect-all; CI's first step)
-//   • publish:check  runs gates.includes('publish')  (fast local build gate)
-//   • diagnose       runs gates.includes('diagnose') (the complete, run-all gate)
-//   • release:check  runs publish:check (subprocess) + gates.includes('release'),
-//                    so an audit publish already runs does not also claim release
-//
-// Each gate keeps its OWN orchestration (ordering around sync/build, fail-fast
-// vs collect-all, the report). This module is data only.
-//
-// Fields:
-//   id          stable key (diagnose report + troubleshooting anchor)
-//   label       short column label for publish-check's terse output
-//   name        human title for the diagnose report
-//   asserts     one line: what a pass guarantees (the audit table in tests/ARCHITECTURE.md)
-//   phase       'pre-build' (source/synced-content checks) | 'post-build' (need dist/)
-//   exec        { cmd, args, env?, jsonArgs? } spawned from the repo root;
-//               jsonArgs are appended when SITE_JSON=1 (set by `site --json`)
-//   gates       subset of ['gate','publish','diagnose','release']
-//   fix         one-line remediation (diagnose troubleshooting + report)
-//   summary     publish-check terse line: 'ok' (default, first `ok …` line),
-//               'astro' (errors/warnings), 'assets' (image report), or 'silent'
-//   macosOnly   skip when not on darwin (committed visual baselines are macOS)
-//   localOnly   skip when CI is set: the check verifies sources that live
-//               outside the repo (the vault, the MCP server) and only exist
-//               on the authoring machine
-//   timeout     ms before the gate kills a hung check (default in bin/lib/run.ts)
-//   heavy       a browser suite: the runners cap how many run at once by memory
-//   servesBuild serves the gate's own dist/; the runners pass PREBUILT=1 so it
-//               does not rebuild
-//   lock        audits sharing a lock never overlap ('astro': both write .astro/)
-//   ownCiJob    a dedicated CI job runs this audit, so publish:check skips it on the runner
+// The verification audits; every gate derives its checks from this list (data only).
+// localOnly skips on CI, macosOnly is the visual baselines, heavy caps concurrency, servesBuild runs with PREBUILT=1,
+// lock serializes audits sharing it, ownCiJob means a dedicated CI job runs it so publish:check skips it there.
 
 export type Gate = 'gate' | 'publish' | 'diagnose' | 'release';
 export type Phase = 'pre-build' | 'post-build';
@@ -270,7 +239,6 @@ export const AUDITS: readonly Audit[] = [
 export const auditsFor = (gate: Gate, phase?: Phase): Audit[] =>
   AUDITS.filter((a) => a.gates.includes(gate) && (!phase || a.phase === phase));
 
-// What publish:check runs. CI runs gate:check first and the edge suite in its
-// own job, so `afterGate` and `ci` drop the audits those already covered.
+// What publish:check runs; `afterGate` and `ci` drop audits gate:check and the edge job already covered.
 export const publishAudits = (phase: Phase, { afterGate = false, ci = false } = {}): Audit[] =>
   auditsFor('publish', phase).filter((a) => !(afterGate && a.gates.includes('gate')) && !(ci && a.ownCiJob));

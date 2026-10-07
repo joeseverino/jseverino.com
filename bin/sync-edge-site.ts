@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Projects the site identity into the edge runtime. Cloudflare bundles
-// functions/ on its own, so those files cannot import src/lib; the values are
-// generated into functions/generated/site.ts the way the contact contract is,
-// and check-contract-projections keeps the projection fresh.
+// Project the site identity into functions/generated/site.ts: Cloudflare bundles
+// functions/ separately, so they cannot import src/lib.
 import { checkMode } from './lib/args.ts';
 import { writeOrCheck } from './lib/projection.ts';
 import { fromRoot } from '../src/lib/site-root.ts';

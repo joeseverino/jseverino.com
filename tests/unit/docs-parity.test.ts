@@ -1,9 +1,3 @@
-// Coverage between the machine inventory and the hand-written docs: every
-// audit is documented, every gate label appears in the release checklist's
-// expected output, and every script appears in the command reference.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

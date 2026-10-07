@@ -1,8 +1,3 @@
-// The sitemap lastmod rules (src/lib/sitemap.ts): a date only where the page's
-// own content carries one, never the build time.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sitemapLastmods } from '../../src/lib/sitemap.ts';

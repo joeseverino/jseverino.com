@@ -1,9 +1,4 @@
-// Unit tests for the CSP report endpoint (functions/api/csp-report.ts):
-// normalization of both report formats (legacy report-uri and the Reporting
-// API), the noise filters (foreign documents, browser extensions, extension-
-// injected inline violations), and the D1 persistence paths.
-//
-//   npm run test:unit
+// The CSP report endpoint (functions/api/csp-report.ts): both report formats, the noise filters, D1 persistence.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';

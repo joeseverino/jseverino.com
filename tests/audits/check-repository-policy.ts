@@ -74,8 +74,7 @@ if (forbiddenTracked.length > 0) {
   fail(`forbidden generated or secret files are tracked: ${forbiddenTracked.join(', ')}`);
 }
 
-// The public stylesheet has one entry and concern-based source modules;
-// component-scoped styles would fragment that audited cascade.
+// One stylesheet entry plus concern-based modules; component-scoped styles would fragment the cascade.
 const componentStyles = existingTracked.filter(
   (file) => file.startsWith('src/') && file.endsWith('.astro') && /<style(?:\s|>)/.test(read(file)),
 );
@@ -83,15 +82,13 @@ if (componentStyles.length > 0) {
   fail(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
 }
 
-// Literal colors are allowed only inside the generated token block. Component
-// rules must name a token or derive a variant from one with color-mix().
+// Literal colors only inside the generated token block; rules name a token or use color-mix().
 const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/') && file.endsWith('.css'));
 const authoredStyles = styleFiles
   .map((file) => {
     const stylesheet = read(file);
-    // A generated block ends with a `/* <name>:end */` marker (tokens.css,
-    // brand.css); strip through the last one so a hand-authored rule below it
-    // is still checked, but nothing generated is mistaken for hand-authored.
+    // A generated block ends with a `/* <name>:end */` marker; strip through the last one so a
+    // hand-authored rule below it is still checked.
     const ends = [...stylesheet.matchAll(/\/\* \w+:end \*\//g)];
     const blockEnd = ends.at(-1)?.index;
     return blockEnd !== undefined ? stylesheet.slice(blockEnd) : stylesheet;
@@ -102,8 +99,7 @@ if (literalColor.test(authoredStyles)) {
   fail('src/styles contains a literal color outside the generated token block');
 }
 
-// The site does not use View Transitions; lifecycle listeners for them would be
-// dead client code.
+// No View Transitions, so lifecycle listeners for them are dead client code.
 const transitionHooks = existingTracked.filter(
   (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) && read(file).includes('astro:after-swap'),
 );
@@ -111,10 +107,8 @@ if (transitionHooks.length > 0) {
   fail(`Astro View Transition hooks are not used by this site: ${transitionHooks.join(', ')}`);
 }
 
-// Client-side HTML parsing creates an avoidable injection sink and blocks the
-// site's path toward an enforced Trusted Types policy. Build-time Astro
-// `set:html` remains explicit and reviewable; browser scripts clone existing
-// nodes or assign text instead of reparsing strings as markup.
+// Client-side HTML parsing is an injection sink and blocks an enforced Trusted Types policy;
+// scripts clone existing nodes or assign text instead.
 const clientHtmlSinks = existingTracked.filter(
   (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) &&
     /\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(read(file)),
@@ -123,8 +117,7 @@ if (clientHtmlSinks.length > 0) {
   fail(`client-side HTML assignment is forbidden: ${clientHtmlSinks.join(', ')}`);
 }
 
-// Deprecated private-link markers and internal service URLs must never enter
-// the public content snapshot or generated site source.
+// Deprecated private-link markers and internal service URLs must not enter the public snapshot.
 const publicSources = existingTracked.filter(
   (file) => file.startsWith('src/content/') || file.startsWith('src/pages/') || file.startsWith('src/components/'),
 );
@@ -140,11 +133,8 @@ for (const file of publicSources) {
   }
 }
 
-// Same-basename JS/TS module siblings (e.g. site.mjs + site.ts in one dir)
-// resolve ambiguously: Vite/Astro try .mjs before .ts, the TS compiler does the
-// reverse. So `astro check` and the bundler disagree and a build can break while
-// the typecheck passes. Declaration files (foo.d.ts) keep a distinct stem and are
-// unaffected. Forbid the collision outright.
+// Same-basename .mjs/.ts siblings resolve ambiguously: Vite tries .mjs first, tsc the reverse,
+// so the bundler and `astro check` can disagree. Forbid the collision (foo.d.ts is unaffected).
 const moduleStems = new Map<string, Set<string>>();
 for (const file of tracked) {
   const match = file.match(/^(.*)\.(mjs|cjs|js|jsx|mts|cts|ts|tsx)$/);
@@ -164,16 +154,14 @@ if (moduleCollisions.length > 0) {
   fail(`same-basename JS/TS modules resolve ambiguously (Vite picks .mjs, tsc picks .ts): ${moduleCollisions.sort().join(', ')}`);
 }
 
-// One language: every script is TypeScript that Node runs by stripping types.
-// A JavaScript file is allowed only when a tool cannot read TypeScript.
+// One language: TypeScript run by Node type stripping. JS only where a tool cannot read TS.
 const JAVASCRIPT_ALLOWED = new Set<string>([]);
 const javascript = tracked.filter((file) => /\.[cm]?jsx?$/.test(file) && !JAVASCRIPT_ALLOWED.has(file));
 if (javascript.length > 0) {
   fail(`JavaScript files are tracked; convert them to TypeScript or allow-list a tool requirement: ${javascript.join(', ')}`);
 }
 
-// Type errors get fixed. @ts-expect-error with a reason is the
-// one escape hatch, since it fails once the error it names is gone.
+// Type errors get fixed. @ts-expect-error with a reason is the one escape hatch (it fails once the error is gone).
 // Split so this line does not match itself.
 const suppression = new RegExp(String.raw`@ts-(?:ignore|nocheck)\b|@ts-expect-` + String.raw`error(?!\s+\S)`);
 const suppressed = existingTracked.filter(
@@ -183,7 +171,6 @@ if (suppressed.length > 0) {
   fail(`type-check suppressions without a reason (use @ts-expect-error <reason>): ${suppressed.join(', ')}`);
 }
 
-// No explicit any: unknown plus narrowing says what the code actually knows.
 const explicitAny = /(?::|<|,|\|)\s*any\b(?!-)|\bas\s+any\b/;
 const code = (source: string): string[] => source.split('\n').map((line) => line.replace(/(?:^|\s)\/\/.*$/, '')).filter((line) => !/^\s*\*/.test(line));
 const anyTyped = existingTracked.filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && code(read(file)).some((line) => explicitAny.test(line)));
@@ -198,7 +185,6 @@ for (const file of automation) {
   for (const [, label = ''] of source.matchAll(/^\s*(?:-\s*)?(?:runs-on|os):\s*(\S+)/gm)) {
     if (/-latest$/.test(label)) fail(`${file} runs on a floating runner label: ${label}`);
   }
-  // Every job carries its own timeout; the default is six hours.
   const jobs = source.match(/^    runs-on:/gm)?.length ?? 0;
   const timeouts = source.match(/^    timeout-minutes:/gm)?.length ?? 0;
   if (jobs !== timeouts) fail(`${file} has ${jobs} job(s) but ${timeouts} timeout-minutes`);

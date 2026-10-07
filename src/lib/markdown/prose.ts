@@ -1,6 +1,3 @@
-// Inline conventions: image alt text carries display modifiers
-// (`![alt|400|nozoom](…)`), and in a writeup a paragraph that is only a link
-// renders as a button.
 import { defineMdastPlugin } from 'satteri';
 import { parseImageDirectives } from '../image-directives.ts';
 

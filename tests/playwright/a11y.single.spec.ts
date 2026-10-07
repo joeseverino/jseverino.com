@@ -11,19 +11,14 @@ const summarize = (results: Awaited<ReturnType<typeof scan>>) =>
       `${violation.id} (${violation.impact}): ${violation.help}; ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target}`,
   );
 
-// Accessibility sweep with axe-core over the key page archetypes: home,
-// listing, writeup, form, and resume. The static check-html audit covers the
-// cheap structural rules (unique ids, alt presence) on every page; this runs
-// the full WCAG A/AA ruleset in a real browser, where label association,
-// landmark structure, and computed color contrast actually resolve.
+// axe-core over the key page archetypes. check-html covers cheap structural rules;
+// this runs the full WCAG A/AA ruleset where contrast and landmarks resolve.
 // Engine-independent, so *.single.
 
 const pages = ['/', '/portfolio/', anyWriteup(), '/contact/', '/resume/'];
 
-// Abort the Turnstile challenge script the same way contact.spec.ts does: its
-// widget keeps network activity alive on CI (which is also why this spec must
-// not wait for networkidle), and axe scans the site's own markup, not
-// Cloudflare's iframe.
+// Abort the Turnstile script as contact.spec.ts does: it keeps network activity alive
+// on CI (so do not wait for networkidle), and axe should scan only the site's markup.
 test.beforeEach(async ({ page }) => {
   await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
 });

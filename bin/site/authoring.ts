@@ -1,5 +1,4 @@
-// The vault-side commands: scaffold a writeup, validate it, order the
-// featured list, browse the technology catalog.
+// Vault-side commands: scaffold, validate, order the featured list, browse technologies.
 import fs from 'node:fs';
 import path from 'node:path';
 import { checkContent } from '../content-sync/sync.ts';

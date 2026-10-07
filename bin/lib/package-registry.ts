@@ -1,6 +1,4 @@
-// Looks up the PyPI and npm facts the Software tab shows. Kept apart from
-// bin/snapshot-software.ts so the rule that matters, all lookups succeed or
-// nothing is written, can be tested without the network.
+// PyPI and npm lookups for the Software tab, apart from bin/snapshot-software.ts so the all-or-nothing rule is testable offline.
 import { fetchJson } from '../../src/lib/fetch-json.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 

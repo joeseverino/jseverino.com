@@ -1,7 +1,5 @@
-// The engine the desired-state tools share (bin/cloudflare.ts, bin/github.ts):
-// the item and call shapes a diff produces, the helpers that build and compare
-// them, and the check / plan / apply command flow over a tool's own survey.
-// A tool supplies the live read, the diff, and the executor for its API.
+// Engine shared by the desired-state tools (bin/cloudflare.ts, bin/github.ts): diff item shapes and the
+// check / plan / apply flow. A tool supplies the live read, the diff, and the executor.
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
 import { readJson } from '../../src/lib/json.ts';

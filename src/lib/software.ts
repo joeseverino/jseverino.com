@@ -1,9 +1,5 @@
-// Orchestration for the Software tab. Composes three sources, none hand-keyed:
-//   1. GitHub (github.ts)            -> which repos, description, language, pushed
-//   2. curation config (.config.ts)  -> skip / featured / order / writeups / packages
-//   3. package-registry.json         -> PyPI + npm version + monthly downloads (a snapshot)
-// The result is the derived list the page renders. Add a repo on GitHub (with a
-// description) and it appears; cut a release and the version updates.
+// The Software tab list, from GitHub (github.ts), the curation config, and the
+// package-registry.json snapshot (PyPI/npm versions and downloads).
 
 import { getGithubRepos } from './github.ts';
 import { asyncCache } from './async-cache.ts';
@@ -30,7 +26,7 @@ export type SoftwareEntry = {
   description: string;
   repoUrl: string;
   language?: string | undefined;
-  updatedAt?: string | undefined; // 'YYYY-MM'
+  updatedAt?: string | undefined;
   featured: boolean;
   selfHosted: boolean;
   writeupSlug?: string | undefined;
@@ -42,8 +38,7 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-// Versions and monthly downloads come from the committed registry snapshot
-// (`npm run snapshot:software`), so a build never calls PyPI or npm.
+// From the committed snapshot (`npm run snapshot:software`), so a build never calls PyPI or npm.
 const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
 
 function enrich(pkg: SoftwarePackage): void {
@@ -80,13 +75,11 @@ async function build(): Promise<SoftwareEntry[]> {
       };
     });
 
-  // Fixture builds carry no registry numbers.
   if (!fixtureContent) {
     for (const entry of entries) if (entry.package) enrich(entry.package);
   }
 
-  // Explicit order first, then alphabetical by title. Never by last-pushed: any
-  // repo push (including a merge to this site) would reorder the list.
+  // Never by last-pushed: any repo push would reorder the list.
   return entries.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 }
 
@@ -100,7 +93,6 @@ export function getMoreSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
 
 const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-/** 'YYYY-MM' -> 'Jun 2026'. Empty string for missing/invalid input. */
 export function formatUpdated(ym?: string): string {
   const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
   return year && month && Number(month) >= 1 && Number(month) <= 12
@@ -108,7 +100,6 @@ export function formatUpdated(ym?: string): string {
     : '';
 }
 
-/** 'Python · Jun 2026' from an entry's language + updatedAt. */
 export function metaLine(entry: SoftwareEntry): string {
   return [entry.language, formatUpdated(entry.updatedAt)].filter(Boolean).join(' · ');
 }

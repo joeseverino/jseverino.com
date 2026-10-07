@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// npm audit with an expiring allowlist: fails on any high or critical advisory
-// that .github/audit-allowlist.json does not accept, or accepts past its
-// reviewBy date. Reads the lockfile; no install needed.
+// npm audit with an expiring allowlist (.github/audit-allowlist.json): fails on any
+// high or critical advisory not accepted, or accepted past its reviewBy date.
 //
 //   node bin/audit.ts [--json]
 import { cli, flag } from './lib/args.ts';
@@ -20,7 +19,6 @@ interface AllowlistEntry {
   reviewBy: string;
 }
 
-// npm audit --json: the fields read here.
 interface AuditVia {
   name: string;
   severity: string;
@@ -45,7 +43,6 @@ export interface AuditFinding extends Advisory {
   reviewBy: string | null;
 }
 
-// The --json document.
 export interface AuditDocument {
   ok: boolean;
   findings: AuditFinding[];
@@ -65,7 +62,6 @@ try {
   process.exit(1);
 }
 
-// Advisory objects (not the transitive "via" names) with their GHSA id.
 const found = new Map<string, Advisory>();
 for (const vulnerability of Object.values(report.vulnerabilities ?? {})) {
   for (const via of vulnerability.via) {

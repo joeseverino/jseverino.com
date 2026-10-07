@@ -1,9 +1,6 @@
 #!/usr/bin/env node
-// Turn the built pages into the site's headers: hash the inline script and the
-// inlined stylesheet every page carries, fail on any script or style the policy
-// would not cover, and write the Content-Security-Policy into dist/_headers in
-// place of the placeholders public/_headers holds. Runs from build-static after
-// the sitedrift wrap, so a preview build is scanned as it will be served.
+// Hash each page's inline script and stylesheet, fail on any the policy would not
+// cover, and write the CSP into dist/_headers. Runs after the sitedrift wrap.
 //
 //   node bin/build-csp.ts [dist-dir]
 import fs from 'node:fs';
@@ -17,7 +14,6 @@ import { cli } from './lib/args.ts';
 
 // Cloudflare ignores a _headers line past this length.
 const MAX_HEADER_LINE = 2000;
-// A page that grows a fifth distinct inline script is a design change, not drift.
 const MAX_HASHES = 4;
 
 export const PLACEHOLDERS = ['__CSP__', '__CSP_CONTACT__', '__TT_REPORT_ONLY__', '__REPORTING_ENDPOINTS__'] as const;

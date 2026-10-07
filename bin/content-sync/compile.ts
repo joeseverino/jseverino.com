@@ -1,6 +1,4 @@
-// Compiles a document with the site's renderer, so a problem the build would
-// hit (an MDX syntax error, a block the vocabulary lacks, content the guard
-// refuses) is reported by site validate first, with its line.
+// Compiles a document with the site's renderer so build problems surface in site validate first, with a line.
 import { mdxToJs } from 'satteri';
 import { pathToFileURL } from 'node:url';
 import { processorOptions } from '../../src/lib/markdown/index.ts';

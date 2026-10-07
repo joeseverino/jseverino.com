@@ -1,7 +1,5 @@
-// Local, gitignored state the scripts keep between runs: the image-master
-// cache and the drafts overlay. It lives in the repo's .cache/, outside
-// node_modules, so `npm ci` keeps it. SITE_CACHE_DIR points a temporary
-// worktree (site publish) at the checkout's cache.
+// Local, gitignored state between runs (image-master cache, drafts overlay) in .cache/, outside node_modules
+// so `npm ci` keeps it. SITE_CACHE_DIR points a temporary worktree at the checkout's cache.
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';
 

@@ -33,9 +33,8 @@ jobs:
         with:
           sarif_file: scorecard.sarif
 
-      # The SARIF above lists only the checks with findings. A second pass in
-      # JSON carries every check and the aggregate, which is what the summary
-      # shows.
+      # The SARIF lists only checks with findings; the JSON pass carries every check and
+      # the aggregate for the summary.
       - name: Run OpenSSF Scorecard for the summary
         uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
         with:

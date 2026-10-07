@@ -39,8 +39,7 @@ const {
 const canonical = new URL(path, site.url).href;
 const personId = `${site.url}/#person`;
 const websiteId = `${site.url}/#website`;
-// A content image becomes a 1200px JPEG card, the format every platform
-// reads; getImage reports its size without exposing the original.
+// A content image becomes a 1200px JPEG card; getImage reports its size without exposing the original.
 const card = typeof image === 'string'
   ? { src: image, ...(image === site.defaultOgImage ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight } : {}) }
   : await (async () => {

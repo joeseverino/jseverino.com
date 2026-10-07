@@ -1,6 +1,4 @@
-// The sitemap index and the URL lists it points to, walked the same way by the
-// live deploy check and the route spec. read() fetches one document by its
-// <loc> (the canonical URL) and fails however its caller fails.
+// Walked by the live deploy check and the route spec. read() fetches one document by its <loc>.
 import { tagPath } from './site-config.ts';
 
 export const sitemapLocs = (xml: string): string[] => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc = '']) => loc);
@@ -18,12 +16,8 @@ export interface LastmodWriteup {
   date: Date | string | undefined;
 }
 
-// `lastmod` is only worth sending when it is true, so a page gets one only when
-// its own content says so: a writeup's reviewed date, and the pages that list
-// writeups (home, the portfolio index, a tag page) take the newest date among the
-// writeups they list. Pages with no date of their own get none, which Google
-// accepts, rather than the build time, which claims every page changed on every
-// deploy.
+// `lastmod` only when true: a writeup's reviewed date, or the newest date among the writeups a
+// listing page shows. Others get none rather than the build time, which claims every page changed.
 export function sitemapLastmods(writeups: readonly LastmodWriteup[], origin: string): Map<string, string> {
   const dated = writeups.flatMap((writeup) => {
     const time = writeup.date === undefined ? Number.NaN : new Date(writeup.date).getTime();

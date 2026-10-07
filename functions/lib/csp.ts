@@ -1,12 +1,5 @@
-// The site's Content Security Policy, built from the page markup itself.
-//
-// Every page is a static file, so the one inline script (the theme bootstrap)
-// and the one inlined stylesheet are known at build time: bin/build-csp.ts
-// hashes them and writes the policy into the built _headers. Nothing is
-// computed per request, so a page view never invokes a Function.
-//
-// Only the preview proxy (functions/__sitedrift) builds a policy at request
-// time, because it serves markup fetched while the request runs.
+// The site's CSP. Pages are static, so bin/build-csp.ts hashes the one inline script and one inlined
+// stylesheet at build time and writes the policy into _headers. Only the preview proxy builds one per request.
 
 // Build-time marker on a tag the site itself emits: it says "hash me". It is
 // spelled as a nonce attribute because the preview wrapper (sitedrift) can only
@@ -14,8 +7,7 @@
 export const CSP_INLINE_MARKER = '__CSP_INLINE__';
 const MARKER_ATTRIBUTE = new RegExp(`\\s+nonce="${CSP_INLINE_MARKER}"`, 'g');
 
-// Hosts a page may load a script from. Turnstile is loaded on the contact page;
-// the Web Analytics beacon is injected by Cloudflare.
+// Script hosts: Turnstile on the contact page, the Cloudflare Web Analytics beacon.
 export const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'] as const;
 
 export interface PolicyInput {
@@ -25,7 +17,6 @@ export interface PolicyInput {
   // Enforce Trusted Types. The contact page opts out because Turnstile's own
   // script writes to sinks without a policy; there it is only reported.
   trustedTypes: boolean;
-  // Extra script sources, for the preview proxy's per-request nonce.
   scriptExtras?: readonly string[];
 }
 
@@ -55,15 +46,11 @@ export function htmlPolicy({ scriptHashes, styleHashes, reportUri, trustedTypes,
   ].join('; ');
 }
 
-// The report-only companion the contact page carries instead of enforcing
-// Trusted Types.
 export const trustedTypesReportOnly = (reportUri: string): string =>
   [TRUSTED_TYPES, 'report-to csp-endpoint', `report-uri ${reportUri}`].join('; ');
 
 export const reportingEndpoints = (reportUri: string): string => `csp-endpoint="${reportUri}"`;
 
-// A CSP hash source ('sha256-…', quotes added by the caller) over a script or
-// style body, exactly as it sits between its tags.
 export async function hashSource(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return `sha256-${toBase64(new Uint8Array(digest))}`;
@@ -72,11 +59,9 @@ export async function hashSource(text: string): Promise<string> {
 const toBase64 = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes));
 
 export interface InlineScan {
-  // The page with the build-time marker removed.
   html: string;
   scriptHashes: string[];
   styleHashes: string[];
-  // Anything on the page the policy would not cover.
   problems: string[];
 }
 
@@ -89,9 +74,8 @@ const SAME_ORIGIN = /^\/(?!\/)/;
 const attribute = (attributes: string, name: string): string | undefined =>
   new RegExp(`\\s${name}=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(` ${attributes}`)?.slice(1).find((value) => value !== undefined);
 
-// Hash the inline scripts and styles the site marked, and report every script
-// or style the policy would block. Content that reaches a page unmarked (raw
-// HTML in a writeup, an injected tag) is a build failure, not a silent block.
+// Hash the marked inline scripts and styles and report anything the policy would block.
+// Unmarked content (raw HTML in a writeup, an injected tag) fails the build.
 export async function scanInline(html: string): Promise<InlineScan> {
   const headEnd = html.indexOf('</head>');
   const scriptHashes = new Set<string>();
@@ -125,8 +109,7 @@ export async function scanInline(html: string): Promise<InlineScan> {
   return { html: html.replace(MARKER_ATTRIBUTE, ''), scriptHashes: [...scriptHashes], styleHashes: [...styleHashes], problems };
 }
 
-// The same scan for markup fetched at request time, where nothing is marked:
-// every inline script and style on the page is covered by its own hash.
+// The same scan for markup fetched at request time, where nothing is marked.
 export async function inlineHashes(html: string): Promise<{ scriptHashes: string[]; styleHashes: string[] }> {
   const scriptHashes = new Set<string>();
   const styleHashes = new Set<string>();
@@ -141,10 +124,8 @@ export async function inlineHashes(html: string): Promise<{ scriptHashes: string
 
 export const randomNonce = (): string => toBase64(crypto.getRandomValues(new Uint8Array(16)));
 
-// The preview proxy's HTML response with its own policy: `nonce` covers the
-// bridge script the proxy injects, and each inline script and style of the
-// fetched page is covered by its hash. Anything else, and anything that is not
-// HTML, passes through.
+// The preview proxy's HTML response with its own policy: `nonce` covers the injected bridge
+// script, hashes cover the page's inline tags. Non-HTML passes through.
 export async function withPreviewPolicy(response: Response, nonce: string, reportUri: string): Promise<Response> {
   if (!/text\/html/i.test(response.headers.get('Content-Type') ?? '') || response.body === null) return response;
   const body = await response.text();

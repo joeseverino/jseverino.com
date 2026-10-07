@@ -1,6 +1,4 @@
-// Shared plumbing for the `site` subcommands: exit codes, failures that carry
-// one, and output that stays machine-readable under --json (progress goes to
-// stderr, stdout holds only the final JSON document).
+// Shared `site` plumbing. Under --json progress goes to stderr and stdout holds only the final JSON document.
 import { styleText } from 'node:util';
 import type { Preflight } from '../lib/preflight.ts';
 import { run } from '../lib/run.ts';

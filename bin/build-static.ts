@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// The static build: `astro build`, then wrap the output with sitedrift. The
-// output directory comes from src/lib/build-output.ts, the module
-// astro.config.ts uses, so sitedrift's --dir is where Astro wrote. The --live
-// origin and --brand come from the instance identity in site-config.ts.
+// `astro build`, then wrap the output with sitedrift. The output dir comes from
+// src/lib/build-output.ts (shared with astro.config.ts).
 import path from 'node:path';
 import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
@@ -25,8 +23,7 @@ function run(command: string, args: readonly string[]): void {
   if (code !== 0) process.exit(code);
 }
 
-// Emit the HQ content index into public/ before the build so Astro copies it
-// into the deploy output (served at /content-index.json, gated by Access).
+// Before the build, so Astro copies it to the output (/content-index.json, gated by Access).
 run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // Under `site --json`, Astro's JSON logger: one {message,label,level} line per event.
 run(astro, jsonLogs() ? ['build', '--json'] : ['build']);
@@ -39,6 +36,5 @@ run(process.execPath, [
   // Every inline tag the viewer writes carries the marker build-csp hashes.
   '--nonce', CSP_INLINE_MARKER,
 ]);
-// The Content Security Policy, from the pages as they will be served, so it
-// runs after the wrap.
+// After the wrap, so the CSP hashes the pages as served.
 run(process.execPath, [path.join(siteRoot, 'bin/build-csp.ts')]);

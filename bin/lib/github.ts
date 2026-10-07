@@ -1,5 +1,4 @@
-// The gh CLI as functions, for scripts that run where gh is already
-// authenticated: locally, and in Actions through GH_TOKEN.
+// The gh CLI as functions, for scripts where gh is authenticated (locally, or in Actions via GH_TOKEN).
 import { setTimeout as delay } from 'node:timers/promises';
 import { runSync } from './run.ts';
 

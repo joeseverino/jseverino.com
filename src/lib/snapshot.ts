@@ -1,6 +1,4 @@
-// The committed content snapshot under src/content, read straight from disk by
-// the code that runs outside Astro's content layer: the config, the content
-// index, seo-preview, and the specs.
+// Reads src/content straight from disk for code outside Astro's content layer.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter, type ParsedFrontmatter } from './frontmatter.ts';
@@ -13,10 +11,8 @@ export interface SnapshotWriteup extends ParsedFrontmatter {
 
 const byName = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
-// Each document is <collection>/<slug>/index.mdx.
 export const DOCUMENT_FILE = 'index.mdx';
 
-// The slugs of a collection's top-level documents, in name order.
 function documentSlugs(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir, { withFileTypes: true })

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-// Draft a one-sentence cover_alt for a writeup using Claude's multimodal API.
-// Takes a writeup slug, reads the cover image referenced in vault frontmatter,
-// sends the image to Claude, and prints the proposed alt text.
+// Draft a one-sentence cover_alt for a writeup's cover image with Claude's API.
 //
 // Usage:
 //   node bin/draft-cover-alt.ts <slug>

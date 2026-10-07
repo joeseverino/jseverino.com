@@ -1,19 +1,11 @@
 #!/usr/bin/env node
-// Emit the one webfont the site ships.
-//
-// Inter's variable release carries every script and a 100–900 weight axis;
-// the site sets Latin text at weights 400–700, so everything else is bytes
-// the LCP image competes with on a slow connection. This subsets the glyphs
-// to the characters the content uses (typographer punctuation, arrows) and
-// clamps the weight axis, keeping the optical-size axis so headings still
-// pick up Inter Display. The recipe lives here so the font can be rebuilt
-// from an upstream release.
+// Emit the one webfont the site ships: Inter subset to the glyphs the content
+// uses, weight axis clamped to 400–700, optical-size axis kept for Inter Display.
 //
 //   node bin/make-font.ts                       # re-subset the committed font
 //   node bin/make-font.ts --source Inter.woff2  # from an upstream Inter release
 //
-// Needs python3 with fontTools and brotli (`pip install fonttools brotli`),
-// the same way make:icons needs the optional branding engine.
+// Needs python3 with fontTools and brotli (`pip install fonttools brotli`).
 import fs from 'node:fs';
 import { cli } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
@@ -21,9 +13,7 @@ import { fromRoot } from '../src/lib/site-root.ts';
 
 const FONT_PATH = 'public/assets/fonts/inter/inter-variable-latin.woff2';
 const WEIGHT_RANGE = [400, 700];
-// Basic Latin, Latin-1, the ligature and dotless-i glyphs Inter's kerning
-// expects, general punctuation (typographer quotes, dashes, bullet, ellipsis),
-// the arrows the writeups use, and the replacement character.
+// Latin, ligature and dotless-i glyphs Inter's kerning expects, punctuation, arrows, U+FFFD.
 const UNICODES = [
   'U+0020-007E',
   'U+00A0-00FF',

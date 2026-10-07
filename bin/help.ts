@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// `npm run help`: the npm scripts grouped by role. It reads package.json at
-// runtime: a removed script drops out, and one not listed below shows under
-// "Other" with a nudge to categorize it.
-//
-// The groups are also the source of the overview tables in docs/Commands.md
-// (bin/sync-docs.ts renders them), so each description is written once.
+// `npm run help`: npm scripts grouped by role, filtered against package.json.
+// Unlisted scripts show under "Other". The groups also feed docs/Commands.md
+// (rendered by bin/sync-docs.ts).
 import { styleText } from 'node:util';
 import { packageScripts } from '../src/lib/json.ts';
 
@@ -99,7 +96,6 @@ export const GROUPS = [
   },
 ];
 
-// The groups with only the scripts package.json actually defines.
 type Scripts = Record<string, string>;
 
 export function groupedScripts(scripts: Scripts): { title: string; rows: [string, string][] }[] {

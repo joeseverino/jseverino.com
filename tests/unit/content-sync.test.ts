@@ -1,5 +1,3 @@
-// The content-sync modules: reference handling, the writer and prune, the
-// document rows, the education join, and a whole sync against a temp vault.
 import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -245,7 +243,6 @@ describe('syncContent and checkContent against a temp vault', () => {
   test('a drafts sync previews a draft with a missing image as a warning, not a failure', async () => {
     const vault = await fixtureVault();
     const root = scratch.make();
-    // Drafts include the unpublished resume canonical, which renders through the grammar.
     write(path.join(vault, 'resume-engine/lib/grammar.ts'), [
       'export const linesForSite = (lines) => lines;',
       'export const matchOrg = () => null;',

@@ -1,10 +1,7 @@
 #!/usr/bin/env node
-// No copy-pasted code: a run of identical tokens that appears twice across the
-// tracked TypeScript is a clone, and a clone fails the gate. The fix is one
-// shared primitive both sites import. Tokens come from the TypeScript scanner,
-// so formatting and comments never matter; import and re-export lines are
-// skipped, since naming the same modules is not duplicated logic. Specs and
-// unit tests may repeat a little more setup than the code they test.
+// No copy-pasted code: a run of identical tokens appearing twice in tracked TypeScript
+// fails the gate. Tokens come from the TS scanner, so formatting and comments never matter;
+// import and re-export lines are skipped. Specs and unit tests get a looser threshold.
 import fs from 'node:fs';
 import path from 'node:path';
 import ts from 'typescript';
@@ -51,8 +48,7 @@ export function tokenize(source: string): Token[] {
   return tokens;
 }
 
-// Rolling hashes over every MIN_TOKENS window; a repeated window grows into the
-// longest run both sites share, and each pair of sites is reported once.
+// Rolling hashes over every MIN_TOKENS window; each pair of sites is reported once.
 export function findClones(files: ReadonlyMap<string, Token[]>): Clone[] {
   const ids = new Map<string, number>();
   const id = (text: string): number => {
@@ -89,7 +85,6 @@ export function findClones(files: ReadonlyMap<string, Token[]>): Clone[] {
       const span = (tokens: Token[], start: number) => ({ start: tokens[start]?.line ?? 0, end: tokens[start + length - 1]?.line ?? 0 });
       const a = { file: other.file, ...span(other.tokens, first.at) };
       const b = { file: sequence.file, ...span(sequence.tokens, at) };
-      // A clone between two test files is held to the test threshold.
       const limit = isTest(a.file) && isTest(b.file) ? THRESHOLDS.tests : THRESHOLDS.code;
       const lines = Math.max(a.end - a.start, b.end - b.start) + 1;
       if (length >= limit.tokens && lines >= limit.lines) clones.push({ a, b, tokens: length });

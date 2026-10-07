@@ -1,12 +1,6 @@
-// What a correctly served response looks like at the edge, as pure functions
-// over status, headers, and body that return a list of findings (empty means
-// correct). tests/edge asserts these against `wrangler pages dev` before a
-// deploy; bin/deploy-verify.ts asserts the same functions against production
-// after one, so both sides use one definition of "correct".
-//
-// `headers` is a plain object keyed by lower-cased header name, which is what
-// Playwright's response.headers() returns; headersToRecord() produces the same
-// shape from a fetch Response.
+// Pure checks returning findings (empty means correct). tests/edge runs them against
+// `wrangler pages dev`; bin/deploy-verify.ts runs the same ones against production.
+// `headers` is keyed by lower-cased name, as Playwright's response.headers() returns.
 import { SITE_ORIGIN as siteOrigin } from './site-config.ts';
 import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from '../../functions/lib/csp.ts';
 
@@ -14,7 +8,6 @@ export { siteOrigin };
 export const cspReportPath = '/api/csp-report';
 export const cspReportUri = `${siteOrigin}${cspReportPath}`;
 
-// Lower-cased header name to value: Playwright's response.headers() shape.
 export type HeaderRecord = Record<string, string>;
 
 export const trustedTypesExempt = (pathname: string): boolean => pathname.replace(/\/+$/, '') === '/contact';
@@ -27,9 +20,8 @@ export function headersToRecord(headers: Headers): HeaderRecord {
   return record;
 }
 
-// The policy public/_headers gives every route, once bin/build-csp.ts has
-// filled in the hashes. Trusted Types is enforced on every page except the
-// contact form, which keeps it report-only because Turnstile's script trips it.
+// The policy public/_headers gives every route once bin/build-csp.ts fills in the hashes.
+// Trusted Types is report-only on the contact form because Turnstile's script trips it.
 export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   const findings: string[] = [];
   const csp = headers['content-security-policy'] ?? '';
@@ -47,8 +39,6 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   if (!csp.includes(`report-uri ${cspReportUri}`)) findings.push(`content-security-policy lacks the report-uri ${cspReportUri} fallback`);
   if (csp.includes('__')) findings.push('content-security-policy still carries a build placeholder');
 
-  // No nonces and no escape hatches: the page's own inline code is covered by
-  // hashes, everything else by 'self' and two named hosts.
   const script = directive('script-src');
   const style = directive('style-src');
   if (!script.includes("'self'")) findings.push("script-src lacks 'self'");
@@ -75,7 +65,6 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   return findings;
 }
 
-// The static rules public/_headers applies to every route.
 export const staticSecurityHeaders = Object.freeze({
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'SAMEORIGIN',
@@ -98,17 +87,14 @@ export function staticHeaderFindings(headers: HeaderRecord): string[] {
   return findings;
 }
 
-// HSTS is a Cloudflare zone setting rather than a build artifact, so only a
-// production probe can assert it.
+// HSTS is a Cloudflare zone setting, so only a production probe can assert it.
 export function hstsFindings(headers: HeaderRecord): string[] {
   const value = headers['strict-transport-security'] ?? '';
   return /includesubdomains/i.test(value) ? [] : [`strict-transport-security is ${value || '<missing>'}, expected includeSubDomains`];
 }
 
-// A page whose inline script or stylesheet is not covered by the policy that
-// ships beside it runs unthemed or unstyled, and no status code would notice.
-// Every inline script and style on the page must have its hash in the header,
-// and the build-time marker must not reach the response.
+// An inline script or style missing from the policy runs unthemed or unstyled, and no status code notices.
+// Every inline one needs its hash in the header, and the build-time marker must not reach the response.
 export async function inlineHashFindings(html: string, csp: string | null | undefined): Promise<string[]> {
   const findings: string[] = [];
   const { scriptHashes, styleHashes } = await inlineHashes(html);
@@ -135,8 +121,7 @@ export function cacheRuleFindings(headers: HeaderRecord, { immutable }: { immuta
   return findings;
 }
 
-// The contact function must refuse a submission without a Turnstile token
-// before the honeypot, the Turnstile call, and the D1 write.
+// The contact function must refuse a missing Turnstile token before the honeypot, Turnstile call, and D1 write.
 export function contactRefusalFindings(status: number, payload: unknown): string[] {
   const findings: string[] = [];
   const body: { ok?: unknown; error?: unknown } = payload && typeof payload === 'object' ? payload : {};

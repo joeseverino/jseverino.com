@@ -1,5 +1,3 @@
-// The site CLI's --json contract outside the commands themselves: help as a
-// JSON document, and the interactive command refusing --json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

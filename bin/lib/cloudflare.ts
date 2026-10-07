@@ -1,11 +1,6 @@
-// Cloudflare desired state (cloudflare/zone.json) against the live zone and
-// account: read the live state, diff it item by item, and turn each drift into
-// the v4 API calls that fix it. bin/cloudflare.ts is the CLI over this.
-//
-// Paths are templates: `:zone`, `:account`, and ids created mid-apply (`:list`,
-// `:operation`) resolve from the client's id map, so plans, errors, and logs
-// never print an account or zone id. Rules this repo owns carry a ref starting
-// with `<owner>-`; every other rule is read for context and never written.
+// Cloudflare desired state (cloudflare/zone.json) against the live zone and account. bin/cloudflare.ts is the CLI.
+// Paths are templates (`:zone`, `:account`, mid-apply ids) so output never prints an id. Rules this repo
+// owns carry a ref starting with `<owner>-`; every other rule is read and never written.
 import { setTimeout as sleep } from 'node:timers/promises';
 import type {
   AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
@@ -82,7 +77,6 @@ export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: 
         throw error;
       }
     },
-    // Page-numbered list endpoints.
     async list<T>(template: string): Promise<T[]> {
       const results: T[] = [];
       for (let page = 1; ; page += 1) {
@@ -139,7 +133,6 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
   };
 }
 
-// --- diff ------------------------------------------------------------------
 
 const ownedRef = (desired: DesiredState, id: string): string => `${desired.owner}-${id}`;
 const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule => typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);

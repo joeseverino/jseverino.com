@@ -1,7 +1,5 @@
-// A JSON Schema validator for the subset the repo's own schemas use: type,
-// properties, required, additionalProperties: false, items, enum, const,
-// pattern, minLength, minimum, minItems, maxItems, and local $ref. Anything
-// else in a schema is an error, so a keyword never passes by being ignored.
+// Validates the JSON Schema subset the repo uses (type, properties, required, additionalProperties: false,
+// items, enum, const, pattern, minLength, minimum, minItems, maxItems, local $ref). Any other keyword is an error.
 const KNOWN = new Set([
   '$schema', '$id', '$defs', '$ref', 'title', 'description', 'type', 'properties', 'required',
   'additionalProperties', 'items', 'enum', 'const', 'pattern', 'minLength', 'minimum', 'minItems', 'maxItems',

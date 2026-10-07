@@ -1,7 +1,5 @@
-// An in-memory stand-in for the GitHub REST endpoints bin/lib/github-settings.ts
-// uses, seeded from tests/fixtures/github/live-drifted.json. Writes mutate the
-// state, so an apply can be re-checked and re-applied. Every call is recorded;
-// an unknown route fails the test instead of passing silently.
+// In-memory GitHub REST fake seeded from tests/fixtures/github/live-drifted.json. Writes mutate
+// state and every call is recorded; an unknown route fails the test.
 
 import { API_BASE } from '../../../bin/lib/github-settings.ts';
 

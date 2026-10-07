@@ -1,6 +1,5 @@
-// site publish and site land against a real git remote (a bare repository in
-// a temp dir) and a stubbed gh on PATH. The sync and gate are injected; git is
-// real, so branches, worktrees, pushes, and staged paths are what git says.
+// site publish and site land against a real git remote (bare repo in a temp dir) and a stubbed gh.
+// The sync and gate are injected; git is real.
 import { after, before, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -20,7 +19,6 @@ let tmp = '';
 
 const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
-// gh: logs every call and answers from a scenario file the test controls.
 const GH_STUB = `#!/usr/bin/env node
 const fs = require('node:fs');
 const args = process.argv.slice(2);
@@ -57,9 +55,8 @@ process.exit(1);
 const ghCalls = () => fs.readFileSync(path.join(tmp, 'gh.log'), 'utf8').split('\n').filter(Boolean);
 const scenario = (data: Record<string, unknown>) => fs.writeFileSync(path.join(tmp, 'scenario.json'), JSON.stringify(data));
 
-// origin (bare) with two commits on main; a checkout on a stale branch cut
-// from the first, never fetched since. Built once and copied back per test:
-// the repos are slow to create and cheap to copy.
+// origin (bare) with two commits on main, plus a checkout on a stale branch cut from the first.
+// Built once and copied per test: slow to create, cheap to copy.
 const REPOS = ['origin.git', 'seed', 'checkout'] as const;
 let template = '';
 
@@ -96,7 +93,6 @@ function fixture() {
   return { origin, seed, checkout };
 }
 
-// The injected sync: writes the files it reports, like the real one.
 const syncWriting = (files: Record<string, string>, extra: Record<string, string> = {}) =>
   async ({ worktree }: { worktree: string }) => {
     for (const [file, content] of Object.entries({ ...files, ...extra })) write(path.join(worktree, file), content);
@@ -157,11 +153,9 @@ describe('site publish', () => {
     assert.deepEqual(result.diff.published, ['new']);
     assert.equal(result.message, 'content: publish new');
 
-    // The pushed commit sits on the current origin/main, whatever the checkout's branch.
     assert.equal(git(origin, 'rev-parse', `${BRANCH}^`), git(origin, 'rev-parse', 'main'));
     assert.deepEqual(git(origin, 'diff-tree', '--no-commit-id', '--name-only', '-r', BRANCH).split('\n').sort(), Object.keys(NEW_WRITEUP).sort());
 
-    // The checkout is untouched: same branch, same HEAD, no branch or worktree left behind.
     assert.equal(git(checkout, 'branch', '--show-current'), 'stale');
     assert.equal(git(checkout, 'rev-parse', 'HEAD'), before);
     assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
@@ -217,7 +211,6 @@ describe('site publish', () => {
       assert.match(cleanup[0] ?? '', /^removing the worktree failed .*git worktree prune/);
       return true;
     });
-    // The later steps still ran: no branch or worktree is left.
     assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
     assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
   });
@@ -267,7 +260,6 @@ const headPolls = () => ghCalls().filter((call) => call.includes('/commits/head/
 describe('site land', () => {
   test('waits for every required check, merges, waits for the deploy, verifies published and removed slugs', async () => {
     const { seed, checkout } = fixture();
-    // The squash-merge commit as it lands on main.
     write(path.join(seed, 'src/content/writeups/new/index.mdx'), '---\ntitle: New\n---\nBody\n');
     fs.rmSync(path.join(seed, 'src/content/writeups/old'), { recursive: true });
     git(seed, 'add', '-A');
@@ -278,7 +270,6 @@ describe('site land', () => {
       pr: { ...OPEN_PR, url: 'https://github.com/example/site/pull/7', title: 'content: publish 1, remove 1' },
       mergeSha,
       rules: rules('build', 'e2e'),
-      // A fresh PR: nothing reported, then one running, then both green.
       headPolls: [[], [run('build', 'in_progress')], [run('build', 'completed', 'success'), run('e2e', 'completed', 'success')]],
       checkRuns: [{ name: 'Cloudflare Pages', status: 'completed', conclusion: 'success', details_url: 'https://dash.example' }],
     });

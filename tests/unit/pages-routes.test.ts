@@ -1,9 +1,3 @@
-// Unit tests for the _routes.json matcher (bin/lib/pages-routes.ts) that
-// tests/audits/check-routes.ts uses to prove no HTML page invokes a Function and
-// every Function route does, and for the committed public/_routes.json itself.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';

@@ -1,7 +1,4 @@
-// The technology catalog (06 Pages/_technology-groups.md, synced to
-// src/content/technology-groups.md): one `## Group` section per group, each a
-// `| Slug | Label | Featured |` table. One parser for the build, the sync check,
-// and `site tech`.
+// Parser for the technology catalog: one `## Group` section per group, each a `| Slug | Label | Featured |` table.
 
 import fs from 'node:fs';
 
@@ -39,6 +36,5 @@ export function parseTechnologyGroups(body: string): TechnologyGroup[] {
     .filter((group) => group.name && group.tags.length > 0);
 }
 
-// The groups in `file`, or none when the file does not exist yet.
 export const readTechnologyGroups = (file: string): TechnologyGroup[] =>
   parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');

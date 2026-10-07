@@ -1,11 +1,8 @@
 name: changes
 
-# Reusable: classifies a pull request's files. `code` is 'false' only when every
-# changed path is content or prose (writeups, pages, assets, the image manifest,
-# the GitHub snapshot, Markdown), so callers can skip analysis that only reads
-# code with a job-level `if`. A skipped job reports success to a required
-# check; paths-ignore would leave it pending forever instead. Anything other
-# than a pull request counts as code.
+# Reusable: `code` is 'false' only when every changed path is content or prose, so callers
+# can skip code analysis with a job-level `if`. A skipped job reports success to a required
+# check; paths-ignore would leave it pending. Anything but a pull request counts as code.
 on:
   workflow_call:
     outputs:

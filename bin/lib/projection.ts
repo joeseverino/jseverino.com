@@ -1,6 +1,4 @@
-// Generated files are written by their sync/make script and verified by the
-// same script with --check, which fails when a committed copy differs from
-// what its canonical source would produce now.
+// Generated files are written by their script and verified by it with --check, which fails when a committed copy differs.
 import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';

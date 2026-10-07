@@ -1,9 +1,3 @@
-// Shape validation for the audit registry (tests/audits/registry.ts), which
-// every gate derives its checks from: well-formed entries, unique ids, valid
-// gate/phase claims, and exec targets that exist on disk.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

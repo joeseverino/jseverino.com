@@ -1,9 +1,7 @@
-// One directory walker for every audit and script that lists files. Returns
-// absolute paths; callers map to relative paths where they need them.
+// Returns absolute paths.
 import fs from 'node:fs';
 import path from 'node:path';
 
-// `filter(absolutePath, dirent)` decides which files are returned.
 export type WalkFilter = (file: string, entry: fs.Dirent) => boolean;
 
 export function walkFiles(dir: string, { filter = () => true }: { filter?: WalkFilter } = {}, files: string[] = []): string[] {

@@ -1,6 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-// The home page's menu toggle and the popover it controls.
 async function menu(page: Page) {
   await page.goto('/');
   return { toggle: page.locator('[data-nav-toggle]'), popover: page.locator('[data-mobile-nav]') };

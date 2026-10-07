@@ -1,10 +1,6 @@
 #!/usr/bin/env node
-// Refresh the committed package registry snapshot (src/data/package-registry.json),
-// the only source src/lib/software.ts reads for versions and monthly downloads:
-// builds never call PyPI or npm, so one commit always builds the same site. Run
-// it before a release of the site, or after publishing a package, and commit the
-// result. It fails without writing when any lookup fails, so a registry outage
-// cannot blank a number.
+// Refresh src/data/package-registry.json, the only source src/lib/software.ts reads
+// (builds never call PyPI or npm). Fails without writing if any lookup fails.
 //
 //   npm run snapshot:software
 

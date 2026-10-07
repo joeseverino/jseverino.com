@@ -1,6 +1,4 @@
-// Remove files under the managed roots that the run did not write (unpublished
-// documents, unreferenced assets, variants of a changed source), then the
-// directories that leaves empty. Returns the removed files.
+// Remove files under the managed roots that the run did not write, then the directories left empty. Returns the removed files.
 import fs from 'node:fs';
 import path from 'node:path';
 import { walkFiles } from '../../src/lib/walk.ts';

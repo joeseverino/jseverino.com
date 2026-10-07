@@ -1,9 +1,3 @@
-// The Content Security Policy builder and the inline-markup scan
-// (functions/lib/csp.ts): what the policy allows, which tags get hashed, and
-// which markup is a build failure.
-//
-//   npm run test:unit
-
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CSP_INLINE_MARKER, htmlPolicy, hashSource, inlineHashes, scanInline, trustedTypesReportOnly, withPreviewPolicy } from '../../functions/lib/csp.ts';

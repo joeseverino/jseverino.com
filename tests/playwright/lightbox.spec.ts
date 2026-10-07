@@ -3,7 +3,6 @@ import { imageHeavyWriteup } from './helpers/writeups.ts';
 
 const WRITEUP = imageHeavyWriteup();
 
-// The writeup's first zoomable figure and the lightbox it opens.
 async function openFigurePage(page: Page) {
   await page.goto(WRITEUP);
   return { trigger: page.locator('.prose .image-zoom').first(), dialog: page.locator('dialog.lightbox') };
@@ -65,7 +64,6 @@ test.describe('figure lightbox', () => {
 
     await trigger.click();
     await expect(dialog).toBeVisible();
-    // A click anywhere in the overlay outside the caption dismisses it.
     await page.mouse.click(5, 5);
     await expect(dialog).toBeHidden();
   });

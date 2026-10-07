@@ -1,10 +1,4 @@
-// Cloudflare Pages Function: POST /api/contact
-//
-// Verifies the Turnstile token and stores the submission in Cloudflare D1.
-// No email notification: submissions are read from D1.
-//
-// Bundled by the Cloudflare Pages pipeline; this directory is excluded from
-// `astro check` (see tsconfig.json).
+// POST /api/contact: verifies the Turnstile token and stores the submission in D1.
 
 import {
   CONTACT_PROPERTIES,

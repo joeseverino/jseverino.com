@@ -35,7 +35,6 @@ const images = {
   'portrait.png': diagram(680, 680, '#e7ecf7', [[340, 300], [340, 560]]),
 };
 
-// The documents each image belongs to.
 const uses: Record<keyof typeof images, string[]> = {
   'network-lab-cover.png': ['writeups/network-lab'],
   'network-lab-topology.png': ['writeups/network-lab', 'pages/about'],

@@ -1,8 +1,5 @@
 ---
-// Renders a content entry. Markdown images render as <Picture>, the blocks a
-// page places (::featured-projects, ::contact-form) as their components, and
-// each run of prose between those blocks in the page's wrapper: .home-content
-// on the home page, .prose elsewhere.
+// Prose runs sit in the page's wrapper: .home-content on the home page, .prose elsewhere.
 import { render, type CollectionEntry } from 'astro:content';
 import ContactForm from '@components/ContactForm.astro';
 import { CONTENT_RUN, PLACEHOLDERS } from '@lib/markdown/index.ts';

@@ -54,9 +54,7 @@ export default defineConfig({
   ],
   webServer: {
     cwd: webServerCwd,
-    // PREBUILT is set by bin/diagnose.ts (after its own build-static run) and
-    // by CI (which builds while system dependencies install), so the suite
-    // serves that artifact instead of rebuilding it.
+    // PREBUILT is set by bin/diagnose.ts and by CI, which builds while system deps install.
     command: [
       process.env.PREBUILT ? null : 'npm run build:static',
       // --ignore-lock keeps the server in the foreground Playwright owns (Astro

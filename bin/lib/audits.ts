@@ -1,6 +1,4 @@
-// Running one registry audit, for every gate that runs them (gate-check,
-// publish-check, diagnose, release-check, site publish). Each gate keeps its
-// own orchestration; the skip rules and the result shape live here once.
+// Runs one registry audit for every gate; skip rules and the result shape live here.
 import os from 'node:os';
 import { firstFailureLine, summarize } from './audit-summary.ts';
 import { jsonLogs, run, type RunOptions, type RunResult } from './run.ts';
@@ -25,10 +23,8 @@ export function rerunFor(audit: Audit): string {
   return `${envPrefix} ${audit.exec.cmd} ${audit.exec.args.join(' ')}`.trim();
 }
 
-// Always resolves: { id, name, label, skipped, ok (null when skipped), detail,
-// rerun, code, stdout, stderr, output, duration, timedOut }. options pass
-// through to run(); env merges over the audit's own; ci/platform override the
-// skip rules' inputs.
+// Always resolves: { id, name, label, skipped, ok (null when skipped), detail, rerun, code, stdout,
+// stderr, output, duration, timedOut }. options pass through to run(); env merges over the audit's own.
 export interface AuditResult extends RunResult {
   id: string;
   name: string;
@@ -66,9 +62,7 @@ export async function runAudit(audit: Audit, { cwd = siteRoot, env, ci, platform
   };
 }
 
-// How many audits run at once. Most are a node process of tens of MB; the
-// heavy ones (a browser suite with its server and browsers, about 1.5 GB) run
-// one at a time below 12 GB of memory so an 8 GB machine never swaps.
+// Concurrency: heavy audits (browser suite, about 1.5 GB) run one at a time below 12 GB of memory.
 const GB = 2 ** 30;
 const AUDIT_CONCURRENCY = Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / (2 * GB))));
 const HEAVY_CONCURRENCY = os.totalmem() < 12 * GB ? 1 : 3;

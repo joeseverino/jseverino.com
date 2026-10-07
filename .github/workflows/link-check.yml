@@ -30,10 +30,8 @@ jobs:
         with:
           persist-credentials: false
 
-      # 403, 429, and 999 are accepted on purpose: they come from targets that
-      # wall off automated clients (LinkedIn, some vendor docs, rate limiters),
-      # and a link that answers at all is not a dead link. A real 404 or a
-      # connection failure still fails the run.
+      # 403, 429, and 999 come from targets that wall off automated clients, and a link that
+      # answers at all is not dead. A real 404 or a connection failure still fails.
       - name: Check repository documentation links
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
@@ -51,10 +49,8 @@ jobs:
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           output: lychee/public-content.md
-          # Self-domain links are excluded: a PR that introduces a page and
-          # links to it would 404 against live until it deploys. Internal
-          # references are audited against the built output by publish-check
-          # in CI; this step owns external links only.
+          # Self-domain links are excluded: a PR adding a page would 404 against live until it
+          # deploys. Internal links are audited against the build by publish-check in CI.
           args: >-
             --no-progress
             --verbose

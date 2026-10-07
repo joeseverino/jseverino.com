@@ -16,7 +16,6 @@ async function readable(file: string): Promise<boolean> {
   try { await fs.access(file); return true; } catch { return false; }
 }
 
-// One vault document: a writeup folder's index.md or a page.
 export interface SourceEntry {
   slug: string;
   sourceDir: string;

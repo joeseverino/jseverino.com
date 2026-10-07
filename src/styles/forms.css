@@ -1,6 +1,4 @@
 @layer components {
-/* ── Contact form ───────────────────────────────────────────────────── */
-
 .contact-intake {
   max-inline-size: 720px;
   margin-block-start: var(--space-30);
@@ -14,8 +12,7 @@
   &[hidden] { display: none; }
 }
 
-/* Allow the form module to load before displaying a failure fallback.
-   Without scripting, the alternate contact link is available immediately. */
+/* Gives the form module time to load before showing the failure fallback. */
 @media (scripting: enabled) {
   .contact-fallback {
     visibility: hidden;

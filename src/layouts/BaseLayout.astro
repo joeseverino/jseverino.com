@@ -18,10 +18,7 @@ type Props = {
 
 const { seo = {}, bodyClass, preconnect = [] } = Astro.props;
 
-// `static.cloudflareinsights.com` serves the Cloudflare Web Analytics beacon,
-// auto-injected into every HTML response by the Cloudflare proxy unless
-// WEB_ANALYTICS.emitBeacon has the layout emit it. Warming the DNS + TLS
-// connection here removes ~100-300ms of cold-start latency for it.
+// static.cloudflareinsights.com serves the Web Analytics beacon; preconnect warms DNS and TLS for it.
 const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnect];
 if (WEB_ANALYTICS.emitBeacon && !WEB_ANALYTICS.token) {
   throw new Error('WEB_ANALYTICS.emitBeacon needs the Web Analytics site token in src/lib/site-config.ts');
@@ -34,16 +31,7 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    {/* Duplicates the `color-scheme` in base.css on purpose. The stylesheet only
-        applies once it has loaded, and until then the document scheme is
-        `normal`, so the browser paints a white canvas, light scrollbars, and
-        light form controls even on a dark-mode OS. This is parsed first and
-        gets the paint right from the very first frame. */}
     <meta name="color-scheme" content="light dark" />
-    {/* Browser-chrome tint. Media-scoped so it works with JS off, but the scopes
-        follow the OS and ignore an explicit choice, so the script below re-points
-        them. They sit ABOVE that script on purpose: browsers sample theme-color
-        while parsing the head, so a deferred fixup lands too late to be read. */}
     <meta name="theme-color" data-scheme="light" media="(prefers-color-scheme: light)" content={SURFACE.light} />
     <meta name="theme-color" data-scheme="dark" media="(prefers-color-scheme: dark)" content={SURFACE.dark} />
     <script is:inline nonce={CSP_INLINE_MARKER}>

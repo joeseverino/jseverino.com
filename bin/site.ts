@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-// site: the writeup publishing workflow, vault → repo → pull request → live.
-// Built for an agent caller first: every command answers --help, rejects
-// unknown flags, never prompts, and with --json prints one JSON document on
-// stdout ({ ok, command, status, ..., next, error? }) with progress on stderr.
-// `manage` is the one interactive command and needs a terminal.
+// site: the writeup publishing workflow, vault to repo to PR to live. Every command
+// answers --help, rejects unknown flags, never prompts, and with --json prints one
+// JSON document on stdout ({ ok, command, status, ..., next, error? }), progress on
+// stderr. `manage` is the one interactive command.
 import type { parseArgs, ParseArgsOptionsConfig } from 'node:util';
 import { parse, flag } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
@@ -33,8 +32,6 @@ export interface Command<R = unknown> {
   run(context: RunContext<Record<string, unknown>>): Promise<R>;
 }
 
-// main() parses each command's argv with that command's own options, so its
-// run() sees exactly the values those options declare.
 const define = <const O extends ParseArgsOptionsConfig, R>(
   command: Omit<Command<R>, 'options' | 'run'> & { options?: O; run(context: RunContext<Values<O>>): Promise<R> },
 ): Command<R> => command as Command<R>;
@@ -340,8 +337,6 @@ function printHelp(json: boolean, name: CommandName | undefined): number {
 
 const isCommand = (name: string | undefined): name is CommandName => name !== undefined && Object.hasOwn(COMMANDS, name);
 
-// The command's fields under the envelope; generic over the command so the
-// document's type follows from its name.
 async function runCommand<C extends CommandName>(name: C, rest: string[], json: boolean, out: Output): Promise<number> {
   const command = COMMANDS[name];
   let parsed;
@@ -379,7 +374,6 @@ async function main(argv: string[]): Promise<number> {
     return printHelp(json, isCommand(topic) ? topic : undefined);
   }
   const out = createOutput({ json });
-  // Every process this command starts logs machine-readable too (bin/lib/run.ts).
   if (json) process.env[JSON_LOGS_ENV] = '1';
   try {
     if (!isCommand(name)) throw new SiteError(`unknown command: ${name}`, { code: EXIT.usage, fix: 'site --help' });

@@ -1,10 +1,6 @@
-// Resolves writeup URLs for the functional specs from the synced content
-// snapshot instead of pinned slugs, so renaming a writeup in the vault cannot
-// break the code gates. Each helper picks the alphabetically-first writeup
-// satisfying a capability (deterministic across runs).
-//
-// The visual suite (visual.spec.ts) does not use these: it renders the fixture
-// content and pins the fixture slugs.
+// Resolves writeup URLs from the synced content snapshot instead of pinned slugs, so
+// renaming a writeup cannot break the code gates. Picks the alphabetically first match.
+// The visual suite does not use these.
 
 import { writeupPath } from '../../../src/lib/site-config.ts';
 import { snapshotWriteups } from '../../../src/lib/snapshot.ts';

@@ -1,5 +1,4 @@
-// Ambient types for the untyped packages bin/ imports: only the surface this
-// repo calls, so a breaking upstream change surfaces in the type check.
+// Ambient types for the untyped packages bin/ imports (only the surface used).
 
 declare module 'branding-engine' {
   export interface Browser {
@@ -71,7 +70,6 @@ declare module 'severino-brand' {
 
   export const webContract: WebContract;
   export function toJs(value: unknown, depth?: number): string;
-  // The number of targets whose marked block changed (or would, under check).
   export function syncTargets(
     targets: readonly SyncTarget[],
     options?: { root?: string; log?: (line: string) => void; check?: boolean },

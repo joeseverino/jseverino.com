@@ -1,6 +1,4 @@
-// Compiles content the way the build does: Sätteri with the site's plugins,
-// as a page or a writeup. `html` returns the rendered HTML; `compile` runs the
-// MDX compile content ships through, which is where the guard refuses.
+// Compiles content as the build does. `compile` runs the MDX compile, where the guard refuses.
 import { mdxToJs } from 'satteri';
 import { contentFileURL, renderMarkdown, type Collection } from '../../../bin/lib/render.ts';
 import { processorOptions } from '../../../src/lib/markdown/index.ts';

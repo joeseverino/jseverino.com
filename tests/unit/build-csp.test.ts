@@ -1,9 +1,3 @@
-// The post-build CSP step (bin/build-csp.ts) on a scratch dist: it hashes the
-// inline tags the site marked, strips the marker, fills the _headers
-// placeholders, and fails the build on markup the policy would block.
-//
-//   npm run test:unit
-
 import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

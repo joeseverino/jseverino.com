@@ -1,6 +1,4 @@
-// A content root outside src/content (SITE_CONTENT_ROOT) carries its own
-// public/ tree: the drafts preview's images, the fixture images. The dev
-// server serves those before falling through to the repo's public/.
+// A SITE_CONTENT_ROOT outside src/content carries its own public/ tree; the dev server serves it before the repo's public/.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AstroIntegration } from 'astro';

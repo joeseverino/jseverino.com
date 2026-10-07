@@ -1,9 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // Neutral tokens use light-dark(); brand tokens use deterministic selectors from
-// the shared brand emitter. What matters here is the resolved paint: auto tracks
-// the OS with no JS, an explicit choice overrides it, and that choice survives a
-// reload without a flash of the wrong scheme. Runs on every desktop engine.
+// the shared brand emitter. Asserts the resolved paint: auto tracks the OS with no JS,
+// an explicit choice overrides it and survives a reload without a flash.
 
 const LIGHT_BG = 'rgb(255, 255, 255)';
 const DARK_BG = 'rgb(19, 24, 38)';
@@ -13,18 +12,13 @@ const pageBg = (page: Page) =>
 
 const themeChoice = (page: Page, value: 'light' | 'dark' | 'auto') => page.locator(`[data-theme-choice="${value}"]`);
 
-// The home page under an OS color preference.
 async function homeIn(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.emulateMedia({ colorScheme: scheme });
   await page.goto('/');
 }
 
-// base.css carries the real `color-scheme`, but it only applies once the
-// stylesheet has loaded. Until then the document scheme is `normal` and the
-// browser paints a white canvas, light scrollbars, and light form controls even
-// on a dark-mode OS, so the page starts light and turns dark. The head meta is
-// parsed before any CSS and gets the first frame right (with the stylesheet
-// aborted, the unstyled paint is dark with the meta and white without it).
+// base.css sets `color-scheme` only once loaded; until then the browser paints a white
+// canvas on a dark OS. The head meta is parsed first and fixes the first frame.
 // This checks the meta is present.
 test('declares the color scheme before any stylesheet loads', async ({ page }) => {
   await page.goto('/');
@@ -99,10 +93,8 @@ test.describe('explicit override', () => {
   });
 });
 
-// Chromium and WebKit resolve a @keyframes block's var() colors once and keep
-// the stale pair when color-scheme changes, so the sticky header's keyframe
-// animates a plain number and the scrim color is composed outside it. Asserts
-// the scrim tracks the current page scheme as it changes after load.
+// Chromium and WebKit keep stale var() colors in @keyframes when color-scheme changes,
+// so the scrim color is composed outside the keyframe. Asserts it tracks the page scheme.
 test('the sticky header scrim follows a runtime theme switch', async ({ page }) => {
   await homeIn(page, 'light');
 

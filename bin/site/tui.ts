@@ -1,9 +1,5 @@
-// The terminal primitives behind `site manage`: the ANSI palette,
-// grapheme-aware width and clipping, the scrolling line editor, the
-// resize-fit frame, the alt screen and window title, and the escape-sequence
-// input pump (split arrows, bracketed paste, the esc timeout).
+// Terminal primitives behind `site manage`.
 
-// ---- palette ----------------------------------------------------------------
 
 export const RESET = '\x1b[0m';
 export const BOLD = '\x1b[1m';
@@ -17,7 +13,6 @@ export const MAGENTA = '\x1b[35m';
 
 const SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
-// ---- grapheme-aware width + clipping ----------------------------------------
 
 function graphemes(text: string): string[] {
   return [...SEGMENTER.segment(text)].map((entry) => entry.segment);
@@ -139,7 +134,6 @@ export function truncate(text: unknown, width: number): string {
   return clipAnsi(s, width - 1) + '…';
 }
 
-// ---- scrolling single-line editor -------------------------------------------
 
 export function lineEditor(input: string, cursorIndex: number, width: number): string {
   const next = nextBoundary(input, cursorIndex);
@@ -167,10 +161,7 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   return `${leftHidden ? '…' : ''}${before}${INVERT}${cursorChar}${RESET}${after}${rightHidden ? '…' : ''}`;
 }
 
-// ---- resize-fit frame windowing ---------------------------------------------
-// Clip each line to the terminal width, then, if the frame is taller than the
-// terminal, keep a fixed header/footer and window the body around the row
-// holding the ▸ cursor, so the selection and key hints stay on screen.
+// Clip lines to the width; if taller than the terminal, keep header/footer and window the body around the ▸ row.
 
 export function fitFrame(frame: string, cols: number, rows: number): string {
   const width = Math.max(1, cols - 1);
@@ -194,9 +185,7 @@ export function fitFrame(frame: string, cols: number, rows: number): string {
   return [...lines.slice(0, topCount), ...body, ...lines.slice(-bottomCount)].join('\n');
 }
 
-// ---- alt screen + window title ---------------------------------------------
-// \x1b[22;0t / \x1b[23;0t push/pop the window title so quitting restores
-// whatever the shell had set before; the 1049 pair is the alt screen.
+// \x1b[22;0t / \x1b[23;0t push/pop the window title; the 1049 pair is the alt screen.
 
 export function enterAlt(): void {
   process.stdout.write('\x1b[22;0t\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h');
@@ -206,8 +195,7 @@ export function leaveAlt(): void {
   process.stdout.write('\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l\x1b[23;0t');
 }
 
-// setTitle that only writes when the title actually changes (its own lastTitle
-// diff guard), so redraws don't spam the terminal's title escape.
+// setTitle that skips writes when the title is unchanged.
 export function createTitleSetter(): (title: string) => void {
   let lastTitle = '';
   return function setTitle(title: string): void {
@@ -217,11 +205,8 @@ export function createTitleSetter(): (title: string) => void {
   };
 }
 
-// ---- input pump -------------------------------------------------------------
-// Parses a raw stdin stream into discrete keys: single bytes, CSI sequences
-// (arrows / Home / End / Delete), bracketed-paste spans, and a 30 ms timeout
-// that distinguishes a lone Esc from the start of an escape sequence. onKey is
-// called with each key token; onPaste with the (flattened) pasted text.
+// Parses raw stdin into keys: bytes, CSI sequences, bracketed paste, and a 30 ms timeout that tells a lone Esc
+// from an escape sequence.
 
 // Named keys for replay harnesses: a comma-separated MANAGE_TUI_KEYS script
 // maps through this before being fed to the pump.

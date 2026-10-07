@@ -25,14 +25,11 @@ if (process.platform !== 'darwin') {
   process.exit(1);
 }
 
-// The fast local build gate (its audits come from the shared registry).
-// Streams output live, for a person watching the gate.
+// Streams output live.
 console.log('\n==> publish checks');
 const gate = await spawnRun(npm, ['run', '-s', 'publish:check'], { cwd: siteRoot, timeout: GATE_TIMEOUT_MS, stdio: 'inherit' });
 if (gate.code !== 0) failed('publish checks', gate);
 
-// The release-only audits (repository policy, whitespace/conflict markers, the
-// browser and edge suites) also come from the registry.
 for (const audit of auditsFor('release')) {
   console.log(`\n==> ${audit.name}`);
   const result = await runAudit(audit, { stdio: 'inherit' });
@@ -40,7 +37,6 @@ for (const audit of auditsFor('release')) {
   if (result.ok === false) failed(audit.name, result);
 }
 
-// Idempotence: nothing above may have changed tracked or untracked state.
 const finalStatus = gitStatus();
 if (finalStatus !== initialStatus) {
   console.error(

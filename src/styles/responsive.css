@@ -1,9 +1,5 @@
 @layer components {
-/* ── Responsive ─────────────────────────────────────────────────────── */
-
-/* The tokens layer sets 12px; this later layer eases the radius from 10px to
-   12px with the width. --menu-offset is where the menu panel starts: the height
-   the header has once the 2.5rem menu button (plus its padding) is what sizes it. */
+/* Overrides the tokens layer's 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
 :root {
   --radius-md: clamp(10px, 6px + 0.6vw, 12px);
   --menu-offset: 3.8rem;
@@ -88,8 +84,7 @@
     display: flex;
   }
 
-  /* Appearance (blur + dim + fade) is shared with .lightbox::backdrop below;
-     only the header-offset inset is nav-specific. */
+  /* Appearance is shared with .lightbox::backdrop below; only the inset is nav-specific. */
   &::backdrop {
     position: fixed;
     inset-block-start: var(--menu-offset);
@@ -182,8 +177,7 @@
   }
 }
 
-/* Shared overlay behavior: one fade + backdrop treatment for the mobile nav and
-   image lightbox. The nav adds its own header-offset inset above. */
+/* One fade and backdrop treatment for the mobile nav and the lightbox. */
 .mobile-nav,
 .lightbox {
   opacity: 0;
@@ -215,8 +209,7 @@
   }
 }
 
-/* Image lightbox: native <dialog> opened with showModal() for a real modal
-   (focus trap, Escape, focus return). */
+/* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
 .prose .image-zoom {
   display: block;
   max-inline-size: 100%;
@@ -317,12 +310,9 @@ body:has(.lightbox[open]) {
   overflow: hidden;
 }
 
-/* ── Components that answer to their own width ──────────────────────── */
+/* Components that answer to their own width */
 
-/* Each of these rearranges when the space it is given runs short, wherever it
-   sits, so none of it keys off the viewport. 33.5rem is the width these
-   full-width containers have at a 600px viewport, where the layout used to
-   switch. */
+/* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
 .site-nav { container: site-nav / inline-size; }
 .page-hero { container: hero / inline-size; }
 .software-list { container: software / inline-size; }
