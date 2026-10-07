@@ -8,11 +8,10 @@
 // with `<owner>-`; every other rule is read for context and never written.
 import { setTimeout as sleep } from 'node:timers/promises';
 import type {
-  AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, Call, DesiredState, FirewallRuleSpec, Item, ItemStatus, LiveRule, LiveState,
-  Method, Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, Step, ValidationSettings, Widget, Zone,
+  AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
+  Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, ValidationSettings, Widget, Zone,
 } from './cloudflare-types.ts';
-import { assertMatches, type JsonSchema } from './json-schema.ts';
-import { readJson } from '../../src/lib/json.ts';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run, type Step } from './drift.ts';
 
 export type * from './cloudflare-types.ts';
 
@@ -32,15 +31,7 @@ export class ApiError extends Error {
   }
 }
 
-export function loadDesired(file: string, schemaFile: string): DesiredState {
-  const desired: unknown = readJson(file);
-  const schema: JsonSchema = readJson(schemaFile);
-  assertMatches<DesiredState>(schema, desired, file);
-  return desired;
-}
-
-// What the client needs from fetch: a URL string and an init.
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
+export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 export interface ClientOptions {
   token: string | undefined;
@@ -150,14 +141,6 @@ export async function readLive(client: Client, desired: DesiredState): Promise<L
 
 // --- diff ------------------------------------------------------------------
 
-const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
-const show = (value: unknown): string => (value === undefined || value === null ? 'absent' : typeof value === 'string' ? value : JSON.stringify(value));
-
-// status: see ItemStatus.
-function item(area: string, name: string, want: unknown, have: unknown, status: ItemStatus, steps: Step[] = [], note = ''): Item {
-  return { area, name, want: show(want), have: show(have), status, steps, note };
-}
-
 const ownedRef = (desired: DesiredState, id: string): string => `${desired.owner}-${id}`;
 const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule => typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);
 const describe = (desired: DesiredState, text: string): string => `[${desired.owner}] ${text}`;
@@ -209,16 +192,6 @@ const ruleView = (rule: Rule): Record<string, unknown> =>
       .filter((key) => rule[key] !== undefined)
       .map((key) => [key, key === 'ratelimit' ? pick(rule.ratelimit, ['characteristics', 'period', 'requests_per_period', 'mitigation_timeout']) : rule[key]]),
   );
-
-const changedKeys = (want: Record<string, unknown>, have: Record<string, unknown>): string[] => [...new Set([...Object.keys(want), ...Object.keys(have)])].filter((key) => !same(want[key], have[key]));
-
-// A JSON value's own fields; anything but an object has none.
-const fields = (value: unknown): Record<string, unknown> =>
-  typeof value === 'object' && value !== null ? Object.fromEntries(Object.entries(value)) : {};
-const pick = (object: unknown, keys: readonly string[]): Record<string, unknown> => {
-  const source = fields(object);
-  return Object.fromEntries(keys.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]));
-};
 
 // One phase entrypoint: create, update, or delete the owned rules; leave the
 // rest. A missing entrypoint is created whole, which is safe because nothing
@@ -458,15 +431,6 @@ export function diff(desired: DesiredState, live: LiveState, { openapi, compatib
   ];
 }
 
-export const drifted = (items: Item[]): Item[] => items.filter((entry) => entry.status === 'drift' || entry.status === 'manual');
-
-// The calls an apply makes, in order. `use` steps bind an existing id and
-// make no call.
-const isCall = (step: Step): step is Call => 'method' in step;
-
-export const plannedCalls = (items: Item[]): Call[] =>
-  items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
-
 async function awaitBulk(client: Client, operationId: string): Promise<void> {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     const operation = await client.get<{ status: string; error?: string }>(`/accounts/:account/rules/lists/bulk_operations/${q(operationId)}`);
@@ -477,20 +441,21 @@ async function awaitBulk(client: Client, operationId: string): Promise<void> {
   throw new Error('list bulk operation did not complete in 30 s');
 }
 
-export async function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
-  const made: string[] = [];
-  for (const entry of items.filter((candidate) => candidate.status === 'drift')) {
-    for (const step of entry.steps) {
-      if (!isCall(step)) {
-        Object.assign(client.ids, step.use);
-        continue;
-      }
+export function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
+  return applySteps(items, {
+    use: (ids) => Object.assign(client.ids, ids),
+    log,
+    async call(step) {
       const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
       for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = String(result[field]);
       if (step.awaitBulk) await awaitBulk(client, String(result.operation_id));
-      made.push(`${step.method} ${step.path}`);
-      log(`${step.method} ${step.path}`);
-    }
-  }
-  return made;
+    },
+  });
 }
+
+export const createRun = (desired: DesiredState, client: Client, context: { openapi: string; compatibilityDate: string }): Run => ({
+  target: desired.zone,
+  source: 'cloudflare/zone.json',
+  survey: async () => diff(desired, await readLive(client, desired), context),
+  apply: (items, log) => apply(client, items, { log }),
+});

@@ -212,6 +212,9 @@ npm run deploy:verify
 
 Then run `npm run cloudflare:check` until it exits 0.
 
+The repository's own settings follow the same check, plan, and apply pattern in
+[GitHub Settings](./GitHub-Settings.md).
+
 ## No `wrangler.toml`
 
 A Pages `wrangler.toml` would pin the compatibility date in the repo, but it

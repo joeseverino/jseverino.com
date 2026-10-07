@@ -14,12 +14,9 @@ import { loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { createCloudflareFake, type FakeState } from './helpers/cloudflare-fake.ts';
-import { readJson } from '../../src/lib/json.ts';
+import { fromRoot, read, runner, schemaTests } from './helpers/desired-state.ts';
 
 const TOKEN = 'fixture-token-never-printed';
-// Each fixture is read as the type it is committed as; the schema test below
-// holds zone.json to its schema, and the fake to the fixture's routes.
-const read = <T>(file: string): T => readJson<T>(path.join(siteRoot, file));
 const seed = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');
 const schema = read<JsonSchema>('cloudflare/zone.schema.json');
 const desired = read<DesiredState>('cloudflare/zone.json');
@@ -31,26 +28,10 @@ const DESIRED_FIELDS = {
   rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-async function run(fake: ReturnType<typeof createCloudflareFake>, ...argv: string[]) {
-  const lines: string[] = [];
-  const code = await main({ argv, env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {}, write: (line: string) => lines.push(line) });
-  return { code, output: lines.join('\n') };
-}
-
-const checkJson = async (fake: ReturnType<typeof createCloudflareFake>) => {
-  const { code, output } = await run(fake, 'check', '--json');
-  return { code, report: JSON.parse(output) };
-};
+const { run, checkJson } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {} }));
 
 describe('cloudflare/zone.json', () => {
-  test('matches its schema', () => {
-    assert.deepEqual(validate(schema, desired), []);
-    assert.doesNotThrow(() => loadDesired(path.join(siteRoot, 'cloudflare/zone.json'), path.join(siteRoot, 'cloudflare/zone.schema.json')));
-  });
-
-  test('the DesiredState type names exactly the schema\'s properties', () => {
-    assert.deepEqual(Object.keys(DESIRED_FIELDS).sort(), Object.keys(schema.properties ?? {}).sort());
-  });
+  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
 
   test('the schema keeps one custom rule free and rejects unknown settings', () => {
     const fifth = { ...desired, firewall: [...desired.firewall, desired.firewall[0]] };

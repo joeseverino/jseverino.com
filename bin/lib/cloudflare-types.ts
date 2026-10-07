@@ -212,29 +212,4 @@ export interface LiveState {
 
 // --- the plan ----------------------------------------------------------------
 
-export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-
-// A call to make, or a `use` step that binds an existing id and makes none.
-export interface Call {
-  method: Method;
-  path: string;
-  body?: unknown;
-  saveAs?: Record<string, string>;
-  awaitBulk?: boolean;
-}
-
-export type Step = Call | { use: Record<string, string> };
-
-// ok | drift (apply fixes it) | manual (a person must) | unavailable (the API
-// does not expose it here; reported, not counted).
-export type ItemStatus = 'ok' | 'drift' | 'manual' | 'unavailable';
-
-export interface Item {
-  area: string;
-  name: string;
-  want: string;
-  have: string;
-  status: ItemStatus;
-  steps: Step[];
-  note: string;
-}
+export type { Call, Item, ItemStatus, Method, Step } from './drift.ts';
