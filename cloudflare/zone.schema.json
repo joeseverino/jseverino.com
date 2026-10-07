@@ -62,7 +62,7 @@
       }
     },
     "firewall": {
-      "description": "WAF custom rules (phase http_request_firewall_custom). The free plan allows 5; keep one free for incidents.",
+      "description": "WAF custom rules (phase http_request_firewall_custom). The free plan allows 5 including rules made in the dashboard, which check counts; keep one free for incidents.",
       "type": "array",
       "maxItems": 4,
       "items": { "$ref": "#/$defs/rule" }

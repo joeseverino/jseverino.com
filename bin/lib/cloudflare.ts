@@ -13,6 +13,8 @@ export type * from './cloudflare-types.ts';
 export const API_BASE = 'https://api.cloudflare.com/client/v4';
 
 const FIREWALL_PHASE = 'http_request_firewall_custom';
+// Custom rules the free plan allows in the phase, dashboard rules included.
+const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 const REDIRECT_PHASE = 'http_request_redirect';
 
@@ -199,6 +201,11 @@ function rulesetItems(desired: DesiredState, area: string, scope: 'zones' | 'acc
   }
   const rules = live.rules ?? [];
   const items: Item[] = [];
+  // Deletes come first so a plan at the phase's rule limit frees a slot before it needs one.
+  const wantedRefs = new Set(wanted.map((rule) => rule.ref));
+  for (const rule of rules.filter((entry): entry is LiveRule & OwnedRule => isOwned(desired, entry) && !wantedRefs.has(entry.ref))) {
+    items.push(item(area, rule.ref, null, 'present', 'drift', [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }], 'owned rule no longer in zone.json'));
+  }
   for (const rule of wanted) {
     const current = rules.find((entry) => entry.ref === rule.ref);
     if (!current) {
@@ -208,10 +215,6 @@ function rulesetItems(desired: DesiredState, area: string, scope: 'zones' | 'acc
     } else {
       items.push(item(area, rule.ref, 'present', 'present', 'ok'));
     }
-  }
-  const wantedRefs = new Set(wanted.map((rule) => rule.ref));
-  for (const rule of rules.filter((entry): entry is LiveRule & OwnedRule => isOwned(desired, entry) && !wantedRefs.has(entry.ref))) {
-    items.push(item(area, rule.ref, null, 'present', 'drift', [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }], 'owned rule no longer in zone.json'));
   }
   const unowned = rules.filter((entry) => !isOwned(desired, entry)).length;
   if (unowned > 0) items.push(item(area, 'unowned rules', 'left alone', `${unowned}`, 'ok', [], 'never edited or deleted'));
@@ -259,6 +262,14 @@ function botManagementItem(desired: DesiredState, live: LiveState): Item {
   const body = { ...pick(live.botManagement, BOT_MANAGEMENT_KEPT), ...want };
   return item('bot-management', 'bot_management', want, have, 'drift', [{ method: 'PUT', path: '/zones/:zone/bot_management', body }],
     `differs: ${changedKeys(want, have).join(', ')}`);
+}
+
+// Dashboard rules count against the plan's limit, so the total is checked, not just this file's share.
+function firewallBudgetItem(desired: DesiredState, live: LiveState): Item {
+  const others = (live.firewall?.rules ?? []).filter((rule) => !isOwned(desired, rule)).length;
+  const total = others + desired.firewall.length;
+  return item('waf', 'rule budget', `at most ${FIREWALL_LIMIT}`, `${total} after apply`, total > FIREWALL_LIMIT ? 'manual' : 'ok', [],
+    total > FIREWALL_LIMIT ? `${others} dashboard rules plus ${desired.firewall.length} in zone.json; remove one` : '');
 }
 
 function dnssecItem(desired: DesiredState, live: LiveState): Item {
@@ -428,6 +439,7 @@ export function diff(desired: DesiredState, live: LiveState, { openapi, compatib
     botManagementItem(desired, live),
     dnssecItem(desired, live),
     ...rulesetItems(desired, 'waf', 'zones', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
+    firewallBudgetItem(desired, live),
     ...rulesetItems(desired, 'ratelimit', 'zones', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),
     ...redirectItems(desired, live),
     ...pagesItems(desired, live, compatibilityDate),

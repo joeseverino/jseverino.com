@@ -26,7 +26,7 @@ describe('cloudflare/zone.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
 
   test('the schema keeps one custom rule free and rejects unknown settings', () => {
-    const fifth = { ...desired, firewall: [...desired.firewall, desired.firewall[0]] };
+    const fifth = { ...desired, firewall: Array.from({ length: 5 }, () => desired.firewall[0]) };
     assert.ok(validate(schema, fifth).some((problem: string) => problem.includes('more than 4 items')));
     const extra = { ...desired, settings: { ...desired.settings, polish: 'lossy' } };
     assert.ok(validate(schema, extra).some((problem: string) => problem.includes('unexpected property polish')));
@@ -57,8 +57,9 @@ describe('check', () => {
     assert.equal(status('bot_management'), 'drift');
     assert.equal(status('hsts'), 'ok');
     assert.equal(status('server_side_exclude'), 'unavailable');
-    assert.equal(status('jseverino-com-api-method'), 'drift');
-    assert.equal(status('jseverino-com-scanner-noise'), 'drift');
+    assert.equal(status('jseverino-com-api-request'), 'drift');
+    assert.equal(status('jseverino-com-api-method'), 'drift', 'a rule zone.json no longer lists is deleted');
+    assert.equal(status('rule budget'), 'ok');
     assert.equal(status('jseverino-com-retired'), 'drift');
     assert.equal(status('jseverino-com-api-rate'), 'drift');
     assert.equal(status('compatibility_date'), 'drift');
@@ -66,6 +67,17 @@ describe('check', () => {
     assert.equal(status('preview branches'), 'drift');
     assert.equal(status('preview access policy'), 'manual');
     assert.equal(fake.writes().length, 0, 'check is read-only');
+  });
+
+  test('the rule budget counts dashboard rules and flags a total over the limit', async () => {
+    const crowded = structuredClone(seed);
+    const phase = crowded.rulesets['zones/http_request_firewall_custom'];
+    assert.ok(phase);
+    for (const n of [1, 2, 3]) phase.rules.push({ id: `rule-dashboard-${n}`, ref: `dashboard-${n}`, description: 'Made in the dashboard', expression: '(ip.src eq 192.0.2.2)', action: 'block', enabled: true });
+    const { report } = await checkJson(createCloudflareFake(crowded, TOKEN));
+    const budget = report.items.find((entry: { name: string }) => entry.name === 'rule budget');
+    assert.equal(budget.status, 'manual');
+    assert.match(budget.note, /4 dashboard rules plus 2 in zone\.json/);
   });
 
   test('a preview deployment without an Access app is a manual item', async () => {
@@ -124,7 +136,7 @@ describe('plan', () => {
     assert.ok(lines.includes('PATCH /zones/:zone/settings/automatic_https_rewrites'));
     assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
-    assert.ok(lines.includes('PATCH /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
+    assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
     assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-retired'));
     assert.ok(lines.includes('PUT /zones/:zone/rulesets/phases/http_ratelimit/entrypoint'));
     assert.ok(lines.includes('POST /accounts/:account/rules/lists'));
@@ -132,6 +144,8 @@ describe('plan', () => {
     assert.ok(lines.includes('PUT /zones/:zone/schema_validation/settings/operations/:operation'));
     assert.ok(lines.includes('PUT /accounts/:account/challenges/widgets/:sitekey'));
     assert.equal(lines.filter((line: string) => line.includes('rule-incident')).length, 0, 'the unowned rule is never in a plan');
+    const rules = (verb: string) => lines.findIndex((line: string) => line.startsWith(`${verb} /zones/:zone/rulesets/ruleset-fw/rules`));
+    assert.ok(rules('DELETE') < rules('POST'), 'deletes come before creates, so a plan at the rule limit frees a slot first');
     assert.ok(!lines.some((line: string) => line.includes('settings/tls_1_3')), 'settings already right are left alone');
     assert.equal(fake.writes().length, 0);
   });

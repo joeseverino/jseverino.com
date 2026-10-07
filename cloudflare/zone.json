@@ -33,27 +33,15 @@
   },
   "firewall": [
     {
-      "id": "api-method",
-      "description": "The API accepts POST only",
-      "expression": "(starts_with(http.request.uri.path, \"/api/\") and http.request.method ne \"POST\")",
-      "action": "block"
-    },
-    {
-      "id": "api-content-type",
-      "description": "API bodies carry the media type their handler reads",
-      "expression": "(http.request.uri.path eq \"/api/contact\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\")) or (http.request.uri.path eq \"/api/csp-report\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/csp-report*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/reports+json*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\"))",
+      "id": "api-request",
+      "description": "API requests are POST, with the media type their handler reads",
+      "expression": "(starts_with(http.request.uri.path, \"/api/\") and http.request.method ne \"POST\") or (http.request.uri.path eq \"/api/contact\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\")) or (http.request.uri.path eq \"/api/csp-report\" and not any(http.request.headers[\"content-type\"][*] wildcard \"application/csp-report*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/reports+json*\") and not any(http.request.headers[\"content-type\"][*] wildcard \"application/json*\"))",
       "action": "block"
     },
     {
       "id": "sitedrift-production",
       "description": "The preview review proxy never answers on the production hosts",
       "expression": "(http.host in {\"jseverino.com\" \"www.jseverino.com\"} and starts_with(http.request.uri.path, \"/__sitedrift\"))",
-      "action": "block"
-    },
-    {
-      "id": "scanner-noise",
-      "description": "PHP, dotenv, and git probes",
-      "expression": "(ends_with(lower(http.request.uri.path), \".php\") or starts_with(http.request.uri.path, \"/.env\") or starts_with(http.request.uri.path, \"/.git\"))",
       "action": "block"
     }
   ],

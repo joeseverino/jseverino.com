@@ -94,10 +94,12 @@ the dashboard during an incident is never touched.
 
 | Rule | Blocks |
 |---|---|
-| `api-method` | anything but `POST` under `/api/` |
-| `api-content-type` | `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
+| `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the Function already 404s there; this stops it at the edge) |
-| `scanner-noise` | `*.php`, `/.env*`, `/.git*` |
+
+The free plan allows five custom rules in total, and rules made in the dashboard count
+against them. `cloudflare:check` reports the total (`rule budget`) and flags one over the
+limit; the repo keeps its share small enough to leave one slot free for an incident.
 
 ## Features that stay off
 
