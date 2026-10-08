@@ -8,7 +8,8 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { createClient, createRun, loadDesired, type ClientOptions } from './lib/cloudflare.ts';
-import { exitWith, toolMain, type ToolOptions } from './lib/drift.ts';
+import { exitWith } from './lib/args.ts';
+import { toolMain, type ToolOptions } from './lib/drift.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { edgeRuntime } from '../tests/browser-test-env.ts';
 

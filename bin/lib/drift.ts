@@ -194,13 +194,3 @@ async function runTool({ usage, command: invocation, argv = process.argv.slice(2
 // options. Tests pass the environment, fetch, and output through the options.
 export const toolMain = <O extends ToolOptions>({ usage, command, setup }: { usage: string; command: string; setup: (options: O) => Run }) =>
   (options: O): Promise<number> => runTool({ ...options, usage, command, setup: () => setup(options) });
-
-// A tool's entry point: its exit code, or 2 with the error on stderr.
-export async function exitWith(name: string, run: () => Promise<number>): Promise<void> {
-  try {
-    process.exitCode = await run();
-  } catch (error) {
-    console.error(`${name}: ${errorMessage(error)}`);
-    process.exitCode = 2;
-  }
-}

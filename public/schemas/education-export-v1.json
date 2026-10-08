@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jseverino.com/schemas/education-export-v1.json",
+  "title": "Education export, version 1",
+  "description": "Coursework by institution, as `severino-vault-mcp export education` prints it and as the site reads it from EDUCATION_EXPORT_FILE. The /education/ pages join it with the resume's institutions. Fields the site does not read may be present.",
+  "oneOf": [
+    { "$ref": "#/$defs/export" },
+    { "$ref": "#/$defs/failure" }
+  ],
+  "$defs": {
+    "export": {
+      "type": "object",
+      "required": ["ok", "institutions"],
+      "properties": {
+        "ok": { "const": true },
+        "institutions": { "type": "array", "items": { "$ref": "#/$defs/institution" } }
+      }
+    },
+    "failure": {
+      "description": "What the command prints, with a nonzero exit, when the vault cannot be exported.",
+      "type": "object",
+      "required": ["ok", "errors"],
+      "properties": {
+        "ok": { "const": false },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "institution": {
+      "type": "object",
+      "required": ["institution", "slug", "description", "courses"],
+      "properties": {
+        "institution": { "type": "string", "minLength": 1 },
+        "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "description": { "type": "string" },
+        "courses": { "type": "array", "items": { "$ref": "#/$defs/course" } }
+      }
+    },
+    "course": {
+      "type": "object",
+      "required": ["code", "title", "term", "status"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "term": { "type": "string" },
+        "status": { "description": "A course renders once it is active or completed.", "enum": ["active", "completed", "upcoming"] },
+        "site_bullets": { "type": "string" }
+      }
+    }
+  }
+}

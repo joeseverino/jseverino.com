@@ -6,7 +6,8 @@
 //   node bin/github.ts plan [--json]     # the calls an apply would make
 //   node bin/github.ts apply [--yes]     # plan, or with --yes, execute
 import { createClient, createRun, loadDesired, type ClientOptions } from './lib/github-settings.ts';
-import { exitWith, toolMain, type ToolOptions } from './lib/drift.ts';
+import { exitWith } from './lib/args.ts';
+import { toolMain, type ToolOptions } from './lib/drift.ts';
 import { spawnResult } from './lib/run.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 

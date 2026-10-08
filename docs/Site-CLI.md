@@ -23,8 +23,8 @@ Every non-interactive command:
   stderr:
 
   ```json
-  { "ok": true, "command": "publish", "status": "pr-opened", "pr": "https://…", "next": "…" }
-  { "ok": false, "command": "publish", "status": "failed",
+  { "protocolVersion": 1, "ok": true, "command": "publish", "status": "pr-opened", "pr": "https://…", "next": "…" }
+  { "protocolVersion": 1, "ok": false, "command": "publish", "status": "failed",
     "error": { "message": "preflight failed: deps", "code": 3, "fix": "cd … && npm ci" } }
   ```
 
@@ -47,6 +47,20 @@ Every non-interactive command:
 
 `site manage` is interactive and prints no result, so `site manage --json` is
 a usage error (exit 2, with the JSON error document).
+
+### Protocol
+
+Every document carries `protocolVersion`, currently `1`.
+[`site-protocol-v1.json`](../public/schemas/site-protocol-v1.json), published at
+`https://jseverino.com/schemas/site-protocol-v1.json`, is the JSON Schema (2020-12)
+for the envelope and for the `site apply-plan` input. Each command's own fields
+are its type in [`bin/site/types.ts`](../bin/site/types.ts). A command may add
+fields within a version; removing or retyping one is `protocolVersion` 2. The
+unit tests run real commands and validate their output against the schema.
+
+The content model a client edits against is
+[`contracts/content.v1.json`](../contracts/content.v1.json), printed by
+`site contract`.
 
 ## Commands
 
@@ -172,7 +186,7 @@ server on the port that this session did not start is named and left running.
 ## Configuration
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
-(`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`).
+(`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts`; `build:static` accepts only a

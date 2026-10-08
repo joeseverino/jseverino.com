@@ -121,6 +121,11 @@ The sync and the local-only audits find the vaults and sibling repos through [`b
 | Labs vault | `VAULT_DIR`, then `NOTES_HOME` | `~/Documents/Code/Severino Labs` |
 | Life vault | `LIFE_VAULT_DIR` | `~/Documents/Life` |
 | resume-engine | `RESUME_ENGINE_DIR` | `~/Code/Assets/resume-engine` |
+| Education export | `EDUCATION_EXPORT_FILE` | none: `severino-vault-mcp export education` is run |
+
+The export is held to [`education-export-v1.json`](../public/schemas/education-export-v1.json), whether it is a file or the command's output. A runner on another machine supplies all four inputs explicitly, and [`explicit-inputs.test.ts`](../tests/unit/explicit-inputs.test.ts) runs the sync CLI with an empty home to hold that. The site never decrypts the vault: a runner hands it plain directories.
+
+`Career/resume.md` in the Life vault is the resume's canonical file. Obsidian or any other client may edit it; the grammar that renders it lives in resume-engine, so every client validates and previews through that grammar.
 
 ## Cloudflare Build Boundary
 

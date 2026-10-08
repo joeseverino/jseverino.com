@@ -4,7 +4,7 @@ import path from 'node:path';
 import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
 import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
-import { createEducationSource, createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
+import { createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
 import { createPublicProjection } from './public-projection.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 import {
@@ -40,7 +40,7 @@ export interface SyncOptions {
   cacheDir: string;
   includeDrafts?: boolean;
   snapshotDir?: string;
-  educationSource?: EducationSource;
+  educationSource: EducationSource;
   concurrency?: number;
   date?: string;
 }
@@ -96,7 +96,7 @@ export async function syncContent({
   cacheDir,
   includeDrafts = false,
   snapshotDir = layout.content,
-  educationSource = createEducationSource(),
+  educationSource,
   concurrency = defaultConcurrency(),
   date = isoDate(),
 }: SyncOptions): Promise<SyncResult> {

@@ -46,3 +46,13 @@ export function cli<const O extends ParseArgsOptionsConfig = {}, const P extends
 // The write-or-verify scripts take one flag.
 export const checkMode = (usage: string): boolean =>
   cli({ usage, options: { check: { type: 'boolean' } } }).values.check ?? false;
+
+// A tool's entry point: its exit code, or 2 with the error on stderr.
+export async function exitWith(name: string, run: () => Promise<number>): Promise<void> {
+  try {
+    process.exitCode = await run();
+  } catch (error) {
+    console.error(`${name}: ${errorMessage(error)}`);
+    process.exitCode = 2;
+  }
+}
