@@ -5,7 +5,7 @@
   "description": "The repository settings, security features, Actions permissions, and branch ruleset bin/github.ts checks and applies. See docs/GitHub-Settings.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["repository", "settings", "security", "actions", "variables", "ruleset"],
+  "required": ["repository", "settings", "topics", "security", "actions", "variables", "ruleset"],
   "properties": {
     "$schema": { "type": "string" },
     "repository": { "description": "owner/name.", "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
@@ -13,7 +13,7 @@
       "description": "Repository fields (PATCH /repos/:repository). Squash is the only merge method: rebase merging strips SSH commit signatures, and the ruleset below refuses the rest.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["allow_squash_merge", "allow_merge_commit", "allow_rebase_merge", "allow_auto_merge", "delete_branch_on_merge", "squash_merge_commit_title", "squash_merge_commit_message", "has_wiki"],
+      "required": ["allow_squash_merge", "allow_merge_commit", "allow_rebase_merge", "allow_auto_merge", "delete_branch_on_merge", "squash_merge_commit_title", "squash_merge_commit_message", "has_wiki", "description", "homepage"],
       "properties": {
         "allow_squash_merge": { "type": "boolean" },
         "allow_merge_commit": { "type": "boolean" },
@@ -22,8 +22,15 @@
         "delete_branch_on_merge": { "type": "boolean" },
         "squash_merge_commit_title": { "enum": ["PR_TITLE", "COMMIT_OR_PR_TITLE"] },
         "squash_merge_commit_message": { "enum": ["PR_BODY", "COMMIT_MESSAGES", "BLANK"] },
-        "has_wiki": { "type": "boolean" }
+        "has_wiki": { "type": "boolean" },
+        "description": { "description": "The About text. It makes claims about the site, so it is checked like the docs are.", "type": "string", "minLength": 1 },
+        "homepage": { "type": "string", "pattern": "^https://" }
       }
+    },
+    "topics": {
+      "description": "Repository topics; the order does not matter.",
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
     },
     "security": {
       "description": "Repository security features.",

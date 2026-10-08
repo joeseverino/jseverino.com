@@ -27,7 +27,10 @@ export interface DesiredState {
     squash_merge_commit_title: 'PR_TITLE' | 'COMMIT_OR_PR_TITLE';
     squash_merge_commit_message: 'PR_BODY' | 'COMMIT_MESSAGES' | 'BLANK';
     has_wiki: boolean;
+    description: string;
+    homepage: string;
   };
+  topics: string[];
   security: {
     secret_scanning: Status;
     secret_scanning_push_protection: Status;
@@ -158,6 +161,12 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
       ? item('repo', key, want, have, 'ok')
       : item('repo', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { [key]: want } }]));
   }
+
+  const topics = [...desired.topics].sort();
+  const topicsNow = (Array.isArray(live.repo.topics) ? live.repo.topics.map(String) : []).sort();
+  items.push(same(topics, topicsNow)
+    ? item('repo', 'topics', topics, topicsNow, 'ok')
+    : item('repo', 'topics', topics, topicsNow, 'drift', [{ method: 'PUT', path: `${base}/topics`, body: { names: topics } }]));
 
   const analysis = fields(live.repo.security_and_analysis);
   for (const key of ['secret_scanning', 'secret_scanning_push_protection', 'dependabot_security_updates'] as const) {

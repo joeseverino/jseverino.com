@@ -12,7 +12,7 @@ const schema = read<JsonSchema>('.github/repo.schema.json');
 const desired = read<DesiredState>('.github/repo.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
-const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
+const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, topics: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
@@ -41,6 +41,9 @@ describe('check', () => {
     assert.equal(code, 1);
     assert.equal(status(report, 'allow_merge_commit'), 'drift');
     assert.equal(status(report, 'allow_squash_merge'), 'ok');
+    assert.equal(status(report, 'description'), 'drift', 'the About text is held to repo.json');
+    assert.equal(status(report, 'homepage'), 'ok');
+    assert.equal(status(report, 'topics'), 'drift');
     assert.equal(status(report, 'secret_scanning_push_protection'), 'drift');
     assert.equal(status(report, 'private_vulnerability_reporting'), 'drift');
     assert.equal(status(report, 'vulnerability_alerts'), 'ok');
@@ -86,9 +89,11 @@ describe('plan', () => {
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
       `PATCH ${repo}`,
+      `PATCH ${repo}`,
       `POST ${repo}/actions/variables`,
       `PUT ${repo}/actions/permissions`,
       `PUT ${repo}/private-vulnerability-reporting`,
+      `PUT ${repo}/topics`,
     ]);
     assert.equal(fake.writes().length, 0);
   });
@@ -115,6 +120,8 @@ describe('apply --yes', () => {
     const first = await run(fake, 'apply', '--yes');
     assert.equal(first.code, 0, first.output);
     assert.equal(fake.state.repo.allow_merge_commit, false);
+    assert.match(String(fake.state.repo.description), /Hash-based CSP/);
+    assert.deepEqual(fake.state.repo.topics, [...desired.topics]);
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
     assert.equal(fake.state.permissions.sha_pinning_required, true);

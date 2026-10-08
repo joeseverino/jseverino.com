@@ -9,6 +9,9 @@
     "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
     "squash_merge_commit_message": "COMMIT_MESSAGES",
     "has_wiki": false,
+    "description": "Personal site and writeups. Strict nonce CSP, edge-tested, and released with signed provenance.",
+    "homepage": "https://jseverino.com",
+    "topics": ["astro", "typescript"],
     "security_and_analysis": {
       "secret_scanning": { "status": "enabled" },
       "secret_scanning_push_protection": { "status": "disabled" },
