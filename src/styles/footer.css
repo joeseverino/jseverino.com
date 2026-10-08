@@ -102,15 +102,16 @@
   & li a {
     display: flex;
     align-items: center;
+    color: var(--color-primary);
 
     &:hover,
     &:focus {
-      color: var(--color-primary);
+      color: var(--color-primary-deep);
       text-decoration: none;
     }
 
     &:active {
-      color: var(--color-primary-deep);
+      color: var(--color-primary);
     }
   }
 

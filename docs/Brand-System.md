@@ -151,8 +151,8 @@ dark override. Consequences:
 - **Derived tokens adapt for free.** `--color-border` is a `color-mix()` over
   `--color-text`, so it has no dark entry and follows the text color. Anything
   expressible as a mix of an already-themeable token should stay derived.
-- **`light-dark()` only accepts colors.** `--shadow-sm` is geometry plus a color,
-  so the color half was split into `--shadow-color-sm` and the shadow composes it.
+- **`light-dark()` only accepts colors.** `--shadow-md` is geometry plus a color,
+  so the color half was split into `--shadow-color-md` and the shadow composes it.
   Apply the same split to any future token that isn't a bare color.
 - **A dark key with no light counterpart throws.** `mergeThemes` in the
   versioned `severino-brand` contract refuses to emit a token that exists only in the

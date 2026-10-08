@@ -1,6 +1,6 @@
 @layer components {
 .page-shell {
-  min-block-size: 100vh;
+  min-block-size: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -13,6 +13,11 @@
 .wide {
   inline-size: var(--w-wide);
   margin-inline: auto;
+}
+
+main {
+  flex: 1;
+  padding-block-start: var(--space-25);
 }
 
 main > * + * {
@@ -204,6 +209,14 @@ main > * + * {
 }
 
 .center-text {
+  text-align: center;
+}
+
+/* A page with one message: it sits in the middle of the space between header and footer. */
+.empty-state {
+  display: grid;
+  align-content: center;
+  justify-items: center;
   text-align: center;
 }
 

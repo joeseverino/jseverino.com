@@ -395,7 +395,7 @@ hr {
 
 @layer components {
 .page-shell {
-  min-block-size: 100vh;
+  min-block-size: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -408,6 +408,11 @@ hr {
 .wide {
   inline-size: var(--w-wide);
   margin-inline: auto;
+}
+
+main {
+  flex: 1;
+  padding-block-start: var(--space-25);
 }
 
 main > * + * {
@@ -602,6 +607,14 @@ main > * + * {
   text-align: center;
 }
 
+/* A page with one message: it sits in the middle of the space between header and footer. */
+.empty-state {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+}
+
 /* Site header */
 
 /* Scroll progress as a number so both paths set one value and colors compose in one place.
@@ -742,11 +755,13 @@ main > * + * {
 /* Home content (page bodies wrapped by index.astro) */
 
 .home-content {
+  container: home / inline-size;
   inline-size: var(--w-constrained);
   margin-inline: auto;
 
   & > * { margin-block-start: var(--space-30); }
   & > :first-child { margin-block-start: 0; }
+  & > h2 { margin-block-start: var(--space-50); }
 }
 
 /* Hero (::hero block on the home page) */
@@ -757,9 +772,30 @@ main > * + * {
   & > * { margin-block-start: var(--space-30); }
   & > :first-child { margin-block-start: 0; }
 
-  & > .hero-eyebrow { font-size: var(--font-xs); }
-  & > h1 { margin-block-start: 0.4rem; }
-  & > .hero-summary { margin-block: var(--space-20); }
+  & > .hero-eyebrow {
+    color: var(--color-primary);
+    font-size: var(--font-xs);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  & > h1 { margin-block-start: var(--space-15); }
+
+  & > p:not([class]) {
+    margin-block-start: var(--space-20);
+    font-size: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
+    line-height: 1.55;
+    text-wrap: balance;
+  }
+
+  & > .hero-summary {
+    max-inline-size: 38rem;
+    margin-block: var(--space-20);
+    margin-inline: auto;
+    color: var(--color-muted);
+    text-wrap: balance;
+  }
 
   & > .hero-location {
     display: inline-flex;
@@ -776,7 +812,15 @@ main > * + * {
     line-height: 1;
   }
 
-  & > .actions { margin-block-start: 1.4rem; }
+  & > .actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    justify-content: center;
+    inline-size: fit-content;
+    margin-block-start: var(--space-25);
+    margin-inline: auto;
+  }
 }
 
 /* Buttons + action rows */
@@ -796,7 +840,7 @@ main > * + * {
 }
 
 .button {
-  --button-lift: 2px;
+  --button-lift: 1px;
   --button-border: 0px;
 
   position: relative;
@@ -814,10 +858,8 @@ main > * + * {
   font-weight: 500;
   line-height: 1.6;
   text-align: center;
-  box-shadow: var(--shadow-sm);
   transition:
     translate var(--motion-duration-standard) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-standard) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
   &::after {
@@ -833,11 +875,6 @@ main > * + * {
     background: var(--color-primary-deep);
     color: var(--color-bg);
     text-decoration: none;
-    box-shadow: var(--shadow-md);
-  }
-
-  &:active {
-    box-shadow: none;
   }
 
   &.secondary {
@@ -890,39 +927,48 @@ main > * + * {
   min-inline-size: 0;
 }
 
+.project-card {
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+
+  & > .card-surface {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+}
+
 .card-surface {
+  --card-border: color-mix(in oklch, var(--color-text) 14%, transparent);
+  --card-border-active: color-mix(in oklch, var(--color-primary) 55%, transparent);
+
   position: relative;
   flex: 1;
   min-inline-size: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-15);
-  border: 1px solid var(--color-border-faint);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
   transition:
     translate var(--motion-duration-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 @media (hover: hover) and (pointer: fine) {
   :where(.project-card, .software-card):hover > .card-surface {
-    translate: 0 -6px;
-    box-shadow: var(--shadow-md);
+    translate: 0 -2px;
+    border-color: var(--card-border-active);
   }
 }
 
-.card-surface:focus-within { box-shadow: var(--shadow-md); }
-
-.project-card {
-  &:has(.project-card-title a:active) > .card-surface {
-    box-shadow: none;
-  }
-}
+.card-surface:focus-within { border-color: var(--card-border-active); }
 
 .project-card-media {
-  block-size: 180px;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--color-soft);
 
@@ -936,8 +982,8 @@ main > * + * {
 
 .project-card-title {
   display: flex;
-  align-items: center;
-  min-block-size: 4.4em;
+  align-items: flex-start;
+  padding-block-start: var(--space-15);
   padding-inline: 14px;
   font-size: 1.0625rem;
   font-weight: 600;
@@ -980,6 +1026,7 @@ main > * + * {
 }
 
 .project-card-date {
+  margin-block-start: auto;
   padding-block-end: 14px;
   padding-inline: 14px;
   color: var(--color-muted);
@@ -1052,11 +1099,16 @@ figure {
   background: var(--color-fill-faint);
   color: var(--color-text);
   font-size: 12px;
-  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 
   &:hover,
   &:focus {
+    border-color: color-mix(in oklch, var(--color-primary) 40%, var(--color-border-faint));
     background: var(--color-fill-faint-strong);
+    color: var(--color-primary);
     text-decoration: none;
   }
 
@@ -1077,7 +1129,6 @@ figure {
 .tag-groups {
   display: grid;
   gap: 1.5rem;
-  margin-block-end: var(--space-50);
 }
 
 /* Writeup article */
@@ -1490,15 +1541,16 @@ figure {
   & li a {
     display: flex;
     align-items: center;
+    color: var(--color-primary);
 
     &:hover,
     &:focus {
-      color: var(--color-primary);
+      color: var(--color-primary-deep);
       text-decoration: none;
     }
 
     &:active {
-      color: var(--color-primary-deep);
+      color: var(--color-primary);
     }
   }
 
@@ -2136,6 +2188,25 @@ body:has(.lightbox[open]) {
   .page-hero > * { text-align: left; }
   .page-intro { margin-inline: 0; }
   .page-actions { justify-content: flex-start; }
+}
+
+@container home (inline-size < 33.5rem) {
+  .hero > .actions {
+    inline-size: 100%;
+    gap: var(--space-10);
+  }
+
+  .hero > .actions .button {
+    padding-inline: 0.75em;
+    white-space: nowrap;
+  }
+}
+
+@container home (inline-size < 20rem) {
+  .hero > .actions {
+    grid-auto-flow: row;
+    inline-size: min(100%, 16rem);
+  }
 }
 
 @container software (inline-size < 33.5rem) {

@@ -86,12 +86,10 @@ test('motion tokens drive stable pressed feedback', async ({ page }) => {
   expect(box).not.toBeNull();
 
   await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-  await expect(card).toHaveCSS('translate', '0px -6px');
+  await expect(card).toHaveCSS('translate', '0px -2px');
   const raisedCardBox = await card.boundingBox();
   expect(raisedCardBox).not.toBeNull();
-  await expect(card).toHaveCSS('box-shadow', /.+/);
   await page.mouse.down();
-  await expect(card).toHaveCSS('box-shadow', 'none');
   expect(await card.boundingBox()).toEqual(raisedCardBox);
   await page.mouse.move(0, 0);
   await page.mouse.up();
@@ -109,7 +107,7 @@ test('buttons and cards keep a stable click target through press and release', a
     buttonBox!.x + buttonBox!.width / 2,
     buttonBox!.y + buttonBox!.height / 2,
   );
-  await expect(button).toHaveCSS('translate', '0px -2px');
+  await expect(button).toHaveCSS('translate', '0px -1px');
   const raisedButtonBox = await button.boundingBox();
   expect(raisedButtonBox).not.toBeNull();
   await page.mouse.down();
@@ -126,7 +124,7 @@ test('buttons and cards keep a stable click target through press and release', a
     cardBox!.x + cardBox!.width / 2,
     cardBox!.y + cardBox!.height / 2,
   );
-  await expect(page.locator('.card-surface').first()).toHaveCSS('translate', '0px -6px');
+  await expect(page.locator('.card-surface').first()).toHaveCSS('translate', '0px -2px');
   const raisedCardBox = await cardLink.boundingBox();
   expect(raisedCardBox).not.toBeNull();
   await page.mouse.down();
@@ -150,7 +148,7 @@ for (const { name, selector, path } of [
     const box = await target.boundingBox();
     expect(box).not.toBeNull();
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
-    await expect(target.locator('.card-surface')).toHaveCSS('translate', '0px -6px');
+    await expect(target.locator('.card-surface')).toHaveCSS('translate', '0px -2px');
     const frames = await target.evaluate(async (element) => {
       const samples: { x: number; y: number; hovered: boolean }[] = [];
       for (let i = 0; i < 30; i++) {
@@ -176,7 +174,7 @@ for (const selector of ['.button:not(.secondary)', '.button.secondary']) {
     const box = await target.boundingBox();
     expect(box).not.toBeNull();
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
-    await expect(target).toHaveCSS('translate', '0px -2px');
+    await expect(target).toHaveCSS('translate', '0px -1px');
     const hovered = await target.evaluate(async (element) => {
       for (let i = 0; i < 30; i++) {
         await new Promise(requestAnimationFrame);
