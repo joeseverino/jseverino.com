@@ -3,6 +3,9 @@ import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseFrontmatter, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
+import { readJson } from '../../src/lib/json.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { assertMatches, type JsonSchema } from '../lib/json-schema.ts';
 import { PAGES_FOLDER, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import type { EducationDataset } from './education.ts';
 
@@ -58,7 +61,10 @@ export function createResumeSource({ lifeVaultRoot, includeDrafts = false }: { l
   return {
     sourceFile,
     async load(): Promise<ParsedFrontmatter | null> {
-      cached ??= parseFrontmatter(await fs.readFile(sourceFile, 'utf8'));
+      if (!cached) {
+        if (!(await readable(sourceFile))) throw new Error(`resume source not found: ${sourceFile} (set LIFE_VAULT_DIR)`);
+        cached = parseFrontmatter(await fs.readFile(sourceFile, 'utf8'));
+      }
       return !includeDrafts && cached.data.published !== true ? null : cached;
     },
   };
@@ -74,11 +80,28 @@ interface ExecError extends Error {
   stderr?: string;
 }
 
-export function createEducationSource({ command = 'severino-vault-mcp' } = {}): EducationSource {
+type EducationExport = (EducationDataset & { ok: true }) | { ok: false; errors: string[] };
+
+// Held to public/schemas/education-export-v1.json, whichever way it arrives.
+function parseExport(text: string, label: string): EducationDataset {
+  let data: unknown;
+  try { data = JSON.parse(text); } catch { throw new Error(`${label} is not JSON`); }
+  assertMatches<EducationExport>(readJson<JsonSchema>(path.join(siteRoot, 'public/schemas/education-export-v1.json')), data, label);
+  if (!data.ok) throw new Error(`${label} reports:\n  ${data.errors.join('\n  ')}`);
+  return data;
+}
+
+// `file` is an export a trusted runner supplies (EDUCATION_EXPORT_FILE); without one the
+// export is made by running `command`, the local default.
+export function createEducationSource({ command = 'severino-vault-mcp', file }: { command?: string; file?: string | undefined } = {}): EducationSource {
   let cached: EducationDataset | undefined;
   return {
     async load() {
       if (cached) return cached;
+      if (file) {
+        cached = parseExport(await fs.readFile(file, 'utf8'), file);
+        return cached;
+      }
       let stdout: string;
       try {
         ({ stdout } = await execFileAsync(command, ['export', 'education']));
@@ -92,7 +115,7 @@ export function createEducationSource({ command = 'severino-vault-mcp' } = {}): 
           'Install/update with: tools reinstall severino-vault-mcp',
         );
       }
-      cached = JSON.parse(stdout) as EducationDataset;
+      cached = parseExport(stdout, `${command} export education`);
       return cached;
     },
   };

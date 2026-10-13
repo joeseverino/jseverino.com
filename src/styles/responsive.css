@@ -330,6 +330,25 @@ body:has(.lightbox[open]) {
   .page-actions { justify-content: flex-start; }
 }
 
+@container home (inline-size < 33.5rem) {
+  .hero > .actions {
+    inline-size: 100%;
+    gap: var(--space-10);
+  }
+
+  .hero > .actions .button {
+    padding-inline: 0.75em;
+    white-space: nowrap;
+  }
+}
+
+@container home (inline-size < 20rem) {
+  .hero > .actions {
+    grid-auto-flow: row;
+    inline-size: min(100%, 16rem);
+  }
+}
+
 @container software (inline-size < 33.5rem) {
   .sli {
     flex-direction: column;

@@ -46,6 +46,7 @@ export function createGithubFake(seed: FakeState, token: string) {
       if (analysis) state.repo.security_and_analysis = { ...(state.repo.security_and_analysis as Fields), ...(analysis as Fields) };
       return json(state.repo);
     }],
+    ['PUT', /^\/topics$/, (_id, body) => (state.repo.topics = body.names, json({ names: body.names }))],
     ['GET', /^\/vulnerability-alerts$/, () => (state.vulnerabilityAlerts ? empty() : notFound())],
     ['PUT', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', true)],
     ['DELETE', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', false)],

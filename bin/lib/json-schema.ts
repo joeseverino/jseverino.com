@@ -1,8 +1,8 @@
 // Validates the JSON Schema subset the repo uses (type, properties, required, additionalProperties: false,
-// items, enum, const, pattern, minLength, minimum, minItems, maxItems, local $ref). Any other keyword is an error.
+// items, enum, const, pattern, minLength, minimum, minItems, maxItems, oneOf, local $ref). Any other keyword is an error.
 const KNOWN = new Set([
   '$schema', '$id', '$defs', '$ref', 'title', 'description', 'type', 'properties', 'required',
-  'additionalProperties', 'items', 'enum', 'const', 'pattern', 'minLength', 'minimum', 'minItems', 'maxItems',
+  'additionalProperties', 'items', 'enum', 'const', 'pattern', 'minLength', 'minimum', 'minItems', 'maxItems', 'oneOf',
 ]);
 
 export interface JsonSchema {
@@ -24,6 +24,7 @@ export interface JsonSchema {
   minimum?: number;
   minItems?: number;
   maxItems?: number;
+  oneOf?: JsonSchema[];
 }
 
 const typeOf = (value: unknown): string => {
@@ -47,6 +48,13 @@ export function validate(schema: JsonSchema, value: unknown, root: JsonSchema = 
     return validate(target, value, root, at);
   }
   const problems: string[] = [];
+  if (schema.oneOf) {
+    // Which alternative a document meant is not decidable, so a miss reports every one's problems.
+    const outcomes = schema.oneOf.map((branch) => validate(branch, value, root, at));
+    const matched = outcomes.filter((found) => found.length === 0).length;
+    if (matched === 0) problems.push(`${at}: matches none of ${outcomes.length} alternatives (${outcomes.map((found, i) => `${i + 1}: ${found.join(', ')}`).join('; ')})`);
+    else if (matched > 1) problems.push(`${at}: matches ${matched} alternatives, expected exactly one`);
+  }
   if (schema.type && !matchesType(schema.type, value)) return [`${at}: expected ${schema.type}, got ${typeOf(value)}`];
   if ('const' in schema && JSON.stringify(value) !== JSON.stringify(schema.const)) problems.push(`${at}: must be ${JSON.stringify(schema.const)}`);
   if (schema.enum && !schema.enum.some((option) => JSON.stringify(option) === JSON.stringify(value))) {

@@ -8,6 +8,9 @@ import type {
   FrontmatterResult, LinkResult, PlanResult, PublishReadiness, TagUsage, WriteupDashboard, WriteupListing, writeupContract,
 } from '../lib/writeups/store.ts';
 
+// The version of the --json documents, described by public/schemas/site-protocol-v1.json.
+export const PROTOCOL_VERSION = 1;
+
 export const EXIT = { ok: 0, failed: 1, usage: 2, preflight: 3, timeout: 4 } as const;
 export type ExitCode = (typeof EXIT)[keyof typeof EXIT];
 

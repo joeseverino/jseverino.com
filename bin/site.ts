@@ -8,7 +8,7 @@ import { parse, flag } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
 import { EXIT, SiteError, createOutput, type Output } from './site/cli.ts';
 import { collectionFields } from '../src/lib/content-contract.ts';
-import type { CommandName, CommandResults, SiteFailure, SiteHelp, SiteSuccessOf } from './site/types.ts';
+import { PROTOCOL_VERSION, type CommandName, type CommandResults, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 
 type Values<O extends ParseArgsOptionsConfig> =
@@ -326,7 +326,7 @@ function helpDocument(name: CommandName | undefined): SiteHelp {
 }
 
 function emit<C extends CommandName>(json: boolean, document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
-  if (json) console.log(JSON.stringify(document, null, 2));
+  if (json) console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
 }
 
 function printHelp(json: boolean, name: CommandName | undefined): number {

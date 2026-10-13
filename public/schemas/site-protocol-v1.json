@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jseverino.com/schemas/site-protocol-v1.json",
+  "title": "site CLI protocol, version 1",
+  "description": "The one JSON document `site <command> --json` prints on stdout, and the plan `site apply-plan` reads. A command may add fields within a version; removing or retyping one is a new version. The envelope is fixed; each command's own fields are described by its type in bin/site/types.ts.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/help"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ],
+  "$defs": {
+    "protocolVersion": {
+      "const": 1
+    },
+    "command": {
+      "enum": [
+        "new",
+        "validate",
+        "dev",
+        "publish",
+        "land",
+        "verify",
+        "status",
+        "featured",
+        "tech",
+        "seo",
+        "draft-alt",
+        "writeups",
+        "dashboard",
+        "tag",
+        "prepare",
+        "apply-plan",
+        "set",
+        "link",
+        "contract",
+        "render",
+        "contact",
+        "csp",
+        "d1-apply",
+        "headers",
+        "manage"
+      ]
+    },
+    "exitCode": {
+      "description": "0 ok, 1 failed, 2 usage, 3 preflight, 4 timeout.",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "next": {
+      "description": "The suggested next command, or null when the workflow is done.",
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "success": {
+      "type": "object",
+      "required": [
+        "protocolVersion",
+        "ok",
+        "command",
+        "status"
+      ],
+      "properties": {
+        "protocolVersion": {
+          "$ref": "#/$defs/protocolVersion"
+        },
+        "ok": {
+          "const": true
+        },
+        "command": {
+          "$ref": "#/$defs/command"
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next": {
+          "$ref": "#/$defs/next"
+        }
+      }
+    },
+    "help": {
+      "description": "`--help --json`: the usage as data.",
+      "type": "object",
+      "required": [
+        "protocolVersion",
+        "ok",
+        "command",
+        "status",
+        "usage",
+        "summary",
+        "options",
+        "positionals",
+        "exitCodes",
+        "next"
+      ],
+      "properties": {
+        "protocolVersion": {
+          "$ref": "#/$defs/protocolVersion"
+        },
+        "ok": {
+          "const": true
+        },
+        "command": {
+          "enum": [
+            "new",
+            "validate",
+            "dev",
+            "publish",
+            "land",
+            "verify",
+            "status",
+            "featured",
+            "tech",
+            "seo",
+            "draft-alt",
+            "writeups",
+            "dashboard",
+            "tag",
+            "prepare",
+            "apply-plan",
+            "set",
+            "link",
+            "contract",
+            "render",
+            "contact",
+            "csp",
+            "d1-apply",
+            "headers",
+            "manage",
+            "help"
+          ]
+        },
+        "status": {
+          "const": "help"
+        },
+        "usage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "type"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "enum": [
+                  "string",
+                  "boolean"
+                ]
+              }
+            }
+          }
+        },
+        "positionals": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "summary",
+              "usage",
+              "interactive"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/command"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "usage": {
+                "type": "string"
+              },
+              "interactive": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "exitCodes": {
+          "type": "object"
+        },
+        "next": {
+          "$ref": "#/$defs/next"
+        }
+      }
+    },
+    "failure": {
+      "description": "A command that did not finish. The process exit code equals error.code. Any partial result the failing step attached (preflight checks, failing documents) rides along as extra fields.",
+      "type": "object",
+      "required": [
+        "protocolVersion",
+        "ok",
+        "status",
+        "error"
+      ],
+      "properties": {
+        "protocolVersion": {
+          "$ref": "#/$defs/protocolVersion"
+        },
+        "ok": {
+          "const": false
+        },
+        "command": {
+          "type": "string"
+        },
+        "status": {
+          "const": "failed"
+        },
+        "error": {
+          "type": "object",
+          "required": [
+            "message",
+            "code",
+            "fix"
+          ],
+          "properties": {
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "code": {
+              "$ref": "#/$defs/exitCode"
+            },
+            "fix": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "plan": {
+      "description": "The input of `site apply-plan`: scalar updates and the complete featured order in one transaction. With source_fingerprint, a plan made against an earlier state is refused.",
+      "type": "object",
+      "properties": {
+        "updates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "slug"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "featured_order": {
+          "description": "The complete order; omitted leaves it unchanged.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "source_fingerprint": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

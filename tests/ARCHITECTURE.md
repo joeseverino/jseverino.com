@@ -361,7 +361,7 @@ test('buttons and cards keep a stable click target through press and release', a
   expect(buttonBox).not.toBeNull();
 
   await page.mouse.move(buttonBox!.x + buttonBox!.width / 2, buttonBox!.y + buttonBox!.height / 2);
-  await expect(button).toHaveCSS('translate', '0px -2px'); // hover raises the button
+  await expect(button).toHaveCSS('translate', '0px -1px'); // hover raises the button
 
   const raisedButtonBox = await button.boundingBox();
   await page.mouse.down();
