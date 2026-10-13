@@ -112,7 +112,7 @@ upstream contract:
 - `severino-brand/brand/tokens.json` is the one editable source: the brand
   identity (`brand`: navy, glyph), the design system (`designSystem`: the `:root`
   custom properties), and the dark values for the themeable subset of those
-  properties (`designSystemDark`). The package's `brand/contract.mjs` validates
+  properties (`designSystemDark`). The package's `brand/contract.ts` validates
   that data and derives the semantic web contract (surface, card, theme, and CSS
   roles) once.
 - The signed `severino-brand` release is pinned by tag and resolved commit in

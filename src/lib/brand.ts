@@ -3,7 +3,7 @@
 // tokens:start
 export const BRAND_CONTRACT = {
   schema: 1,
-  digest: 'sha256-2deb0e032c8114c28d4ea6c472a3dbe18024a096cbc50a352e425e0e76e58ab8',
+  digest: 'sha256-38e73ec5928d7530464f1e0fffa4ee64081f8210b9ac2201f8318d8160faffc7',
 };
 
 export const BRAND = {
