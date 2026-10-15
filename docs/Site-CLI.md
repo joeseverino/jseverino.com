@@ -129,6 +129,14 @@ the vault only through the store and `site new`, which copies the template.
 
 ## `site manage`: the TUI
 
+Keyboard transitions live in `bin/site/manage-input.ts`: each mode updates staged
+state and returns a typed effect when an operation needs I/O. The controller in
+`bin/site/manage.ts` executes those effects. Frames in `bin/site/manage-render.ts`
+render loaded state without probing the filesystem or starting commands. The
+transition tests cover edits, confirmations, navigation, and text input; terminal
+replay tests exercise the controller against a temporary vault.
+
+
 The one interactive command; it refuses to start without a terminal. A full-screen terminal app over the whole publishing surface: a
 **Writeups** tab for content state and a **Site** tab for operations. `←`/`→`
 (or Tab) switch between them. Nothing on the Writeups tab is written until

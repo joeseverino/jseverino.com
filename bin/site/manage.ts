@@ -7,7 +7,7 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import {
   RESET, BOLD, DIM, GREEN, YELLOW, RED,
-  fitFrame, previousBoundary, nextBoundary,
+  fitFrame,
   enterAlt, leaveAlt, createTitleSetter, createInputPump, NAMED_KEYS,
 } from './tui.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
@@ -17,11 +17,11 @@ import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
 import { DEV_PORT, isListening, listeners, startDevServer, stopDevServer, type StartedServer } from './dev-server.ts';
 import {
-  FIELDS, SITE, createWriteup, current, currentField, diff, fieldValue, hasStaged, load, loadSiteStatus, moveCursor, moveItem,
-  reload, toggleFeatured, togglePublished, type Model, type Tab,
+  FIELDS, SITE, createWriteup, diff, load, loadSiteStatus, reload, type Model,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, drawTabBar, listFrame, rule, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { handleManageKey, pasteManageInput, type ManageEffect } from './manage-input.ts';
 
 // MANAGE_TUI_KEYS replays a comma-separated key script without a TTY and prints the final frame;
 // MANAGE_TUI_SMOKE renders one static frame. Used by tests/unit/site-manage.test.ts.
@@ -40,12 +40,6 @@ function gatherSiteStatus(model: Model): string {
   const t0 = Date.now();
   model.siteStatus = loadSiteStatus();
   return ((Date.now() - t0) / 1000).toFixed(1);
-}
-
-function switchTab(model: Model, tab: Tab): void {
-  model.tab = tab;
-  model.flash = '';
-  if (tab === 'site' && !model.siteStatus) gatherSiteStatus(model);
 }
 
 // Stops only the server this session started; a listener manage did not
@@ -262,251 +256,35 @@ function finish(code: number, message: string | null, runApply = false): void {
   process.exit(code);
 }
 
-function lineInput(model: Model, key: string): void {
-  if (key === '\x7f' || key === '\b') {
-    if (model.inputCursor > 0) {
-      const previous = previousBoundary(model.input, model.inputCursor);
-      model.input =
-        model.input.slice(0, previous) +
-        model.input.slice(model.inputCursor);
-      model.inputCursor = previous;
+function handleKey(key: string): void {
+  const actions = siteActionSpecs(model.siteStatus ?? {}).map((action) => action.key);
+  const effect = handleManageKey(model, key, isoDate(), actions);
+  if (effect) execute(effect);
+  draw(model);
+}
+
+function execute(effect: ManageEffect): void {
+  switch (effect.type) {
+    case 'exit': finish(0, effect.message, effect.save); return;
+    case 'reload': reload(model); return;
+    case 'open': openInObsidian(model); return;
+    case 'action': SITE_ACTIONS[effect.key]?.(model); return;
+    case 'refresh': {
+      const seconds = gatherSiteStatus(model);
+      if (effect.announce) model.flash = `${GREEN}status refreshed${RESET}${DIM} in ${seconds}s${RESET}`;
+      return;
     }
-    return;
-  }
-  if (key === '\x1b[3~') {
-    if (model.inputCursor < model.input.length) {
-      const next = nextBoundary(model.input, model.inputCursor);
-      model.input =
-        model.input.slice(0, model.inputCursor) +
-        model.input.slice(next);
-    }
-    return;
-  }
-  if (key === '\x1b[D') {
-    model.inputCursor = previousBoundary(model.input, model.inputCursor);
-    return;
-  }
-  if (key === '\x1b[C') {
-    model.inputCursor = nextBoundary(model.input, model.inputCursor);
-    return;
-  }
-  if (key === '\x1b[H' || key === '\x1b[1~') {
-    model.inputCursor = 0;
-    return;
-  }
-  if (key === '\x1b[F' || key === '\x1b[4~') {
-    model.inputCursor = model.input.length;
-    return;
-  }
-  if (key === '\x15') { // Ctrl+U: clear input
-    model.input = '';
-    model.inputCursor = 0;
-    return;
-  }
-  if (key === '\x17') { // Ctrl+W: delete last word
-    const before = model.input.slice(0, model.inputCursor);
-    const start = before.search(/\S+\s*$/);
-    const deleteFrom = start === -1 ? 0 : start;
-    model.input = model.input.slice(0, deleteFrom) + model.input.slice(model.inputCursor);
-    model.inputCursor = deleteFrom;
-    return;
-  }
-  const clean = key.replace(/[\p{Cc}\p{Cf}]/gu, '');
-  if (clean) {
-    model.input =
-      model.input.slice(0, model.inputCursor) +
-      clean +
-      model.input.slice(model.inputCursor);
-    model.inputCursor += clean.length;
+    case 'create':
+      if (createWriteup(model, effect.slug)) {
+        model.mode = 'detail';
+        model.field = 0;
+      }
+      return;
   }
 }
 
 function pasteInput(text: string): void {
-  if (model.mode !== 'edit' && model.mode !== 'new') return;
-  const clean = text
-    .replace(/\r\n?|\n|\t/g, ' ')
-    .replace(/[\p{Cc}\p{Cf}]/gu, '');
-  if (!clean) return;
-  model.input =
-    model.input.slice(0, model.inputCursor) +
-    clean +
-    model.input.slice(model.inputCursor);
-  model.inputCursor += clean.length;
-  model.flash = '';
-  draw(model);
-}
-
-function handleKey(key: string): void {
-  model.flash = '';
-
-  if (model.tab === 'site') {
-    switch (key) {
-      case '1': switchTab(model, 'writeups'); break;
-      case '2': switchTab(model, 'site'); break;
-      case '\t': case '\x1b[D': switchTab(model, 'writeups'); break;
-      case 'r': case '\x12': { // r or Ctrl+R: regather status
-        const secs = gatherSiteStatus(model);
-        model.flash = `${GREEN}status refreshed${RESET}${DIM} in ${secs}s${RESET}`;
-        break;
-      }
-      case '\x1b[A': case 'k':
-        model.actionCursor = Math.max(0, model.actionCursor - 1);
-        break;
-      case '\x1b[B': case 'j':
-        model.actionCursor = Math.min(siteActionSpecs(model.siteStatus || {}).length - 1, model.actionCursor + 1);
-        break;
-      case '\r':
-        SITE_ACTIONS[siteActionSpecs(model.siteStatus || {})[model.actionCursor]?.key ?? '']?.(model);
-        break;
-      case 'd': case 'h': case 'v': case 'g': case 'b': case 't': case 'p':
-        SITE_ACTIONS[key]?.(model);
-        break;
-      case 'q': case '\x1b': case '\x03':
-        if (hasStaged(model)) { switchTab(model, 'writeups'); model.mode = 'confirm-quit'; break; }
-        finish(0, 'exited');
-        return;
-      default: return;
-    }
-    draw(model);
-    return;
-  }
-
-  switch (model.mode) {
-    case 'list':
-      switch (key) {
-        case '\x1b[A': case 'k': moveCursor(model, -1); break;
-        case '\x1b[B': case 'j': moveCursor(model, 1); break;
-        case ' ': case 'm': if (model.cursor < model.items.length) model.mode = 'move'; break;
-        case 'f': toggleFeatured(model); break;
-        case 'p': togglePublished(model); break;
-        case 'n': model.mode = 'new'; model.input = ''; model.inputCursor = 0; break;
-        case 'o': openInObsidian(model); break;
-        case '1': switchTab(model, 'writeups'); break;
-        case '2': switchTab(model, 'site'); break;
-        case '\t': case '\x1b[C': switchTab(model, 'site'); break;
-        case 'r': case '\x12': // r or Ctrl+R: reload
-          if (hasStaged(model)) model.mode = 'confirm-reload';
-          else reload(model);
-          break;
-        case '\r':
-          if (model.cursor === model.items.length) {
-            model.mode = 'new';
-            model.input = '';
-            model.inputCursor = 0;
-          }
-          else { model.mode = 'detail'; model.field = 0; }
-          break;
-        case 's': finish(0, null, true); return;
-        case 'q': case '\x1b': case '\x03':
-          if (hasStaged(model)) model.mode = 'confirm-quit';
-          else { finish(0, 'cancelled · nothing written'); return; }
-          break;
-        default: return;
-      }
-      break;
-
-    case 'move':
-      switch (key) {
-        case '\x1b[A': case 'k': case '\x1b[1;2A': moveItem(model, -1); break;
-        case '\x1b[B': case 'j': case '\x1b[1;2B': moveItem(model, 1); break;
-        case ' ': case '\r': case '\x1b': case 'm': case 'q': model.mode = 'list'; break;
-        case '\x03': finish(0, 'cancelled · nothing written'); return;
-        default: return;
-      }
-      break;
-
-    case 'detail':
-      switch (key) {
-        case '\x1b[A': case 'k': model.field = Math.max(0, model.field - 1); break;
-        case '\x1b[B': case 'j': model.field = Math.min(FIELDS.length - 1, model.field + 1); break;
-        case 'p': togglePublished(model); break;
-        case 'o': openInObsidian(model); break;
-        case '\x12': // Ctrl+R: reload
-          if (hasStaged(model)) model.mode = 'confirm-reload';
-          else reload(model);
-          break;
-        case 'r': { // r: revert writeup edits
-          const item = model.items[model.cursor];
-          if (item) {
-            item.edits = {};
-            item.published = model.origPublished.get(item.slug) ?? item.published;
-            model.flash = `${YELLOW}reverted all staged changes for ${item.slug}${RESET}`;
-          }
-          break;
-        }
-        case 't': { // t: touch last_reviewed date
-          const item = model.items[model.cursor];
-          if (item) {
-            const todayStr = isoDate();
-            item.edits.lastReviewed = todayStr;
-            model.flash = `${GREEN}staged last_reviewed as today (${todayStr})${RESET}`;
-          }
-          break;
-        }
-        case '\r': {
-          const f = currentField(model);
-          if (!f.editable) { model.flash = `${DIM}${f.label} is read-only here${f.note ? ` (${f.note})` : ''}${RESET}`; break; }
-          model.mode = 'edit';
-          model.input = String(fieldValue(current(model), f) || '');
-          model.inputCursor = model.input.length;
-          break;
-        }
-        case 'q': case '\x1b': model.mode = 'list'; break;
-        case '\x03': finish(0, 'cancelled · nothing written'); return;
-        default: return;
-      }
-      break;
-
-    case 'edit':
-      switch (key) {
-        case '\r': {
-          const f = currentField(model);
-          const item = current(model);
-          const original = fieldValue({ ...item, edits: {} }, f);
-          if (model.input === String(original)) delete item.edits[f.key];
-          else item.edits[f.key] = model.input;
-          model.mode = 'detail';
-          break;
-        }
-        case '\x1b': model.mode = 'detail'; break;
-        case '\x03': finish(0, 'cancelled · nothing written'); return;
-        default: lineInput(model, key); break;
-      }
-      break;
-
-    case 'new':
-      switch (key) {
-        case '\r':
-          if (createWriteup(model, model.input.trim())) {
-            model.mode = 'detail';
-            model.field = 0;
-          }
-          break;
-        case '\x1b': model.mode = 'list'; break;
-        case '\x03': finish(0, 'cancelled · nothing written'); return;
-        default: lineInput(model, key); break;
-      }
-      break;
-
-    case 'confirm-quit':
-      switch (key) {
-        case 's': finish(0, null, true); return;
-        case 'd': finish(0, 'discarded · nothing written'); return;
-        case '\x1b': case 'q': model.mode = 'list'; break;
-        case '\x03': finish(0, 'discarded · nothing written'); return;
-        default: return;
-      }
-      break;
-
-    case 'confirm-reload':
-      switch (key) {
-        case 'y': case 'r': case '\x12': reload(model); model.mode = 'list'; break;
-        case 'n': case '\x1b': case 'q': model.mode = 'list'; break;
-        case '\x03': finish(0, 'cancelled · nothing written'); return;
-        default: return;
-      }
-      break;
-  }
+  pasteManageInput(model, text);
   draw(model);
 }
 

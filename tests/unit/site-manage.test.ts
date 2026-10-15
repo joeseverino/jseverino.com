@@ -47,3 +47,16 @@ test('staged moves stay staged until save', () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(stripVTControlCharacters(result.stdout), /staged: featured order · press s to save/);
 });
+
+test('discard leaves the vault unchanged and save applies the staged publish state', () => {
+  const alpha = path.join(tmp, 'vault/05 Writeups/alpha/index.md');
+  const original = fs.readFileSync(alpha, 'utf8');
+  const discard = manage({ MANAGE_TUI_KEYS: 'p,q,d' });
+  assert.equal(discard.status, 0, discard.stderr);
+  assert.equal(fs.readFileSync(alpha, 'utf8'), original);
+
+  const save = manage({ MANAGE_TUI_KEYS: 'p,s' });
+  assert.equal(save.status, 0, save.stderr);
+  assert.match(fs.readFileSync(alpha, 'utf8'), /published: false/);
+  assert.match(stripVTControlCharacters(save.stdout), /saved/);
+});

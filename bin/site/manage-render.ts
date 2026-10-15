@@ -2,7 +2,7 @@
 import { RESET, BOLD, DIM, INVERT, GREEN, YELLOW, RED, CYAN, MAGENTA, truncate, lineEditor } from './tui.ts';
 import { DEV_PORT } from './dev-server.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
-import { FIELDS, current, diff, fieldValue, hasStaged, loadSiteStatus, type Item, type Model, type SiteStatus } from './manage-model.ts';
+import { FIELDS, current, diff, fieldValue, hasStaged, type Item, type Model, type SiteStatus } from './manage-model.ts';
 
 // The horizontal rule under a frame's header and between its sections.
 export const rule = (cols: number): string => '─'.repeat(Math.max(40, cols - 4));
@@ -212,7 +212,8 @@ export function detailFrame(model: Model): string {
 export function siteFrame(model: Model): string {
   const cols = terminalColumns();
   const out: string[] = [];
-  const status = model.siteStatus ??= loadSiteStatus();
+  const status = model.siteStatus;
+  if (!status) return `${drawTabBar(model)}\n\n  Site status has not been loaded.\n`;
   
   out.push('');
   out.push(drawTabBar(model));

@@ -122,25 +122,18 @@ export interface Model {
   sourceFingerprint: string;
 }
 
-export let FIELDS: Field[] = [];
-
-// The detail view's fields come from the repo's content contract.
-function configureFields(): Record<string, FieldSpec> {
-  const fields = collectionFields('writeups');
-  FIELDS = Object.entries(fields)
-    .filter(([name, spec]) =>
-      name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
-    .map(([name, spec]): Field => ({
-      key: camelKey(name),
-      label: name,
-      flag: spec.cli_flag,
-      editable: spec.editable === true,
-      note: spec.editable === true ? undefined : 'edit in Obsidian',
-      type: spec.type,
-      default: spec.default,
-    }));
-  return fields;
-}
+export const FIELDS: readonly Field[] = Object.entries(collectionFields('writeups'))
+  .filter(([name, spec]) =>
+    name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
+  .map(([name, spec]): Field => ({
+    key: camelKey(name),
+    label: name,
+    flag: spec.cli_flag,
+    editable: spec.editable === true,
+    note: spec.editable === true ? undefined : 'edit in Obsidian',
+    type: spec.type,
+    default: spec.default,
+  }));
 
 function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: Record<string, FieldSpec>): Item {
   const source: Record<string, unknown> = w;
@@ -199,7 +192,7 @@ export function loadSiteStatus(): SiteStatus {
 
 export function load(): Model {
   const loaded = loadSnapshot();
-  const contractFields = configureFields();
+  const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
   const featured = summaries
     .filter((w) => w.featured)
@@ -219,7 +212,7 @@ export function load(): Model {
     divider: featured.length,
     cursor: 0,
     tab: 'writeups',
-    mode: 'list', // list | move | detail | edit | new | confirm-quit
+    mode: 'list',
     field: 0,
     input: '',
     inputCursor: 0,
