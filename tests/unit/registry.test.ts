@@ -2,7 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor, publishAudits } from '../../tests/audits/registry.ts';
+import { AUDITS, auditsFor, publishAudits, diagnosticAudits } from '../../tests/audits/registry.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 
 const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
@@ -83,4 +83,15 @@ describe('publishAudits', () => {
     assert.ok(ids(publishAudits('post-build')).includes('edge-tests'));
     assert.ok(!ids(publishAudits('post-build', { ci: true })).includes('edge-tests'));
   });
+});
+
+test('diagnosis without browsers keeps artifact audits and omits every served suite', () => {
+  const full = diagnosticAudits('post-build');
+  const selected = diagnosticAudits('post-build', { browsers: false });
+  const omitted = full.filter((audit) => !selected.includes(audit)).map((audit) => audit.id);
+  assert.deepEqual(omitted, ['edge-tests', 'browser-tests', 'visual-tests']);
+  for (const id of ['html-check', 'weight-check', 'routes-check', 'seo-check']) {
+    assert.ok(selected.some((audit) => audit.id === id), `${id} must still run`);
+  }
+  assert.deepEqual(full, auditsFor('diagnose', 'post-build'));
 });

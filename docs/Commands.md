@@ -23,7 +23,7 @@ appears here.
 | `npm run sync:tokens` | Pull design + brand tokens from `severino-brand` into the repo |
 | `npm run sync:edge-site` | Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`) |
 | `npm run sync:docs` | Regenerate the generated blocks in `docs/Commands.md` and `tests/ARCHITECTURE.md` |
-| `npm run diagnose` | Run every check and report everything that is wrong |
+| `npm run diagnose` | Validate the current snapshot without syncing; report all failures |
 | `npm run diff:build` | Build HEAD vs the working tree; show what changed in the shipped site |
 
 ### Release
@@ -145,7 +145,9 @@ The `docs-sync` audit runs it with `--check` in the fast gates, so a
 description, an audit's `asserts` and `fix`, or a gate assignment is written
 once, in code.
 
-**`npm run diagnose`**: the one-stop gate. Runs every check in the registry
+**`npm run diagnose`**: the one-stop gate for the current checkout. Does not
+sync the vault or clear existing build caches; run `npm run sync:content`
+separately to refresh editorial inputs. Runs every check in the registry
 without stopping at the first failure: green prints one line; red writes
 `.validation-report.md` with one row per failure, a remediation, and the exact
 command to rerun that single check (long output is clipped; the rerun command
@@ -177,7 +179,7 @@ is left to its own job.
 
 **`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs
 (`gate:check`, then `publish:check`) with `CI=1` (local-only audits skip, as on
-the runner) and a scratch GPG keyring seeded only from the committed WKD key. A gate that depends on
+the runner) and signature verification isolated from the personal keyring. A gate that depends on
 authoring-machine state fails here instead of after a push.
 
 **`npm run release:check`**: an optional full local gate before opening a PR: runs

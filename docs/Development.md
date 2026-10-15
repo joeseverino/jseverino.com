@@ -37,6 +37,14 @@ npm run release:check      # publish:check, then the browser suites and an idemp
 npm run deploy:verify      # after a merge: required checks, then the live deployment
 ```
 
+`npm run diagnose` validates the current checkout without vault access or
+content synchronization. Run `npm run sync:content` explicitly before checking
+new editorial content. Fast diagnosis preserves the existing build and caches;
+all modes check workspace idempotence and report the scope actually executed.
+Signature verification uses an isolated keyring containing only the committed
+WKD public keys. Unit-test Git repositories disable signing locally; production
+commit signing remains configured by the author.
+
 Every gate reads its audits from
 [`tests/audits/registry.ts`](../tests/audits/registry.ts). The browser suites
 (e2e across Chromium, Firefox, and WebKit, and the visual baselines) run in CI;

@@ -7,7 +7,7 @@ import {
   SECURITY_FILE,
   WKD_DIR,
   parseFields,
-  runGpg,
+  verifySecuritySignature,
   stripSignature,
 } from '../../bin/lib/security-txt.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -31,7 +31,7 @@ try {
     fail('security.txt is not PGP-signed. Run `npm run sign:security`.');
   }
 
-  const verify = runGpg(['--verify', '--status-fd=1', SECURITY_FILE]);
+  const verify = verifySecuritySignature(SECURITY_FILE);
   if (verify.code !== 0) {
     fail(`gpg signature verification failed:\n${verify.stderr}`);
   }

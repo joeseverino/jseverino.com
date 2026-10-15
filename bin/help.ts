@@ -18,7 +18,7 @@ export const GROUPS = [
       'sync:tokens': 'Pull design + brand tokens from `severino-brand` into the repo',
       'sync:edge-site': 'Regenerate the edge runtime\'s copy of the site identity (`functions/generated/site.ts`)',
       'sync:docs': 'Regenerate the generated blocks in `docs/Commands.md` and `tests/ARCHITECTURE.md`',
-      'diagnose': 'Run every check and report everything that is wrong',
+      'diagnose': 'Validate the current snapshot without syncing; report all failures',
       'diff:build': 'Build HEAD vs the working tree; show what changed in the shipped site',
     },
   },

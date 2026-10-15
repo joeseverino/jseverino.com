@@ -26,9 +26,6 @@ jobs:
         with:
           node-version-file: .nvmrc
 
-      - name: Import disclosure public key
-        run: gpg --import public/.well-known/openpgpkey/hu/*
-
       - name: Check security.txt Expires
         id: check
         run: |

@@ -47,8 +47,11 @@ beforeEach(() => {
   site = path.join(root, 'site');
   git(root, 'init', '--bare', '--quiet', '-b', 'main', origin);
   git(root, 'init', '--quiet', '-b', 'main', repo);
+  for (const directory of [repo, origin]) {
+    git(directory, 'config', 'commit.gpgsign', 'false');
+    git(directory, 'config', 'core.hooksPath', '/dev/null');
+  }
   git(repo, 'remote', 'add', 'origin', origin);
-  git(repo, 'config', 'core.hooksPath', '/dev/null');
   fs.writeFileSync(path.join(repo, 'README.md'), 'source\n');
   git(repo, 'add', '.');
   git(repo, '-c', 'user.name=t', '-c', 'user.email=t@example.com', 'commit', '--quiet', '-m', 'source');

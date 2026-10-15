@@ -3,14 +3,14 @@
 // .validation-report.md (clipped excerpts plus the rerun command).
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor, type Audit } from '../tests/audits/registry.ts';
+import { AUDITS, diagnosticAudits, type Audit } from '../tests/audits/registry.ts';
 import { browserTestEnv } from '../tests/browser-test-env.ts';
 import { styleText } from 'node:util';
 import { cli, flag } from './lib/args.ts';
 import { runAudits, type AuditResult, type RunAuditOptions } from './lib/audits.ts';
 import { statusEntries } from './lib/git.ts';
 import { preflight, type PreflightCheck } from './lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from './lib/run.ts';
+import { BUILD_TIMEOUT_MS, run, type RunOptions, type RunResult } from './lib/run.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 
 const reportPath = path.join(root, '.validation-report.md');
@@ -35,7 +35,6 @@ export type DiagnoseDocument =
         fix?: string;
       }[];
     }
-  | { ok: false; failed: ['setup']; report: string; setup: string }
   | { ok: false; failed: ['preflight']; preflight: PreflightCheck[] };
 
 const emit = (document: DiagnoseDocument): void => console.log(JSON.stringify(document, null, 2));
@@ -104,23 +103,6 @@ function emitJson(checks: readonly Check[], failedChecks: readonly Check[]): voi
   });
 }
 
-function renderSetupFailure(name: string, output: string): string {
-  return [
-    '# Codebase Diagnostics & Issues Report',
-    '',
-    '> [!CAUTION]',
-    `> ${name} failed. The verification pipeline cannot proceed.`,
-    '',
-    `### ❌ ${name}`,
-    '',
-    '**Error Output**:',
-    '```text',
-    clipOutput(output),
-    '```',
-    '',
-  ].join('\n');
-}
-
 function renderReport(checks: readonly Check[], failed: readonly Check[]): string {
   const recommendation = (check: Check): string => check.fix ?? fixFor(check.id);
   const status = (check: Check): string => (check.skipped ? '⚠️ SKIP' : check.code !== 0 ? '❌ FAIL' : '✅ PASS');
@@ -161,38 +143,8 @@ function renderReport(checks: readonly Check[], failed: readonly Check[]): strin
   ].join('\n');
 }
 
-function setupFailure(name: string, result: RunResult): number {
-  sayErr(styleText('red', `❌ Setup failed: ${name} exited with code ${result.code}`, { stream: process.stderr }));
-  const output = (result.stderr || result.stdout || '').trim();
-  sayErr(output);
-  fs.writeFileSync(reportPath, renderSetupFailure(name, output), 'utf8');
-  if (jsonMode) emit({ ok: false, failed: ['setup'], report: path.relative(root, reportPath), setup: name });
-  return 1;
-}
-
-// Returns an exit code when a step fails, otherwise null.
-async function prepare(initialGitStatus: string): Promise<number | null> {
-  say(styleText('blue', 'Phase 1: Syncing Content and Cleaning Caches...'));
-  const clean = await runCommand('node', ['bin/clean-generated.ts']);
-  if (clean.code !== 0) return setupFailure('Cache Clean (bin/clean-generated.ts)', clean);
-  const sync = await runCommand('node', ['bin/sync-content.ts'], { timeout: SYNC_TIMEOUT_MS });
-  if (sync.code !== 0) return setupFailure('Content Synchronization (sync:content)', sync);
-
-  const postSyncGitStatus = getGitStatus();
-  if (postSyncGitStatus === initialGitStatus) {
-    say('✓ Caches cleared & content synced.\n');
-    return null;
-  }
-  const before = new Set(initialGitStatus.split('\n').filter(Boolean));
-  const drift = postSyncGitStatus.split('\n').filter((line) => line && !before.has(line));
-  say(styleText('yellow', `Vault drift detected: ${drift.length} synced path${drift.length === 1 ? '' : 's'} changed before validation.`));
-  for (const line of drift) say(`  ${line}`);
-  say('Review with `git diff -- src/content public/assets` or publish the synced snapshot.\n');
-  return null;
-}
-
 async function buildAndTest(checks: Check[]): Promise<void> {
-  say(styleText('blue', 'Phase 3: Compiling Production Build...'));
+  say(styleText('blue', 'Phase 2: Compiling Production Build...'));
   const build = await runCommand('node', ['bin/build-static.ts'], { env: browserTestEnv, timeout: BUILD_TIMEOUT_MS });
   const built = build.code === 0;
   say(`  ${built ? styleText('green', '[PASS]') : styleText('red', '[FAIL]')} Static Site Build (${build.duration}ms)\n`);
@@ -202,12 +154,12 @@ async function buildAndTest(checks: Check[]): Promise<void> {
     fix: 'Fix HTML/CSS/JS compile errors during the static site building process.',
   });
   if (!built) {
-    say(styleText('yellow', 'Phase 4 Skipped: Static compilation failed.\n'));
+    say(styleText('yellow', 'Phase 3 Skipped: Static compilation failed.\n'));
     return;
   }
 
-  say(styleText('blue', 'Phase 4: Running Post-Build Audits and Browser Tests...'));
-  const postAudits = auditsFor('diagnose', 'post-build').filter((audit) => runTests || !audit.heavy);
+  say(styleText('blue', 'Phase 3: Running Post-Build Audits and Browser Tests...'));
+  const postAudits = diagnosticAudits('post-build', { browsers: runTests });
   checks.push(...await runAudits(postAudits, { cwd: root, optionsFor: postBuildOptions, onResult: printResult }));
   say('');
 }
@@ -231,12 +183,14 @@ function conclude(checks: readonly Check[], startedAt: number): number {
   const seconds = Math.round((Date.now() - startedAt) / 1000);
 
   if (failed.length === 0) {
-    const browserSkipped = checks.some((check) => check.id === 'browser-tests' && check.skipped);
-    say(styleText(['bold', 'green'],
-      browserSkipped
-        ? `✓ ALL CHECKS PASSED in ${seconds}s. Static checks and build are clean; browser/visual suite skipped (run on macOS before deploy).`
-        : `✓ ALL CHECKS PASSED in ${seconds}s. Codebase is logically clean and ready to deploy.`,
-    ));
+    const skipped = checks.filter((check) => check.skipped);
+    const scope = !runBuild
+      ? 'Pre-build checks passed; build and browser suites were not run.'
+      : !runTests
+        ? 'Static checks and build passed; browser suites were not run.'
+        : 'Static checks, build, and available browser suites passed.';
+    say(styleText(['bold', 'green'], `✓ CHECKS PASSED in ${seconds}s. ${scope}`));
+    if (skipped.length) say(`Skipped: ${skipped.map((check) => check.name).join(', ')}.`);
     fs.rmSync(reportPath, { force: true });
     if (jsonMode) emitJson(checks, failed);
     return 0;
@@ -253,7 +207,7 @@ async function diagnose(): Promise<number> {
   const startedAt = Date.now();
   say(styleText('bold', 'Starting Deterministic E2E Codebase Diagnosis...\n'));
 
-  const ready = await preflight(process.env.CI ? ['deps'] : ['deps', 'vault'], { root });
+  const ready = await preflight(['deps'], { root });
   if (!ready.ok) {
     for (const check of ready.failed) sayErr(styleText('red', `preflight: ${check.detail}\n  fix: ${check.fix}`, { stream: process.stderr }));
     if (jsonMode) emit({ ok: false, failed: ['preflight'], preflight: ready.checks });
@@ -261,20 +215,19 @@ async function diagnose(): Promise<number> {
   }
 
   const initialGitStatus = getGitStatus();
-  const setup = await prepare(initialGitStatus);
-  if (setup !== null) return setup;
+  say('Validating the current snapshot; content sync is a separate command.\n');
 
   const checks: Check[] = [];
-  say(styleText('blue', 'Phase 2: Running Static Audits and Policy Checks...'));
-  checks.push(...await runAudits(auditsFor('diagnose', 'pre-build'), { cwd: root, onResult: printResult }));
+  say(styleText('blue', 'Phase 1: Running Static Audits and Policy Checks...'));
+  checks.push(...await runAudits(diagnosticAudits('pre-build'), { cwd: root, onResult: printResult }));
   say('');
 
   if (runBuild) {
     await buildAndTest(checks);
-    checks.push(idempotenceCheck(initialGitStatus));
   } else {
-    say(styleText('yellow', 'Phases 3 & 4 Skipped (--fast flag provided).\n'));
+    say(styleText('yellow', 'Phases 2 & 3 Skipped (--fast flag provided).\n'));
   }
+  checks.push(idempotenceCheck(initialGitStatus));
   return conclude(checks, startedAt);
 }
 

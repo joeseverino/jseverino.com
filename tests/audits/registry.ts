@@ -19,6 +19,7 @@ export interface Audit {
   localOnly?: boolean;
   timeout?: number;
   heavy?: boolean;
+  browser?: boolean;
   servesBuild?: boolean;
   lock?: 'astro';
   ownCiJob?: boolean;
@@ -211,7 +212,7 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.edge.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
+    browser: true, servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
     fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
   },
   {
@@ -221,7 +222,7 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, servesBuild: true, gates: ['diagnose', 'release'], timeout: 15 * 60_000,
+    browser: true, heavy: true, servesBuild: true, gates: ['diagnose', 'release'], timeout: 15 * 60_000,
     fix: 'Run `npm run test:e2e:ui` to debug the functional specs.',
   },
   {
@@ -231,7 +232,7 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.visual.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, gates: ['diagnose', 'release'], macosOnly: true, timeout: 10 * 60_000,
+    browser: true, heavy: true, gates: ['diagnose', 'release'], macosOnly: true, timeout: 10 * 60_000,
     fix: 'Inspect expected/actual/diff under test-results/visual/. If the layout or a fixture changed on purpose, re-baseline with `npm run test:e2e:visual:update` and review every PNG in the diff.',
   },
 ];
@@ -242,3 +243,7 @@ export const auditsFor = (gate: Gate, phase?: Phase): Audit[] =>
 // What publish:check runs; `afterGate` and `ci` drop audits gate:check and the edge job already covered.
 export const publishAudits = (phase: Phase, { afterGate = false, ci = false } = {}): Audit[] =>
   auditsFor('publish', phase).filter((a) => !(afterGate && a.gates.includes('gate')) && !(ci && a.ownCiJob));
+
+// Diagnostic scope is independent of scheduling cost and build-server needs.
+export const diagnosticAudits = (phase: Phase, { browsers = true } = {}): Audit[] =>
+  auditsFor('diagnose', phase).filter((audit) => browsers || !audit.browser);

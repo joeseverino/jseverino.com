@@ -37,11 +37,6 @@ jobs:
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-gate.md
 
-      # The security-txt audit verifies the PGP signature; the public key ships
-      # in the repo's WKD directory, so the runner can import it from there.
-      - name: Import disclosure public key
-        run: gpg --import public/.well-known/openpgpkey/hu/*
-
       # The same registry-driven gate that runs locally before a push. --no-sync
       # because CI has no vault; src/content is the committed snapshot.
       - name: Publish gate
