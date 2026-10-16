@@ -26,6 +26,16 @@ const elements = (node: HastNode, tagName: string): Element[] => [
 ];
 
 describe('URL schemes', () => {
+  test('embedded controls cannot disguise a browser-executable scheme', () => {
+    for (const control of ['\t', '\n', '\r', '\u0000', '\u001b', '\u007f']) {
+      const url = `java${control}script:alert(1)`;
+      assert.equal(isSafeUrl(url), false);
+    }
+    for (const entity of ['&#9;', '&#10;', '&#13;']) {
+      assert.throws(() => compile(`<a href="java${entity}script:alert(1)">link</a>`), /scheme other than/);
+    }
+  });
+
   test('a URL is safe exactly when it is relative or http(s)/mailto, however it is spelled', () => {
     fc.assert(fc.property(scheme.chain((name) => respelled(name).map((spelling) => [name, spelling] as const)), fc.webPath(), ([name, spelling], rest) => {
       assert.equal(isSafeUrl(`${spelling}:${rest}`), SAFE_SCHEMES.has(name));

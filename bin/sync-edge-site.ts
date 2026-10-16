@@ -4,13 +4,13 @@
 import { checkMode } from './lib/args.ts';
 import { writeOrCheck } from './lib/projection.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
-import { SITE } from '../src/lib/site-config.ts';
-import { cspReportPath, cspReportUri, siteOrigin } from '../src/lib/edge-expectations.ts';
+import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
+import { cspReportPath, cspReportUri } from '../src/lib/edge-expectations.ts';
 
 const check = checkMode('usage: node bin/sync-edge-site.ts [--check]');
 const projection = {
   domain: SITE.domain,
-  origin: siteOrigin,
+  origin: SITE_ORIGIN,
   cspReportPath,
   cspReportUri,
 };

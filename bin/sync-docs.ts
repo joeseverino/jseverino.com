@@ -14,7 +14,7 @@ import { table } from './lib/step-summary.ts';
 import { groupedScripts } from './help.ts';
 import { packageScripts } from '../src/lib/json.ts';
 
-const GATES: readonly Gate[] = ['gate', 'publish', 'diagnose', 'release'];
+const GATES: readonly Gate[] = ['gate', 'publish', 'diagnose'];
 const check = checkMode('usage: node bin/sync-docs.ts [--check]');
 
 function commandOverview() {
@@ -28,7 +28,7 @@ function gateCoverage() {
   return table(
     ['Audit', 'Label', 'Phase', ...GATES],
     AUDITS.map((audit) => [
-      audit.localOnly ? `${audit.name} (authoring machine only)` : audit.name,
+      audit.name,
       `\`${audit.label}\``,
       audit.phase,
       ...GATES.map((gate) => (audit.gates.includes(gate) ? '✓' : '')),

@@ -6,6 +6,9 @@ Report security issues in this site privately, not in a public issue. That
 covers the build output, the contact and CSP-report functions, the response
 headers, and anything else in this repository.
 
+- Use GitHub's
+  [private vulnerability reporting](https://github.com/joeseverino/jseverino.com/security/advisories/new)
+  for this repository.
 - Use the contact form at <https://jseverino.com/contact/> and start the message
   with **Security:**.
 - Include what reproduces it: the URL or endpoint, the request, and the observed

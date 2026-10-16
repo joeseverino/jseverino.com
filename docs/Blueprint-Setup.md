@@ -31,7 +31,7 @@ focused module is imported once into the declared `tokens`, `base`, and
 variants own only their differences. Keep design values in named tokens and
 logical properties, with the site-local font choice next to its font asset.
 
-Cards share [`CardSurface.astro`](../src/components/CardSurface.astro) and one
+Cards share one `.card-surface` element and one
 hover rule. Animate the inner surface while the outer list item retains a
 stable pointer target. Preserve keyboard focus, reduced motion, forced colors,
 and touch behavior when adding interactions. Prefer native controls and bundled
@@ -65,7 +65,7 @@ reporting) import that projection, so the domain is declared once.
   [`bin/make-github-social.ts`](../bin/make-github-social.ts).
 
 ### CI / external config
-- [`tests/lighthouserc.json`](../tests/lighthouserc.json): audited URLs.
+- [`tests/lighthouse.json`](../tests/lighthouse.json): audited URLs.
 - [`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml): `--base-url`.
 
 ### Cloudflare zone and account

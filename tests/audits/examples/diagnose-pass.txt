@@ -1,36 +1,44 @@
 $ npm run diagnose
 
-Starting Deterministic E2E Codebase Diagnosis...
+diagnose
 
-Phase 1: Syncing Content and Cleaning Caches...
-✓ Caches cleared & content synced.
+Validating the current snapshot; content sync is a separate command.
 
-Phase 2: Running Static Audits and Policy Checks...
-  [PASS] Security Signatures (94ms)
-  [PASS] WCAG Color Contrast (52ms)
-  [PASS] Content Contract Parity (52ms)
-  [PASS] Sitedrift Preview Guard (256ms)
-  [PASS] Repository Policy (97ms)
-  [PASS] Docs Link Integrity (57ms)
-  [PASS] Stylelint CSS Check (1099ms)
-  [PASS] CSS Unused Variables (46ms)
-  [PASS] Astro Compiler Diagnostics (4897ms)
-  [PASS] Git Formatting/Conflicts (1265ms)
+Static checks
+  PASS No Duplicated Code (431ms)
+  PASS Generated Contract Projections (451ms)
+  PASS No Drafts in the Snapshot (86ms)
+  PASS Security Signatures (115ms)
+  PASS WCAG Color Contrast (62ms)
+  PASS Content Contract Parity (67ms)
+  PASS TypeScript Type Check (6324ms)
+  PASS Functions/Schema Parity (75ms)
+  PASS Sitedrift Preview Guard (214ms)
+  PASS Unit Test Suite (8506ms)
+  PASS Generated Documentation Blocks (117ms)
+  PASS Docs Reference Integrity (349ms)
+  PASS Stylelint CSS Check (2369ms)
+  PASS CSS Unused Variables (108ms)
+  PASS Astro Compiler Diagnostics (3725ms)
+  PASS Repository Policy (1452ms)
+  PASS Playwright Browser Revisions (438ms)
+  PASS Git Formatting/Conflicts (115ms)
 
-Phase 3: Compiling Production Build...
-  [PASS] Static Site Build (2677ms)
+Build
+  PASS Static build (2062ms)
 
-Phase 4: Running Post-Build Audits and Browser Tests...
-  [PASS] Asset Weight Limits (41ms)
-  [PASS] SEO Metadata (43ms)
-  [PASS] Playwright Browser Tests (50367ms)
+Post-build checks
+  PASS Asset Weight Limits (118ms)
+  PASS Internal Link Integrity (126ms)
+  PASS Page Weight Budget (106ms)
+  PASS Structural HTML (107ms)
+  PASS Functions Routing (118ms)
+  PASS SEO Metadata (98ms)
+  PASS Edge Runtime Tests (3562ms)
+  WAIT Playwright still running (30s)
+  PASS Playwright Browser Tests (43085ms)
+  PASS Visual Regression (fixture content) (5970ms)
 
-  [PASS] Worktree Idempotence Check
+  PASS Worktree unchanged
 
-✓ ALL CHECKS PASSED. Codebase is logically clean and ready to deploy.
-
-# On success there is nothing else to read, and no report file is written:
-# the stale .validation-report.md (if any) is deleted. The full surface here is
-# every static audit, the production build, check-seo, the Playwright suite
-# across all six browser projects (including visual baselines), and an
-# idempotence check proving the run mutated nothing. One command, ~60s, done.
+PASS in 62s. Static checks, build, and available browser suites passed.

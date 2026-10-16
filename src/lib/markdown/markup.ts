@@ -6,10 +6,10 @@
 import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
 import type { Element, ElementContent, Text } from 'hast';
 
-const el = (tagName: string, className: string[] | undefined, children: ElementContent[]): Element => ({
+const el = (tagName: string, className: string[] | undefined, children: ElementContent[], properties: Element['properties'] = {}): Element => ({
   type: 'element',
   tagName,
-  properties: className ? { className } : {},
+  properties: className ? { className, ...properties } : properties,
   children,
 });
 const text = (value: string): Text => ({ type: 'text', value });
@@ -36,7 +36,7 @@ function terminal(code: Element): Element {
     if (!prompt) return el('span', ['line', 'out'], [text(line)]);
     return el('span', ['line'], [el('span', ['prompt'], [text('$')]), text(' '), el('span', ['cmd'], [text(line.slice(prompt[0].length))])]);
   });
-  const dots: Element = { ...el('span', ['terminal-dots'], []), properties: { className: ['terminal-dots'], ariaHidden: 'true' } };
+  const dots = el('span', ['terminal-dots'], [], { ariaHidden: 'true' });
   return el('div', ['terminal-block'], [
     el('div', ['terminal-bar'], [dots, el('span', ['terminal-label'], [text('TERMINAL')])]),
     el('pre', undefined, [el('code', undefined, lines)]),

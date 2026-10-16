@@ -1,7 +1,6 @@
 ---
 import { metaLine, type SoftwareEntry } from '@lib/software.ts';
 import { writeupPath } from '@lib/site-config.ts';
-import CardSurface from '@components/CardSurface.astro';
 
 type Props = { entry: SoftwareEntry };
 const { entry } = Astro.props;
@@ -19,7 +18,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 ---
 
 <li class="software-card">
-  <CardSurface>
+  <div class="card-surface">
     <div class="software-card-head">
       <h2 class="software-card-title">
         {titleHref ? (
@@ -36,7 +35,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
             </span>
           )}
           {pkg?.downloadsPerMonth != null && (
-            <span class="badge badge--muted">↓ {formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+            <span class="badge badge--muted"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
           )}
           {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
         </div>
@@ -48,7 +47,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     {pkg && (
       <div class="terminal-block software-install">
         <code class="software-install-cmd"><span class="prompt">$</span> {pkg.install}</code>
-        <button class="software-copy" type="button" data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
+        <button class="software-copy" type="button" hidden data-copy={pkg.install} aria-label={`Copy command: ${pkg.install}`}>
           <span class="copy-label">Copy</span>
         </button>
       </div>
@@ -58,20 +57,22 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 
     <div class="software-links">
       {entry.repoUrl && (
-        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
       )}
       {pkg && (
-        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} ↗</a>
+        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} <span aria-hidden="true">↗</span></a>
       )}
       {entry.writeupSlug && (
-        <a class="software-writeup" href={writeupPath(entry.writeupSlug)}>Read the writeup →</a>
+        <a class="software-writeup" href={writeupPath(entry.writeupSlug)}>Read the writeup <span aria-hidden="true">→</span></a>
       )}
     </div>
-  </CardSurface>
+  </div>
 </li>
 
 <script>
   const resets = new WeakMap<HTMLButtonElement, number>();
+
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.software-copy')) button.hidden = false;
 
   document.addEventListener('click', async (event) => {
     if (!(event.target instanceof Element)) return;

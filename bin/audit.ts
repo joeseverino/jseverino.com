@@ -27,7 +27,15 @@ interface AuditVia {
   source?: number;
 }
 interface AuditReport {
-  vulnerabilities?: Record<string, { via: (string | AuditVia)[] }>;
+  vulnerabilities: Record<string, { via: (string | AuditVia)[] }>;
+}
+
+// npm prints an error document, still valid JSON, when the registry fails.
+function isAuditReport(value: unknown): value is AuditReport {
+  if (typeof value !== 'object' || value === null || 'error' in value) return false;
+  const { vulnerabilities } = value as { vulnerabilities?: unknown };
+  return typeof vulnerabilities === 'object' && vulnerabilities !== null && !Array.isArray(vulnerabilities)
+    && Object.values(vulnerabilities).every((entry) => Array.isArray((entry as { via?: unknown } | null)?.via));
 }
 
 interface Advisory {
@@ -56,14 +64,15 @@ const accepted = new Map(allowlist.map((entry) => [`${entry.ghsa}:${entry.packag
 const result = await run('npm', ['audit', '--json'], { cwd: siteRoot, timeout: 2 * 60_000 });
 let report: AuditReport;
 try {
-  report = JSON.parse(result.stdout) as AuditReport;
+  report = JSON.parse(result.stdout);
+  if (![0, 1].includes(result.code) || !isAuditReport(report)) throw new Error('invalid npm audit report');
 } catch {
   console.error(`npm audit did not produce a report:\n${result.output.trim()}`);
   process.exit(1);
 }
 
 const found = new Map<string, Advisory>();
-for (const vulnerability of Object.values(report.vulnerabilities ?? {})) {
+for (const vulnerability of Object.values(report.vulnerabilities)) {
   for (const via of vulnerability.via) {
     if (typeof via !== 'object' || !BLOCKING.has(via.severity)) continue;
     const ghsa = via.url?.match(/GHSA-[\w-]+/)?.[0] ?? `advisory-${via.source}`;

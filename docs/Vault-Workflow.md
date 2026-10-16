@@ -39,7 +39,7 @@ Content is synced only when frontmatter includes:
 published: true
 ```
 
-Unpublished content is skipped during normal sync. Draft preview is available through `site dev --drafts` (`npm run dev:drafts`; see [`Site-CLI.md`](./Site-CLI.md)), which syncs into the gitignored `.cache/drafts` overlay the dev server reads through `SITE_CONTENT_ROOT`, so a draft never enters the committed snapshot. A gate audit fails if `src/content` ever holds `published: false`.
+Unpublished content is skipped during normal sync. Draft preview is available through `site dev --drafts` (see [`Site-CLI.md`](./Site-CLI.md)), which syncs into the gitignored `.cache/drafts` overlay the dev server reads through `SITE_CONTENT_ROOT`, so a draft never enters the committed snapshot. A gate audit fails if `src/content` ever holds `published: false`.
 
 ## Metadata Boundary
 
@@ -114,7 +114,7 @@ npm run publish:check
 
 `npm run publish:check` is the final local gate before committing generated content changes.
 
-The sync and the local-only audits find the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
+The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
 
 | Source | Override | Default |
 | :--- | :--- | :--- |

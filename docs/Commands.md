@@ -15,7 +15,6 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run dev` | Start the local dev server |
-| `npm run dev:drafts` | Dev server including unpublished drafts, from the gitignored overlay (`site dev --drafts`) |
 | `npm run site` | The publishing workflow CLI: `npm run site -- <command>` (validate, publish, land, featured, …) |
 | `npm run sync:content` | Pull published content from the vault into the repo |
 | `npm run sync:contract` | Regenerate typed content-contract projections |
@@ -23,7 +22,7 @@ appears here.
 | `npm run sync:tokens` | Pull design + brand tokens from `severino-brand` into the repo |
 | `npm run sync:edge-site` | Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`) |
 | `npm run sync:docs` | Regenerate the generated blocks in `docs/Commands.md` and `tests/ARCHITECTURE.md` |
-| `npm run diagnose` | Run every check and report everything that is wrong |
+| `npm run diagnose` | Validate the current snapshot without syncing; report all failures |
 | `npm run diff:build` | Build HEAD vs the working tree; show what changed in the shipped site |
 
 ### Release
@@ -31,11 +30,9 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run publish:check` | Fast local build gate (`-- --no-sync` for code-only changes) |
-| `npm run publish:check:ci` | The same gate under CI conditions: `CI=1` + a scratch keyring |
-| `npm run release:check` | Full gate: publish:check + browser/visual/policy + idempotence (macOS) |
 | `npm run gate:check` | The registry's fast pre-build audits, collect-all; the first step of CI's `build` job |
 | `npm run deploy:verify` | After the merge deploys, from a residential IP: verify remote CI + the live production deploy |
-| `npm run content:diff` | What a content change means by slug: published, edited, removed, pages, generated (`-- --json`) |
+| `npm run diff:content` | What a content change means by slug: published, edited, removed, pages, generated (`-- --json`) |
 | `npm run audit` | `npm audit` against `.github/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review |
 | `npm run build` | Type-check, then produce the static build (what CI's `build` job wraps) |
 
@@ -51,11 +48,10 @@ appears here.
 | `npm run make:font` | Re-subset the Inter webfont to the site's characters and weights (needs python3 + fontTools) |
 | `npm run snapshot:github` | Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads for repos |
 | `npm run snapshot:software` | Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails without writing if any lookup fails |
-| `npm run scaffold:primer` | Scaffold a new reference primer in the vault |
 | `npm run scaffold:writeup-field` | Add a field once to the canonical writeup contract |
 | `npm run draft:cover-alt` | Draft writeup cover alt text via the Claude API |
 | `npm run sign:security` | Re-sign `public/.well-known/security.txt` |
-| `npm run seo:preview` | Preview a page's Google snippet + metadata from built HTML |
+| `npm run preview:seo` | Preview a page's Google snippet + metadata from built HTML |
 | `npm run preview` | Serve the built site locally |
 | `npm run test:unit` | Unit suite: markdown DSL, Cloudflare functions, gate harness, registry, audit rules |
 | `npm run test:e2e` | Playwright functional specs across Chromium, Firefox, WebKit |
@@ -63,16 +59,15 @@ appears here.
 | `npm run test:e2e:visual` | Visual-regression snapshots (macOS Chromium) |
 | `npm run test:e2e:visual:update` | Re-baseline visual snapshots after an intentional design change |
 | `npm run test:edge` | Serve the build through the Cloudflare runtime and assert headers, the CSP hashes, cache rules, and the functions |
-| `npm run edge:serve` | Serve the build through `wrangler pages dev` for by-hand checks (headers + functions active) |
+| `npm run serve:edge` | Serve the build through `wrangler pages dev` for by-hand checks (headers + functions active) |
 | `npm run cloudflare:check` | Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift) |
 | `npm run cloudflare:plan` | The Cloudflare API calls an apply would make |
 | `npm run cloudflare:apply` | Plan, or with `-- --yes` apply `cloudflare/zone.json` (edit token; owned rules only) |
-| `npm run dist:publish` | Commit a build directory to the `dist` branch (CI publishes it on every push to `main`) |
+| `npm run publish:dist` | Commit a build directory to the `dist` branch (CI publishes it on every push to `main`) |
 | `npm run github:check` | Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift) |
 | `npm run github:plan` | The GitHub API calls an apply would make |
 | `npm run github:apply` | Plan, or with `-- --yes` apply `.github/repo.json` (admin token) |
-| `npm run d1:apply` | Apply `cloudflare/d1.sql` to the remote D1 database (idempotent) |
-| `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly) |
+| `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly) |
 | `npm run clean:generated` | Remove build output and build caches |
 
 ### Internal (run by the commands above)
@@ -80,13 +75,14 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run check` | CSS lint + unused-var audit + `astro check` (used by `build`) |
-| `npm run build:static` | `astro build` + sitedrift wrap (used by `build` and the gates) |
+| `npm run check:astro` | `astro check` over the .astro files, content schemas, and imports (`-- --json` for machine output) |
+| `npm run build:static` | `astro build` + sitedrift wrap (`-- --timings` profiles the Astro build) |
 | `npm run lint:css` | Stylelint over `src/styles/` |
 | `npm run check:security` | security.txt signature, required fields, expiry, WKD file |
 | `npm run check:contrast` | WCAG ratios for every text/background pair in `base.css` |
 | `npm run check:parity` | The content contract, the Astro schema, the writeup store, and the `site manage` TUI agree on writeup fields |
-| `npm run typecheck` | Strict TypeScript over the whole repo (Node program, then the Workers program for `functions/`) |
-| `npm run check:edge` | Contact handler, OpenAPI schema, and D1 schema agree |
+| `npm run check:types` | Strict TypeScript over the whole repo (Node program, then the Workers program for `functions/`) |
+| `npm run check:functions` | Contact handler, OpenAPI schema, and D1 schema agree |
 | `npm run check:preview` | Sitedrift wrapping on previews, absent on main |
 | `npm run check:docs` | Every doc link and anchor, `npm run` reference, and backticked repo path resolves |
 | `npm run check:css-vars` | No CSS custom property is defined but never used |
@@ -108,8 +104,8 @@ What each audit asserts, and how to fix it when it fails, is the generated
 
 ## Daily, in detail
 
-**`npm run dev` / `npm run dev:drafts`**: the Astro dev server on
-`localhost:4321`. The `:drafts` variant (`site dev --drafts`) syncs the vault,
+**`npm run dev`**: the Astro dev server on
+`localhost:4321`. `site dev --drafts` syncs the vault,
 drafts included, into the gitignored `.cache/drafts` overlay and points the
 dev server at it with `SITE_CONTENT_ROOT`; the committed snapshot is left alone.
 
@@ -145,7 +141,9 @@ The `docs-sync` audit runs it with `--check` in the fast gates, so a
 description, an audit's `asserts` and `fix`, or a gate assignment is written
 once, in code.
 
-**`npm run diagnose`**: the one-stop gate. Runs every check in the registry
+**`npm run diagnose`**: the one-stop gate for the current checkout. Does not
+sync the vault or clear existing build caches; run `npm run sync:content`
+separately to refresh editorial inputs. Runs every check in the registry
 without stopping at the first failure: green prints one line; red writes
 `.validation-report.md` with one row per failure, a remediation, and the exact
 command to rerun that single check (long output is clipped; the rerun command
@@ -175,20 +173,8 @@ unrelated content drift. `-- --after-gate` skips the
 audits `gate:check` already ran; CI passes it, and on the runner the edge suite
 is left to its own job.
 
-**`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs
-(`gate:check`, then `publish:check`) with `CI=1` (local-only audits skip, as on
-the runner) and a scratch GPG keyring seeded only from the committed WKD key. A gate that depends on
-authoring-machine state fails here instead of after a push.
-
-**`npm run release:check`**: an optional full local gate before opening a PR: runs
-`publish:check`, then the release-only audits (repository policy,
-`git diff --check`, the full cross-browser + visual Playwright suite), and
-fails if any of it mutated the worktree. Requires macOS because the committed
-visual baselines are macOS Chromium renders.
-
 **`npm run gate:check`**: the first step of the `build` job in `ci.yml`.
-Runs the registry audits that claim the `gate` gate (source integrity,
-duplicated code, the snapshot's draft guard, the type
+Runs the registry audits that claim the `gate` gate (duplicated code, the snapshot's draft guard, the type
 check, the generated doc blocks, docs references, stylesheet lint, repository
 policy) concurrently and keeps going after a failure, so one report names
 every broken invariant before the publish gate builds anything. In CI the
@@ -202,12 +188,12 @@ policy on every request, the `/contact/` Trusted Types exemption, the `public/_h
 the contact function's refusals (no Turnstile token, wrong content type,
 malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
 WKD key's content type. CI's `edge` leg and the local `publish:check` and
-`diagnose` gates run it. **`npm run edge:serve`** starts the same runtime on
+`diagnose` gates run it. **`npm run serve:edge`** starts the same runtime on
 `http://127.0.0.1:8788` for by-hand checks.
 
 **`npm run check:lighthouse`**: Lighthouse against the live site, using the
 lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
-URLs, device preset, and thresholds declared in `tests/lighthouserc.json`. Prints a
+URLs, device preset, and thresholds declared in `tests/lighthouse.json`. Prints a
 score line per page, writes the table to the job summary in CI, and exits
 non-zero on an audit execution failure or an `error`-level threshold. Uses the
 lockfile's Playwright Chromium (`npx playwright install chromium`), with
@@ -260,23 +246,21 @@ validated, published writeup snapshot. The static build invokes it
 automatically. The generated file is gitignored: the build is the one place
 that writes it, and consumers read the deployed JSON.
 
-**`npm run scaffold:primer`**: scaffolds a new reference primer in the
-vault's `04 Reference/` with the slim frontmatter the MCP expects.
-
 **`npm run scaffold:writeup-field`**: adds a field only to
 `contracts/content.v1.json`, the canonical writeup contract. Dry-run by
 default. After `--apply`, run `npm run sync:contract`; the typed Astro schema,
 MCP projection, CLI/tool schemas, and the `site manage` TUI derive from that one contract.
 
-**`npm run draft:cover-alt`**: drafts `cover_alt` text for one or every
-writeup via the Claude API, for human review before it lands in the vault.
+**`npm run draft:cover-alt`**: drafts `cover_alt` text for one writeup, or
+with `--all` every published writeup missing it, via the Claude API, for
+human review before it lands in the vault.
 
 **`npm run sign:security`**: clear-signs `public/.well-known/security.txt`
 with the security@ key. The signature, fields, and expiry are verified by
 `check:security` on every gate run, so an expired or tampered file cannot
 ship. See [`SECURITY.md`](../SECURITY.md).
 
-**`npm run seo:preview`**: renders a Google-style result snippet and the
+**`npm run preview:seo`**: renders a Google-style result snippet and the
 full metadata readout for a built page (`-- --result <slug>` for just the
 snippet). Reads the built HTML, so run a build first.
 

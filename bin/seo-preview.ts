@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+// Prints the Google-style result, metadata, and SEO checks for one built page.
+//
+//   node bin/seo-preview.ts [--result] <url|path|slug>
 import fs from 'node:fs';
 import path from 'node:path';
 import { styleText } from 'node:util';
@@ -10,7 +13,7 @@ import { siteRoot } from '../src/lib/site-root.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;
-const USAGE = `Usage: node bin/seo-preview.ts <url|path|slug>
+const USAGE = `usage: node bin/seo-preview.ts <url|path|slug>
 
 Examples:
   node bin/seo-preview.ts ${SITE.domain}
@@ -64,13 +67,13 @@ function attr(html: string, selector: string, attrName = 'content'): string {
   const pattern = new RegExp(`<meta\\s+[^>]*${RegExp.escape(selector)}[^>]*>`, 'i');
   const tag = html.match(pattern)?.[0];
   if (!tag) return '';
-  const value = tag.match(new RegExp(`${attrName}=["']([^"']*)["']`, 'i'))?.[1] ?? '';
+  const value = tag.match(new RegExp(`${attrName}=(["'])(.*?)\\1`, 'i'))?.[2] ?? '';
   return decodeEntities(value);
 }
 
 function linkHref(html: string, rel: string): string {
   const tag = html.match(new RegExp(`<link\\s+[^>]*rel=["']${rel}["'][^>]*>`, 'i'))?.[0];
-  const value = tag?.match(/href=["']([^"']*)["']/i)?.[1] ?? '';
+  const value = tag?.match(/href=(["'])(.*?)\1/i)?.[2] ?? '';
   return decodeEntities(value);
 }
 
@@ -117,7 +120,7 @@ const [input] = positionals;
 
 if (!input) {
   console.error(USAGE);
-  process.exit(1);
+  process.exit(2);
 }
 
 const urlPath = normalizePath(input);

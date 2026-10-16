@@ -24,7 +24,6 @@ export function createD1Sqlite() {
     },
   });
   return {
-    db,
     prepare: (query: string) => statement(query),
     async batch(statements: ReturnType<typeof statement>[]) {
       db.exec('BEGIN');

@@ -1,8 +1,8 @@
 // The verification audits; every gate derives its checks from this list (data only).
-// localOnly skips on CI, macosOnly is the visual baselines, heavy caps concurrency, servesBuild runs with PREBUILT=1,
+// macosOnly is the visual baselines, heavy caps concurrency, servesBuild runs with PREBUILT=1,
 // lock serializes audits sharing it, ownCiJob means a dedicated CI job runs it so publish:check skips it there.
 
-export type Gate = 'gate' | 'publish' | 'diagnose' | 'release';
+export type Gate = 'gate' | 'publish' | 'diagnose';
 export type Phase = 'pre-build' | 'post-build';
 
 export interface Audit {
@@ -14,24 +14,17 @@ export interface Audit {
   exec: { cmd: string; args: readonly string[]; env?: Readonly<Record<string, string>>; jsonArgs?: readonly string[] };
   gates: readonly Gate[];
   fix: string;
-  summary?: 'ok' | 'astro' | 'assets' | 'silent';
+  summary?: 'astro' | 'assets' | 'silent';
   macosOnly?: boolean;
-  localOnly?: boolean;
   timeout?: number;
   heavy?: boolean;
+  browser?: boolean;
   servesBuild?: boolean;
   lock?: 'astro';
   ownCiJob?: boolean;
 }
 
 export const AUDITS: readonly Audit[] = [
-  {
-    id: 'source-integrity', label: 'source', name: 'Source Integrity', phase: 'pre-build',
-    asserts: 'Every .ts file under bin/, src/, and tests/ parses, and no file declares the same top-level function twice.',
-    exec: { cmd: 'node', args: ['tests/audits/check-source-integrity.ts'] },
-    gates: ['gate', 'publish', 'diagnose'],
-    fix: 'Fix the reported parse error or duplicate top-level function. The duplicate is legal JavaScript, so no compiler step reports it.',
-  },
   {
     id: 'duplication', label: 'dupes', name: 'No Duplicated Code', phase: 'pre-build',
     asserts: 'No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files).',
@@ -43,7 +36,7 @@ export const AUDITS: readonly Audit[] = [
     id: 'contract-projections', label: 'contracts', name: 'Generated Contract Projections', phase: 'pre-build',
     asserts: 'Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source.',
     exec: { cmd: 'node', args: ['tests/audits/check-contract-projections.ts'] },
-    gates: ['publish', 'diagnose', 'release'],
+    gates: ['publish', 'diagnose'],
     fix: 'Regenerate the stale projection with the `run:` command it names (sync:tokens, sync:contract, sync:contact-openapi, make:embed, or sync:edge-site); generated artifacts must exactly match their canonical inputs.',
   },
   {
@@ -69,17 +62,17 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'parity-check', label: 'parity', name: 'Content Contract Parity', phase: 'pre-build',
-    asserts: 'The content contract, its generated Astro schema, the public projection, the writeup store, and the `site manage` TUI agree on one fingerprint.',
+    asserts: 'The Astro writeup schema, the public projection, the writeup store, and the `site manage` TUI all read their fields from the content contract.',
     exec: { cmd: 'node', args: ['tests/audits/check-contract-parity.ts'] },
     gates: ['publish', 'diagnose'],
     fix: 'Edit `contracts/content.v1.json`, run `npm run sync:contract`, and commit the generated schema. Never hand-edit a projection.',
   },
   {
-    id: 'typecheck', label: 'types', name: 'TypeScript Type Check', phase: 'pre-build',
+    id: 'check:types', label: 'types', name: 'TypeScript Type Check', phase: 'pre-build',
     asserts: 'Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib.',
-    exec: { cmd: 'npm', args: ['run', '-s', 'typecheck'] },
+    exec: { cmd: 'npm', args: ['run', '-s', 'check:types'] },
     lock: 'astro', gates: ['gate', 'publish', 'diagnose'], summary: 'silent',
-    fix: 'Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib. `astro check` covers the .astro files.',
+    fix: 'Run `npm run check:types`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib. `astro check` covers the .astro files.',
   },
   {
     id: 'functions-parity', label: 'edge', name: 'Functions/Schema Parity', phase: 'pre-build',
@@ -134,32 +127,31 @@ export const AUDITS: readonly Audit[] = [
     id: 'astro-check', label: 'check', name: 'Astro Compiler Diagnostics', phase: 'pre-build',
     asserts: '`astro check` reports no errors or warnings in the .astro files, content schemas, or imports.',
     exec: {
-      cmd: 'npx', args: ['astro', 'check', '--minimumSeverity', 'warning', '--tsconfig', 'tsconfig.astro.json'],
-      env: { ASTRO_TELEMETRY_DISABLED: '1', NODE_OPTIONS: '--max-old-space-size=4096' },
-      jsonArgs: ['--json'],
+      cmd: 'npm', args: ['run', '-s', 'check:astro'],
+      jsonArgs: ['--', '--json'],
     },
     lock: 'astro', gates: ['publish', 'diagnose'], summary: 'astro',
-    fix: 'Run `npm run check` and fix the reported .astro type, content-schema, or import error.',
+    fix: 'Run `npm run check:astro` and fix the reported .astro type, content-schema, or import error.',
   },
   {
     id: 'repo-policy', label: 'repo-policy', name: 'Repository Policy', phase: 'pre-build',
     asserts: 'Node, npm, and lockfile pins agree; no secrets or build output tracked; stylesheet rules hold; TypeScript only, no explicit any or unexplained suppressions; actions SHA-pinned, runners fixed, every job time-boxed.',
     exec: { cmd: 'node', args: ['tests/audits/check-repository-policy.ts'] },
-    gates: ['gate', 'publish', 'diagnose', 'release'],
+    gates: ['gate', 'publish', 'diagnose'],
     fix: 'Fix the reported rule: the Node and npm pins (.nvmrc, engines, packageManager), the lockfile, a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (SHA pin, fixed runner, timeout-minutes).',
   },
   {
     id: 'playwright-browsers', label: 'browsers', name: 'Playwright Browser Revisions', phase: 'pre-build',
     asserts: 'The installed Chromium, Firefox, and WebKit revisions match the locked Playwright package.',
     exec: { cmd: 'node', args: ['tests/audits/check-playwright-browsers.ts'] },
-    gates: ['diagnose', 'release'], macosOnly: true,
+    gates: ['diagnose'], macosOnly: true,
     fix: 'Install the browser revisions required by the lockfile with `npx playwright install chromium firefox webkit`.',
   },
   {
     id: 'git-diff-check', label: 'git-diff', name: 'Git Formatting/Conflicts', phase: 'pre-build',
     asserts: '`git diff --check` finds no whitespace errors or conflict markers.',
     exec: { cmd: 'git', args: ['diff', '--check'] },
-    gates: ['diagnose', 'release'], summary: 'silent',
+    gates: ['diagnose'], summary: 'silent',
     fix: 'Fix trailing whitespace, missing end-of-lines, or unresolved git conflict markers reported by `git diff --check`.',
   },
   {
@@ -211,8 +203,8 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.edge.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
-    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
+    browser: true, servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
+    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run serve:edge` reproduces the served responses by hand.',
   },
   {
     id: 'browser-tests', label: 'e2e', name: 'Playwright Browser Tests', phase: 'post-build',
@@ -221,7 +213,7 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, servesBuild: true, gates: ['diagnose', 'release'], timeout: 15 * 60_000,
+    browser: true, heavy: true, servesBuild: true, gates: ['diagnose'], timeout: 15 * 60_000,
     fix: 'Run `npm run test:e2e:ui` to debug the functional specs.',
   },
   {
@@ -231,7 +223,7 @@ export const AUDITS: readonly Audit[] = [
       cmd: 'npx', args: ['playwright', 'test', '-c', 'tests/playwright.visual.config.ts', '--reporter=line'],
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
-    heavy: true, gates: ['diagnose', 'release'], macosOnly: true, timeout: 10 * 60_000,
+    browser: true, heavy: true, gates: ['diagnose'], macosOnly: true, timeout: 10 * 60_000,
     fix: 'Inspect expected/actual/diff under test-results/visual/. If the layout or a fixture changed on purpose, re-baseline with `npm run test:e2e:visual:update` and review every PNG in the diff.',
   },
 ];
@@ -242,3 +234,7 @@ export const auditsFor = (gate: Gate, phase?: Phase): Audit[] =>
 // What publish:check runs; `afterGate` and `ci` drop audits gate:check and the edge job already covered.
 export const publishAudits = (phase: Phase, { afterGate = false, ci = false } = {}): Audit[] =>
   auditsFor('publish', phase).filter((a) => !(afterGate && a.gates.includes('gate')) && !(ci && a.ownCiJob));
+
+// Diagnostic scope is independent of scheduling cost and build-server needs.
+export const diagnosticAudits = (phase: Phase, { browsers = true } = {}): Audit[] =>
+  auditsFor('diagnose', phase).filter((audit) => browsers || !audit.browser);

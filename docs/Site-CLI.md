@@ -69,8 +69,8 @@ The content model a client edits against is
 | `site new <slug>` | Scaffold `05 Writeups/<slug>/` from the vault template (`published: false`) |
 | `site validate [<slug>] [--draft]` | Resolve every reference, the frontmatter contract, and the catalog without writing (`sync-content --check`) |
 | `site dev [--drafts] [--host <host>] [--port <port>]` | Astro dev server; drafts come from the gitignored `.cache/drafts` overlay, never the committed snapshot |
-| `site publish [--dry-run] [--full] [--base <branch>] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/<base>` (default `main`, or `--from <ref>`) in a temporary worktree, sync, content diff, fast gate plus local-only audits (`--full`: the whole publish gate), a commit of exactly the declared outputs, push, open the PR. Never merges |
-| `site land [<pr>] [--timeout <min>]` | Read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge, wait for the merge commit's Cloudflare Pages deploy, verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. Merges only when invoked |
+| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, fast gate (`--full`: the whole publish gate), a commit of exactly the declared outputs, push, open the PR. Never merges |
+| `site land [<pr>] [--timeout <min>]` | A PR into `main` (the latest open `content/*` PR when none is named): read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge pinned to that head, wait for the merge commit's Cloudflare Pages deploy, verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. `--timeout` bounds the waits for checks and deploy. Merges only when invoked |
 | `site verify <slug> [--origin <url>]` | Live checks for one writeup (`bin/deploy-verify.ts --slug`), on production or on the deployment at `--origin` |
 | `site status` | Repo, dependency, vault, build, and open content PR state |
 | `site featured [<slug> <slot\|up\|down\|top\|bottom\|off>]` | Show or reorder the home-page featured list (renumbers `1..N`) |
@@ -86,7 +86,7 @@ The content model a client edits against is
 | `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
 | `site contract` | The writeup field contract and its fingerprint |
 | `site render <slug\|-> [--document]` | One writeup body (`html`) rendered exactly as the build ships it, from the vault or stdin (`-`); `--document` adds `document`, a self-contained page in the site's article layout with its styles inlined, for previews |
-| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited) |
+| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
 | `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1, or counts by directive |
 | `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
 | `site headers [<path>]` | Live security headers on one path, with named pass/fail checks |
@@ -106,7 +106,8 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 - **Fails in seconds.** Stale `node_modules`, an unfetchable remote,
   unauthenticated `gh`, an unreachable vault, or uncommitted tracked changes
   stop it before any work, with the fix.
-- **Any `git`/`gh` failure is fatal**, with its stderr.
+- **Any `git`/`gh` failure is fatal**, with its stderr. Every `gh pr` call names
+  the repository (`-R`), so a fork or second remote is never the target.
 - **The PR body speaks in slugs**: published, edited, and removed writeups with
   their URLs; generated files as a count.
 
@@ -128,6 +129,14 @@ typed functions with no console output and injected paths, so other callers
 the vault only through the store and `site new`, which copies the template.
 
 ## `site manage`: the TUI
+
+Keyboard transitions live in `bin/site/manage-input.ts`: each mode updates staged
+state and returns a typed effect when an operation needs I/O. The controller in
+`bin/site/manage.ts` executes those effects. Frames in `bin/site/manage-render.ts`
+render loaded state without probing the filesystem or starting commands. The
+transition tests cover edits, confirmations, navigation, and text input; terminal
+replay tests exercise the controller against a temporary vault.
+
 
 The one interactive command; it refuses to start without a terminal. A full-screen terminal app over the whole publishing surface: a
 **Writeups** tab for content state and a **Site** tab for operations. `←`/`→`
@@ -189,8 +198,9 @@ Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
-(`site dev --drafts` sets it to `.cache/drafts`; `build:static` accepts only a
-tree under `tests/fixtures` or that overlay), `SITE_JSON=1` switches Astro
+(`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
+`build:static` refuses anything outside `tests/fixtures`, so drafts never
+reach a build), `SITE_JSON=1` switches Astro
 to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
 (default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`
 (default `~/.local/state/jseverino.com/audit.log`), and `CLOUDFLARE_API_TOKEN`

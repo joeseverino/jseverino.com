@@ -1,24 +1,23 @@
 // site land: merge one content PR and see it live. Waits for main's required checks on the PR head,
 // squash-merges, waits for the Cloudflare Pages deployment, then verifies each changed writeup on production.
 // Every wait polls real state against one deadline.
-import fs from 'node:fs';
-import path from 'node:path';
 import { contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { preflight, type CheckName } from '../lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, run } from '../lib/run.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, requireReady, runScript, type Output } from './cli.ts';
 import { git, gh, ghJson } from './git.ts';
 import type { HqSync, LandResult, PullRequestRef, ScriptRun, Verified } from './types.ts';
 
-const PR_FIELDS = 'number,url,title,state,headRefName,headRefOid,mergeCommit,isDraft';
+const PR_FIELDS = 'number,url,title,state,baseRefName,headRefName,headRefOid,mergeCommit,isDraft';
 const PAGES_CHECK = 'Cloudflare Pages';
 
 // The PR_FIELDS gh returns.
 interface PullRequest extends PullRequestRef {
   state: 'OPEN' | 'CLOSED' | 'MERGED';
+  baseRefName: string;
   headRefOid: string;
   mergeCommit: { oid: string } | null;
   isDraft: boolean;
@@ -91,25 +90,14 @@ async function verifyGone(slug: string): Promise<{ ok: boolean; status: number }
   return { ok: response.status === 404, status: response.status };
 }
 
-function onPath(name: string): boolean {
-  return (process.env.PATH ?? '').split(path.delimiter).some((dir) => {
-    try {
-      fs.accessSync(path.join(dir, name), fs.constants.X_OK);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-}
-
 async function hqSync(root: string, out: Output): Promise<HqSync> {
-  if (!onPath('hq')) return { ran: false };
-  const result = await run('hq', ['sync'], { cwd: root, timeout: BUILD_TIMEOUT_MS });
+  const result = spawnResult('hq', ['sync'], { cwd: root, timeout: BUILD_TIMEOUT_MS });
+  if (result.error?.code === 'ENOENT') return { ran: false };
   if (result.code === 0) {
     out.ok('hq', 'hq sync done');
     return { ran: true, ok: true };
   }
-  out.warn('hq', `hq sync failed (the site is live regardless); retry: hq sync\n${result.output.trim()}`);
+  out.warn('hq', `hq sync failed (the site is live regardless); retry: hq sync\n${`${result.stdout}${result.stderr}`.trim()}`);
   return { ran: true, ok: false, retry: 'hq sync' };
 }
 
@@ -140,6 +128,11 @@ export async function land({
   const deadline = Date.now() + timeoutMs;
   let pr = requested ? ghJson<PullRequest>(root, 'pr', 'view', requested, '--json', PR_FIELDS) : latestContentPr(root);
   out.step('pr', `#${pr.number} ${pr.title} (${pr.state.toLowerCase()})`);
+  if (pr.baseRefName !== DEFAULT_BRANCH) {
+    throw new SiteError(`#${pr.number} targets ${pr.baseRefName}; site land waits on ${DEFAULT_BRANCH}'s checks and merges only into it`, {
+      code: EXIT.usage, result: { pr: pr.url }, fix: `retarget the PR to ${DEFAULT_BRANCH}`,
+    });
+  }
 
   if (pr.state === 'CLOSED') {
     throw new SiteError(`#${pr.number} is closed without merging`, { result: { pr: pr.url }, fix: 'reopen it or publish again' });
@@ -147,7 +140,7 @@ export async function land({
   if (pr.state === 'OPEN') {
     if (pr.isDraft) throw new SiteError(`#${pr.number} is a draft`, { result: { pr: pr.url }, fix: `gh pr ready ${pr.number}` });
     await waitForChecks(pr, deadline, intervalMs, out);
-    gh(root, 'pr', 'merge', String(pr.number), '--squash', '--delete-branch');
+    gh(root, 'pr', 'merge', String(pr.number), '--squash', '--delete-branch', '--match-head-commit', pr.headRefOid);
     out.ok('merge', `#${pr.number} squash-merged`);
     pr = ghJson<PullRequest>(root, 'pr', 'view', String(pr.number), '--json', PR_FIELDS);
     if (pr.state !== 'MERGED') {

@@ -102,6 +102,8 @@
   font-size: 0.9rem;
   line-height: 1.45;
 
+  &:empty { display: none; }
+
   &[data-kind='success'] {
     background: var(--color-success-bg);
     color: var(--color-success);

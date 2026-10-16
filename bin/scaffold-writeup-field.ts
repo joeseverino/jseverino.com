@@ -7,10 +7,12 @@ import { fromRoot } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 
 const target = fromRoot('contracts/content.v1.json');
+const FIELD_TYPES: readonly string[] = ['string', 'boolean', 'date', 'integer', 'string[]', 'image'] satisfies FieldType[];
+const TYPE_LIST = FIELD_TYPES.join('|');
 const { values } = cli({
   usage: [
-    'usage: node bin/scaffold-writeup-field.ts --name <snake_case> [--type string|boolean|date|integer|string[]]',
-    '         [--required] [--editable] [--public] [--ownership vault] [--cli-flag <flag>] [--apply]',
+    `usage: node bin/scaffold-writeup-field.ts --name <snake_case> [--type ${TYPE_LIST}]`,
+    '         [--required] [--editable] [--public] [--ownership <owner>] [--cli-flag <flag>] [--apply]',
   ].join('\n'),
   options: {
     name: { type: 'string' },
@@ -18,13 +20,12 @@ const { values } = cli({
     required: flag,
     editable: flag,
     public: flag,
-    ownership: { type: 'string', default: 'vault' },
+    ownership: { type: 'string' },
     'cli-flag': { type: 'string' },
     apply: flag,
   },
 });
 
-const FIELD_TYPES: readonly string[] = ['string', 'boolean', 'date', 'integer', 'string[]', 'image'] satisfies FieldType[];
 const isFieldType = (value: string): value is FieldType => FIELD_TYPES.includes(value);
 
 const { name, type } = values;
@@ -33,7 +34,7 @@ if (!name || !/^[a-z][a-z0-9_]*$/.test(name)) {
   process.exit(2);
 }
 if (!isFieldType(type)) {
-  console.error('scaffold-writeup-field: --type must be string|boolean|date|integer|string[]');
+  console.error(`scaffold-writeup-field: --type must be ${TYPE_LIST}`);
   process.exit(2);
 }
 
@@ -43,19 +44,32 @@ if (name in fields) {
   console.error(`scaffold-writeup-field: ${name} already exists`);
   process.exit(1);
 }
+const defaults: Partial<Record<FieldType, FieldSpec['default']>> = { boolean: false, 'string[]': [] };
 const spec: FieldSpec = {
   type,
   ...(values.required ? { required: true } : {}),
+  ...(type in defaults ? { default: defaults[type] } : {}),
   editable: values.editable,
   public: values.public,
-  ownership: values.ownership,
+  ...(values.ownership ? { ownership: values.ownership } : {}),
   ...(values['cli-flag'] ? { cli_flag: values['cli-flag'] } : {}),
 };
-if (type === 'boolean') spec.default = false;
-if (type === 'string[]') spec.default = [];
+
+// The contract file keeps one field spec per line.
+const inline = (value: object): string =>
+  `{ ${Object.entries(value).map(([key, item]) => `${JSON.stringify(key)}: ${JSON.stringify(item)}`).join(', ')} }`;
+function layout(value: unknown, indent = '', inlineChildren = false): string {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return JSON.stringify(value);
+  const entries = Object.entries(value);
+  if (!entries.length) return '{}';
+  const inner = `${indent}  `;
+  const lines = entries.map(([key, item]) =>
+    `${inner}${JSON.stringify(key)}: ${inlineChildren ? inline(item as object) : layout(item, inner, key === 'fields')}`);
+  return `{\n${lines.join(',\n')}\n${indent}}`;
+}
 
 fields[name] = spec;
-const output = `${JSON.stringify(contract, null, 2)}\n`;
+const output = `${layout(contract)}\n`;
 if (!values.apply) {
   console.log(JSON.stringify({ field: name, spec }, null, 2));
   console.log('dry run; add --apply, then run npm run sync:contract');

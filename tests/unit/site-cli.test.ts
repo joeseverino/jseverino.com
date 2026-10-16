@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import type { SiteFailure, SiteHelp } from '../../bin/site/types.ts';
+import { createOutput, terminalText } from '../../bin/site/cli.ts';
 
 const site = (...args: string[]) => {
   const result = spawnSync(process.execPath, ['bin/site.ts', ...args], { cwd: siteRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
@@ -45,4 +46,22 @@ test('manage --json is a usage error with a JSON error document', () => {
   assert.equal(doc.ok, false);
   assert.equal(doc.error.code, 2);
   assert.match(doc.error.message, /interactive/);
+});
+
+test('human-readable stdout and JSON progress neutralize untrusted terminal controls', (t) => {
+  const payload = 'report\x1b[2J\x1b[H\x1b]52;c;Y2xpcGJvYXJk\x07\r\x08\x9b2J\u202e';
+  for (const json of [false, true]) {
+    const chunks: string[] = [];
+    const stream = json ? process.stderr : process.stdout;
+    const writer = t.mock.method(stream, 'write', (chunk: string) => { chunks.push(chunk); return true; });
+    const out = createOutput({ json });
+    out.text(payload);
+    out.warn(payload, payload);
+    writer.mock.restore();
+    const output = chunks.join('');
+    assert.doesNotMatch(output, /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u202e]/u);
+    assert.ok(output.includes('report'));
+    assert.ok(output.includes('\\u000d'));
+  }
+  assert.equal(terminalText('Title\n  ordinary\ttext'), 'Title\n  ordinary\ttext');
 });

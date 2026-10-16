@@ -16,8 +16,7 @@ updates:
         update-types:
           - version-update:semver-major
     groups:
-      # sitedrift is bundled into the production edge functions; its own group
-      # keeps it out of the auto-merged dev-dependencies PR.
+      # sitedrift is bundled into the production edge functions, so it gets a PR of its own.
       sitedrift:
         patterns:
           - sitedrift
@@ -30,8 +29,6 @@ updates:
           - patch
       dev-dependencies:
         dependency-type: development
-        exclude-patterns:
-          - sitedrift
         update-types:
           - minor
           - patch
@@ -40,6 +37,7 @@ updates:
         exclude-patterns:
           - astro
           - "@astrojs/*"
+          - sitedrift
         update-types:
           - minor
           - patch

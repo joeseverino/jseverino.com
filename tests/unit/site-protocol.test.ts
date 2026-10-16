@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { EXIT, PROTOCOL_VERSION } from '../../bin/site/types.ts';
-import { fromRoot, read } from './helpers/desired-state.ts';
+import { failureDocument, successDocument } from '../../bin/site.ts';
+import { SiteError } from '../../bin/site/cli.ts';
+import { fromRoot } from '../../src/lib/site-root.ts';
+import { read } from './helpers/desired-state.ts';
 
 const schema = read<JsonSchema>('public/schemas/site-protocol-v1.json');
 
@@ -47,6 +50,31 @@ describe('real documents', () => {
     assert.equal(code, EXIT.usage);
     assert.deepEqual(problemsIn(document), []);
     assert.equal((document.error as { code: number }).code, code);
+  });
+});
+
+describe('the envelope', () => {
+  test('a result field never replaces ok, command, or status', () => {
+    const result = { ok: false, command: 'other', httpStatus: 503, next: null } as unknown as Parameters<typeof successDocument<'headers'>>[1];
+    const document = successDocument('headers', result);
+    assert.equal(document.ok, true);
+    assert.equal(document.command, 'headers');
+    assert.equal(document.status, 'ok');
+  });
+
+  test('a command\'s own status is kept', () => {
+    const result = { status: 'landed', next: null } as unknown as Parameters<typeof successDocument<'land'>>[1];
+    assert.equal(successDocument('land', result).status, 'landed');
+  });
+
+  test('a failure\'s partial result never replaces ok, status, or error', () => {
+    const error = new SiteError('boom', { code: EXIT.usage, result: { ok: true, status: 'landed', error: null, pr: 'u' } });
+    const document = failureDocument('land', error);
+    assert.equal(document.ok, false);
+    assert.equal(document.status, 'failed');
+    assert.equal(document.error.code, EXIT.usage);
+    assert.equal(document.pr, 'u');
+    assert.deepEqual(problemsIn({ protocolVersion: PROTOCOL_VERSION, ...document }), []);
   });
 });
 

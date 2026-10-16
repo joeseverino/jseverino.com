@@ -18,7 +18,7 @@ function stripHtmlTags(value: string): string {
   return current;
 }
 
-export function normalizeDescription(text: string): string {
+function normalizeDescription(text: string): string {
   const withoutMarkdownLinks = text
     .replace(/\[([^\]]*)\]\([^)]+\)/g, '$1')
     .replace(/!\[[^\]]*\]\([^)]+\)/g, '');

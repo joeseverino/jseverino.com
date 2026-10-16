@@ -1,5 +1,5 @@
 // Shared `site` plumbing. Under --json progress goes to stderr and stdout holds only the final JSON document.
-import { styleText } from 'node:util';
+import { stripVTControlCharacters, styleText } from 'node:util';
 import type { Preflight } from '../lib/preflight.ts';
 import { run } from '../lib/run.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -61,11 +61,16 @@ export interface Output {
   text: (text: string) => void;
 }
 
+export function terminalText(value: string): string {
+  return stripVTControlCharacters(value).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/gu,
+    (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+
 export function createOutput({ json = false, quiet = false } = {}): Output {
   const stream = json ? process.stderr : process.stdout;
   const write = (color: 'dim' | 'green' | 'yellow' | 'red', label: string, detail: string) => {
     if (quiet) return;
-    stream.write(`${styleText(color, label.padEnd(10), { stream })} ${detail}\n`);
+    stream.write(`${styleText(color, terminalText(label).padEnd(10), { stream })} ${terminalText(detail)}\n`);
   };
   return {
     json,
@@ -73,7 +78,7 @@ export function createOutput({ json = false, quiet = false } = {}): Output {
     ok: (label, detail) => write('green', label, detail),
     warn: (label, detail) => write('yellow', label, detail),
     fail: (label, detail) => write('red', label, detail),
-    text: (text) => { if (!quiet) stream.write(`${text}\n`); },
+    text: (text) => { if (!quiet) stream.write(`${terminalText(text)}\n`); },
   };
 }
 
@@ -90,15 +95,14 @@ export function requireReady(ready: Preflight, out: Output): void {
 
 export interface ScriptOptions {
   out: Output;
-  root?: string;
   env?: NodeJS.ProcessEnv;
   timeout?: number;
 }
 
 // A repo script: streamed for people, captured for --json callers.
-export async function runScript(script: string, args: readonly string[], { out, root = siteRoot, env, timeout = 0 }: ScriptOptions): Promise<ScriptRun> {
+export async function runScript(script: string, args: readonly string[], { out, env, timeout = 0 }: ScriptOptions): Promise<ScriptRun> {
   const result = await run(process.execPath, [script, ...args], {
-    cwd: root,
+    cwd: siteRoot,
     env,
     timeout,
     stdio: out.json ? 'capture' : 'inherit',

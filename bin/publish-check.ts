@@ -6,7 +6,7 @@ import { cli, flag } from './lib/args.ts';
 import { runAudits } from './lib/audits.ts';
 import { firstFailureLine } from './lib/audit-summary.ts';
 import { contentDiff, describeDiff } from './content-diff.ts';
-import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run as spawnRun, status as printStatus, type RunOptions, type RunResult } from './lib/run.ts';
+import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, status, type RunOptions, type RunResult } from './lib/run.ts';
 import { annotate, createReport, type Outcome } from './lib/step-summary.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
@@ -22,9 +22,9 @@ const selection = { afterGate: values['after-gate'], ci: Boolean(process.env.CI)
 const node = process.execPath;
 const report = createReport('Publish gate');
 
-function status(label: string, detail: string, ok: Outcome = true): void {
+function record(label: string, detail: string, ok: Outcome = true): void {
   report.add(label, ok, detail);
-  printStatus(label, detail);
+  status(label, detail);
 }
 
 const writeSummary = () => report.write(report.failed().length === 0
@@ -42,7 +42,7 @@ function stop(label: string, result: RunResult & { detail: string }): never {
 }
 
 async function step(label: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
-  const result = await spawnRun(node, args, { cwd: siteRoot, ...options });
+  const result = await run(node, args, { cwd: siteRoot, ...options });
   if (result.code !== 0) stop(label, { ...result, detail: firstFailureLine(result.output) });
   return result;
 }
@@ -51,7 +51,7 @@ async function audits(entries: readonly Audit[]): Promise<void> {
   const results = await runAudits(entries, {
     stopOnFailure: true,
     onResult: (result, entry) => {
-      if (result.ok !== false) status(entry.label, result.detail, result.ok);
+      if (result.ok !== false) record(entry.label, result.detail, result.ok);
     },
   });
   const last = results.at(-1);
@@ -62,12 +62,12 @@ async function audits(entries: readonly Audit[]): Promise<void> {
 await step('clean generated output', ['bin/clean-generated.ts']);
 
 if (noSync) {
-  status('sync', 'skipped (--no-sync)', null);
+  record('sync', 'skipped (--no-sync)', null);
 } else {
   await step('sync content', ['bin/sync-content.ts'], { timeout: SYNC_TIMEOUT_MS });
-  status('sync', 'content snapshot updated');
+  record('sync', 'content snapshot updated');
 }
-status('content', describeDiff(contentDiff({ cwd: siteRoot })));
+record('content', describeDiff(contentDiff({ cwd: siteRoot })));
 
 // astro-check needs the sync, so pre-build audits run after it.
 await audits(publishAudits('pre-build', selection));
@@ -78,7 +78,7 @@ const build = await step('build static', ['bin/build-static.ts'], {
 });
 // `[build] N page(s) built`, or {"message":"N page(s) built …"} under SITE_JSON.
 const pageCount = build.output.match(/(?:\[build\] |"message":")(\d+) page\(s\) built/);
-status('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
+record('build', pageCount ? `${pageCount[1]} pages built` : 'completed');
 
 await audits(publishAudits('post-build', selection));
 

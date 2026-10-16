@@ -76,34 +76,28 @@ export async function getEducationInstitutions(): Promise<PageContent[]> {
 }
 
 // Cached per file mtime: a build reads the catalog hundreds of times, and a dev edit still shows up.
-let catalog: { mtimeMs: number; groups: TechnologyGroup[] } | undefined;
+let catalog: { mtimeMs: number; groups: TechnologyGroup[]; labels: Map<string, string> } | undefined;
 
-export function getTechnologyGroups(): TechnologyGroup[] {
+function technologyCatalog() {
   const file = path.resolve(process.cwd(), contentRoot, 'technology-groups.md');
   const mtimeMs = fs.statSync(file, { throwIfNoEntry: false })?.mtimeMs ?? 0;
-  if (catalog?.mtimeMs !== mtimeMs) catalog = { mtimeMs, groups: readTechnologyGroups(file) };
-  return catalog.groups;
-}
-
-function getTechnologyLabel(slug: string): string | undefined {
-  for (const group of getTechnologyGroups()) {
-    for (const tag of group.tags) if (tag.slug === slug) return tag.label;
+  if (catalog?.mtimeMs !== mtimeMs) {
+    const groups = readTechnologyGroups(file);
+    catalog = { mtimeMs, groups, labels: new Map(groups.flatMap((group) => group.tags.map((tag) => [tag.slug, tag.label]))) };
   }
-  return undefined;
+  return catalog;
 }
 
-let warnedUnknownTechnologies = false;
+export function getTechnologyGroups(): TechnologyGroup[] {
+  return technologyCatalog().groups;
+}
 
 function warnOnUnknownTechnologies(writeups: Writeup[]): void {
-  if (warnedUnknownTechnologies) return;
-  const known = new Set<string>();
-  for (const group of getTechnologyGroups()) {
-    for (const tag of group.tags) known.add(tag.slug);
-  }
+  const { labels } = technologyCatalog();
   const unknown = new Set<string>();
   for (const writeup of writeups) {
     for (const tag of writeup.technologies) {
-      if (!known.has(tag)) unknown.add(tag);
+      if (!labels.has(tag)) unknown.add(tag);
     }
   }
   if (unknown.size > 0) {
@@ -112,7 +106,6 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
       `[technology-groups] Writeup frontmatter references tag slugs missing from ${contentRoot}/technology-groups.md: ${list}`,
     );
   }
-  warnedUnknownTechnologies = true;
 }
 
 export const getWriteups = asyncCache<Writeup[]>(async () => {
@@ -171,7 +164,7 @@ export async function getAllTags(): Promise<{ slug: string; label: string; count
 }
 
 export function titleCase(value: string): string {
-  const label = getTechnologyLabel(value);
+  const label = technologyCatalog().labels.get(value);
   if (label) return label;
 
   return value

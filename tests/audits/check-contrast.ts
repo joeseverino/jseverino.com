@@ -61,6 +61,7 @@ for (const [, name, raw = ''] of tokenBlock.matchAll(/--color-([a-z0-9-]+)\s*:\s
   if (dual?.[1] && dual[2]) tokens.set(`--color-${name}`, { light: dual[1].toLowerCase(), dark: dual[2].toLowerCase() });
   else if (PLAIN.test(value)) tokens.set(`--color-${name}`, { light: value.toLowerCase(), dark: value.toLowerCase() });
 }
+if (tokens.size === 0) fail(`no --color-* tokens found in ${cssPath}`);
 
 // --color-primary lives in brand.ts, outside the design tokens, so fold it in from the source
 // src/styles/brand.css is generated from.
@@ -72,7 +73,6 @@ tokens.set('--color-primary-deep', {
   light: BRAND.navyDeep.toLowerCase(),
   dark: BRAND.onDark.primaryDeep.toLowerCase(),
 });
-if (tokens.size === 0) fail(`no --color-* tokens found in ${cssPath}`);
 
 // Pairs the site renders; add one when a component introduces a new combination.
 const pairs = [

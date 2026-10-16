@@ -22,12 +22,6 @@ export interface DocumentInput {
   body: string;
 }
 
-const silent = (): ReturnType<typeof createLogger> => {
-  const logger = createLogger('silent');
-  logger.error = () => {};
-  return logger;
-};
-
 export async function renderDocument(input: DocumentInput): Promise<string> {
   // Astro resolves the config and tsconfig aliases from the working directory.
   const cwd = process.cwd();
@@ -45,7 +39,7 @@ async function render(input: DocumentInput): Promise<string> {
     ...config,
     configFile: false,
     root: ROOT,
-    customLogger: silent(),
+    customLogger: createLogger('silent'),
     logLevel: 'silent',
     cacheDir: path.join(os.tmpdir(), 'site-render-vite'),
     server: { middlewareMode: true, hmr: false, watch: null },

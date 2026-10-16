@@ -38,7 +38,7 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const MODEL = process.env.CLAUDE_MODEL ?? 'claude-sonnet-4-6';
+const MODEL = process.env.CLAUDE_MODEL ?? 'claude-sonnet-5-5';
 
 function mediaTypeFor(filename: string): string {
   const ext = path.extname(filename).toLowerCase();
@@ -61,6 +61,7 @@ async function draftFor(slug: string): Promise<Draft> {
   }
   const text = fs.readFileSync(indexFile, 'utf8');
   const { data: fm } = parseFrontmatter(text);
+  if (all && fm.published !== true) return { slug, skipped: 'not published' };
   const cover = typeof fm.cover_image === 'string' ? fm.cover_image : undefined;
   if (!cover) return { slug, error: 'cover_image not set' };
   if (fm.cover_alt) return { slug, skipped: 'cover_alt already set' };
@@ -90,7 +91,8 @@ async function draftFor(slug: string): Promise<Draft> {
 
   const body = {
     model: MODEL,
-    max_tokens: 200,
+    max_tokens: 2048,
+    output_config: { effort: 'low' },
     messages: [
       {
         role: 'user',
@@ -110,12 +112,16 @@ async function draftFor(slug: string): Promise<Draft> {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok) {
     return { slug, error: `Anthropic API ${response.status}: ${await response.text()}` };
   }
-  const result = (await response.json()) as { content?: { type: string; text?: string }[] } | null;
-  const draft = result?.content?.find?.((c) => c.type === 'text')?.text?.trim() ?? '';
+  const result = (await response.json()) as { stop_reason?: string; content?: { type: string; text?: string }[] } | null;
+  const draft = result?.content?.find((c) => c.type === 'text')?.text?.trim() ?? '';
+  if (result?.stop_reason !== 'end_turn' || !draft) {
+    return { slug, error: `no usable draft (stop_reason ${result?.stop_reason ?? 'missing'})` };
+  }
   return { slug, draft };
 }
 
@@ -134,10 +140,12 @@ if (all) {
   slugsToProcess.push(slug);
 }
 
+let failed = 0;
 for (const target of slugsToProcess) {
-  const result = await draftFor(target);
+  const result = await draftFor(target).catch((error: unknown) => ({ slug: target, error: String(error) }));
   if ('error' in result) {
     console.error(`${target}: ${result.error}`);
+    failed += 1;
     continue;
   }
   if ('skipped' in result) {
@@ -148,3 +156,4 @@ for (const target of slugsToProcess) {
   console.log(`  ${result.draft}`);
   if (apply) applyDraft(target, result.draft);
 }
+if (failed) process.exitCode = 1;

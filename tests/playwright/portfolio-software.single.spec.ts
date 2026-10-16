@@ -110,7 +110,7 @@ test.describe('portfolio software tab', () => {
   test('renders the "More projects" compact list', async ({ page }) => {
     await page.goto('/portfolio/#software');
     const list = page.locator('[data-panel="software"] .software-list .sli');
-    expect(await list.count()).toBeGreaterThan(0);
+    await expect(list).not.toHaveCount(0);
   });
 
   test('software writeup cross-links resolve to a writeup page', async ({ page }) => {

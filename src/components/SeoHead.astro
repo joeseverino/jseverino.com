@@ -4,7 +4,6 @@ import { getImage } from 'astro:assets';
 import { site } from '@lib/site.ts';
 
 type Breadcrumb = { name: string; url: string };
-type ListItem = Breadcrumb;
 
 type Props = {
   title?: string;
@@ -18,7 +17,7 @@ type Props = {
   tags?: string[];
   breadcrumbs?: Breadcrumb[];
   pageType?: 'profile' | 'collection' | 'itemList';
-  itemListItems?: ListItem[];
+  itemListItems?: Breadcrumb[];
 };
 
 const {
@@ -85,10 +84,6 @@ const breadcrumbList =
     : undefined;
 
 type JsonLdNode = Record<string, unknown>;
-type JsonLd = {
-  '@context': 'https://schema.org';
-  '@graph': JsonLdNode[];
-};
 
 const primaryNode: JsonLdNode =
   type === 'article'
@@ -153,7 +148,7 @@ if (pageType === 'profile') {
   });
 }
 
-const jsonLd: JsonLd = {
+const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': graph,
 };

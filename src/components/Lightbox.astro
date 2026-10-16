@@ -61,21 +61,13 @@
       if (!(target instanceof Element)) return;
       const trigger = target.closest<HTMLElement>('.prose .image-zoom');
       if (trigger) {
-        open(trigger, false);
+        open(trigger, event.detail === 0);
         return;
       }
       // Any click dismisses except on the caption, so its text stays selectable.
       if (dialog.open && target.closest('dialog.lightbox') && !target.closest('.lightbox-caption')) {
         dialog.close();
       }
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      const trigger = event.target instanceof Element ? event.target.closest<HTMLElement>('.prose .image-zoom') : null;
-      if (!trigger) return;
-      event.preventDefault();
-      open(trigger, true);
     });
 
     dialog.addEventListener('close', () => {

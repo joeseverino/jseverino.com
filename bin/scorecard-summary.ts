@@ -3,11 +3,17 @@
 // one row per check, lowest first. The SARIF lists only checks with findings.
 //
 //   node bin/scorecard-summary.ts scorecard.json
+import { cli } from './lib/args.ts';
 import { status } from './lib/run.ts';
 import { appendSummary, table } from './lib/step-summary.ts';
 import { readJson } from '../src/lib/json.ts';
 
-const file = process.argv[2] ?? 'scorecard.json';
+const USAGE = 'usage: node bin/scorecard-summary.ts [scorecard.json]';
+const [file = 'scorecard.json', ...extra] = cli({ usage: USAGE, allowPositionals: true }).positionals;
+if (extra.length) {
+  console.error(USAGE);
+  process.exit(2);
+}
 interface ScorecardResult {
   score: number;
   checks: { name: string; score: number; reason: string }[];

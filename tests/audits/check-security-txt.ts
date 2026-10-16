@@ -7,7 +7,7 @@ import {
   SECURITY_FILE,
   WKD_DIR,
   parseFields,
-  runGpg,
+  verifySecuritySignature,
   stripSignature,
 } from '../../bin/lib/security-txt.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -31,7 +31,7 @@ try {
     fail('security.txt is not PGP-signed. Run `npm run sign:security`.');
   }
 
-  const verify = runGpg(['--verify', '--status-fd=1', SECURITY_FILE]);
+  const verify = verifySecuritySignature(SECURITY_FILE);
   if (verify.code !== 0) {
     fail(`gpg signature verification failed:\n${verify.stderr}`);
   }
@@ -49,6 +49,7 @@ try {
   if (Number.isNaN(expires.getTime())) fail(`security.txt Expires is not a parseable date: ${Expires}`);
   const msUntil = expires.getTime() - Date.now();
   const daysUntil = Math.floor(msUntil / 86_400_000);
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `days_remaining=${daysUntil}\n`);
   if (msUntil <= 0) fail(`security.txt Expires (${Expires}) is in the past`);
   if (daysUntil < expiresWarnDays) {
     fail(`security.txt Expires in ${daysUntil}d (< ${expiresWarnDays}d). Bump it, re-sign, commit.`);

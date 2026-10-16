@@ -19,7 +19,7 @@ tests/
 └── fixtures/      the synthetic content the visual suite builds
 ```
 
-Every gate (`gate:check`, `publish:check`, `diagnose`, `release:check`) reads its
+Every gate (`gate:check`, `publish:check`, `diagnose`) reads its
 audits from [`audits/registry.ts`](./audits/registry.ts), so a new audit runs in
 every gate that claims it.
 
@@ -32,9 +32,8 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run gate:check` | local and CI, first | the fast invariants: source parse, duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
-| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO; CI skips the local-only vault parity check |
-| `npm run release:check` | local, macOS | `publish:check`, then Playwright E2E, visual baselines, the edge runtime suite, repository policy, and a clean-worktree check |
+| `npm run gate:check` | local and CI, first | the fast invariants: duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
+| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
 | `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
 
 The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md#gate-coverage) table.
@@ -114,8 +113,6 @@ npm run help                     # grouped list of every script by role
 
 npm run gate:check               # fast invariants, collect-all
 npm run publish:check            # local build gate
-npm run publish:check:ci         # the same gate under CI conditions (scratch keyring, CI=1)
-npm run release:check            # full gate incl. Playwright + visual (macOS)
 npm run diagnose                 # everything, no short-circuit (--fast | --no-tests | --json)
 
 npm run test:unit                # unit suite (fast, no browser)

@@ -3,13 +3,13 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { stripVTControlCharacters } from 'node:util';
 
-const DEFAULT_TIMEOUT_MS = 5 * 60_000;
+const MINUTE_MS = 60_000;
+const DEFAULT_TIMEOUT_MS = 5 * MINUTE_MS;
 
 // `site --json` sets SITE_JSON=1 so the static build and astro-check pass `--json` to Astro.
 export const JSON_LOGS_ENV = 'SITE_JSON';
 export const jsonLogs = (env: NodeJS.ProcessEnv = process.env): boolean => env[JSON_LOGS_ENV] === '1';
 // A cold content sync re-encodes every image; callers pass this explicitly.
-const MINUTE_MS = 60_000;
 export const SYNC_TIMEOUT_MS = 15 * MINUTE_MS;
 export const BUILD_TIMEOUT_MS = 10 * MINUTE_MS;
 export const GATE_TIMEOUT_MS = 30 * MINUTE_MS;
@@ -89,14 +89,17 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
   };
 }
 
-// Spawn `cmd args` and always resolve with { code, stdout, stderr, output, duration, timedOut }.
-// code is non-zero on non-zero exit, signal, timeout, or spawn failure. options: cwd, env, timeout (ms, 0
-// disables), heartbeatMs + onHeartbeat, signal, stdio ('capture' | 'inherit' | 'stderr').
+// Never rejects: code is non-zero on non-zero exit, signal, abort, timeout, or spawn failure. timeout 0 disables it.
 export function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
   const {
     cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture',
     heartbeatMs = 0, onHeartbeat = () => {}, signal,
   } = options;
+
+  if (signal?.aborted) {
+    const stderr = `[aborted before start: ${cmd} ${args.join(' ')}]`;
+    return Promise.resolve({ code: 1, stdout: '', stderr, output: stderr, duration: 0, timedOut: false });
+  }
 
   return new Promise((resolve) => {
     const start = Date.now();

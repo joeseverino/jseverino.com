@@ -93,8 +93,11 @@ describe(':::button and :::buttons', () => {
     assert.equal(html(':::buttons\n- [One](/1/)\n- [Two](/2/)\n- [Three](/3/)\n:::', 'pages').trim(), '<div class="actions"><a href="/1/" class="button">One</a>\n<a href="/2/" class="button secondary">Two</a>\n<a href="/3/" class="button secondary">Three</a></div>');
   });
 
-  test('a row that is not a lone link is left out', () => {
-    assert.equal(render(':::buttons\n- [One](/1/)\n- just text\n:::', 'pages'), '<div class="actions"><a href="/1/" class="button">One</a></div>');
+  test('refuses anything but bare links', () => {
+    assert.throws(() => render(':::buttons\n- [One](/1/)\n- just text\n:::', 'pages'), /:::buttons items are each one bare link \(line 3\)/);
+    assert.throws(() => render(':::buttons\n[One](/1/)\n:::', 'pages'), /:::buttons holds one list of links \(line 1\)/);
+    assert.throws(() => render(':::button\nSee [Resume](/resume/)\n:::', 'pages'), /:::button holds one bare link \(line 1\)/);
+    assert.throws(() => render(':::button\n:::', 'pages'), /:::button holds one bare link/);
   });
 });
 

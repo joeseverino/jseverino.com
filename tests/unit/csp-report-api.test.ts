@@ -68,7 +68,7 @@ describe('noise filtering', () => {
     const foreign = { 'csp-report': { ...legacyReport['csp-report'], 'document-uri': 'https://other.example/' } };
     const db = createD1Stub();
     const response = await call(reportRequest(foreign), db);
-    assert.equal(response.status, 400);
+    assert.equal(response.status, 204);
     assert.equal(db.queries.length, 0);
   });
 
@@ -78,7 +78,7 @@ describe('noise filtering', () => {
         const extension = { 'csp-report': { ...legacyReport['csp-report'], [field]: `${scheme}://abcdef/inject.js` } };
         const db = createD1Stub();
         const response = await call(reportRequest(extension), db);
-        assert.equal(response.status, 400, `${scheme} ${field}`);
+        assert.equal(response.status, 204, `${scheme} ${field}`);
         assert.equal(db.queries.length, 0, `${scheme} ${field}`);
       }
     }
@@ -96,8 +96,10 @@ describe('noise filtering', () => {
         sourceFile: 'https://jseverino.com/',
       },
     };
-    const response = await call(reportRequest(injected, 'application/reports+json'));
-    assert.equal(response.status, 400);
+    const db = createD1Stub();
+    const response = await call(reportRequest(injected, 'application/reports+json'), db);
+    assert.equal(response.status, 204);
+    assert.equal(db.queries.length, 0);
   });
 
   test('drops Reporting API entries that are not csp-violations', async () => {
@@ -126,6 +128,7 @@ describe('persistence', () => {
     assert.equal(response.status, 204);
     assert.equal(inserts(db)[0]?.values[0], 'https://jseverino.com/portfolio/');
     assert.equal(inserts(db)[0]?.values[1], 'https://evil.example/tracker.js');
+    assert.equal(inserts(db)[0]?.values[3], null);
   });
 
   test('writes every report of a request in one batch', async () => {

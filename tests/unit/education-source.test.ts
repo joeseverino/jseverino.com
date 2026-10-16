@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, test } from 'node:test';
+import { after, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { createEducationSource } from '../../bin/content-sync/source-adapters.ts';
+import { scratchDirs } from './helpers/fs.ts';
 
 const exported = {
   ok: true,
@@ -21,8 +21,9 @@ const write = (name: string, body: unknown, mode?: number): string => {
 };
 const loadFrom = (file: string) => createEducationSource({ file }).load();
 
-beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'education-source-')); });
-afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
+const scratch = scratchDirs('education-source-');
+beforeEach(() => { dir = scratch.make(); });
+after(scratch.cleanup);
 
 describe('an export file', () => {
   test('loads, with fields the site does not read left in place', async () => {
@@ -51,7 +52,7 @@ describe('an export file', () => {
 
   test('that is not JSON is named', async () => {
     const file = write('text.json', 'nope');
-    await assert.rejects(loadFrom(file), new RegExp(`${file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} is not JSON`));
+    await assert.rejects(loadFrom(file), new RegExp(`${RegExp.escape(file)} is not JSON`));
   });
 });
 

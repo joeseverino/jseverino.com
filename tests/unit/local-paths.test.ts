@@ -4,6 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
+  educationExportFile,
+  existingDir,
   lifeVaultRoot,
   resumeEngineRoot,
   vaultRoot,
@@ -24,4 +26,13 @@ test('life vault and sibling repos: override, then the home-absolute default', (
     assert.equal(resolve({ [variable]: '/x/../override' }), '/override', variable);
     assert.equal(resolve({}), path.join(os.homedir(), ...segments), variable);
   }
+});
+
+test('education export: an explicit file, otherwise none', () => {
+  assert.equal(educationExportFile({ EDUCATION_EXPORT_FILE: '/d.json' }), '/d.json');
+  assert.equal(educationExportFile({}), undefined);
+});
+
+test('a missing directory is one line', () => {
+  assert.throws(() => existingDir('vault', '/nowhere/vault', 'VAULT_DIR'), /^Error: vault not found: \/nowhere\/vault \(set VAULT_DIR\)$/);
 });

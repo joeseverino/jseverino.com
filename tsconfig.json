@@ -1,10 +1,10 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "target": "ES2024",
+    "target": "ES2025",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2025", "DOM", "DOM.Iterable"],
+    "lib": ["ES2025", "DOM"],
     "types": ["node"],
     "allowJs": false,
     "noUncheckedIndexedAccess": true,
@@ -14,10 +14,6 @@
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
     "paths": {
       "@components/*": ["./src/components/*"],
       "@layouts/*": ["./src/layouts/*"],
@@ -25,6 +21,5 @@
       "@styles/*": ["./src/styles/*"]
     }
   },
-  "include": [".astro/types.d.ts", "**/*"],
   "exclude": ["dist", "functions", "node_modules", "playwright-report", "test-results", "public"]
 }

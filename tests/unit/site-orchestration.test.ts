@@ -4,11 +4,11 @@ import { after, before, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 
 import { publish } from '../../bin/site/publish.ts';
 import { land } from '../../bin/site/land.ts';
 import { SiteError, createOutput } from '../../bin/site/cli.ts';
+import { git } from '../../bin/lib/git.ts';
 import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });
@@ -16,8 +16,6 @@ const NOW = new Date(2026, 9, 2, 14, 5);
 const BRANCH = 'content/2026-10-02-1405';
 const saved: Record<string, string | undefined> = {};
 let tmp = '';
-
-const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
 
 const GH_STUB = `#!/usr/bin/env node
 const fs = require('node:fs');
@@ -254,7 +252,7 @@ const rules = (...contexts: string[]) => [
   { type: 'required_status_checks', parameters: { required_status_checks: contexts.map((context) => ({ context })) } },
 ];
 const run = (name: string, status: string, conclusion: string | null = null) => ({ name, status, conclusion, details_url: 'https://ci.example' });
-const OPEN_PR = { number: 7, url: 'u', title: 't', state: 'OPEN', headRefName: BRANCH, headRefOid: 'head', isDraft: false };
+const OPEN_PR = { number: 7, url: 'u', title: 't', state: 'OPEN', baseRefName: 'main', headRefName: BRANCH, headRefOid: 'head', isDraft: false };
 const headPolls = () => ghCalls().filter((call) => call.includes('/commits/head/')).length;
 
 describe('site land', () => {

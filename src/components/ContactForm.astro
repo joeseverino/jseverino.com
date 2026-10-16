@@ -32,11 +32,11 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       Messages are stored in a private database. See <a href="/privacy/" class="privacy-link">Privacy</a> for details and data requests.
     </p>
     <button type="submit" class="button contact-submit">Send Message</button>
-    <p class="contact-status" role="status" aria-live="polite" hidden></p>
+    <p class="contact-status" role="status"></p>
   </form>
 </div>
 
-<script is:inline async defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+<script is:inline async src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
 
 <script>
   const form = document.querySelector<HTMLFormElement>('.contact-intake-form');
@@ -49,11 +49,13 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       if (!status) return;
       status.textContent = message;
       status.dataset.kind = kind;
-      status.hidden = false;
     };
 
     form.addEventListener('input', () => {
-      if (status && !status.hidden && status.dataset.kind === 'error') status.hidden = true;
+      if (status?.dataset.kind === 'error') {
+        status.textContent = '';
+        delete status.dataset.kind;
+      }
     });
 
     form.addEventListener('submit', async (event) => {

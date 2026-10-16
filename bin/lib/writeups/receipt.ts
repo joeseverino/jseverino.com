@@ -1,10 +1,7 @@
 // Receipts for completed writes: audit and cache-invalidation evidence, never a second source of truth.
-import crypto from 'node:crypto';
-import { canonicalContractJson } from '../../../src/lib/content-contract.ts';
+import { jsonFingerprint as fingerprint } from '../../../src/lib/canonical-json.ts';
 
-// Stable SHA-256 of JSON-compatible data (keys sorted at every depth).
-export const fingerprint = (value: unknown): string =>
-  crypto.createHash('sha256').update(canonicalContractJson(value)).digest('hex');
+export { fingerprint };
 
 export interface MutationReceipt {
   receipt_version: 1;

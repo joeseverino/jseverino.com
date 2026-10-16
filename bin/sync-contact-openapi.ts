@@ -16,7 +16,7 @@ const response = (description: string, ref: string) => ({
   content: { 'application/json': { schema: { $ref: ref } } },
 });
 const document = {
-  openapi: '3.0.3',
+  openapi: '3.1.0',
   info: {
     title: `${SITE.domain} Contact API`,
     version: '1.0.0',

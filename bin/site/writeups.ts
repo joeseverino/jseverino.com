@@ -40,15 +40,16 @@ export async function showDashboard({ out }: { out: Output }): Promise<Dashboard
   return { ...result, next: null };
 }
 
-export async function tag({ slug, out }: { slug: string; out: Output }): Promise<TagResult> {
+export async function tag({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<TagResult> {
+  const slug = assertSlug(requested);
   const usage = await guard(() => tagUsage(writeupStore(), slug));
   out.text(`${usage.slug}: ${usage.totalMatches} writeups, ${usage.publishedMatches} published`);
   for (const w of usage.writeups) out.text(`  ${w.slug}${w.published ? '' : ' (draft)'}`);
   return { ...usage, next: null };
 }
 
-export async function prepareWriteup({ slug, tagUsage: withTags, out }: { slug: string; tagUsage: boolean; out: Output }): Promise<PrepareResult> {
-  assertSlug(slug);
+export async function prepareWriteup({ slug: requested, tagUsage: withTags, out }: { slug: string | undefined; tagUsage: boolean; out: Output }): Promise<PrepareResult> {
+  const slug = assertSlug(requested);
   const readiness = await guard(() => prepare(writeupStore(), slug, { includeTagUsage: withTags }));
   for (const issue of readiness.validation.issues) out.text(`  - ${issue}`);
   const place = readiness.featuredSet.position === null ? 'not featured' : `featured slot ${readiness.featuredSet.position}`;
@@ -62,7 +63,8 @@ export async function prepareWriteup({ slug, tagUsage: withTags, out }: { slug: 
 }
 
 function readPlan(file: string | undefined): WriteupPlan {
-  const text = file ? fs.readFileSync(file, 'utf8') : fs.readFileSync(0, 'utf8');
+  if (file && !fs.existsSync(file)) throw new SiteError(`plan file not found: ${file}`, { code: EXIT.usage, fix: 'site apply-plan --help' });
+  const text = fs.readFileSync(file || 0, 'utf8');
   try {
     return JSON.parse(text) as WriteupPlan;
   } catch (error) {
@@ -79,9 +81,9 @@ export async function applyWriteupPlan({ file, out }: { file: string | undefined
 }
 
 export async function set({
-  slug, fields, touchLastReviewed, out,
-}: { slug: string; fields: Record<string, unknown>; touchLastReviewed: boolean; out: Output }): Promise<SetResult> {
-  assertSlug(slug);
+  slug: requested, fields, touchLastReviewed, out,
+}: { slug: string | undefined; fields: Record<string, unknown>; touchLastReviewed: boolean; out: Output }): Promise<SetResult> {
+  const slug = assertSlug(requested);
   if (Object.keys(fields).length === 0 && !touchLastReviewed) {
     throw new SiteError('nothing to set', { code: EXIT.usage, fix: 'site set --help lists the editable fields' });
   }
@@ -92,9 +94,9 @@ export async function set({
 }
 
 export async function link({
-  slug, label, from, to, out,
-}: { slug: string; label: string | undefined; from: string | undefined; to: string | undefined; out: Output }): Promise<LinkCommandResult> {
-  assertSlug(slug);
+  slug: requested, label, from, to, out,
+}: { slug: string | undefined; label: string | undefined; from: string | undefined; to: string | undefined; out: Output }): Promise<LinkCommandResult> {
+  const slug = assertSlug(requested);
   if (!label || !from || !to) throw new SiteError('--label, --from, and --to are required', { code: EXIT.usage, fix: 'site link --help' });
   const result = await guard(() => updateLink(writeupStore(), slug, label, from, to));
   out.ok('relinked', `${slug}: [${label}] ${from} -> ${to}`);

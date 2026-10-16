@@ -29,8 +29,8 @@ import { cli as parseCli, flag } from './lib/args.ts';
 import { routeFile } from './lib/dist.ts';
 import { git } from './lib/git.ts';
 import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
-import { runSync, status } from './lib/run.ts';
-import { annotate, appendSummary, endGroup, group, outcome, table, type Outcome } from './lib/step-summary.ts';
+import { runSync, spawnResult, status } from './lib/run.ts';
+import { annotate, createReport, endGroup, group } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
@@ -60,8 +60,8 @@ const requiredChecks = (): string[] => [...new Set([
   'Cloudflare Pages',
 ])];
 
-const results: { name: string; ok: Outcome; detail: string }[] = [];
-
+const production = !deployment && !cli.slug;
+const report = createReport('Deploy verification', 'Check');
 
 async function fetchChecked(url: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(url, {
@@ -213,8 +213,8 @@ async function verifyDist(urls: string[]): Promise<string> {
     const stale: string[] = [];
     for (const url of urls) {
       const { pathname } = new URL(url);
-      const published = runSync('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot, raw: true });
-      if (published !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
+      const published = spawnResult('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot });
+      if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
     }
     if (stale.length === 0) {
       const { verified, reason } = commitVerification(repository, 'dist');
@@ -319,15 +319,15 @@ function verifyCodeScanning(): string {
   return 'zero open CodeQL alerts';
 }
 
-async function run(name: string, check: () => string | Promise<string>): Promise<boolean> {
+async function check(name: string, verify: () => string | Promise<string>): Promise<boolean> {
   try {
-    const detail = await check();
-    results.push({ name, ok: true, detail });
+    const detail = await verify();
+    report.add(name, true, detail);
     status(name, detail);
     return true;
   } catch (error) {
     const message = errorMessage(error);
-    results.push({ name, ok: false, detail: message });
+    report.add(name, false, message);
     status(name, `FAILED: ${message}`);
     annotate('error', `deploy-verify: ${name}`, message);
     return false;
@@ -335,149 +335,87 @@ async function run(name: string, check: () => string | Promise<string>): Promise
 }
 
 function skip(name: string, reason: string): void {
-  results.push({ name, ok: null, detail: reason });
+  report.add(name, null, reason);
   status(name, `skipped: ${reason}`);
 }
 
-function writeSummary(sha: string): void {
-  const failed = results.filter((result) => result.ok === false).length;
-  appendSummary([
-    `## Deploy verification for \`${sha.slice(0, 12)}\``,
-    '',
-    failed === 0
-      ? `All ${results.length} checks passed against ${origin}.`
-      : `${failed} of ${results.length} checks failed against ${origin}.`,
-    '',
-    table(
-      ['Check', 'Result', 'Detail'],
-      results.map((result) => [`\`${result.name}\``, outcome(result.ok), result.detail]),
-    ),
-  ].join('\n'));
+async function verifyPageHeaders(urls: readonly string[]): Promise<string> {
+  const paths = ['/', '/contact/'];
+  if (production) {
+    const writeup = urls.map((url) => new URL(url).pathname).find((pathname) => /^\/portfolio\/[^/]+\/?$/.test(pathname));
+    if (!writeup) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
+    paths.push(writeup);
+  }
+  for (const pathname of paths) await verifyHeaders(pathname);
+  return `CSP, Trusted Types staging, and static security headers${production ? ' and HSTS' : ''} passed on ${paths.join(', ')}`;
 }
 
-async function verifyDeployment(): Promise<void> {
-  const sha = process.env.DEPLOY_SHA ?? 'deployment';
-  status('target', `${origin}${cli.preview ? ' (preview)' : ''}`);
-
-  let publicUrls: string[] = [];
-  const sitemapOk = await run('sitemap', async () => {
-    publicUrls = await collectSitemapUrls();
-    return `${publicUrls.length} URLs listed`;
-  });
-
-  const { slug } = cli;
-  if (slug) {
-    if (sitemapOk) await run('writeup', () => verifyWriteup(slug, publicUrls));
-    else skip('writeup', 'sitemap unavailable');
-  } else {
-    if (sitemapOk) {
-      await run('headers', async () => {
-        await verifyHeaders('/');
-        await verifyHeaders('/contact/');
-        return 'CSP, Trusted Types staging, and static security headers passed on / and /contact/';
-      });
-      await run('routes', () => verifyLiveRoutes(publicUrls));
-    } else {
-      skip('headers', 'sitemap unavailable');
-      skip('routes', 'sitemap unavailable');
-    }
-    if (cli.preview) {
-      // Previews serve every HTML route through the sitedrift viewer.
-      const reason = 'branch previews serve HTML through the sitedrift viewer';
-      skip('production', reason);
-      skip('inline', reason);
-      skip('cache', reason);
-    } else {
-      await run('production', verifyProductionGuard);
-      await run('inline', verifyInlineHashes);
-      await run('cache', verifyCacheRules);
-      await run('turnstile', verifyTurnstileKey);
-    }
-    await run('not-found', verifyNotFound);
-    await run('contact', verifyContactGate);
-    await run('security-txt', verifySecurityTxt);
-  }
-
-  writeSummary(sha);
-  const failed = results.filter((result) => result.ok === false);
-  if (failed.length > 0) {
-    throw new Error(`${failed.length} check(s) failed: ${failed.map((result) => result.name).join(', ')}`);
-  }
-  console.log(`\nok ${results.filter((result) => result.ok).length} checks passed against ${origin}`);
-}
-
-async function main(): Promise<void> {
-  if (deployment || cli.slug) return verifyDeployment();
+// Production runs from a clean main that matches origin, so the commit checked is the one deployed.
+function releaseCandidate(): string {
   if (git(siteRoot, 'status', '--porcelain')) {
     throw new Error('worktree is not clean; commit the verified release candidate first');
   }
   if (git(siteRoot, 'branch', '--show-current') !== DEFAULT_BRANCH) {
     throw new Error('production deployment verification must run from main');
   }
-
   const sha = git(siteRoot, 'rev-parse', 'HEAD');
   const remote = git(siteRoot, 'ls-remote', 'origin', `refs/heads/${DEFAULT_BRANCH}`).split(/\s+/)[0] ?? '';
-  if (sha !== remote) {
-    throw new Error(`local HEAD ${sha} does not match origin/main ${remote}`);
-  }
+  if (sha !== remote) throw new Error(`local HEAD ${sha} does not match origin/main ${remote}`);
   status('commit', `${sha.slice(0, 12)} is clean and pushed to main`);
-  status('target', origin);
+  return sha;
+}
 
-  await run('audit', () => {
-    runSync('npm', ['audit', '--omit=dev', '--audit-level=high'], { cwd: siteRoot });
-    return 'no high-severity production dependency advisories';
-  });
+async function main(): Promise<void> {
+  const sha = production ? releaseCandidate() : process.env.DEPLOY_SHA ?? 'deployment';
+  status('target', `${origin}${cli.preview ? ' (preview)' : ''}`);
 
-  const deployed = await run('remote', () => waitForChecks(sha));
-
-  // Deep page comes from the live sitemap, not a pinned slug.
-  let publicUrls: string[] = [];
-  const sitemapOk = await run('sitemap', async () => {
-    publicUrls = await collectSitemapUrls();
-    return `${publicUrls.length} URLs listed`;
-  });
-
-  if (sitemapOk) {
-    await run('headers', async () => {
-      const writeupPath = publicUrls
-        .map((url) => new URL(url).pathname)
-        .find((pathname) => /^\/portfolio\/[^/]+\/?$/.test(pathname));
-      if (!writeupPath) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
-      await verifyHeaders('/');
-      await verifyHeaders('/contact/');
-      await verifyHeaders(writeupPath);
-      return `CSP, Trusted Types staging, static security headers, and HSTS passed (/, /contact/, and ${writeupPath})`;
+  let deployed = true;
+  if (production) {
+    await check('audit', () => {
+      runSync(process.execPath, ['bin/audit.ts'], { cwd: siteRoot });
+      return 'no unaccepted high or critical advisories';
     });
-    await run('routes', () => verifyLiveRoutes(publicUrls));
-    await run('dist', () => verifyDist(publicUrls));
+    deployed = await check('remote', () => waitForChecks(sha));
+  }
+
+  let urls: string[] = [];
+  const sitemapOk = await check('sitemap', async () => {
+    urls = await collectSitemapUrls();
+    return `${urls.length} URLs listed`;
+  });
+  const fromSitemap = (name: string, verify: () => string | Promise<string>) =>
+    sitemapOk ? check(name, verify) : skip(name, 'sitemap unavailable');
+
+  const { slug } = cli;
+  if (slug) {
+    await fromSitemap('writeup', () => verifyWriteup(slug, urls));
   } else {
-    skip('headers', 'sitemap unavailable');
-    skip('routes', 'sitemap unavailable');
-    skip('dist', 'sitemap unavailable');
+    await fromSitemap('headers', () => verifyPageHeaders(urls));
+    await fromSitemap('routes', () => verifyLiveRoutes(urls));
+    if (production) await fromSitemap('dist', () => verifyDist(urls));
+    const served = [['production', verifyProductionGuard], ['inline', verifyInlineHashes], ['cache', verifyCacheRules], ['turnstile', verifyTurnstileKey]] as const;
+    for (const [name, verify] of served) {
+      if (cli.preview) skip(name, 'branch previews serve HTML through the sitedrift viewer');
+      else await check(name, verify);
+    }
+    await check('not-found', verifyNotFound);
+    await check('contact', verifyContactGate);
+    await check('security-txt', verifySecurityTxt);
+    if (production) await check('security', verifyCodeScanning);
   }
 
-  await run('production', verifyProductionGuard);
-  await run('inline', verifyInlineHashes);
-  await run('cache', verifyCacheRules);
-  await run('not-found', verifyNotFound);
-  await run('contact', verifyContactGate);
-  await run('security-txt', verifySecurityTxt);
-  await run('security', verifyCodeScanning);
-
-  writeSummary(sha);
-
-  const failed = results.filter((result) => result.ok === false);
+  const against = `for \`${sha.slice(0, 12)}\` against ${origin}`;
+  const failed = report.failed();
+  report.write(failed.length === 0
+    ? `All ${report.rows.length} checks passed ${against}.`
+    : `${failed.length} of ${report.rows.length} checks failed ${against}.`);
   if (failed.length > 0) {
-    throw new Error(
-      `${failed.length} check(s) failed: ${failed.map((result) => result.name).join(', ')}${deployed ? '' : ' (deployment never reached a verified state)'}`,
-    );
+    const stalled = deployed ? '' : ' (deployment never reached a verified state)';
+    throw new Error(`${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);
   }
-
-  const summary = `all ${results.length} checks passed for ${sha.slice(0, 12)} against ${origin}`;
-  annotate('notice', 'deploy-verify', summary);
-  console.log(
-    '\nok deployed: pushed commit, remote checks, production guard, headers, routes, dist branch, inline hashes, cache rules, 404, contact gate, security.txt, dependency audit, and code scanning passed',
-  );
+  const summary = `${report.rows.filter((row) => row.ok).length} checks passed ${against}`;
+  if (production) annotate('notice', 'deploy-verify', summary);
+  console.log(`\nok ${summary}`);
 }
 
 main().catch((error: unknown) => {

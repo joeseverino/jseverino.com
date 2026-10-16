@@ -204,7 +204,7 @@ Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links
 live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
-The source-integrity and CSS-variable audits reuse the same
+The CSS-variable audit reuses the same
 [`walkFiles`](../src/lib/walk.ts) helper as the other file-based audits.
 
 ### Sticky-header shadow
@@ -212,8 +212,8 @@ The source-integrity and CSS-variable audits reuse the same
 The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The bundled script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()`. The same module owns mobile-menu state and delegates link clicks to the menu.
 
 Interactive CSS separates hit areas from visual effects. Writeup and software
-cards share [`CardSurface.astro`](../src/components/CardSurface.astro): the list
-item stays stationary while its surface lifts on fine-pointer hover. Keyboard
+cards share one `.card-surface` element: the list item stays stationary while
+its surface lifts on fine-pointer hover. Keyboard
 focus receives the same raised shadow. Buttons retain their lift with a hit
 area that accounts for their border width. Shared rules live in `content.css`;
 variants add only their differences. Regression tests check edge-hover behavior,
@@ -228,15 +228,15 @@ Both paths set one registered custom property, `--header-scroll` (a `<number>`, 
 
 ### Mobile menu
 
-The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape and light-dismiss are native. The script only mirrors `aria-expanded` and `aria-label` on the toggle from the popover `toggle` event. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
+The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape, light-dismiss, and the expanded state are native; the script only closes the menu when a link inside it is followed. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
 
 ### Header height
 
-`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `responsive.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
+`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `tokens.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
 
 ### Responsive behavior
 
-The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius scale with `clamp()`, and the card and split layouts size from their content (`min(100%, …)` inside `auto-fill` and `auto-fit` grids). The five parts that rearrange when space runs short (the primary nav, the page hero, the software list, the archive summary, and the technology rows) are containers declared in [`responsive.css`](../src/styles/responsive.css), and each answers to its own width at 33.5rem (the width of a full-width container at a 600px viewport). The other media queries are about capability or preference (hover, pointer, forced colors, reduced motion, scripting, color scheme), not size.
+The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius scale with `clamp()`, and the card and split layouts size from their content (`min(100%, …)` inside `auto-fill` and `auto-fit` grids). The five parts that rearrange when space runs short (the primary nav, the page hero, the software list, the archive summary, and the technology rows) are containers declared beside their component styles, and each answers to its own width at 33.5rem (the width of a full-width container at a 600px viewport). The other media queries are about capability or preference (hover, pointer, forced colors, reduced motion, scripting, color scheme), not size.
 
 A size container is a containing block for fixed-position descendants, so `main` and the content flow must not become containers: the resume page's fixed download button would anchor to them instead of the viewport.
 
@@ -481,7 +481,7 @@ The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement
 
 ```sh
 # Remote (production):
-npm run d1:apply
+npm run site -- d1-apply --confirm
 
 # Local (for `wrangler pages dev`):
 wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
@@ -527,10 +527,10 @@ To exercise the edge runtime locally, build first and serve the output through
 
 ```sh
 npm run build:static
-npm run edge:serve
+npm run serve:edge
 ```
 
-The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
+The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `diagnose` gate execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -538,8 +538,7 @@ Every gate derives its checks from [`tests/audits/registry.ts`](../tests/audits/
 
 - [`bin/gate-check.ts`](../bin/gate-check.ts) (`npm run gate:check`) runs the fast pre-build invariants, collect-all.
 - [`bin/publish-check.ts`](../bin/publish-check.ts) (`npm run publish:check`) is the local publish gate: clean, sync from the vault (skippable with `--no-sync`), the pre-build audits, the production build, the post-build audits, stopping at the first failure.
-- [`bin/release-check.ts`](../bin/release-check.ts) (`npm run release:check`, macOS) runs `publish:check`, then the `release` audits (the browser suites, repository policy, `git diff --check`), and fails if validation changed the worktree.
-- [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping and writes one report.
+- [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping, fails if validation changed the worktree, and writes one report.
 
 Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures. Preview review and the live post-deploy checks stay separate: they depend on external state or human judgment.
 
@@ -561,7 +560,7 @@ GitHub Actions provide the remote quality gate:
   (`npm run publish:check -- --no-sync --after-gate`, which skips the audits
   the gate step just ran and the edge suite its own job runs) on the artifact `bin/build-static.ts`
   produces, the same one Cloudflare ships, so the committed tree must pass
-  everything the local gate passes except the local-only vault parity check. A CycloneDX SBOM is uploaded on
+  everything the local gate passes. A CycloneDX SBOM is uploaded on
   `main`. The `playwright` matrix: `e2e` serves the build with `astro preview`
   and runs functional checks across Chromium, Firefox, and WebKit on three
   workers; `visual` builds the synthetic content in `tests/fixtures/content`
@@ -598,7 +597,7 @@ GitHub Actions provide the remote quality gate:
 - [`npm audit`](../.github/workflows/npm-audit.yml) runs `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) weekly over the lockfile and fails on a high or critical advisory that [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
 - [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, writes both lychee reports into the job summary, and uploads them.
-- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `tests/lighthouserc.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
+- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `tests/lighthouse.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
 - [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`, and `sitedrift`, which is bundled into the production edge functions and gets its own Dependabot group; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
 - [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible.

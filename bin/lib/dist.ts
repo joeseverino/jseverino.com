@@ -53,24 +53,28 @@ export async function publishDist({ repo, dir, branch, sha, push = false, token,
     const commit = git(['commit-tree', tree, ...(parent ? ['-p', parent] : []), '-m', message], { env: identity });
     if (!push) return { status: 'committed', commit };
 
-    const auth = token ? ['-c', `http.https://github.com/.extraheader=AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}`] : [];
+    // Through the environment, not argv, so the header never shows in a process listing.
+    const auth = token
+      ? { env: { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader', GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}` } }
+      : {};
     if (!token || !repository) {
-      git([...auth, 'push', '--quiet', 'origin', `${commit}:refs/heads/${branch}`]);
+      git(['push', '--quiet', 'origin', `${commit}:refs/heads/${branch}`], auth);
       return { status: 'pushed', commit };
     }
 
     // The tree goes up under a non-branch ref so nothing builds it; the API commit names that tree.
     const staging = `refs/dist-staging/${sha.slice(0, 12)}`;
-    git([...auth, 'push', '--quiet', 'origin', `${commit}:${staging}`]);
+    git(['push', '--quiet', 'origin', `${commit}:${staging}`], auth);
     try {
       const api = createClient({ token, ...(fetch && { fetch }) });
       const created = await api.request<{ sha: string }>('POST', `/repos/${repository}/git/commits`, { message, tree, parents: parent ? [parent] : [] });
-      const signed = created?.sha ?? '';
+      const signed = created?.sha;
+      if (!signed) throw new Error('GitHub created no commit for the deploy tree');
       if (parent) await api.request('PATCH', `/repos/${repository}/git/refs/heads/${branch}`, { sha: signed });
       else await api.request('POST', `/repos/${repository}/git/refs`, { ref: `refs/heads/${branch}`, sha: signed });
       return { status: 'pushed', commit: signed };
     } finally {
-      git([...auth, 'push', '--quiet', 'origin', `:${staging}`]);
+      git(['push', '--quiet', 'origin', `:${staging}`], auth);
     }
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });

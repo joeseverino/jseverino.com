@@ -4,13 +4,7 @@
     {
       "ghsa": "GHSA-vfj7-8cjw-p6xm",
       "package": "braces",
-      "reason": "Stack-exhaustion DoS on deeply nested glob patterns, reached through stylelint's micromatch. It only expands the globs in our own lint config; no external input reaches it.",
-      "reviewBy": "2026-11-01"
-    },
-    {
-      "ghsa": "GHSA-ch52-4w7c-c8xp",
-      "package": "http-cache-semantics",
-      "reason": "max-stale cross-user disclosure in a shared runtime cache, reached through astro. Astro uses it only at build time for remote images; there is no runtime cache and no users.",
+      "reason": "Stack-exhaustion DoS on deeply nested glob patterns, reached through stylelint's micromatch. No patched release exists (<= 3.0.3 affected). It only expands the globs in the repo's own lint config; no external input reaches it.",
       "reviewBy": "2026-11-01"
     }
   ]

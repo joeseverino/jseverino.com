@@ -1,6 +1,7 @@
 // git and gh for publish/land. Every failure is fatal and carries the command's stderr.
 import { git as gitQuery, statusEntries } from '../lib/git.ts';
 import { runSync } from '../lib/run.ts';
+import { SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { SiteError } from './cli.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
@@ -13,7 +14,11 @@ function call(cmd: string, args: string[], spawn: () => string): string {
 }
 
 export const git = (root: string, ...args: string[]): string => call('git', args, () => gitQuery(root, ...args));
-export const gh = (root: string, ...args: string[]): string => call('gh', args, () => runSync('gh', args, { cwd: root }));
+// Every pr subcommand names the repo, so a fork or another remote is never the target.
+export function gh(root: string, ...args: string[]): string {
+  const full = args[0] === 'pr' ? [...args, '-R', SITE_REPOSITORY] : args;
+  return call('gh', full, () => runSync('gh', full, { cwd: root }));
+}
 // The caller names the shape of the JSON it asked gh for with --json.
 export const ghJson = <T>(root: string, ...args: string[]): T => JSON.parse(gh(root, ...args)) as T;
 

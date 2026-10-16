@@ -3,6 +3,7 @@
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
 import { readJson } from '../../src/lib/json.ts';
+import { canonicalJson } from '../../src/lib/canonical-json.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 // What the client needs from fetch: a URL string and an init.
@@ -50,14 +51,8 @@ export function loadDesired<T>(file: string, schemaFile: string): T {
   return desired;
 }
 
-// Objects with their keys sorted at every depth: APIs return fields in an order of their own.
-export const stable = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(stable);
-  if (typeof value !== 'object' || value === null) return value;
-  return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, entry]) => [key, stable(entry)]));
-};
-
-export const same = (a: unknown, b: unknown): boolean => JSON.stringify(stable(a)) === JSON.stringify(stable(b));
+// Key order never counts: APIs return fields in an order of their own.
+export const same = (a: unknown, b: unknown): boolean => canonicalJson(a) === canonicalJson(b);
 const show = (value: unknown): string => (value === undefined || value === null ? 'absent' : typeof value === 'string' ? value : JSON.stringify(value));
 
 export function item(area: string, name: string, want: unknown, have: unknown, status: ItemStatus, steps: Step[] = [], note = ''): Item {
@@ -83,13 +78,12 @@ const isCall = (step: Step): step is Call => 'method' in step;
 const plannedCalls = (items: Item[]): Call[] =>
   items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
 
-// The calls an apply makes, in order. `use` steps bind an existing id and make
-// no call. Returns each call made as `METHOD path`.
+// Makes the drifted items' calls in order, logging each as `METHOD path`. `use` steps bind an existing id
+// and make no call.
 export async function applySteps(
   items: Item[],
-  { call, use = () => {}, log = () => {} }: { call: (step: Call) => Promise<void>; use?: (ids: Record<string, string>) => void; log?: (line: string) => void },
-): Promise<string[]> {
-  const made: string[] = [];
+  { call, use = () => {}, log }: { call: (step: Call) => Promise<void>; use?: (ids: Record<string, string>) => void; log: (line: string) => void },
+): Promise<void> {
   for (const entry of items.filter((candidate) => candidate.status === 'drift')) {
     for (const step of entry.steps) {
       if (!isCall(step)) {
@@ -97,11 +91,9 @@ export async function applySteps(
         continue;
       }
       await call(step);
-      made.push(`${step.method} ${step.path}`);
       log(`${step.method} ${step.path}`);
     }
   }
-  return made;
 }
 
 function render(items: Item[], write: (line: string) => void): void {
@@ -125,7 +117,7 @@ export interface Run {
   // The desired-state file, for the summary line.
   source: string;
   survey: () => Promise<Item[]>;
-  apply: (items: Item[], log: (line: string) => void) => Promise<unknown>;
+  apply: (items: Item[], log: (line: string) => void) => Promise<void>;
 }
 
 interface RunToolOptions extends ToolOptions {

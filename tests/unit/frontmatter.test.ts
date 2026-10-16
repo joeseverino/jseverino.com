@@ -22,3 +22,20 @@ test('stringify: round-trips and omits an empty block', () => {
   assert.equal(stringifyFrontmatter(content, data), source);
   assert.equal(stringifyFrontmatter('Body', {}), 'Body\n');
 });
+
+test('YAML dates, merge keys, folded text and string scalars retain their types', () => {
+  const source = '---\n# metadata\ndefaults: &defaults\n  published: true\n<<: *defaults\npublished_at: 2026-10-15\ntitle: "true"\ndescription: >-\n  First line\n  second line\n---\nBody\n';
+  const { data, content } = parseFrontmatter(source);
+  assert.equal(data.published, true);
+  assert.deepEqual(data.published_at, new Date('2026-10-15T00:00:00Z'));
+  assert.equal(data.title, 'true');
+  assert.equal(data.description, 'First line second line');
+  assert.deepEqual(parseFrontmatter(stringifyFrontmatter(content, data)), { data, content });
+  assert.deepEqual(parseFrontmatter('---\n# only a comment\n---\nBody'), { data: {}, content: 'Body' });
+});
+
+test('parse: a scalar or list block is not frontmatter', () => {
+  for (const block of ['just text', '- a\n- b', '2026-10-15']) {
+    assert.throws(() => parseFrontmatter(`---\n${block}\n---\nBody`), /frontmatter must be a mapping/);
+  }
+});

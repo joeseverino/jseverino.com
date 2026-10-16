@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import { jsonFingerprint } from './canonical-json.ts';
 import { readJson } from './json.ts';
 
 // `image` is a path relative to the document, resolved by Astro's image pipeline.
@@ -26,7 +26,7 @@ export const contentContract: ContentContract = readJson(contractUrl);
 
 export function collectionFields(name: string): Record<string, FieldSpec> {
   const fields = contentContract.collections[name]?.fields;
-  if (!fields || typeof fields !== 'object') {
+  if (!fields) {
     throw new Error(`Unknown content contract collection: ${name}`);
   }
   return fields;
@@ -46,20 +46,7 @@ export function projectFrontmatter(name: string, data: Record<string, unknown>):
   return projected;
 }
 
-export function canonicalContractJson(contract: unknown = contentContract): string {
-  const sort = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(sort);
-    if (value && typeof value === 'object') {
-      return Object.fromEntries(Object.entries(value).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([key, item]) => [key, sort(item)]));
-    }
-    return value;
-  };
-  return JSON.stringify(sort(contract));
-}
-
-export function contentContractFingerprint(contract: unknown = contentContract): string {
-  return crypto.createHash('sha256').update(canonicalContractJson(contract)).digest('hex');
-}
+export const contentContractFingerprint = (): string => jsonFingerprint(contentContract);
 
 const isDate = (value: unknown): boolean =>
   (value instanceof Date && !Number.isNaN(value.getTime())) ||

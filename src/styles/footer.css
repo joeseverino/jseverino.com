@@ -2,7 +2,6 @@
 .site-footer {
   margin-block-start: var(--space-50);
   padding-block: var(--space-30);
-  padding-inline: var(--gutter);
 }
 
 .footer-inner {
@@ -11,8 +10,6 @@
   justify-content: space-between;
   align-items: center;
   gap: var(--space-15) var(--space-20);
-  inline-size: min(var(--wide), 100%);
-  margin-inline: auto;
 }
 
 .source-link {
@@ -26,7 +23,7 @@
   letter-spacing: 0.04em;
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     color: var(--color-primary-deep);
     text-decoration: none;
   }
@@ -78,7 +75,7 @@
   }
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     color: var(--color-primary);
   }
 
@@ -105,7 +102,7 @@
     color: var(--color-primary);
 
     &:hover,
-    &:focus {
+    &:focus-visible {
       color: var(--color-primary-deep);
       text-decoration: none;
     }

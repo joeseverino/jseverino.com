@@ -3,14 +3,15 @@
 // .validation-report.md (clipped excerpts plus the rerun command).
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor, type Audit } from '../tests/audits/registry.ts';
-import { browserTestEnv } from '../tests/browser-test-env.ts';
 import { styleText } from 'node:util';
-import { cli, flag } from './lib/args.ts';
+import { AUDITS, diagnosticAudits, type Audit } from '../tests/audits/registry.ts';
+import { browserTestEnv } from '../tests/browser-test-env.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
+import { cli, exitWith, flag } from './lib/args.ts';
 import { runAudits, type AuditResult, type RunAuditOptions } from './lib/audits.ts';
 import { statusEntries } from './lib/git.ts';
 import { preflight, type PreflightCheck } from './lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from './lib/run.ts';
+import { BUILD_TIMEOUT_MS, run } from './lib/run.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 
 const reportPath = path.join(root, '.validation-report.md');
@@ -35,12 +36,12 @@ export type DiagnoseDocument =
         fix?: string;
       }[];
     }
-  | { ok: false; failed: ['setup']; report: string; setup: string }
-  | { ok: false; failed: ['preflight']; preflight: PreflightCheck[] };
+  | { ok: false; failed: ['preflight']; preflight: PreflightCheck[] }
+  | { ok: false; failed: ['harness']; error: string };
 
 const emit = (document: DiagnoseDocument): void => console.log(JSON.stringify(document, null, 2));
 
-const fixFor = (id: string): string => AUDITS.find((a) => a.id === id)?.fix ?? 'Inspect error logs.';
+const fixFor = (id: string): string => AUDITS.find((a) => a.id === id)?.fix ?? 'Read the output below and rerun the check.';
 
 const { values } = cli({
   usage: 'usage: node bin/diagnose.ts [--fast | --no-tests] [--json]',
@@ -57,9 +58,6 @@ const jsonMode = values.json;
 const say: (text: string) => void = jsonMode ? () => {} : (text) => console.log(text);
 const sayErr: (text: string) => void = jsonMode ? () => {} : (text) => console.error(text);
 
-const runCommand = (cmd: string, cmdArgs: readonly string[], options: RunOptions = {}): Promise<RunResult> => run(cmd, cmdArgs, { cwd: root, ...options });
-
-
 const getGitStatus = (): string => statusEntries(root).join('\n');
 
 function postBuildOptions(audit: Audit): RunAuditOptions {
@@ -67,17 +65,16 @@ function postBuildOptions(audit: Audit): RunAuditOptions {
     ...(audit.id === 'browser-tests' && !jsonMode
       ? {
           heartbeatMs: 30_000,
-          onHeartbeat: (elapsed: number) => say(styleText('dim', `  [WAIT] Playwright still running (${Math.round(elapsed / 1000)}s)`)),
+          onHeartbeat: (elapsed: number) => say(styleText('dim', `  WAIT Playwright still running (${Math.round(elapsed / 1000)}s)`)),
         }
       : {}),
   };
 }
 
 function printResult(res: Check): void {
-  const statusText = res.skipped ? styleText('yellow', '[SKIP]') : res.code === 0 ? styleText('green', '[PASS]') : styleText('red', '[FAIL]');
+  const statusText = res.skipped ? styleText('yellow', 'SKIP') : res.code === 0 ? styleText('green', 'PASS') : styleText('red', 'FAIL');
   say(`  ${statusText} ${res.name} (${res.duration}ms)`);
 }
-
 
 function clipOutput(text: string, head = 20, tail = 60): string {
   const lines = text.trim().split('\n');
@@ -104,36 +101,19 @@ function emitJson(checks: readonly Check[], failedChecks: readonly Check[]): voi
   });
 }
 
-function renderSetupFailure(name: string, output: string): string {
-  return [
-    '# Codebase Diagnostics & Issues Report',
-    '',
-    '> [!CAUTION]',
-    `> ${name} failed. The verification pipeline cannot proceed.`,
-    '',
-    `### ❌ ${name}`,
-    '',
-    '**Error Output**:',
-    '```text',
-    clipOutput(output),
-    '```',
-    '',
-  ].join('\n');
-}
-
 function renderReport(checks: readonly Check[], failed: readonly Check[]): string {
   const recommendation = (check: Check): string => check.fix ?? fixFor(check.id);
-  const status = (check: Check): string => (check.skipped ? '⚠️ SKIP' : check.code !== 0 ? '❌ FAIL' : '✅ PASS');
-  const rows = checks.map((check) => `| **${check.name}** | ${status(check)} | ${check.duration}ms | ${recommendation(check)} |`);
+  const status = (check: Check): string => (check.skipped ? 'SKIP' : check.code !== 0 ? 'FAIL' : 'PASS');
+  const rows = checks.map((check) => `| ${check.name} | ${status(check)} | ${check.duration}ms | ${recommendation(check)} |`);
   const details = failed.map((check) => {
     const output = [check.stdout, check.stderr].map((text) => (text ?? '').trim()).filter(Boolean).join('\n');
     return [
-      `### ❌ ${check.name} (\`${check.id}\`)`,
+      `### ${check.name} (\`${check.id}\`)`,
       '',
-      `**Action Item**: ${recommendation(check)}`,
+      `Fix: ${recommendation(check)}`,
       '',
-      ...(check.rerun ? [`**Rerun**: \`${check.rerun}\``, ''] : []),
-      '**Error Output**:',
+      ...(check.rerun ? [`Rerun: \`${check.rerun}\``, ''] : []),
+      'Output:',
       '```text',
       clipOutput(output),
       '```',
@@ -141,73 +121,38 @@ function renderReport(checks: readonly Check[], failed: readonly Check[]): strin
     ].join('\n');
   });
   return [
-    '# Codebase Diagnostics & Issues Report',
+    '# Diagnose report',
     '',
-    '> [!IMPORTANT]',
-    '> This report lists all logical failures detected in the codebase by running deterministic test scripts. Fix these issues prior to pushing or deploying.',
+    '## Summary',
     '',
-    '## Validation Summary',
-    '',
-    '| Check Name | Status | Duration | Recommendation |',
+    '| Check | Status | Duration | Fix |',
     '| :--- | :--- | :--- | :--- |',
     ...rows,
     '',
-    '---',
-    '',
-    '## Failure Details & Resolution Paths',
+    '## Failures',
     '',
     ...details,
     '',
   ].join('\n');
 }
 
-function setupFailure(name: string, result: RunResult): number {
-  sayErr(styleText('red', `❌ Setup failed: ${name} exited with code ${result.code}`, { stream: process.stderr }));
-  const output = (result.stderr || result.stdout || '').trim();
-  sayErr(output);
-  fs.writeFileSync(reportPath, renderSetupFailure(name, output), 'utf8');
-  if (jsonMode) emit({ ok: false, failed: ['setup'], report: path.relative(root, reportPath), setup: name });
-  return 1;
-}
-
-// Returns an exit code when a step fails, otherwise null.
-async function prepare(initialGitStatus: string): Promise<number | null> {
-  say(styleText('blue', 'Phase 1: Syncing Content and Cleaning Caches...'));
-  const clean = await runCommand('node', ['bin/clean-generated.ts']);
-  if (clean.code !== 0) return setupFailure('Cache Clean (bin/clean-generated.ts)', clean);
-  const sync = await runCommand('node', ['bin/sync-content.ts'], { timeout: SYNC_TIMEOUT_MS });
-  if (sync.code !== 0) return setupFailure('Content Synchronization (sync:content)', sync);
-
-  const postSyncGitStatus = getGitStatus();
-  if (postSyncGitStatus === initialGitStatus) {
-    say('✓ Caches cleared & content synced.\n');
-    return null;
-  }
-  const before = new Set(initialGitStatus.split('\n').filter(Boolean));
-  const drift = postSyncGitStatus.split('\n').filter((line) => line && !before.has(line));
-  say(styleText('yellow', `Vault drift detected: ${drift.length} synced path${drift.length === 1 ? '' : 's'} changed before validation.`));
-  for (const line of drift) say(`  ${line}`);
-  say('Review with `git diff -- src/content public/assets` or publish the synced snapshot.\n');
-  return null;
-}
-
 async function buildAndTest(checks: Check[]): Promise<void> {
-  say(styleText('blue', 'Phase 3: Compiling Production Build...'));
-  const build = await runCommand('node', ['bin/build-static.ts'], { env: browserTestEnv, timeout: BUILD_TIMEOUT_MS });
+  say(styleText('blue', 'Build'));
+  const build = await run(process.execPath, ['bin/build-static.ts'], { cwd: root, env: browserTestEnv, timeout: BUILD_TIMEOUT_MS });
   const built = build.code === 0;
-  say(`  ${built ? styleText('green', '[PASS]') : styleText('red', '[FAIL]')} Static Site Build (${build.duration}ms)\n`);
+  say(`  ${built ? styleText('green', 'PASS') : styleText('red', 'FAIL')} Static build (${build.duration}ms)\n`);
   checks.push({
-    id: 'static-build', name: 'Production Static Build', skipped: false, ...build,
+    id: 'static-build', name: 'Static build', skipped: false, ...build,
     rerun: 'npm run build:static',
-    fix: 'Fix HTML/CSS/JS compile errors during the static site building process.',
+    fix: 'Rerun npm run build:static and fix the first error it reports.',
   });
   if (!built) {
-    say(styleText('yellow', 'Phase 4 Skipped: Static compilation failed.\n'));
+    say(styleText('yellow', 'Post-build checks skipped: the build failed.\n'));
     return;
   }
 
-  say(styleText('blue', 'Phase 4: Running Post-Build Audits and Browser Tests...'));
-  const postAudits = auditsFor('diagnose', 'post-build').filter((audit) => runTests || !audit.heavy);
+  say(styleText('blue', 'Post-build checks'));
+  const postAudits = diagnosticAudits('post-build', { browsers: runTests });
   checks.push(...await runAudits(postAudits, { cwd: root, optionsFor: postBuildOptions, onResult: printResult }));
   say('');
 }
@@ -215,14 +160,14 @@ async function buildAndTest(checks: Check[]): Promise<void> {
 function idempotenceCheck(initialGitStatus: string): Check {
   const finalGitStatus = getGitStatus();
   const mutated = finalGitStatus !== initialGitStatus;
-  say(`  ${mutated ? styleText('red', '[FAIL]') : styleText('green', '[PASS]')} Worktree Idempotence Check\n`);
+  say(`  ${mutated ? styleText('red', 'FAIL') : styleText('green', 'PASS')} Worktree unchanged\n`);
   return {
-    id: 'idempotence-check', name: 'Workspace Idempotence', skipped: false,
+    id: 'idempotence-check', name: 'Worktree unchanged', skipped: false,
     code: mutated ? 1 : 0,
     stdout: mutated ? `Git status changed during run:\nBefore:\n${initialGitStatus}\nAfter:\n${finalGitStatus}` : 'Worktree is clean.',
     stderr: '', duration: 0,
     rerun: 'git status --porcelain=v1',
-    fix: 'Running tests and builds mutated tracked files in the workspace. Commit synced content or reset generated files before pushing.',
+    fix: 'The run changed tracked files. Commit synced content or reset generated files, then rerun.',
   };
 }
 
@@ -231,19 +176,21 @@ function conclude(checks: readonly Check[], startedAt: number): number {
   const seconds = Math.round((Date.now() - startedAt) / 1000);
 
   if (failed.length === 0) {
-    const browserSkipped = checks.some((check) => check.id === 'browser-tests' && check.skipped);
-    say(styleText(['bold', 'green'],
-      browserSkipped
-        ? `✓ ALL CHECKS PASSED in ${seconds}s. Static checks and build are clean; browser/visual suite skipped (run on macOS before deploy).`
-        : `✓ ALL CHECKS PASSED in ${seconds}s. Codebase is logically clean and ready to deploy.`,
-    ));
+    const skipped = checks.filter((check) => check.skipped);
+    const scope = !runBuild
+      ? 'Pre-build checks passed; build and browser suites were not run.'
+      : !runTests
+        ? 'Static checks and build passed; browser suites were not run.'
+        : 'Static checks, build, and available browser suites passed.';
+    say(styleText(['bold', 'green'], `PASS in ${seconds}s. ${scope}`));
+    if (skipped.length) say(`Skipped: ${skipped.map((check) => check.name).join(', ')}.`);
     fs.rmSync(reportPath, { force: true });
     if (jsonMode) emitJson(checks, failed);
     return 0;
   }
 
-  sayErr(styleText(['bold', 'red'], `❌ ${failed.length} CHECKS FAILED in ${seconds}s.`, { stream: process.stderr }));
-  say(`Writing diagnostic report to: ${styleText('bold', '.validation-report.md')}\n`);
+  sayErr(styleText(['bold', 'red'], `FAIL: ${failed.length} of ${checks.length} checks in ${seconds}s.`, { stream: process.stderr }));
+  say(`Report: ${styleText('bold', '.validation-report.md')}\n`);
   fs.writeFileSync(reportPath, renderReport(checks, failed), 'utf8');
   if (jsonMode) emitJson(checks, failed);
   return 1;
@@ -251,9 +198,9 @@ function conclude(checks: readonly Check[], startedAt: number): number {
 
 async function diagnose(): Promise<number> {
   const startedAt = Date.now();
-  say(styleText('bold', 'Starting Deterministic E2E Codebase Diagnosis...\n'));
+  say(styleText('bold', 'diagnose\n'));
 
-  const ready = await preflight(process.env.CI ? ['deps'] : ['deps', 'vault'], { root });
+  const ready = await preflight(['deps'], { root });
   if (!ready.ok) {
     for (const check of ready.failed) sayErr(styleText('red', `preflight: ${check.detail}\n  fix: ${check.fix}`, { stream: process.stderr }));
     if (jsonMode) emit({ ok: false, failed: ['preflight'], preflight: ready.checks });
@@ -261,24 +208,23 @@ async function diagnose(): Promise<number> {
   }
 
   const initialGitStatus = getGitStatus();
-  const setup = await prepare(initialGitStatus);
-  if (setup !== null) return setup;
+  say('Validating the current snapshot; content sync is a separate command.\n');
 
   const checks: Check[] = [];
-  say(styleText('blue', 'Phase 2: Running Static Audits and Policy Checks...'));
-  checks.push(...await runAudits(auditsFor('diagnose', 'pre-build'), { cwd: root, onResult: printResult }));
+  say(styleText('blue', 'Static checks'));
+  checks.push(...await runAudits(diagnosticAudits('pre-build'), { cwd: root, onResult: printResult }));
   say('');
 
   if (runBuild) {
     await buildAndTest(checks);
-    checks.push(idempotenceCheck(initialGitStatus));
   } else {
-    say(styleText('yellow', 'Phases 3 & 4 Skipped (--fast flag provided).\n'));
+    say(styleText('yellow', 'Build and post-build checks skipped (--fast).\n'));
   }
+  checks.push(idempotenceCheck(initialGitStatus));
   return conclude(checks, startedAt);
 }
 
-process.exitCode = await diagnose().catch((error: unknown) => {
-  console.error('Diagnostic harness error:', error);
-  return 1;
-});
+await exitWith('diagnose', () => diagnose().catch((error: unknown) => {
+  if (jsonMode) emit({ ok: false, failed: ['harness'], error: errorMessage(error) });
+  throw error;
+}));

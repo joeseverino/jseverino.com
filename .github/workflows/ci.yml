@@ -13,7 +13,7 @@ permissions:
 # A newer push to the same pull request supersedes the run in flight. Pushes to
 # main are never cancelled: each one deploys and keeps its own run.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Every job starts at once and none depends on another, so a failure reports on its own
@@ -37,17 +37,11 @@ jobs:
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-gate.md
 
-      # The security-txt audit verifies the PGP signature; the public key ships
-      # in the repo's WKD directory, so the runner can import it from there.
-      - name: Import disclosure public key
-        run: gpg --import public/.well-known/openpgpkey/hu/*
-
       # The same registry-driven gate that runs locally before a push. --no-sync
       # because CI has no vault; src/content is the committed snapshot.
       - name: Publish gate
         run: npm run publish:check -- --no-sync --after-gate
         env:
-          ASTRO_TELEMETRY_DISABLED: '1'
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
 
       - name: Generate SBOM
@@ -143,7 +137,6 @@ jobs:
           BROWSERS: ${{ matrix.browsers }}
           CACHE_HIT: ${{ steps.browsers.outputs.cache-hit }}
           PREBUILD: ${{ matrix.prebuild }}
-          ASTRO_TELEMETRY_DISABLED: '1'
 
       - name: ${{ matrix.title }}
         run: npx playwright test -c "$CONFIG"
@@ -151,7 +144,6 @@ jobs:
           CONFIG: ${{ matrix.config }}
           PREBUILT: ${{ matrix.prebuild && '1' || '' }}
           PLAYWRIGHT_REPORT: '1'
-          ASTRO_TELEMETRY_DISABLED: '1'
 
       - name: Summarize results
         if: always()

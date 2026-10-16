@@ -3,9 +3,9 @@
 // (builds never call PyPI or npm). Fails without writing if any lookup fails.
 //
 //   npm run snapshot:software
-
 import fs from 'node:fs';
 import { PACKAGES } from '../src/lib/software.config.ts';
+import { fromRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
 import { snapshotPackages } from './lib/package-registry.ts';
 
@@ -16,5 +16,5 @@ if (!result.ok) {
   console.error(`failed: nothing written.\n  ${result.failures.join('\n  ')}`);
   process.exit(1);
 }
-fs.writeFileSync('src/data/package-registry.json', `${JSON.stringify(result.snapshot, null, 2)}\n`);
+fs.writeFileSync(fromRoot('src/data/package-registry.json'), `${JSON.stringify(result.snapshot, null, 2)}\n`);
 console.log(`Wrote src/data/package-registry.json (${Object.keys(result.snapshot.packages).length} packages).`);

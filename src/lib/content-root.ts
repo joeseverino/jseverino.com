@@ -4,14 +4,12 @@ import path from 'node:path';
 // self-contained tree: tests/fixtures/content, so the visual baselines never
 // move with a publish, or the gitignored drafts overlay `site dev --drafts`
 // syncs. Such a build is hermetic and makes no network calls.
-export const contentRoot = process.env.SITE_CONTENT_ROOT ?? 'src/content';
+export const contentRoot = process.env.SITE_CONTENT_ROOT || 'src/content';
 export const fixtureContent = Boolean(process.env.SITE_CONTENT_ROOT);
 
-// The content roots a build may read besides src/content: a tree under
-// tests/fixtures, or the drafts overlay. bin/build-static.ts refuses any other,
-// so a stray SITE_CONTENT_ROOT stops the production build.
+// A static build reads only src/content or a fixture tree, so drafts never ship.
 export function permittedContentRoot(value: string, root: string): boolean {
   const resolved = path.resolve(root, value);
   const fixtures = path.join(root, 'tests', 'fixtures');
-  return resolved.startsWith(fixtures + path.sep) || resolved === path.join(root, '.cache', 'drafts');
+  return resolved.startsWith(fixtures + path.sep);
 }

@@ -34,4 +34,4 @@ tip of `dist` is not a verified commit.
 
 | Command | Does |
 |---|---|
-| `npm run dist:publish` | Commit a build directory to `dist` locally; with `-- --push`, push it (CI does this) |
+| `npm run publish:dist` | Commit a build directory to `dist` locally; with `-- --push`, push it (CI does this) |

@@ -7,7 +7,8 @@ import { loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { createCloudflareFake, type FakeState } from './helpers/cloudflare-fake.ts';
-import { fromRoot, read, runner, schemaTests } from './helpers/desired-state.ts';
+import { fromRoot } from '../../src/lib/site-root.ts';
+import { read, runner, schemaTests } from './helpers/desired-state.ts';
 
 const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');

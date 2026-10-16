@@ -25,7 +25,6 @@ import { permittedContentRoot } from '../../src/lib/content-root.ts';
 const scratch = scratchDirs('content-sync-');
 after(scratch.cleanup);
 
-
 describe('asset references', () => {
   const body = [
     '![Alt](./images/a.png "A title")',
@@ -323,7 +322,6 @@ describe('image masters', () => {
     assert.equal(meta.exif, undefined);
     assert.equal(meta.icc, undefined);
     assert.deepEqual(await master(source), await master(source), 'a second encode is the cached bytes');
-    fs.rmSync(dir, { recursive: true, force: true });
   });
 });
 
@@ -341,11 +339,11 @@ describe('MDX compile issues', () => {
 });
 
 describe('content root overrides', () => {
-  test('a build reads only fixtures or the drafts overlay besides src/content', () => {
+  test('a static build reads only fixtures besides src/content', () => {
     const root = '/repo';
     assert.equal(permittedContentRoot('tests/fixtures/content', root), true);
-    assert.equal(permittedContentRoot('/repo/.cache/drafts', root), true);
-    assert.equal(permittedContentRoot('.cache/drafts', root), true);
+    assert.equal(permittedContentRoot('/repo/.cache/drafts', root), false);
+    assert.equal(permittedContentRoot('.cache/drafts', root), false);
     assert.equal(permittedContentRoot('tests/fixtures', root), false);
     assert.equal(permittedContentRoot('tests/fixtures/../../elsewhere', root), false);
     assert.equal(permittedContentRoot('/tmp/content', root), false);

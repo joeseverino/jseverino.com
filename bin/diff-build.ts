@@ -58,18 +58,20 @@ function firstDivergence(a: string, b: string) {
   };
 }
 
+const buildStatic = (root: string): void => run(process.execPath, [path.join(root, 'bin/build-static.ts')], root);
+
 const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'jsev-diffbuild-'));
 const realNodeModules = fs.realpathSync(path.join(siteRoot, 'node_modules'));
 
 try {
   console.log(`Building current working tree...`);
-  run(path.join(siteRoot, 'node_modules/.bin/astro'), ['build'], siteRoot);
+  buildStatic(siteRoot);
   const current = collect(path.join(siteRoot, buildOutDir));
 
   console.log(`\nBuilding baseline (${baselineRef}) in an isolated worktree...`);
   run('git', ['worktree', 'add', '--detach', worktree, baselineRef], siteRoot);
   fs.symlinkSync(realNodeModules, path.join(worktree, 'node_modules'), 'dir');
-  run(path.join(siteRoot, 'node_modules/.bin/astro'), ['build'], worktree);
+  buildStatic(worktree);
   const baseline = collect(path.join(worktree, buildOutDir));
 
   const onlyBaseline = [...baseline.keys()].filter((f) => !current.has(f)).sort();
@@ -93,7 +95,7 @@ try {
   }
 
   if (!onlyBaseline.length && !onlyCurrent.length && !changed.length) {
-    console.log('\nNo differences in built output (after normalizing lastmod + sitekey).');
+    console.log('\nNo differences in built output.');
   }
 } finally {
   spawnResult('git', ['worktree', 'remove', '--force', worktree], { cwd: siteRoot, stdio: 'ignore' });

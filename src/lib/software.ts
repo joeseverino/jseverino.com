@@ -7,7 +7,6 @@ import { fixtureContent } from './content-root.ts';
 import registry from '../data/package-registry.json' with { type: 'json' };
 import {
   FEATURED,
-  ORDER,
   PACKAGES,
   SELF_HOSTED,
   SKIP,
@@ -60,6 +59,7 @@ async function build(): Promise<SoftwareEntry[]> {
     .map((repo) => {
       const config = PACKAGES[repo.name];
       const pkg: SoftwarePackage | undefined = config ? { ...config } : undefined;
+      const rank = FEATURED.indexOf(repo.name);
       return {
         slug: slugify(repo.name),
         title: pkg?.name ?? repo.name,
@@ -67,11 +67,11 @@ async function build(): Promise<SoftwareEntry[]> {
         repoUrl: repo.url,
         language: repo.language ?? undefined,
         updatedAt: repo.pushedAt || undefined,
-        featured: FEATURED.has(repo.name),
+        featured: rank >= 0,
         selfHosted: SELF_HOSTED.has(repo.name),
         writeupSlug: WRITEUPS[repo.name],
         package: pkg,
-        order: ORDER[repo.name] ?? 999,
+        order: rank >= 0 ? rank : 999,
       };
     });
 
@@ -93,7 +93,7 @@ export function getMoreSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
 
 const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-export function formatUpdated(ym?: string): string {
+function formatUpdated(ym?: string): string {
   const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
   return year && month && Number(month) >= 1 && Number(month) <= 12
     ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1))

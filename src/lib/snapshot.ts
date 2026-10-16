@@ -9,8 +9,6 @@ export interface SnapshotWriteup extends ParsedFrontmatter {
   source: string;
 }
 
-const byName = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
-
 export const DOCUMENT_FILE = 'index.mdx';
 
 function documentSlugs(dir: string): string[] {
@@ -18,7 +16,7 @@ function documentSlugs(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, DOCUMENT_FILE)))
     .map((entry) => entry.name)
-    .sort(byName);
+    .sort();
 }
 
 export function snapshotWriteups(root = siteRoot): SnapshotWriteup[] {

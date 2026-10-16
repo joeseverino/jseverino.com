@@ -17,9 +17,8 @@ Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 | `variables` | Actions variables, by name: the public Turnstile site key the [dist workflow](./Dist-Branch.md) builds with. Variables not listed are left alone |
 | `ruleset` | The `main` branch ruleset, compared as a whole: pull request required with squash only, the required status checks, no force pushes, no deletion, signed commits required |
 
-The ruleset names the repository admin role as a bypass actor, which is how the
-live ruleset is configured. The rule that nothing is pushed to `main` directly
-is kept by convention (see [Development](./Development.md)), not by the ruleset.
+The ruleset has no bypass actors: every change to `main`, the owner's included,
+goes through a pull request with the required checks green.
 
 A new CI job that must gate merges is added to the ruleset's
 `required_status_checks` in `.github/repo.json`, then applied.

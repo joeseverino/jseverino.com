@@ -1,10 +1,15 @@
-// All-or-nothing file replacement: stage bodies beside their targets, then under a root lock confirm nothing
-// changed and swap. Any failure restores the files already swapped.
+// All-or-nothing file replacement: stage bodies beside their targets, then under a root lock confirm every
+// file still holds the content the caller read and swap. Any failure restores the files already swapped.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../../src/lib/error-message.ts';
+
+export interface Replacement {
+  before: string;
+  after: string;
+}
 
 export type TransactionResult = { ok: true } | { ok: false; error: string; rolledBack: boolean };
 
@@ -16,7 +21,7 @@ export interface TransactionOptions {
 
 const LOCK_STALE_MS = 30_000;
 
-function stage(target: string, body: string | Buffer, prefix: string): string {
+function stage(target: string, body: string, prefix: string): string {
   const staged = path.join(path.dirname(target), `.${path.basename(target)}.${prefix}-${crypto.randomBytes(6).toString('hex')}`);
   fs.writeFileSync(staged, body, { mode: fs.statSync(target).mode & 0o777 });
   return staged;
@@ -40,22 +45,21 @@ function acquire(lockPath: string, timeoutMs: number): number {
 
 export function transactionalReplace(
   root: string,
-  replacements: ReadonlyMap<string, string>,
+  replacements: ReadonlyMap<string, Replacement>,
   { rename = fs.renameSync, lockTimeoutMs = 5_000 }: TransactionOptions = {},
 ): TransactionResult {
   if (replacements.size === 0) return { ok: true };
-  const originals = new Map([...replacements.keys()].map((file) => [file, fs.readFileSync(file)]));
   const staged = new Map<string, string>();
   const replaced: string[] = [];
   const lockKey = crypto.createHash('sha256').update(path.resolve(root)).digest('hex').slice(0, 16);
   const lockPath = path.join(os.tmpdir(), `site-writeups-${lockKey}.lock`);
   let lock: number | undefined;
   try {
-    for (const [file, body] of replacements) staged.set(file, stage(file, body, 'site'));
+    for (const [file, { after }] of replacements) staged.set(file, stage(file, after, 'site'));
     lock = acquire(lockPath, lockTimeoutMs);
     try {
-      for (const [file, original] of originals) {
-        if (!fs.readFileSync(file).equals(original)) throw new Error(`file changed during transaction: ${file}`);
+      for (const [file, { before }] of replacements) {
+        if (fs.readFileSync(file, 'utf8') !== before) throw new Error(`file changed during transaction: ${file}`);
       }
       for (const file of [...replacements.keys()].sort()) {
         rename(staged.get(file) as string, file);
@@ -67,7 +71,7 @@ export function transactionalReplace(
       const rollbackErrors: string[] = [];
       for (const file of replaced.reverse()) {
         try {
-          fs.renameSync(stage(file, originals.get(file) as Buffer, 'rollback'), file);
+          fs.renameSync(stage(file, (replacements.get(file) as Replacement).before, 'rollback'), file);
         } catch (rollbackError) {
           rollbackErrors.push(`${file}: ${errorMessage(rollbackError)}`);
         }

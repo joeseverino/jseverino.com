@@ -43,9 +43,11 @@ export interface StartedServer {
   startedAt: number;
 }
 
+// null when the command could not be spawned; the 'error' listener keeps that from crashing the caller.
 export function startDevServer(command: readonly [string, ...string[]], { cwd, port }: { cwd: string; port: string }): StartedServer | null {
   const [bin, ...args] = command;
   const child = spawn(bin, [...args, '--port', port], { cwd, detached: true, stdio: 'ignore' });
+  child.on('error', () => {});
   child.unref();
   return child.pid === undefined ? null : { pid: child.pid, startedAt: Date.now() };
 }
@@ -59,6 +61,9 @@ const alive = (pid: number): boolean => {
     return false;
   }
 };
+
+// Whether anything in the started process group is still alive.
+export const running = (server: StartedServer): boolean => alive(-server.pid);
 
 const signal = (target: number, name: NodeJS.Signals): void => {
   try {

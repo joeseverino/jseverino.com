@@ -1,6 +1,7 @@
 name: release
 
-# A signed version tag (docs/Release-Checklist.md §4) publishes a verifiable
+# A version tag (signed by convention, docs/Release-Checklist.md §4; the
+# trigger matches any v* tag) publishes a verifiable
 # release: the build output and its SBOM, each with a Sigstore attestation
 # GitHub issues for this workflow run. Verify with:
 #   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com
@@ -30,6 +31,14 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check the tag matches package.json
+        run: |
+          version=$(jq -r .version package.json)
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::tag $TAG does not match package.json version v$version"
+            exit 1
+          fi
+
       - uses: ./.github/actions/setup
         with:
           astro-cache: 'true'
@@ -37,7 +46,7 @@ jobs:
       - name: Build the site
         run: npm run -s build:static
         env:
-          ASTRO_TELEMETRY_DISABLED: '1'
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
 
       - name: Package the build and its SBOM
         run: |

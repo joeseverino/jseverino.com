@@ -2,23 +2,24 @@
 import { formatDate, type Writeup } from '@lib/content.ts';
 import { writeupPath } from '@lib/site-config.ts';
 import Picture from '@components/Picture.astro';
-import CardSurface from '@components/CardSurface.astro';
 
 type Props = {
   writeup: Writeup;
   eager?: boolean;
+  headingLevel?: 2 | 3;
 };
 
-const { writeup, eager = false } = Astro.props;
+const { writeup, eager = false, headingLevel = 2 } = Astro.props;
+const Heading = `h${headingLevel}` as const;
 ---
 
 <li class="project-card">
-  <CardSurface>
-    <h2 class="project-card-title">
+  <div class="card-surface">
+    <Heading class="project-card-title">
       <a href={writeupPath(writeup.slug)}>{writeup.title}</a>
-    </h2>
+    </Heading>
     <figure class="project-card-media">
-      <a href={writeupPath(writeup.slug)}>
+      <a href={writeupPath(writeup.slug)} tabindex="-1" aria-hidden="true">
         <Picture
           src={writeup.heroImage}
           alt={writeup.heroAlt}
@@ -32,5 +33,5 @@ const { writeup, eager = false } = Astro.props;
     <div class="project-card-date">
       <time datetime={writeup.date}>{formatDate(writeup.date)}</time>
     </div>
-  </CardSurface>
+  </div>
 </li>

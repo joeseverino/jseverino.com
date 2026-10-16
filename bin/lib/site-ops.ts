@@ -29,7 +29,7 @@ export function siteOpsConfig(env: NodeJS.ProcessEnv = process.env): SiteOpsConf
     siteRepo: env.SITE_REPO || siteRoot,
     siteOrigin: env.SITE_ORIGIN || SITE_ORIGIN,
     auditLog: env.SITE_AUDIT_LOG || path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
-    run: (cmd, args, { cwd, timeout }) => spawnResult(cmd, args, { cwd, timeout }),
+    run: spawnResult,
     fetch: globalThis.fetch,
   };
 }
@@ -76,13 +76,14 @@ function runD1(config: SiteOpsConfig, sql: string, timeout = 20_000): D1Result {
   return { database: config.d1Database, results: first?.results ?? [], meta: first?.meta ?? {} };
 }
 
-// Best effort: an audit failure never fails the read it records.
+// PII is released only once its access is on record, so an unwritable log fails the read.
 function audit(config: SiteOpsConfig, action: string, detail: string): void {
   try {
-    fs.mkdirSync(path.dirname(config.auditLog), { recursive: true });
-    fs.appendFileSync(config.auditLog, `${new Date().toISOString()} action=${action} ${detail} client=site\n`);
-    fs.chmodSync(config.auditLog, 0o600);
-  } catch {}
+    fs.mkdirSync(path.dirname(config.auditLog), { recursive: true, mode: 0o700 });
+    fs.appendFileSync(config.auditLog, `${new Date().toISOString()} action=${action} ${detail} client=site\n`, { mode: 0o600 });
+  } catch (error) {
+    throw new SiteOpsError(`cannot write the audit log ${config.auditLog}: ${errorMessage(error)}`, { auditLog: config.auditLog });
+  }
 }
 
 export const redactEmail = (email: string): string => {
@@ -202,7 +203,7 @@ const SECURITY_HEADERS = [
 
 export interface HeaderCheck {
   url: string;
-  status: number;
+  httpStatus: number;
   ok: boolean;
   headers: Record<(typeof SECURITY_HEADERS)[number], string | null>;
   checks: {
@@ -217,20 +218,20 @@ export interface HeaderCheck {
 // HEAD one root-relative path on the live origin, without following redirects.
 export async function checkSecurityHeaders(config: SiteOpsConfig, pathname = '/'): Promise<HeaderCheck> {
   const target = pathname.trim() || '/';
-  if (!target.startsWith('/') || target.startsWith('//')) throw new SiteOpsError('path must be root-relative, e.g. / or /contact/');
+  if (!target.startsWith('/') || target.startsWith('//')) throw new SiteOpsError('path must be root-relative, e.g. / or /contact/', { usage: true });
   const url = `${config.siteOrigin.replace(/\/$/, '')}${target}`;
   let response: Response;
   try {
     response = await config.fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(10_000) });
   } catch (error) {
-    throw new SiteOpsError(`HEAD ${url} failed: ${errorMessage(error)}`);
+    throw new SiteOpsError(`HEAD ${url} failed: ${errorMessage(error)}`, { network: true });
   }
   const headers = Object.fromEntries(SECURITY_HEADERS.map((name) => [name, response.headers.get(name)])) as HeaderCheck['headers'];
   const csp = headers['content-security-policy'] ?? '';
   const reporting = headers['reporting-endpoints'] ?? '';
   return {
     url,
-    status: response.status,
+    httpStatus: response.status,
     ok: response.status >= 200 && response.status < 400,
     headers,
     checks: {

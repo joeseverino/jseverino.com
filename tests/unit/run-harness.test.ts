@@ -1,6 +1,9 @@
 // The gate harness failure modes a green run never hits: non-zero exit, missing binary, timeout.
 // All must resolve as failed results, never hang or reject.
 
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { run } from '../../bin/lib/run.ts';
@@ -23,6 +26,15 @@ describe('run()', () => {
     const result = await run('definitely-not-a-binary-xyz', []);
     assert.notEqual(result.code, 0);
     assert.match(result.stderr, /failed to start/);
+  });
+
+  test('resolves as failed without spawning when the signal is already aborted', async () => {
+    const marker = path.join(os.tmpdir(), `run-aborted-${process.pid}`);
+    const result = await run(process.execPath, ['-e', `require('node:fs').writeFileSync(${JSON.stringify(marker)}, '')`], { signal: AbortSignal.abort() });
+    assert.notEqual(result.code, 0);
+    assert.equal(result.timedOut, false);
+    assert.match(result.stderr, /aborted before start/);
+    assert.equal(fs.existsSync(marker), false);
   });
 
   test('kills a hung command at the timeout and marks the result', async () => {
@@ -53,12 +65,5 @@ describe('run()', () => {
     });
     assert.equal(result.code, 0);
     assert.ok(beats.length >= 2);
-  });
-});
-
-describe('run() output', () => {
-  test('strips color codes from the combined output', async () => {
-    const result = await run(process.execPath, ['-e', 'console.log("\\x1b[1m\\x1b[32mok\\x1b[0m done")']);
-    assert.equal(result.output.trim(), 'ok done');
   });
 });

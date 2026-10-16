@@ -16,25 +16,15 @@ export const SKIP = new Set<string>([
   'severino-brand',
 ]);
 
-/** Repos rendered as rich featured cards (vs the compact list). */
-export const FEATURED = new Set<string>([
+/** Repos rendered as rich featured cards, in this order; the rest sort after, by title. */
+export const FEATURED: readonly string[] = [
   'vault-engine',
   'branding-engine',
   'sitedrift',
   'severino-vault-mcp',
   'tools',
   'cordon',
-]);
-
-/** Explicit ordering (lower = earlier). Unlisted repos sort after, by recency. */
-export const ORDER: Record<string, number> = {
-  'vault-engine': 1,
-  'branding-engine': 2,
-  'sitedrift': 3,
-  'severino-vault-mcp': 4,
-  'tools': 5,
-  'cordon': 6,
-};
+];
 
 /** repo -> writeup slug for the "Read the writeup" cross-link. */
 export const WRITEUPS: Record<string, string> = {

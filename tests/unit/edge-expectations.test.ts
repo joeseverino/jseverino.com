@@ -41,7 +41,7 @@ describe('cspFindings', () => {
   test('flags every escape hatch', async () => {
     const policy = (await policyFor(true)).replace("script-src 'self'", "script-src 'self' 'unsafe-inline' 'strict-dynamic' blob: 'nonce-abc'");
     const findings = cspFindings(withPolicy(policy), '/').join(' | ');
-    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-']) assert.match(findings, new RegExp(`script-src carries ${banned.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-']) assert.match(findings, new RegExp(`script-src carries ${RegExp.escape(banned)}`));
   });
 
   test('flags a leftover build placeholder and a policy with no hash', async () => {

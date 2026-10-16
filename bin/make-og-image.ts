@@ -1,6 +1,8 @@
+#!/usr/bin/env node
 // Generates the 1200x630 Open Graph card at public/assets/og/og-default.jpg
 // (PNG render re-encoded as JPEG, about 100 KB vs 850 KB).
-// Run with: node bin/make-og-image.ts
+//
+//   node bin/make-og-image.ts
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,8 +11,12 @@ import { renderCard, launchBrowser } from 'branding-engine';
 import { brandCardColors } from '../src/lib/brand.ts';
 import { SITE } from '../src/lib/site-config.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
+import { cli } from './lib/args.ts';
 
-const render = path.join(os.tmpdir(), `og-default-${process.pid}.png`);
+cli({ usage: 'usage: node bin/make-og-image.ts' });
+
+using dir = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'og-default-'));
+const render = path.join(dir.path, 'og-default.png');
 const browser = await launchBrowser();
 try {
   await renderCard(browser, {
@@ -30,12 +36,8 @@ try {
   await browser.close();
 }
 
-try {
-  await sharp(render)
-    .jpeg({ quality: 85, mozjpeg: true, chromaSubsampling: '4:4:4' })
-    .toFile(path.join(root, 'public/assets/og/og-default.jpg'));
-} finally {
-  fs.rmSync(render, { force: true });
-}
+await sharp(render)
+  .jpeg({ quality: 85, mozjpeg: true, chromaSubsampling: '4:4:4' })
+  .toFile(path.join(root, 'public/assets/og/og-default.jpg'));
 
 console.log('Wrote public/assets/og/og-default.jpg (1200x630)');

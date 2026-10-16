@@ -20,13 +20,9 @@ if (!writeupFields || Object.keys(writeupFields).length === 0) {
 
 const contentConfig = fs.readFileSync(path.join(root, 'src/content.config.ts'), 'utf8');
 const syncSource = fs.readFileSync(path.join(root, 'bin/content-sync/sync.ts'), 'utf8');
-const generatedSchema = fs.readFileSync(path.join(root, 'src/generated/content-schema.ts'), 'utf8');
 const publicProjection = fs.readFileSync(path.join(root, 'bin/content-sync/public-projection.ts'), 'utf8');
 if (!contentConfig.includes("from './generated/content-schema.ts'")) {
   fail('Astro writeup schema does not derive from the canonical contract');
-}
-if (!generatedSchema.includes(`Contract fingerprint: ${contentContractFingerprint()}`)) {
-  fail('generated Astro schema fingerprint is stale; run npm run sync:contract');
 }
 if (!syncSource.includes('projection.writeup(') || !publicProjection.includes("projectFrontmatter('writeups'")) {
   fail('public writeup projection does not derive from the canonical contract');

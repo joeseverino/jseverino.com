@@ -15,31 +15,31 @@ const text = (value: unknown): string => (value instanceof Date ? value.toISOStr
 // title, hero line, and repeated description stripped). `document` adds the
 // full styled preview page, which costs a Vite start (about a second).
 export async function render({ slug, document = false, out, stdin = () => fs.readFileSync(0, 'utf8') }: {
-  slug: string;
+  slug: string | undefined;
   document?: boolean;
   out: Output;
   stdin?: () => string;
 }): Promise<RenderResult> {
+  const name = slug === '-' ? null : assertSlug(slug);
   let markdown: string;
   let source: string;
-  if (slug === '-') {
+  if (name === null) {
     markdown = stdin();
     source = 'stdin';
   } else {
-    assertSlug(slug);
-    const file = path.join(vaultRoot(), WRITEUPS_FOLDER, slug, 'index.md');
+    const file = path.join(vaultRoot(), WRITEUPS_FOLDER, name, 'index.md');
     if (!fs.existsSync(file)) throw new SiteError(`writeup not found: ${file}`, { code: EXIT.usage, fix: 'check the slug with site writeups' });
     markdown = fs.readFileSync(file, 'utf8');
     source = file;
   }
   const { data, content } = parseFrontmatter(markdown);
   const { html } = renderMarkdown(stripArticleChrome(stripRepeatedDescription(content, data.description)), 'writeups');
-  const result: RenderResult = { slug: slug === '-' ? null : slug, source, html, next: null };
+  const result: RenderResult = { slug: name, source, html, next: null };
   if (document) {
     const { renderDocument } = await import('../lib/render-document.ts');
     const heroSrc = text(data.cover_image);
     result.document = await renderDocument({
-      title: text(data.title) || (slug === '-' ? 'Preview' : slug),
+      title: text(data.title) || name || 'Preview',
       date: text(data.published_at),
       technologies: Array.isArray(data.technologies) ? data.technologies.map(String) : [],
       ...(heroSrc ? { heroSrc, heroAlt: text(data.cover_alt) } : {}),

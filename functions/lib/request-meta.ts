@@ -24,12 +24,8 @@ export function requestMeta(request: Request, maxUserAgentLength: number): Reque
 // the Referer are both client input, so anything off-origin is no source.
 export function ownPageUrl(origin: string, ...candidates: (string | null | undefined)[]): string | null {
   for (const candidate of candidates) {
-    if (!candidate) continue;
-    try {
-      const url = new URL(candidate);
-      if (url.origin === origin) return `${origin}${url.pathname}`;
-    } catch {
-    }
+    const url = candidate ? URL.parse(candidate) : null;
+    if (url?.origin === origin) return `${origin}${url.pathname}`;
   }
   return null;
 }

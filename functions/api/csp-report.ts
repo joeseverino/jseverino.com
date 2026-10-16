@@ -41,7 +41,6 @@ const MAX_DIRECTIVE_LENGTH = 256;
 const MAX_USER_AGENT_LENGTH = 512;
 const MAX_STORED_PER_IP_PER_HOUR = 30;
 const RETENTION_DAYS = 60;
-const SITE_ORIGIN = SITE.origin;
 // Reports whose blocked URI or source file is a browser extension's own.
 const EXTENSION_SCHEMES = ['chrome-extension:', 'moz-extension:', 'safari-extension:', 'safari-web-extension:', 'edge-extension:'];
 
@@ -67,12 +66,7 @@ function rawJson(value: unknown): string {
 }
 
 function isSiteDocument(documentUri: string): boolean {
-  if (!documentUri) return false;
-  try {
-    return new URL(documentUri).origin === SITE_ORIGIN;
-  } catch {
-    return false;
-  }
+  return URL.parse(documentUri)?.origin === SITE.origin;
 }
 
 function isIgnoredReport(report: NormalizedReport): boolean {
@@ -111,7 +105,7 @@ function normalizeReportingApi(report: ReportingApiReport): NormalizedReport | n
     documentUri: field(body.documentURL || report.url),
     blockedUri: field(body.blockedURL),
     effectiveDirective: directive(body.effectiveDirective),
-    violatedDirective: directive(body.effectiveDirective),
+    violatedDirective: '',
     disposition: directive(body.disposition),
     referrer: field(body.referrer),
     sourceFile: field(body.sourceFile),
@@ -132,7 +126,7 @@ function normalizeReports(payload: unknown): NormalizedReport[] {
       if (legacy && typeof legacy === 'object') return normalizeLegacy(legacy);
       return normalizeReportingApi(report as ReportingApiReport);
     })
-    .filter((report): report is NormalizedReport => report !== null && !isIgnoredReport(report));
+    .filter((report) => report !== null);
 }
 
 export async function onRequestPost({ request, env }: PostContext<Env>): Promise<Response> {
@@ -142,11 +136,10 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
 
   const payload = await readRequestJson(request, MAX_BODY_BYTES);
   if (!payload.ok) return noContent(payload.status);
-  const reports = normalizeReports(payload.value);
-
-  if (reports.length === 0) {
-    return noContent(400);
-  }
+  const parsed = normalizeReports(payload.value);
+  if (parsed.length === 0) return noContent(400);
+  const reports = parsed.filter((report) => !isIgnoredReport(report));
+  if (reports.length === 0) return noContent();
 
   const { ip, userAgent, country } = requestMeta(request, MAX_USER_AGENT_LENGTH);
   const insert = env.DB.prepare(

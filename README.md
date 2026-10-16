@@ -26,7 +26,7 @@ no secrets.
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | static pages on Cloudflare Pages under a build-time hash CSP; Pages Functions only for the contact form and CSP reporting |
-| Data | Cloudflare D1 for contact submissions and CSP reports, behind Turnstile |
+| Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
 | Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `npm run cloudflare:apply` |
 | Previews | Behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
@@ -74,8 +74,8 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
   and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
   publish their results to code scanning.
-- Every commit on `main` is signed and every change lands through a pull
-  request with required checks.
+- Every commit on `main` is signed and every change lands through a
+  squash-merged pull request.
 - Each release carries the build output and its CycloneDX SBOM with Sigstore
   attestations: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
@@ -99,7 +99,7 @@ docs/         architecture, operations, and guides
 ```sh
 npm ci
 npm run dev              # local site
-npm run publish:check    # the local gate: audits, types, build, edge suite
+npm run diagnose         # the local gate: every audit, the build, the browser suites
 npm run site -- --help   # scaffold, validate, publish, and verify writeups
 ```
 
@@ -128,7 +128,7 @@ and gate issues on one screen.
 | [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
 | [Commands](./docs/Commands.md) | every npm script |
 | [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
-| [Dependencies](./docs/Dependencies.md) | why each `overrides` entry exists |
+| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and testing an upgrade |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |
 | [WordPress to Astro](./docs/WordPress-To-Astro-Migration.md) | why the site left WordPress, with measurements |
 

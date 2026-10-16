@@ -42,9 +42,9 @@ jobs:
           results_format: json
           publish_results: false
 
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+      - uses: ./.github/actions/setup
         with:
-          node-version-file: .nvmrc
+          install: 'false'
 
       - name: Summarize
         run: node bin/scorecard-summary.ts scorecard.json
