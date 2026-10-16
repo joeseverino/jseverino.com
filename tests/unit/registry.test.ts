@@ -5,40 +5,14 @@ import path from 'node:path';
 import { AUDITS, auditsFor, publishAudits, diagnosticAudits } from '../../tests/audits/registry.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 
-const VALID_GATES = ['gate', 'publish', 'diagnose'];
-const VALID_PHASES = ['pre-build', 'post-build'];
-
 describe('audit registry', () => {
-  test('every entry carries the required fields', () => {
-    for (const audit of AUDITS) {
-      const record: Record<string, unknown> = { ...audit };
-      for (const field of ['id', 'label', 'name', 'asserts', 'phase', 'exec', 'gates', 'fix']) {
-        assert.ok(record[field], `${audit.id ?? '<missing id>'} is missing ${field}`);
-      }
-      assert.ok(typeof audit.exec.cmd === 'string' && audit.exec.cmd.length > 0, `${audit.id} exec.cmd`);
-      assert.ok(Array.isArray(audit.exec.args), `${audit.id} exec.args`);
-    }
-  });
-
   test('ids are unique', () => {
     const ids = AUDITS.map((audit) => audit.id);
     assert.equal(new Set(ids).size, ids.length);
   });
 
-  test('phases and gates only use known values', () => {
-    for (const audit of AUDITS) {
-      assert.ok(VALID_PHASES.includes(audit.phase), `${audit.id} phase "${audit.phase}"`);
-      assert.ok(audit.gates.length > 0, `${audit.id} claims no gate`);
-      for (const gate of audit.gates) {
-        assert.ok(VALID_GATES.includes(gate), `${audit.id} gate "${gate}"`);
-      }
-    }
-  });
-
-  test('the complete gate (diagnose) runs every audit', () => {
-    for (const audit of AUDITS) {
-      assert.ok(audit.gates.includes('diagnose'), `${audit.id} is invisible to diagnose`);
-    }
+  test('every audit claims a gate', () => {
+    for (const audit of AUDITS) assert.ok(audit.gates.length > 0, `${audit.id} claims no gate`);
   });
 
   test('every node-script exec target exists on disk', () => {

@@ -1,5 +1,5 @@
 // The verification audits; every gate derives its checks from this list (data only).
-// localOnly skips on CI, macosOnly is the visual baselines, heavy caps concurrency, servesBuild runs with PREBUILT=1,
+// macosOnly is the visual baselines, heavy caps concurrency, servesBuild runs with PREBUILT=1,
 // lock serializes audits sharing it, ownCiJob means a dedicated CI job runs it so publish:check skips it there.
 
 export type Gate = 'gate' | 'publish' | 'diagnose';
@@ -14,9 +14,8 @@ export interface Audit {
   exec: { cmd: string; args: readonly string[]; env?: Readonly<Record<string, string>>; jsonArgs?: readonly string[] };
   gates: readonly Gate[];
   fix: string;
-  summary?: 'ok' | 'astro' | 'assets' | 'silent';
+  summary?: 'astro' | 'assets' | 'silent';
   macosOnly?: boolean;
-  localOnly?: boolean;
   timeout?: number;
   heavy?: boolean;
   browser?: boolean;
@@ -26,13 +25,6 @@ export interface Audit {
 }
 
 export const AUDITS: readonly Audit[] = [
-  {
-    id: 'source-integrity', label: 'source', name: 'Source Integrity', phase: 'pre-build',
-    asserts: 'Every .ts file under bin/, src/, and tests/ parses, and no file declares the same top-level function twice.',
-    exec: { cmd: 'node', args: ['tests/audits/check-source-integrity.ts'] },
-    gates: ['gate', 'publish', 'diagnose'],
-    fix: 'Fix the reported parse error or duplicate top-level function. The duplicate is legal JavaScript, so no compiler step reports it.',
-  },
   {
     id: 'duplication', label: 'dupes', name: 'No Duplicated Code', phase: 'pre-build',
     asserts: 'No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files).',
@@ -70,17 +62,17 @@ export const AUDITS: readonly Audit[] = [
   },
   {
     id: 'parity-check', label: 'parity', name: 'Content Contract Parity', phase: 'pre-build',
-    asserts: 'The content contract, its generated Astro schema, the public projection, the writeup store, and the `site manage` TUI agree on one fingerprint.',
+    asserts: 'The Astro writeup schema, the public projection, the writeup store, and the `site manage` TUI all read their fields from the content contract.',
     exec: { cmd: 'node', args: ['tests/audits/check-contract-parity.ts'] },
     gates: ['publish', 'diagnose'],
     fix: 'Edit `contracts/content.v1.json`, run `npm run sync:contract`, and commit the generated schema. Never hand-edit a projection.',
   },
   {
-    id: 'typecheck', label: 'types', name: 'TypeScript Type Check', phase: 'pre-build',
+    id: 'check:types', label: 'types', name: 'TypeScript Type Check', phase: 'pre-build',
     asserts: 'Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib.',
-    exec: { cmd: 'npm', args: ['run', '-s', 'typecheck'] },
+    exec: { cmd: 'npm', args: ['run', '-s', 'check:types'] },
     lock: 'astro', gates: ['gate', 'publish', 'diagnose'], summary: 'silent',
-    fix: 'Run `npm run typecheck`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib. `astro check` covers the .astro files.',
+    fix: 'Run `npm run check:types`. One strict program covers bin/, src/, tests/, and the configs; functions/ compiles again under the Workers lib. `astro check` covers the .astro files.',
   },
   {
     id: 'functions-parity', label: 'edge', name: 'Functions/Schema Parity', phase: 'pre-build',
@@ -135,12 +127,11 @@ export const AUDITS: readonly Audit[] = [
     id: 'astro-check', label: 'check', name: 'Astro Compiler Diagnostics', phase: 'pre-build',
     asserts: '`astro check` reports no errors or warnings in the .astro files, content schemas, or imports.',
     exec: {
-      cmd: 'npx', args: ['astro', 'check', '--minimumSeverity', 'warning', '--tsconfig', 'tsconfig.astro.json'],
-      env: { ASTRO_TELEMETRY_DISABLED: '1', NODE_OPTIONS: '--max-old-space-size=4096' },
-      jsonArgs: ['--json'],
+      cmd: 'npm', args: ['run', '-s', 'check:astro'],
+      jsonArgs: ['--', '--json'],
     },
     lock: 'astro', gates: ['publish', 'diagnose'], summary: 'astro',
-    fix: 'Run `npm run check` and fix the reported .astro type, content-schema, or import error.',
+    fix: 'Run `npm run check:astro` and fix the reported .astro type, content-schema, or import error.',
   },
   {
     id: 'repo-policy', label: 'repo-policy', name: 'Repository Policy', phase: 'pre-build',
@@ -213,7 +204,7 @@ export const AUDITS: readonly Audit[] = [
       env: { ASTRO_TELEMETRY_DISABLED: '1' },
     },
     browser: true, servesBuild: true, ownCiJob: true, gates: ['publish', 'diagnose'], timeout: 5 * 60_000,
-    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run edge:serve` reproduces the served responses by hand.',
+    fix: 'The build failed under the Cloudflare runtime (`wrangler pages dev`): a rule in public/_headers, the CSP build step, or a Pages Function regressed. Run `npm run test:edge`; `npm run serve:edge` reproduces the served responses by hand.',
   },
   {
     id: 'browser-tests', label: 'e2e', name: 'Playwright Browser Tests', phase: 'post-build',

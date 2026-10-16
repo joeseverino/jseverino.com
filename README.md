@@ -74,8 +74,8 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
   and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
   publish their results to code scanning.
-- Every commit on `main` is signed and every change lands through a pull
-  request with required checks.
+- Every commit on `main` is signed and every change lands through a
+  squash-merged pull request.
 - Each release carries the build output and its CycloneDX SBOM with Sigstore
   attestations: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
@@ -99,7 +99,7 @@ docs/         architecture, operations, and guides
 ```sh
 npm ci
 npm run dev              # local site
-npm run publish:check    # the local gate: audits, types, build, edge suite
+npm run diagnose         # the local gate: every audit, the build, the browser suites
 npm run site -- --help   # scaffold, validate, publish, and verify writeups
 ```
 

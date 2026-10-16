@@ -25,7 +25,6 @@ import { permittedContentRoot } from '../../src/lib/content-root.ts';
 const scratch = scratchDirs('content-sync-');
 after(scratch.cleanup);
 
-
 describe('asset references', () => {
   const body = [
     '![Alt](./images/a.png "A title")',
@@ -323,7 +322,6 @@ describe('image masters', () => {
     assert.equal(meta.exif, undefined);
     assert.equal(meta.icc, undefined);
     assert.deepEqual(await master(source), await master(source), 'a second encode is the cached bytes');
-    fs.rmSync(dir, { recursive: true, force: true });
   });
 });
 

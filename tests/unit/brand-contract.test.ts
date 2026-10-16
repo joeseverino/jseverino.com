@@ -13,5 +13,4 @@ test('brand card roles derive from the canonical token projection', () => {
 
 test('public focus copy derives from one ordered identity list', () => {
   assert.deepEqual(SITE.focus, ['Cybersecurity', 'Networking', 'AI']);
-  assert.equal(SITE.focus.join(' • '), 'Cybersecurity • Networking • AI');
 });

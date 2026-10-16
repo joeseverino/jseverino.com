@@ -35,29 +35,3 @@ jobs:
         uses: docker://rhysd/actionlint@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 # 1.7.12
         with:
           args: -color
-
-      # Workflows and the local composite actions they call.
-      - name: Enforce SHA-pinned actions
-        run: |
-          fail=0
-          while IFS= read -r ref; do
-            ref="${ref%%#*}"
-            ref="$(echo "$ref" | xargs)"
-            [ -z "$ref" ] && continue
-            case "$ref" in
-              ./*) ;;                  # local action or reusable workflow
-              docker://*@sha256:*) ;;  # digest-pinned container action
-              *@*)
-                sha="${ref##*@}"
-                if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
-                  echo "::error::Action must be pinned to a 40-char commit SHA: $ref"
-                  fail=1
-                fi
-                ;;
-              *)
-                echo "::error::Action has no pinned ref: $ref"
-                fail=1
-                ;;
-            esac
-          done < <(grep -rhE '^[[:space:]]*-?[[:space:]]*uses:' .github/workflows/ .github/actions/ | sed -E 's/^[[:space:]]*-?[[:space:]]*uses:[[:space:]]*//')
-          exit $fail

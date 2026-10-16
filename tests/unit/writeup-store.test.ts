@@ -7,6 +7,7 @@ import {
   technologyCatalog, updateFrontmatter, updateLink, type WriteupStore,
 } from '../../bin/lib/writeups/store.ts';
 import { renderScalar, replaceScalar, yamlEscape } from '../../bin/lib/writeups/scalar.ts';
+import { transactionalReplace } from '../../bin/lib/writeups/transaction.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 
@@ -231,9 +232,9 @@ describe('frontmatter writes', () => {
 });
 
 describe('links', () => {
-  test('replace exactly one link and drop its title', () => {
+  test('replace exactly one link and keep its title', () => {
     updateLink(store, 'ready-piece', 'the docs', 'https://example.com/old', 'https://example.com/new');
-    assert.ok(read('ready-piece').includes('[the docs](https://example.com/new)'));
+    assert.ok(read('ready-piece').includes('[the docs](https://example.com/new "Old docs")'));
   });
 
   test('refuse zero matches and non-http targets', () => {
@@ -302,5 +303,15 @@ describe('featured order and plans', () => {
     assert.equal(read('lead-piece'), originals.lead);
     assert.equal(read('ready-piece'), originals.ready);
     assert.deepEqual(fs.readdirSync(path.join(store.writeupsDir, 'lead-piece')).filter((name) => name.startsWith('.')), []);
+  });
+
+  test('an edit made after the caller read the file fails the transaction and survives', () => {
+    const before = read('lead-piece');
+    const edited = `${before}\nAn edit from another writer.\n`;
+    fs.writeFileSync(file('lead-piece'), edited);
+    const outcome = transactionalReplace(store.writeupsDir, new Map([[file('lead-piece'), { before, after: `${before}\nMine.\n` }]]));
+    assert.equal(outcome.ok, false);
+    assert.match(outcome.ok ? '' : outcome.error, /file changed during transaction/);
+    assert.equal(read('lead-piece'), edited);
   });
 });

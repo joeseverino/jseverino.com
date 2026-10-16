@@ -81,6 +81,12 @@ describe('request validation', () => {
     assert.equal(response.status, 400);
   });
 
+  test('rejects under-length fields with 400', async () => {
+    const response = await call(contactRequest({ ...validPayload, email: 'ab' }));
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /too short/);
+  });
+
   test('rejects an invalid email with 400', async () => {
     const response = await call(contactRequest({ ...validPayload, email: 'not-an-email' }));
     assert.equal(response.status, 400);
@@ -297,6 +303,20 @@ describe('persistence', () => {
     assert.equal(device, 'Mac');
     assert.equal(country, 'US');
     assert.equal(sourceUrl, 'https://jseverino.com/contact/');
+  });
+
+  test('names mobile Edge, Chrome and Firefox by their iOS and Android tokens', async () => {
+    const cases = {
+      'Mozilla/5.0 (Linux; Android 14) Chrome/126.0 Mobile Safari/537.36 EdgA/126.0': 'Edge',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Version/17.0 EdgiOS/126.0 Mobile/15E148 Safari/605.1.15': 'Edge',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) CriOS/126.0 Mobile/15E148 Safari/604.1': 'Chrome',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) FxiOS/127.0 Mobile/15E148 Safari/605.1.15': 'Firefox',
+    };
+    for (const [userAgent, expected] of Object.entries(cases)) {
+      const db = createD1Stub();
+      assert.equal((await call(contactRequest(validPayload, { 'User-Agent': userAgent }), db)).status, 200);
+      assert.equal(db.queries.at(-1)?.values[5], expected, userAgent);
+    }
   });
 
   test('returns 500 when the D1 insert fails', async () => {

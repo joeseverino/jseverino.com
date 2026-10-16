@@ -6,9 +6,7 @@ export interface RecordedQuery {
 }
 
 export interface D1StubOptions {
-  firstResult?: unknown;
   failRun?: boolean;
-  failFirst?: boolean;
   /** Rows a run() reports changed; 0 simulates a conditional INSERT that wrote nothing. */
   changes?: number;
 }
@@ -21,11 +19,6 @@ export function createD1Stub(options: D1StubOptions = {}) {
     record: { query, values } as RecordedQuery,
     bind(...bound: unknown[]) {
       return statement(query, bound);
-    },
-    async first() {
-      queries.push(this.record);
-      if (options.failFirst) throw new Error('d1 unavailable');
-      return options.firstResult ?? null;
     },
     async run() {
       queries.push(this.record);

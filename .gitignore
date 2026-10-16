@@ -4,9 +4,8 @@ node_modules
 # branding-engine glyph cache (only written when extracting a custom font)
 .brand-cache/
 
-# Astro, Vite, and Wrangler generated state
+# Astro and Wrangler generated state
 .astro/
-.vite/
 .wrangler/
 
 # Build output
@@ -42,9 +41,6 @@ AGENTS.md
 # Logs
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
 # Generated at build from src/content/writeups (see bin/make-content-index.ts)
 public/content-index.json

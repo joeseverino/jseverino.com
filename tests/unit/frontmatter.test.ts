@@ -33,3 +33,9 @@ test('YAML dates, merge keys, folded text and string scalars retain their types'
   assert.deepEqual(parseFrontmatter(stringifyFrontmatter(content, data)), { data, content });
   assert.deepEqual(parseFrontmatter('---\n# only a comment\n---\nBody'), { data: {}, content: 'Body' });
 });
+
+test('parse: a scalar or list block is not frontmatter', () => {
+  for (const block of ['just text', '- a\n- b', '2026-10-15']) {
+    assert.throws(() => parseFrontmatter(`---\n${block}\n---\nBody`), /frontmatter must be a mapping/);
+  }
+});

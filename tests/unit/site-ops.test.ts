@@ -69,6 +69,14 @@ describe('contact submissions', () => {
     assert.doesNotMatch(log, /jane/);
   });
 
+  test('--pii releases nothing when the audit line cannot be written', () => {
+    reply = d1([row]);
+    const cfg = config();
+    write(cfg.auditLog, '');
+    fs.chmodSync(cfg.auditLog, 0o400);
+    assert.throws(() => contactSubmissions(cfg, { includePii: true }), (error) => error instanceof SiteOpsError && /audit log/.test(error.message));
+  });
+
   test('a wrangler failure surfaces as an error with its output', () => {
     reply = () => ({ code: 1, stdout: '', stderr: 'Authentication error' });
     assert.throws(() => contactSubmissions(config()), (error) => error instanceof SiteOpsError && /Authentication error/.test(error.message));

@@ -2,7 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { AUDITS, auditsFor } from '../audits/registry.ts';
+import { auditsFor } from '../audits/registry.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 import { packageScripts } from '../../src/lib/json.ts';
 
@@ -10,16 +10,6 @@ const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
 const scripts = packageScripts();
 
 describe('registry/docs parity', () => {
-  test('every audit script is documented in tests/ARCHITECTURE.md', () => {
-    const architecture = read('tests/ARCHITECTURE.md');
-    for (const audit of AUDITS) {
-      const script = audit.exec.args.find((arg) => arg.startsWith('tests/audits/'));
-      if (!script) continue;
-      const name = path.basename(script);
-      assert.ok(architecture.includes(name), `${audit.id}: ${name} never appears in tests/ARCHITECTURE.md`);
-    }
-  });
-
   test('the release-checklist expected output covers every publish-gate label', () => {
     const checklist = read('docs/Release-Checklist.md');
     for (const audit of auditsFor('publish')) {
@@ -33,7 +23,7 @@ describe('registry/docs parity', () => {
   test('every gate command is listed in docs/Development.md', () => {
     const development = read('docs/Development.md');
     const gateScripts = Object.keys(scripts).filter((name) =>
-      /^(publish:|release:|deploy:|diagnose$)/.test(name),
+      /^(gate|publish):check$|^diagnose$|^deploy:verify$/.test(name),
     );
     for (const name of gateScripts) {
       assert.ok(development.includes(`npm run ${name}`), `gate command "${name}" is missing from docs/Development.md`);

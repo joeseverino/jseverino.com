@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // Internal link integrity over the built HTML: every href, src, srcset and poster (including
-// same-origin absolute URLs) resolves to an emitted file.
+// same-origin absolute URLs) resolves to an emitted file or a Pages Function route.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { SITE_ORIGIN as origin } from '../../src/lib/site-config.ts';
-import { builtPages, finish } from './lib.ts';
+import { functionPaths, matchesRule } from '../../bin/lib/pages-routes.ts';
+import { builtPages, finish, siteRoot } from './lib.ts';
 
 const { distDir, pages } = builtPages('check-links');
 
-// Routes served by Cloudflare Pages functions, not by emitted files.
-const DYNAMIC_ROUTE_PREFIXES = ['/api/', '/__sitedrift/', '/cdn-cgi/'];
+const functionRules = functionPaths(path.join(siteRoot, 'functions')).map((url) => url.replace(/(?<=\/)x(?=\/|$)/g, '*'));
 
 // Normalize a reference to a root-relative pathname, or null when it is out
 // of scope (external origin, mailto:, data:, fragment-only, …).
@@ -34,7 +34,7 @@ function internalPathname(reference: string, pageDir: string): string | null {
 }
 
 function resolvesInDist(pathname: string): boolean {
-  if (DYNAMIC_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true;
+  if (pathname.startsWith('/cdn-cgi/') || functionRules.some((rule) => matchesRule(rule, pathname))) return true;
   const target = path.join(distDir, pathname);
   if (pathname.endsWith('/')) return fs.existsSync(path.join(target, 'index.html'));
   if (fs.existsSync(target) && fs.statSync(target).isFile()) return true;

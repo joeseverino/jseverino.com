@@ -13,7 +13,7 @@ Turnstile test keys, then:
 ```sh
 npm ci
 npm run dev                # Astro dev server
-npm run build:static && npm run edge:serve   # the build on the Cloudflare runtime
+npm run build:static && npm run serve:edge   # the build on the Cloudflare runtime
 ```
 
 ## Code
@@ -21,7 +21,7 @@ npm run build:static && npm run edge:serve   # the build on the Cloudflare runti
 Everything is TypeScript, run directly by Node 24, which strips the types: no
 build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
 properties) is out, so `erasableSyntaxOnly` is on and every relative import
-names its `.ts` file. `npm run typecheck` is the one strict
+names its `.ts` file. `npm run check:types` is the one strict
 check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, `functions/lib/`, or a test helper, and the
 gate fails on duplicated code.
@@ -30,8 +30,8 @@ gate fails on duplicated code.
 
 ```sh
 npm run gate:check         # fast invariants: types, policy, docs, lint, duplication
-npm run publish:check      # + unit tests, astro check, the build, post-build audits, the edge suite
-npm run diagnose           # every audit in one pass; writes .validation-report.md on failure
+npm run publish:check      # the pre-publish gate: + unit tests, astro check, the build, post-build audits, the edge suite
+npm run diagnose           # the local gate: every audit in one pass; writes .validation-report.md on failure
 npm run diff:build         # build HEAD and the working tree, report any change to shipped output
 npm run deploy:verify      # after a merge: required checks, then the live deployment
 ```
@@ -75,7 +75,7 @@ steps.
 
 | Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`ci`](../.github/workflows/ci.yml) | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs the gate audits (source integrity, repository policy, documentation integrity, stylesheet lint) and then the registry publish gate `publish:check --no-sync` on the same artifact `build-static` ships (plus a CycloneDX SBOM on `main`). The `playwright` matrix runs `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `wrangler pages dev` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact function's refusals, and byte-exact `security.txt`, all before anything deploys. | Green checks on the committed tree, SBOM artifact on `main`, and a summary on every job. |
+| [`ci`](../.github/workflows/ci.yml) | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs the gate audits (repository policy, documentation integrity, stylesheet lint) and then the registry publish gate `publish:check --no-sync` on the same artifact `build-static` ships (plus a CycloneDX SBOM on `main`). The `playwright` matrix runs `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `wrangler pages dev` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact function's refusals, and byte-exact `security.txt`, all before anything deploys. | Green checks on the committed tree, SBOM artifact on `main`, and a summary on every job. |
 | [`deploy`](../.github/workflows/deploy.yml) | Starts when Cloudflare Pages reports its check-run complete (nothing polls). Runs `deploy-verify --origin` against that deployment's own `*.pages.dev` URL (headers, inline-code hash coverage, cache rules, every sitemap route, 404, contact refusal, `security.txt`), and keeps one pull-request comment current with the CI summaries and the deployment result, whichever finishes first. Also recovers the CI run GitHub suppresses after a Dependabot auto-merge. | One updating PR comment; a verification summary for every deployment. |
 | [`dist`](../.github/workflows/dist.yml) | On each push to `main`, builds the site and commits the output to the `dist` branch ([Dist Branch](./Dist-Branch.md)). | A `deploy: <sha>` commit on `dist`, or none when the output is unchanged. |
 | [`codeql`](../.github/workflows/codeql.yml) | Scans the TypeScript for semantic vulnerabilities; skipped (reported as passing) on pull requests that touch only content. | Zero open CodeQL alerts. |

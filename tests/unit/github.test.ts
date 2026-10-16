@@ -4,7 +4,8 @@ import { main } from '../../bin/github.ts';
 import { loadDesired, type DesiredState } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
 import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
-import { fromRoot, read, runner, schemaTests } from './helpers/desired-state.ts';
+import { fromRoot } from '../../src/lib/site-root.ts';
+import { read, runner, schemaTests } from './helpers/desired-state.ts';
 
 const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');

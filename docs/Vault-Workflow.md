@@ -114,7 +114,7 @@ npm run publish:check
 
 `npm run publish:check` is the final local gate before committing generated content changes.
 
-The sync and the local-only audits find the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
+The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
 
 | Source | Override | Default |
 | :--- | :--- | :--- |

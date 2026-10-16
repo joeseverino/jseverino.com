@@ -32,8 +32,8 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run gate:check` | local and CI, first | the fast invariants: source parse, duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
-| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO; CI skips the local-only vault parity check |
+| `npm run gate:check` | local and CI, first | the fast invariants: duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
+| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
 | `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
 
 The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md#gate-coverage) table.

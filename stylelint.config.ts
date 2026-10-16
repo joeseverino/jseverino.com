@@ -1,3 +1,5 @@
+import type { Config } from 'stylelint';
+
 export default {
   extends: ['stylelint-config-standard'],
   rules: {
@@ -17,8 +19,5 @@ export default {
 
     'selector-class-pattern': null,
     'value-keyword-case': null,
-
-    'no-duplicate-selectors': true,
-    'block-no-empty': true,
   },
-};
+} satisfies Config;

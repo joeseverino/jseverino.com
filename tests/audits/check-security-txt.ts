@@ -49,6 +49,7 @@ try {
   if (Number.isNaN(expires.getTime())) fail(`security.txt Expires is not a parseable date: ${Expires}`);
   const msUntil = expires.getTime() - Date.now();
   const daysUntil = Math.floor(msUntil / 86_400_000);
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `days_remaining=${daysUntil}\n`);
   if (msUntil <= 0) fail(`security.txt Expires (${Expires}) is in the past`);
   if (daysUntil < expiresWarnDays) {
     fail(`security.txt Expires in ${daysUntil}d (< ${expiresWarnDays}d). Bump it, re-sign, commit.`);

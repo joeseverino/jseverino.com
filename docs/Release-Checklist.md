@@ -44,7 +44,6 @@ A clean `publish:check` reports one line per step:
 ```text
 sync         content snapshot updated
 content      no content changes
-source       source files parse and top-level declarations are unique
 dupes        <n> files, no clone of 30+ tokens over 3+ lines (40/4 between tests)
 contracts    generated brand, API, schema, CSS, and edge identity projections match their canonical sources
 manifest     <n> synced images have manifest entries; all <n> named files exist

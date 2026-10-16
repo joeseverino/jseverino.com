@@ -6,7 +6,9 @@ on:
     paths:
       - 'README.md'
       - 'SECURITY.md'
+      - 'CONTRIBUTING.md'
       - 'docs/**/*.md'
+      - 'tests/*.md'
       - 'src/content/**/*.md'
       - 'src/content/**/*.mdx'
   schedule:
@@ -42,7 +44,9 @@ jobs:
             --accept 200,204,206,301,302,303,307,308,403,429,999
             README.md
             SECURITY.md
+            CONTRIBUTING.md
             docs/**/*.md
+            tests/*.md
           fail: true
 
       - name: Check public content links

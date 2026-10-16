@@ -51,7 +51,6 @@ export default defineConfig({
     syntaxHighlight: false,
     processor: satteri(processorOptions),
   },
-  // 768 covers the common 600-720px box: 512 undersizes it and 1024 ships about double the bytes.
   image: {
     breakpoints: IMAGE_WIDTHS,
     service: {

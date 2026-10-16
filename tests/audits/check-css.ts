@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { walkFiles } from '../../src/lib/walk.ts';
+import { abort, finish } from './lib.ts';
 
 const srcDir = path.join(siteRoot, 'src');
 const listFiles = (dir: string, pattern: RegExp): string[] => walkFiles(dir, { filter: (file) => pattern.test(file) });
@@ -10,6 +11,7 @@ const listFiles = (dir: string, pattern: RegExp): string[] => walkFiles(dir, { f
 // a var(--x) in an .astro template or a JS string still justifies the token.
 const cssFiles = listFiles(path.join(srcDir, 'styles'), /\.css$/);
 const codeFiles = listFiles(srcDir, /\.(astro|ts)$/);
+if (cssFiles.length === 0) abort('check-css', 'no stylesheets under src/styles');
 
 const definitions = new Map<string, string[]>();
 const usages = new Set<string>();
@@ -35,12 +37,8 @@ const unused = [...definitions]
   .filter(([property]) => !usages.has(property))
   .sort(([left], [right]) => left.localeCompare(right));
 
-if (unused.length > 0) {
-  console.error('Unused CSS custom properties:');
-  for (const [property, locations] of unused) {
-    console.error(`  ${property} (${locations.join(', ')})`);
-  }
-  process.exitCode = 1;
-} else {
-  console.log(`CSS custom-property audit passed (${definitions.size} properties).`);
-}
+finish(
+  unused.map(([property, locations]) => `${property} (${locations.join(', ')})`),
+  `${definitions.size} CSS custom properties, all referenced`,
+  { heading: 'Unused CSS custom properties:' },
+);

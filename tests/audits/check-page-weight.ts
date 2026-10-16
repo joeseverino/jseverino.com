@@ -33,7 +33,7 @@ for (const { file, rel } of htmlFiles) {
 // External .css counts too, except public/embed/bundle.css (an embeddable artifact no page loads).
 const inlineCss = Math.max(
   0,
-  ...htmlFiles.map(({ html }) => (html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '').length),
+  ...htmlFiles.map(({ html }) => Buffer.byteLength(html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '')),
 );
 const totalCss = inlineCss + sum(files.filter((file) => file.endsWith('.css') && !file.includes('/embed/')));
 if (totalCss > BUDGET.totalCssBytes) {

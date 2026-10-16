@@ -64,5 +64,4 @@ test('human-readable stdout and JSON progress neutralize untrusted terminal cont
     assert.ok(output.includes('\\u000d'));
   }
   assert.equal(terminalText('Title\n  ordinary\ttext'), 'Title\n  ordinary\ttext');
-  assert.equal(JSON.parse(JSON.stringify({ value: payload })).value, payload);
 });

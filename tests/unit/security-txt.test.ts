@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { SECURITY_FILE, verifySecuritySignature } from '../../bin/lib/security-txt.ts';
+import { tempDir } from './helpers/fs.ts';
 
 test('signature verification ignores the personal keyring and rejects modified content', (t) => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'signature-test-'));
+  const directory = tempDir('signature-test-');
   const previous = process.env.GNUPGHOME;
   process.env.GNUPGHOME = path.join(directory, 'personal-keyring-must-not-be-created');
   t.after(() => {
