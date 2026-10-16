@@ -3,13 +3,12 @@ import path from 'node:path';
 import { test, expect } from '@playwright/test';
 import { buildOutDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { writeupPath } from '../../src/lib/site-config.ts';
+import { SITE_ORIGIN, writeupPath } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
   cspFindings,
   inlineHashFindings,
-  siteOrigin,
   staticHeaderFindings,
 } from '../../src/lib/edge-expectations.ts';
 
@@ -124,7 +123,7 @@ test.describe('POST /api/contact', () => {
     name: 'edge suite',
     email: 'edge-suite@example.com',
     message: 'Automated pre-deploy probe. No verification token supplied.',
-    sourceUrl: `${siteOrigin}/contact/`,
+    sourceUrl: `${SITE_ORIGIN}/contact/`,
   };
 
   test('refuses a submission without a Turnstile token before any external call', async ({ request }) => {

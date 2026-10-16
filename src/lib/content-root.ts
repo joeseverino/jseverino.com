@@ -4,7 +4,7 @@ import path from 'node:path';
 // self-contained tree: tests/fixtures/content, so the visual baselines never
 // move with a publish, or the gitignored drafts overlay `site dev --drafts`
 // syncs. Such a build is hermetic and makes no network calls.
-export const contentRoot = process.env.SITE_CONTENT_ROOT ?? 'src/content';
+export const contentRoot = process.env.SITE_CONTENT_ROOT || 'src/content';
 export const fixtureContent = Boolean(process.env.SITE_CONTENT_ROOT);
 
 // A static build reads only src/content or a fixture tree, so drafts never ship.

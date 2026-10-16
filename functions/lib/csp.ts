@@ -8,7 +8,7 @@ export const CSP_INLINE_MARKER = '__CSP_INLINE__';
 const MARKER_ATTRIBUTE = new RegExp(`\\s+nonce="${CSP_INLINE_MARKER}"`, 'g');
 
 // Script hosts: Turnstile on the contact page, the Cloudflare Web Analytics beacon.
-export const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'] as const;
+const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'] as const;
 
 export interface PolicyInput {
   scriptHashes: readonly string[];

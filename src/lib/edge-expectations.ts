@@ -1,12 +1,11 @@
 // Pure checks returning findings (empty means correct). tests/edge runs them against
 // `wrangler pages dev`; bin/deploy-verify.ts runs the same ones against production.
 // `headers` is keyed by lower-cased name, as Playwright's response.headers() returns.
-import { SITE_ORIGIN as siteOrigin } from './site-config.ts';
+import { SITE_ORIGIN } from './site-config.ts';
 import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from '../../functions/lib/csp.ts';
 
-export { siteOrigin };
 export const cspReportPath = '/api/csp-report';
-export const cspReportUri = `${siteOrigin}${cspReportPath}`;
+export const cspReportUri = `${SITE_ORIGIN}${cspReportPath}`;
 
 export type HeaderRecord = Record<string, string>;
 
@@ -65,7 +64,7 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   return findings;
 }
 
-export const staticSecurityHeaders = Object.freeze({
+const staticSecurityHeaders = Object.freeze({
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'SAMEORIGIN',
   'x-permitted-cross-domain-policies': 'none',

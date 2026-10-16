@@ -1,7 +1,7 @@
 // Walked by the live deploy check and the route spec. read() fetches one document by its <loc>.
 import { tagPath } from './site-config.ts';
 
-export const sitemapLocs = (xml: string): string[] => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc = '']) => loc);
+const sitemapLocs = (xml: string): string[] => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc = '']) => loc);
 
 export async function sitemapUrls(index: string, read: (url: string) => Promise<string>): Promise<string[]> {
   const urls: string[] = [];

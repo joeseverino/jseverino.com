@@ -1,12 +1,10 @@
 // Shared subset of D1 used by the edge endpoints; no runtime dependency.
 export interface D1Result {
-  success: boolean;
   meta: { changes: number };
 }
 
 export interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
-  first<T = Record<string, unknown>>(): Promise<T | null>;
   run(): Promise<D1Result>;
 }
 

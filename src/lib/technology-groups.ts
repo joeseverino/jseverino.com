@@ -24,7 +24,6 @@ export function parseTechnologyGroups(body: string): TechnologyGroup[] {
         const trimmed = line.trim();
         if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
         const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
-        if (cells.length < 2) continue;
         const [slug, label, featured] = cells;
         if (!slug || !label) continue;
         if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;

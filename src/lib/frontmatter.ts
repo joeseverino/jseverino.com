@@ -18,7 +18,10 @@ export function parseFrontmatter(markdown: string): ParsedFrontmatter {
   const match = FENCE.exec(text);
   if (!match) return { data: {}, content: text };
   const [data] = loadAll(match[1] ?? '', { schema: FRONTMATTER_SCHEMA });
-  return { data: (data ?? {}) as FrontmatterData, content: text.slice(match[0].length) };
+  const content = text.slice(match[0].length);
+  if (data === undefined || data === null) return { data: {}, content };
+  if (typeof data !== 'object' || Array.isArray(data) || data instanceof Date) throw new Error('frontmatter must be a mapping');
+  return { data: data as FrontmatterData, content };
 }
 
 export function stringifyFrontmatter(markdown: string, data: FrontmatterData): string {

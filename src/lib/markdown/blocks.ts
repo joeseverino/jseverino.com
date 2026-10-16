@@ -52,19 +52,22 @@ function button(paragraph: RootContent | undefined, className: string): MdastNod
   return { ...link, data: { hProperties: { className: className.split(' ') } } } as unknown as MdastNode;
 }
 
-function buttons(node: ContainerDirective): MdastNode | readonly RootContent[] {
-  const list = node.children[0];
-  if (list?.type !== 'list') return [];
-  const links = list.children
-    .map((item: ListItem, index) => button(item.children[0], index === 0 ? 'button' : 'button secondary'))
-    .filter((link): link is MdastNode => link !== undefined);
-  return links.length ? element('div', links.flatMap((link, index) => (index ? [{ type: 'text', value: '\n' }, link] : [link])), { className: ['actions'] }) : [];
+function buttons(node: ContainerDirective): MdastNode {
+  const [list] = node.children;
+  if (node.children.length !== 1 || list?.type !== 'list') throw new Error(`:::buttons holds one list of links${line(node)}`);
+  const links = list.children.map((item: ListItem, index) => {
+    const link = item.children.length === 1 ? button(item.children[0], index === 0 ? 'button' : 'button secondary') : undefined;
+    if (!link) throw new Error(`:::buttons items are each one bare link${line(item)}`);
+    return link;
+  });
+  return element('div', links.flatMap((link, index) => (index ? [{ type: 'text', value: '\n' }, link] : [link])), { className: ['actions'] });
 }
 
-function single(node: ContainerDirective): MdastNode | readonly RootContent[] {
+function single(node: ContainerDirective): MdastNode {
   const sticky = String(node.attributes?.class ?? '').split(/\s+/).includes('sticky');
-  const link = button(node.children[0], sticky ? 'button sticky-button' : 'button');
-  return link ? element('div', [link], { className: ['actions'] }) : [];
+  const link = node.children.length === 1 ? button(node.children[0], sticky ? 'button sticky-button' : 'button') : undefined;
+  if (!link) throw new Error(`:::button holds one bare link${line(node)}`);
+  return element('div', [link], { className: ['actions'] });
 }
 
 function side(node: ContainerDirective): MdastNode {

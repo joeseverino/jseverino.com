@@ -19,10 +19,10 @@ interface Env {
 const json = (data: unknown, status = 200): Response => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 
 function parseBrowser(ua: string): string {
-  if (/Edg\//.test(ua)) return 'Edge';
+  if (/Edg(?:A|iOS)?\//.test(ua)) return 'Edge';
   if (/OPR\/|Opera/.test(ua)) return 'Opera';
-  if (/Firefox\//.test(ua)) return 'Firefox';
-  if (/Chrome\//.test(ua)) return 'Chrome';
+  if (/Firefox\/|FxiOS\//.test(ua)) return 'Firefox';
+  if (/Chrome\/|CriOS\//.test(ua)) return 'Chrome';
   if (/Safari\//.test(ua)) return 'Safari';
   return 'Unknown';
 }
@@ -60,7 +60,6 @@ async function verifyTurnstile(token: string, ip: string, secret: string): Promi
 }
 
 export async function onRequestPost({ request, env }: PostContext<Env>): Promise<Response> {
-
   if (requestMediaType(request) !== 'application/json') {
     return json({ ok: false, error: 'Invalid request.' }, 415);
   }
@@ -77,6 +76,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
     }
     const error = {
       missing: 'Please fill in your name, email, and message.',
+      too_short: 'One of the fields is too short.',
       too_long: 'One of the fields is too long.',
       email: 'Please enter a valid email address.',
       uri: 'Invalid request.',
