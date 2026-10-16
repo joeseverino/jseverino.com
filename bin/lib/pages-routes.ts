@@ -12,7 +12,7 @@ const MAX_RULE_LENGTH = 100;
 export interface PagesRoutes {
   version: number;
   include: string[];
-  exclude: string[];
+  exclude?: string[];
 }
 
 // Trusted as PagesRoutes; shapeFindings is the check that it really is one.

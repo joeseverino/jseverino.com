@@ -5,10 +5,10 @@ import { draftsOverlay } from '../lib/cache.ts';
 import { lockfileDrift, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run } from '../lib/run.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { buildOutDir } from '../../src/lib/build-output.ts';
-import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
+import { buildOutDir, resolveBuiltDir } from '../../src/lib/build-output.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { SiteError, assertSlug, requireReady, runScript, type Output } from './cli.ts';
+import { EXIT, SiteError, assertSlug, requireReady, runScript, type Output } from './cli.ts';
 import type { DevResult, DraftAltResult, PullRequestRef, ScriptRun, SeoResult, StatusResult, VerifyResult } from './types.ts';
 import { liveDevServer } from './dev-server.ts';
 
@@ -58,7 +58,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
     gitLine(root, ['branch', '--show-current']),
     gitLine(root, ['status', '--porcelain=v1']),
     gitLine(root, ['rev-list', '--left-right', '--count', `HEAD...origin/${DEFAULT_BRANCH}`]),
-    run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName'], { cwd: root, timeout: 30_000 }),
+    run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY], { cwd: root, timeout: 30_000 }),
   ]);
   const dirty = (porcelain ?? '').split('\n').filter(Boolean).length;
   const [ahead = null, behind = null] = counts ? counts.split(/\s+/).map(Number) : [];
@@ -72,12 +72,13 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
     behind,
     deps: { ok: drift.length === 0, drift: drift.slice(0, 10) },
     vault: { path: vault, ok: fs.existsSync(path.join(vault, WRITEUPS_FOLDER)) },
-    built: fs.existsSync(path.join(root, buildOutDir)),
+    built: resolveBuiltDir(root) !== null,
     draftsOverlay: fs.existsSync(draftsOverlay()),
     contentPrs: prs.code === 0 ? (JSON.parse(prs.stdout) as PullRequestRef[]).filter((pr) => pr.headRefName.startsWith(CONTENT_BRANCH_PREFIX)) : null,
   };
   out.step('repo', `${root} on ${result.branch ?? 'detached HEAD'}${dirty ? `, ${dirty} uncommitted` : ', clean'}`);
-  out.step('main', ahead === null ? 'origin/main unknown (fetch first)' : `${ahead} ahead, ${behind} behind origin/main (as of the last fetch)`);
+  const upstream = `origin/${DEFAULT_BRANCH}`;
+  out.step(DEFAULT_BRANCH, ahead === null ? `${upstream} unknown (fetch first)` : `${ahead} ahead, ${behind} behind ${upstream} (as of the last fetch)`);
   (result.deps.ok ? out.step : out.warn)('deps', result.deps.ok ? 'match package-lock.json' : `stale: run npm ci (${drift.length} differences)`);
   (result.vault.ok ? out.step : out.warn)('vault', result.vault.ok ? vault : `not found at ${vault}`);
   out.step('build', result.built ? `${buildOutDir}/ present` : 'not built');
@@ -102,7 +103,8 @@ export async function verify({ slug: requested, origin, out }: { slug: string | 
   return { slug, ...result, next: `site seo ${slug}` };
 }
 
-export async function seo({ page, result: resultOnly, out }: { page: string; result: boolean; out: Output }): Promise<SeoResult> {
+export async function seo({ page, result: resultOnly, out }: { page: string | undefined; result: boolean; out: Output }): Promise<SeoResult> {
+  if (!page) throw new SiteError('a page is required', { code: EXIT.usage, fix: 'site seo --help' });
   const result = await front('bin/seo-preview.ts', [...(resultOnly ? ['--result'] : []), page], { out, what: 'seo preview' });
   return { page, ...result, next: null };
 }

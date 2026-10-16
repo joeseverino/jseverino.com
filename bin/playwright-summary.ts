@@ -6,13 +6,21 @@
 import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import fs from 'node:fs';
 import path from 'node:path';
+import { cli } from './lib/args.ts';
 import { status } from './lib/run.ts';
 import { annotate, appendSummary, cell, table } from './lib/step-summary.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 
-const title = process.argv[2] ?? 'Playwright';
-const input = path.resolve(root, process.argv[3] ?? 'test-results/results.json');
+const [title = 'Playwright', reportFile = 'test-results/results.json', ...extra] = cli({
+  usage: 'usage: node bin/playwright-summary.ts [title] [report.json]',
+  allowPositionals: true,
+}).positionals;
+if (extra.length) {
+  console.error('usage: node bin/playwright-summary.ts [title] [report.json]');
+  process.exit(2);
+}
+const input = path.resolve(root, reportFile);
 
 interface TestRow {
   project: string;

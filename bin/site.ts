@@ -9,6 +9,7 @@ import { JSON_LOGS_ENV } from './lib/run.ts';
 import { EXIT, SiteError, createOutput, terminalText, type Output } from './site/cli.ts';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import { PROTOCOL_VERSION, type CommandName, type CommandResults, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
+import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 
 type Values<O extends ParseArgsOptionsConfig> =
@@ -92,25 +93,23 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   }),
   publish: define({
     summary: 'Open a pull request with the vault\'s current public content',
-    usage: 'site publish [--dry-run] [--full] [--base <branch>] [--from <ref>]',
+    usage: 'site publish [--dry-run] [--full] [--from <ref>]',
     help: [
-      'Preflight, then a fresh content/<date> branch from origin/<base> in a temporary worktree (the',
-      'checkout is never touched), the sync, the content diff, the fast gate plus local-only audits, a',
+      `Preflight, then a fresh content/<date> branch from origin/${DEFAULT_BRANCH} in a temporary worktree (the`,
+      'checkout is never touched), the sync, the content diff, the fast gate, a',
       'commit of exactly the files the sync declares, push, and the PR. It does not merge: site land does.',
       '',
       '  --dry-run      stop after the commit, print the summary and PR body, remove the worktree and branch',
       '  --full         run the whole publish gate (build + post-build audits) instead of the fast gate',
-      '  --base         the PR\'s target branch (default main)',
-      '  --from         cut the branch from this ref instead of origin/<base>',
+      `  --from         cut the branch from this ref instead of origin/${DEFAULT_BRANCH}`,
     ].join('\n'),
     options: {
       'dry-run': flag,
       full: flag,
-      base: { type: 'string', default: 'main' },
       from: { type: 'string' },
     },
     run: async ({ values, out }) => (await import('./site/publish.ts')).publish({
-      dryRun: values['dry-run'], full: values.full, base: values.base, from: values.from, out,
+      dryRun: values['dry-run'], full: values.full, from: values.from, out,
     }),
   }),
   land: define({
@@ -121,7 +120,8 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
       'until each has reported and passed on the PR head, squash-merges, waits for',
       'the merge commit\'s Cloudflare Pages deployment, verifies each published or edited writeup on',
       'production (and that removed ones return 404), then runs hq sync if the hq CLI exists.',
-      'An already-merged PR skips straight to the deploy wait. --timeout bounds the whole run (default 30).',
+      'Only a content/* PR into main is landed. An already-merged PR skips straight to the deploy wait.',
+      '--timeout bounds the waits for checks and deploy, in minutes (default 30).',
     ].join('\n'),
     options: { timeout: { type: 'string', default: '30' } },
     positionals: [0, 1],
@@ -159,9 +159,9 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     summary: 'Preview a built page\'s search snippet and metadata',
     usage: 'site seo <page> [--result]',
     help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (npm run build:static).',
-    options: { result: { type: 'boolean', short: 'r', default: false } },
+    options: { result: flag },
     positionals: [1, 1],
-    run: async ({ values, positionals: [page = ''], out }) => (await local()).seo({ page, result: values.result, out }),
+    run: async ({ values, positionals: [page], out }) => (await local()).seo({ page, result: values.result, out }),
   }),
   'draft-alt': define({
     summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
@@ -189,7 +189,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site tag <slug>',
     help: 'A tag earns a featured slot on the home page only when a published writeup uses it.',
     positionals: [1, 1],
-    run: async ({ positionals: [slug = ''], out }) => (await writeupOps()).tag({ slug, out }),
+    run: async ({ positionals: [slug], out }) => (await writeupOps()).tag({ slug, out }),
   }),
   prepare: define({
     summary: 'Publish readiness for one writeup: the ship gate plus its featured slot',
@@ -197,7 +197,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: '--tag-usage adds how many writeups use each of its technologies.',
     options: { 'tag-usage': flag },
     positionals: [1, 1],
-    run: async ({ values, positionals: [slug = ''], out }) => (await writeupOps()).prepareWriteup({ slug, tagUsage: values['tag-usage'], out }),
+    run: async ({ values, positionals: [slug], out }) => (await writeupOps()).prepareWriteup({ slug, tagUsage: values['tag-usage'], out }),
   }),
   'apply-plan': define({
     summary: 'Apply field updates and the complete featured order in one transaction',
@@ -216,7 +216,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: 'Rewrites only the changed lines; every other byte of the file is kept. Featured order is site featured.',
     options: SET_OPTIONS,
     positionals: [1, 1],
-    run: async ({ values, positionals: [slug = ''], out }) => (await writeupOps()).set({
+    run: async ({ values, positionals: [slug], out }) => (await writeupOps()).set({
       slug, fields: setFields(values), touchLastReviewed: values['touch-last-reviewed'], out,
     }),
   }),
@@ -226,7 +226,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: 'Exactly one [label](from) must match; both URLs must be absolute http(s).',
     options: { label: { type: 'string' }, from: { type: 'string' }, to: { type: 'string' } },
     positionals: [1, 1],
-    run: async ({ positionals: [slug = ''], values: { label, from, to }, out }) => (await writeupOps()).link({ slug, label, from, to, out }),
+    run: async ({ positionals: [slug], values: { label, from, to }, out }) => (await writeupOps()).link({ slug, label, from, to, out }),
   }),
   contract: define({
     summary: 'The writeup field contract and its fingerprint',
@@ -240,7 +240,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. html is the body the build ships. --document adds document: a self-contained page with the site article layout and styles inlined, for previews (the Obsidian plugin, HQ). Asset paths stay vault-relative.',
     positionals: [1, 1],
     options: { document: flag },
-    run: async ({ positionals: [slug = ''], values: { document }, out }) => (await import('./site/render.ts')).render({ slug, document, out }),
+    run: async ({ positionals: [slug], values: { document }, out }) => (await import('./site/render.ts')).render({ slug, document, out }),
   }),
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
@@ -325,6 +325,22 @@ function helpDocument(name: CommandName | undefined): SiteHelp {
   };
 }
 
+// The envelope is spread last, so a command's own fields never replace ok, command, or status.
+export function successDocument<C extends CommandName>(command: C, result: CommandResults[C]): SiteSuccessOf<C> {
+  const status = typeof result === 'object' && result !== null && 'status' in result && typeof result.status === 'string' ? result.status : 'ok';
+  return { ...result, ok: true, command, status } as SiteSuccessOf<C>;
+}
+
+export function failureDocument(command: string | undefined, error: unknown): SiteFailure {
+  const known = error instanceof SiteError;
+  const message = known ? error.message : error instanceof Error ? error.stack ?? error.message : String(error);
+  return {
+    ...(known ? error.result : {}),
+    ok: false, command, status: 'failed',
+    error: { message, code: known ? error.code : EXIT.failed, fix: known ? error.fix ?? null : null },
+  };
+}
+
 function emit<C extends CommandName>(json: boolean, document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
   if (json) console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
 }
@@ -361,8 +377,7 @@ async function runCommand<C extends CommandName>(name: C, rest: string[], json: 
     throw new SiteError(`usage: ${command.usage}`, { code: EXIT.usage, fix: `site ${name} --help` });
   }
   const result = await command.run({ values: parsed.values, positionals: parsed.positionals, out });
-  const status = typeof result === 'object' && result !== null && 'status' in result && typeof result.status === 'string' ? result.status : 'ok';
-  emit<C>(json, { ok: true, command: name, status, ...result });
+  emit<C>(json, successDocument(name, result));
   return EXIT.ok;
 }
 
@@ -379,19 +394,14 @@ async function main(argv: string[]): Promise<number> {
     if (!isCommand(name)) throw new SiteError(`unknown command: ${name}`, { code: EXIT.usage, fix: 'site --help' });
     return await runCommand(name, rest, json, out);
   } catch (error) {
-    const known = error instanceof SiteError;
-    const code = known ? error.code : EXIT.failed;
-    const message = known ? error.message : error instanceof Error ? error.stack ?? error.message : String(error);
+    const failure = failureDocument(name, error);
     if (json) {
-      emit(true, {
-        ok: false, command: name, status: 'failed', ...(known ? error.result : {}),
-        error: { message, code, fix: known ? error.fix ?? null : null },
-      });
+      emit(true, failure);
     } else {
-      console.error(`failed: ${terminalText(message)}`);
-      if (known && error.fix) console.error(`fix: ${terminalText(error.fix)}`);
+      console.error(`failed: ${terminalText(failure.error.message)}`);
+      if (failure.error.fix) console.error(`fix: ${terminalText(failure.error.fix)}`);
     }
-    return code;
+    return failure.error.code;
   }
 }
 

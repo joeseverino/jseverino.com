@@ -3,8 +3,15 @@ import fs from 'node:fs';
 
 export const inActions = process.env.GITHUB_ACTIONS === 'true';
 
+// The workflow-command escaping @actions/core applies, so text cannot end the command or start another.
+const escapeData = (text: string): string => text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+const escapeProperty = (text: string): string => escapeData(text).replace(/:/g, '%3A').replace(/,/g, '%2C');
+
+export const annotation = (kind: 'error' | 'warning' | 'notice', title: string, message: string): string =>
+  `::${kind} title=${escapeProperty(title)}::${escapeData(message)}`;
+
 export function annotate(kind: 'error' | 'warning' | 'notice', title: string, message: string): void {
-  if (inActions) console.log(`::${kind} title=${title}::${message}`);
+  if (inActions) console.log(annotation(kind, title, message));
 }
 
 export function group(title: string): void {

@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, stable, type Fetch, type Item, type Run } from './drift.ts';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Fetch, type Item, type Run } from './drift.ts';
 
 export const API_BASE = 'https://api.github.com';
 
@@ -130,7 +130,6 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
   };
 }
 
-
 const byKey = (key: string) => (a: unknown, b: unknown): number => String(fields(a)[key]).localeCompare(String(fields(b)[key]));
 
 // A ruleset as compared: the fields the file sets, rules and status checks in
@@ -142,11 +141,11 @@ function canonicalRuleset(ruleset: Record<string, unknown>): unknown {
     const checks = fields(parameters).required_status_checks;
     return { type, parameters: Array.isArray(checks) ? { ...fields(parameters), required_status_checks: [...checks].sort(byKey('context')) } : parameters };
   });
-  return stable({
+  return {
     ...pick(ruleset, ['name', 'target', 'enforcement', 'conditions']),
     bypass_actors: [...(Array.isArray(ruleset.bypass_actors) ? ruleset.bypass_actors : [])].sort(byKey('actor_id')),
     rules: rules.sort(byKey('type')),
-  });
+  };
 }
 
 const toggle = (path: string, on: boolean) => ({ method: on ? 'PUT' : 'DELETE', path }) as const;
@@ -222,12 +221,9 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
   return items;
 }
 
-const apply = (client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> =>
-  applySteps(items, { log, call: async (step) => void (await client.request(step.method, step.path, step.body)) });
-
 export const createRun = (desired: DesiredState, client: Client): Run => ({
   target: desired.repository,
   source: '.github/repo.json',
   survey: async () => diff(desired, await readLive(client, desired)),
-  apply: (items, log) => apply(client, items, { log }),
+  apply: (items, log) => applySteps(items, { log, call: async (step) => void (await client.request(step.method, step.path, step.body)) }),
 });

@@ -1,10 +1,16 @@
+#!/usr/bin/env node
 // Generates the 1280x640 GitHub social preview at .github/social-preview.png
-// (uploaded manually in repo settings). Run with: node bin/make-github-social.ts
+// (uploaded manually in repo settings).
+//
+//   node bin/make-github-social.ts
 import path from 'node:path';
 import { renderCard, launchBrowser } from 'branding-engine';
 import { brandCardColors } from '../src/lib/brand.ts';
 import { SITE, SITE_REPOSITORY } from '../src/lib/site-config.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
+import { cli } from './lib/args.ts';
+
+cli({ usage: 'usage: node bin/make-github-social.ts' });
 
 const browser = await launchBrowser();
 try {

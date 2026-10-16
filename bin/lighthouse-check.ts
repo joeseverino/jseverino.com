@@ -1,15 +1,20 @@
 #!/usr/bin/env node
-// Lighthouse against the live site, configured by tests/lighthouserc.json. Exists
+// Lighthouse against the live site, configured by tests/lighthouse.json. Exists
 // because @lhci/cli pins an older Lighthouse than PageSpeed Insights uses, which
 // shows up as phantom deductions.
+//
+//   node bin/lighthouse-check.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
+import { cli } from './lib/args.ts';
 import { firstFailureLine } from './lib/audit-summary.ts';
 import { spawnResult, status } from './lib/run.ts';
 import { annotate, appendSummary, table } from './lib/step-summary.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
+
+cli({ usage: 'usage: node bin/lighthouse-check.ts\n\nRuns Lighthouse against the URLs in tests/lighthouse.json.' });
 
 const chromePath = process.env.CHROME_PATH || chromium.executablePath();
 if (!fs.existsSync(chromePath)) {
@@ -23,7 +28,7 @@ interface LighthouseConfig {
 }
 type Score = number | null;
 
-const config = readJson<{ ci: LighthouseConfig }>(path.join(root, 'tests/lighthouserc.json')).ci;
+const config = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
 
 const urls = config.collect.url;
 const preset = config.collect.settings?.preset ?? 'desktop';

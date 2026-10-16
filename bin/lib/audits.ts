@@ -5,15 +5,13 @@ import { jsonLogs, run, type RunOptions, type RunResult } from './run.ts';
 import type { Audit } from '../../tests/audits/registry.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
-// Why an audit does not run here, or null when it does.
 interface SkipInputs {
-  ci?: boolean | undefined;
   platform?: NodeJS.Platform | undefined;
 }
 
-function skipReason(audit: Audit, { ci = Boolean(process.env.CI), platform = process.platform }: SkipInputs = {}): string | null {
+// Why an audit does not run here, or null when it does.
+function skipReason(audit: Audit, { platform = process.platform }: SkipInputs = {}): string | null {
   if (audit.macosOnly && platform !== 'darwin') return 'requires macOS (the visual baselines are macOS Chromium renders)';
-  if (audit.localOnly && ci) return 'verifies sources that only exist on the authoring machine';
   return null;
 }
 
@@ -23,8 +21,6 @@ export function rerunFor(audit: Audit): string {
   return `${envPrefix} ${audit.exec.cmd} ${audit.exec.args.join(' ')}`.trim();
 }
 
-// Always resolves: { id, name, label, skipped, ok (null when skipped), detail, rerun, code, stdout,
-// stderr, output, duration, timedOut }. options pass through to run(); env merges over the audit's own.
 export interface AuditResult extends RunResult {
   id: string;
   name: string;
@@ -37,9 +33,10 @@ export interface AuditResult extends RunResult {
 
 export type RunAuditOptions = Omit<RunOptions, 'timeout'> & SkipInputs;
 
-export async function runAudit(audit: Audit, { cwd = siteRoot, env, ci, platform, ...options }: RunAuditOptions = {}): Promise<AuditResult> {
+// Always resolves; ok is null when skipped. options pass through to run(); env merges over the audit's own.
+export async function runAudit(audit: Audit, { cwd = siteRoot, env, platform, ...options }: RunAuditOptions = {}): Promise<AuditResult> {
   const base = { id: audit.id, name: audit.name, label: audit.label, rerun: rerunFor(audit) };
-  const reason = skipReason(audit, { ci, platform });
+  const reason = skipReason(audit, { platform });
   if (reason) {
     return {
       ...base, skipped: true, ok: null, detail: `skipped (${reason})`,
@@ -74,8 +71,6 @@ export interface RunAuditsOptions extends RunAuditOptions {
   onResult?: (result: AuditResult, audit: Audit) => void;
   // Stop at the first failure in registry order; audits still running are stopped.
   stopOnFailure?: boolean;
-  concurrency?: number;
-  heavyConcurrency?: number;
 }
 
 // The audits concurrently, reported in order. Returns the reported results:
@@ -84,8 +79,6 @@ export async function runAudits(audits: readonly Audit[], {
   optionsFor = () => ({}),
   onResult = () => {},
   stopOnFailure = false,
-  concurrency = AUDIT_CONCURRENCY,
-  heavyConcurrency = HEAVY_CONCURRENCY,
   env,
   ...options
 }: RunAuditsOptions = {}): Promise<AuditResult[]> {
@@ -106,11 +99,11 @@ export async function runAudits(audits: readonly Audit[], {
     }
   };
   const heavySlot = async (): Promise<void> => {
-    while (heavyRunning >= heavyConcurrency) await new Promise<void>((resolve) => heavyWaiters.push(resolve));
+    while (heavyRunning >= HEAVY_CONCURRENCY) await new Promise<void>((resolve) => heavyWaiters.push(resolve));
     heavyRunning += 1;
   };
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, audits.length) }, async () => {
+  await Promise.all(Array.from({ length: Math.min(AUDIT_CONCURRENCY, audits.length) }, async () => {
     while (next < audits.length && !controller.signal.aborted) {
       const index = next++;
       const audit = audits[index];

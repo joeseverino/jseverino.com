@@ -135,7 +135,6 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
   };
 }
 
-
 const ownedRef = (desired: DesiredState, id: string): string => `${desired.owner}-${id}`;
 const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule => typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);
 const describe = (desired: DesiredState, text: string): string => `[${desired.owner}] ${text}`;
@@ -338,7 +337,7 @@ function pagesItems(desired: DesiredState, live: LiveState, compatibilityDate: s
     ? item('pages', 'preview access', desired.pages.previewAccess, covered, 'ok')
     : item('pages', 'preview access', desired.pages.previewAccess, covered, 'manual', [],
         'Pages project → Settings → General → Enable access policy'));
-  if (covered) items.push(previewPolicyItem(apps));
+  if (covered) items.push(previewPolicyItem(apps, desired.pages.previewPolicy));
   return items;
 }
 
@@ -352,12 +351,12 @@ const isServiceAuthOnly = (policy: AccessPolicy): boolean =>
 // Previews are reached only by CI's service token and the tailnet proxy's.
 // Any other policy (an email, a group, everyone) is reported; apply never
 // edits Access, so a person fixes it in the dashboard.
-function previewPolicyItem(apps: AccessApp[]): Item {
+function previewPolicyItem(apps: AccessApp[], want: DesiredState['pages']['previewPolicy']): Item {
   const policies = apps.flatMap((app) => app.policies ?? []);
   const human = policies.filter((policy) => !isServiceAuthOnly(policy));
   const describePolicy = (policy: AccessPolicy) => `${policy.name ?? 'unnamed'} (${policy.decision ?? 'no decision'})`;
-  if (policies.length > 0 && human.length === 0) return item('pages', 'preview access policy', 'service-auth-only', 'service-auth-only', 'ok');
-  return item('pages', 'preview access policy', 'service-auth-only', policies.length ? human.map(describePolicy).join(', ') : 'no policies', 'manual', [],
+  if (policies.length > 0 && human.length === 0) return item('pages', 'preview access policy', want, 'service-auth-only', 'ok');
+  return item('pages', 'preview access policy', want, policies.length ? human.map(describePolicy).join(', ') : 'no policies', 'manual', [],
     'Zero Trust → Access → Applications → the preview app: keep only Service Auth policies that include the CI and proxy service tokens');
 }
 
@@ -458,21 +457,24 @@ async function awaitBulk(client: Client, operationId: string): Promise<void> {
   throw new Error('list bulk operation did not complete in 30 s');
 }
 
-function apply(client: Client, items: Item[], { log = () => {} }: { log?: (call: string) => void } = {}): Promise<string[]> {
-  return applySteps(items, {
-    use: (ids) => Object.assign(client.ids, ids),
-    log,
-    async call(step) {
-      const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
-      for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = String(result[field]);
-      if (step.awaitBulk) await awaitBulk(client, String(result.operation_id));
-    },
-  });
+// A field a later step depends on; a response without it must not become the id "undefined".
+function required(result: Record<string, unknown>, field: string, step: Call): string {
+  const value = result[field];
+  if (value === undefined || value === null || value === '') throw new Error(`${step.method} ${step.path}: response has no ${field}`);
+  return String(value);
 }
 
 export const createRun = (desired: DesiredState, client: Client, context: { openapi: string; compatibilityDate: string }): Run => ({
   target: desired.zone,
   source: 'cloudflare/zone.json',
   survey: async () => diff(desired, await readLive(client, desired), context),
-  apply: (items, log) => apply(client, items, { log }),
+  apply: (items, log) => applySteps(items, {
+    use: (ids) => Object.assign(client.ids, ids),
+    log,
+    async call(step) {
+      const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
+      for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = required(result, field, step);
+      if (step.awaitBulk) await awaitBulk(client, required(result, 'operation_id', step));
+    },
+  }),
 });

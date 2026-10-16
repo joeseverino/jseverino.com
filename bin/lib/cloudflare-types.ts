@@ -91,7 +91,6 @@ export interface DesiredState {
   turnstile: { domains: string[] };
 }
 
-
 export interface ApiErrorEntry {
   code?: number;
   message?: string;

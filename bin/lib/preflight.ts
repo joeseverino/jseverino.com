@@ -31,8 +31,10 @@ export function lockfileDrift(root: string): string[] {
     const have = installed[key];
     if (!have) {
       if (!entry.optional && !entry.devOptional) drift.push(`${key} is missing`);
-    } else if ((entry.version && have.version !== entry.version) || (entry.integrity && have.integrity && have.integrity !== entry.integrity)) {
+    } else if (entry.version && have.version !== entry.version) {
       drift.push(`${key} is ${have.version}, lockfile wants ${entry.version}`);
+    } else if (entry.integrity && have.integrity && have.integrity !== entry.integrity) {
+      drift.push(`${key} ${have.version} differs from the lockfile's integrity hash`);
     }
   }
   for (const key of Object.keys(installed)) {
@@ -60,7 +62,7 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
   async fetch({ root }) {
     const result = await run('git', ['fetch', '--quiet', 'origin', DEFAULT_BRANCH], { cwd: root, timeout: 60_000 });
     return result.code === 0
-      ? { ok: true, detail: 'fetched origin/main' }
+      ? { ok: true, detail: `fetched origin/${DEFAULT_BRANCH}` }
       : { ok: false, detail: `git fetch failed: ${result.stderr.trim()}`, fix: 'check the network and the origin remote, then retry' };
   },
   async gh({ root }) {
@@ -78,8 +80,9 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
   },
   async clean({ root }) {
     const result = await run('git', ['status', '--porcelain=v1', '--untracked-files=no'], { cwd: root });
+    if (result.code !== 0) return { ok: false, detail: `git status failed: ${result.stderr.trim()}`, fix: `check that ${root} is a git checkout, then retry` };
     const dirty = result.stdout.split('\n').filter(Boolean);
-    return result.code === 0 && dirty.length === 0
+    return dirty.length === 0
       ? { ok: true, detail: 'no uncommitted tracked changes' }
       : { ok: false, detail: `${dirty.length} uncommitted tracked change(s): ${dirty.slice(0, 3).map((line) => line.slice(3)).join(', ')}`, fix: 'commit or stash them, then retry' };
   },

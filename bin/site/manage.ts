@@ -1,7 +1,6 @@
 // site manage: every writeup on one screen. Edits stage locally and save in one transactional plan through
 // the writeup store. The one interactive command: it refuses to start without a terminal.
 // Model in ./manage-model.ts, frames in ./manage-render.ts, dev server in ./dev-server.ts.
-
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -15,7 +14,7 @@ import { siteRoot } from '../../src/lib/site-root.ts';
 import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
 import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
-import { DEV_PORT, isListening, listeners, startDevServer, stopDevServer, type StartedServer } from './dev-server.ts';
+import { DEV_PORT, isListening, listeners, running, startDevServer, stopDevServer, type StartedServer } from './dev-server.ts';
 import {
   FIELDS, SITE, createWriteup, diff, load, loadSiteStatus, reload, type Model,
 } from './manage-model.ts';
@@ -45,8 +44,23 @@ function gatherSiteStatus(model: Model): string {
 // Stops only the server this session started; a listener manage did not
 // start is named and left alone.
 let started: StartedServer | null = null;
+let devBusy = false;
+const DEV_START_TIMEOUT_MS = 15_000;
 
 async function toggleDevServer(model: Model): Promise<void> {
+  if (devBusy) {
+    model.flash = `${YELLOW}the dev server is still starting or stopping${RESET}`;
+    return;
+  }
+  devBusy = true;
+  try {
+    await switchDevServer(model);
+  } finally {
+    devBusy = false;
+  }
+}
+
+async function switchDevServer(model: Model): Promise<void> {
   if (isListening(DEV_PORT)) {
     if (!started) {
       model.flash = `${YELLOW}port ${DEV_PORT} is served by a process this session did not start (pid ${listeners(DEV_PORT).join(', ')}); stop it there${RESET}`;
@@ -63,83 +77,73 @@ async function toggleDevServer(model: Model): Promise<void> {
   model.flash = `${YELLOW}starting dev server...${RESET}`;
   draw(model);
   started = startDevServer([SITE[0], SITE[1], 'dev'], { cwd: siteRoot, port: DEV_PORT });
+  const deadline = Date.now() + DEV_START_TIMEOUT_MS;
   let up = false;
-  for (let i = 0; i < 20 && started; i++) {
+  while (started && Date.now() < deadline) {
     if (isListening(DEV_PORT)) {
       up = true;
       break;
     }
-    await delay(100);
+    if (!running(started)) {
+      up = isListening(DEV_PORT);
+      break;
+    }
+    await delay(200);
+  }
+  if (!up && started) {
+    await stopDevServer(started, { cwd: siteRoot, port: DEV_PORT });
+    started = null;
   }
   model.siteStatus = loadSiteStatus();
   model.flash = up
     ? `${GREEN}dev server started on http://127.0.0.1:${DEV_PORT}${RESET}`
-    : `${RED}dev server failed to start (check port ${DEV_PORT} manually)${RESET}`;
+    : `${RED}dev server did not start on port ${DEV_PORT}; run site dev in a terminal to see why${RESET}`;
 }
 
+// Replay scripts never run real commands.
 function runCommandInline(bin: string, args: readonly string[], title: string): void {
-  if (!process.stdin.isTTY) return; // replay scripts never run real commands
+  if (!process.stdin.isTTY) return;
   setTitle(`site manage: ${title}`);
   process.stdin.setRawMode(false);
   process.stdin.pause();
-  process.stdout.write('\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l'); // Disable paste mode, wrap, show cursor
-
+  leaveAlt({ popTitle: false });
   process.stdout.write(`\n=== ${BOLD}${title}${RESET} ===\n\n`);
 
   const res = spawnSync(bin, args, { cwd: siteRoot, stdio: 'inherit' });
 
-  process.stdout.write('\n─────────────────────────────────────────────────────────────────────────────\n');
-  process.stdout.write(`Finished with exit code ${res.status}. Press any key to return...`);
+  process.stdout.write(`\n${rule(terminalColumns())}\n`);
+  process.stdout.write(`Finished with exit code ${res.status ?? res.signal}. Press any key to return...`);
 
   // Node keeps the TTY fd non-blocking, so fs.readSync(0, …) EAGAINs straight
   // through "press any key"; block in a child that owns the terminal instead.
   spawnSync('bash', ['-c', 'read -rsn1'], { stdio: 'inherit' });
 
-  process.stdout.write('\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h');
+  enterAlt({ pushTitle: false });
   process.stdin.setRawMode(true);
   process.stdin.resume();
 }
 
-function runStatus(model: Model): void {
-  runCommandInline(SITE[0], [SITE[1], 'status'], 'Repository status (site status)');
-  model.siteStatus = loadSiteStatus();
-}
-
-function runValidate(model: Model): void {
-  runCommandInline(SITE[0], [SITE[1], 'validate'], 'Publish gate (site validate)');
-  model.siteStatus = loadSiteStatus();
-}
-
-function runPublish(model: Model): void {
-  runCommandInline(SITE[0], [SITE[1], 'publish'], 'Open the content PR (site publish)');
-  reload(model);
-}
-
-function runDiagnose(model: Model): void {
-  runCommandInline('npm', ['run', '-s', 'diagnose'], 'Full diagnostic gate (npm run diagnose)');
-  model.siteStatus = loadSiteStatus();
-}
-
-function runBuild(model: Model): void {
-  runCommandInline('npm', ['run', '-s', 'build'], 'Astro build (npm run build)');
-  model.siteStatus = loadSiteStatus();
-}
-
-function runTests(model: Model): void {
-  runCommandInline('npm', ['run', '-s', 'test:e2e'], 'Playwright suite (npm run test:e2e)');
-  model.siteStatus = loadSiteStatus();
-}
-
-// What each Site tab action key runs.
-const SITE_ACTIONS: Record<string, (model: Model) => void> = {
-  d: (model) => { void toggleDevServer(model).then(() => draw(model)); },
-  h: runStatus,
-  v: runValidate,
-  g: runDiagnose,
-  b: runBuild,
-  t: runTests,
-  p: runPublish,
+// What each Site tab action key runs inline; publish reloads the writeups, the rest the site status.
+const INLINE_ACTIONS: Record<string, { bin: string; args: readonly string[]; title: string; reloads?: true }> = {
+  h: { bin: SITE[0], args: [SITE[1], 'status'], title: 'Repository status (site status)' },
+  v: { bin: SITE[0], args: [SITE[1], 'validate'], title: 'Publish gate (site validate)' },
+  g: { bin: 'npm', args: ['run', '-s', 'diagnose'], title: 'Full diagnostic gate (npm run diagnose)' },
+  b: { bin: 'npm', args: ['run', '-s', 'build'], title: 'Astro build (npm run build)' },
+  t: { bin: 'npm', args: ['run', '-s', 'test:e2e'], title: 'Playwright suite (npm run test:e2e)' },
+  p: { bin: SITE[0], args: [SITE[1], 'publish'], title: 'Open the content PR (site publish)', reloads: true },
 };
+
+async function runAction(model: Model, key: string): Promise<void> {
+  if (key === 'd') {
+    void toggleDevServer(model).then(() => draw(model));
+    return;
+  }
+  const action = INLINE_ACTIONS[key];
+  if (!action) return;
+  runCommandInline(action.bin, action.args, action.title);
+  if (action.reloads) await reload(model);
+  else model.siteStatus = loadSiteStatus();
+}
 
 function openInObsidian(model: Model): void {
   const item = model.items[model.cursor];
@@ -191,7 +195,7 @@ function apply(model: Model): number {
     const update: { slug: string } & Record<string, unknown> = { slug };
     const what: string[] = [];
     for (const f of FIELDS) {
-      if (f.flag && f.key in item.edits) {
+      if (f.editable && f.key in item.edits) {
         update[f.label] = item.edits[f.key];
         what.push(f.label);
       }
@@ -256,26 +260,35 @@ function finish(code: number, message: string | null, runApply = false): void {
   process.exit(code);
 }
 
+// Keys apply in order: one that starts async work (a scaffold, a reload) holds the next until it settles.
+let pending: Promise<void> = Promise.resolve();
+const enqueue = (work: () => void | Promise<void>): void => {
+  pending = pending.then(work).catch((error: unknown) => {
+    model.flash = `${RED}${errorMessage(error)}${RESET}`;
+  }).then(() => draw(model));
+};
+
 function handleKey(key: string): void {
-  const actions = siteActionSpecs(model.siteStatus ?? {}).map((action) => action.key);
-  const effect = handleManageKey(model, key, isoDate(), actions);
-  if (effect) execute(effect);
-  draw(model);
+  enqueue(async () => {
+    const actions = siteActionSpecs(model.siteStatus ?? {}).map((action) => action.key);
+    const effect = handleManageKey(model, key, isoDate(), actions);
+    if (effect) await execute(effect);
+  });
 }
 
-function execute(effect: ManageEffect): void {
+async function execute(effect: ManageEffect): Promise<void> {
   switch (effect.type) {
     case 'exit': finish(0, effect.message, effect.save); return;
-    case 'reload': reload(model); return;
+    case 'reload': await reload(model); return;
     case 'open': openInObsidian(model); return;
-    case 'action': SITE_ACTIONS[effect.key]?.(model); return;
+    case 'action': await runAction(model, effect.key); return;
     case 'refresh': {
       const seconds = gatherSiteStatus(model);
       if (effect.announce) model.flash = `${GREEN}status refreshed${RESET}${DIM} in ${seconds}s${RESET}`;
       return;
     }
     case 'create':
-      if (createWriteup(model, effect.slug)) {
+      if (await createWriteup(model, effect.slug)) {
         model.mode = 'detail';
         model.field = 0;
       }
@@ -284,8 +297,7 @@ function execute(effect: ManageEffect): void {
 }
 
 function pasteInput(text: string): void {
-  pasteManageInput(model, text);
-  draw(model);
+  enqueue(() => pasteManageInput(model, text));
 }
 
 const { feedInput, flushInput } = createInputPump({ onKey: handleKey, onPaste: pasteInput });
@@ -298,7 +310,7 @@ export async function manage(): Promise<never> {
       fix: 'non-interactive callers use site featured, site validate, and site status (each with --json)',
     });
   }
-  model = load();
+  model = await load();
 
   if (smoke) {
     if (smoke === 'detail') {
@@ -324,6 +336,7 @@ export async function manage(): Promise<never> {
       else if (t) feedInput(NAMED_KEYS[t] ?? t);
     }
     flushInput();
+    await pending;
     process.stdout.write(fitFrame(currentFrame(model), terminalColumns(), terminalRows()) + '\n');
     process.exit(0);
   }

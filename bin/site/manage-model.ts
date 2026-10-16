@@ -3,34 +3,20 @@ import { statSync } from 'node:fs';
 import path from 'node:path';
 import { GREEN, RED, RESET, YELLOW } from './tui.ts';
 import { DEV_PORT, isListening } from './dev-server.ts';
-import { WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { spawnResult, type SpawnOptions, type SpawnResult } from '../lib/run.ts';
+import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
+import { spawnResult } from '../lib/run.ts';
 import { WriteupError, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { SLUG, SiteError } from './cli.ts';
-import type { CheckedDocument } from '../content-sync/sync.ts';
+import { SLUG, SiteError, createOutput } from './cli.ts';
+import { checkContent } from '../content-sync/sync.ts';
+import { newWriteup } from './authoring.ts';
 import { collectionFields, type FieldSpec, type FieldType } from '../../src/lib/content-contract.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { fingerprint } from '../lib/writeups/receipt.ts';
 
 export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
-
-interface RunOutcome {
-  ok: boolean;
-  stdout: string;
-  stderr: string;
-  error: string;
-}
-
-function outcome(proc: SpawnResult): RunOutcome {
-  const ok = proc.code === 0 && !proc.error;
-  return { ok, stdout: proc.stdout, stderr: proc.stderr, error: proc.error?.message || (ok ? '' : (proc.stderr || proc.stdout).trim()) };
-}
-
-const run = (bin: string, args: readonly string[], options: Pick<SpawnOptions, 'stdio'> = {}): RunOutcome =>
-  outcome(spawnResult(bin, args, { cwd: siteRoot, ...options }));
 
 // The writeup snapshot, or a load failure the TUI shows instead of crashing.
 function loadSnapshot(): WriteupDashboard {
@@ -44,19 +30,15 @@ function loadSnapshot(): WriteupDashboard {
 
 // The gate issues `site validate --draft` reports, per writeup slug. error
 // names why there is no report, so a broken check never reads as "no issues".
-function gateIssues(): { issues: Map<string, string[]>; error: string | null } {
-  // Exits 1 when any document has issues; the report is on stdout either way.
-  const result = run(process.execPath, ['bin/sync-content.ts', '--check', '--draft', '--json']);
+async function gateIssues(slug?: string): Promise<{ issues: Map<string, string[]>; error: string | null }> {
   const issues = new Map<string, string[]>();
-  let report: { documents?: CheckedDocument[] };
   try {
-    report = JSON.parse(result.stdout);
+    const report = await checkContent({ vaultRoot: vaultRoot(), slug, draft: true });
+    for (const doc of report.documents) if (doc.collection === 'writeups') issues.set(doc.slug, doc.issues);
+    return { issues, error: null };
   } catch (error) {
-    const reason = (result.stderr.trim().split('\n').at(-1) || errorMessage(error)).trim();
-    return { issues, error: `the gate check printed no report (${reason})` };
+    return { issues, error: `the gate check failed (${errorMessage(error)})` };
   }
-  for (const doc of report.documents ?? []) if (doc.collection === 'writeups') issues.set(doc.slug, doc.issues);
-  return { issues, error: null };
 }
 
 function fail(message: string): never {
@@ -155,8 +137,8 @@ function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: R
 
 // Trimmed stdout of a command, or null when it fails.
 function probe(command: string, args: string[]): string | null {
-  const result = run(command, args);
-  return result.ok ? result.stdout.trim() : null;
+  const result = spawnResult(command, args, { cwd: siteRoot });
+  return result.code === 0 ? result.stdout.trim() : null;
 }
 
 function builtStatus(distPath: string): string {
@@ -191,7 +173,7 @@ export function loadSiteStatus(): SiteStatus {
   };
 }
 
-export function load(): Model {
+export async function load(): Promise<Model> {
   const loaded = loadSnapshot();
   const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
@@ -206,7 +188,7 @@ export function load(): Model {
     .sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
   const items = [...featured, ...rest].map((writeup) => toItem(writeup, contractFields));
 
-  const gate = gateIssues();
+  const gate = await gateIssues();
 
   return {
     items,
@@ -228,12 +210,12 @@ export function load(): Model {
   };
 }
 
-export function reload(model: Model): void {
+export async function reload(model: Model): Promise<void> {
   const oldCursor = model.cursor;
   const oldMode = model.mode;
   const oldTab = model.tab;
   const oldActionCursor = model.actionCursor;
-  const next = load();
+  const next = await load();
   Object.assign(model, next);
   model.cursor = Math.min(model.items.length, oldCursor);
   model.mode = oldMode === 'confirm-reload' ? 'list' : oldMode;
@@ -325,7 +307,7 @@ export function togglePublished(model: Model): void {
   if (item) item.published = !item.published;
 }
 
-export function createWriteup(model: Model, slug: string): boolean {
+export async function createWriteup(model: Model, slug: string): Promise<boolean> {
   if (!SLUG.test(slug)) {
     model.flash = `${RED}slug must be lowercase-kebab-case: '${slug}'${RESET}`;
     return false;
@@ -334,10 +316,10 @@ export function createWriteup(model: Model, slug: string): boolean {
     model.flash = `${RED}writeup already exists: ${slug}${RESET}`;
     return false;
   }
-  const res = run(SITE[0], [SITE[1], 'new', slug]);
-  if (!res.ok) {
-    const reason = (res.error.split('\n').find((line) => line.startsWith('failed:')) || res.error.split('\n').pop() || 'failed').trim();
-    model.flash = `${RED}site new failed: ${reason}${RESET}`;
+  try {
+    await newWriteup({ slug, out: createOutput({ quiet: true }) });
+  } catch (error) {
+    model.flash = `${RED}site new failed: ${errorMessage(error)}${RESET}`;
     return false;
   }
   // Pull the scaffold's real frontmatter so the detail view edits the truth.
@@ -356,7 +338,7 @@ export function createWriteup(model: Model, slug: string): boolean {
   model.origPublished.set(slug, item.published);
   model.created.push(slug);
   model.cursor = model.items.length - 1;
-  const gate = gateIssues();
+  const gate = await gateIssues(slug);
   model.issues.set(slug, gate.issues.get(slug) ?? []);
   model.flash = gate.error
     ? `${YELLOW}created ${WRITEUPS_FOLDER}/${slug}/; gate issues unavailable: ${gate.error}${RESET}`

@@ -95,15 +95,14 @@ export function requireReady(ready: Preflight, out: Output): void {
 
 export interface ScriptOptions {
   out: Output;
-  root?: string;
   env?: NodeJS.ProcessEnv;
   timeout?: number;
 }
 
 // A repo script: streamed for people, captured for --json callers.
-export async function runScript(script: string, args: readonly string[], { out, root = siteRoot, env, timeout = 0 }: ScriptOptions): Promise<ScriptRun> {
+export async function runScript(script: string, args: readonly string[], { out, env, timeout = 0 }: ScriptOptions): Promise<ScriptRun> {
   const result = await run(process.execPath, [script, ...args], {
-    cwd: root,
+    cwd: siteRoot,
     env,
     timeout,
     stdio: out.json ? 'capture' : 'inherit',

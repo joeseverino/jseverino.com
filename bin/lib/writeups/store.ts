@@ -10,7 +10,7 @@ import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
 import { isoDate } from '../../../src/lib/dates.ts';
 import { applyScalars } from './scalar.ts';
-import { transactionalReplace, type TransactionOptions } from './transaction.ts';
+import { transactionalReplace, type Replacement, type TransactionOptions } from './transaction.ts';
 import { fingerprint, receipt, type MutationReceipt } from './receipt.ts';
 
 export interface WriteupStore {
@@ -238,7 +238,7 @@ function findWriteup(writeups: readonly Writeup[], slug: string): Writeup {
 }
 
 // Write the replacements together or not at all; a failure rolls back and throws.
-function commit(store: WriteupStore, replacements: Map<string, string>, options?: TransactionOptions): void {
+function commit(store: WriteupStore, replacements: ReadonlyMap<string, Replacement>, options?: TransactionOptions): void {
   const outcome = transactionalReplace(store.writeupsDir, replacements, options);
   if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
 }
@@ -332,13 +332,14 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
     }
   }
 
-  const replacements = new Map<string, string>();
+  const replacements = new Map<string, Replacement>();
   const changedFields: Record<string, string[]> = {};
   for (const [slug, fields] of updates) {
     const writeup = bySlug.get(slug) as Writeup;
-    const { text, changed } = applyScalars(fs.readFileSync(writeup.path, 'utf8'), fields);
+    const before = fs.readFileSync(writeup.path, 'utf8');
+    const { text, changed } = applyScalars(before, fields);
     if (changed.length) {
-      replacements.set(writeup.path, text);
+      replacements.set(writeup.path, { before, after: text });
       changedFields[slug] = changed;
     }
   }
@@ -402,9 +403,10 @@ export function updateFrontmatter(
   const updates = Object.fromEntries(Object.entries({ ...fields, ...(touchLastReviewed ? { last_reviewed: today } : {}) })
     .filter(([, value]) => value !== undefined));
   const writeup = findWriteup(loadWriteups(store), slug);
-  const { text, changed } = applyScalars(fs.readFileSync(writeup.path, 'utf8'), updates);
+  const source = fs.readFileSync(writeup.path, 'utf8');
+  const { text, changed } = applyScalars(source, updates);
   if (changed.length === 0) return { slug, noOp: true, changedFields: [], values: {} };
-  commit(store, new Map([[writeup.path, text]]));
+  commit(store, new Map([[writeup.path, { before: source, after: text }]]));
   const before = summary(writeup);
   const values = Object.fromEntries(changed.map((key) => [key, updates[key] ?? null]));
   return {
@@ -450,11 +452,11 @@ export function updateLink(store: WriteupStore, slug: string, label: string, exp
     if (!isHttpUrl(href)) throw new WriteupError('invalid', `${name} href must be an absolute HTTP(S) URL`);
   }
   const text = fs.readFileSync(writeup.path, 'utf8');
-  const pattern = new RegExp(`\\[${RegExp.escape(label)}\\]\\(${RegExp.escape(expectedHref)}(?:\\s+"[^"]*")?\\)`, 'g');
+  const pattern = new RegExp(`\\[${RegExp.escape(label)}\\]\\(${RegExp.escape(expectedHref)}(\\s+"[^"]*")?\\)`, 'g');
   const matches = text.match(pattern) ?? [];
   if (matches.length !== 1) throw new WriteupError('invalid', `expected exactly one matching link; found ${matches.length}`);
-  const next = text.replace(pattern, () => `[${label}](${replacementHref})`);
-  commit(store, new Map([[writeup.path, next]]));
+  const next = text.replace(pattern, (_match, title: string | undefined) => `[${label}](${replacementHref}${title ?? ''})`);
+  commit(store, new Map([[writeup.path, { before: text, after: next }]]));
   return {
     slug, label, oldHref: expectedHref, newHref: replacementHref,
     receipt: receipt({

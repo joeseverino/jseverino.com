@@ -3,13 +3,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { commitMessage, contentDiff, describeDiff, isEmpty, type ContentDiff } from '../content-diff.ts';
-import { runAudit } from '../lib/audits.ts';
 import { preflight, type CheckName } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from '../lib/run.ts';
-import type { Audit } from '../../tests/audits/registry.ts';
-import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, writeupUrl } from '../../src/lib/site-config.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, requireReady, type Output } from './cli.ts';
 import { changedPaths, gh, git, refExists } from './git.ts';
@@ -50,11 +47,10 @@ async function linkDependencies(root: string, worktree: string, out: Output): Pr
     fs.symlinkSync(path.join(root, 'node_modules'), path.join(worktree, 'node_modules'), 'dir');
     return;
   }
-  out.step('deps', 'origin/main has a different lockfile; installing in the worktree');
+  out.step('deps', 'the branch has a different lockfile; installing in the worktree');
   await step('npm ci', 'npm', ['ci', '--no-audit', '--no-fund'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
 }
 
-// The worktree's own sync (main's code), reporting the files it owns.
 interface StageContext {
   root: string;
   worktree: string;
@@ -62,6 +58,7 @@ interface StageContext {
   out: Output;
 }
 
+// The worktree's own sync (the branch's code), reporting the files it owns.
 async function syncInWorktree({ root, worktree, scratch }: StageContext): Promise<SyncReport> {
   const reportFile = path.join(scratch, 'sync-report.json');
   await step('content sync', process.execPath, ['bin/sync-content.ts', '--report', reportFile], {
@@ -72,11 +69,10 @@ async function syncInWorktree({ root, worktree, scratch }: StageContext): Promis
   return readJson<SyncReport>(reportFile);
 }
 
-// CI runs the full build and browser suites on the PR. Locally: the fast gate,
-// plus the audits CI cannot run (they read sources only this machine has).
-// --full runs the whole publish gate instead.
 export type GateContext = Pick<StageContext, 'root' | 'worktree' | 'out'> & { full: boolean };
 
+// CI runs the full build and browser suites on the PR, so locally the fast gate is enough;
+// --full runs the whole publish gate instead.
 async function gateInWorktree({ worktree, full, out }: GateContext): Promise<void> {
   if (full) {
     await step('publish gate', process.execPath, ['bin/publish-check.ts', '--no-sync'], { cwd: worktree, timeout: GATE_TIMEOUT_MS });
@@ -84,13 +80,7 @@ async function gateInWorktree({ worktree, full, out }: GateContext): Promise<voi
     return;
   }
   await step('fast gate', process.execPath, ['bin/gate-check.ts'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
-  // The worktree's own registry, so the audits are main's.
-  const { AUDITS } = await import(pathToFileURL(path.join(worktree, 'tests/audits/registry.ts')).href) as { AUDITS: readonly Audit[] };
-  for (const audit of AUDITS.filter((entry) => entry.localOnly && !entry.gates.includes('gate'))) {
-    const result = await runAudit(audit, { cwd: worktree, ci: false });
-    if (result.ok === false) throw new SiteError(`${audit.label} failed: ${result.detail}\n${result.output.trim()}`);
-  }
-  out.ok('gate', 'fast gate and local-only audits passed');
+  out.ok('gate', 'fast gate passed');
 }
 
 // Changes the sync did not declare mean it wrote something publish would not
@@ -145,7 +135,6 @@ const DEFAULT_CHECKS: CheckName[] = ['deps', 'fetch', 'gh', 'vault', 'clean'];
 
 interface PublishOptions {
   root?: string;
-  base?: string;
   from?: string | undefined;
   dryRun?: boolean;
   full?: boolean;
@@ -159,7 +148,6 @@ interface PublishOptions {
 // out: a createOutput(); sync/gate are injectable for tests.
 export async function publish({
   root = siteRoot,
-  base = DEFAULT_BRANCH,
   from,
   dryRun = false,
   full = false,
@@ -171,7 +159,7 @@ export async function publish({
 }: PublishOptions): Promise<PublishResult> {
   requireReady(await preflight(checks, { root }), out);
 
-  const start = from ?? `origin/${base}`;
+  const start = from ?? `origin/${DEFAULT_BRANCH}`;
   if (!refExists(root, start)) throw new SiteError(`no such ref: ${start}`, { code: EXIT.usage });
   const branch = freshBranch(root, now);
   // The worktree and the files publish writes beside it (report, pathspec,
@@ -181,7 +169,7 @@ export async function publish({
 
   let result: PublishResult;
   try {
-    result = await publishInWorktree({ root, base, start, branch, worktree, scratch, dryRun, full, out, sync, gate });
+    result = await publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate });
   } catch (error) {
     const warnings = cleanUp(root, worktree, branch, scratch, out);
     if (error instanceof SiteError && warnings.length > 0) error.result = { ...error.result, cleanup: warnings };
@@ -193,7 +181,6 @@ export async function publish({
 
 interface PublishRun {
   root: string;
-  base: string;
   start: string;
   branch: string;
   worktree: string;
@@ -205,7 +192,7 @@ interface PublishRun {
   gate: (context: GateContext) => Promise<void>;
 }
 
-async function publishInWorktree({ root, base, start, branch, worktree, scratch, dryRun, full, out, sync, gate }: PublishRun): Promise<PublishResult> {
+async function publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate }: PublishRun): Promise<PublishResult> {
   git(root, 'worktree', 'add', '--quiet', '--no-track', '-b', branch, worktree, start);
   out.step('branch', `${branch} from ${start} (temporary worktree)`);
   await linkDependencies(root, worktree, out);
@@ -250,16 +237,16 @@ async function publishInWorktree({ root, base, start, branch, worktree, scratch,
   const subject = message.split('\n')[0] ?? message;
   let pr: string;
   try {
-    pr = (gh(worktree, 'pr', 'create', '--base', base, '--head', branch, '--title', subject, '--body-file', bodyFile)
-      .split('\n').at(-1) ?? '').trim();
+    const created = gh(worktree, 'pr', 'create', '--base', DEFAULT_BRANCH, '--head', branch, '--title', subject, '--body-file', bodyFile);
+    pr = created.slice(created.lastIndexOf('\n') + 1);
   } catch (error) {
     throw new SiteError(`${errorMessage(error)}\norigin/${branch} was pushed and is still on the remote`, {
       result: { branch, commit, remoteBranch: branch },
-      fix: `open the PR: gh pr create --base ${base} --head ${branch}; or delete the branch: git push origin --delete ${branch}`,
+      fix: `open the PR: gh pr create -R ${SITE_REPOSITORY} --base ${DEFAULT_BRANCH} --head ${branch}; or delete the branch: git push origin --delete ${branch}`,
     });
   }
   out.ok('pr', pr);
-  return { ...result, status: 'pr-opened', pr, next: `review the preview deployment on the PR, then: site land ${pr.split('/').at(-1) ?? pr}` };
+  return { ...result, status: 'pr-opened', pr, next: `review the preview deployment on the PR, then: site land ${pr.slice(pr.lastIndexOf('/') + 1)}` };
 }
 
 // Each step runs on its own, so one failure neither skips the rest nor

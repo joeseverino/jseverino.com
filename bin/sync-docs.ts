@@ -28,7 +28,7 @@ function gateCoverage() {
   return table(
     ['Audit', 'Label', 'Phase', ...GATES],
     AUDITS.map((audit) => [
-      audit.localOnly ? `${audit.name} (authoring machine only)` : audit.name,
+      audit.name,
       `\`${audit.label}\``,
       audit.phase,
       ...GATES.map((gate) => (audit.gates.includes(gate) ? '✓' : '')),

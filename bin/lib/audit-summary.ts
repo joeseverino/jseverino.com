@@ -18,9 +18,9 @@ export function summarize(audit: Pick<Audit, 'summary'>, output: string): string
   }
   // Audits print their summary as an aligned `ok␣␣…` line (two+ spaces),
   // distinct from per-item `ok <detail>` lines.
-  // Playwright suites end with `N passed (Xs)`.
   const ok = output.split('\n').find((l) => /^ok\s{2,}/.test(l));
   if (ok) return ok.replace(/^ok\s+/, '').trim();
+  // Playwright suites end with `N passed (Xs)`.
   return nonEmptyLines(output).find((l) => /^\d+ passed\b/.test(l)) ?? 'passed';
 }
 

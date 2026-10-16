@@ -107,12 +107,8 @@ export function listFrame(model: Model): string {
   if (model.divider === model.items.length) {
     out.push(notFeaturedDivider(cols));
   }
-  {
-    const selNew = model.cursor === model.items.length;
-    const pointer = selNew ? `${CYAN}▸${RESET}` : ' ';
-    const label = selNew ? `${BOLD}new writeup…${RESET}` : `${DIM}new writeup…${RESET}`;
-    out.push(`  ${pointer} ${DIM} +${RESET}     ${label}`);
-  }
+  const onNew = model.cursor === model.items.length;
+  out.push(`  ${onNew ? `${CYAN}▸${RESET}` : ' '} ${DIM} +${RESET}     ${onNew ? BOLD : DIM}new writeup…${RESET}`);
 
   out.push('');
   if (model.flash) {
@@ -214,7 +210,7 @@ export function siteFrame(model: Model): string {
   const out: string[] = [];
   const status = model.siteStatus;
   if (!status) return `${drawTabBar(model)}\n\n  Site status has not been loaded.\n`;
-  
+
   out.push('');
   out.push(drawTabBar(model));
   out.push(`  ${rule(cols)}`);
@@ -291,7 +287,7 @@ export function siteFrame(model: Model): string {
 
   out.push(`  ${DIM}${rule(cols)}${RESET}`);
   out.push(`  ${DIM}↑/↓ select · enter run · ←/→ switch tabs · r reload status · q quit${RESET}`);
-  
+
   return out.join('\n');
 }
 

@@ -1,11 +1,17 @@
-// Generates the favicon set and brand marks from the shared mark renderer: node bin/make-icons.ts
-// Writes public/favicon.ico, public/assets/icons/*, and public/assets/brand/*.
+#!/usr/bin/env node
+// Generates the favicon set and brand marks from the shared mark renderer into
+// public/favicon.ico, public/assets/icons/*, and public/assets/brand/*.
+//
+//   node bin/make-icons.ts
 import fs from 'node:fs';
 import path from 'node:path';
 import { renderMarkSet, wordmarkSvg } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.ts';
 import { SITE } from '../src/lib/site-config.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
+import { cli } from './lib/args.ts';
+
+cli({ usage: 'usage: node bin/make-icons.ts' });
 
 const iconsDir = path.join(root, 'public/assets/icons');
 const brandDir = path.join(root, 'public/assets/brand');

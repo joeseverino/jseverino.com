@@ -45,12 +45,11 @@ function siteKey(model: Model, key: string, actions: readonly string[]): ManageE
       break;
     case '\r':
       return { type: 'action', key: actions[model.actionCursor] ?? '' };
-    case 'd': case 'h': case 'v': case 'g': case 'b': case 't': case 'p':
-      return { type: 'action', key };
     case 'q': case '\x1b': case '\x03':
       if (hasStaged(model)) { switchTab(model, 'writeups'); model.mode = 'confirm-quit'; break; }
       return exit('exited');
-    default: return;
+    default:
+      if (actions.includes(key)) return { type: 'action', key };
   }
 }
 
@@ -69,9 +68,7 @@ function listKey(model: Model, key: string): ManageEffect | void {
     case 'r': case '\x12':
       return requestReload(model);
     case '\r':
-      if (model.cursor === model.items.length) {
-        beginNew(model);
-      }
+      if (model.cursor === model.items.length) beginNew(model);
       else { model.mode = 'detail'; model.field = 0; }
       break;
     case 's': return exit(null, true);
@@ -241,7 +238,6 @@ export function pasteManageInput(model: Model, text: string): void {
   insertText(model, text.replace(/\r\n?|\n|\t/g, ' '));
   model.flash = '';
 }
-
 
 const handlers = {
   list: listKey,
