@@ -5,7 +5,7 @@ import path from 'node:path';
 import { AUDITS, auditsFor, publishAudits, diagnosticAudits } from '../../tests/audits/registry.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 
-const VALID_GATES = ['gate', 'publish', 'diagnose', 'release'];
+const VALID_GATES = ['gate', 'publish', 'diagnose'];
 const VALID_PHASES = ['pre-build', 'post-build'];
 
 describe('audit registry', () => {

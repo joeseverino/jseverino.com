@@ -15,7 +15,6 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run dev` | Start the local dev server |
-| `npm run dev:drafts` | Dev server including unpublished drafts, from the gitignored overlay (`site dev --drafts`) |
 | `npm run site` | The publishing workflow CLI: `npm run site -- <command>` (validate, publish, land, featured, …) |
 | `npm run sync:content` | Pull published content from the vault into the repo |
 | `npm run sync:contract` | Regenerate typed content-contract projections |
@@ -31,8 +30,6 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run publish:check` | Fast local build gate (`-- --no-sync` for code-only changes) |
-| `npm run publish:check:ci` | The same gate under CI conditions: `CI=1` + a scratch keyring |
-| `npm run release:check` | Full gate: publish:check + browser/visual/policy + idempotence (macOS) |
 | `npm run gate:check` | The registry's fast pre-build audits, collect-all; the first step of CI's `build` job |
 | `npm run deploy:verify` | After the merge deploys, from a residential IP: verify remote CI + the live production deploy |
 | `npm run content:diff` | What a content change means by slug: published, edited, removed, pages, generated (`-- --json`) |
@@ -71,7 +68,6 @@ appears here.
 | `npm run github:check` | Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift) |
 | `npm run github:plan` | The GitHub API calls an apply would make |
 | `npm run github:apply` | Plan, or with `-- --yes` apply `.github/repo.json` (admin token) |
-| `npm run d1:apply` | Apply `cloudflare/d1.sql` to the remote D1 database (idempotent) |
 | `npm run check:lighthouse` | Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly) |
 | `npm run clean:generated` | Remove build output and build caches |
 
@@ -108,8 +104,8 @@ What each audit asserts, and how to fix it when it fails, is the generated
 
 ## Daily, in detail
 
-**`npm run dev` / `npm run dev:drafts`**: the Astro dev server on
-`localhost:4321`. The `:drafts` variant (`site dev --drafts`) syncs the vault,
+**`npm run dev`**: the Astro dev server on
+`localhost:4321`. `site dev --drafts` syncs the vault,
 drafts included, into the gitignored `.cache/drafts` overlay and points the
 dev server at it with `SITE_CONTENT_ROOT`; the committed snapshot is left alone.
 
@@ -176,17 +172,6 @@ stops whatever is still running.
 unrelated content drift. `-- --after-gate` skips the
 audits `gate:check` already ran; CI passes it, and on the runner the edge suite
 is left to its own job.
-
-**`npm run publish:check:ci`**: rehearses exactly what CI's `build` job runs
-(`gate:check`, then `publish:check`) with `CI=1` (local-only audits skip, as on
-the runner) and signature verification isolated from the personal keyring. A gate that depends on
-authoring-machine state fails here instead of after a push.
-
-**`npm run release:check`**: an optional full local gate before opening a PR: runs
-`publish:check`, then the release-only audits (repository policy,
-`git diff --check`, the full cross-browser + visual Playwright suite), and
-fails if any of it mutated the worktree. Requires macOS because the committed
-visual baselines are macOS Chromium renders.
 
 **`npm run gate:check`**: the first step of the `build` job in `ci.yml`.
 Runs the registry audits that claim the `gate` gate (source integrity,

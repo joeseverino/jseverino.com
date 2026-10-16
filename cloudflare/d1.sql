@@ -1,7 +1,7 @@
 -- Contact form submissions for jseverino.com.
 --
 -- Apply to the remote D1 database:
---   npm run d1:apply
+--   npm run site -- d1-apply --confirm
 -- Apply to the local dev database (used by `wrangler pages dev`):
 --   wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 

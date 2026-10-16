@@ -33,7 +33,6 @@ npm run gate:check         # fast invariants: types, policy, docs, lint, duplica
 npm run publish:check      # + unit tests, astro check, the build, post-build audits, the edge suite
 npm run diagnose           # every audit in one pass; writes .validation-report.md on failure
 npm run diff:build         # build HEAD and the working tree, report any change to shipped output
-npm run release:check      # publish:check, then the browser suites and an idempotence check
 npm run deploy:verify      # after a merge: required checks, then the live deployment
 ```
 
@@ -47,8 +46,8 @@ commit signing remains configured by the author.
 
 Every gate reads its audits from
 [`tests/audits/registry.ts`](../tests/audits/registry.ts). The browser suites
-(e2e across Chromium, Firefox, and WebKit, and the visual baselines) run in CI;
-`npm run publish:check:ci` rehearses the CI conditions locally.
+(e2e across Chromium, Firefox, and WebKit, and the visual baselines) run in CI
+and in `diagnose`.
 
 ![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](./diagrams/validation-flow.png)
 

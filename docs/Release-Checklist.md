@@ -25,17 +25,19 @@ The worktree is clean before the gate runs.
 
 ## 2. Local Release Gate
 
-Run the canonical repo-local gate:
+Run every audit in one pass (macOS, for the visual baselines):
 
 ```sh
-npm run release:check
+npm run diagnose
 ```
 
-`release:check` runs `publish:check`, then the `release` audits from
-[`tests/audits/registry.ts`](../tests/audits/registry.ts) (repository policy,
-Playwright browser revisions, `git diff --check`, the edge runtime suite, the
-cross-browser functional suite, and the macOS Chromium visual suite), then an
-idempotence check that proves validation did not change repository state.
+`diagnose` runs every audit in
+[`tests/audits/registry.ts`](../tests/audits/registry.ts), including the
+cross-browser, edge runtime, and visual suites, without stopping at the first
+failure, then fails if validation changed repository state. On failure it
+writes `.validation-report.md` with each fix and rerun command;
+`-- --fast` runs only the static checks, `-- --no-tests` skips the browser
+suites, and `-s diagnose -- --json` emits one JSON document.
 
 A clean `publish:check` reports one line per step:
 
@@ -70,22 +72,9 @@ seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
 edge-runtime <n> passed (<n>s)
 ```
 
-`parity` reads `skipped` where `CI` is set. `release:check` ends in
-`ok release-ready`.
+`parity` reads `skipped` where `CI` is set.
 
-`release:check` snapshots the worktree before validation and fails if sync,
-cleanup, generation, or testing changes repository state. A pass means the checked-out source and generated content were already
-consistent.
-
-To run all codebase validations and E2E browser tests without short-circuiting on the first error, run the diagnostic suite:
-
-```sh
-npm run diagnose
-```
-
-If any check fails, it writes `.validation-report.md` in the project root with each failure's fix and rerun command. For faster iterations, run only the static checks with `npm run diagnose -- --fast`, or skip browser tests with `npm run diagnose -- --no-tests`. For machine-readable results (agents, CI), `npm run -s diagnose -- --json` emits a single JSON document with per-check status and the rerun command for each failure.
-
-For a focused frontend check without the complete release gate, run:
+For a focused frontend check without the full diagnostic run:
 
 ```sh
 npm run test:e2e:visual
@@ -266,7 +255,7 @@ remote D1 database (`jseverino-contact`, the `d1` value in
 `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-npm run d1:apply
+npm run site -- d1-apply --confirm
 ```
 
 Confirm the expected operational tables exist:
@@ -341,7 +330,7 @@ verified. Do not raise the score for planned items.
 Recommended evidence to record:
 
 - final commit SHA;
-- `release:check` output summary;
+- `diagnose` output summary;
 - signed tag verification result;
 - Cloudflare deploy URL or timestamp;
 - live header check summary;

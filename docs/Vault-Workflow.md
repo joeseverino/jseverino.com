@@ -39,7 +39,7 @@ Content is synced only when frontmatter includes:
 published: true
 ```
 
-Unpublished content is skipped during normal sync. Draft preview is available through `site dev --drafts` (`npm run dev:drafts`; see [`Site-CLI.md`](./Site-CLI.md)), which syncs into the gitignored `.cache/drafts` overlay the dev server reads through `SITE_CONTENT_ROOT`, so a draft never enters the committed snapshot. A gate audit fails if `src/content` ever holds `published: false`.
+Unpublished content is skipped during normal sync. Draft preview is available through `site dev --drafts` (see [`Site-CLI.md`](./Site-CLI.md)), which syncs into the gitignored `.cache/drafts` overlay the dev server reads through `SITE_CONTENT_ROOT`, so a draft never enters the committed snapshot. A gate audit fails if `src/content` ever holds `published: false`.
 
 ## Metadata Boundary
 

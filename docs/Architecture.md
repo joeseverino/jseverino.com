@@ -481,7 +481,7 @@ The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement
 
 ```sh
 # Remote (production):
-npm run d1:apply
+npm run site -- d1-apply --confirm
 
 # Local (for `wrangler pages dev`):
 wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
@@ -530,7 +530,7 @@ npm run build:static
 npm run edge:serve
 ```
 
-The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `release:check` and `diagnose` gates execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
+The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `diagnose` gate execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -538,8 +538,7 @@ Every gate derives its checks from [`tests/audits/registry.ts`](../tests/audits/
 
 - [`bin/gate-check.ts`](../bin/gate-check.ts) (`npm run gate:check`) runs the fast pre-build invariants, collect-all.
 - [`bin/publish-check.ts`](../bin/publish-check.ts) (`npm run publish:check`) is the local publish gate: clean, sync from the vault (skippable with `--no-sync`), the pre-build audits, the production build, the post-build audits, stopping at the first failure.
-- [`bin/release-check.ts`](../bin/release-check.ts) (`npm run release:check`, macOS) runs `publish:check`, then the `release` audits (the browser suites, repository policy, `git diff --check`), and fails if validation changed the worktree.
-- [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping and writes one report.
+- [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping, fails if validation changed the worktree, and writes one report.
 
 Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures. Preview review and the live post-deploy checks stay separate: they depend on external state or human judgment.
 

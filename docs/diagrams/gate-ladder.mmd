@@ -2,7 +2,7 @@
 flowchart TB
     A["Source change"] --> G["gate:check<br/>fast pre-build audits"]
     G --> B["publish:check<br/>security.txt, WCAG contrast<br/>vault / Zod / MCP parity<br/>functions + edge parity<br/>unit suite, sitedrift guard<br/>CSS lint, astro check + build<br/>asset + page weight, links<br/>HTML, SEO, routes"]
-    B -.-> C["release:check (optional)<br/>Playwright e2e + visual<br/>repository policy<br/>git diff --check, clean worktree"]
+    D["diagnose<br/>every audit in one pass<br/>Playwright e2e + visual, edge<br/>clean worktree"] -.-> PR
     B --> PR["Pull request"]
     PR --> CI["CI<br/>build, e2e, visual, edge, CodeQL"]
     PR --> PV["Preview<br/>deploy-verify --origin"]

@@ -2,7 +2,6 @@
 flowchart TB
     A["Source change"] --> B["gate:check"] --> C["publish:check"] --> D["Push branch, open PR"]
     G["diagnose: every check, one pass"] -.-> C
-    R["release:check (optional)"] -.-> D
     D --> CI
     D --> P["Cloudflare Pages preview"] --> V["deploy-verify --origin on the preview"]
     CI --> M["Merge: site land"]

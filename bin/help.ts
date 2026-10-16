@@ -10,7 +10,6 @@ export const GROUPS = [
     title: 'Daily',
     items: {
       'dev': 'Start the local dev server',
-      'dev:drafts': 'Dev server including unpublished drafts, from the gitignored overlay (`site dev --drafts`)',
       'site': 'The publishing workflow CLI: `npm run site -- <command>` (validate, publish, land, featured, …)',
       'sync:content': 'Pull published content from the vault into the repo',
       'sync:contract': 'Regenerate typed content-contract projections',
@@ -26,8 +25,6 @@ export const GROUPS = [
     title: 'Release',
     items: {
       'publish:check': 'Fast local build gate (`-- --no-sync` for code-only changes)',
-      'publish:check:ci': 'The same gate under CI conditions: `CI=1` + a scratch keyring',
-      'release:check': 'Full gate: publish:check + browser/visual/policy + idempotence (macOS)',
       'gate:check': "The registry's fast pre-build audits, collect-all; the first step of CI's `build` job",
       'deploy:verify': 'After the merge deploys, from a residential IP: verify remote CI + the live production deploy',
       'content:diff': 'What a content change means by slug: published, edited, removed, pages, generated (`-- --json`)',
@@ -66,7 +63,6 @@ export const GROUPS = [
       'github:check': 'Diff the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift)',
       'github:plan': 'The GitHub API calls an apply would make',
       'github:apply': 'Plan, or with `-- --yes` apply `.github/repo.json` (admin token)',
-      'd1:apply': 'Apply `cloudflare/d1.sql` to the remote D1 database (idempotent)',
       'check:lighthouse': 'Lighthouse against the live site with the URLs and thresholds in `tests/lighthouserc.json` (needs Chrome; CI runs it weekly)',
       'clean:generated': 'Remove build output and build caches',
     },

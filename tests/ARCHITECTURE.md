@@ -13,7 +13,7 @@ them:
 | [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Cloudflare functions, the gate harness, registry shape, and registry/docs parity. No browser, no build. | `npm run test:unit` |
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the built site (`dist/` via the preview server). | `playwright test` |
 | [`tests/edge/`](./edge/) | Request specs against the build served through `wrangler pages dev`. | `npm run test:edge` |
-| [`bin/`](../bin/) | Gate runners (`gate-check`, `publish-check`, `release-check`, `diagnose`) and the post-deploy `deploy-verify`. | `npm run publish:check`, etc. |
+| [`bin/`](../bin/) | Gate runners (`gate-check`, `publish-check`, `diagnose`) and the post-deploy `deploy-verify`. | `npm run publish:check`, etc. |
 
 ### The audit registry
 
@@ -24,7 +24,6 @@ Every gate derives its check list from that one module:
 - **`gate:check`** runs the `gate` audits (fast pre-build invariants, collect-all; the first step of CI's `build` job).
 - **`publish:check`** runs the `publish` audits (the fast build gate).
 - **`diagnose`** runs the `diagnose` audits (everything: the complete gate).
-- **`release:check`** runs `publish:check` plus the `release` audits.
 
 A check added to the registry is picked up by every gate that claims it. Each
 gate keeps its own orchestration (ordering around sync/build, fail-fast vs.
@@ -71,10 +70,7 @@ Which audits each gate runs is the [gate coverage](#gate-coverage) table below.
 
 0. **`npm run gate:check`**: the fast pre-build invariants, collect-all, concurrently. CI runs it as the first step of the `build` job, so a misaligned lockfile or an unpinned action fails in seconds.
 1. **`npm run publish:check`**: local build gate. Content sync, the pre-build audits, the production build (`build:static`), then the post-build audits, stopping at the first failure. The same gate runs in CI on every push (the `build` job in `ci.yml`, with `--no-sync`), so the green badge proves what a green local run proves, except the vault parity check, which verifies sources that only exist on the authoring machine (registry `localOnly`) and is skipped where `CI` is set.
-
-   `npm run publish:check:ci` ([`bin/ci-rehearsal.ts`](../bin/ci-rehearsal.ts)) rehearses the runner's conditions locally (`CI=1`; the signature audit isolates its own keyring from the committed WKD keys), so a gate that leans on authoring-machine state (the vault, the personal keyring) fails here instead of after a push.
-2. **`npm run release:check`**: final local gate. Runs `publish:check`, then the `release` audits (the browser suites, the edge runtime suite, repository policy), and confirms the validation run did not mutate tracked or untracked files. Requires macOS, because the visual baselines are rasterized by macOS Chromium.
-3. **`npm run diagnose`**: runs everything without short-circuiting and reports every problem in one pass (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
+2. **`npm run diagnose`**: the complete local gate. Runs everything without short-circuiting, fails if validation changed tracked or untracked files, and reports every problem in one pass (console output plus a `.validation-report.md` on failure). See an [example report](./audits/examples/validation-report.md) captured from a failing run.
    - `npm run diagnose -- --fast` runs only the fast static checks (skips build + Playwright).
    - `npm run diagnose -- --no-tests` runs static checks and the build, skipping the browser tests.
    - `npm run -s diagnose -- --json` emits a single JSON document (per-check status, durations, rerun commands for failures) instead of console output, for agents and CI to consume without parsing prose.
@@ -89,36 +85,36 @@ Which registry audit runs under which gate, rendered from [`tests/audits/registr
 
 <!-- generated:start gate-coverage (npm run sync:docs) -->
 
-| Audit | Label | Phase | gate | publish | diagnose | release |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Source Integrity | `source` | pre-build | ✓ | ✓ | ✓ |  |
-| No Duplicated Code | `dupes` | pre-build | ✓ | ✓ | ✓ |  |
-| Generated Contract Projections | `contracts` | pre-build |  | ✓ | ✓ | ✓ |
-| No Drafts in the Snapshot | `drafts` | pre-build | ✓ | ✓ | ✓ |  |
-| Security Signatures | `security` | pre-build |  | ✓ | ✓ |  |
-| WCAG Color Contrast | `contrast` | pre-build |  | ✓ | ✓ |  |
-| Content Contract Parity | `parity` | pre-build |  | ✓ | ✓ |  |
-| TypeScript Type Check | `types` | pre-build | ✓ | ✓ | ✓ |  |
-| Functions/Schema Parity | `edge` | pre-build |  | ✓ | ✓ |  |
-| Sitedrift Preview Guard | `preview` | pre-build |  | ✓ | ✓ |  |
-| Unit Test Suite | `unit` | pre-build |  | ✓ | ✓ |  |
-| Generated Documentation Blocks | `docs-sync` | pre-build | ✓ | ✓ | ✓ |  |
-| Docs Reference Integrity | `docs` | pre-build | ✓ | ✓ | ✓ |  |
-| Stylelint CSS Check | `css-lint` | pre-build | ✓ | ✓ | ✓ |  |
-| CSS Unused Variables | `css-vars` | pre-build |  | ✓ | ✓ |  |
-| Astro Compiler Diagnostics | `check` | pre-build |  | ✓ | ✓ |  |
-| Repository Policy | `repo-policy` | pre-build | ✓ | ✓ | ✓ | ✓ |
-| Playwright Browser Revisions | `browsers` | pre-build |  |  | ✓ | ✓ |
-| Git Formatting/Conflicts | `git-diff` | pre-build |  |  | ✓ | ✓ |
-| Asset Weight Limits | `assets` | post-build |  | ✓ | ✓ |  |
-| Internal Link Integrity | `links` | post-build |  | ✓ | ✓ |  |
-| Page Weight Budget | `weight` | post-build |  | ✓ | ✓ |  |
-| Structural HTML | `html` | post-build |  | ✓ | ✓ |  |
-| Functions Routing | `routes` | post-build |  | ✓ | ✓ |  |
-| SEO Metadata | `seo` | post-build |  | ✓ | ✓ |  |
-| Edge Runtime Tests | `edge-runtime` | post-build |  | ✓ | ✓ |  |
-| Playwright Browser Tests | `e2e` | post-build |  |  | ✓ | ✓ |
-| Visual Regression (fixture content) | `visual` | post-build |  |  | ✓ | ✓ |
+| Audit | Label | Phase | gate | publish | diagnose |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Source Integrity | `source` | pre-build | ✓ | ✓ | ✓ |
+| No Duplicated Code | `dupes` | pre-build | ✓ | ✓ | ✓ |
+| Generated Contract Projections | `contracts` | pre-build |  | ✓ | ✓ |
+| No Drafts in the Snapshot | `drafts` | pre-build | ✓ | ✓ | ✓ |
+| Security Signatures | `security` | pre-build |  | ✓ | ✓ |
+| WCAG Color Contrast | `contrast` | pre-build |  | ✓ | ✓ |
+| Content Contract Parity | `parity` | pre-build |  | ✓ | ✓ |
+| TypeScript Type Check | `types` | pre-build | ✓ | ✓ | ✓ |
+| Functions/Schema Parity | `edge` | pre-build |  | ✓ | ✓ |
+| Sitedrift Preview Guard | `preview` | pre-build |  | ✓ | ✓ |
+| Unit Test Suite | `unit` | pre-build |  | ✓ | ✓ |
+| Generated Documentation Blocks | `docs-sync` | pre-build | ✓ | ✓ | ✓ |
+| Docs Reference Integrity | `docs` | pre-build | ✓ | ✓ | ✓ |
+| Stylelint CSS Check | `css-lint` | pre-build | ✓ | ✓ | ✓ |
+| CSS Unused Variables | `css-vars` | pre-build |  | ✓ | ✓ |
+| Astro Compiler Diagnostics | `check` | pre-build |  | ✓ | ✓ |
+| Repository Policy | `repo-policy` | pre-build | ✓ | ✓ | ✓ |
+| Playwright Browser Revisions | `browsers` | pre-build |  |  | ✓ |
+| Git Formatting/Conflicts | `git-diff` | pre-build |  |  | ✓ |
+| Asset Weight Limits | `assets` | post-build |  | ✓ | ✓ |
+| Internal Link Integrity | `links` | post-build |  | ✓ | ✓ |
+| Page Weight Budget | `weight` | post-build |  | ✓ | ✓ |
+| Structural HTML | `html` | post-build |  | ✓ | ✓ |
+| Functions Routing | `routes` | post-build |  | ✓ | ✓ |
+| SEO Metadata | `seo` | post-build |  | ✓ | ✓ |
+| Edge Runtime Tests | `edge-runtime` | post-build |  | ✓ | ✓ |
+| Playwright Browser Tests | `e2e` | post-build |  |  | ✓ |
+| Visual Regression (fixture content) | `visual` | post-build |  |  | ✓ |
 
 <!-- generated:end gate-coverage -->
 

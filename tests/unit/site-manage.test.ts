@@ -67,3 +67,14 @@ test('a scaffold created during the session can be edited and saved without a st
   assert.equal(result.status, 0, result.stderr + result.stdout);
   assert.match(fs.readFileSync(path.join(tmp, 'vault/05 Writeups/gamma/index.md'), 'utf8'), /^title: New title$/m);
 });
+
+test('a scaffold does not absorb an outside edit made after the session loaded', async () => {
+  process.env.VAULT_DIR = path.join(tmp, 'vault');
+  const { load, createWriteup } = await import('../../bin/site/manage-model.ts');
+  const model = load();
+  const loaded = model.sourceFingerprint;
+  const alpha = path.join(tmp, 'vault/05 Writeups/alpha/index.md');
+  fs.writeFileSync(alpha, fs.readFileSync(alpha, 'utf8').replace(/^title: .*$/m, 'title: Edited elsewhere'));
+  assert.ok(createWriteup(model, 'delta'), stripVTControlCharacters(model.flash));
+  assert.equal(model.sourceFingerprint, loaded);
+});
