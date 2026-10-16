@@ -16,6 +16,12 @@ async function submitExpecting(page: Page, kind: 'error' | 'success', text: stri
 }
 
 test.describe('Contact Form Interactive Verification', () => {
+  test.beforeEach(async ({ page }) => {
+    // Block the Turnstile script so its always-pass test key cannot auto-solve mid-test.
+    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
+    await page.goto('/contact/');
+  });
+
   test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
     let requests = 0;
     let finish!: () => void;
@@ -49,12 +55,6 @@ test.describe('Contact Form Interactive Verification', () => {
     await expect(page.locator('#contact-message')).toHaveValue('Keep this message for retry.');
     expect(requests).toBe(1);
   });
-  test.beforeEach(async ({ page }) => {
-    // Block the Turnstile script so its always-pass test key cannot auto-solve mid-test.
-    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
-    await page.goto('/contact/');
-  });
-
   test('validates required fields and shows HTML5 constraints', async ({ page }) => {
     const submitButton = page.locator('.contact-submit');
     const nameInput = page.locator('#contact-name');
@@ -82,13 +82,6 @@ test.describe('Contact Form Interactive Verification', () => {
 
   test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
     await page.route('/api/contact', async (route) => {
-      expect(route.request().method()).toBe('POST');
-      const payload = route.request().postDataJSON();
-      expect(payload.name).toBe('Jane Doe');
-      expect(payload.email).toBe('jane@example.com');
-      expect(payload.message).toBe('Mocked message content');
-      expect(payload.turnstileToken).toBe('mocked-turnstile-token');
-
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -108,7 +101,16 @@ test.describe('Contact Form Interactive Verification', () => {
       };
     });
 
+    const request = page.waitForRequest('/api/contact');
     await submitExpecting(page, 'success', 'Thanks, your message has been sent');
+    const submitted = await request;
+    expect(submitted.method()).toBe('POST');
+    expect(submitted.postDataJSON()).toMatchObject({
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      message: 'Mocked message content',
+      turnstileToken: 'mocked-turnstile-token',
+    });
 
     await expect(page.locator('#contact-name')).toHaveValue('');
     await expect(page.locator('#contact-email')).toHaveValue('');

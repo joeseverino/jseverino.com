@@ -94,4 +94,11 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 }
 /* tokens:end */
 
+/* Overrides the generated 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
+/* stylelint-disable-next-line no-duplicate-selectors -- the generated block owns the first :root. */
+:root {
+  --radius-md: clamp(10px, 6px + 0.6vw, 12px);
+  --menu-offset: 3.8rem;
+}
+
 }

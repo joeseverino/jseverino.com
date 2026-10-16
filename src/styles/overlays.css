@@ -1,63 +1,7 @@
 @layer components {
-/* Overrides the tokens layer's 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
-:root {
-  --radius-md: clamp(10px, 6px + 0.6vw, 12px);
-  --menu-offset: 3.8rem;
-}
-
-.nav-toggle {
-  display: none;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  flex-direction: column;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-  color: var(--color-text);
-  transition:
-    color var(--motion-duration-fast) var(--motion-ease-standard),
-    scale var(--motion-duration-instant) var(--motion-ease-standard);
-
-  &:hover,
-  &:focus {
-    color: var(--color-primary);
-  }
-
-  &:active {
-    scale: 0.94;
-    color: var(--color-primary-deep);
-  }
-
-  &[aria-expanded='true'] {
-    & .nav-toggle-bar:nth-child(1) { translate: 0 0.4rem; rotate: 45deg; }
-    & .nav-toggle-bar:nth-child(2) { opacity: 0; }
-    & .nav-toggle-bar:nth-child(3) { translate: 0 -0.4rem; rotate: -45deg; }
-  }
-}
-
-.nav-toggle-bar {
-  display: block;
-  inline-size: 1.5rem;
-  block-size: 2px;
-  background: currentColor;
-  border-radius: 2px;
-  transition:
-    translate var(--motion-duration-standard) var(--motion-ease-standard),
-    rotate var(--motion-duration-standard) var(--motion-ease-standard),
-    opacity var(--motion-duration-standard) var(--motion-ease-standard);
-}
-
 .mobile-nav {
   position: fixed;
-  inset-block-start: var(--menu-offset);
-  inset-inline: 0;
-  inset-block-end: 0;
+  inset: var(--menu-offset) 0 0;
   inline-size: auto;
   block-size: auto;
   flex-direction: column;
@@ -73,8 +17,7 @@
   &::before {
     content: '';
     position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
+    inset: 0 0 auto;
     block-size: 3px;
     background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
     pointer-events: none;
@@ -86,10 +29,7 @@
 
   /* Appearance is shared with .lightbox::backdrop below; only the inset is nav-specific. */
   &::backdrop {
-    position: fixed;
-    inset-block-start: var(--menu-offset);
-    inset-inline: 0;
-    inset-block-end: 0;
+    inset: var(--menu-offset) 0 0;
   }
 }
 
@@ -97,18 +37,12 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0;
   padding: 0;
   list-style: none;
 
   & li {
     inline-size: 100%;
     border-block-end: 1px solid var(--color-border-faint);
-    opacity: 1;
-    translate: 0 0;
-    transition:
-      opacity var(--motion-duration-standard) var(--motion-ease-standard),
-      translate var(--motion-duration-standard) var(--motion-ease-standard);
   }
 }
 
@@ -124,13 +58,9 @@
     translate: 0 8px;
   }
 
-  &:nth-child(1) { transition-delay: 0ms; }
   &:nth-child(2) { transition-delay: var(--motion-stagger-step); }
   &:nth-child(3) { transition-delay: calc(var(--motion-stagger-step) * 2); }
   &:nth-child(4) { transition-delay: calc(var(--motion-stagger-step) * 3); }
-  &:nth-child(5) { transition-delay: calc(var(--motion-stagger-step) * 4); }
-  &:nth-child(6) { transition-delay: calc(var(--motion-stagger-step) * 5); }
-  &:nth-child(7) { transition-delay: calc(var(--motion-stagger-step) * 6); }
 }
 
 .mobile-nav-link {
@@ -154,7 +84,7 @@
   }
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     color: var(--color-primary);
     text-decoration: none;
   }
@@ -171,10 +101,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-
-  & .page-kicker {
-    margin: 0;
-  }
 }
 
 /* One fade and backdrop treatment for the mobile nav and the lightbox. */
@@ -209,7 +135,6 @@
   }
 }
 
-/* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
 .prose .image-zoom {
   display: block;
   max-inline-size: 100%;
@@ -220,25 +145,16 @@
   color: inherit;
   cursor: zoom-in;
 
-  &:focus:not(:focus-visible) {
-    outline: none;
-  }
-
   &:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 3px;
   }
 }
 
-.prose .image-zoom,
-.lightbox-img,
-.lightbox-close {
-  -webkit-tap-highlight-color: transparent;
-}
-
+/* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
 .lightbox {
   max-inline-size: min(92vw, 1400px);
-  max-block-size: 92vh;
+  max-block-size: 92dvh;
   margin: auto;
   border: 0;
   padding: 0;
@@ -252,7 +168,6 @@
 }
 
 .lightbox-figure {
-  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -261,7 +176,7 @@
 
 .lightbox-img {
   display: block;
-  max-block-size: 82vh;
+  max-block-size: 82dvh;
   object-fit: contain;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
@@ -270,7 +185,6 @@
 
 .lightbox-caption {
   max-inline-size: 100%;
-  margin: 0;
   color: var(--color-text);
   font-size: var(--font-2xs);
   line-height: 1.5;
@@ -297,7 +211,7 @@
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
-  transition: background var(--motion-duration-fast) var(--motion-ease-standard);
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
 
   &:hover,
   &:focus-visible {
@@ -308,68 +222,5 @@
 body:has(.mobile-nav:popover-open),
 body:has(.lightbox[open]) {
   overflow: hidden;
-}
-
-/* Components that answer to their own width */
-
-/* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
-.site-nav { container: site-nav / inline-size; }
-.page-hero { container: hero / inline-size; }
-.software-list { container: software / inline-size; }
-.archive-section { container: archive / inline-size; }
-.archive-taxonomy { container: taxonomy / inline-size; }
-
-@container site-nav (inline-size < 33.5rem) {
-  .primary-nav { display: none; }
-  .nav-toggle { display: inline-flex; }
-}
-
-@container hero (inline-size < 33.5rem) {
-  .page-hero > * { text-align: left; }
-  .page-intro { margin-inline: 0; }
-  .page-actions { justify-content: flex-start; }
-}
-
-@container home (inline-size < 33.5rem) {
-  .hero > .actions {
-    inline-size: 100%;
-    gap: var(--space-10);
-  }
-
-  .hero > .actions .button {
-    padding-inline: 0.75em;
-    white-space: nowrap;
-  }
-}
-
-@container home (inline-size < 20rem) {
-  .hero > .actions {
-    grid-auto-flow: row;
-    inline-size: min(100%, 16rem);
-  }
-}
-
-@container software (inline-size < 33.5rem) {
-  .sli {
-    flex-direction: column;
-    gap: var(--space-10);
-  }
-
-  .sli-aside {
-    align-items: flex-start;
-    text-align: start;
-  }
-}
-
-@container archive (inline-size < 33.5rem) {
-  .archive-section summary {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 2px;
-  }
-}
-
-@container taxonomy (inline-size < 33.5rem) {
-  .archive-taxonomy-group { grid-template-columns: 1fr; }
 }
 }

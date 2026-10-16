@@ -6,6 +6,8 @@ import wordmark from '../../public/assets/brand/wordmark-caps.svg?raw';
 
 // The template's <svg> owns sizing and accessibility; inline only the geometry.
 const wordmarkInner = wordmark.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+const wordmarkViewBox = /^<svg[^>]*\sviewBox="([^"]+)"/.exec(wordmark)?.[1];
+if (!wordmarkViewBox) throw new Error('wordmark-caps.svg needs a viewBox on its root <svg>.');
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
@@ -20,21 +22,14 @@ const navigation = navItems.map((item) => ({
 <header class="site-header" data-sticky-header>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
-      <svg class="brand-mark" viewBox="0 0 1736.11 352" aria-hidden="true" focusable="false" set:html={wordmarkInner} />
+      <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" focusable="false" set:html={wordmarkInner} />
     </a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
       <NavLinks items={navigation} listClass="nav-list" linkClass="nav-link" />
     </nav>
 
-    <button
-      class="nav-toggle"
-      type="button"
-      popovertarget="mobile-nav"
-      aria-expanded="false"
-      aria-label="Menu"
-      data-nav-toggle
-    >
+    <button class="nav-toggle" type="button" popovertarget="mobile-nav" aria-label="Menu" data-nav-toggle>
       <span class="nav-toggle-bar"></span>
       <span class="nav-toggle-bar"></span>
       <span class="nav-toggle-bar"></span>
@@ -42,12 +37,7 @@ const navigation = navItems.map((item) => ({
   </div>
 
   <nav class="mobile-nav" id="mobile-nav" popover="auto" aria-label="Mobile navigation" data-mobile-nav>
-    <NavLinks
-      items={navigation}
-      listClass="mobile-nav-list"
-      linkClass="mobile-nav-link"
-      linkDataAttribute="data-mobile-nav-link"
-    />
+    <NavLinks items={navigation} listClass="mobile-nav-list" linkClass="mobile-nav-link" />
     <div class="mobile-nav-footer">
       <p class="page-kicker">{focusLabel}</p>
       <SocialLinks links={socialLinks} class="mobile-nav-social" />
@@ -67,19 +57,13 @@ const navigation = navItems.map((item) => ({
     }
   }
 
-  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
 
-  if (toggle && mobileNav && 'showPopover' in mobileNav) {
+  if (mobileNav) {
     document.body.classList.add('nav-js-ready');
 
-    mobileNav.addEventListener('toggle', (event) => {
-      toggle.setAttribute('aria-expanded', String((event as ToggleEvent).newState === 'open'));
-    });
-
     mobileNav.addEventListener('click', (event) => {
-      if (event.target instanceof Element &&
-          (event.target === mobileNav || event.target.closest('[data-mobile-nav-link]'))) {
+      if (event.target instanceof Element && (event.target === mobileNav || event.target.closest('a'))) {
         mobileNav.hidePopover();
       }
     });

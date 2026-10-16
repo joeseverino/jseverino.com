@@ -5,7 +5,8 @@ import ProjectCard from '@components/ProjectCard.astro';
 import SoftwareCard from '@components/SoftwareCard.astro';
 import SoftwareListItem from '@components/SoftwareListItem.astro';
 import TagIndex from '@components/TagIndex.astro';
-import { getAllTags, getPage, getWriteups } from '@lib/content.ts';
+import { groupedTags } from '@components/tag-groups.ts';
+import { getPage, getWriteups } from '@lib/content.ts';
 import { getFeaturedSoftware, getMoreSoftware, getSoftware } from '@lib/software.ts';
 
 const page = await getPage('portfolio');
@@ -13,8 +14,8 @@ const writeups = await getWriteups();
 const software = await getSoftware();
 const featuredSoftware = getFeaturedSoftware(software);
 const moreSoftware = getMoreSoftware(software);
-const tags = await getAllTags();
-const tagCount = tags.length;
+const tagGroups = await groupedTags();
+const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0);
 ---
 
 <BaseLayout
@@ -32,38 +33,16 @@ const tagCount = tags.length;
   <main id="main" class="wide section">
     <PageHero title={page.title} description={page.intro ?? page.description} />
 
-    <div class="tabs-wrap">
-      <div class="portfolio-tabs" role="tablist" aria-label="Portfolio sections" data-portfolio-tabs>
-        <button
-          class="portfolio-tab"
-          type="button"
-          role="tab"
-          id="tab-writeups"
-          aria-controls="panel-writeups"
-          aria-selected="true"
-          data-tab="writeups"
-        >Writeups</button>
-        <button
-          class="portfolio-tab"
-          type="button"
-          role="tab"
-          id="tab-software"
-          aria-controls="panel-software"
-          aria-selected="false"
-          data-tab="software"
-        >Software</button>
+    <div class="tabs-wrap" hidden>
+      <div class="portfolio-tabs" data-portfolio-tabs>
+        <button class="portfolio-tab" type="button" id="tab-writeups" aria-controls="panel-writeups" data-tab="writeups">Writeups</button>
+        <button class="portfolio-tab" type="button" id="tab-software" aria-controls="panel-software" data-tab="software">Software</button>
       </div>
     </div>
 
     <hr class="page-divider" />
 
-    <section
-      id="panel-writeups"
-      class="portfolio-panel"
-      role="tabpanel"
-      aria-labelledby="tab-writeups"
-      data-panel="writeups"
-    >
+    <section id="panel-writeups" class="portfolio-panel" data-panel="writeups">
       <ul class="project-grid">
         {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
       </ul>
@@ -72,17 +51,11 @@ const tagCount = tags.length;
           <span>Browse by technology</span>
           <span>{tagCount} tags</span>
         </summary>
-        <TagIndex />
+        <TagIndex groups={tagGroups} />
       </details>
     </section>
 
-    <section
-      id="panel-software"
-      class="portfolio-panel"
-      role="tabpanel"
-      aria-labelledby="tab-software"
-      data-panel="software"
-    >
+    <section id="panel-software" class="portfolio-panel" data-panel="software">
       <ul class="project-grid">
         {featuredSoftware.map((entry) => <SoftwareCard entry={entry} />)}
       </ul>
@@ -104,9 +77,18 @@ const tagCount = tags.length;
     const root = document.querySelector<HTMLElement>('[data-portfolio-tabs]');
     if (!root) return;
 
-    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-tab]')];
     const panelFor = (name: string) =>
       document.querySelector<HTMLElement>(`[data-panel="${name}"]`);
+
+    root.setAttribute('role', 'tablist');
+    root.setAttribute('aria-label', 'Portfolio sections');
+    for (const tab of tabs) {
+      tab.setAttribute('role', 'tab');
+      const panel = panelFor(tab.dataset.tab ?? '');
+      panel?.setAttribute('role', 'tabpanel');
+      panel?.setAttribute('aria-labelledby', tab.id);
+    }
 
     function activate(name: string, updateHash: boolean): void {
       tabs.forEach((tab) => {
@@ -123,28 +105,33 @@ const tagCount = tags.length;
       }
     }
 
-    tabs.forEach((tab, i) => {
-      tab.addEventListener('click', () => activate(tab.dataset.tab ?? '', true));
-      tab.addEventListener('keydown', (event) => {
-        const destinations: Record<string, number> = {
-          ArrowRight: (i + 1) % tabs.length,
-          ArrowLeft: (i + tabs.length - 1) % tabs.length,
-          Home: 0,
-          End: tabs.length - 1,
-        };
-        const index = destinations[event.key];
-        if (index === undefined) return;
-        event.preventDefault();
-        // destinations only names indexes inside tabs.
-        const next = tabs[index]!;
-        next.focus();
-        activate(next.dataset.tab ?? '', true);
-      });
+    root.addEventListener('click', (event) => {
+      const tab = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[role="tab"]') : null;
+      if (tab) activate(tab.dataset.tab ?? '', true);
+    });
+
+    root.addEventListener('keydown', (event) => {
+      const tab = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[role="tab"]') : null;
+      if (!tab) return;
+      const i = tabs.indexOf(tab);
+      const destinations: Record<string, number> = {
+        ArrowRight: (i + 1) % tabs.length,
+        ArrowLeft: (i + tabs.length - 1) % tabs.length,
+        Home: 0,
+        End: tabs.length - 1,
+      };
+      const index = destinations[event.key];
+      const next = index === undefined ? undefined : tabs[index];
+      if (!next) return;
+      event.preventDefault();
+      next.focus();
+      activate(next.dataset.tab ?? '', true);
     });
 
     const syncFromUrl = () => activate(window.location.hash === '#software' ? 'software' : 'writeups', false);
     window.addEventListener('hashchange', syncFromUrl);
     syncFromUrl();
+    root.closest<HTMLElement>('.tabs-wrap')?.removeAttribute('hidden');
   }
 
   initPortfolioTabs();

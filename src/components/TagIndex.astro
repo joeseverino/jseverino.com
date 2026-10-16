@@ -1,18 +1,10 @@
 ---
-import { getAllTags, getTechnologyGroups } from '@lib/content.ts';
 import { tagPath } from '@lib/site-config.ts';
+import type { TagGroup } from '@components/tag-groups.ts';
 
-const collator = new Intl.Collator('en', { sensitivity: 'base' });
-const tagCounts = new Map((await getAllTags()).map((tag) => [tag.slug, tag.count]));
-const groups = getTechnologyGroups()
-  .map((group) => ({
-    ...group,
-    tags: group.tags
-      .filter((tag) => tagCounts.has(tag.slug))
-      .sort((a, b) => collator.compare(a.label, b.label)),
-  }))
-  .filter((group) => group.tags.length > 0)
-  .sort((a, b) => collator.compare(a.name, b.name));
+type Props = { groups: TagGroup[] };
+
+const { groups } = Astro.props;
 ---
 
 <div class="archive-taxonomy">
@@ -25,15 +17,12 @@ const groups = getTechnologyGroups()
             {group.name}
           </h2>
           <div class="archive-taxonomy-list">
-            {group.tags.map((tag) => {
-              const count = tagCounts.get(tag.slug) ?? 0;
-              return (
-                <a class="archive-tag" href={tagPath(tag.slug)} aria-label={`${tag.label}, ${count} ${count === 1 ? 'project' : 'projects'}`}>
-                  <span>{tag.label}</span>
-                  <span class="archive-tag-count">{count}</span>
-                </a>
-              );
-            })}
+            {group.tags.map((tag) => (
+              <a class="archive-tag" href={tagPath(tag.slug)} aria-label={`${tag.label}, ${tag.count} ${tag.count === 1 ? 'project' : 'projects'}`}>
+                <span>{tag.label}</span>
+                <span class="archive-tag-count">{tag.count}</span>
+              </a>
+            ))}
           </div>
         </section>
       );

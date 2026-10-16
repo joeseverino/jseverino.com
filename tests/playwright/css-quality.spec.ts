@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { tableWriteup } from './helpers/writeups.ts';
+import { rgb } from './helpers/colors.ts';
+import { BRAND, SURFACE } from '../../src/lib/brand.ts';
 
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
@@ -8,8 +10,8 @@ async function expectBrandVars(page: Page, primary: string, deep: string): Promi
       (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
       property,
     );
-  expect(await declared('--color-primary')).toBe(primary);
-  expect(await declared('--color-primary-deep')).toBe(deep);
+  expect(await declared('--color-primary')).toBe(primary.toLowerCase());
+  expect(await declared('--color-primary-deep')).toBe(deep.toLowerCase());
 }
 
 test('focus exposes the skip link', async ({ page }) => {
@@ -27,23 +29,23 @@ test('brand tokens drive document chrome and interactive states', async ({ page 
 
   // Chrome tint tracks the page background per theme, not the brand navy, so the
   // browser toolbar blends into the page instead of staying dark in both themes.
-  await expect(page.locator('meta[name="theme-color"][data-scheme="light"]')).toHaveAttribute('content', /#ffffff/i);
-  await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', /#131826/i);
+  await expect(page.locator('meta[name="theme-color"][data-scheme="light"]')).toHaveAttribute('content', new RegExp(SURFACE.light, 'i'));
+  await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', new RegExp(SURFACE.dark, 'i'));
   // The whole stylesheet, brand vars included, is inlined: first paint never
   // waits on a stylesheet request.
   await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(0);
   await expect(page.locator('head style')).toHaveCount(1);
 
   // The shared brand emitter resolves the light palette explicitly.
-  await expectBrandVars(page, '#1e3a8a', '#14245c');
+  await expectBrandVars(page, BRAND.navy, BRAND.navyDeep);
 
   const cardLink = page.locator('.project-card-title a').first();
   await cardLink.focus();
-  await expect(cardLink).toHaveCSS('color', 'rgb(30, 58, 138)');
+  await expect(cardLink).toHaveCSS('color', rgb(BRAND.navy));
 
   const sourceLink = page.locator('.source-link');
   await sourceLink.focus();
-  await expect(sourceLink).toHaveCSS('color', 'rgb(20, 36, 92)');
+  await expect(sourceLink).toHaveCSS('color', rgb(BRAND.navyDeep));
   expect(await sourceLink.evaluate((element) => getComputedStyle(element).fontFamily)).toContain('Inter');
 });
 
@@ -51,21 +53,18 @@ test('dark brand paint stays legible in links, navigation, and primary actions',
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
 
-  await expectBrandVars(page, '#7c9ce0', '#a8c0f0');
+  await expectBrandVars(page, BRAND.onDark.primary, BRAND.onDark.primaryDeep);
 
   const button = page.locator('.button').first();
-  await expect(button).toHaveCSS('background-color', 'rgb(124, 156, 224)');
-  await expect(button).toHaveCSS('color', 'rgb(19, 24, 38)');
+  await expect(button).toHaveCSS('background-color', rgb(BRAND.onDark.primary));
+  await expect(button).toHaveCSS('color', rgb(SURFACE.dark));
 
   const cardLink = page.locator('.project-card-title a').first();
   await cardLink.focus();
-  await expect(cardLink).toHaveCSS('color', 'rgb(124, 156, 224)');
+  await expect(cardLink).toHaveCSS('color', rgb(BRAND.onDark.primary));
 
   await page.goto('/resume/');
-  await expect(page.locator('.nav-link[aria-current="page"]')).toHaveCSS(
-    'color',
-    'rgb(124, 156, 224)',
-  );
+  await expect(page.locator('.nav-link[aria-current="page"]')).toHaveCSS('color', rgb(BRAND.onDark.primary));
 });
 
 test('motion tokens drive stable pressed feedback', async ({ page }) => {
@@ -138,7 +137,6 @@ test('buttons and cards keep a stable click target through press and release', a
 for (const { name, selector, path } of [
   { name: 'writeup card', selector: '.project-card', path: '/portfolio/' },
   { name: 'software card', selector: '.software-card', path: '/portfolio/#software' },
-
 ]) {
   test(`${name} stays stationary at its bottom hover edge`, async ({ page }) => {
     await page.goto(path);

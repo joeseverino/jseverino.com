@@ -1,4 +1,5 @@
 ---
+import type { ComponentProps } from 'astro/types';
 import SeoHead from '@components/SeoHead.astro';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
@@ -10,13 +11,12 @@ import { CSP_INLINE_MARKER } from '../../functions/lib/csp.ts';
 import '@styles/base.css';
 
 type Props = {
-  seo?: Parameters<typeof SeoHead>[0];
-  bodyClass?: string;
+  seo?: ComponentProps<typeof SeoHead>;
   /** Extra third-party origins to preconnect to, beyond the site-wide defaults. */
   preconnect?: string[];
 };
 
-const { seo = {}, bodyClass, preconnect = [] } = Astro.props;
+const { seo = {}, preconnect = [] } = Astro.props;
 
 // static.cloudflareinsights.com serves the Web Analytics beacon; preconnect warms DNS and TLS for it.
 const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnect];
@@ -64,7 +64,7 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
     <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png" />
   </head>
-  <body class={bodyClass || undefined}>
+  <body>
     <a class="skip-link" href="#main">Skip to main content</a>
     <SocialIconsDefs />
     <div class="page-shell">

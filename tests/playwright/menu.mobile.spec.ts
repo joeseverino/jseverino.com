@@ -5,6 +5,9 @@ async function menu(page: Page) {
   return { toggle: page.locator('[data-nav-toggle]'), popover: page.locator('[data-mobile-nav]') };
 }
 
+const expectToggleShowsOpen = (page: Page, open: boolean) =>
+  expect(page.locator('[data-nav-toggle] .nav-toggle-bar').nth(1)).toHaveCSS('opacity', open ? '0' : '1');
+
 async function openMenu(page: Page) {
   const nav = await menu(page);
   await nav.toggle.click();
@@ -35,22 +38,22 @@ test('mobile menu opens via hamburger and closes on Escape', async ({ page }) =>
 
   await toggle.click();
   await expect(popover).toBeVisible();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expectToggleShowsOpen(page, true);
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
 
   await page.keyboard.press('Escape');
   await expect(popover).toBeHidden();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expectToggleShowsOpen(page, false);
   await expect(page.locator('body')).not.toHaveCSS('overflow', 'hidden');
 });
 
 test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
-  const { toggle, popover } = await openMenu(page);
+  const { popover } = await openMenu(page);
 
   // Click the popover's own backdrop (top-left corner), not a nav link.
   await popover.click({ position: { x: 4, y: 4 } });
   await expect(popover).toBeHidden();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expectToggleShowsOpen(page, false);
 });
 
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {

@@ -1,13 +1,14 @@
 import rss from '@astrojs/rss';
+import type { APIRoute } from 'astro';
 import { getWriteups } from '@lib/content.ts';
 import { site } from '@lib/site.ts';
 import { writeupPath } from '@lib/site-config.ts';
 
-export async function GET(context: { site: string }) {
-  return rss({
+export const GET: APIRoute = async () =>
+  rss({
     title: site.defaultTitle,
     description: site.defaultDescription,
-    site: context.site,
+    site: site.url,
     items: (await getWriteups()).map((writeup) => ({
       title: writeup.title,
       description: writeup.description,
@@ -15,4 +16,3 @@ export async function GET(context: { site: string }) {
       link: writeupPath(writeup.slug),
     })),
   });
-}

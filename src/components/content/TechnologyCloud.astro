@@ -1,0 +1,25 @@
+---
+import { tagPath } from '@lib/site-config.ts';
+import { groupedTags } from '@components/tag-groups.ts';
+
+const groups = await groupedTags({ featuredOnly: true });
+---
+
+<section class="container section">
+  <div class="tag-groups">
+    {
+      groups.map((group) => (
+        <div>
+          <h3 class="tag-group-title">{group.name}</h3>
+          <div class="tag-list">
+            {group.tags.map((tag) => (
+              <a class="tag" href={tagPath(tag.slug)}>
+                {tag.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

@@ -26,10 +26,10 @@ const titleHref = entry.repoUrl ?? entry.package?.url;
     {meta && <p class="sli-meta">{meta}</p>}
     <div class="sli-links">
       {entry.repoUrl && (
-        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
       )}
       {entry.writeupSlug && (
-        <a class="sli-writeup" href={writeupPath(entry.writeupSlug)}>Writeup →</a>
+        <a class="sli-writeup" href={writeupPath(entry.writeupSlug)}>Writeup <span aria-hidden="true">→</span></a>
       )}
     </div>
   </div>

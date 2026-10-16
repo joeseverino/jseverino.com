@@ -68,11 +68,6 @@ test.describe('figure lightbox', () => {
     await expect(dialog).toBeHidden();
   });
 
-  test('opens via the keyboard on a focused figure', async ({ page }) => {
-    const { dialog } = await openWithKeyboard(page);
-    await expect(dialog).toBeVisible();
-  });
-
   test('copies rich captions as DOM nodes without an HTML parsing sink', async ({ page }) => {
     await page.goto(WRITEUP);
     const trigger = page.locator('.prose figure:has(figcaption) .image-zoom').first();

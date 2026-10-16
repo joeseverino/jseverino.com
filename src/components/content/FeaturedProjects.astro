@@ -7,6 +7,6 @@ const featured = await getFeaturedWriteups();
 
 <section class="wide section">
   <ul class="project-grid">
-    {featured.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+    {featured.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} headingLevel={3} />)}
   </ul>
 </section>

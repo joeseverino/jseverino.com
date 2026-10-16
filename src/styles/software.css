@@ -17,7 +17,7 @@
   border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
@@ -47,17 +47,15 @@
 }
 
 .software-list {
-  margin: 0;
+  container: software / inline-size;
   padding: 0;
   list-style: none;
   border-block-start: 1px solid var(--color-border-faint);
 }
 
 /* Both panels render for no-JS and SEO. */
-.portfolio-panel {
-  &[hidden] { display: none; }
-
-  & + & { margin-block-start: var(--space-40); }
+.portfolio-panel + .portfolio-panel {
+  margin-block-start: var(--space-40);
 }
 
 .software-card > .card-surface {
@@ -72,14 +70,13 @@
 }
 
 .software-card-title {
-  margin: 0;
   font-family: var(--font-mono);
   font-size: 1.0625rem;
   font-weight: 600;
   line-height: 1.3;
 
   & a:hover,
-  & a:focus {
+  & a:focus-visible {
     color: var(--color-primary);
     text-decoration: none;
   }
@@ -98,7 +95,7 @@
   padding-inline: 8px;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -130,7 +127,6 @@
 
 .software-card-summary {
   min-block-size: 6.2em;
-  margin: 0;
   line-height: 1.55;
 }
 
@@ -152,11 +148,6 @@
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-
-  & .prompt {
-    color: var(--term-prompt);
-    user-select: none;
-  }
 }
 
 .software-copy {
@@ -168,7 +159,7 @@
   background: color-mix(in oklch, var(--term-cmd) 6%, transparent);
   color: var(--term-bar-fg);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
   transition:
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
@@ -187,11 +178,10 @@
 }
 
 .software-meta {
-  margin: 0;
   margin-block-start: auto;
   color: var(--color-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-2xs);
 }
 
 .software-links {
@@ -200,11 +190,11 @@
   align-items: center;
   gap: var(--space-20);
   padding-block-start: var(--space-10);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
 
   & a:hover,
-  & a:focus {
+  & a:focus-visible {
     color: var(--color-primary);
     text-decoration: none;
   }
@@ -230,14 +220,13 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-10);
-  margin: 0;
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: 0;
 
   & a:hover,
-  & a:focus {
+  & a:focus-visible {
     color: var(--color-primary);
     text-decoration: none;
   }
@@ -246,14 +235,14 @@
 .sli-flag {
   color: var(--color-muted);
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .sli-desc {
-  margin: 4px 0 0;
+  margin-block-start: 4px;
   color: var(--color-muted);
   font-size: 13.5px;
   line-height: 1.5;
@@ -266,30 +255,41 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
-  text-align: right;
+  text-align: end;
 }
 
 .sli-meta {
-  margin: 0;
   color: var(--color-muted);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-2xs);
   white-space: nowrap;
 }
 
 .sli-links {
   display: flex;
   gap: var(--space-15);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
 
   & a:hover,
-  & a:focus {
+  & a:focus-visible {
     color: var(--color-primary);
     text-decoration: none;
   }
 }
 
 .sli-writeup { color: var(--color-text-alt); }
+
+@container software (inline-size < 33.5rem) {
+  .sli {
+    flex-direction: column;
+    gap: var(--space-10);
+  }
+
+  .sli-aside {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
 }

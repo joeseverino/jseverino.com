@@ -5,7 +5,7 @@
   flex-direction: column;
 }
 
-.container {
+:is(.container, .content-flow, .home-content, .article) {
   inline-size: var(--w-constrained);
   margin-inline: auto;
 }
@@ -24,20 +24,13 @@ main > * + * {
   margin-block-start: var(--space-30);
 }
 
-.content-flow {
-  inline-size: var(--w-constrained);
-  margin-inline: auto;
-
-  & > * + * {
-    margin-block-start: var(--space-30);
-  }
+.content-flow > * + * {
+  margin-block-start: var(--space-30);
 }
 
-.section-title {
-  margin-block-end: var(--space-30);
-}
-
+/* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
 .page-hero {
+  container: hero / inline-size;
   max-inline-size: 760px;
   margin-inline: auto;
   text-align: center;
@@ -107,9 +100,9 @@ main > * + * {
 }
 
 .page-actions a:hover,
-.page-actions a:focus,
+.page-actions a:focus-visible,
 .archive-tag:hover,
-.archive-tag:focus {
+.archive-tag:focus-visible {
   border-color: color-mix(in oklch, var(--color-primary) 45%, var(--color-border));
   color: var(--color-primary);
   text-decoration: none;
@@ -122,7 +115,14 @@ main > * + * {
   color: var(--color-primary-deep);
 }
 
+@container hero (inline-size < 33.5rem) {
+  .page-hero > * { text-align: start; }
+  .page-intro { margin-inline: 0; }
+  .page-actions { justify-content: flex-start; }
+}
+
 .archive-section {
+  container: archive / inline-size;
   max-inline-size: var(--cards);
   margin-inline: auto;
   padding-block-start: var(--space-20);
@@ -146,11 +146,10 @@ main > * + * {
     & span:last-child {
       color: var(--color-muted);
       font-size: 0.875rem;
-      font-weight: 600;
     }
 
     &:hover,
-    &:focus {
+    &:focus-visible {
       color: var(--color-primary);
     }
 
@@ -160,9 +159,17 @@ main > * + * {
   }
 }
 
+@container archive (inline-size < 33.5rem) {
+  .archive-section summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
 .archive-taxonomy {
+  container: taxonomy / inline-size;
   display: grid;
-  gap: 0;
   padding-block-start: var(--space-10);
 }
 
@@ -183,8 +190,11 @@ main > * + * {
   font-weight: var(--weight-label);
   letter-spacing: var(--track-label);
   line-height: 1.35;
-  text-align: left;
   text-transform: uppercase;
+}
+
+@container taxonomy (inline-size < 33.5rem) {
+  .archive-taxonomy-group { grid-template-columns: 1fr; }
 }
 
 .archive-taxonomy-list {
@@ -282,6 +292,7 @@ main > * + * {
 }
 
 .site-nav {
+  container: site-nav / inline-size;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -302,7 +313,7 @@ main > * + * {
   }
 
   &:hover,
-  &:focus {
+  &:focus-visible {
     color: var(--color-primary);
   }
 
@@ -336,11 +347,11 @@ main > * + * {
     inline-size: 0;
     block-size: 1.5px;
     background: var(--color-primary);
-    transition: width var(--motion-duration-standard) var(--motion-ease-standard);
+    transition: inline-size var(--motion-duration-standard) var(--motion-ease-standard);
   }
 
   &:hover,
-  &:focus,
+  &:focus-visible,
   &[aria-current='page'] {
     color: var(--color-primary);
     text-decoration: none;
@@ -353,5 +364,66 @@ main > * + * {
   &:active {
     color: var(--color-primary-deep);
   }
+}
+
+.nav-toggle {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex-direction: column;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text);
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    scale var(--motion-duration-instant) var(--motion-ease-standard);
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-primary);
+  }
+
+  &:active {
+    scale: 0.94;
+    color: var(--color-primary-deep);
+  }
+}
+
+.nav-toggle-bar {
+  display: block;
+  inline-size: 1.5rem;
+  block-size: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition:
+    translate var(--motion-duration-standard) var(--motion-ease-standard),
+    rotate var(--motion-duration-standard) var(--motion-ease-standard),
+    opacity var(--motion-duration-standard) var(--motion-ease-standard);
+}
+
+body:has(.mobile-nav:popover-open) .nav-toggle-bar {
+  &:nth-child(1) { translate: 0 0.4rem; rotate: 45deg; }
+  &:nth-child(2) { opacity: 0; }
+  &:nth-child(3) { translate: 0 -0.4rem; rotate: -45deg; }
+}
+
+@container site-nav (inline-size < 33.5rem) {
+  .primary-nav { display: none; }
+  .nav-toggle { display: inline-flex; }
+}
+
+.brand,
+.project-card a,
+.prose .image-zoom,
+.lightbox-img,
+.lightbox-close {
+  -webkit-tap-highlight-color: transparent;
 }
 }
