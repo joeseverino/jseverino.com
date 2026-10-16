@@ -13,6 +13,7 @@ import { SLUG, SiteError } from './cli.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import { collectionFields, type FieldSpec, type FieldType } from '../../src/lib/content-contract.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { fingerprint } from '../lib/writeups/receipt.ts';
 
 export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
 
@@ -342,7 +343,12 @@ export function createWriteup(model: Model, slug: string): boolean {
   // Pull the scaffold's real frontmatter so the detail view edits the truth.
   let summary: WriteupSummary | undefined;
   try {
-    summary = snapshot(writeupStore()).writeups.find((w) => w.slug === slug);
+    const next = snapshot(writeupStore());
+    summary = next.writeups.find((w) => w.slug === slug);
+    // Accept this scaffold without accepting unrelated edits since the model loaded.
+    if (summary && fingerprint(next.writeups.filter((w) => w.slug !== slug)) === model.sourceFingerprint) {
+      model.sourceFingerprint = next.sourceFingerprint;
+    }
   } catch {}
   const contractFields = collectionFields('writeups');
   const item = toItem(summary ?? { slug, title: slug, published: false }, contractFields);

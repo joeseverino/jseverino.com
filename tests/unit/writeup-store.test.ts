@@ -8,6 +8,7 @@ import {
 } from '../../bin/lib/writeups/store.ts';
 import { renderScalar, replaceScalar, yamlEscape } from '../../bin/lib/writeups/scalar.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
+import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 
 const READY = `---
 title: Ready Piece
@@ -106,6 +107,42 @@ describe('scalar writes', () => {
   test('a missing key is inserted before the closing fence', () => {
     assert.equal(replaceScalar('---\ntitle: A\n---\nbody\n', 'cover_alt', 'x'), '---\ntitle: A\ncover_alt: x\n---\nbody\n');
   });
+
+  test('multiline and scalar-like strings cannot change YAML structure or body bytes', () => {
+    for (const value of ['true', 'null', '123', '2026-10-15', '"quoted"', 'C:\\notes\\file', 'x\n---\ninjected body', 'a\r\nb', ' padded ']) {
+      const body = '# Article\n\ntitle: body text\n---\n';
+      const updated = replaceScalar(`---\npublished: false\n---\n${body}`, 'title', renderScalar(value));
+      assert.deepEqual(parseFrontmatter(updated), { data: { published: false, title: value }, content: body });
+    }
+  });
+
+  test('replacing block, quoted and empty values preserves adjacent metadata and body', () => {
+    for (const value of ['|-\n  Old\n  title', '>-\n  Old\n  title', '"Old title"', "'Old title'", '']) {
+      const original = `---\ntitle: ${value}\n# keep this comment\npublished: false\n---\ntitle: body\n`;
+      const updated = replaceScalar(original, 'title', renderScalar('New title'));
+      assert.equal(updated, '---\ntitle: New title\n# keep this comment\npublished: false\n---\ntitle: body\n');
+      assert.equal(replaceScalar(updated, 'title', renderScalar('New title')), updated);
+    }
+  });
+
+  test('only root keys match, never text inside another value or a nested mapping', () => {
+    const original = '---\ndescription: "first\n  title: inside"\nmeta:\n  title: nested\n"title": Old # keep\n---\nBody\n';
+    const updated = replaceScalar(original, 'title', renderScalar('New'));
+    assert.equal(updated, '---\ndescription: "first\n  title: inside"\nmeta:\n  title: nested\ntitle: New # keep\n---\nBody\n');
+    assert.deepEqual(parseFrontmatter(updated).data, { description: 'first title: inside', meta: { title: 'nested' }, title: 'New' });
+  });
+
+  test('CRLF frontmatter keeps its line endings', () => {
+    const original = '---\r\ntitle: |-\r\n  Old\r\npublished: true\r\n---\r\nBody\r\n';
+    assert.equal(replaceScalar(original, 'title', 'New'), '---\r\ntitle: New\r\npublished: true\r\n---\r\nBody\r\n');
+    assert.equal(replaceScalar(original, 'cover_alt', 'x'), '---\r\ntitle: |-\r\n  Old\r\npublished: true\r\ncover_alt: x\r\n---\r\nBody\r\n');
+  });
+
+  test('scalar updates refuse unfenced documents and collection values', () => {
+    assert.throws(() => replaceScalar('---\ntitle: &t Old\nalt: *t\n---\nBody\n', 'title', 'x'), /must be a scalar/);
+    assert.throws(() => replaceScalar('title: body\n', 'title', 'x'), /fenced frontmatter/);
+    assert.throws(() => replaceScalar('---\ntitle: [a, b]\n---\nBody\n', 'title', 'x'), /must be a scalar/);
+  });
 });
 
 describe('reads', () => {
@@ -155,7 +192,7 @@ describe('frontmatter writes', () => {
     const result = updateFrontmatter(store, 'draft-piece', { published: true }, { touchLastReviewed: true, today: '2026-10-03' });
     assert.deepEqual(result.changedFields, ['last_reviewed', 'published']);
     assert.match(read('draft-piece'), /^published: true$/m);
-    assert.match(read('draft-piece'), /^last_reviewed: 2026-10-03$/m);
+    assert.equal(loadWriteups(store).find((w) => w.slug === 'draft-piece')?.last_reviewed, '2026-10-03');
     assert.equal(result.receipt?.operation, 'writeup.update');
   });
 

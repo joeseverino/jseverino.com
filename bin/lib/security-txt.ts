@@ -45,16 +45,12 @@ export function runGpg(args: readonly string[], options: Pick<SpawnOptions, 'inp
 // Verification trusts only the public keys shipped with the checkout. It never
 // reads the author's GPG config or keyring, and needs no signing agent.
 export function verifySecuritySignature(file: string, keyDirectory = WKD_DIR): SpawnResult {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'site-signature-'));
-  try {
-    const options = ['--no-options', '--homedir', directory, '--batch', '--no-autostart', '--no-auto-key-retrieve'];
-    const keys = fs.readdirSync(keyDirectory, { withFileTypes: true })
-      .filter((entry) => entry.isFile()).map((entry) => path.join(keyDirectory, entry.name));
-    if (!keys.length) throw new Error('No committed WKD public keys available for signature verification.');
-    const imported = runGpg([...options, '--import', ...keys]);
-    if (imported.code !== 0) return imported;
-    return runGpg([...options, '--verify', '--status-fd=1', file]);
-  } finally {
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
+  using directory = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'site-signature-'));
+  const options = ['--no-options', '--homedir', directory.path, '--batch', '--no-autostart', '--no-auto-key-retrieve'];
+  const keys = fs.readdirSync(keyDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isFile()).map((entry) => path.join(keyDirectory, entry.name));
+  if (!keys.length) throw new Error('No committed WKD public keys available for signature verification.');
+  const imported = runGpg([...options, '--import', ...keys]);
+  if (imported.code !== 0) return imported;
+  return runGpg([...options, '--verify', '--status-fd=1', file]);
 }

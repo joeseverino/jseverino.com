@@ -26,7 +26,7 @@ no secrets.
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | static pages on Cloudflare Pages under a build-time hash CSP; Pages Functions only for the contact form and CSP reporting |
-| Data | Cloudflare D1 for contact submissions and CSP reports, behind Turnstile |
+| Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
 | Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `npm run cloudflare:apply` |
 | Previews | Behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
@@ -128,7 +128,7 @@ and gate issues on one screen.
 | [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
 | [Commands](./docs/Commands.md) | every npm script |
 | [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
-| [Dependencies](./docs/Dependencies.md) | why each `overrides` entry exists |
+| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and testing an upgrade |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |
 | [WordPress to Astro](./docs/WordPress-To-Astro-Migration.md) | why the site left WordPress, with measurements |
 

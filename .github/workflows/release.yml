@@ -1,6 +1,7 @@
 name: release
 
-# A signed version tag (docs/Release-Checklist.md §4) publishes a verifiable
+# A version tag (signed by convention, docs/Release-Checklist.md §4; the
+# trigger matches any v* tag) publishes a verifiable
 # release: the build output and its SBOM, each with a Sigstore attestation
 # GitHub issues for this workflow run. Verify with:
 #   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com

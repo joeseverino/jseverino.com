@@ -80,7 +80,7 @@ appears here.
 | Command | Does |
 | :--- | :--- |
 | `npm run check` | CSS lint + unused-var audit + `astro check` (used by `build`) |
-| `npm run build:static` | `astro build` + sitedrift wrap (used by `build` and the gates) |
+| `npm run build:static` | `astro build` + sitedrift wrap (`-- --timings` profiles the Astro build) |
 | `npm run lint:css` | Stylelint over `src/styles/` |
 | `npm run check:security` | security.txt signature, required fields, expiry, WKD file |
 | `npm run check:contrast` | WCAG ratios for every text/background pair in `base.css` |
@@ -270,8 +270,9 @@ vault's `04 Reference/` with the slim frontmatter the MCP expects.
 default. After `--apply`, run `npm run sync:contract`; the typed Astro schema,
 MCP projection, CLI/tool schemas, and the `site manage` TUI derive from that one contract.
 
-**`npm run draft:cover-alt`**: drafts `cover_alt` text for one or every
-writeup via the Claude API, for human review before it lands in the vault.
+**`npm run draft:cover-alt`**: drafts `cover_alt` text for one writeup, or
+with `--all` every published writeup missing it, via the Claude API, for
+human review before it lands in the vault.
 
 **`npm run sign:security`**: clear-signs `public/.well-known/security.txt`
 with the security@ key. The signature, fields, and expiry are verified by

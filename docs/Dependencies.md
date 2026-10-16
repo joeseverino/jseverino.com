@@ -1,26 +1,49 @@
-# Dependency Overrides
+# Dependencies
 
-`package.json` carries an `overrides` block that forces the version of a
-transitive dependency. npm has no place for a reason beside an override, so the
-reasons live here, each with the commit that introduced it and the condition
-under which it can go.
+The runtime pins, the packages held below their latest major on purpose, and
+how to test an upgrade before taking it.
 
-| Package | Value | Introduced | Why | Remove when |
-| :--- | :--- | :--- | :--- | :--- |
-| `esbuild` | `^0.28.2` | `048b858` (2026-10-02) | `wrangler` pins an exact `esbuild` 0.28.1; the override gives Astro, Vite, and `wrangler` one copy at the floor the build uses (`cssMinify: 'esbuild'`). | `wrangler` declares a range that admits the version Astro resolves, and `npm ls esbuild` shows one copy without the override. |
-| `sharp` | `$sharp` | `048b858` (2026-10-02) | `miniflare` (under `wrangler`) pins an exact `sharp`; the override makes every dependent use the direct `sharp` devDependency, so one native binary is installed. | `npm ls sharp` shows one copy without the override. |
+## Runtime and package manager
 
-A high or critical advisory with no fixed release is accepted,
-with a reason and a review date, in
-[`.github/audit-allowlist.json`](../.github/audit-allowlist.json) rather than
-pinned here.
+Node comes from [`.nvmrc`](../.nvmrc), an exact LTS release. `engines.node` in
+`package.json` names the same major, and `packageManager` pins the npm release
+that Node version bundles, so a fresh install of the pinned Node needs nothing
+else. `npm run check:repo-policy` fails when the running Node's major.minor or
+npm's major disagrees with those pins. Patch drift passes, so a Node security
+release does not block the gates before the pin moves.
 
-## Testing whether an override still matters
+CI reads the same `.nvmrc` through `actions/setup-node`, so bumping the file
+moves every workflow at once.
 
-1. Delete the entry from `overrides`.
-2. `npm install`, then `npm ls <package>` and confirm one copy resolves at or above the old value.
-3. `npm run audit` stays clean.
-4. `npm run publish:check -- --no-sync` passes, which covers the build tools.
+## Deliberate holds
 
-If all four hold, commit the removal. If any fails,
-restore it and update its row with what still requires it.
+| Package | Held at | Why | Revisit when |
+| :--- | :--- | :--- | :--- |
+| `typescript` | 6.x | The audits and the site CLI call the TypeScript compiler API (scanner and program APIs), and Astro's language tools load it. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's tooling and the compiler API used by `tests/audits` support 7.x. |
+| `@types/node` | 24.x | The types describe the Node runtime pinned in `.nvmrc`; a newer major would type APIs that Node 24 does not have. | `.nvmrc` moves to a newer Node major. |
+
+## No overrides
+
+`package.json` has no `overrides` block. Earlier `esbuild` and `sharp`
+overrides forced one copy of each across Astro, Vite, and `wrangler`; with the
+current releases, `npm ls esbuild sharp` resolves a single version of each
+without them, so both were removed. If a future release brings back a
+duplicate native binary or a split `esbuild`, add the override back with a
+row here naming the dependent that pins it and the condition for removal.
+
+## Advisories
+
+A high or critical advisory with no fixed release is accepted, with a reason
+and a review date, in
+[`.github/audit-allowlist.json`](../.github/audit-allowlist.json).
+`npm run audit` fails when the entry expires or the audit itself errors.
+
+## Testing an upgrade
+
+1. `npm install <package>@<version>` (never delete `package-lock.json`; a lock
+   regenerated on macOS drops the Linux platform binaries CI needs).
+2. `npm ls <package>` shows one resolved copy, and `npm outdated` lists only
+   the holds above.
+3. `npm run audit` passes.
+4. `npm run diagnose` passes, including the visual baselines. A browser
+   upgrade can shift rendering; inspect any diff before regenerating.

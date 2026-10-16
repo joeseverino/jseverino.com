@@ -8,11 +8,17 @@ import { permittedContentRoot } from '../src/lib/content-root.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { CSP_INLINE_MARKER } from '../functions/lib/csp.ts';
 import { jsonLogs, spawnResult } from './lib/run.ts';
+import { cli, flag } from './lib/args.ts';
+
+const { values } = cli({
+  usage: 'usage: node bin/build-static.ts [--timings]',
+  options: { timings: flag },
+});
 
 const outDir = buildOutDir;
 const contentOverride = process.env.SITE_CONTENT_ROOT;
 if (contentOverride !== undefined && !permittedContentRoot(contentOverride, siteRoot)) {
-  console.error(`build-static: SITE_CONTENT_ROOT=${contentOverride} is neither under tests/fixtures nor the drafts overlay (.cache/drafts); unset it to build src/content`);
+  console.error(`build-static: SITE_CONTENT_ROOT=${contentOverride} is not under tests/fixtures; unset it to build src/content`);
   process.exit(2);
 }
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
@@ -26,7 +32,7 @@ function run(command: string, args: readonly string[]): void {
 // Before the build, so Astro copies it to the output (/content-index.json, gated by Access).
 run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // Under `site --json`, Astro's JSON logger: one {message,label,level} line per event.
-run(astro, jsonLogs() ? ['build', '--json'] : ['build']);
+run(astro, ['build', ...(jsonLogs() ? ['--json'] : []), ...(values.timings ? ['--timings'] : [])]);
 run(process.execPath, [
   sitedrift,
   'cloudflare',

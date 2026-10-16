@@ -12,6 +12,7 @@ let tmp = '';
 
 before(() => {
   tmp = tempDir('site-manage-');
+  write(path.join(tmp, 'vault/00 Templates/Writeup.md'), '---\ntitle: {{title}}\npublished: false\n---\nBody\n');
   write(path.join(tmp, 'vault/06 Pages/_technology-groups.md'), '## Tools\n\n| Slug | Label | Featured |\n| --- | --- | --- |\n| astro | Astro | |\n');
   write(path.join(tmp, 'vault/05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: true\npublished_at: 2026-01-01\nfeatured: true\nfeatured_order: 1\ntechnologies: [astro]\n---\nBody\n');
   write(path.join(tmp, 'vault/05 Writeups/beta/index.md'), '---\ntitle: Beta\npublished: false\ntechnologies: [unknown]\n---\nBody\n');
@@ -59,4 +60,10 @@ test('discard leaves the vault unchanged and save applies the staged publish sta
   assert.equal(save.status, 0, save.stderr);
   assert.match(fs.readFileSync(alpha, 'utf8'), /published: false/);
   assert.match(stripVTControlCharacters(save.stdout), /saved/);
+});
+
+test('a scaffold created during the session can be edited and saved without a stale plan', () => {
+  const result = manage({ MANAGE_TUI_KEYS: 'n,gamma,enter,enter,ctrl-u,New title,enter,esc,s' });
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  assert.match(fs.readFileSync(path.join(tmp, 'vault/05 Writeups/gamma/index.md'), 'utf8'), /^title: New title$/m);
 });

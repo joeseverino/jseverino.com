@@ -75,7 +75,7 @@ export const GROUPS = [
     title: 'Internal (run by the commands above)',
     items: {
       'check': 'CSS lint + unused-var audit + `astro check` (used by `build`)',
-      'build:static': '`astro build` + sitedrift wrap (used by `build` and the gates)',
+      'build:static': '`astro build` + sitedrift wrap (`-- --timings` profiles the Astro build)',
       'lint:css': 'Stylelint over `src/styles/`',
       'check:security': 'security.txt signature, required fields, expiry, WKD file',
       'check:contrast': 'WCAG ratios for every text/background pair in `base.css`',

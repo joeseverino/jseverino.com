@@ -6,7 +6,7 @@
 import type { parseArgs, ParseArgsOptionsConfig } from 'node:util';
 import { parse, flag } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
-import { EXIT, SiteError, createOutput, type Output } from './site/cli.ts';
+import { EXIT, SiteError, createOutput, terminalText, type Output } from './site/cli.ts';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import { PROTOCOL_VERSION, type CommandName, type CommandResults, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
@@ -388,8 +388,8 @@ async function main(argv: string[]): Promise<number> {
         error: { message, code, fix: known ? error.fix ?? null : null },
       });
     } else {
-      console.error(`failed: ${message}`);
-      if (known && error.fix) console.error(`fix: ${error.fix}`);
+      console.error(`failed: ${terminalText(message)}`);
+      if (known && error.fix) console.error(`fix: ${terminalText(error.fix)}`);
     }
     return code;
   }

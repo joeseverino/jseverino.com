@@ -197,8 +197,9 @@ Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
-(`site dev --drafts` sets it to `.cache/drafts`; `build:static` accepts only a
-tree under `tests/fixtures` or that overlay), `SITE_JSON=1` switches Astro
+(`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
+`build:static` refuses anything outside `tests/fixtures`, so drafts never
+reach a build), `SITE_JSON=1` switches Astro
 to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
 (default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`
 (default `~/.local/state/jseverino.com/audit.log`), and `CLOUDFLARE_API_TOKEN`

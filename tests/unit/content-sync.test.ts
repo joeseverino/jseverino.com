@@ -341,11 +341,11 @@ describe('MDX compile issues', () => {
 });
 
 describe('content root overrides', () => {
-  test('a build reads only fixtures or the drafts overlay besides src/content', () => {
+  test('a static build reads only fixtures besides src/content', () => {
     const root = '/repo';
     assert.equal(permittedContentRoot('tests/fixtures/content', root), true);
-    assert.equal(permittedContentRoot('/repo/.cache/drafts', root), true);
-    assert.equal(permittedContentRoot('.cache/drafts', root), true);
+    assert.equal(permittedContentRoot('/repo/.cache/drafts', root), false);
+    assert.equal(permittedContentRoot('.cache/drafts', root), false);
     assert.equal(permittedContentRoot('tests/fixtures', root), false);
     assert.equal(permittedContentRoot('tests/fixtures/../../elsewhere', root), false);
     assert.equal(permittedContentRoot('/tmp/content', root), false);

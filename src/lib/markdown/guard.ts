@@ -25,8 +25,9 @@ const SAFE_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
 
 export function isSafeUrl(value: string): boolean {
   const trimmed = value.trim();
-  if (!/^[a-z][a-z\d+.-]*:/i.test(trimmed)) return true;
-  return SAFE_SCHEMES.has(trimmed.slice(0, trimmed.indexOf(':') + 1).toLowerCase());
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
+  const scheme = /^[a-z][a-z\d+.-]*:/i.exec(trimmed)?.[0];
+  return scheme === undefined || SAFE_SCHEMES.has(scheme.toLowerCase());
 }
 
 type Positioned = { position?: { start: { line: number; column: number } } | undefined };

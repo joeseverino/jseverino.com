@@ -91,6 +91,8 @@ there is no email injection and no mail credential to leak.
 message, IP address, user-agent, parsed browser and device, Cloudflare
 country code, and the page the form was submitted from. The non-message
 fields support abuse review. Records live only in the private D1 database.
+`site contact --pii` prints full records and is recorded in a best-effort
+local audit log.
 Nothing deletes them automatically; they are kept until the site owner
 removes them. To request a copy or deletion, send a follow-up through the
 contact form and start the message with "Data request".
