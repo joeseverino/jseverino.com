@@ -93,7 +93,7 @@
     "astro": "^7.4.0",
     "js-yaml": "^5.5.0",
     "satteri": "^0.10.5",
-    "sitedrift": "^0.4.0"
+    "sitedrift": "^0.5.0"
   },
   "optionalDependencies": {
     "branding-engine": "^0.9.0"
