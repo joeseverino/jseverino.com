@@ -28,6 +28,9 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    outputs:
+      url: ${{ steps.deployment.outputs.url }}
+      environment: ${{ steps.deployment.outputs.environment }}
     steps:
       # The per-deployment URL (https://<hash>.<project>.pages.dev) is outside
       # the zone, so Bot Fight Mode does not challenge the runner as it does on
@@ -96,6 +99,27 @@ jobs:
           path: ${{ runner.temp }}/summary-deploy.md
           retention-days: 1
           if-no-files-found: ignore
+
+  # GitHub lists a deployment only for a job that declares an environment, and
+  # Cloudflare deploys through its own Git connection. A deployment that passed
+  # verification is recorded here, so failed or unverifiable ones leave no entry.
+  # A record, not a gate: the environments carry no reviewers.
+  record:
+    needs: verify
+    if: github.event.check_run.conclusion == 'success' && needs.verify.outputs.url != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    environment:
+      name: ${{ needs.verify.outputs.environment }}
+      url: ${{ needs.verify.outputs.environment == 'production' && 'https://jseverino.com' || needs.verify.outputs.url }}
+    steps:
+      - name: Record the deployment
+        env:
+          URL: ${{ needs.verify.outputs.url }}
+          ENVIRONMENT: ${{ needs.verify.outputs.environment }}
+        run: echo "Verified $ENVIRONMENT deployment $URL"
 
   # The one comment per pull request. Each section (ci, deploy) is replaced by
   # the event that owns it and the others are kept, so the CI run and the

@@ -586,7 +586,10 @@ GitHub Actions provide the remote quality gate:
   (`CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET`), so it runs the verifier
   from the default branch and takes only the deployment URL from the event;
   the token is sent only to the project's `pages.dev` host. That host is
-  outside the zone, so zone-level bot challenges do not apply. `report` keeps one comment per pull
+  outside the zone, so zone-level bot challenges do not apply. `record` runs
+  after a passing `verify` and declares the `production` or `preview`
+  environment, which is what makes GitHub list the deployment; it is a record,
+  not a gate, and the environments have no required reviewers. `report` keeps one comment per pull
   request current: the completed `ci` run replaces its section and the
   deployment replaces its own, in whichever order they finish. The release
   confirmation against the production hostname stays `npm run deploy:verify`
