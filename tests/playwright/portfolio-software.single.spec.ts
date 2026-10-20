@@ -94,17 +94,15 @@ test.describe('portfolio software tab', () => {
     const panel = page.locator('[data-panel="software"]');
 
     const card = panel.locator('.software-card', {
-      has: page.getByRole('heading', { name: 'severino-vault-engine' }),
+      has: page.getByRole('heading', { name: 'sitedrift' }),
     });
     await expect(card).toBeVisible();
-    await expect(card.locator('.badge--pypi')).toContainText('PyPI');
-    await expect(card.locator('.software-install-cmd')).toContainText(
-      'pip install severino-vault-engine',
-    );
+    await expect(card.locator('.badge--npm')).toContainText('npm');
+    await expect(card.locator('.software-install-cmd')).toContainText('npm i sitedrift');
 
     const copy = card.locator('.software-copy');
     await expect(copy).toBeVisible();
-    await expect(copy).toHaveAttribute('data-copy', 'pip install severino-vault-engine');
+    await expect(copy).toHaveAttribute('data-copy', 'npm i sitedrift');
   });
 
   test('renders the "More projects" compact list', async ({ page }) => {

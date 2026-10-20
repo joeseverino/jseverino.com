@@ -18,17 +18,15 @@ export const SKIP = new Set<string>([
 
 /** Repos rendered as rich featured cards, in this order; the rest sort after, by title. */
 export const FEATURED: readonly string[] = [
-  'vault-engine',
+  'severino-vault-mcp',
   'branding-engine',
   'sitedrift',
-  'severino-vault-mcp',
   'tools',
   'cordon',
 ];
 
 /** repo -> writeup slug for the "Read the writeup" cross-link. */
 export const WRITEUPS: Record<string, string> = {
-  'vault-engine': 'building-a-custom-mcp-layer',
   'severino-vault-mcp': 'building-a-custom-mcp-layer',
   'jseverino.com': 'from-wordpress-to-astro',
   'study-quiz': 'building-study-quiz',
@@ -46,12 +44,6 @@ export type PackageConfig = {
 
 /** repo -> published package (GitHub doesn't know about PyPI/npm). */
 export const PACKAGES: Record<string, PackageConfig> = {
-  'vault-engine': {
-    registry: 'pypi',
-    name: 'severino-vault-engine',
-    install: 'pip install severino-vault-engine',
-    url: 'https://pypi.org/project/severino-vault-engine/',
-  },
   'branding-engine': {
     registry: 'npm',
     name: 'branding-engine',
