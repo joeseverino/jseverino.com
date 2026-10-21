@@ -131,10 +131,11 @@ the brand changes. See [`Brand-System.md`](./Brand-System.md).
 `public/assets/fonts/inter/inter-variable-latin.woff2`, to the characters the
 content uses and the 400 to 700 weight range the stylesheet declares, keeping
 Inter's optical-size axis. The character list and range live in
-[`bin/make-font.ts`](../bin/make-font.ts); widen them there, then rerun with
-`--source <InterVariable.woff2>` from an upstream Inter release (the committed
-file is already a subset, so it can only shrink further). Needs `python3` with
-`fontTools` and `brotli`.
+[`mise-tasks/make/font`](../mise-tasks/make/font); widen them there, then rerun
+with `--source <InterVariable.woff2>` from an upstream Inter release (the
+committed file is already a subset, so it can only shrink further).
+`--output <path>` writes the result elsewhere to compare it first. The
+fontTools CLIs run through `uvx`, which `mise install` provides.
 
 **`mise run make:content-index`**: emits `public/content-index.json` from the
 validated, published writeup snapshot. The static build invokes it
@@ -466,9 +467,14 @@ Regenerate `public/embed/bundle.css`, the embeddable stylesheet (brand vars, bas
 
 ## `make:font`
 
-- **Usage:** `make:font`
+Re-subset the Inter webfont to the site's characters, weights 400-700 and the optical-size axis, from the committed file or an upstream Inter release
 
-Re-subset the Inter webfont to the site's characters and weights (needs python3 and fontTools)
+
+- **Usage:** `make:font [--source <font>] [--output <font>]`
+
+### Flags
+- **`--source <font>`** — Inter variable font to start from (default: the committed font)
+- **`--output <font>`** — Where to write the result (default: the committed font)
 
 ## `make:icons`
 

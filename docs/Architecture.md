@@ -422,7 +422,7 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
 | `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
-| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `mise run make:font` ([`bin/make-font.ts`](../bin/make-font.ts); re-subsets the committed file, or an upstream Inter release via `--source`) |
+| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `mise run make:font` ([`mise-tasks/make/font`](../mise-tasks/make/font); re-subsets the committed file, or an upstream Inter release via `--source`) |
 | `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `mise run make:icons` |
 | `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `mise run make:icons` (marks) / headshot hand-added |
 | `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `mise run make:og` |

@@ -55,6 +55,7 @@ node = "24.22.0"
 "aqua:zizmorcore/zizmor" = "1.30.1"
 "github:jdx/jactionlint" = "2.2.0"
 "aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:astral-sh/uv" = "0.13.1"
 
 # ------------------------------------------------------------------ checks
 
@@ -343,11 +344,6 @@ run = "node bin/make-embed-bundle.ts"
 [tasks."make:social"]
 description = "Regenerate the GitHub social preview"
 run = "node bin/make-github-social.ts"
-
-[tasks."make:font"]
-description = "Re-subset the Inter webfont to the site's characters and weights (needs python3 and fontTools)"
-raw_args = true
-run = "node bin/make-font.ts"
 
 [tasks."make:content-index"]
 description = "Emit the published-writeup JSON projection consumed by Severino HQ"
