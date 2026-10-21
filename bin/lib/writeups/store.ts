@@ -68,11 +68,6 @@ export interface OrderEntry {
   featured: boolean;
 }
 
-const bool = (value: unknown): boolean => {
-  if (typeof value === 'boolean') return value;
-  return ['true', 'yes', '1', 'on'].includes(String(value ?? '').trim().toLowerCase());
-};
-
 const optionalString = (value: unknown): string | null => {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return null;
   return value instanceof Date ? isoDate(value) : String(value);
@@ -102,7 +97,7 @@ function requireDir(dir: string): void {
 export function loadWriteups(store: WriteupStore): Writeup[] {
   requireDir(store.writeupsDir);
   const writeups: Writeup[] = [];
-  for (const entry of fs.readdirSync(store.writeupsDir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+  for (const entry of fs.readdirSync(store.writeupsDir, { withFileTypes: true }).toSorted((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
     const file = path.join(store.writeupsDir, entry.name, 'index.md');
     if (!fs.existsSync(file)) continue;
@@ -112,12 +107,12 @@ export function loadWriteups(store: WriteupStore): Writeup[] {
       slug: entry.name,
       title: String(data.title || entry.name),
       description: String(data.description || ''),
-      published: bool(data.published),
+      published: data.published === true,
       published_at: optionalString(data.published_at),
       last_reviewed: optionalString(data.last_reviewed),
       cover_image: optionalString(data.cover_image),
       cover_alt: optionalString(data.cover_alt),
-      featured: bool(data.featured),
+      featured: data.featured === true,
       featured_order: optionalInt(data.featured_order),
       technologies: stringList(data.technologies),
       related_projects: stringList(data.related_projects),
@@ -129,15 +124,16 @@ export function loadWriteups(store: WriteupStore): Writeup[] {
   return writeups;
 }
 
-const byFeaturedOrder = (a: Writeup, b: Writeup): number =>
-  (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
+// Featured order first, unordered last, then by slug.
+export const byFeaturedOrder = (a: WriteupSummary, b: WriteupSummary): number =>
+  (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || a.slug.localeCompare(b.slug);
 
 const entry = (writeup: Writeup, slot: number | null): OrderEntry =>
   ({ slot, slug: writeup.slug, title: writeup.title, published: writeup.published, featured: writeup.featured });
 
 // What the home page renders: published and featured, slotted 1..N.
 export function featuredOrder(writeups: readonly Writeup[]): OrderEntry[] {
-  return writeups.filter((w) => w.published && w.featured).sort(byFeaturedOrder).map((w, index) => entry(w, index + 1));
+  return writeups.filter((w) => w.published && w.featured).toSorted(byFeaturedOrder).map((w, index) => entry(w, index + 1));
 }
 
 export const WRITEUP_FILTERS = ['all', 'published', 'draft', 'featured'] as const;
@@ -156,7 +152,7 @@ export function listWriteups(store: WriteupStore, filter: WriteupFilter = 'all',
   let selected = [...writeups];
   if (filter === 'published') selected = selected.filter((w) => w.published);
   if (filter === 'draft') selected = selected.filter((w) => !w.published);
-  if (filter === 'featured') selected = selected.filter((w) => w.featured).sort(byFeaturedOrder);
+  if (filter === 'featured') selected = selected.filter((w) => w.featured).toSorted(byFeaturedOrder);
   return {
     filter,
     count: selected.length,
@@ -248,7 +244,7 @@ export async function prepare(store: WriteupStore, slug: string, { includeTagUsa
   const writeups = loadWriteups(store);
   const writeup = findWriteup(writeups, slug);
   const [validation] = (await checkContent({ vaultRoot: store.vaultRoot, slug })).documents;
-  const featured = writeups.filter((w) => w.featured).sort(byFeaturedOrder);
+  const featured = writeups.filter((w) => w.featured).toSorted(byFeaturedOrder);
   const result: PublishReadiness = {
     slug,
     ok: Boolean(validation && validation.issues.length === 0),
@@ -377,7 +373,7 @@ export function reorderFeatured(store: WriteupStore, slug: string, position: num
   if (!Number.isInteger(position) || position < 0) throw new WriteupError('invalid', 'position must be an integer >= 0');
   const writeups = loadWriteups(store);
   findWriteup(writeups, slug);
-  const others = writeups.filter((w) => w.featured).sort(byFeaturedOrder).map((w) => w.slug).filter((s) => s !== slug);
+  const others = writeups.filter((w) => w.featured).toSorted(byFeaturedOrder).map((w) => w.slug).filter((s) => s !== slug);
   if (position > others.length + 1) throw new WriteupError('invalid', `position ${position} out of range (max ${others.length + 1})`);
   const order = position === 0 ? others : [...others.slice(0, position - 1), slug, ...others.slice(position - 1)];
   return { slug, position: position === 0 ? null : position, ...applyPlan(store, { featured_order: order }, options) };

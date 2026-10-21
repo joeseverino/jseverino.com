@@ -197,8 +197,9 @@ describe('frontmatter writes', () => {
     assert.equal(result.receipt?.operation, 'writeup.update');
   });
 
-  test('a hand-written nonstandard bool is rewritten even though it reads as true', () => {
+  test('only a YAML boolean is true; a hand-written `yes` reads as false until rewritten', () => {
     fs.writeFileSync(file('draft-piece'), DRAFT.replace('published: false', 'published: yes'));
+    assert.equal(loadWriteups(store).find((w) => w.slug === 'draft-piece')?.published, false);
     const result = updateFrontmatter(store, 'draft-piece', { published: true });
     assert.equal(result.noOp, false);
     assert.deepEqual(result.changedFields, ['published']);
