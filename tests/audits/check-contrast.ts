@@ -2,13 +2,13 @@
 // WCAG 2.1 contrast for every color-on-background pair the site CSS renders, against AA.
 // Tokens are `light-dark()` pairs, so each pair is measured once per theme.
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { BRAND } from '../../src/lib/brand.ts';
-import { readCssEntry } from '../../bin/lib/css-entry.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { abort } from './lib.ts';
 
-const cssPath = path.join(siteRoot, 'src/styles/base.css');
+const cssPath = path.join(siteRoot, 'src/styles/tokens.css');
 const AA_NORMAL = 4.5;
 
 const fail: (message: string) => never = (message) => abort('check-contrast', message);
@@ -39,7 +39,7 @@ function contrastRatio(hexA: string, hexB: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-const css = readCssEntry(cssPath);
+const css = fs.readFileSync(cssPath, 'utf8');
 
 // Scoped to the generated token block, the only place --color-* is declared, so a later override
 // elsewhere cannot shadow the measured value.
