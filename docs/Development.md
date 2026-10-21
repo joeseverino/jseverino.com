@@ -91,7 +91,8 @@ checkouts) is in [Security](./Security.md#supply-chain-and-ci).
 
 ## Documentation
 
-Docs change in the same commit as the code they describe. `mise run checks:docs`
-fails when a relative link, anchor, image, `npm run` or `mise run` reference,
-or backticked repo path points at nothing. The command and gate overviews are
+Docs change in the same commit as the code they describe. `mise run checks:doc-links`
+(lychee, offline) fails when a relative link, anchor, or image points at
+nothing, and `mise run checks:docs` when an `npm run` or `mise run` reference
+or a backticked repo path does. Both read only tracked files. The command and gate overviews are
 generated: `npm run sync:docs`.

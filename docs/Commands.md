@@ -26,7 +26,7 @@ gate prints its own fix. CI runs the same tasks, one aggregate per job.
 | `mise run built` | CI job build, last phase: every gate on the build in dist/, collect-all |
 | `mise run built:assets` | No image the build ships (committed or encoded from content) exceeds 1.5 MB |
 | `mise run built:html` | No built page repeats an id, every <img> has alt, headings never skip a level, and no literal `::name` directive reaches the page text |
-| `mise run built:links` | Every internal href, src, poster, and srcset in the built HTML resolves to an emitted file or a Function route |
+| `mise run built:links` | Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route |
 | `mise run built:routes` | Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/* |
 | `mise run built:seo` | Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD |
 | `mise run built:weight` | Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget |
@@ -37,7 +37,8 @@ gate prints its own fix. CI runs the same tasks, one aggregate per job.
 | `mise run checks:contrast` | Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1) |
 | `mise run checks:css-lint` | Stylelint passes over src/styles |
 | `mise run checks:css-vars` | Every CSS custom property defined in src/styles is referenced somewhere in src/ |
-| `mise run checks:docs` | Every relative link and its #anchor, `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves |
+| `mise run checks:doc-links` | Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves |
+| `mise run checks:docs` | Every `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves |
 | `mise run checks:docs-sync` | The generated blocks in docs/Commands.md match bin/help.ts and these tasks |
 | `mise run checks:drafts` | No document under src/content is `published: false` |
 | `mise run checks:duplication` | No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files) |

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { anchors, missingPaths, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import { missingPaths, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
@@ -43,21 +43,4 @@ test('the repo index sees tracked files and ignored generated output', () => {
   assert.ok(index.tracked.has('tests/audits'));
   assert.deepEqual([...index.ignored(['dist/index.html', 'bin/site.ts'])], ['dist/index.html']);
   assert.ok(index.topLevel.has('bin') && index.topLevel.has('node_modules'));
-});
-
-test('anchors follow GitHub heading slugs, skip fences, and count explicit ids', () => {
-  const markdown = [
-    '# Validation Architecture (Full Reference)',
-    '## 4. `tests/playwright/`: browser specs',
-    '### `check-html.ts`',
-    '## Notes',
-    '## Notes',
-    '```sh',
-    '## not a heading',
-    '```',
-    '<a id="custom"></a>',
-  ].join('\n');
-  assert.deepEqual([...anchors(markdown)].sort(), [
-    '4-testsplaywright-browser-specs', 'check-htmlts', 'custom', 'notes', 'notes-1', 'validation-architecture-full-reference',
-  ]);
 });

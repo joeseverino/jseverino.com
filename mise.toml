@@ -37,8 +37,15 @@ _.path = ["node_modules/.bin"]
 ASTRO_TELEMETRY_DISABLED = "1"
 WRANGLER_SEND_METRICS = "false"
 
+[vars]
+# The engineering docs the docs gates read, as git pathspecs, so a gate reads
+# only tracked files and never a local or untracked copy.
+docs = "README.md SECURITY.md CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+
 [tools]
 node = "24.22.0"
+"aqua:lycheeverse/lychee" = "0.24.2"
+"aqua:zizmorcore/zizmor" = "1.30.1"
 
 # ------------------------------------------------------------------ checks
 
@@ -99,8 +106,12 @@ description = "The generated blocks in docs/Commands.md match bin/help.ts and th
 run = "node bin/sync-docs.ts --check"
 
 [tasks."checks:docs"]
-description = "Every relative link and its #anchor, `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves"
-run = "node tests/audits/check-docs.ts"
+description = "Every `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves"
+run = "node tests/audits/check-docs.ts {{vars.docs}}"
+
+[tasks."checks:doc-links"]
+description = "Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves"
+run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
 
 [tasks."checks:css-lint"]
 description = "Stylelint passes over src/styles"
@@ -137,8 +148,10 @@ env = { STRICT_ASSET_AUDIT = "1" }
 run = "node tests/audits/audit-assets.ts"
 
 [tasks."built:links"]
-description = "Every internal href, src, poster, and srcset in the built HTML resolves to an emitted file or a Function route"
-run = "node tests/audits/check-links.ts"
+description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route"
+# Root-relative and https://jseverino.com/ URLs both resolve against dist/; a
+# directory link needs its index.html, as Pages serves it.
+run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/$1' dist"
 
 [tasks."built:weight"]
 description = "Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget"

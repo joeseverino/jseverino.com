@@ -1,0 +1,10 @@
+# lychee reads this file by default from the repository root, so every run
+# shares it: the offline gates (`mise run built:links`, `mise run checks:doc-links`)
+# and the external link check workflow. The offline-only flags (--offline,
+# --include-fragments, --root-dir, --remap) stay on those tasks' command lines,
+# since --root-dir must be absolute and the external check must stay online.
+
+# Paths the build has no file for: the Pages Function routes in
+# public/_routes.json, and Cloudflare's own /cdn-cgi/. Matched once resolved
+# against the build root, so an external URL never matches.
+exclude = ['^file://.*/dist/(?:api|__sitedrift|cdn-cgi)/']
