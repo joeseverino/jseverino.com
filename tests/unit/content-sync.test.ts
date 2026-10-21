@@ -31,16 +31,28 @@ describe('asset references', () => {
     '![Same](<images/b c.png>)',
     '[Download](images/doc.pdf#page=2)',
     '[![thumb](./images/t.png)](images/full.png)',
-    '[ref]: ./images/ref.png "Ref title"',
     '<img src="./images/raw.png" alt="">',
     '![External](https://example.com/images/x.png)',
     '[Anchor](#images/no)',
     '![Absolute](/assets/og/card.png)',
+    '![Encoded](images/q%20r&amp;s.png)',
+    '',
+    '[ref]: ./images/ref.png "Ref title"',
+    '',
+    '<figure>',
+    '  <img src="images/fig.png">',
+    '  <figcaption><a href=\'images/cap.pdf\'>Caption</a></figcaption>',
+    '</figure>',
+    '',
+    '```md',
+    '![In code](images/code.png)',
+    '```',
   ].join('\n');
 
-  test('every relative destination is found once, titles and brackets aside', () => {
+  test('every relative destination is found once, titles, brackets and HTML aside, code skipped', () => {
     assert.deepEqual([...collectAssetRefs(body)].sort(), [
-      'images/a.png', 'images/b c.png', 'images/doc.pdf', 'images/full.png', 'images/raw.png', 'images/ref.png', 'images/t.png',
+      'images/a.png', 'images/b c.png', 'images/cap.pdf', 'images/doc.pdf', 'images/fig.png', 'images/full.png',
+      'images/q r&s.png', 'images/raw.png', 'images/ref.png', 'images/t.png',
     ]);
   });
 
