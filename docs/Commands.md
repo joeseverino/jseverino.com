@@ -46,10 +46,11 @@ gate prints its own fix. CI runs the same tasks, one aggregate per job.
 | `mise run checks:parity` | The Astro writeup schema, the public projection, the writeup store, and the `site manage` TUI all read their fields from the content contract |
 | `mise run checks:patch` | No whitespace errors or conflict markers in the working tree |
 | `mise run checks:preview` | The sitedrift review wrapper is present on preview branches and absent on main |
-| `mise run checks:repo-policy` | Node, npm, and lockfile pins agree; no secrets or build output tracked; stylesheet rules hold; TypeScript only, no explicit any or unexplained suppressions; actions SHA-pinned, runners fixed, every job time-boxed |
+| `mise run checks:repo-policy` | Node and npm pins agree; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed |
 | `mise run checks:security-txt` | security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 30 days out, and its Encryption URL names a committed WKD key |
 | `mise run checks:types` | Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib |
 | `mise run checks:unit` | The node:test specs under tests/unit pass |
+| `mise run checks:workflows` | zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings .github/zizmor.yml accepts with a reason |
 | `mise run ci` | Every gate the pipeline runs: check, then the browser suites |
 
 <!-- generated:end task-overview -->

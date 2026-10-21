@@ -432,6 +432,11 @@ ships to visitors:
   feature branches receive the review wrapper and `main` remains unmodified.
 - **Workflow lint** runs actionlint when GitHub Actions workflow files change
   ([`.github/workflows/workflow-lint.yml`](../.github/workflows/workflow-lint.yml)).
+- **Workflow audit** runs zizmor over every workflow and action in
+  `mise run fast` (`checks:workflows`): actions pinned to commit SHAs,
+  permissions, template injection, credential persistence, and dangerous
+  triggers. Each accepted finding is listed with its reason in
+  [`.github/zizmor.yml`](../.github/zizmor.yml).
 - **Link checks** run lychee against repository documentation and public
   Markdown content separately, with reports uploaded as workflow artifacts
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).

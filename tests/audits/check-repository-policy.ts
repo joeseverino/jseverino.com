@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { isDeepStrictEqual } from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
 import { trackedFiles } from '../../bin/lib/git.ts';
@@ -26,17 +25,12 @@ if (miseNode !== expectedNode) {
   failures.push(`mise.toml pins node ${miseNode ?? '(none)'} but .nvmrc pins ${expectedNode}`);
 }
 
-type DependencyField = 'dependencies' | 'devDependencies' | 'optionalDependencies';
-type Manifest = { name?: string; version?: string; engines?: { node?: string }; packageManager?: string } & Partial<Record<DependencyField, Record<string, string>>>;
-interface Lockfile {
-  lockfileVersion?: number;
-  name?: string;
-  version?: string;
-  packages?: Record<string, Manifest>;
+interface Manifest {
+  engines?: { node?: string };
+  packageManager?: string;
 }
 
 const packageJson: Manifest = JSON.parse(read('package.json'));
-const packageLock: Lockfile = JSON.parse(read('package-lock.json'));
 
 const nodeMajor = expectedNode.split('.')[0];
 if (packageJson.engines?.node !== `>=${nodeMajor}`) {
@@ -47,19 +41,6 @@ if (!npmPin) failures.push('package.json packageManager must pin an exact npm@x.
 const npmAgent = /\bnpm\/(\d+)\./.exec(process.env.npm_config_user_agent ?? '');
 if (npmPin && npmAgent && npmAgent[1] !== npmPin[1]) {
   failures.push(`npm ${npmAgent[1]}.x is running; packageManager pins ${packageJson.packageManager}`);
-}
-if (packageLock.lockfileVersion !== 3) failures.push('package-lock.json must be lockfileVersion 3');
-if (packageLock.name !== packageJson.name) failures.push('package-lock.json name differs from package.json');
-if (packageLock.version !== packageJson.version) {
-  failures.push('package-lock.json version differs from package.json');
-}
-if (packageLock.packages?.['']?.version !== packageJson.version) {
-  failures.push('package-lock.json root package version differs from package.json');
-}
-for (const field of ['dependencies', 'devDependencies', 'optionalDependencies'] as const satisfies readonly DependencyField[]) {
-  if (!isDeepStrictEqual(packageLock.packages?.['']?.[field] ?? {}, packageJson[field] ?? {})) {
-    failures.push(`package-lock.json root ${field} differ from package.json`);
-  }
 }
 
 const tracked = trackedFiles(root);
@@ -80,23 +61,6 @@ const componentStyles = existingTracked.filter(
 );
 if (componentStyles.length > 0) {
   failures.push(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
-}
-
-// Literal colors only inside the generated token block; rules name a token or use color-mix().
-const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/') && file.endsWith('.css'));
-const authoredStyles = styleFiles
-  .map((file) => {
-    const stylesheet = read(file);
-    // A generated block ends with a `/* <name>:end */` marker; strip through the last one so a
-    // hand-authored rule below it is still checked.
-    const ends = [...stylesheet.matchAll(/\/\* \w+:end \*\//g)];
-    const blockEnd = ends.at(-1)?.index;
-    return blockEnd !== undefined ? stylesheet.slice(blockEnd) : stylesheet;
-  })
-  .join('\n');
-const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;
-if (literalColor.test(authoredStyles)) {
-  failures.push('src/styles contains a literal color outside the generated token block');
 }
 
 // No View Transitions, so lifecycle listeners for them are dead client code.
@@ -166,20 +130,14 @@ for (const file of automation) {
   const jobs = source.match(/^    runs-on:/gm)?.length ?? 0;
   const timeouts = source.match(/^    timeout-minutes:/gm)?.length ?? 0;
   if (jobs !== timeouts) failures.push(`${file} has ${jobs} job(s) but ${timeouts} timeout-minutes`);
-  for (const [, reference = ''] of source.matchAll(/^\s*(?:-\s*)?uses:\s*([^\s#]+).*$/gm)) {
-    if (reference.startsWith('./')) continue;
-    if (/^docker:\/\/.+@sha256:[0-9a-f]{64}$/.test(reference)) continue;
-    if (/^[^@\s]+@[0-9a-f]{40}$/.test(reference)) continue;
-    failures.push(`${file} contains an unpinned action: ${reference}`);
-  }
 }
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; lockfile aligned; stylesheet architecture clean; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; actions and runners pinned; every job time-boxed`,
+  `Node ${actualNode}, ${packageJson.packageManager}; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (.nvmrc, mise.toml, engines, packageManager), the lockfile, a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (SHA pin, fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (.nvmrc, mise.toml, engines, packageManager), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
   },
 );

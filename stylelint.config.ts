@@ -19,5 +19,11 @@ export default {
 
     'selector-class-pattern': null,
     'value-keyword-case': null,
+
+    // Every color is a named token: a rule names a custom property or mixes one with
+    // color-mix(). The generated token blocks hold the literals, fenced by sync:tokens.
+    'color-no-hex': true,
+    'color-named': 'never',
+    'function-disallowed-list': ['rgb', 'rgba', 'hsl', 'hsla'],
   },
 } satisfies Config;

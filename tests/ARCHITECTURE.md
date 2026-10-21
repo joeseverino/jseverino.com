@@ -58,7 +58,7 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 
 ### The gates
 
-1. **`mise run fast`** (the `checks` aggregate): every static gate, collect-all, side by side. A misaligned lockfile or an unpinned action fails in seconds.
+1. **`mise run fast`** (the `checks` aggregate): every static gate, collect-all, side by side. A literal color or an unpinned action fails in seconds.
 2. **`mise run check`**: the static gates, then the production build (`node bin/build-static.ts`, the artifact Cloudflare ships), then every `built:*` gate on it. CI's `build` job runs exactly this, so the green check proves what a green local run proves. It validates the checkout and never syncs the vault.
 3. **`mise run browser`**: builds once with the Turnstile test key and runs the three `browser:*` suites one at a time against it (`PREBUILT=1`), so an 8 GB machine never runs two browsers at once. The CI legs `e2e`, `visual`, and `edge` each run one of those tasks.
 4. **`mise run ci`**: `check`, then `browser`; every gate the pipeline runs.
@@ -161,15 +161,15 @@ Walks `public/assets`, prints image count and total weight, and lists anything o
 ### `check-repository-policy.ts`
 Structural health:
 - **Node version**: the `node` pin in [`mise.toml`](../mise.toml) equals [`.nvmrc`](../.nvmrc), the running Node matches it on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
-- **Lockfile** is version 3 and its root entry aligns with `package.json`.
 - **Clean tree**: no committed `.env` / `.dev.vars`, no `dist/` or `playwright-report/`.
-- **Stylesheets**: component styles live in `src/styles` modules, and no literal color appears outside the generated token block.
+- **Stylesheets**: component styles live in `src/styles` modules.
 - **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
-- **Workflows**: every third-party action is pinned to a commit SHA, no runner uses a floating `-latest` label, and every job sets `timeout-minutes`.
-- **No ambiguous module siblings**: no two tracked files share a basename with both a JS-like (`.mjs`/`.js`) and a TS-like (`.ts`/`.mts`) extension. Such a pair resolves differently in Vite (which tries `.mjs` first) than in the TS compiler (which tries `.ts` first), so a build can break while `astro check` passes. Declaration files (`foo.d.ts`) keep a distinct stem and are fine.
-- **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs` outside the explicit allow-list in the audit (empty today; an entry needs a tool that cannot read TypeScript).
+- **Workflows**: no runner uses a floating `-latest` label, and every job sets `timeout-minutes`.
+- **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
 - **No explicit `any`**: a `: any`, `<any>`, or `as any` in code (comments aside) fails; `unknown` and narrowing say what the code knows.
+
+What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; stylelint (`checks:css-lint`) refuses a literal color (`color-no-hex`, `color-named`, and `rgb`/`hsl` in `function-disallowed-list`) everywhere except the generated token blocks, which `npm run sync:tokens` fences with `stylelint-disable` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with the findings it accepts listed with a reason in [`.github/zizmor.yml`](../.github/zizmor.yml).
 - **No unexplained suppressions**: no `@ts-ignore` or `@ts-nocheck` in any `.ts` or `.astro` file; `@ts-expect-error` must carry a reason.
 
 ### Links: `checks:doc-links` and `built:links`
@@ -465,7 +465,7 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 | `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. Skipped on content-only PRs (`changes.yml` classifies the paths). |
 | `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. Skipped on content-only PRs. |
 | `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning, and a JSON pass rendered by `bin/scorecard-summary.ts` into the job summary: the aggregate plus every check with Scorecard's reason. |
-| `workflow-lint.yml` | workflow changes | `actionlint` on Action YAML; also gates SHA-pinning. |
+| `workflow-lint.yml` | workflow changes | `actionlint` on Action YAML. SHA pinning is `checks:workflows` (zizmor) in every `mise run fast`. |
 | `link-check.yml` | docs changes, weekly | `lychee` audits repository documentation links and public content links (self-domain links excluded; 403/429/999 accepted as answered) and writes both reports into the job summary. |
 | `lighthouse.yml` | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse against the URLs in `tests/lighthouse.json` with its thresholds (accessibility 95 and SEO 90 fail; performance 85 and best practices 70 warn), writes the per-page scores to the job summary, and uploads the reports. |
 | `security-txt-expires.yml` | schedule | Opens an issue when `security.txt` nears expiry (runs `check-security-txt.ts`). |
@@ -483,4 +483,4 @@ If unintended, fix the layout/CSS. If it's an approved redesign:
 3. commit the updated baselines with the styling change.
 
 ### Unpinned GitHub Action
-A workflow uses a tag (`@v4`) instead of a SHA. Replace it with the commit SHA for that release, e.g. `uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`.
+`checks:workflows` (zizmor `unpinned-uses`) reports a tag (`@v4`) where a SHA belongs. Replace it with the commit SHA for that release, e.g. `uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`.

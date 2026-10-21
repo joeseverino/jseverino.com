@@ -1,0 +1,15 @@
+# zizmor (`mise run checks:workflows`) audits every workflow and action. Each
+# entry here is a finding accepted on purpose, with the reason.
+rules:
+  # deploy.yml's workflow_run trigger only reads the ci run's job-summary
+  # artifacts into the pull request comment. It checks out the default branch,
+  # never the triggering head, and runs no code the event supplies.
+  dangerous-triggers:
+    ignore:
+      - deploy.yml:6
+
+  # The `$/` self-repository form for local actions is newer than the
+  # workflow-lint job's pinned actionlint; the workflows keep `./` until both
+  # the linter and the workflows move together.
+  self-repository:
+    disable: true

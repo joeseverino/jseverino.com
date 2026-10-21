@@ -122,8 +122,15 @@ description = "Every CSS custom property defined in src/styles is referenced som
 run = "node tests/audits/check-css.ts"
 
 [tasks."checks:repo-policy"]
-description = "Node, npm, and lockfile pins agree; no secrets or build output tracked; stylesheet rules hold; TypeScript only, no explicit any or unexplained suppressions; actions SHA-pinned, runners fixed, every job time-boxed"
+description = "Node and npm pins agree; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed"
 run = "node tests/audits/check-repository-policy.ts"
+
+[tasks."checks:workflows"]
+description = "zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings .github/zizmor.yml accepts with a reason"
+# Offline: the online audits need a token and the network, and a gate gives the
+# same verdict on a laptop and in CI. The config is named because zizmor's
+# discovery does not find it from a linked worktree.
+run = "zizmor --offline --quiet --config .github/zizmor.yml .github"
 
 [tasks."checks:patch"]
 description = "No whitespace errors or conflict markers in the working tree"

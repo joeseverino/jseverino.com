@@ -18,11 +18,24 @@ const brandBlock = [
 ].join('\n\n');
 const surfaceBlock = `export const SURFACE = ${toJs(webContract.surfaces)};`;
 
+// A generated CSS block is where the literal colors live, so it switches off exactly the
+// stylelint color rules its values trip, and only between its own markers.
+const literalColors = (css: string, rules: readonly string[]): string =>
+  `/* stylelint-disable ${rules.join(', ')} -- generated literal colors */\n${css}\n/* stylelint-enable ${rules.join(', ')} */`;
+
 const targets = [
-  { file: path.join(siteRoot, 'src/styles/tokens.css'), label: '/* tokens', inner: webContract.designSystemCss },
+  {
+    file: path.join(siteRoot, 'src/styles/tokens.css'),
+    label: '/* tokens',
+    inner: literalColors(webContract.designSystemCss, ['color-no-hex', 'function-disallowed-list']),
+  },
   { file: path.join(siteRoot, 'src/lib/brand.ts'), label: '// tokens', inner: brandBlock },
   { file: path.join(siteRoot, 'src/lib/brand.ts'), label: '// surfaces', inner: surfaceBlock },
-  { file: path.join(siteRoot, 'src/styles/brand.css'), label: '/* brand', inner: brandVarsCss(webContract.primaryByTheme) },
+  {
+    file: path.join(siteRoot, 'src/styles/brand.css'),
+    label: '/* brand',
+    inner: literalColors(brandVarsCss(webContract.primaryByTheme), ['color-no-hex']),
+  },
 ];
 
 const changed = syncTargets(targets, { root: siteRoot, check });

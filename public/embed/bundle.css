@@ -19,6 +19,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 }
 
 /* tokens:start: generated from the lockfile-pinned severino-brand contract by `npm run sync:tokens`. Edit tokens upstream, not here. */
+/* stylelint-disable color-no-hex, function-disallowed-list -- generated literal colors */
 :root {
   color-scheme: light dark;
   --color-bg: light-dark(#ffffff, #131826);
@@ -97,6 +98,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   --weight-label: 700;
   --header-height: 3.6rem;
 }
+/* stylelint-enable color-no-hex, function-disallowed-list */
 /* tokens:end */
 
 /* Overrides the generated 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
@@ -111,7 +113,9 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 @layer tokens {
 
 /* brand:start: generated from the lockfile-pinned severino-brand contract by `npm run sync:tokens` (brandVarsCss in src/lib/brand.ts). Edit tokens upstream, not here. */
+/* stylelint-disable color-no-hex -- generated literal colors */
 :root{--color-primary:#1E3A8A;--color-primary-deep:#14245C}@media(prefers-color-scheme:dark){:root:not([data-theme-mode="light"]){--color-primary:#7C9CE0;--color-primary-deep:#A8C0F0}}:root[data-theme-mode="dark"]{--color-primary:#7C9CE0;--color-primary-deep:#A8C0F0}:root[data-theme-mode="light"]{--color-primary:#1E3A8A;--color-primary-deep:#14245C}
+/* stylelint-enable color-no-hex */
 /* brand:end */
 
 }
