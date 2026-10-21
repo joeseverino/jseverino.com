@@ -30,7 +30,6 @@ node_modules
 .claude/
 .gemini/
 .obsidian/
-AGENTS.md
 
 # Stray root-level binaries (export PDFs, screenshots, etc.).
 # Intentional PDFs live under public/assets/docs/.
@@ -46,3 +45,4 @@ public/content-index.json
 
 # Lighthouse output from bin/lighthouse-check.ts
 lighthouse-reports/
+CLAUDE.local.md
