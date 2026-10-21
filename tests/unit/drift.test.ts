@@ -9,6 +9,7 @@ test('values compare equal whatever order an API returns their keys in', () => {
 
 test('different values, and arrays in a different order, are not the same', () => {
   assert.ok(!same({ a: 1 }, { a: 2 }));
-  assert.ok(!same({ a: 1 }, { a: 1, b: undefined, c: 0 }));
+  assert.ok(!same({ a: 1 }, { a: 1, c: 0 }));
+  assert.ok(!same({ a: 1 }, { a: 1, b: undefined }), 'a key set to undefined differs from a missing key');
   assert.ok(!same([1, 2], [2, 1]));
 });
