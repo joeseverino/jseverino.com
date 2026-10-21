@@ -319,11 +319,6 @@ run = "astro preview"
 description = "Serve the build through `wrangler pages dev` for by-hand checks (headers and functions active)"
 run = "node bin/edge-serve.ts"
 
-[tasks."seo:preview"]
-description = "Preview a page's Google snippet and metadata from built HTML"
-raw_args = true
-run = "node bin/seo-preview.ts"
-
 [tasks.lighthouse]
 description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
 run = "node bin/lighthouse-check.ts"
@@ -357,21 +352,11 @@ run = "node bin/snapshot-github.ts"
 description = "Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails without writing if any lookup fails"
 run = "node bin/snapshot-software.ts"
 
-[tasks."scaffold:writeup-field"]
-description = "Add a field once to the canonical writeup contract"
-raw_args = true
-run = "node bin/scaffold-writeup-field.ts"
-
-[tasks."draft:cover-alt"]
-description = "Draft writeup cover alt text through the Claude API"
-raw_args = true
-run = "node bin/draft-cover-alt.ts"
-
 [tasks."sign:security"]
 description = "Re-sign `public/.well-known/security.txt`"
 interactive = true
 run = "node bin/sign-security.ts"
 
 [tasks."clean:generated"]
-description = "Remove build output and build caches"
-run = "node bin/clean-generated.ts"
+description = "Remove build output (`dist/`) and the Astro and Vite caches; synced content is left alone"
+run = "rm -rf dist .astro node_modules/.vite"

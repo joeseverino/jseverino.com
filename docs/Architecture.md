@@ -137,7 +137,8 @@ Writeups:
 The committed snapshot holds no drafts (the no-drafts audit enforces it). `site dev --drafts` syncs unpublished content into the gitignored `.cache/drafts` overlay and points the dev server at it through `SITE_CONTENT_ROOT`; the loaders render unpublished entries only under `astro dev`.
 
 To add or change a writeup field, edit only the canonical contract and run
-`mise run sync:contract`. `mise run scaffold:writeup-field` makes that edit.
+`mise run sync:contract`. Adding a field is one line in
+`contracts/content.v1.json`, beside the fields it resembles.
 
 ## 5. Markdown Rendering
 

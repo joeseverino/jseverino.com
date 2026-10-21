@@ -142,23 +142,23 @@ validated, published writeup snapshot. The static build invokes it
 automatically. The generated file is gitignored: the build is the one place
 that writes it, and consumers read the deployed JSON.
 
-**`mise run scaffold:writeup-field`**: adds a field only to
-`contracts/content.v1.json`, the canonical writeup contract. Dry-run by
-default. After `--apply`, run `mise run sync:contract`; the typed Astro schema,
-MCP projection, CLI/tool schemas, and the `site manage` TUI derive from that one contract.
+**`mise run sync:contract`**: after adding a field as one line in
+`contracts/content.v1.json`, the canonical writeup contract, regenerates what
+derives from it: the typed Astro schema, MCP projection, CLI/tool schemas, and
+the `site manage` TUI.
 
-**`mise run draft:cover-alt`**: drafts `cover_alt` text for one writeup, or
-with `--all` every published writeup missing it, via the Claude API, for
-human review before it lands in the vault.
+**`mise run site draft-alt <slug>`**: drafts `cover_alt` text for one writeup
+via the Claude API, for human review before it lands in the vault; `--apply`
+writes it. See [`Site-CLI.md`](./Site-CLI.md).
 
 **`mise run sign:security`**: clear-signs `public/.well-known/security.txt`
 with the security@ key. The signature, fields, and expiry are verified by
 `mise run checks:security-txt` on every gate run, so an expired or tampered
 file cannot ship. See [`SECURITY.md`](../SECURITY.md).
 
-**`mise run seo:preview`**: renders a Google-style result snippet and the
-full metadata readout for a built page (`--result <slug>` for just the
-snippet). Reads the built HTML, so run a build first.
+**`mise run site seo <page>`**: renders a Google-style result snippet and the
+full metadata readout for a built page (`--result` for just the snippet).
+Reads the built HTML, so run a build first.
 
 **`mise run preview`**: serves the most recent build locally, the same way
 the Playwright suite consumes it.
@@ -397,7 +397,7 @@ Every gate the pipeline runs: check, then the browser suites
 
 - **Usage:** `clean:generated`
 
-Remove build output and build caches
+Remove build output (`dist/`) and the Astro and Vite caches; synced content is left alone
 
 ## `cloudflare`
 
@@ -434,12 +434,6 @@ Build HEAD and the working tree; show what changed in the shipped site
 - **Usage:** `diff:content`
 
 What a content change means by slug: published, edited, removed, pages, generated (`--json`)
-
-## `draft:cover-alt`
-
-- **Usage:** `draft:cover-alt`
-
-Draft writeup cover alt text through the Claude API
 
 ## `github`
 
@@ -505,18 +499,6 @@ Serve the built site locally
 - **Usage:** `publish:dist`
 
 Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)
-
-## `scaffold:writeup-field`
-
-- **Usage:** `scaffold:writeup-field`
-
-Add a field once to the canonical writeup contract
-
-## `seo:preview`
-
-- **Usage:** `seo:preview`
-
-Preview a page's Google snippet and metadata from built HTML
 
 ## `serve:edge`
 
