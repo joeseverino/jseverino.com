@@ -1,34 +1,23 @@
 #!/usr/bin/env node
 // Generates the 1280x640 GitHub social preview at .github/social-preview.png
 // (uploaded manually in repo settings).
-//
-//   node bin/make-github-social.ts
-import path from 'node:path';
-import { renderCard, launchBrowser } from 'branding-engine';
-import { brandCardColors } from '../src/lib/brand.ts';
 import { SITE, SITE_REPOSITORY } from '../src/lib/site-config.ts';
-import { siteRoot as root } from '../src/lib/site-root.ts';
+import { fromRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
+import { renderBrandCard } from './lib/brand-card.ts';
 
 cli({ usage: 'usage: node bin/make-github-social.ts' });
 
-const browser = await launchBrowser();
-try {
-  await renderCard(browser, {
-    width: 1280,
-    height: 640,
-    photoWidth: 480,
-    eyebrow: 'GitHub • Open Source',
-    name: SITE.domain,
-    tagline: 'Source for my personal site',
-    meta: 'Astro • TypeScript • Cloudflare Pages',
-    url: `github.com/${SITE_REPOSITORY}`,
-    photoPath: path.join(root, 'src/content/pages/home/images/portrait.jpg'),
-    outPath: path.join(root, '.github/social-preview.png'),
-    colors: brandCardColors(),
-  });
-} finally {
-  await browser.close();
-}
+await renderBrandCard({
+  width: 1280,
+  height: 640,
+  photoWidth: 480,
+  eyebrow: 'GitHub • Open Source',
+  name: SITE.domain,
+  tagline: 'Source for my personal site',
+  meta: 'Astro • TypeScript • Cloudflare Pages',
+  url: `github.com/${SITE_REPOSITORY}`,
+  outPath: fromRoot('.github/social-preview.png'),
+});
 
 console.log('Wrote .github/social-preview.png (1280x640)');
