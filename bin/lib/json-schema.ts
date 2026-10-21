@@ -1,87 +1,31 @@
-// Validates the JSON Schema subset the repo uses (type, properties, required, additionalProperties: false,
-// items, enum, const, pattern, minLength, minimum, minItems, maxItems, oneOf, local $ref). Any other keyword is an error.
-const KNOWN = new Set([
-  '$schema', '$id', '$defs', '$ref', 'title', 'description', 'type', 'properties', 'required',
-  'additionalProperties', 'items', 'enum', 'const', 'pattern', 'minLength', 'minimum', 'minItems', 'maxItems', 'oneOf',
-]);
+// JSON Schema 2020-12 through Ajv in strict mode, so a keyword Ajv does not know is an error.
+import { Ajv2020, type ErrorObject, type SchemaObject } from 'ajv/dist/2020.js';
 
-export interface JsonSchema {
-  $schema?: string;
-  $id?: string;
-  $defs?: Record<string, JsonSchema>;
-  $ref?: string;
-  title?: string;
-  description?: string;
-  type?: string;
-  properties?: Record<string, JsonSchema>;
-  required?: string[];
-  additionalProperties?: boolean;
-  items?: JsonSchema;
-  enum?: unknown[];
-  const?: unknown;
-  pattern?: string;
-  minLength?: number;
-  minimum?: number;
-  minItems?: number;
-  maxItems?: number;
-  oneOf?: JsonSchema[];
-}
+export type JsonSchema = SchemaObject;
 
-const typeOf = (value: unknown): string => {
-  if (Array.isArray(value)) return 'array';
-  if (value === null) return 'null';
-  if (Number.isInteger(value)) return 'integer';
-  return typeof value;
-};
+// addUsedSchema false: a schema file read twice compiles twice, instead of
+// colliding with its own $id.
+const ajv = new Ajv2020({ allErrors: true, addUsedSchema: false });
 
-const matchesType = (type: string, value: unknown): boolean => type === typeOf(value) || (type === 'number' && typeof value === 'number');
+// Problems name the property or the allowed values; the rest keep Ajv's message.
+const problem = ({ keyword, params, message }: ErrorObject): string | undefined =>
+  keyword === 'required' ? `missing ${params.missingProperty}`
+    : keyword === 'additionalProperties' ? `unexpected property ${params.additionalProperty}`
+      : keyword === 'enum' ? `must be one of ${params.allowedValues.map((value: unknown) => JSON.stringify(value)).join(', ')}`
+        : message;
+
+// Ajv's JSON Pointer /rules/0/action as $.rules[0].action.
+const path = (pointer: string): string => `$${pointer.split('/').slice(1).map((token) => {
+  const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
+  return /^\d+$/.test(key) ? `[${key}]` : `.${key}`;
+}).join('')}`;
+
+const describe = (error: ErrorObject): string => `${path(error.instancePath)}: ${problem(error)}`;
 
 // Returns a list of "path: problem" strings; empty means valid.
-export function validate(schema: JsonSchema, value: unknown, root: JsonSchema = schema, at = '$'): string[] {
-  for (const keyword of Object.keys(schema)) {
-    if (!KNOWN.has(keyword)) throw new Error(`${at}: unsupported schema keyword ${keyword}`);
-  }
-  if (schema.$ref) {
-    const name = schema.$ref.replace(/^#\/\$defs\//, '');
-    const target = root.$defs?.[name];
-    if (!target) throw new Error(`${at}: unresolved $ref ${schema.$ref}`);
-    return validate(target, value, root, at);
-  }
-  const problems: string[] = [];
-  if (schema.oneOf) {
-    // Which alternative a document meant is not decidable, so a miss reports every one's problems.
-    const outcomes = schema.oneOf.map((branch) => validate(branch, value, root, at));
-    const matched = outcomes.filter((found) => found.length === 0).length;
-    if (matched === 0) problems.push(`${at}: matches none of ${outcomes.length} alternatives (${outcomes.map((found, i) => `${i + 1}: ${found.join(', ')}`).join('; ')})`);
-    else if (matched > 1) problems.push(`${at}: matches ${matched} alternatives, expected exactly one`);
-  }
-  if (schema.type && !matchesType(schema.type, value)) return [`${at}: expected ${schema.type}, got ${typeOf(value)}`];
-  if ('const' in schema && JSON.stringify(value) !== JSON.stringify(schema.const)) problems.push(`${at}: must be ${JSON.stringify(schema.const)}`);
-  if (schema.enum && !schema.enum.some((option) => JSON.stringify(option) === JSON.stringify(value))) {
-    problems.push(`${at}: must be one of ${schema.enum.map((option) => JSON.stringify(option)).join(', ')}`);
-  }
-  if (typeof value === 'string') {
-    if (schema.pattern && !new RegExp(schema.pattern, 'u').test(value)) problems.push(`${at}: does not match ${schema.pattern}`);
-    if (schema.minLength !== undefined && value.length < schema.minLength) problems.push(`${at}: shorter than ${schema.minLength}`);
-  }
-  if (typeof value === 'number' && schema.minimum !== undefined && value < schema.minimum) problems.push(`${at}: below ${schema.minimum}`);
-  if (Array.isArray(value)) {
-    if (schema.minItems !== undefined && value.length < schema.minItems) problems.push(`${at}: fewer than ${schema.minItems} items`);
-    if (schema.maxItems !== undefined && value.length > schema.maxItems) problems.push(`${at}: more than ${schema.maxItems} items`);
-    const { items } = schema;
-    if (items) value.forEach((item: unknown, index: number) => problems.push(...validate(items, item, root, `${at}[${index}]`)));
-  }
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    for (const key of schema.required ?? []) {
-      if (!(key in value)) problems.push(`${at}: missing ${key}`);
-    }
-    for (const [key, item] of Object.entries(value)) {
-      const property = schema.properties?.[key];
-      if (property) problems.push(...validate(property, item, root, `${at}.${key}`));
-      else if (schema.additionalProperties === false) problems.push(`${at}: unexpected property ${key}`);
-    }
-  }
-  return problems;
+export function validate(schema: JsonSchema, value: unknown): string[] {
+  const check = ajv.compile(schema);
+  return check(value) ? [] : (check.errors ?? []).map(describe);
 }
 
 // validate() as an assertion: a value with no problems narrows to T, the type

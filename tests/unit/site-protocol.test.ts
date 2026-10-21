@@ -105,7 +105,7 @@ describe('documents the schema refuses', () => {
 });
 
 describe('the apply-plan input', () => {
-  const plan = (value: unknown): string[] => validate({ $ref: '#/$defs/plan' }, value, schema);
+  const plan = (value: unknown): string[] => validate({ $defs: schema.$defs, $ref: '#/$defs/plan' }, value);
 
   test('accepts updates, a complete featured order, and a fingerprint', () => {
     assert.deepEqual(plan({ updates: [{ slug: 'a', title: 'A' }], featured_order: ['a', 'b'], source_fingerprint: 'abc123' }), []);
