@@ -309,7 +309,7 @@ describe('featured order and plans', () => {
     const before = read('lead-piece');
     const edited = `${before}\nAn edit from another writer.\n`;
     fs.writeFileSync(file('lead-piece'), edited);
-    const outcome = transactionalReplace(store.writeupsDir, new Map([[file('lead-piece'), { before, after: `${before}\nMine.\n` }]]));
+    const outcome = transactionalReplace(new Map([[file('lead-piece'), { before, after: `${before}\nMine.\n` }]]));
     assert.equal(outcome.ok, false);
     assert.match(outcome.ok ? '' : outcome.error, /file changed during transaction/);
     assert.equal(read('lead-piece'), edited);

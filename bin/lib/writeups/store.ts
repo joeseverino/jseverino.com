@@ -238,8 +238,8 @@ function findWriteup(writeups: readonly Writeup[], slug: string): Writeup {
 }
 
 // Write the replacements together or not at all; a failure rolls back and throws.
-function commit(store: WriteupStore, replacements: ReadonlyMap<string, Replacement>, options?: TransactionOptions): void {
-  const outcome = transactionalReplace(store.writeupsDir, replacements, options);
+function commit(replacements: ReadonlyMap<string, Replacement>, options?: TransactionOptions): void {
+  const outcome = transactionalReplace(replacements, options);
   if (!outcome.ok) throw new WriteupError('transaction_failed', `writeup transaction failed: ${outcome.error}`, { rolled_back: outcome.rolledBack });
 }
 
@@ -346,7 +346,7 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
   if (replacements.size === 0) {
     return { noOp: true, changedWriteups: [], changedFields: {}, featuredOrderAfter: order ?? featuredOrder(writeups).map((e) => e.slug) };
   }
-  commit(store, replacements, options);
+  commit(replacements, options);
 
   const changedWriteups = Object.keys(changedFields).sort();
   const featuredOrderAfter = order ?? featuredOrder(loadWriteups(store)).map((e) => e.slug);
@@ -406,7 +406,7 @@ export function updateFrontmatter(
   const source = fs.readFileSync(writeup.path, 'utf8');
   const { text, changed } = applyScalars(source, updates);
   if (changed.length === 0) return { slug, noOp: true, changedFields: [], values: {} };
-  commit(store, new Map([[writeup.path, { before: source, after: text }]]));
+  commit(new Map([[writeup.path, { before: source, after: text }]]));
   const before = summary(writeup);
   const values = Object.fromEntries(changed.map((key) => [key, updates[key] ?? null]));
   return {
@@ -456,7 +456,7 @@ export function updateLink(store: WriteupStore, slug: string, label: string, exp
   const matches = text.match(pattern) ?? [];
   if (matches.length !== 1) throw new WriteupError('invalid', `expected exactly one matching link; found ${matches.length}`);
   const next = text.replace(pattern, (_match, title: string | undefined) => `[${label}](${replacementHref}${title ?? ''})`);
-  commit(store, new Map([[writeup.path, { before: text, after: next }]]));
+  commit(new Map([[writeup.path, { before: text, after: next }]]));
   return {
     slug, label, oldHref: expectedHref, newHref: replacementHref,
     receipt: receipt({
