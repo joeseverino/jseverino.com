@@ -19,7 +19,8 @@
     "secret_scanning_push_protection": "enabled",
     "dependabot_security_updates": "disabled",
     "vulnerability_alerts": true,
-    "private_vulnerability_reporting": true
+    "private_vulnerability_reporting": true,
+    "code_scanning": { "state": "configured", "languages": ["actions", "javascript-typescript"] }
   },
   "actions": {
     "allowed_actions": "all",
@@ -61,9 +62,14 @@
             { "context": "visual" },
             { "context": "edge" },
             { "context": "dependency-review" },
-            { "context": "analyze typescript", "integration_id": 15368 },
             { "context": "Cloudflare Pages", "integration_id": 85455 }
           ]
+        }
+      },
+      {
+        "type": "code_scanning",
+        "parameters": {
+          "code_scanning_tools": [{ "tool": "CodeQL", "alerts_threshold": "errors", "security_alerts_threshold": "high_or_higher" }]
         }
       },
       { "type": "non_fast_forward" },

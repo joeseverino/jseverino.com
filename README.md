@@ -1,7 +1,6 @@
 # jseverino.com
 
 [![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
-[![codeql](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
 [![scorecard](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
 
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
@@ -72,8 +71,8 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 - [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
   A+, 145 / 100, 12 of 12 tests on 2026-10-03.
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
-  and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
-  publish their results to code scanning.
+  and CodeQL's default setup publish their results to code scanning, and a
+  pull request cannot merge past a high-severity CodeQL alert.
 - Every commit on `main` is signed and every change lands through a
   squash-merged pull request.
 - Each release carries the build output and its CycloneDX SBOM with Sigstore

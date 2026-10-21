@@ -9,6 +9,7 @@ export interface FakeState {
   repo: Fields;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  codeScanning: Fields;
   permissions: Fields;
   workflow: Fields;
   variables: { name: string; value: string }[];
@@ -53,6 +54,9 @@ export function createGithubFake(seed: FakeState, token: string) {
     ['GET', /^\/private-vulnerability-reporting$/, () => json({ enabled: state.privateReporting })],
     ['PUT', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', true)],
     ['DELETE', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', false)],
+    ['GET', /^\/code-scanning\/default-setup$/, () => json(state.codeScanning)],
+    // Enabling queues a first analysis: 202 with the run.
+    ['PATCH', /^\/code-scanning\/default-setup$/, (_id, body) => (Object.assign(state.codeScanning, body), json({ run_id: 42, run_url: `${API_BASE}${REPO}/actions/runs/42` }, 202))],
     ['GET', /^\/actions\/permissions$/, () => json(state.permissions)],
     ['PUT', /^\/actions\/permissions$/, (_id, body) => (Object.assign(state.permissions, body), empty())],
     ['GET', /^\/actions\/permissions\/workflow$/, () => json(state.workflow)],

@@ -100,7 +100,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
 | A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser. |
 | Post-deploy | [deploy verification](#post-deploy-verification) | `bin/deploy-verify.ts` | Remote CI status, live headers and HSTS, live sitemap 200s, hash coverage of the home page's inline script and stylesheet, cache rules, the contact gate, `security.txt` parity, open CodeQL alerts. The response predicates are the edge suite's, from `src/lib/edge-expectations.ts`. |
-| CI | CodeQL | `.github/workflows/codeql.yml` | Semantic JS/TS scanning for injection, XSS, prototype pollution. |
+| CI | CodeQL | default setup, `.github/repo.json` | Semantic JS/TS and workflow scanning for injection, XSS, prototype pollution; the ruleset's code scanning rule holds a merge on a high-severity alert. |
 | CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
 | CI | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Supply-chain posture: branch protection, pinned actions, token scope. |
 
@@ -444,7 +444,7 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 `bin/deploy-verify.ts` (`npm run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it is not run from CI, because Cloudflare Bot Fight Mode challenges GitHub-hosted runners. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each deployment's own `*.pages.dev` URL, which is outside the zone: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
 
 1. **Repo state**: local branch is `main`, clean, fully pushed.
-2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, CodeQL, and Cloudflare Pages report success.
+2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and Cloudflare Pages report success.
 3. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source and the home page's inline script and stylesheet covered by its hashes (`inline`),
@@ -458,18 +458,8 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 
 ## 7. Remote CI/CD workflows
 
-| Workflow | Trigger | Enforces |
-| :--- | :--- | :--- |
-| `dist.yml` | push to `main` | Commits the build output to the `dist` branch; the only job with `contents: write` |
-| `ci.yml` | push/PR to `main` | Independent jobs, so a failure reports on its own required check: `build` (`mise run check`, plus a CycloneDX SBOM on `main`) and the `playwright` matrix, one `browser:*` task per leg (`e2e` on three workers, `visual` against `tests/fixtures/content` on macOS, and `edge`, which serves the build through `wrangler pages dev` and asserts the hash CSP, `_headers` rules, real 404, contact refusals, and `security.txt` parity). The Linux legs install browser system packages while the site builds, then serve that build. Every browser leg writes a summary. |
-| `deploy.yml` | Cloudflare Pages check-run completed; `ci` completed | `verify` runs the default branch's `bin/deploy-verify.ts --origin` against the deployment's `*.pages.dev` URL, with the Access service token and no branch code; `record` logs each verified deployment under the `production` or `preview` environment so GitHub's Deployments list shows it; `report` keeps one PR comment current (CI summaries and the deployment, in whichever order they finish). |
-| `codeql.yml` | push/PR to `main`, weekly | Semantic JS/TS scan (XSS, prototype pollution, insecure regex). Open alerts block merge. Skipped on content-only PRs (`changes.yml` classifies the paths). |
-| `dependency-review.yml` | every PR | Fails PRs that add/update a dependency with a high-severity advisory. Skipped on content-only PRs. |
-| `scorecard.yml` | weekly / branch-protection change | OpenSSF supply-chain posture; SARIF uploaded to code scanning, and a JSON pass rendered by `bin/scorecard-summary.ts` into the job summary: the aggregate plus every check with Scorecard's reason. |
-| `workflow-lint.yml` | workflow changes | `actionlint` on Action YAML. SHA pinning is `checks:workflows` (zizmor) in every `mise run fast`. |
-| `link-check.yml` | docs changes, weekly | `lychee` audits repository documentation links and public content links (self-domain links excluded; 403/429/999 accepted as answered) and writes both reports into the job summary. |
-| `lighthouse.yml` | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse against the URLs in `tests/lighthouse.json` with its thresholds (accessibility 95 and SEO 90 fail; performance 85 and best practices 70 warn), writes the per-page scores to the job summary, and uploads the reports. |
-| `security-txt-expires.yml` | schedule | Opens an issue when `security.txt` nears expiry (runs `check-security-txt.ts`). |
+Each workflow, its trigger and what it verifies are in the
+[continuous integration table](../docs/Development.md#continuous-integration).
 
 ---
 

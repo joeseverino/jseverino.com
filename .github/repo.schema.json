@@ -36,13 +36,26 @@
       "description": "Repository security features.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["secret_scanning", "secret_scanning_push_protection", "dependabot_security_updates", "vulnerability_alerts", "private_vulnerability_reporting"],
+      "required": ["secret_scanning", "secret_scanning_push_protection", "dependabot_security_updates", "vulnerability_alerts", "private_vulnerability_reporting", "code_scanning"],
       "properties": {
         "secret_scanning": { "$ref": "#/$defs/status" },
         "secret_scanning_push_protection": { "$ref": "#/$defs/status" },
         "dependabot_security_updates": { "description": "Off: Renovate opens the security fixes, from the alerts below.", "$ref": "#/$defs/status" },
         "vulnerability_alerts": { "description": "GitHub's vulnerability alerts, which Renovate reads to open a fix at once; an accepted advisory is an alert dismissed with a reason.", "type": "boolean" },
-        "private_vulnerability_reporting": { "type": "boolean" }
+        "private_vulnerability_reporting": { "type": "boolean" },
+        "code_scanning": {
+          "description": "CodeQL default setup (PATCH /repos/:repository/code-scanning/default-setup). The ruleset's code_scanning rule requires its results, so both change in one apply.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "languages"],
+          "properties": {
+            "state": { "enum": ["configured", "not-configured"] },
+            "languages": {
+              "type": "array",
+              "items": { "enum": ["actions", "c-cpp", "csharp", "go", "java-kotlin", "javascript-typescript", "python", "ruby", "swift"] }
+            }
+          }
+        }
       }
     },
     "actions": {

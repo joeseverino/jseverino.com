@@ -75,9 +75,10 @@ expired, or WKD-mismatched `security.txt` fails before the build runs.
 ## 3. Pull Request And Merge
 
 Push the branch and open a pull request against `main`. The ruleset's
-required checks (`build`, `e2e`, `visual`, `edge`, CodeQL, `dependency-review`,
+required checks (`build`, `e2e`, `visual`, `edge`, `dependency-review`,
 and `Cloudflare Pages`)
-must pass before a merge. Content changes go through `site publish` and
+must pass before a merge, and its code scanning rule holds the merge while
+CodeQL reports a high-severity alert or an error. Content changes go through `site publish` and
 `site land` ([Site CLI](./Site-CLI.md)), and `site land` reads the same list
 from the ruleset.
 

@@ -204,7 +204,7 @@ script.
 **`npm run deploy:verify`**: run after a production deploy, from a residential IP;
 Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run
 it. Confirms the local HEAD matches origin, waits for every required check
-(build, e2e, visual, edge, CodeQL, Cloudflare Pages) to pass,
+(build, e2e, visual, edge, Cloudflare Pages) to pass,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
 is absent in production, the live home page's inline script and stylesheet are covered by the

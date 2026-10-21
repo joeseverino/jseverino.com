@@ -592,13 +592,13 @@ GitHub Actions provide the remote quality gate:
   deployment replaces its own, in whichever order they finish. The release
   confirmation against the production hostname stays `npm run deploy:verify`
   from a residential IP.
-- [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
-- [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories, and comments only when it blocks.
-- Both are skipped on pull requests that touch only content or prose, classified by the reusable [`changes`](../.github/workflows/changes.yml) workflow and a job-level `if`: a skipped job reports success to a required check, where `paths-ignore` would leave it pending forever. If the classification fails, they run.
-- [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
-- [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, writes both lychee reports into the job summary, and uploads them.
-- [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `tests/lighthouse.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
-- [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
+
+The remaining workflows, with what each verifies, are in the
+[continuous integration table](./Development.md#continuous-integration).
+CodeQL runs as GitHub's default setup, declared in
+[`.github/repo.json`](../.github/repo.json) with the ruleset rule that
+requires its results ([GitHub Settings](./GitHub-Settings.md)).
+
 Dependency updates come from Renovate, which runs outside this repository;
 [`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
 the actionlint container) moves in one weekly pull request after a 7-day
@@ -613,7 +613,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR, and `issues: write` for the self-closing `security-txt-expires` alert. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR, and `issues: write` for the self-closing `security-txt-expires` alert. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
 
 CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

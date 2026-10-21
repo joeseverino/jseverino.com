@@ -421,8 +421,10 @@ ships to visitors:
   for any advisory that GitHub's vulnerability alerts or OSV report
   ([`renovate.json`](../renovate.json)). An advisory with no fix to take is
   accepted by dismissing its alert with a reason.
-- **CodeQL** scans the JavaScript/TypeScript on every push and PR to `main`
-  and on a weekly schedule ([`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml)).
+- **CodeQL** default setup scans the JavaScript/TypeScript and the workflows
+  on every push and PR to `main` and on a weekly schedule, and the `main`
+  ruleset holds a merge on a high-severity alert
+  ([`.github/repo.json`](../.github/repo.json)).
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
 - **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
@@ -453,8 +455,8 @@ ships to visitors:
   as accepted.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
-  Elevated scopes (notably `security-events: write` for SARIF upload in
-  `codeql.yml` and `scorecard.yml`) are granted per job, never per workflow. The deploy verification job holds the Access
+  Elevated scopes (notably `security-events: write` for the SARIF upload in
+  `scorecard.yml`) are granted per job, never per workflow. The deploy verification job holds the Access
   service token, so it runs the default branch's verifier and takes only the
   deployment URL from the triggering event.
 - **Code-scanning dashboard.** CodeQL findings are fixed at the source and

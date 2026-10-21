@@ -37,6 +37,7 @@ export interface DesiredState {
     dependabot_security_updates: Status;
     vulnerability_alerts: boolean;
     private_vulnerability_reporting: boolean;
+    code_scanning: { state: 'configured' | 'not-configured'; languages: string[] };
   };
   actions: {
     allowed_actions: 'all' | 'local_only' | 'selected';
@@ -52,6 +53,7 @@ export interface LiveState {
   repo: Record<string, unknown>;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  codeScanning: Record<string, unknown>;
   permissions: Record<string, unknown>;
   workflow: Record<string, unknown>;
   variables: Record<string, string>;
@@ -123,6 +125,7 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
     repo: await client.get<Record<string, unknown>>(base),
     vulnerabilityAlerts: await client.isOn(`${base}/vulnerability-alerts`),
     privateReporting: Boolean(fields(await client.get(`${base}/private-vulnerability-reporting`)).enabled),
+    codeScanning: await client.get<Record<string, unknown>>(`${base}/code-scanning/default-setup`),
     permissions: await client.get<Record<string, unknown>>(`${base}/actions/permissions`),
     workflow: await client.get<Record<string, unknown>>(`${base}/actions/permissions/workflow`),
     variables: Object.fromEntries((await client.get<{ variables: { name: string; value: string }[] }>(`${base}/actions/variables?per_page=100`)).variables.map(({ name, value }) => [name, value])),
@@ -184,6 +187,15 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
     const want = desired.security[key];
     items.push(have === want ? item('security', key, want, have, 'ok') : item('security', key, want, have, 'drift', [toggle(path, want)]));
   }
+
+  // CodeQL default setup, ahead of the ruleset: its code_scanning rule waits on
+  // CodeQL results, so the analysis is on before the rule is.
+  const scanning = { state: desired.security.code_scanning.state, languages: desired.security.code_scanning.languages.toSorted() };
+  const scanningNow = { state: live.codeScanning.state, languages: (Array.isArray(live.codeScanning.languages) ? live.codeScanning.languages.map(String) : []).sort() };
+  items.push(same(scanning, scanningNow)
+    ? item('security', 'code_scanning', scanning, scanningNow, 'ok')
+    : item('security', 'code_scanning', scanning, scanningNow, 'drift',
+        [{ method: 'PATCH', path: `${base}/code-scanning/default-setup`, body: scanning }], `differs: ${changedKeys(scanning, scanningNow).join(', ')}`));
 
   const permissions = { allowed_actions: desired.actions.allowed_actions, sha_pinning_required: desired.actions.sha_pinning_required };
   const permissionsNow = pick(live.permissions, Object.keys(permissions));
