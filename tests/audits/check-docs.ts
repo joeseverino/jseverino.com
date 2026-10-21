@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Engineering docs integrity that no link checker knows: every `npm run` and `mise run` reference
-// names a script or task, and every backticked repo path resolves (git tracks or ignores it). Script
-// and task refs are checked everywhere, fenced code included. Links and #anchors are lychee's
+// Engineering docs integrity that no link checker knows: every `mise run` reference names a task,
+// no `npm run` names anything but the build (every other command is a mise task), and every
+// backticked repo path resolves (git tracks or ignores it). Command refs are checked everywhere,
+// fenced code included. Links and #anchors are lychee's
 // (`mise run checks:doc-links`).
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { packageScripts } from '../../src/lib/json.ts';
 import { abort, finish } from './lib.ts';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { spawnResult } from '../../bin/lib/run.ts';
@@ -103,7 +103,6 @@ if (import.meta.main) {
   const docs = trackedFiles(siteRoot, ...pathspecs).filter((file) => file.endsWith('.md') && fs.existsSync(path.join(siteRoot, file)));
   if (docs.length === 0) abort('check-docs', `no tracked docs match ${pathspecs.join(' ')}`);
 
-  const scripts = packageScripts();
   const npmRunPattern = /npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g;
   // `mise run [-c] [-j N] <task>`, the task bare or quoted as a glob; a name ending in a
   // `<placeholder>` is an example, not a reference.
@@ -123,7 +122,7 @@ if (import.meta.main) {
       for (const [, name = ''] of line.matchAll(npmRunPattern)) {
         if (name.startsWith('-')) continue;
         scriptRefCount += 1;
-        if (!scripts[name]) problems.push(`${doc}:${lineIndex + 1}  unknown npm script -> npm run ${name}`);
+        if (name !== 'build') problems.push(`${doc}:${lineIndex + 1}  not an npm script -> npm run ${name} (every command but the build is \`mise run <task>\`)`);
       }
 
       for (const [, name = ''] of line.matchAll(miseRunPattern)) {
