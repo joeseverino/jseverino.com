@@ -358,7 +358,10 @@ non-production Pages branches, sitedrift preserves the generated pages and
 installs its DEV-versus-LIVE review shell, and the build marks the inline
 script on the viewer it wrote for hashing. On `main`, it exits without changing
 Astro's output. See [Deployment Preview Review](./Deployment-Preview-Review.md).
-Under `site --json` (`SITE_JSON=1`), `astro build` uses Astro's JSON logger;
+`astro build` runs with `--silent`, so a passing build prints only the content
+index, sitedrift and CSP lines, while a failing one still prints Astro's error
+and stack; `--timings` keeps Astro's log for its summary. Under `site --json`
+(`SITE_JSON=1`), `astro build` uses Astro's JSON logger;
 [Site CLI](./Site-CLI.md) has the detail.
 
 The output tree:

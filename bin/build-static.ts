@@ -33,7 +33,10 @@ function run(command: string, args: readonly string[]): void {
 // Before the build, so Astro copies it to the output (/content-index.json, gated by Access).
 run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // Under `site --json`, Astro's JSON logger: one {message,label,level} line per event.
-run(astro, ['build', ...(jsonLogs() ? ['--json'] : []), ...(values.timings ? ['--timings'] : [])]);
+// Otherwise silent, unless --timings asks for the summary: a passing build has
+// nothing to say, and Astro prints a fatal error and its stack at any level.
+const logs = jsonLogs() ? ['--json'] : values.timings ? [] : ['--silent'];
+run(astro, ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
 run(process.execPath, [
   sitedrift,
   'cloudflare',
