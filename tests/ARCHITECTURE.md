@@ -28,8 +28,9 @@ output whole under its name, each task's `timeout` stops a hung run, and
 `wait_for` keeps `astro sync` and `astro check` from rewriting `.astro/` at
 once. Under `-c` a task whose dependency failed still starts, so no `built:*`
 gate depends on the build: `mise run check` runs the build after the static
-gates and the `built:*` gates only after a build that succeeded. A failing gate
-prints its own fix on its last lines.
+gates and the `built:*` gates only after a build that succeeded. A passing gate
+prints one line; a failing gate prints every failure and its own fix on its
+last lines.
 
 ## Naming: `audit-` vs `check-`
 
@@ -209,7 +210,7 @@ A third pre-build layer beside the audits and browser specs: `node:test` suites 
 
 [`tests/unit/content-render.test.ts`](./unit/content-render.test.ts) compiles Markdown with Sätteri and the site's plugins from [`src/lib/markdown/`](../src/lib/markdown/), the same options Astro's processor gets. The guard cases compile as MDX, the format content ships in, and assert the refusal.
 
-Runs on Node's test runner via type stripping, with no extra dependency:
+Runs on Node's test runner via type stripping, with no extra dependency. Its reporter, [`quiet-reporter.ts`](./unit/helpers/quiet-reporter.ts), prints one line on a pass and hands a failing run to Node's own spec reporter, so every failure prints in full:
 
 ```sh
 mise run checks:unit

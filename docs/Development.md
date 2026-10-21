@@ -9,12 +9,15 @@ How the repository is built, checked, and shipped. Every script is in
 [mise](https://mise.jdx.dev) installs the toolchain: Node, pinned in
 [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock),
 and the same version in [`.nvmrc`](../.nvmrc), which Cloudflare Pages reads.
-npm comes from `package.json`'s `packageManager`. Copy
+npm comes from `package.json`'s `packageManager`. `mise install` installs the
+tools, then its `postinstall` hook runs `npm ci` from the lockfile, so a fresh
+checkout is ready after that one command (CI installs packages per job in its
+setup action instead). Machine paths for the content sync go in a gitignored
+`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)). Copy
 [`.env.example`](../.env.example) to `.env` for the Turnstile test keys, then:
 
 ```sh
 mise install
-npm ci
 npm run dev                # Astro dev server
 npm run build && npm run serve:edge   # the build on the Cloudflare runtime
 ```

@@ -1,6 +1,7 @@
 # The toolchain and every gate, declared once.
 #
-#   mise install        the pinned tools (versions here, checksums in mise.lock)
+#   mise install        the pinned tools (versions here, checksums in mise.lock),
+#                       then npm ci (the postinstall hook)
 #   mise run fast       the static gates, collect-all
 #   mise run check      does my change work: the static gates, the production
 #                       build, then every gate on what it built
@@ -31,6 +32,13 @@ min_version = "2026.10.15"
 # Gates that run together print one after another, each whole and labeled,
 # so each gate's failures sit under its own name.
 output = "keep-order"
+
+[hooks]
+# A fresh checkout is ready after one `mise install`: the tools, then the npm
+# packages from the lockfile. CI installs packages per job in its setup action
+# instead, so a job that holds a secret and needs no package never runs their
+# install scripts.
+postinstall = "test -n \"$CI\" || npm ci --no-audit --no-fund"
 
 [env]
 _.path = ["node_modules/.bin"]
@@ -80,14 +88,14 @@ run = "node tests/audits/check-contract-parity.ts"
 
 [tasks."checks:types"]
 description = "Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib"
-run = ["astro sync", "tsc -p .", "tsc -p functions"]
+run = ["astro sync --silent", "tsc -p .", "tsc -p functions"]
 
 [tasks."checks:astro"]
 description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
 # astro sync and astro check both rewrite .astro/; never at once.
 wait_for = ["checks:types"]
 env = { NODE_OPTIONS = "--max-old-space-size=4096" }
-run = "astro check --minimumSeverity warning --tsconfig tsconfig.astro.json"
+run = "astro check --silent --minimumSeverity warning --tsconfig tsconfig.astro.json"
 
 [tasks."checks:functions"]
 description = "The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines"
@@ -99,7 +107,7 @@ run = "node tests/audits/check-sitedrift-preview.ts"
 
 [tasks."checks:unit"]
 description = "The node:test specs under tests/unit pass"
-run = "node --test 'tests/unit/**/*.test.ts'"
+run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
 
 [tasks."checks:docs-sync"]
 description = "The generated blocks in docs/Commands.md match bin/help.ts and these tasks"

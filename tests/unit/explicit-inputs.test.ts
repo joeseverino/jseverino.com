@@ -31,19 +31,21 @@ describe('the sync CLI on a machine with nothing of the author\'s', () => {
     assert.deepEqual(JSON.parse(run.stdout), { ok: true, documents: [] });
   });
 
-  test('without one, stops on a single line that names the variable and where to set it', () => {
-    const run = sync({});
+  // Each way to lack a vault stops on one line that says what to do about it.
+  const stopsOnOneLine = (env: Record<string, string>, message: RegExp) => {
+    const run = sync(env);
     assert.equal(run.status, 2);
     assert.equal(run.stderr.trim().split('\n').length, 1);
-    assert.match(run.stderr, /vault not configured: set VAULT_DIR in mise\.local\.toml \[env\]/);
+    assert.match(run.stderr, message);
+  };
+
+  test('without one, stops on a line that names the variable and where to set it', () => {
+    stopsOnOneLine({}, /vault not configured: set VAULT_DIR in mise\.local\.toml \[env\]/);
   });
 
-  test('pointed at a missing vault, stops on a single line that names the path and the variable', () => {
+  test('pointed at a missing vault, stops on a line that names the path and the variable', () => {
     const missing = path.join(root, 'missing');
-    const run = sync({ VAULT_DIR: missing });
-    assert.equal(run.status, 2);
-    assert.equal(run.stderr.trim().split('\n').length, 1);
-    assert.match(run.stderr, new RegExp(`vault not found: ${RegExp.escape(missing)}.*\\(set VAULT_DIR\\)`));
+    stopsOnOneLine({ VAULT_DIR: missing }, new RegExp(`vault not found: ${RegExp.escape(missing)}.*\\(set VAULT_DIR\\)`));
   });
 });
 
