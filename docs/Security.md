@@ -428,8 +428,8 @@ ships to visitors:
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
 - **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
-  push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), then
-  uploads a CycloneDX SBOM artifact on `main`.
+  push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+  Each release carries the attested SBOM.
 - **Preview guard** runs `mise run checks:preview` before release to prove that
   feature branches receive the review wrapper and `main` remains unmodified.
 - **Workflow lint** runs actionlint when GitHub Actions workflow files change

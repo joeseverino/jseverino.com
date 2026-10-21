@@ -558,8 +558,7 @@ GitHub Actions provide the remote quality gate:
   (a job skipped because an upstream job failed would report as passing).
   `build` runs `mise run check`: the static gates, then the gates on the
   artifact `bin/build-static.ts` produces, the same one Cloudflare ships, so
-  the committed tree must pass everything the local gate passes. A CycloneDX SBOM is uploaded on
-  `main`. The `playwright` matrix: `e2e` serves the build with `astro preview`
+  the committed tree must pass everything the local gate passes. The `playwright` matrix: `e2e` serves the build with `astro preview`
   and runs functional checks across Chromium, Firefox, and WebKit on three
   workers; `visual` builds the synthetic content in `tests/fixtures/content`
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
