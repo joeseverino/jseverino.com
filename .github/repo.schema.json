@@ -65,7 +65,7 @@
       "required": ["allowed_actions", "sha_pinning_required", "default_workflow_permissions", "can_approve_pull_request_reviews"],
       "properties": {
         "allowed_actions": { "enum": ["all", "local_only", "selected"] },
-        "sha_pinning_required": { "description": "Every `uses:` reference must be a full commit SHA, which workflow-lint also enforces in CI.", "type": "boolean" },
+        "sha_pinning_required": { "description": "Every `uses:` reference must be a full commit SHA, which zizmor (checks:workflows) also enforces.", "type": "boolean" },
         "default_workflow_permissions": { "enum": ["read", "write"] },
         "can_approve_pull_request_reviews": { "type": "boolean" }
       }

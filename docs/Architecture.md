@@ -600,7 +600,7 @@ requires its results ([GitHub Settings](./GitHub-Settings.md)).
 
 Dependency updates come from Renovate, which runs outside this repository;
 [`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
-the actionlint container) moves in one weekly pull request after a 7-day
+the mise tools) moves in one weekly pull request after a 7-day
 release age; Astro and its integrations, `sitedrift` (bundled into the
 production edge functions), Node (one update across `mise.toml`, `mise.lock`
 and `.nvmrc`), and each major come on their own, and the held majors in
@@ -612,7 +612,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
 
 CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

@@ -54,6 +54,8 @@ docs = "README.md SECURITY.md CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
 node = "24.22.0"
 "aqua:lycheeverse/lychee" = "0.24.2"
 "aqua:zizmorcore/zizmor" = "1.30.1"
+"github:jdx/jactionlint" = "2.2.0"
+"aqua:koalaman/shellcheck" = "0.11.0"
 
 # ------------------------------------------------------------------ checks
 
@@ -139,6 +141,12 @@ description = "zizmor finds no security issue in the workflows or actions (pinne
 # same verdict on a laptop and in CI. The config is named because zizmor's
 # discovery does not find it from a linked worktree.
 run = "zizmor --offline --quiet --config .github/zizmor.yml .github"
+
+[tasks."checks:actionlint"]
+description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
+# The correctness profile is actionlint's checks; zizmor (checks:workflows)
+# owns the security audits.
+run = "jactionlint --profile correctness --no-hints"
 
 [tasks."checks:patch"]
 description = "No whitespace errors or conflict markers in the working tree"

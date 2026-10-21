@@ -415,8 +415,8 @@ Types regressions on `/contact/`. Full procedure in
 The build toolchain is a supply-chain surface even though only prebuilt output
 ships to visitors:
 
-- **Renovate** updates every pin (npm, GitHub Actions, the actionlint
-  container, Node) once a release is 7 days old, in one weekly pull request
+- **Renovate** updates every pin (npm, GitHub Actions, the mise tools,
+  Node) once a release is 7 days old, in one weekly pull request
   with Astro, `sitedrift`, Node and each major apart, and opens a fix at once
   for any advisory that GitHub's vulnerability alerts or OSV report
   ([`renovate.json`](../renovate.json)). An advisory with no fix to take is
@@ -432,8 +432,9 @@ ships to visitors:
   Each release carries the attested SBOM.
 - **Preview guard** runs `mise run checks:preview` before release to prove that
   feature branches receive the review wrapper and `main` remains unmodified.
-- **Workflow lint** runs actionlint when GitHub Actions workflow files change
-  ([`.github/workflows/workflow-lint.yml`](../.github/workflows/workflow-lint.yml)).
+- **Workflow lint** runs jactionlint's correctness profile (actionlint's
+  checks, with shellcheck on every `run:` script) in `mise run fast`
+  (`checks:actionlint`).
 - **Workflow audit** runs zizmor over every workflow and action in
   `mise run fast` (`checks:workflows`): actions pinned to commit SHAs,
   permissions, template injection, credential persistence, and dangerous
@@ -467,8 +468,8 @@ ships to visitors:
   ([`.github/workflows/release.yml`](../.github/workflows/release.yml)); `gh
   attestation verify` checks a release against this repository's workflow.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
-  the actionlint container is pinned by tag and digest, Lighthouse runs from the
-  lockfile, and dependencies install from the committed lockfile.
+  the command-line tools install from `mise.lock` with their checksums,
+  Lighthouse runs from the lockfile, and dependencies install from the committed lockfile.
 
 ## Content and rendering
 

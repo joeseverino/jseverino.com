@@ -32,6 +32,7 @@ gate prints its own fix. CI runs the same tasks, one aggregate per job.
 | `mise run built:weight` | Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget |
 | `mise run check` | Does my change work: every static gate, the production build, then every gate on what it built (CI job build) |
 | `mise run checks` (also `mise run fast`) | CI job build, first phase: every static gate, collect-all |
+| `mise run checks:actionlint` | jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions |
 | `mise run checks:astro` | `astro check` reports no errors or warnings in the .astro files, content schemas, or imports |
 | `mise run checks:contracts` | Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source |
 | `mise run checks:contrast` | Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1) |
