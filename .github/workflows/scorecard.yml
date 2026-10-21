@@ -32,29 +32,3 @@ jobs:
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           sarif_file: scorecard.sarif
-
-      # The SARIF lists only checks with findings; the JSON pass carries every check and
-      # the aggregate for the summary.
-      - name: Run OpenSSF Scorecard for the summary
-        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
-        with:
-          results_file: scorecard.json
-          results_format: json
-          publish_results: false
-
-      - uses: ./.github/actions/setup
-        with:
-          install: 'false'
-
-      - name: Summarize
-        run: node bin/scorecard-summary.ts scorecard.json
-
-      - name: Upload Scorecard reports
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: scorecard-reports
-          path: |
-            scorecard.sarif
-            scorecard.json
-          if-no-files-found: error

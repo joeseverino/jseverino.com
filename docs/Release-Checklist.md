@@ -118,7 +118,7 @@ decides, so they run on their own:
 
 - `link check` uploads `link-check-reports`.
 - `lighthouse` uploads `lighthouse-reports`.
-- `scorecard` uploads `scorecard-sarif` and also sends SARIF to code scanning.
+- `scorecard` sends its SARIF to code scanning.
 
 Use `npm outdated` when intentionally reviewing dependency freshness; an
 available update is not itself a failed deployment.

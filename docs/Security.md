@@ -444,10 +444,8 @@ ships to visitors:
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).
 - **Lighthouse** checks selected live URLs on a weekly/manual schedule with the
   lockfile's Lighthouse (`bin/lighthouse-check.ts`) and uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](../.github/workflows/lighthouse.yml)).
-- **OpenSSF Scorecard** runs weekly/manual checks, uploads SARIF to code
-  scanning, and preserves the generated SARIF as an artifact
-  ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
-  Each run's job summary carries the aggregate and every check's reason.
+- **OpenSSF Scorecard** runs weekly/manual checks and uploads SARIF to code
+  scanning ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
   The checks below maximum follow from a one-person repo (Branch-Protection,
   Code-Review, Fuzzing, CII-Best-Practices, Contributors), from the
   all-rights-reserved license, and from Vulnerabilities, which counts every
