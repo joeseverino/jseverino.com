@@ -75,7 +75,7 @@ description = "No document under src/content is `published: false`"
 run = "node tests/audits/check-no-drafts.ts"
 
 [tasks."checks:security-txt"]
-description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 30 days out, and its Encryption URL names a committed WKD key"
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
 run = "node tests/audits/check-security-txt.ts"
 
 [tasks."checks:contrast"]

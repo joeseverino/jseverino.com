@@ -114,7 +114,7 @@ The audits whose rules need more than the one line in the [audit table](#2-audit
 Verifies `public/.well-known/security.txt`:
 - It is PGP clear-signed and the signature verifies (`gpg --verify`, GOODSIG/VALIDSIG).
 - All RFC 9116 required fields are present (`Contact`, `Encryption`, `Expires`, `Canonical`, `Policy`).
-- `Expires` is a parseable future date at least 30 days out.
+- `Expires` is a parseable future date at least 60 days out, so the monthly `security-txt-expires` run fails, and GitHub emails it, before the file lapses.
 - `Canonical` matches the production URL and `Encryption` is a WKD URL whose key file exists under `public/.well-known/openpgpkey/hu/`.
 
 Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`npm run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.

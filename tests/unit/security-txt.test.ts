@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { SECURITY_FILE, verifySecuritySignature } from '../../bin/lib/security-txt.ts';
+import { SECURITY_FILE, expiryProblem, verifySecuritySignature } from '../../bin/lib/security-txt.ts';
 import { tempDir } from './helpers/fs.ts';
 
 test('signature verification ignores the personal keyring and rejects modified content', (t) => {
@@ -30,4 +30,12 @@ test('signature verification ignores the personal keyring and rejects modified c
   const emptyKeys = path.join(directory, 'empty-keys');
   fs.mkdirSync(emptyKeys);
   assert.throws(() => verifySecuritySignature(SECURITY_FILE, emptyKeys), /No committed WKD public keys/);
+});
+
+test('the gate fails from 60 days before Expires, so the scheduled run fails before the file lapses', () => {
+  const now = Date.parse('2026-01-01T00:00:00Z');
+  assert.equal(expiryProblem('2026-03-03T00:00:00Z', now), undefined, '61 days out passes');
+  assert.match(expiryProblem('2026-02-25T00:00:00Z', now) ?? '', /55d \(< 60d\)/);
+  assert.match(expiryProblem('2025-12-31T00:00:00Z', now) ?? '', /in the past/);
+  assert.match(expiryProblem('soon', now) ?? '', /not a parseable date/);
 });

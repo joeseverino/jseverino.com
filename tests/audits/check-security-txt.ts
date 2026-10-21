@@ -6,6 +6,7 @@ import {
   REQUIRED_FIELDS,
   SECURITY_FILE,
   WKD_DIR,
+  expiryProblem,
   parseFields,
   verifySecuritySignature,
   stripSignature,
@@ -18,8 +19,6 @@ import { errorMessage } from '../../src/lib/error-message.ts';
 const wkdEncryptionRe = new RegExp(
   `^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
 );
-
-const expiresWarnDays = 30;
 
 const fail: (message: string) => never = (message) => abort('check-security-txt', message,
   'fix: run `npm run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key');
@@ -46,15 +45,9 @@ try {
   const missing = REQUIRED_FIELDS.filter((field) => !fields[field]);
   if (missing.length > 0) fail(`security.txt is missing required field(s): ${missing.join(', ')}`);
 
-  const expires = new Date(Expires);
-  if (Number.isNaN(expires.getTime())) fail(`security.txt Expires is not a parseable date: ${Expires}`);
-  const msUntil = expires.getTime() - Date.now();
-  const daysUntil = Math.floor(msUntil / 86_400_000);
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `days_remaining=${daysUntil}\n`);
-  if (msUntil <= 0) fail(`security.txt Expires (${Expires}) is in the past`);
-  if (daysUntil < expiresWarnDays) {
-    fail(`security.txt Expires in ${daysUntil}d (< ${expiresWarnDays}d). Bump it, re-sign, commit.`);
-  }
+  const expired = expiryProblem(Expires);
+  if (expired) fail(expired);
+  const daysUntil = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
 
   if (Canonical !== EXPECTED_CANONICAL) {
     fail(`security.txt Canonical is "${Canonical}"; expected "${EXPECTED_CANONICAL}"`);

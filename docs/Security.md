@@ -514,7 +514,7 @@ signature, re-signs the body with `security@jseverino.com`, and writes it
 back.
 [`mise run checks:security-txt`](../tests/audits/check-security-txt.ts) verifies the signature,
 confirms all RFC 9116 required fields are present, fails if `Expires` is
-within 30 days, and confirms the `Encryption` URL resolves to a local WKD
+within 60 days, and confirms the `Encryption` URL resolves to a local WKD
 file. It is one of the static gates, so an unsigned or expired
 `security.txt` fails before the build. The full set of gates is in
 [`tests/README.md`](../tests/README.md).

@@ -87,7 +87,7 @@ steps.
 | [`workflow lint`](../.github/workflows/workflow-lint.yml) | workflow changes | `actionlint` on the workflow YAML. SHA pinning is `checks:workflows` (zizmor) in every `mise run fast`. | PR and push syntax validation. |
 | [`link check`](../.github/workflows/link-check.yml) | docs changes, weekly | Lychee audits repository documentation links and public content links separately (self-domain links excluded; 403/429/999 accepted as answered), writes both reports into the job summary, and uploads them. | Connectivity report artifacts. |
 | [`lighthouse`](../.github/workflows/lighthouse.yml) | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse (the same generation PageSpeed Insights scores with) against the live URLs in `tests/lighthouse.json`. | Fails below accessibility 95 or SEO 90; warns below performance 85 or best practices 70. Scores in the job summary, reports as artifacts. Best practices reads in the 70s from any client Cloudflare distrusts, because Bot Fight Mode's injected detection script uses deprecated browser APIs; PageSpeed Insights is not served that script and reports 100. |
-| [`security.txt expires`](../.github/workflows/security-txt-expires.yml) | monthly | Runs `mise run checks:security-txt` and opens or updates an issue when `security.txt` expires within 60 days. | An open issue while the expiry is near. |
+| [`security.txt expires`](../.github/workflows/security-txt-expires.yml) | monthly | Runs `mise run checks:security-txt`, which fails from 60 days before `security.txt` expires. | A failed scheduled run, which GitHub emails. |
 
 CodeQL runs as GitHub's default setup on pushes, pull requests and a weekly
 schedule, declared in [`.github/repo.json`](../.github/repo.json) with the
