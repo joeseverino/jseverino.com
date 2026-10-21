@@ -5,6 +5,11 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { escapeHtml } from '../../src/lib/html.ts';
 
+// Rows land in an MDX body, where a brace opens an expression; MDX decodes the
+// character reference back to the brace.
+const escapeText = (text: string): string =>
+  escapeHtml(text).replace(/[{}]/g, (brace) => `&#${brace.codePointAt(0)};`);
+
 export interface Org {
   name: string;
   location: string;
@@ -40,14 +45,14 @@ export async function loadGrammar(resumeEngineRoot: string): Promise<Grammar> {
 // /education/ page). Every value is text from the vault, escaped where it lands.
 export function orgRow(org: Org, { tenure, href }: { tenure?: string | undefined; href?: string | undefined } = {}): string {
   const meta = tenure
-    ? `<span class="resume-org-meta"><span class="resume-dates">${escapeHtml(tenure)}</span><span class="resume-loc">${escapeHtml(org.location)}</span></span>`
-    : `<span class="resume-loc">${escapeHtml(org.location)}</span>`;
-  const name = href ? `<a href="${escapeHtml(href)}">${escapeHtml(org.name)}</a>` : escapeHtml(org.name);
+    ? `<span class="resume-org-meta"><span class="resume-dates">${escapeText(tenure)}</span><span class="resume-loc">${escapeText(org.location)}</span></span>`
+    : `<span class="resume-loc">${escapeText(org.location)}</span>`;
+  const name = href ? `<a href="${escapeText(href)}">${escapeText(org.name)}</a>` : escapeText(org.name);
   return `<h3 class="resume-org"><span>${name}</span>${meta}</h3>`;
 }
 
 export const roleRow = (role: Role): string =>
-  `<p class="resume-role"><strong>${escapeHtml(role.title)}</strong><span class="resume-dates">${escapeHtml(role.dates)}</span></p>`;
+  `<p class="resume-role"><strong>${escapeText(role.title)}</strong><span class="resume-dates">${escapeText(role.dates)}</span></p>`;
 
 function lineRow(grammar: Grammar, line: string): string {
   const role = grammar.matchRole(line);
@@ -55,12 +60,12 @@ function lineRow(grammar: Grammar, line: string): string {
 
   const cert = line.startsWith('- ') ? grammar.matchCert(line.slice(2)) : null;
   if (cert) {
-    return `<p class="resume-cert"><a href="${escapeHtml(cert.url)}">${escapeHtml(cert.name)}</a><span class="resume-issuer">${escapeHtml(cert.issuer)}</span><span class="resume-dates">${escapeHtml(cert.date)}</span></p>`;
+    return `<p class="resume-cert"><a href="${escapeText(cert.url)}">${escapeText(cert.name)}</a><span class="resume-issuer">${escapeText(cert.issuer)}</span><span class="resume-dates">${escapeText(cert.date)}</span></p>`;
   }
 
   const projectMeta = grammar.matchProjectMeta(line);
   if (projectMeta) {
-    return `<p class="resume-projmeta"><a href="${escapeHtml(projectMeta.href)}">${escapeHtml(projectMeta.label)}</a><span class="resume-dates">${escapeHtml(projectMeta.date)}</span></p>`;
+    return `<p class="resume-projmeta"><a href="${escapeText(projectMeta.href)}">${escapeText(projectMeta.label)}</a><span class="resume-dates">${escapeText(projectMeta.date)}</span></p>`;
   }
 
   return line;

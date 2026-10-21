@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
+import { mdxToHast, type HastNode } from 'satteri';
 
 import {
   collectAssetRefs,
@@ -15,6 +16,7 @@ import {
 } from '../../bin/content-sync/assets.ts';
 import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
 import { createWriter } from '../../bin/content-sync/writer.ts';
+import { compileIssues } from '../../bin/content-sync/compile.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
@@ -164,6 +166,17 @@ describe('document rows', () => {
       '<h3 class="resume-org"><span><a href="/x?a=1&amp;b=2">R&amp;D &lt;Lab&gt;</a></span><span class="resume-loc">Town &quot;A&quot;</span></h3>',
     );
     assert.equal(roleRow({ title: 'A & B', dates: "'24" }), '<p class="resume-role"><strong>A &amp; B</strong><span class="resume-dates">&#39;24</span></p>');
+  });
+
+  test('a brace in vault text compiles as literal text in the MDX body', () => {
+    const rows = [
+      orgRow({ name: 'Lab {West', location: 'Town }' }, { tenure: '{2024}' }),
+      roleRow({ title: 'Lead {ops}', dates: '2024' }),
+    ].join('\n');
+    assert.deepEqual(compileIssues(rows, 'pages'), []);
+    const text = (node: HastNode): string =>
+      'value' in node && node.type === 'text' ? node.value : 'children' in node ? node.children.map(text).join('') : '';
+    assert.equal(text(mdxToHast(rows)), 'Lab {West{2024}Town }\nLead {ops}2024');
   });
 });
 
