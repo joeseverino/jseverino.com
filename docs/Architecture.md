@@ -64,18 +64,18 @@ is derived at build time, never hand-keyed:
 
 - [`src/lib/github.ts`](../src/lib/github.ts) reads the committed snapshot
   [`src/data/github-repos.json`](../src/data/github-repos.json). Builds never
-  call GitHub, so they need no token and a rate limit cannot change the artifact. `npm run snapshot:github` refreshes it; commit the result.
+  call GitHub, so they need no token and a rate limit cannot change the artifact. `mise run snapshot:github` refreshes it; commit the result.
 - [`src/lib/software.config.ts`](../src/lib/software.config.ts) is the only
   hand-maintained input: the skip list, featured set, order, writeup
   cross-links, and the PyPI/npm package mappings GitHub cannot know.
 - [`src/data/package-registry.json`](../src/data/package-registry.json) is the
-  matching snapshot of PyPI/npm versions and monthly downloads. `npm run snapshot:software` refreshes it and writes
+  matching snapshot of PyPI/npm versions and monthly downloads. `mise run snapshot:software` refreshes it and writes
   nothing if any lookup fails.
 - [`src/lib/software.ts`](../src/lib/software.ts) composes those snapshots with
   the curation config.
 
-Run `npm run snapshot:github` after editing repo descriptions or
-adding repos, and `npm run snapshot:software` after publishing a package.
+Run `mise run snapshot:github` after editing repo descriptions or
+adding repos, and `mise run snapshot:software` after publishing a package.
 
 The snapshot scripts' registry requests have a five-second timeout, including
 response-body reads. Content, GitHub, and software loaders share pending work
@@ -137,7 +137,7 @@ Writeups:
 The committed snapshot holds no drafts (the no-drafts audit enforces it). `site dev --drafts` syncs unpublished content into the gitignored `.cache/drafts` overlay and points the dev server at it through `SITE_CONTENT_ROOT`; the loaders render unpublished entries only under `astro dev`.
 
 To add or change a writeup field, edit only the canonical contract and run
-`npm run sync:contract`. `npm run scaffold:writeup-field` makes that edit.
+`mise run sync:contract`. `mise run scaffold:writeup-field` makes that edit.
 
 ## 5. Markdown Rendering
 
@@ -199,7 +199,7 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit.
 
 Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
 
-`stylelint.config.ts` extends the standard modern CSS ruleset, documents the project-specific exceptions, and refuses a literal color: a rule names a token. The generated token blocks are the one place literals live, fenced off by `npm run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
+`stylelint.config.ts` extends the standard modern CSS ruleset, documents the project-specific exceptions, and refuses a literal color: a rule names a token. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links
@@ -293,7 +293,7 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 The policy is `default-src 'none'` plus the site's own origin, the hashes, Turnstile, and Cloudflare Web Analytics, with no `'unsafe-inline'`, `'unsafe-eval'`, nonce, `'strict-dynamic'`, or `blob:`. It carries `report-to csp-endpoint` pointing at `/api/csp-report` (with a `Reporting-Endpoints` header), a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and Trusted Types enforcement. `/contact/*` has its own rule in `_headers`: Pages merges the headers of every matching rule, so the rule detaches the global policy (`! Content-Security-Policy`), sets one without Trusted Types, and adds a report-only `require-trusted-types-for 'script'` header, because Turnstile's script trips it. The policy module is [`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`, `inlineHashes`, `hashSource`). The only request-time CSP is the preview proxy's, which hashes the markup it fetches and nonces the bridge script sitedrift injects; it is not served on production.
 
-The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); `mise run checks:contracts` fails when it is stale.
+The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `mise run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); `mise run checks:contracts` fails when it is stale.
 
 Component scripts are external `/_astro/*.js` bundles (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). Besides the hashed theme-bootstrap script, the only inline `<script>` in production HTML is the JSON-LD data block.
 
@@ -340,7 +340,7 @@ minimal D1 type declarations in [`database.ts`](../functions/lib/database.ts).
 
 ### Edge schema validation
 
-Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), next to [`cloudflare/d1.sql`](../cloudflare/d1.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `npm run cloudflare:apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
+Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), next to [`cloudflare/d1.sql`](../cloudflare/d1.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `mise run cloudflare apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
 
 Coverage:
 
@@ -422,10 +422,10 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
 | `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
-| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `npm run make:font` ([`bin/make-font.ts`](../bin/make-font.ts); re-subsets the committed file, or an upstream Inter release via `--source`) |
-| `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `npm run make:icons` |
-| `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `npm run make:icons` (marks) / headshot hand-added |
-| `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `npm run make:og` |
+| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `mise run make:font` ([`bin/make-font.ts`](../bin/make-font.ts); re-subsets the committed file, or an upstream Inter release via `--source`) |
+| `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `mise run make:icons` |
+| `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `mise run make:icons` (marks) / headshot hand-added |
+| `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `mise run make:og` |
 
 ### Vault-synced vs repo-managed
 
@@ -442,11 +442,11 @@ Favicons, social cards, and HD brand marks are all generated from one place:
 
 - `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, an `optionalDependency` pinned to a published, provenance-attested npm version.
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
-- `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
+- `mise run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
 
-The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `npm run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.ts`; `npm run sync:tokens -- --check` is the non-mutating drift gate `mise run checks:contracts` runs. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
+The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `mise run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.ts`; `mise run sync:tokens --check` is the non-mutating drift gate `mise run checks:contracts` runs. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
 
-To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
+To restyle the brand, edit `tokens.json` upstream, run `mise run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
 
 For the full story (how the brand went from an inherited theme purple and an unknown-origin yellow logo to one navy identity, then to a shared engine), see [`docs/Brand-System.md`](./Brand-System.md).
 
@@ -472,7 +472,7 @@ Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/Web
 
 ## 13. Runtime Configuration
 
-The site needs three pieces of Cloudflare Pages project configuration to run: the D1 binding and two Turnstile keys. They are set in the project settings, outside the repo. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `npm run cloudflare:check`; see [Cloudflare](./Cloudflare.md).
+The site needs three pieces of Cloudflare Pages project configuration to run: the D1 binding and two Turnstile keys. They are set in the project settings, outside the repo. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
 
 ### D1 binding
 
@@ -484,7 +484,7 @@ The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement
 
 ```sh
 # Remote (production):
-npm run site -- d1-apply --confirm
+mise run site d1-apply --confirm
 
 # Local (for `wrangler pages dev`):
 wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
@@ -517,7 +517,7 @@ The build reads no GitHub token: the Software list comes from the committed snap
 
 ### No `wrangler.toml`
 
-The repo has no `wrangler.toml`: a Pages project with both dashboard config and a `wrangler.toml` has a precedence conflict, so the binding and environment configuration stay in the dashboard. A pinned compatibility date, the one thing a `wrangler.toml` would add, is covered by `npm run cloudflare:check`, which holds the project's date to the edge suite's ([docs/Cloudflare.md](./Cloudflare.md#no-wranglertoml)).
+The repo has no `wrangler.toml`: a Pages project with both dashboard config and a `wrangler.toml` has a precedence conflict, so the binding and environment configuration stay in the dashboard. A pinned compatibility date, the one thing a `wrangler.toml` would add, is covered by `mise run cloudflare check`, which holds the project's date to the edge suite's ([docs/Cloudflare.md](./Cloudflare.md#no-wranglertoml)).
 
 ### Local preview against the real edge runtime
 
@@ -529,15 +529,15 @@ To exercise the edge runtime locally, build first and serve the output through
 `wrangler pages dev`:
 
 ```sh
-npm run build
-npm run serve:edge
+mise run build
+mise run serve:edge
 ```
 
 The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
 
 ## 14. Release Gate
 
-Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [gate table](./Commands.md#gates).
+Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [task list](./Commands.md#every-task).
 
 - `mise run fast` runs the static `checks:*` gates, collect-all.
 - `mise run check` runs them, then the production build, then the `built:*` gates on what it built; CI's `build` job runs exactly this.
@@ -592,7 +592,7 @@ GitHub Actions provide the remote quality gate:
   not a gate, and the environments have no required reviewers. `report` keeps one comment per pull
   request current: the completed `ci` run replaces its section and the
   deployment replaces its own, in whichever order they finish. The release
-  confirmation against the production hostname stays `npm run deploy:verify`
+  confirmation against the production hostname stays `mise run deploy:verify`
   from a residential IP.
 
 The remaining workflows, with what each verifies, are in the
@@ -617,7 +617,7 @@ dependency review to block merging, the main ruleset must require the
 
 Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
 
-CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
+CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 
 ## Related Docs
 

@@ -32,9 +32,9 @@ A new CI job that must gate merges is added to the ruleset's
 
 | Command | Does |
 |---|---|
-| `npm run github:check` | Read the live repository, print a table (`-- --json` for JSON), exit 1 on drift |
-| `npm run github:plan` | List the API calls an apply would make |
-| `npm run github:apply` | Print the plan; with `-- --yes`, make the calls, then re-check |
+| `mise run github check` | Read the live repository, print a table (`--json` for JSON), exit 1 on drift |
+| `mise run github plan` | List the API calls an apply would make |
+| `mise run github apply` | Print the plan; with `--yes`, make the calls, then re-check |
 
 The token comes from `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`, and
 is never printed. It needs repository Administration: read for `check` and

@@ -68,6 +68,6 @@ writeOrCheck(
     { file: fromRoot('contracts/contact.openapi.json'), content: output },
     { file: fromRoot('functions/generated/contact-contract.ts'), content: moduleOutput },
   ],
-  { check, hint: 'npm run sync:contact-openapi' },
+  { check, hint: 'mise run sync:contact-openapi' },
 );
 if (check) console.log('ok       contact OpenAPI and runtime module derive from contracts/contact.v1.json');

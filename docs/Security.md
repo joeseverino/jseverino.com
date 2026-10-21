@@ -70,7 +70,7 @@ single-purpose and layered:
 | Control | What it does |
 |---|---|
 | **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the function runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
-| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `npm run cloudflare:check` reports when the live zone differs. |
+| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `mise run cloudflare check` reports when the live zone differs. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API (with an idempotency key) before anything is stored. The response must name this site's hostname and the contact widget's action, so a token solved on another site or widget is refused. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, checked by a `COUNT(*)` inside the `INSERT` itself, so concurrent requests cannot race past it. Excess returns HTTP 429. |
@@ -338,9 +338,9 @@ certificate misissuance, and DNS spoofing.
 ## Cloudflare edge posture
 
 The zone and account settings are code: [`cloudflare/zone.json`](../cloudflare/zone.json)
-declares them, `npm run cloudflare:check` diffs the live state against it
+declares them, `mise run cloudflare check` diffs the live state against it
 with a read-only token and exits non-zero while anything differs, and
-`npm run cloudflare:plan` / `cloudflare:apply` preview and write the
+`mise run cloudflare plan` / `apply` preview and write the
 difference with a separate write token. What it declares, briefly:
 
 - **TLS:** minimum TLS 1.3, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
@@ -358,7 +358,7 @@ difference with a separate write token. What it declares, briefly:
 - **JavaScript Detections and Bot Fight Mode must be off.** The detections
   inject an inline script with per-request values into HTML, which a static hash
   policy cannot cover. Both are declared as `botManagement` in
-  `cloudflare/zone.json` and applied with `npm run cloudflare:apply` (see
+  `cloudflare/zone.json` and applied with `mise run cloudflare apply` (see
   [docs/Cloudflare.md](./Cloudflare.md#bot-management)).
 
 [docs/Cloudflare.md](./Cloudflare.md) has the platform limits behind
@@ -459,7 +459,7 @@ ships to visitors:
   service token, so it runs the default branch's verifier and takes only the
   deployment URL from the triggering event.
 - **Code-scanning dashboard.** CodeQL findings are fixed at the source and
-  `npm run deploy:verify` fails while one is open. Scorecard findings that do
+  `mise run deploy:verify` fails while one is open. Scorecard findings that do
   not apply to a solo personal repo are dismissed with a documented reason;
   its Vulnerabilities finding stays open while an accepted advisory is in the
   lockfile.
@@ -510,7 +510,7 @@ The committed `security.txt` is OpenPGP clear-signed by
 clients verify the file is unchanged.
 
 Signing and verification are scripted:
-[`npm run sign:security`](../bin/sign-security.ts) strips the existing
+[`mise run sign:security`](../bin/sign-security.ts) strips the existing
 signature, re-signs the body with `security@jseverino.com`, and writes it
 back.
 [`mise run checks:security-txt`](../tests/audits/check-security-txt.ts) verifies the signature,

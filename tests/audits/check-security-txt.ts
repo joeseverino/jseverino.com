@@ -21,14 +21,14 @@ const wkdEncryptionRe = new RegExp(
 );
 
 const fail: (message: string) => never = (message) => abort('check-security-txt', message,
-  'fix: run `npm run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key');
+  'fix: run `mise run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key');
 
 try {
   if (!fs.existsSync(SECURITY_FILE)) fail(`missing ${path.relative(siteRoot, SECURITY_FILE)}`);
   const raw = fs.readFileSync(SECURITY_FILE, 'utf8');
 
   if (!raw.includes('-----BEGIN PGP SIGNED MESSAGE-----')) {
-    fail('security.txt is not PGP-signed. Run `npm run sign:security`.');
+    fail('security.txt is not PGP-signed. Run `mise run sign:security`.');
   }
 
   const verify = verifySecuritySignature(SECURITY_FILE);

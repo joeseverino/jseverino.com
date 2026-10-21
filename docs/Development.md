@@ -18,8 +18,8 @@ setup action instead). Machine paths for the content sync go in a gitignored
 
 ```sh
 mise install
-npm run dev                # Astro dev server
-npm run build && npm run serve:edge   # the build on the Cloudflare runtime
+mise run dev                            # Astro dev server
+mise run build && mise run serve:edge   # the build on the Cloudflare runtime
 ```
 
 ## Code
@@ -39,14 +39,14 @@ mise run fast             # the static gates: types, policy, docs, lint, duplica
 mise run check            # + the production build, then every gate on it (CI's build job)
 mise run browser          # the browser suites, one at a time: e2e, visual, edge
 mise run ci               # check, then browser: every gate the pipeline runs
-npm run diff:build        # build HEAD and the working tree, report any change to shipped output
-npm run deploy:verify     # after a merge: required checks, then the live deployment
+mise run diff:build       # build HEAD and the working tree, report any change to shipped output
+mise run deploy:verify    # after a merge: required checks, then the live deployment
 ```
 
 Every gate is a mise task named `<job>:<gate>` (`mise tasks` lists them; the
-[gate table](./Commands.md#gates) says what each asserts), and CI runs the same
+[task list](./Commands.md#every-task) says what each asserts), and CI runs the same
 tasks. The gates validate the current checkout without vault access; run
-`npm run sync:content` explicitly before checking new editorial content. A
+`mise run sync:content` explicitly before checking new editorial content. A
 failing gate prints its own fix. Signature verification uses an isolated
 keyring containing only the committed WKD public keys. Unit-test Git
 repositories disable signing locally; production commit signing remains
@@ -100,6 +100,7 @@ checkouts) is in [Security](./Security.md#supply-chain-and-ci).
 
 Docs change in the same commit as the code they describe. `mise run checks:doc-links`
 (lychee, offline) fails when a relative link, anchor, or image points at
-nothing, and `mise run checks:docs` when an `npm run` or `mise run` reference
-or a backticked repo path does. Both read only tracked files. The command and gate overviews are
-generated: `npm run sync:docs`.
+nothing, and `mise run checks:docs` when a `mise run` reference or a
+backticked repo path does, or a doc runs an npm script other than the build. Both read only tracked files. The task list in
+`docs/Commands.md` is generated:
+`mise generate task-docs --inject --output docs/Commands.md`.

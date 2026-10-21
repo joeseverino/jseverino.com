@@ -25,7 +25,7 @@ Examples:
 Options:
   -r, --result   Show only the Google-style result preview
 
-Reads built HTML from dist. Run npm run build first if the page is missing.`;
+Reads built HTML from dist. Run mise run build first if the page is missing.`;
 
 function normalizePath(input: string): string {
   const raw = input.trim();
@@ -129,7 +129,7 @@ const file = htmlPath(urlPath);
 if (!fs.existsSync(file)) {
   console.error(`Missing built HTML for ${urlPath}`);
   console.error(`Expected: ${path.relative(siteRoot, file)}`);
-  console.error('Run npm run build, or pass a path that exists in dist.');
+  console.error('Run mise run build, or pass a path that exists in dist.');
   process.exit(1);
 }
 

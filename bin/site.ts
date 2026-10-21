@@ -158,7 +158,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   seo: define({
     summary: 'Preview a built page\'s search snippet and metadata',
     usage: 'site seo <page> [--result]',
-    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (npm run build).',
+    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (mise run build).',
     options: { result: flag },
     positionals: [1, 1],
     run: async ({ values, positionals: [page], out }) => (await local()).seo({ page, result: values.result, out }),

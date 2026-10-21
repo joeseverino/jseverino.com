@@ -101,7 +101,7 @@ so. They need no account system, write API, or database.
 
 ## Repository Integration
 
-`npm run build`
+`mise run build`
 ([`bin/build-static.ts`](../bin/build-static.ts)) runs `astro build`, then
 `sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
 output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)

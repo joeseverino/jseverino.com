@@ -18,7 +18,7 @@ if (!submission) {
   failures.push('contracts/contact.openapi.json has no components.schemas.ContactSubmission');
 } else {
   if (JSON.stringify(submission) !== JSON.stringify(contract.request)) {
-    failures.push('OpenAPI ContactSubmission is stale; run npm run sync:contact-openapi');
+    failures.push('OpenAPI ContactSubmission is stale; run mise run sync:contact-openapi');
   }
   const contactSrc = read('functions/api/contact.ts');
   if (!/\bvalidateContactPayload\s*\(/.test(contactSrc)) {

@@ -36,7 +36,7 @@ build, every gate on the build) and then `mise run browser` (the
 cross-browser, visual, and edge runtime suites, one at a time). Each phase
 keeps going past a failure and ends on the list of gates that failed; each
 failing gate prints its own fix. `mise run fast` runs only the static gates.
-The [gate table](./Commands.md#gates) says what each gate asserts.
+The [task list](./Commands.md#every-task) says what each gate asserts.
 
 For a focused frontend check without the full run:
 
@@ -63,7 +63,7 @@ changed (edited fields, bumped `Expires`, rotated the WKD key), re-sign before
 committing:
 
 ```sh
-npm run sign:security
+mise run sign:security
 mise run checks:security-txt
 ```
 
@@ -106,7 +106,7 @@ a clean, current `main`:
 
 ```sh
 git switch main && git pull --ff-only
-npm run deploy:verify
+mise run deploy:verify
 ```
 
 It waits for the required checks on that commit, then verifies security
@@ -220,7 +220,7 @@ remote D1 database (`jseverino-contact`, the `d1` value in
 `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-npm run site -- d1-apply --confirm
+mise run site d1-apply --confirm
 ```
 
 Confirm the expected operational tables exist:

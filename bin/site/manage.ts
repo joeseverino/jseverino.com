@@ -128,7 +128,7 @@ const INLINE_ACTIONS: Record<string, { bin: string; args: readonly string[]; tit
   h: { bin: SITE[0], args: [SITE[1], 'status'], title: 'Repository status (site status)' },
   v: { bin: SITE[0], args: [SITE[1], 'validate'], title: 'Publish gate (site validate)' },
   g: { bin: 'mise', args: ['run', 'check'], title: 'Static gates, build, and built-site gates (mise run check)' },
-  b: { bin: 'npm', args: ['run', '-s', 'build'], title: 'Astro build (npm run build)' },
+  b: { bin: 'mise', args: ['run', 'build'], title: 'Astro build (mise run build)' },
   t: { bin: 'mise', args: ['run', 'browser:e2e'], title: 'Playwright suite (mise run browser:e2e)' },
   p: { bin: SITE[0], args: [SITE[1], 'publish'], title: 'Open the content PR (site publish)', reloads: true },
 };

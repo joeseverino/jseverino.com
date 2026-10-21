@@ -34,9 +34,9 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 | `mise run fast` | local | the static gates: duplication, types, repository policy, docs, CSS lint, unit tests, `astro check`, the draft guard |
 | `mise run check` | local and CI (`build`) | the static gates, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
 | `mise run browser` | local and CI (`e2e`, `visual`, `edge`) | one build, then the cross-browser, visual, and edge runtime suites, one at a time |
-| `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status and open CodeQL alerts |
+| `mise run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status and open CodeQL alerts |
 
-Every gate with what it asserts is the generated [gate table](../docs/Commands.md#gates).
+Every gate with what it asserts is the generated [task list](../docs/Commands.md#every-task).
 `mise run ci` runs `check` and then `browser`: every gate the pipeline runs.
 Each phase keeps going past a failure and ends on the gates that failed; each
 failing gate prints its own fix.
@@ -49,7 +49,7 @@ boundaries (vault/Zod/MCP and handler/OpenAPI/D1), strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
 (including unprocessed directives), Functions routing, and SEO metadata.
-The [gate table](../docs/Commands.md#gates) says what each one asserts; a failing one prints its fix.
+The [task list](../docs/Commands.md#every-task) says what each one asserts; a failing one prints its fix.
 
 **[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
 build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
@@ -100,8 +100,7 @@ The full baseline gallery and more diff/failure examples are in
 ## Run it
 
 ```sh
-mise tasks                                   # every gate with what it asserts
-npm run help                                 # every npm script by role
+mise tasks                                   # every task with what it asserts or does
 
 mise run fast                                # the static gates, collect-all
 mise run check                               # + the build and every gate on it

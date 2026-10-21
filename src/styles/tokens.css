@@ -2,7 +2,7 @@
 
 html { --font-sans: Inter, system-ui, sans-serif; }
 
-/* The file is subset by `npm run make:font` to the site's characters and this
+/* The file is subset by `mise run make:font` to the site's characters and this
    weight range; declaring the same range keeps the browser from synthesizing
    weights the font no longer carries. */
 @font-face {
@@ -13,7 +13,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
 }
 
-/* tokens:start: generated from the lockfile-pinned severino-brand contract by `npm run sync:tokens`. Edit tokens upstream, not here. */
+/* tokens:start: generated from the lockfile-pinned severino-brand contract by `mise run sync:tokens`. Edit tokens upstream, not here. */
 /* stylelint-disable color-no-hex, function-disallowed-list -- generated literal colors */
 :root {
   color-scheme: light dark;

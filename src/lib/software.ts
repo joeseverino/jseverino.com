@@ -37,7 +37,7 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-// From the committed snapshot (`npm run snapshot:software`), so a build never calls PyPI or npm.
+// From the committed snapshot (`mise run snapshot:software`), so a build never calls PyPI or npm.
 const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
 
 function enrich(pkg: SoftwarePackage): void {

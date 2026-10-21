@@ -14,9 +14,9 @@ applies the difference.
 | Redirects | [`public/_redirects`](../public/_redirects) | every Pages deploy |
 | Which requests run Functions | [`public/_routes.json`](../public/_routes.json) | every Pages deploy |
 | Contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
-| Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
-| `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `npm run cloudflare:apply` |
-| Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare:check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
+| Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
+| `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
+| Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
 | Web Analytics mode, Pages bindings and secrets, D1 | dashboard | by hand |
 
 [`cloudflare/zone.json`](../cloudflare/zone.json) is validated by
@@ -77,7 +77,7 @@ rules that name service tokens), with two tokens:
   the second token and is how a person opens a preview. It lives outside this
   repo.
 
-`zone.json` declares `pages.previewPolicy: "service-auth-only"`. `cloudflare:check`
+`zone.json` declares `pages.previewPolicy: "service-auth-only"`. `cloudflare check`
 reports any other policy on the application (an email, a group, everyone, or no
 policy) as a manual item and exits 1. Apply never edits Access: fix it in Zero
 Trust → Access → Applications. Create and rotate each token under Zero Trust →
@@ -95,7 +95,7 @@ the dashboard during an incident is never touched.
 | `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the Function already 404s there; this stops it at the edge) |
 
-At most five custom rules, dashboard rules included. `cloudflare:check` reports the total as `rule budget`.
+At most five custom rules, dashboard rules included. `cloudflare check` reports the total as `rule budget`.
 
 ## Features that stay off
 
@@ -163,12 +163,12 @@ The token comes from `CLOUDFLARE_API_TOKEN` only, and the tool never prints it.
 Keep the tokens in 1Password and pass them per command:
 
 ```sh
-CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- npm run cloudflare:check
-CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- npm run cloudflare:plan
-CLOUDFLARE_API_TOKEN="op://<vault>/<edit token item>/credential" op run -- npm run cloudflare:apply -- --yes
+CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- mise run cloudflare check
+CLOUDFLARE_API_TOKEN="op://<vault>/<read token item>/credential" op run -- mise run cloudflare plan
+CLOUDFLARE_API_TOKEN="op://<vault>/<edit token item>/credential" op run -- mise run cloudflare apply --yes
 ```
 
-`check` prints a table (`-- --json` for JSON) and exits 1 on drift. `plan`
+`check` prints a table (`--json` for JSON) and exits 1 on drift. `plan`
 lists the calls an apply would make. `apply` without `--yes` is the plan; with
 it, apply makes the calls, re-checks, and exits 1 if anything is left, which
 includes items only a person can fix.
@@ -200,10 +200,10 @@ curl -sI https://<hash>.jseverino.pages.dev/           # 302 to the Access login
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/api/contact          # 403 (GET)
 curl -s -o /dev/null -w '%{http_code}\n' https://jseverino.com/.env                 # 403
 curl -sI https://jseverino.com/assets/icons/favicon.svg | grep -i cache-control      # max-age=3600
-npm run deploy:verify
+mise run deploy:verify
 ```
 
-Then run `npm run cloudflare:check` until it exits 0.
+Then run `mise run cloudflare check` until it exits 0.
 
 `pages.previewBranches` keeps the [`dist` branch](./Dist-Branch.md) out of preview
 deployments. The repository's own settings follow the same check, plan, and apply
@@ -213,6 +213,6 @@ pattern in [GitHub Settings](./GitHub-Settings.md).
 
 A Pages `wrangler.toml` would pin the compatibility date, but it becomes the
 source of truth for every binding and would carry the D1 database ID in a public
-repository. `cloudflare:check` already holds the project's compatibility date to
+repository. `cloudflare check` already holds the project's compatibility date to
 the one the edge suite runs ([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)),
 and apply sets it.

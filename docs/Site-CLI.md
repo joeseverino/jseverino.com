@@ -2,15 +2,18 @@
 
 `site` is this repository's publishing workflow: vault, repo snapshot, pull
 request, production. It lives here, in [`bin/site.ts`](../bin/site.ts)
-and [`bin/site/`](../bin/site/), on top of the same modules the npm scripts
+and [`bin/site/`](../bin/site/), on top of the same modules the other mise tasks
 use: the content sync ([`bin/content-sync/`](../bin/content-sync/)), the
 content diff ([`bin/content-diff.ts`](../bin/content-diff.ts)), the shared
 preflight ([`bin/lib/preflight.ts`](../bin/lib/preflight.ts)), and the
 mise gates.
 
 ```sh
-npm run site -- <command>     # or `npm link` once, then: site <command>
+mise run site <command>
 ```
+
+Arguments after `site` go to the CLI unchanged, `--help` included. The rest
+of this page writes a command as `site <command>`.
 
 ## Built for an agent caller
 
@@ -115,7 +118,7 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 
 | Layer | Owns | Examples |
 | :--- | :--- | :--- |
-| mise tasks and npm scripts | gates; build and tools | `mise run check`, `npm run sync:content` |
+| mise tasks | gates, the build, and tools | `mise run check`, `mise run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
 | [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
 | [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads, the schema apply, header checks | `contactSubmissions`, `checkSecurityHeaders` |
@@ -182,7 +185,7 @@ not ready yet (yellow).
 Status is gathered once and cached; the `as of` timestamp shows its age, and
 `r` regathers it. Actions run inline: the TUI drops out of its
 alternate screen, streams the real command output (`site status`,
-`site validate`, `mise run check`, `npm run build`, `mise run browser:e2e`,
+`site validate`, `mise run check`, `mise run build`, `mise run browser:e2e`,
 `site publish`), and returns on a keypress.
 
 ![site manage Site tab with the dev server running: the toggled action label and the running-server status line](./images/site-cli/manage-site-tab-dev-running.png)
@@ -199,7 +202,7 @@ Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
-`npm run build` refuses anything outside `tests/fixtures`, so drafts never
+the build refuses anything outside `tests/fixtures`, so drafts never
 reach a build), `SITE_JSON=1` switches Astro
 to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
 (default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`

@@ -2,7 +2,7 @@
 // Refresh src/data/package-registry.json, the only source src/lib/software.ts reads
 // (builds never call PyPI or npm). Fails without writing if any lookup fails.
 //
-//   npm run snapshot:software
+//   mise run snapshot:software
 import fs from 'node:fs';
 import { PACKAGES } from '../src/lib/software.config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';

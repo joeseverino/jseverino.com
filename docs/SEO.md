@@ -118,7 +118,7 @@ The production CSP is hash-based and built at build time by [`bin/build-csp.ts`]
 After major metadata changes:
 
 ```sh
-npm run build
+mise run build
 ```
 
 Then inspect generated HTML for:

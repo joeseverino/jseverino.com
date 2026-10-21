@@ -26,7 +26,7 @@ in [`cloudflare/zone.json`](../cloudflare/zone.json) excludes it from preview de
 
 ## Verification
 
-`npm run deploy:verify` fetches `dist` and compares every sitemap page with what the
+`mise run deploy:verify` fetches `dist` and compares every sitemap page with what the
 live site serves, byte for byte. The publish runs a few minutes after the deploy, so a
 mismatch is retried for six minutes before it fails. A difference that persists means
 the two builds disagree, or the edge rewrote the page. The check also fails if the
@@ -34,4 +34,4 @@ tip of `dist` is not a verified commit.
 
 | Command | Does |
 |---|---|
-| `npm run publish:dist` | Commit a build directory to `dist` locally; with `-- --push`, push it (CI does this) |
+| `mise run publish:dist` | Commit a build directory to `dist` locally; with `--push`, push it (CI does this) |

@@ -106,7 +106,7 @@ A vault page may link to a repo-managed asset, but the asset itself is not synce
 ## Local Workflow
 
 ```sh
-npm run sync:content
+mise run sync:content
 mise run check
 ```
 

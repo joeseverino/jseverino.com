@@ -20,7 +20,7 @@ A gate is a task named `<job>:<gate>`: `checks:*` run before a build, `built:*`
 against the build in `dist/`, `browser:*` in a browser. Each aggregate runs its
 job by glob (`mise run -c 'checks:*'`), so a task added to `mise.toml` runs
 locally and in CI with no second list to edit, and its `description` is the
-one-line assertion the [gate table](../docs/Commands.md#gates) shows.
+one-line assertion the [task list](../docs/Commands.md#every-task) shows.
 
 mise does the orchestration: `-c` keeps a phase going past a failure and ends
 on the list of gates that failed, `output = "keep-order"` prints each gate's
@@ -45,7 +45,7 @@ Four steps; the gates enforce most of them:
 
 1. **Write the script** in `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in [`src/lib/site-root.ts`](../src/lib/site-root.ts), never the cwd, and list files with `walkFiles()` from [`src/lib/walk.ts`](../src/lib/walk.ts) instead of a private recursion. Post-build audits get the built pages from `builtPages()` in [`lib.ts`](./audits/lib.ts) instead of re-resolving the outDir; the outDir decision itself is single-sourced in [`src/lib/build-output.ts`](../src/lib/build-output.ts). End through `finish()`: on violation it prints the problems and the `fix` line and exits non-zero; on success it prints one `ok` summary line. Export the pure logic and guard the run with `import.meta.main` so a unit spec can import it.
 2. **Declare the task** in [`mise.toml`](../mise.toml) as `checks:<thing>` (before the build) or `built:<thing>` (on it), with a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI.
-3. **Regenerate the docs**: `npm run sync:docs` writes the task's row in the [gate table](../docs/Commands.md#gates); `mise run checks:docs-sync` refuses a stale copy. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
+3. **Regenerate the docs**: `mise generate task-docs --inject --output docs/Commands.md` writes the task's entry in the [task list](../docs/Commands.md#every-task); `mise run checks:docs-sync` refuses a stale copy. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
 4. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
 
 ---
@@ -64,14 +64,14 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 3. **`mise run browser`**: builds once with the Turnstile test key and runs the three `browser:*` suites one at a time against it (`PREBUILT=1`), so an 8 GB machine never runs two browsers at once. The CI legs `e2e`, `visual`, and `edge` each run one of those tasks.
 4. **`mise run ci`**: `check`, then `browser`; every gate the pipeline runs.
 
-Every gate with what it asserts is the generated [gate table](../docs/Commands.md#gates).
+Every gate with what it asserts is the generated [task list](../docs/Commands.md#every-task).
 
 ---
 
 ## 2. Audits
 
 Each audit's assertion is its task's `description` in the
-[gate table](../docs/Commands.md#gates); a failing audit prints its fix. The
+[task list](../docs/Commands.md#every-task); a failing audit prints its fix. The
 detail that does not fit one line is in [§3](#3-testsaudits-audit-detail).
 
 ### Other checks
@@ -117,7 +117,7 @@ Verifies `public/.well-known/security.txt`:
 - `Expires` is a parseable future date at least 60 days out, so the monthly `security-txt-expires` run fails, and GitHub emails it, before the file lapses.
 - `Canonical` matches the production URL and `Encryption` is a WKD URL whose key file exists under `public/.well-known/openpgpkey/hu/`.
 
-Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`npm run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
+Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`mise run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
 
 ### `check-contrast.ts`
 Expands the ordered [`src/styles/base.css`](../src/styles/base.css) entrypoint, reads its `--color-*` declarations, computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
@@ -170,7 +170,7 @@ Structural health:
 - **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
 - **No explicit `any`**: a `: any`, `<any>`, or `as any` in code (comments aside) fails; `unknown` and narrowing say what the code knows.
 
-What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; stylelint (`checks:css-lint`) refuses a literal color (`color-no-hex`, `color-named`, and `rgb`/`hsl` in `function-disallowed-list`) everywhere except the generated token blocks, which `npm run sync:tokens` fences with `stylelint-disable` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with the findings it accepts listed with a reason in [`.github/zizmor.yml`](../.github/zizmor.yml).
+What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; stylelint (`checks:css-lint`) refuses a literal color (`color-no-hex`, `color-named`, and `rgb`/`hsl` in `function-disallowed-list`) everywhere except the generated token blocks, which `mise run sync:tokens` fences with `stylelint-disable` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with the findings it accepts listed with a reason in [`.github/zizmor.yml`](../.github/zizmor.yml).
 - **No unexplained suppressions**: no `@ts-ignore` or `@ts-nocheck` in any `.ts` or `.astro` file; `@ts-expect-error` must carry a reason.
 
 ### Links: `checks:doc-links` and `built:links`
@@ -180,7 +180,7 @@ What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of 
 
 ### `check-docs.ts`
 What no link checker knows, over the same tracked docs (gitignored local files such as `AGENTS.md` are never read):
-- every `npm run <script>` reference names a script that exists in `package.json`, and every `mise run <task>` reference a task,
+- every `mise run <task>` reference names a task, and no `npm run` names anything but `build`, the one npm script (every other command is a mise task),
 - every backticked repo path resolves. A token in inline code is a repo path when its first segment is a top-level entry (`bin/site.ts`, `docs/`, `dist/`); it resolves when `git ls-files` tracks it or a file under it, or when `git check-ignore` reports it ignored (generated output such as `dist/` and `.cache/`). A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked up to the directory before it. Intentional example paths go in `EXAMPLE_PATHS` in the audit.
 
 Paths inside fenced code blocks are example syntax and skipped; script and task references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which the weekly link check covers).
@@ -433,7 +433,7 @@ page picked from the build rather than a pinned slug:
 
 ```sh
 mise run browser:edge    # build, serve through wrangler pages dev, run the suite
-npm run serve:edge       # the same runtime on http://127.0.0.1:8788, for checks by hand
+mise run serve:edge       # the same runtime on http://127.0.0.1:8788, for checks by hand
 ```
 
 CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
@@ -441,7 +441,7 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 
 ### Post-deploy verification
 
-`bin/deploy-verify.ts` (`npm run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it is not run from CI, because Cloudflare Bot Fight Mode challenges GitHub-hosted runners. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each deployment's own `*.pages.dev` URL, which is outside the zone: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
+`bin/deploy-verify.ts` (`mise run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it is not run from CI, because Cloudflare Bot Fight Mode challenges GitHub-hosted runners. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each deployment's own `*.pages.dev` URL, which is outside the zone: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
 
 1. **Repo state**: local branch is `main`, clean, fully pushed.
 2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and Cloudflare Pages report success.

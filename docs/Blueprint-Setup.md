@@ -18,9 +18,9 @@ codebase must change. Two kinds exist:
 | [`src/lib/site.ts`](../src/lib/site.ts) | editorial chrome: `jobTitle`, `summary`, `skills`, `socialLinks`, `navItems` | `Header`, `Footer`, `SeoHead` |
 | [`src/lib/build-output.ts`](../src/lib/build-output.ts) | the build outDir decision (write side) and built-dir resolution (read side) | `astro.config.ts`, `bin/build-static.ts`, `bin/seo-preview.ts`, `bin/diff-build.ts`, post-build audits via [`tests/audits/lib.ts`](../tests/audits/lib.ts) |
 
-Changing `site-config.ts` propagates structural identity. Run `npm run sync:edge-site`
+Changing `site-config.ts` propagates structural identity. Run `mise run sync:edge-site`
 to refresh the committed edge projection. Change brand tokens upstream and run
-`npm run sync:tokens`; generated projections are never edited directly. `site.ts`
+`mise run sync:tokens`; generated projections are never edited directly. `site.ts`
 carries the human copy (bio, skills, nav, social).
 
 ### CSS and interaction contract
@@ -37,7 +37,7 @@ stable pointer target. Preserve keyboard focus, reduced motion, forced colors,
 and touch behavior when adding interactions. Prefer native controls and bundled
 component scripts; reserve inline execution for first-paint initialization.
 
-After CSS changes, regenerate `public/embed/bundle.css` with `npm run make:embed`.
+After CSS changes, regenerate `public/embed/bundle.css` with `mise run make:embed`.
 The diagnostic gate verifies that generated output matches its source, along
 with contrast, page weight, responsive layouts, and interaction regressions.
 
@@ -50,15 +50,15 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 
 ### Edge runtime
 [`functions/generated/site.ts`](../functions/generated/site.ts) is derived from
-`site-config.ts` by `npm run sync:edge-site`. The Functions (contact form and CSP
+`site-config.ts` by `mise run sync:edge-site`. The Functions (contact form and CSP
 reporting) import that projection, so the domain is declared once.
 
 ### Signed / generated artifacts
 - [`public/.well-known/security.txt`](../public/.well-known/security.txt): all URLs,
-  then re-sign with `npm run sign:security` using the instance's `security@` key.
+  then re-sign with `mise run sign:security` using the instance's `security@` key.
 - `public/.well-known/openpgpkey/hu/*`: the WKD key file (regenerate from the key).
 - Brand assets in `public/assets/brand/`, favicons in `public/assets/icons/`, and the
-  OG card `public/assets/og/og-default.jpg`: regenerate with `npm run make:icons`,
+  OG card `public/assets/og/og-default.jpg`: regenerate with `mise run make:icons`,
   `make:og`, `make:social` after syncing the upstream brand contract.
 - OG/social card copy (eyebrow, tagline, meta) in
   [`bin/make-og-image.ts`](../bin/make-og-image.ts) and
@@ -72,7 +72,7 @@ reporting) import that projection, so the domain is declared once.
 - [`cloudflare/zone.json`](../cloudflare/zone.json): the zone name, the owner tag on
   rules, the production hosts in the WAF expressions, the `pages.dev` redirect source
   and target, the Pages project name, and the Turnstile hostnames. Check and apply
-  with `npm run cloudflare:check` / `cloudflare:apply` ([docs/Cloudflare.md](./Cloudflare.md)).
+  with `mise run cloudflare check` / `apply` ([docs/Cloudflare.md](./Cloudflare.md)).
 
 ### Cloudflare dashboard (not in the repo)
 - Pages project, the `DB` D1 binding pointing at the `d1` database from `site-config.ts`,

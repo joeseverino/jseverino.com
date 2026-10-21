@@ -26,7 +26,7 @@ no secrets.
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | static pages on Cloudflare Pages under a build-time hash CSP; Pages Functions only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
-| Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `npm run cloudflare:apply` |
+| Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
 | Previews | Behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
 | Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Cloudflare runtime through `wrangler pages dev`, and source and build audits |
@@ -97,9 +97,9 @@ docs/         architecture, operations, and guides
 
 ```sh
 mise install             # the pinned tools, then npm ci from the lockfile
-npm run dev              # local site
+mise run dev             # local site
 mise run check           # the gate: every static check, the build, every check on the build
-npm run site -- --help   # scaffold, validate, publish, and verify writeups
+mise run site --help     # scaffold, validate, publish, and verify writeups
 ```
 
 Content ships through the repo's own `site` CLI. `site publish` opens a pull
@@ -116,16 +116,16 @@ and gate issues on one screen.
 | [Architecture](./docs/Architecture.md) | build, content, rendering, images, and the edge |
 | [Development](./docs/Development.md) | setup, code rules, gates, test policy, CI |
 | [Security](./docs/Security.md) | the security design end to end |
-| [Cloudflare](./docs/Cloudflare.md) | what runs where, platform limits, `cloudflare:check` and `apply` |
+| [Cloudflare](./docs/Cloudflare.md) | what runs where, platform limits, `mise run cloudflare check` and `apply` |
 | [Dist Branch](./docs/Dist-Branch.md) | the built site, one commit per deploy, checked against the live site |
-| [GitHub Settings](./docs/GitHub-Settings.md) | merge rules, security features, and the `main` ruleset, `github:check` and `apply` |
+| [GitHub Settings](./docs/GitHub-Settings.md) | merge rules, security features, and the `main` ruleset, `mise run github check` and `apply` |
 | [Vault Workflow](./docs/Vault-Workflow.md) | the private-to-public sync contract |
 | [Site CLI](./docs/Site-CLI.md) | publishing and the `site manage` TUI |
 | [Authoring Guide](./docs/Authoring-Guide.md) | the Markdown extensions |
 | [Deployment Preview Review](./docs/Deployment-Preview-Review.md) | sitedrift on preview deployments |
 | [SEO](./docs/SEO.md) · [Accessibility](./docs/Accessibility.md) | metadata, structured data, and accessibility |
 | [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
-| [Commands](./docs/Commands.md) | every npm script |
+| [Commands](./docs/Commands.md) | every mise task |
 | [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
 | [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and testing an upgrade |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |

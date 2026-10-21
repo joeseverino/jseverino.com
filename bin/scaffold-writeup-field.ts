@@ -72,9 +72,9 @@ fields[name] = spec;
 const output = `${layout(contract)}\n`;
 if (!values.apply) {
   console.log(JSON.stringify({ field: name, spec }, null, 2));
-  console.log('dry run; add --apply, then run npm run sync:contract');
+  console.log('dry run; add --apply, then run mise run sync:contract');
   process.exit(0);
 }
 fs.writeFileSync(target, output);
 console.log(`added ${name} to contracts/content.v1.json`);
-console.log('run npm run sync:contract to regenerate every typed consumer projection');
+console.log('run mise run sync:contract to regenerate every typed consumer projection');

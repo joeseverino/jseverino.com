@@ -1,5 +1,5 @@
 // Vendored mirror of the lockfile-pinned severino-brand contract. Regenerate with
-// `npm run sync:tokens`; edit upstream. Dependency-free so node generators can import it.
+// `mise run sync:tokens`; edit upstream. Dependency-free so node generators can import it.
 // tokens:start
 export const BRAND_CONTRACT = {
   schema: 1,
@@ -57,7 +57,7 @@ export function brandCardColors(): typeof CARD_COLORS {
 }
 
 // Brand custom properties for the site and every embedder, generated into
-// src/styles/brand.css by `npm run sync:tokens`. Dark mode uses the onDark pair;
+// src/styles/brand.css by `mise run sync:tokens`. Dark mode uses the onDark pair;
 // `deep` is darker on light and lighter on dark. No light-dark() in the properties:
 // Safari can keep the light arm in a separately loaded stylesheet, so emit selectors.
 export function brandVarsCss(themes: typeof PRIMARY_BY_THEME = PRIMARY_BY_THEME): string {

@@ -113,7 +113,7 @@ for (const theme of ['light', 'dark'] as const) {
 if (failed) {
   console.error(lines.join('\n'));
   console.error('check-contrast: at least one pair fails WCAG AA (4.5:1).');
-  console.error('fix: the colors come from severino-brand through `npm run sync:tokens` (the token block in src/styles/tokens.css is generated): change the color upstream or the pairing in src/styles/. Register a new intended pair in `pairs` here.');
+  console.error('fix: the colors come from severino-brand through `mise run sync:tokens` (the token block in src/styles/tokens.css is generated): change the color upstream or the pairing in src/styles/. Register a new intended pair in `pairs` here.');
   process.exit(1);
 }
 console.log(`ok       ${pairs.length} pairs x 2 themes measured, all >= ${AA_NORMAL}:1`);

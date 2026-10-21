@@ -28,11 +28,13 @@ A single gate (`mise run built:weight`) is for iterating on a failure.
 ## Boundaries
 
 - `src/content/` and `public/assets/` are synced snapshots of a private vault.
-  Never edit them by hand; `npm run sync:content` rewrites them.
+  Never edit them by hand; `mise run sync:content` rewrites them.
 - Generated files are written by their sync script and checked by
   `mise run checks:contracts`: the token block in `src/styles/tokens.css`
-  (`npm run sync:tokens`), `src/generated/`, `functions/generated/`, and the
-  generated tables in `docs/Commands.md` (`npm run sync:docs`).
+  (`mise run sync:tokens`), `src/generated/`, and `functions/generated/`. The
+  task list in `docs/Commands.md` is written by
+  `mise generate task-docs --inject --output docs/Commands.md` and checked by
+  `mise run checks:docs-sync`.
 - `main` is production: Cloudflare Pages deploys it. Every change rides a
   branch and a pull request, squash-merged, never rebase-merged (that strips
   commit signatures).
@@ -68,5 +70,6 @@ below the fold moves no baseline; `git status` shows what did.
 - Docs live at `docs/<Title-Case-Hyphenated>.md`, in a neutral imperative
   voice, with images under `docs/images/<topic>/`. Each doc gets a bullet in
   the README's Documentation list and a link from the doc beside it.
-- `mise run checks:docs` checks every relative link, every `npm run` script
-  and every `mise run` task a doc names.
+- `mise run checks:docs` checks every `mise run` task a doc names, and
+  refuses any npm script but `npm run build`; every other command is a mise
+  task.

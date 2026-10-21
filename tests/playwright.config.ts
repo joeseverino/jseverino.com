@@ -59,7 +59,7 @@ export default defineConfig({
       process.env.PREBUILT ? null : 'node bin/build-static.ts',
       // --ignore-lock keeps the server in the foreground Playwright owns (Astro
       // detaches it when it detects an agent) and beside a running visual preview.
-      `npm run preview -- --host 127.0.0.1 --port ${PORT} --ignore-lock`,
+      `npx astro preview --host 127.0.0.1 --port ${PORT} --ignore-lock`,
     ].filter(Boolean).join(' && '),
     url: `http://localhost:${PORT}`,
     // A prebuilt artifact is served fresh, never by whatever holds the port.
