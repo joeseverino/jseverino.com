@@ -10,15 +10,21 @@ export interface ProjectionTarget {
 
 const display = (file: string): string => (file.startsWith(`${siteRoot}${path.sep}`) ? path.relative(siteRoot, file) : file);
 
+// The command that regenerates: the mise task this script runs as, or the script itself outside mise.
+export const regenerateCommand = (): string => {
+  const task = process.env.MISE_TASK_NAME;
+  return task ? `mise run ${task}` : `node ${display(process.argv[1] ?? '')}`;
+};
+
 // targets: [{ file, content }] with absolute paths. Writes the files whose
-// content changed, or with check exits 1 naming them and the regenerate hint.
-export function writeOrCheck(targets: readonly ProjectionTarget[], { check, hint }: { check: boolean; hint: string }): void {
+// content changed, or with check exits 1 naming them and how to regenerate them.
+export function writeOrCheck(targets: readonly ProjectionTarget[], { check }: { check: boolean }): void {
   const stale = targets.filter(
     ({ file, content }) => !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== content,
   );
   if (check) {
     if (stale.length === 0) return;
-    console.error(`stale: ${stale.map(({ file }) => display(file)).join(', ')}\nrun: ${hint}`);
+    console.error(`stale: ${stale.map(({ file }) => display(file)).join(', ')}\nrun: ${regenerateCommand()}`);
     process.exit(1);
   }
   for (const { file, content } of stale) {

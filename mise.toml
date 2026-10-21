@@ -69,7 +69,7 @@ run = "node tests/audits/check-duplication.ts"
 
 [tasks."checks:contracts"]
 description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source"
-run = "node tests/audits/check-contract-projections.ts"
+run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: sync:edge-site --check"
 
 [tasks."checks:drafts"]
 description = "No document under src/content is `published: false`"

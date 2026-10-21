@@ -5,6 +5,7 @@
 import path from 'node:path';
 import { syncTargets, toJs, webContract } from 'severino-brand';
 import { checkMode } from './lib/args.ts';
+import { regenerateCommand } from './lib/projection.ts';
 import { brandVarsCss } from '../src/lib/brand.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 
@@ -38,9 +39,21 @@ const targets = [
   },
 ];
 
-const changed = syncTargets(targets, { root: siteRoot, check });
-
-console.log(
-  `\n${check ? 'Verified' : 'Synced'} brand contract ${webContract.digest}.` +
-    (changed ? '\nReview the diff and commit.' : ''),
-);
+if (check) {
+  // A check prints only what is stale; syncTargets logs each stale target, then throws.
+  const stale: string[] = [];
+  try {
+    const log = (line: string): void => {
+      if (!line.startsWith('=')) stale.push(line);
+    };
+    syncTargets(targets, { root: siteRoot, check, log });
+  } catch (error) {
+    if (stale.length === 0) throw error;
+    console.error(`${stale.join('\n')}\nrun: ${regenerateCommand()}`);
+    process.exit(1);
+  }
+  console.log(`ok       brand tokens derive from severino-brand contract ${webContract.digest.slice(7, 19)}`);
+} else {
+  const changed = syncTargets(targets, { root: siteRoot });
+  console.log(`\nSynced brand contract ${webContract.digest}.${changed ? '\nReview the diff and commit.' : ''}`);
+}

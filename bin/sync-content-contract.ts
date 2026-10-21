@@ -48,5 +48,5 @@ const schemaSource = [
   ]),
 ].join('\n');
 
-writeOrCheck([{ file: schemaTarget, content: schemaSource }], { check, hint: 'mise run sync:contract' });
+writeOrCheck([{ file: schemaTarget, content: schemaSource }], { check });
 if (check) console.log(`ok       content contract projection ${contentContractFingerprint().slice(0, 12)}`);
