@@ -139,9 +139,24 @@ describe('scalar writes', () => {
     assert.equal(replaceScalar(original, 'cover_alt', 'x'), '---\r\ntitle: |-\r\n  Old\r\npublished: true\r\ncover_alt: x\r\n---\r\nBody\r\n');
   });
 
+  test('a write lands in the block the parser reads: after a BOM, before the first closing fence', () => {
+    const cases = [
+      ['﻿---\ntitle: A\n---\nbody\n', '﻿---\ntitle: A\ncover_alt: x\n---\nbody\n'],
+      ['---\ntitle: A\n---- \nmore: yes\n---\nbody\n', '---\ntitle: A\ncover_alt: x\n---- \nmore: yes\n---\nbody\n'],
+      ['---\n---\nbody\n', '---\ncover_alt: x\n---\nbody\n'],
+      ['---\r\n---\r\nbody\r\n', '---\r\ncover_alt: x\r\n---\r\nbody\r\n'],
+    ];
+    for (const [original = '', expected] of cases) {
+      const updated = replaceScalar(original, 'cover_alt', 'x');
+      assert.equal(updated, expected);
+      assert.equal(parseFrontmatter(updated).data.cover_alt, 'x');
+    }
+  });
+
   test('scalar updates refuse unfenced documents and collection values', () => {
     assert.throws(() => replaceScalar('---\ntitle: &t Old\nalt: *t\n---\nBody\n', 'title', 'x'), /must be a scalar/);
     assert.throws(() => replaceScalar('title: body\n', 'title', 'x'), /fenced frontmatter/);
+    assert.throws(() => replaceScalar('---\ntitle: Old\n', 'title', 'x'), /fenced frontmatter/);
     assert.throws(() => replaceScalar('---\ntitle: [a, b]\n---\nBody\n', 'title', 'x'), /must be a scalar/);
   });
 });
