@@ -1,7 +1,7 @@
 # The toolchain and every gate, declared once.
 #
 #   mise install        the pinned tools (versions here, checksums in mise.lock),
-#                       then npm ci (the postinstall hook)
+#                       then the npm packages (the deps task, a postinstall hook)
 #   mise run fast       the static gates, collect-all
 #   mise run check      does my change work: the static gates, the production
 #                       build, then every gate on what it built
@@ -35,10 +35,9 @@ output = "keep-order"
 
 [hooks]
 # A fresh checkout is ready after one `mise install`: the tools, then the npm
-# packages from the lockfile. CI installs packages per job in its setup action
-# instead, so a job that holds a secret and needs no package never runs their
-# install scripts.
-postinstall = "test -n \"$CI\" || npm ci --no-audit --no-fund"
+# packages from the lockfile (the deps task, which skips itself while
+# node_modules matches the lockfile).
+postinstall = { task = "deps" }
 
 [env]
 _.path = ["node_modules/.bin"]
@@ -214,3 +213,166 @@ run = "playwright test -c tests/playwright.visual.config.ts"
 description = "Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
 timeout = "5m"
 run = "playwright test -c tests/playwright.edge.config.ts"
+
+# ------------------------------------------------------------------- tools
+# Every other command. A task whose script takes arguments passes them through
+# untouched (`raw_args`), `--help` included: `mise run site validate`,
+# `mise run cloudflare plan --json`. A task whose output another program reads
+# runs `quiet` with `output = "interleave"`, so mise adds no line and no
+# task-name prefix to its stdout.
+
+[tasks.deps]
+description = "Install the npm packages from package-lock.json; skipped while node_modules matches the lockfile"
+# CI installs packages per job in its setup action instead, so a job that holds
+# a secret and needs no package never runs their install scripts.
+skip_if = "test -n \"$CI\""
+sources = ["package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
+run = "npm ci --no-audit --no-fund"
+
+[tasks.site]
+description = "The publishing workflow CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)"
+raw_args = true
+interactive = true
+quiet = true
+run = "node bin/site.ts"
+
+[tasks.dev]
+description = "Start the local dev server"
+raw_args = true
+interactive = true
+run = "astro dev"
+
+[tasks."sync:content"]
+description = "Pull published content from the vault into the repo"
+raw_args = true
+run = "node bin/sync-content.ts"
+
+[tasks."sync:contract"]
+description = "Regenerate typed content-contract projections"
+raw_args = true
+run = "node bin/sync-content-contract.ts"
+
+[tasks."sync:contact-openapi"]
+description = "Regenerate contact OpenAPI from its request contract"
+raw_args = true
+run = "node bin/sync-contact-openapi.ts"
+
+[tasks."sync:tokens"]
+description = "Pull design and brand tokens from `severino-brand` into the repo"
+raw_args = true
+run = "node bin/sync-tokens.ts"
+
+[tasks."sync:edge-site"]
+description = "Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`)"
+raw_args = true
+run = "node bin/sync-edge-site.ts"
+
+[tasks."diff:build"]
+description = "Build HEAD and the working tree; show what changed in the shipped site"
+raw_args = true
+run = "node bin/diff-build.ts"
+
+[tasks."diff:content"]
+description = "What a content change means by slug: published, edited, removed, pages, generated (`--json`)"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/content-diff.ts"
+
+[tasks."deploy:verify"]
+description = "After the merge deploys, from a residential IP: verify remote CI and the live production deploy"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/deploy-verify.ts"
+
+[tasks."publish:dist"]
+description = "Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)"
+raw_args = true
+run = "node bin/publish-dist.ts"
+
+[tasks.cloudflare]
+description = "`check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/cloudflare.ts"
+
+[tasks.github]
+description = "`check` diffs the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/github.ts"
+
+[tasks.preview]
+description = "Serve the built site locally"
+raw_args = true
+run = "astro preview"
+
+[tasks."serve:edge"]
+description = "Serve the build through `wrangler pages dev` for by-hand checks (headers and functions active)"
+run = "node bin/edge-serve.ts"
+
+[tasks."seo:preview"]
+description = "Preview a page's Google snippet and metadata from built HTML"
+raw_args = true
+run = "node bin/seo-preview.ts"
+
+[tasks.lighthouse]
+description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
+run = "node bin/lighthouse-check.ts"
+
+[tasks."make:icons"]
+description = "Regenerate favicons and brand marks"
+run = "node bin/make-icons.ts"
+
+[tasks."make:og"]
+description = "Regenerate the Open Graph card"
+run = "node bin/make-og-image.ts"
+
+[tasks."make:embed"]
+description = "Regenerate `public/embed/bundle.css`, the embeddable stylesheet (brand vars, base.css, inlined Inter)"
+raw_args = true
+run = "node bin/make-embed-bundle.ts"
+
+[tasks."make:social"]
+description = "Regenerate the GitHub social preview"
+run = "node bin/make-github-social.ts"
+
+[tasks."make:font"]
+description = "Re-subset the Inter webfont to the site's characters and weights (needs python3 and fontTools)"
+raw_args = true
+run = "node bin/make-font.ts"
+
+[tasks."make:content-index"]
+description = "Emit the published-writeup JSON projection consumed by Severino HQ"
+run = "node bin/make-content-index.ts"
+
+[tasks."snapshot:github"]
+description = "Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads for repos"
+run = "node bin/snapshot-github.ts"
+
+[tasks."snapshot:software"]
+description = "Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails without writing if any lookup fails"
+run = "node bin/snapshot-software.ts"
+
+[tasks."scaffold:writeup-field"]
+description = "Add a field once to the canonical writeup contract"
+raw_args = true
+run = "node bin/scaffold-writeup-field.ts"
+
+[tasks."draft:cover-alt"]
+description = "Draft writeup cover alt text through the Claude API"
+raw_args = true
+run = "node bin/draft-cover-alt.ts"
+
+[tasks."sign:security"]
+description = "Re-sign `public/.well-known/security.txt`"
+interactive = true
+run = "node bin/sign-security.ts"
+
+[tasks."clean:generated"]
+description = "Remove build output and build caches"
+run = "node bin/clean-generated.ts"

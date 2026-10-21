@@ -1,60 +1,15 @@
 {
   "name": "jseverino-com",
   "version": "7.0.0",
-  "description": "Personal site for Joe Severino, built with Astro, sourced from a private notes vault, served on Cloudflare Pages.",
   "private": true,
   "license": "UNLICENSED",
-  "author": "Joe Severino",
-  "homepage": "https://jseverino.com",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/joeseverino/jseverino.com.git"
-  },
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "packageManager": "npm@11.19.1",
-  "bin": {
-    "site": "bin/site.ts"
-  },
   "scripts": {
-    "help": "node bin/help.ts",
-    "site": "node bin/site.ts",
-    "dev": "astro dev",
-    "sync:content": "node bin/sync-content.ts",
-    "sync:contract": "node bin/sync-content-contract.ts",
-    "sync:contact-openapi": "node bin/sync-contact-openapi.ts",
-    "sync:tokens": "node bin/sync-tokens.ts",
-    "sync:edge-site": "node bin/sync-edge-site.ts",
-    "sync:docs": "node bin/sync-docs.ts",
-    "snapshot:github": "node bin/snapshot-github.ts",
-    "snapshot:software": "node bin/snapshot-software.ts",
-    "diff:build": "node bin/diff-build.ts",
-    "deploy:verify": "node bin/deploy-verify.ts",
-    "publish:dist": "node bin/publish-dist.ts",
-    "cloudflare:check": "node bin/cloudflare.ts check",
-    "cloudflare:plan": "node bin/cloudflare.ts plan",
-    "cloudflare:apply": "node bin/cloudflare.ts apply",
-    "github:check": "node bin/github.ts check",
-    "github:plan": "node bin/github.ts plan",
-    "github:apply": "node bin/github.ts apply",
-    "build": "node bin/build-static.ts",
-    "preview": "astro preview",
-    "serve:edge": "node bin/edge-serve.ts",
-    "make:icons": "node bin/make-icons.ts",
-    "make:og": "node bin/make-og-image.ts",
-    "make:embed": "node bin/make-embed-bundle.ts",
-    "make:social": "node bin/make-github-social.ts",
-    "make:font": "node bin/make-font.ts",
-    "make:content-index": "node bin/make-content-index.ts",
-    "scaffold:writeup-field": "node bin/scaffold-writeup-field.ts",
-    "draft:cover-alt": "node bin/draft-cover-alt.ts",
-    "sign:security": "node bin/sign-security.ts",
-    "preview:seo": "node bin/seo-preview.ts",
-    "clean:generated": "node bin/clean-generated.ts",
-    "check:lighthouse": "node bin/lighthouse-check.ts",
-    "diff:content": "node bin/content-diff.ts"
+    "build": "node bin/build-static.ts"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.4",

@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { trackedFiles } from '../../bin/lib/git.ts';
+import { runSync } from '../../bin/lib/run.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 import { finish } from './lib.ts';
 
@@ -38,9 +39,9 @@ if (packageJson.engines?.node !== `>=${nodeMajor}`) {
 }
 const npmPin = /^npm@(\d+)\.\d+\.\d+$/.exec(packageJson.packageManager ?? '');
 if (!npmPin) failures.push('package.json packageManager must pin an exact npm@x.y.z');
-const npmAgent = /\bnpm\/(\d+)\./.exec(process.env.npm_config_user_agent ?? '');
-if (npmPin && npmAgent && npmAgent[1] !== npmPin[1]) {
-  failures.push(`npm ${npmAgent[1]}.x is running; packageManager pins ${packageJson.packageManager}`);
+const npmVersion = runSync('npm', ['--version'], { cwd: root });
+if (npmPin && npmVersion.split('.')[0] !== npmPin[1]) {
+  failures.push(`npm ${npmVersion} is on PATH; packageManager pins ${packageJson.packageManager}`);
 }
 
 const tracked = trackedFiles(root);
