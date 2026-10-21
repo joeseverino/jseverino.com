@@ -28,6 +28,7 @@ export type SoftwareEntry = {
   updatedAt?: string | undefined;
   featured: boolean;
   selfHosted: boolean;
+  archived: boolean;
   writeupSlug?: string | undefined;
   package?: SoftwarePackage | undefined;
   order: number;
@@ -66,6 +67,7 @@ async function build(): Promise<SoftwareEntry[]> {
         updatedAt: repo.pushedAt || undefined,
         featured: rank >= 0,
         selfHosted: SELF_HOSTED.has(repo.name),
+        archived: repo.archived,
         writeupSlug: WRITEUPS[repo.name],
         package: pkg,
         order: rank >= 0 ? rank : 999,

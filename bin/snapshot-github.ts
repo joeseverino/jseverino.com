@@ -28,8 +28,8 @@ interface Repository {
 
 const github = createClient({ token: resolveToken() });
 const repos: GithubRepo[] = (await github.list<Repository>(`/users/${SITE.github}/repos?per_page=100`))
-  .filter((repo) => !repo.archived)
   .map((repo) => ({
+    archived: repo.archived,
     description: repo.description ?? '',
     fork: repo.fork,
     language: repo.language,

@@ -15,6 +15,7 @@ export type GithubRepo = {
   language: string | null;
   pushedAt: string; // 'YYYY-MM'
   fork: boolean;
+  archived: boolean;
 };
 
 export async function getGithubRepos(): Promise<GithubRepo[]> {

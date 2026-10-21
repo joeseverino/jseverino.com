@@ -1,5 +1,6 @@
 [
   {
+    "archived": false,
     "description": "Fixture description for a featured repository with a published npm package.",
     "fork": false,
     "language": "JavaScript",
@@ -8,6 +9,7 @@
     "url": "https://github.com/joeseverino/branding-engine"
   },
   {
+    "archived": false,
     "description": "A fixture command-line tool that appears in the compact list.",
     "fork": false,
     "language": "Shell",
@@ -16,6 +18,7 @@
     "url": "https://github.com/joeseverino/fixture-cli"
   },
   {
+    "archived": false,
     "description": "A fixture dashboard that appears in the compact list.",
     "fork": false,
     "language": "Python",
@@ -24,6 +27,7 @@
     "url": "https://github.com/joeseverino/fixture-dashboard"
   },
   {
+    "archived": false,
     "description": "A fork, which the Software tab excludes.",
     "fork": true,
     "language": "Go",
@@ -32,6 +36,7 @@
     "url": "https://github.com/joeseverino/fixture-fork"
   },
   {
+    "archived": false,
     "description": "Fixture description for a second featured repository with a published package.",
     "fork": false,
     "language": "JavaScript",
@@ -40,6 +45,7 @@
     "url": "https://github.com/joeseverino/sitedrift"
   },
   {
+    "archived": false,
     "description": "Fixture description for a featured repository without a package.",
     "fork": false,
     "language": "Shell",
