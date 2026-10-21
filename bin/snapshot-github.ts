@@ -4,46 +4,41 @@
 //
 //   mise run snapshot:github
 //
-// Requires the `gh` CLI authenticated as the repo owner.
+// The token comes from GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`.
 import { writeFileSync } from 'node:fs';
 import { cli } from './lib/args.ts';
-import { runSync } from './lib/run.ts';
+import { createClient, resolveToken } from './lib/github.ts';
+import type { GithubRepo } from '../src/lib/github.ts';
 import { SITE } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 
 cli({ usage: 'usage: node bin/snapshot-github.ts' });
-const LIMIT = 1000;
 const OUTPUT = 'src/data/github-repos.json';
 
-const JQ = [
-  '[.[] | {',
-  'name,',
-  'description: (.description // ""),',
-  'url,',
-  'language: (.primaryLanguage.name // null),',
-  'pushedAt: .pushedAt[0:7],',
-  'fork: .isFork,',
-  'archived: false',
-  '}] | sort_by(.name)',
-].join(' ');
-
-const raw = runSync(
-  'gh',
-  [
-    'repo', 'list', SITE.github,
-    '--visibility', 'public',
-    '--no-archived',
-    '--limit', String(LIMIT),
-    '--json', 'name,description,url,primaryLanguage,pushedAt,isFork',
-    '-q', JQ,
-  ],
-  { raw: true },
-);
-
-const repos: unknown[] = JSON.parse(raw);
-if (repos.length >= LIMIT) {
-  console.error(`failed: gh returned ${repos.length} repos, the --limit; raise LIMIT so none are dropped. Nothing written.`);
-  process.exit(1);
+// The REST fields the snapshot keeps. This endpoint lists public repositories only.
+interface Repository {
+  name: string;
+  description: string | null;
+  html_url: string;
+  language: string | null;
+  pushed_at: string;
+  fork: boolean;
+  archived: boolean;
 }
+
+const github = createClient({ token: resolveToken() });
+const repos: GithubRepo[] = (await github.list<Repository>(`/users/${SITE.github}/repos?per_page=100`))
+  .filter((repo) => !repo.archived)
+  .map((repo) => ({
+    description: repo.description ?? '',
+    fork: repo.fork,
+    language: repo.language,
+    name: repo.name,
+    pushedAt: repo.pushed_at.slice(0, 7),
+    url: repo.html_url,
+  }))
+  // Code-point order, so the committed file only moves when the data does.
+  .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
 writeFileSync(fromRoot(OUTPUT), `${JSON.stringify(repos, null, 2)}\n`);
 console.log(`Wrote ${OUTPUT} (${repos.length} repos).`);

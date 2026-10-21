@@ -1,4 +1,5 @@
-// site publish and site land against a real git remote (bare repo in a temp dir) and a stubbed gh.
+// site publish and site land against a real git remote (bare repo in a temp dir), a stubbed gh, and
+// a stand-in for GitHub's REST API. Both log to one file, so call order is checked across them.
 // The sync and gate are injected; git is real.
 import { after, before, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,19 +37,32 @@ if (a === 'pr' && b === 'merge') {
   save();
   process.exit(0);
 }
-if (a === 'api' && b.includes('/rules/branches/')) { console.log(JSON.stringify(scenario.rules ?? [])); process.exit(0); }
-if (a === 'api' && b.includes('/commits/head/')) {
-  // One entry per poll; the last repeats.
-  const polls = scenario.headPolls ?? [[]];
-  const runs = polls.length > 1 ? polls.shift() : polls[0];
-  save();
-  console.log(JSON.stringify({ check_runs: runs }));
-  process.exit(0);
-}
-if (a === 'api') { console.log(JSON.stringify({ check_runs: scenario.checkRuns ?? [] })); process.exit(0); }
 console.error('unexpected gh ' + args.join(' '));
 process.exit(1);
 `;
+
+const STUB_TOKEN = 'stub-token';
+const realFetch = globalThis.fetch;
+
+// GitHub's REST API as the scenario describes it, logged as `api <path>` beside the gh calls.
+const githubApi: typeof fetch = async (input, init) => {
+  const url = new URL(String(input));
+  assert.equal(url.origin, 'https://api.github.com');
+  assert.equal(new Headers(init?.headers).get('authorization'), `Bearer ${STUB_TOKEN}`);
+  fs.appendFileSync(path.join(tmp, 'gh.log'), `api ${url.pathname.slice(1)}\n`);
+  const file = path.join(tmp, 'scenario.json');
+  const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const json = (body: unknown) => new Response(JSON.stringify(body));
+  if (url.pathname.includes('/rules/branches/')) return json(state.rules ?? []);
+  if (url.pathname.includes('/commits/head/')) {
+    // One entry per poll; the last repeats.
+    const polls = state.headPolls ?? [[]];
+    const runs = polls.length > 1 ? polls.shift() : polls[0];
+    fs.writeFileSync(file, JSON.stringify(state));
+    return json({ check_runs: runs });
+  }
+  return json({ check_runs: state.checkRuns ?? [] });
+};
 
 const ghCalls = () => fs.readFileSync(path.join(tmp, 'gh.log'), 'utf8').split('\n').filter(Boolean);
 const scenario = (data: Record<string, unknown>) => fs.writeFileSync(path.join(tmp, 'scenario.json'), JSON.stringify(data));
@@ -119,14 +133,17 @@ before(() => {
     VAULT_DIR: path.join(tmp, 'vault'),
     GH_STUB_LOG: path.join(tmp, 'gh.log'),
     GH_STUB_SCENARIO: path.join(tmp, 'scenario.json'),
+    GITHUB_TOKEN: STUB_TOKEN,
   };
   for (const [key, value] of Object.entries(env)) {
     saved[key] = process.env[key];
     process.env[key] = value;
   }
+  globalThis.fetch = githubApi;
 });
 
 after(() => {
+  globalThis.fetch = realFetch;
   for (const [key, value] of Object.entries(saved)) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;

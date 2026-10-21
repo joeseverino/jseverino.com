@@ -1,8 +1,7 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Fetch, type Item, type Run } from './drift.ts';
-
-export const API_BASE = 'https://api.github.com';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Item, type Run } from './drift.ts';
+import type { Client } from './github.ts';
 
 interface RulesetSpec {
   name: string;
@@ -61,61 +60,6 @@ export interface LiveState {
 }
 
 export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
-
-class GitHubError extends Error {
-  status: number;
-
-  constructor(method: string, path: string, status: number, message?: string) {
-    super(`${method} ${path} → ${status}${message ? ` (${message})` : ''}`);
-    this.status = status;
-  }
-}
-
-export interface ClientOptions {
-  token: string | undefined;
-  fetch?: Fetch;
-}
-
-export type Client = ReturnType<typeof createClient>;
-
-// The token only ever goes into the Authorization header.
-export function createClient({ token, fetch = globalThis.fetch }: ClientOptions) {
-  if (!token) throw new Error('GITHUB_TOKEN is not set (and `gh auth token` gave none)');
-
-  async function request<T>(method: string, path: string, body?: unknown): Promise<T | undefined> {
-    const response = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
-    if (!response.ok) {
-      const payload: { message?: string } = await response.json().catch(() => ({}));
-      throw new GitHubError(method, path, response.status, payload.message);
-    }
-    const text = await response.text();
-    return text ? (JSON.parse(text) as T) : undefined;
-  }
-
-  return {
-    request,
-    get: async <T>(path: string): Promise<T> => (await request<T>('GET', path)) as T,
-    // Features answer 204 or 200 when on and 404 when off.
-    isOn: async (path: string): Promise<boolean> => {
-      try {
-        await request('GET', path);
-        return true;
-      } catch (error) {
-        if (error instanceof GitHubError && error.status === 404) return false;
-        throw error;
-      }
-    },
-  };
-}
 
 async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const base = `/repos/${desired.repository}`;

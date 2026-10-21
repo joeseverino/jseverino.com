@@ -5,10 +5,10 @@
 //   node bin/github.ts check [--json]    # read-only; exit 1 on drift
 //   node bin/github.ts plan [--json]     # the calls an apply would make
 //   node bin/github.ts apply [--yes]     # plan, or with --yes, execute
-import { createClient, createRun, loadDesired, type ClientOptions } from './lib/github-settings.ts';
+import { createRun, loadDesired } from './lib/github-settings.ts';
 import { exitWith } from './lib/args.ts';
 import { toolMain, type ToolOptions } from './lib/drift.ts';
-import { spawnResult } from './lib/run.ts';
+import { createClient, resolveToken, type ClientOptions } from './lib/github.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 
 export const USAGE = `usage: node bin/github.ts <check|plan|apply> [--json] [--yes]
@@ -30,13 +30,11 @@ export interface MainOptions extends ToolOptions, Pick<ClientOptions, 'fetch'> {
 export const main = toolMain<MainOptions>({
   usage: USAGE,
   command: 'node bin/github.ts',
-  setup: ({ env = process.env, fetch = globalThis.fetch }) =>
-    createRun(loadDesired(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN ?? env.GH_TOKEN, fetch })),
+  // Tests pass the token in env; the command line resolves it below.
+  setup: ({ env = process.env, fetch }) =>
+    createRun(loadDesired(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN, fetch })),
 });
 
 if (import.meta.main) {
-  await exitWith('github', () => {
-    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? spawnResult('gh', ['auth', 'token']).stdout.trim();
-    return main({ env: { ...process.env, GITHUB_TOKEN: token } });
-  });
+  await exitWith('github', () => main({ env: { ...process.env, GITHUB_TOKEN: resolveToken() } }));
 }

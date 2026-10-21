@@ -55,8 +55,8 @@ const onTarget = (url: string): string => {
 // The main ruleset's required checks, less the ones that only run on pull
 // requests, plus the Pages build itself.
 const PULL_REQUEST_ONLY = new Set(['dependency-review']);
-const requiredChecks = (): string[] => [...new Set([
-  ...requiredContexts(repository, DEFAULT_BRANCH).filter((name) => !PULL_REQUEST_ONLY.has(name)),
+const requiredChecks = async (): Promise<string[]> => [...new Set([
+  ...(await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name)),
   'Cloudflare Pages',
 ])];
 
@@ -99,7 +99,7 @@ async function waitForChecks(sha: string): Promise<string> {
 }
 
 async function pollChecks(sha: string, deadline: number, started: number, report: (line: string) => void): Promise<string> {
-  const names = requiredChecks();
+  const names = await requiredChecks();
   const checks = await awaitChecks(repository, sha, names, {
     deadline,
     onPending: ({ missing, pending }) => report(
@@ -217,7 +217,7 @@ async function verifyDist(urls: string[]): Promise<string> {
       if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
     }
     if (stale.length === 0) {
-      const { verified, reason } = commitVerification(repository, 'dist');
+      const { verified, reason } = await commitVerification(repository, 'dist');
       if (!verified) throw new Error(`the dist branch tip is not signed (${reason})`);
       return `${urls.length} pages match the dist branch byte for byte, at a verified commit`;
     }
@@ -311,8 +311,8 @@ async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promi
 }
 
 // CodeQL only: Scorecard's Vulnerabilities finding stays open while an accepted advisory is in the lockfile.
-function verifyCodeScanning(): string {
-  const alerts = openCodeScanningAlerts(repository, 'CodeQL');
+async function verifyCodeScanning(): Promise<string> {
+  const alerts = await openCodeScanningAlerts(repository, 'CodeQL');
   if (alerts.length > 0) {
     throw new Error(`${alerts.length} open CodeQL alert(s) remain`);
   }

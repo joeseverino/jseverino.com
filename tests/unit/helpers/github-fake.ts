@@ -1,7 +1,7 @@
 // In-memory GitHub REST fake seeded from tests/fixtures/github/live-drifted.json. Writes mutate
 // state and every call is recorded; an unknown route fails the test.
 
-import { API_BASE } from '../../../bin/lib/github-settings.ts';
+import { API_BASE } from '../../../bin/lib/github.ts';
 
 type Fields = Record<string, unknown>;
 

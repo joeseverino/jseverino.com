@@ -2,6 +2,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { main } from '../../bin/github.ts';
 import { loadDesired, type DesiredState } from '../../bin/lib/github-settings.ts';
+import { API_BASE, createClient } from '../../bin/lib/github.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
 import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
@@ -169,5 +170,20 @@ describe('apply --yes', () => {
       assert.ok(!error.message.includes(TOKEN));
       return true;
     });
+  });
+});
+
+describe('the GitHub client', () => {
+  test('follows the Link header through every page, each request bounded by a timeout', async () => {
+    const seen: { url: string; signal: AbortSignal | null | undefined }[] = [];
+    const fetch = async (url: string, init: RequestInit) => {
+      seen.push({ url, signal: init.signal });
+      const next = url.endsWith('page=2') ? {} : { link: `<${API_BASE}/users/example/repos?page=2>; rel="next", <${API_BASE}/users/example/repos?page=2>; rel="last"` };
+      return new Response(JSON.stringify([url.endsWith('page=2') ? 'b' : 'a']), { headers: next });
+    };
+    const items = await createClient({ token: TOKEN, fetch }).list<string>('/users/example/repos');
+    assert.deepEqual(items, ['a', 'b']);
+    assert.equal(seen.length, 2);
+    assert.ok(seen.every(({ signal }) => signal instanceof AbortSignal));
   });
 });

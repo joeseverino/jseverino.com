@@ -52,10 +52,7 @@ async function build(): Promise<SoftwareEntry[]> {
   const repos = await getGithubRepos();
 
   const entries: SoftwareEntry[] = repos
-    .filter(
-      (repo) =>
-        !repo.fork && !repo.archived && !SKIP.has(repo.name) && repo.description.trim() !== '',
-    )
+    .filter((repo) => !repo.fork && !SKIP.has(repo.name) && repo.description.trim() !== '')
     .map((repo) => {
       const config = PACKAGES[repo.name];
       const pkg: SoftwarePackage | undefined = config ? { ...config } : undefined;

@@ -42,7 +42,7 @@ function timedOut(what: string, result: object): never {
 // An empty requirement is an error: a fresh PR has reported nothing yet, so
 // "nothing required" cannot be told apart from "nothing reported".
 async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: number, out: Output): Promise<void> {
-  const required = requiredContexts(SITE_REPOSITORY, DEFAULT_BRANCH);
+  const required = await requiredContexts(SITE_REPOSITORY, DEFAULT_BRANCH);
   if (required.length === 0) {
     throw new SiteError('main\'s ruleset requires no status checks, so land cannot tell when the PR is ready', {
       result: { pr: pr.url },

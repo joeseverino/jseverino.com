@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Fetch } from './drift.ts';
-import { createClient } from './github-settings.ts';
+import { createClient } from './github.ts';
 import { runSync } from './run.ts';
 
 export interface PublishOptions {
@@ -66,7 +66,7 @@ export async function publishDist({ repo, dir, branch, sha, push = false, token,
     const staging = `refs/dist-staging/${sha.slice(0, 12)}`;
     git(['push', '--quiet', 'origin', `${commit}:${staging}`], auth);
     try {
-      const api = createClient({ token, ...(fetch && { fetch }) });
+      const api = createClient({ token, fetch });
       const created = await api.request<{ sha: string }>('POST', `/repos/${repository}/git/commits`, { message, tree, parents: parent ? [parent] : [] });
       const signed = created?.sha;
       if (!signed) throw new Error('GitHub created no commit for the deploy tree');
