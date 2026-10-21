@@ -21,7 +21,7 @@ test('parse: unknown flags and unexpected positionals throw', () => {
 });
 
 test('cli: a mistyped flag exits 2 before the script does any work', async () => {
-  const result = await run(process.execPath, ['bin/sync-docs.ts', '--chek'], { cwd: siteRoot });
+  const result = await run(process.execPath, ['bin/sync-edge-site.ts', '--chek'], { cwd: siteRoot });
   assert.equal(result.code, 2);
   assert.match(result.stderr, /Unknown option '--chek'/);
   assert.equal(result.stdout, '');

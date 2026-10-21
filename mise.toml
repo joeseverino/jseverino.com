@@ -111,11 +111,14 @@ description = "The node:test specs under tests/unit pass"
 run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
 
 [tasks."checks:docs-sync"]
-description = "The generated blocks in docs/Commands.md match bin/help.ts and these tasks"
-run = "node bin/sync-docs.ts --check"
+description = "The task list in docs/Commands.md matches these tasks (fix: `mise generate task-docs --inject --output docs/Commands.md`, then commit it)"
+run = [
+  "mise generate task-docs --inject --output docs/Commands.md",
+  "git diff --exit-code -- docs/Commands.md || { echo 'fix: the task list in docs/Commands.md was stale and is now regenerated; review and commit it' >&2; exit 1; }",
+]
 
 [tasks."checks:docs"]
-description = "Every `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves"
+description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script other than `npm run build`"
 run = "node tests/audits/check-docs.ts {{vars.docs}}"
 
 [tasks."checks:doc-links"]
