@@ -28,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
@@ -68,7 +68,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           astro-cache: ${{ matrix.prebuild }}
 

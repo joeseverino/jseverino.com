@@ -7,9 +7,3 @@ rules:
   dangerous-triggers:
     ignore:
       - deploy.yml:6
-
-  # The `$/` self-repository form for local actions is newer than the
-  # workflow-lint job's pinned actionlint; the workflows keep `./` until both
-  # the linter and the workflows move together.
-  self-repository:
-    disable: true

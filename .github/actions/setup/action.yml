@@ -1,8 +1,8 @@
 name: setup
 description: The mise toolchain and environment from mise.toml, then a clean install from the lockfile with the npm download cache.
 
-# The checkout comes first in the calling job: a local action is read from the
-# working tree, so it cannot check the repository out itself.
+# The calling job checks out first: these steps read mise.toml and
+# package-lock.json from the working tree.
 inputs:
   install:
     description: Run npm ci. Scripts that import no packages skip it.

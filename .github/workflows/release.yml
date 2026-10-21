@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
