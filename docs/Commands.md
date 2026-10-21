@@ -84,7 +84,6 @@ and commit them with the change).
 | :--- | :--- |
 | `npm run deploy:verify` | After the merge deploys, from a residential IP: verify remote CI + the live production deploy |
 | `npm run diff:content` | What a content change means by slug: published, edited, removed, pages, generated (`-- --json`) |
-| `npm run audit` | `npm audit` against `.github/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review |
 | `npm run build` | The production build: astro build, the sitedrift wrap, the CSP hashes (Cloudflare Pages' build command) |
 
 ### Occasional
@@ -202,9 +201,8 @@ script.
 
 **`npm run deploy:verify`**: run after a production deploy, from a residential IP;
 Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run
-it. Confirms the local HEAD matches origin, audits production dependencies,
-waits for every required check (build, e2e, visual, edge, CodeQL, Cloudflare
-Pages) to pass,
+it. Confirms the local HEAD matches origin, waits for every required check
+(build, e2e, visual, edge, CodeQL, Cloudflare Pages) to pass,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
 is absent in production, the live home page's inline script and stylesheet are covered by the
@@ -268,10 +266,8 @@ the Vite cache. Synced content is left alone; `sync:content` owns it.
 
 ## Beyond npm
 
-`npm audit --omit=dev` checks production dependency advisories (also run by
-`deploy:verify` on production), and `npm outdated` reports direct dependency
-freshness; `npm run audit` fails on a high or critical advisory that
-`.github/audit-allowlist.json` does not accept or accepts past its review
-date. The publishing workflow (`npm run site -- <command>`: validate,
+Renovate proposes every dependency update and opens a fix as soon as GitHub
+reports an advisory ([`Dependencies.md`](./Dependencies.md)); `npm outdated`
+reports direct dependency freshness locally. The publishing workflow (`npm run site -- <command>`: validate,
 publish, land, featured, and the `site manage` TUI) is documented in
 [`Site-CLI.md`](./Site-CLI.md).

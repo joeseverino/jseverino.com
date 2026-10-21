@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro and each major on their own, security fixes at once.",
+  "extends": [
+    "config:best-practices",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(build)",
+    ":semanticCommitScope(deps)"
+  ],
+  "schedule": ["* * * * 1"],
+  "minimumReleaseAge": "14 days",
+  "internalChecksFilter": "strict",
+  "platformCommit": "enabled",
+  "vulnerabilityAlerts": {
+    "description": "A fix for an advisory GitHub reports opens at once, outside the schedule and the release-age hold."
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "config:best-practices holds npm releases three days through security:minimumReleaseAgeNpm, a package rule a top-level value does not reach; npm gets the same 14 days as everything else.",
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "14 days"
+    },
+    {
+      "description": "Everything short of a major moves together, digests included, so a week's updates are one pull request.",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "dependencies",
+      "groupSlug": "weekly"
+    },
+    {
+      "description": "Astro and its integrations release together and are tested together.",
+      "matchPackageNames": ["astro", "@astrojs/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "astro"
+    },
+    {
+      "description": "sitedrift is bundled into the production edge functions, so it comes alone and is merged by hand.",
+      "matchPackageNames": ["sitedrift"],
+      "groupName": "sitedrift",
+      "automerge": false
+    },
+    {
+      "description": "Node moves as one update across mise.toml, mise.lock and .nvmrc (Cloudflare Pages reads .nvmrc); checks:repo-policy fails while the pins differ.",
+      "matchManagers": ["mise", "nvm"],
+      "matchDepNames": ["node"],
+      "groupName": "node",
+      "groupSlug": "node"
+    },
+    {
+      "description": "Held at TypeScript 6: the audits and Astro's language tools call the compiler API that TypeScript 7 does not ship (docs/Dependencies.md).",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "@types/node and npm follow the Node major in .nvmrc, so their majors move with a Node major (docs/Dependencies.md).",
+      "matchPackageNames": ["@types/node", "npm"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ]
+}

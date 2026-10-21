@@ -18,7 +18,7 @@
         "allow_squash_merge": { "type": "boolean" },
         "allow_merge_commit": { "type": "boolean" },
         "allow_rebase_merge": { "type": "boolean" },
-        "allow_auto_merge": { "description": "Dependabot's squash auto-merge waits on the required checks.", "type": "boolean" },
+        "allow_auto_merge": { "description": "Off: nothing here enables auto-merge, so every pull request, Renovate's included, is merged deliberately.", "type": "boolean" },
         "delete_branch_on_merge": { "type": "boolean" },
         "squash_merge_commit_title": { "enum": ["PR_TITLE", "COMMIT_OR_PR_TITLE"] },
         "squash_merge_commit_message": { "enum": ["PR_BODY", "COMMIT_MESSAGES", "BLANK"] },
@@ -40,8 +40,8 @@
       "properties": {
         "secret_scanning": { "$ref": "#/$defs/status" },
         "secret_scanning_push_protection": { "$ref": "#/$defs/status" },
-        "dependabot_security_updates": { "$ref": "#/$defs/status" },
-        "vulnerability_alerts": { "description": "Dependabot alerts.", "type": "boolean" },
+        "dependabot_security_updates": { "description": "Off: Renovate opens the security fixes, from the alerts below.", "$ref": "#/$defs/status" },
+        "vulnerability_alerts": { "description": "GitHub's vulnerability alerts, which Renovate reads to open a fix at once; an accepted advisory is an alert dismissed with a reason.", "type": "boolean" },
         "private_vulnerability_reporting": { "type": "boolean" }
       }
     },

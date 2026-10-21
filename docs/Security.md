@@ -415,18 +415,16 @@ Types regressions on `/contact/`. Full procedure in
 The build toolchain is a supply-chain surface even though only prebuilt output
 ships to visitors:
 
-- **Dependabot** opens grouped update PRs (npm weekly, GitHub Actions
-  monthly) after a seven-day cooldown that security updates skip
-  ([`.github/dependabot.yml`](../.github/dependabot.yml)).
+- **Renovate** updates every pin (npm, GitHub Actions, the actionlint
+  container, Node) once a release is 14 days old, in one weekly pull request
+  with Astro, `sitedrift`, Node and each major apart, and opens a fix at once
+  for any advisory that GitHub's vulnerability alerts or OSV report
+  ([`renovate.json`](../renovate.json)). An advisory with no fix to take is
+  accepted by dismissing its alert with a reason.
 - **CodeQL** scans the JavaScript/TypeScript on every push and PR to `main`
   and on a weekly schedule ([`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml)).
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
-- **npm audit** runs weekly over the lockfile (`npm run audit`) and fails on a
-  high or critical advisory that
-  [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not
-  accept, or accepts past its review date
-  ([`.github/workflows/npm-audit.yml`](../.github/workflows/npm-audit.yml)).
 - **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), then
   uploads a CycloneDX SBOM artifact on `main`.
@@ -446,8 +444,8 @@ ships to visitors:
   The checks below maximum follow from a one-person repo (Branch-Protection,
   Code-Review, Fuzzing, CII-Best-Practices, Contributors), from the
   all-rights-reserved license, and from Vulnerabilities, which counts every
-  OSV advisory in the lockfile, including the ones
-  [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) accepts.
+  OSV advisory in the lockfile, including the ones whose alerts are dismissed
+  as accepted.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
   Elevated scopes (notably `security-events: write` for SARIF upload in
@@ -464,7 +462,7 @@ ships to visitors:
   ([`.github/workflows/release.yml`](../.github/workflows/release.yml)); `gh
   attestation verify` checks a release against this repository's workflow.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
-  the actionlint container is pinned by digest, Lighthouse runs from the
+  the actionlint container is pinned by tag and digest, Lighthouse runs from the
   lockfile, and dependencies install from the committed lockfile.
 
 ## Content and rendering

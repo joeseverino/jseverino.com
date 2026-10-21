@@ -198,7 +198,7 @@ jobs:
             let deploy;
             if (fromCi) {
               const run = context.payload.workflow_run;
-              const parts = ['gate', 'build', 'e2e', 'visual', 'edge'].map((name) => read(name)).filter(Boolean);
+              const parts = ['e2e', 'visual', 'edge'].map((name) => read(name)).filter(Boolean);
               ci = fenced('ci', [`### ci: ${run.conclusion} · [run](${run.html_url})`, ...parts].join('\n\n'));
               deploy = kept('deploy', '### Cloudflare Pages\n\nWaiting for the deployment.');
             } else {
@@ -222,71 +222,4 @@ jobs:
               await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
             } else {
               await github.rest.issues.createComment({ owner, repo, issue_number: pull.number, body });
-            }
-
-  # Auto-merge is enabled with GITHUB_TOKEN, so GitHub suppresses workflows from
-  # the resulting push. Cloudflare's external check still runs; its completed
-  # check is the trusted signal used to recover the missing ci and dist runs.
-  recover-main-ci:
-    if: github.event_name == 'check_run' && github.event.check_run.name == 'Cloudflare Pages' && github.event.check_run.app.slug == 'cloudflare-workers-and-pages'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      actions: write
-      contents: read
-      pull-requests: read
-    steps:
-      - name: Dispatch ci and dist for a Dependabot merge when their push runs are absent
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const sha = context.payload.check_run.head_sha;
-            const { data: repository } = await github.rest.repos.get({ owner, repo });
-            const branch = repository.default_branch;
-            const { data: ref } = await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
-
-            if (ref.object.sha !== sha) {
-              core.info(`Ignoring ${sha}: ${branch} is at ${ref.object.sha}`);
-              return;
-            }
-
-            const pulls = await github.paginate(
-              github.rest.repos.listPullRequestsAssociatedWithCommit,
-              { owner, repo, commit_sha: sha, per_page: 100 },
-            );
-            const dependabotMerge = pulls.find((pull) =>
-              pull.merged_at &&
-              pull.base.ref === branch &&
-              pull.user?.login === 'dependabot[bot]',
-            );
-            if (!dependabotMerge) {
-              core.info(`Ignoring ${sha}: it is not a merged Dependabot pull request`);
-              return;
-            }
-
-            for (const workflow of ['ci.yml', 'dist.yml']) {
-              const { data: runs } = await github.rest.actions.listWorkflowRuns({
-                owner,
-                repo,
-                workflow_id: workflow,
-                head_sha: sha,
-                per_page: 100,
-              });
-              const recorded = runs.workflow_runs.find((run) =>
-                run.event === 'push' || run.event === 'workflow_dispatch',
-              );
-              if (recorded) {
-                core.info(`${workflow} already recorded for ${sha}: ${recorded.html_url}`);
-                continue;
-              }
-
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id: workflow,
-                ref: branch,
-              });
-              core.notice(`Dispatched ${workflow} for Dependabot PR #${dependabotMerge.number} at ${sha}`);
             }

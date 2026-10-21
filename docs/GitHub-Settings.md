@@ -11,8 +11,8 @@ Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 
 | Section | Declares |
 |---|---|
-| `settings` | Squash as the only merge method (rebase merging strips SSH commit signatures), auto-merge on for Dependabot, branches deleted on merge, the squash commit title and message, no wiki, and the About description, homepage and topics (the description makes claims about the site, so it is held to the file) |
-| `security` | Secret scanning and push protection, Dependabot security updates and alerts, private vulnerability reporting |
+| `settings` | Squash as the only merge method (rebase merging strips SSH commit signatures), auto-merge off (nothing merges on its own), branches deleted on merge, the squash commit title and message, no wiki, and the About description, homepage and topics (the description makes claims about the site, so it is held to the file) |
+| `security` | Secret scanning and push protection, vulnerability alerts on with Dependabot security updates off (Renovate reads the alerts and opens the fixes, see [Dependencies](./Dependencies.md#advisories)), private vulnerability reporting |
 | `actions` | Every `uses:` reference pinned to a commit SHA, a read-only default workflow token, and no workflow approving pull requests |
 | `variables` | Actions variables, by name: the public Turnstile site key the [dist workflow](./Dist-Branch.md) builds with. Variables not listed are left alone |
 | `ruleset` | The `main` branch ruleset, compared as a whole: pull request required with squash only, the required status checks, no force pushes, no deletion, signed commits required |

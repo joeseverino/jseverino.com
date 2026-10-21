@@ -34,7 +34,7 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 | `mise run fast` | local | the static gates: duplication, types, repository policy, docs, CSS lint, unit tests, `astro check`, the draft guard |
 | `mise run check` | local and CI (`build`) | the static gates, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
 | `mise run browser` | local and CI (`e2e`, `visual`, `edge`) | one build, then the cross-browser, visual, and edge runtime suites, one at a time |
-| `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
+| `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status and open CodeQL alerts |
 
 Every gate with what it asserts is the generated [gate table](../docs/Commands.md#gates).
 `mise run ci` runs `check` and then `browser`: every gate the pipeline runs.

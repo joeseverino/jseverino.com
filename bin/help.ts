@@ -26,7 +26,6 @@ export const GROUPS = [
     items: {
       'deploy:verify': 'After the merge deploys, from a residential IP: verify remote CI + the live production deploy',
       'diff:content': 'What a content change means by slug: published, edited, removed, pages, generated (`-- --json`)',
-      'audit': '`npm audit` against `.github/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review',
       'build': "The production build: astro build, the sitedrift wrap, the CSP hashes (Cloudflare Pages' build command)",
     },
   },

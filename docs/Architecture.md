@@ -544,8 +544,8 @@ mise runs the gates of a phase side by side, prints each one's output whole unde
 
 [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) is the post-deploy production
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
-waits for the exact commit's GitHub and Cloudflare checks, runs the production
-dependency audit, validates live security headers and the production sitedrift
+waits for the exact commit's GitHub and Cloudflare checks, validates
+live security headers and the production sitedrift
 guard, checks every live sitemap URL, and requires zero open CodeQL
 alerts. `--origin <url>` verifies a single Cloudflare Pages deployment instead
 (the served responses only; HSTS is set at the zone and absent on
@@ -570,7 +570,7 @@ GitHub Actions provide the remote quality gate:
   function's refusals, and byte-exact `security.txt`. On Linux the browser
   system packages install in the background while the site builds, and the
   suite serves that build. Browser binaries are cached by Playwright version
-  rather than lockfile hash, so Dependabot's lockfile rewrites still hit the
+  rather than lockfile hash, so a dependency update's lockfile rewrite still hits the
   cache. Each suite writes its own `test-results/<suite>/` and
   `playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
@@ -595,27 +595,25 @@ GitHub Actions provide the remote quality gate:
 - [`codeql`](../.github/workflows/codeql.yml) scans JavaScript and TypeScript on pushes, pull requests, and a weekly schedule.
 - [`dependency review`](../.github/workflows/dependency-review.yml) fails pull requests that introduce high-severity dependency advisories, and comments only when it blocks.
 - Both are skipped on pull requests that touch only content or prose, classified by the reusable [`changes`](../.github/workflows/changes.yml) workflow and a job-level `if`: a skipped job reports success to a required check, where `paths-ignore` would leave it pending forever. If the classification fails, they run.
-- [`npm audit`](../.github/workflows/npm-audit.yml) runs `npm run audit` ([`bin/audit.ts`](../bin/audit.ts)) weekly over the lockfile and fails on a high or critical advisory that [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not accept, or accepts past its `reviewBy` date.
 - [`workflow lint`](../.github/workflows/workflow-lint.yml) runs actionlint when workflow files change.
 - [`link check`](../.github/workflows/link-check.yml) validates repository documentation links and public content links separately, writes both lychee reports into the job summary, and uploads them.
 - [`lighthouse`](../.github/workflows/lighthouse.yml) runs the lockfile's Lighthouse against the live URLs in `tests/lighthouse.json` through `bin/lighthouse-check.ts`, writes the per-page scores to the job summary, and uploads the reports.
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
-- [`dependabot auto-merge`](../.github/workflows/dependabot-auto-merge.yml) enables squash auto-merge on Dependabot's pull requests, refusing semver-major updates as a second guard behind `dependabot.yml`, and `sitedrift`, which is bundled into the production edge functions and gets its own Dependabot group; GitHub performs the merge only after every required check passes. The job never checks out pull-request code.
-- [`dependabot stale`](../.github/workflows/dependabot-stale.yml) opens a self-closing issue each week listing any Dependabot pull request open longer than seven days, so a wedged auto-merge is visible.
+Dependency updates come from Renovate, which runs outside this repository;
+[`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
+the actionlint container) moves in one weekly pull request after a 14-day
+release age; Astro and its integrations, `sitedrift` (bundled into the
+production edge functions), Node (one update across `mise.toml`, `mise.lock`
+and `.nvmrc`), and each major come on their own, and the held majors in
+[Dependencies](./Dependencies.md#deliberate-holds) are disabled. Renovate reads
+GitHub's vulnerability alerts and OSV and opens a fix at once, outside the
+schedule and the release-age hold. Its commits go through GitHub's API, so
+they carry the signature the ruleset requires. Nothing merges on its own: each
+pull request runs the same required checks and is merged like any other. For
+dependency review to block merging, the main ruleset must require the
+`dependency-review` status check.
 
-Dependabot's version-update schedule is weekly for npm and monthly for GitHub
-Actions, with minor/patch grouping and a seven-day cooldown (security updates
-are exempt). Auto-merge covers ordinary non-major
-updates as well as security updates. Major updates are ignored by the scheduled configuration and need
-manual maintenance. For dependency review to block merging, the main ruleset
-must require the `dependency-review` status check.
-
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `contents` and `pull-requests: write` for Dependabot auto-merge, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR, and `issues: write` for the self-closing alerts (`dependabot stale`, `security-txt-expires`). Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
-
-Dependabot auto-merge uses the repository `GITHUB_TOKEN`, and GitHub suppresses workflow runs that token causes, so the squash commit emits no `push` CI run. The `recover-main-ci` job in
-[`deploy.yml`](../.github/workflows/deploy.yml) recovers it from the completed
-Cloudflare Pages check. It verifies that the check came from the Cloudflare app, its SHA is current
-`main`, the merged PR belongs to Dependabot, and no CI run exists for that SHA, then dispatches `ci.yml` (`workflow_dispatch` is an event type `GITHUB_TOKEN` may create).
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the SARIF uploads (`codeql`, `scorecard`), `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR, and `issues: write` for the self-closing `security-txt-expires` alert. Workflow dependencies are pinned to immutable commit SHAs or container digests. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
 
 CodeQL findings are fixed at the source, and `npm run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

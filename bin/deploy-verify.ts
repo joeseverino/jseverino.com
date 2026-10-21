@@ -8,7 +8,7 @@
 //   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
 //
 // --origin verifies one Pages deployment (<hash>.pages.dev, outside the zone): served
-// responses only, no git/audit/check-run preconditions, no HSTS. --preview marks a
+// responses only, no git/check-run preconditions, no HSTS. --preview marks a
 // branch preview, where sitedrift wraps every HTML route. --slug verifies one writeup
 // after a publish.
 import fs from 'node:fs';
@@ -29,7 +29,7 @@ import { cli as parseCli, flag } from './lib/args.ts';
 import { routeFile } from './lib/dist.ts';
 import { git } from './lib/git.ts';
 import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
-import { runSync, spawnResult, status } from './lib/run.ts';
+import { spawnResult, status } from './lib/run.ts';
 import { annotate, createReport, endGroup, group } from './lib/step-summary.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
@@ -371,10 +371,6 @@ async function main(): Promise<void> {
 
   let deployed = true;
   if (production) {
-    await check('audit', () => {
-      runSync(process.execPath, ['bin/audit.ts'], { cwd: siteRoot });
-      return 'no unaccepted high or critical advisories';
-    });
     deployed = await check('remote', () => waitForChecks(sha));
   }
 

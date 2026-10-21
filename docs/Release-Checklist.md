@@ -108,8 +108,8 @@ git switch main && git pull --ff-only
 npm run deploy:verify
 ```
 
-It waits for the required checks on that commit, then verifies the production
-dependency audit, security headers, the production sitedrift `404`, every live
+It waits for the required checks on that commit, then verifies security
+headers, the production sitedrift `404`, every live
 sitemap URL, and zero open CodeQL alerts.
 
 Scheduled checks measure external freshness, which no single deployment

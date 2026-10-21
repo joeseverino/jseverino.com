@@ -84,7 +84,7 @@ jobs:
           astro-cache: ${{ matrix.prebuild }}
 
       # Cache the browser binaries by Playwright version, not by lockfile hash:
-      # every Dependabot PR rewrites the lockfile and would otherwise miss.
+      # every dependency update rewrites the lockfile and would otherwise miss.
       - name: Read Playwright version
         if: matrix.browsers != ''
         id: playwright

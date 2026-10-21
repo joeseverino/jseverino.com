@@ -54,7 +54,6 @@
     "preview:seo": "node bin/seo-preview.ts",
     "clean:generated": "node bin/clean-generated.ts",
     "check:lighthouse": "node bin/lighthouse-check.ts",
-    "audit": "node bin/audit.ts",
     "diff:content": "node bin/content-diff.ts"
   },
   "dependencies": {
