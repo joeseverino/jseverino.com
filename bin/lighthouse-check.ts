@@ -8,8 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 import { cli } from './lib/args.ts';
-import { spawnResult, status } from './lib/run.ts';
-import { annotate, appendSummary, table } from './lib/step-summary.ts';
+import { spawnResult } from './lib/run.ts';
+import { annotate, appendSummary, status, table } from './lib/step-summary.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 

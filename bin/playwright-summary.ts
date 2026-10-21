@@ -7,8 +7,7 @@ import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import fs from 'node:fs';
 import path from 'node:path';
 import { cli } from './lib/args.ts';
-import { status } from './lib/run.ts';
-import { annotate, appendSummary, cell, table } from './lib/step-summary.ts';
+import { annotate, appendSummary, cell, status, table } from './lib/step-summary.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 

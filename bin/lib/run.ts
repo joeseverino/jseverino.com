@@ -1,6 +1,8 @@
 // Process harness for the bin/ tools: per-command timeout, spawn failures as failed results,
 // output captured or streamed.
 import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
+import { text } from 'node:stream/consumers';
 import { stripVTControlCharacters } from 'node:util';
 
 const MINUTE_MS = 60_000;
@@ -51,10 +53,6 @@ export interface RunSyncOptions {
   raw?: boolean | undefined;
 }
 
-export function status(label: string, detail: string): void {
-  console.log(`${label.padEnd(12)} ${detail}`);
-}
-
 // Synchronous run(): trimmed stdout of a command that must succeed, else an error carrying its output.
 // env merges over process.env; raw keeps the output untrimmed (porcelain).
 export function runSync(cmd: string, args: readonly string[], { cwd, env, raw = false }: RunSyncOptions = {}): string {
@@ -87,63 +85,36 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
 }
 
 // Never rejects: code is non-zero on non-zero exit, signal, timeout, or spawn failure. timeout 0 disables it.
-export function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
+// The timeout sends SIGKILL: spawn signals once, and a child that ignores SIGTERM would outlive it.
+export async function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
   const { cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture' } = options;
-
-  return new Promise((resolve) => {
-    const start = Date.now();
-    const inherit = stdio !== 'capture';
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-    let spawnError: Error | null = null;
-    let settled = false;
-
-    const child = spawn(cmd, args, {
-      cwd,
-      env: env ? { ...process.env, ...env } : process.env,
-      stdio: stdio === 'stderr' ? ['inherit', process.stderr, process.stderr] : inherit ? 'inherit' : 'pipe',
-    });
-
-    const settle = (code: number | null) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (timedOut) stderr += `${stderr ? '\n' : ''}[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`;
-      if (spawnError) stderr += `${stderr ? '\n' : ''}[failed to start: ${spawnError.message}]`;
-      const finalCode = spawnError || timedOut ? (code || 1) : (code ?? 1);
-      resolve({
-        code: finalCode,
-        stdout,
-        stderr,
-        output: stripVTControlCharacters(`${stdout}\n${stderr}`),
-        duration: Date.now() - start,
-        timedOut,
-      });
-    };
-
-    const stop = () => {
-      child.kill('SIGTERM');
-      // Escalate if the process ignores SIGTERM.
-      setTimeout(() => { if (!settled) child.kill('SIGKILL'); }, 5_000).unref();
-    };
-    const timer = timeout > 0
-      ? setTimeout(() => {
-          timedOut = true;
-          stop();
-        }, timeout)
-      : undefined;
-
-    if (!inherit) {
-      child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
-      child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
-    }
-
-    child.on('error', (error) => {
-      spawnError = error;
-      // 'close' never fires when the process could not spawn.
-      setTimeout(() => settle(1), 0);
-    });
-    child.on('close', (code) => settle(code));
+  const start = Date.now();
+  const child = spawn(cmd, args, {
+    cwd,
+    env: env ? { ...process.env, ...env } : process.env,
+    stdio: stdio === 'stderr' ? ['inherit', process.stderr, process.stderr] : stdio === 'inherit' ? 'inherit' : 'pipe',
+    timeout,
+    killSignal: 'SIGKILL',
   });
+  const [stdout, stderr, exit] = await Promise.all([
+    child.stdout ? text(child.stdout) : '',
+    child.stderr ? text(child.stderr) : '',
+    // A failed spawn emits 'error', which rejects once().
+    once(child, 'close').then(([code]) => ({ code: code as number | null, error: undefined }), (error: Error) => ({ code: null, error })),
+  ]);
+  // Only spawn's timeout kills the child, so a killed child timed out.
+  const timedOut = child.killed;
+  const notes = [
+    stderr,
+    timedOut && `[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`,
+    exit.error && `[failed to start: ${exit.error.message}]`,
+  ].filter(Boolean).join('\n');
+  return {
+    code: exit.code ?? 1,
+    stdout,
+    stderr: notes,
+    output: stripVTControlCharacters(`${stdout}\n${notes}`),
+    duration: Date.now() - start,
+    timedOut,
+  };
 }

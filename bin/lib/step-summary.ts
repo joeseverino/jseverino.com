@@ -1,4 +1,4 @@
-// Job-summary and log helpers for the bin/ runners. Inert outside GitHub Actions.
+// Log, job-summary and annotation helpers for the bin/ runners. Everything but status() is inert outside GitHub Actions.
 import fs from 'node:fs';
 
 const inActions = process.env.GITHUB_ACTIONS === 'true';
@@ -12,6 +12,11 @@ export const annotation = (kind: 'error' | 'warning' | 'notice', title: string, 
 
 export function annotate(kind: 'error' | 'warning' | 'notice', title: string, message: string): void {
   if (inActions) console.log(annotation(kind, title, message));
+}
+
+// One aligned log line per step, in and out of Actions.
+export function status(label: string, detail: string): void {
+  console.log(`${label.padEnd(12)} ${detail}`);
 }
 
 export function group(title: string): void {
