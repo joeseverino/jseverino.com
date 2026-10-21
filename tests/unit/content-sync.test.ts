@@ -102,13 +102,14 @@ describe('writer and prune', () => {
   test('prune removes what the run did not write, then empty folders; the report names both', async () => {
     const root = scratch.make();
     write(path.join(root, 'content/writeups/old/index.md'), 'stale');
+    write(path.join(root, 'content/writeups/old/images/a.png'), 'stale');
     write(path.join(root, 'content/writeups/kept/index.md'), 'old');
     const writer = createWriter({ root });
     await writer.write(path.join(root, 'content/writeups/kept/index.md'), 'new');
-    await writer.prune([path.join(root, 'content/writeups')]);
+    writer.prune([path.join(root, 'content/writeups')]);
     assert.deepEqual(writer.report(), {
       written: ['content/writeups/kept/index.md'],
-      removed: ['content/writeups/old/index.md'],
+      removed: ['content/writeups/old/images/a.png', 'content/writeups/old/index.md'],
     });
     assert.equal(fs.existsSync(path.join(root, 'content/writeups/old')), false);
     assert.equal(fs.readFileSync(path.join(root, 'content/writeups/kept/index.md'), 'utf8'), 'new');

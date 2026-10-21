@@ -1,4 +1,4 @@
-import { after, beforeEach, describe, test } from 'node:test';
+import { after, afterEach, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -57,19 +57,22 @@ describe('an export file', () => {
 });
 
 describe('the export command', () => {
-  const script = (body: string): string => write('export-education', `#!/bin/sh\n${body}\n`, 0o755);
+  // A stand-in for the vault MCP's CLI, found first on PATH.
+  const path0 = process.env.PATH;
+  beforeEach(() => { process.env.PATH = `${dir}${path.delimiter}${path0}`; });
+  afterEach(() => { process.env.PATH = path0; });
+  const exporter = (body: string) => {
+    write('severino-vault-mcp', `#!/bin/sh\n${body}\n`, 0o755);
+    return createEducationSource().load();
+  };
 
   test('is the default when no file is given, and its output is held to the same schema', async () => {
-    const command = script(`cat <<'JSON'\n${JSON.stringify(exported)}\nJSON`);
-    assert.equal((await createEducationSource({ command }).load()).institutions.length, 1);
-    const malformed = script(`echo '{"ok":true,"institutions":[{"slug":"x"}]}'`);
-    await assert.rejects(createEducationSource({ command: malformed }).load(), /missing institution/);
+    assert.equal((await exporter(`cat <<'JSON'\n${JSON.stringify(exported)}\nJSON`)).institutions.length, 1);
+    await assert.rejects(exporter(`echo '{"ok":true,"institutions":[{"slug":"x"}]}'`), /missing institution/);
   });
 
   test('that fails with a report names the report, and one that fails silently names the exit', async () => {
-    const reported = script(`echo '{"ok":false,"errors":["vault locked"]}'; exit 1`);
-    await assert.rejects(createEducationSource({ command: reported }).load(), /education export failed[\s\S]*vault locked/);
-    const silent = script('exit 3');
-    await assert.rejects(createEducationSource({ command: silent }).load(), /education export failed/);
+    await assert.rejects(exporter(`echo '{"ok":false,"errors":["vault locked"]}'; exit 1`), /education export failed[\s\S]*vault locked/);
+    await assert.rejects(exporter('echo oops >&2; exit 3'), /education export failed[\s\S]*oops/);
   });
 });

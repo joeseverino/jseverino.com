@@ -15,8 +15,14 @@ const execFileAsync = promisify(execFile);
 // ("home 2.md", "some-writeup 2/") beside the real entry. They are never sources.
 export const isConflictCopy = (name: string): boolean => / \d+(?:\.[^.]+)?$/.test(name);
 
-async function readable(file: string): Promise<boolean> {
-  try { await fs.access(file); return true; } catch { return false; }
+// The file's text, or undefined when there is no such file.
+async function readIfPresent(file: string): Promise<string | undefined> {
+  try {
+    return await fs.readFile(file, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
+  }
 }
 
 export interface SourceEntry {
@@ -38,8 +44,9 @@ export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultR
       const slug = files ? path.basename(entry.name, '.md') : entry.name;
       const sourceDir = files ? root : path.join(root, entry.name);
       const sourceFile = files ? path.join(root, entry.name) : path.join(sourceDir, 'index.md');
-      if (!(await readable(sourceFile))) continue;
-      const parsed = parseFrontmatter(await fs.readFile(sourceFile, 'utf8'));
+      const text = await readIfPresent(sourceFile);
+      if (text === undefined) continue;
+      const parsed = parseFrontmatter(text);
       if (!includeDrafts && parsed.data.published !== true) continue;
       result.push({ slug, sourceDir, sourceFile, parsed });
     }
@@ -62,8 +69,9 @@ export function createResumeSource({ lifeVaultRoot, includeDrafts = false }: { l
     sourceFile,
     async load(): Promise<ParsedFrontmatter | null> {
       if (!cached) {
-        if (!(await readable(sourceFile))) throw new Error(`resume source not found: ${sourceFile} (set LIFE_VAULT_DIR)`);
-        cached = parseFrontmatter(await fs.readFile(sourceFile, 'utf8'));
+        const text = await readIfPresent(sourceFile);
+        if (text === undefined) throw new Error(`resume source not found: ${sourceFile} (set LIFE_VAULT_DIR)`);
+        cached = parseFrontmatter(text);
       }
       return !includeDrafts && cached.data.published !== true ? null : cached;
     },
@@ -91,9 +99,20 @@ function parseExport(text: string, label: string): EducationDataset {
   return data;
 }
 
+// The errors a failed export reports on stdout, when it printed its JSON.
+function reportedErrors(stdout: string | undefined): string[] | undefined {
+  try {
+    return (JSON.parse(stdout ?? '') as { errors?: string[] }).errors;
+  } catch {
+    return undefined;
+  }
+}
+
+const EXPORT_COMMAND = 'severino-vault-mcp';
+
 // `file` is an export a trusted runner supplies (EDUCATION_EXPORT_FILE); without one the
-// export is made by running `command`, the local default.
-export function createEducationSource({ command = 'severino-vault-mcp', file }: { command?: string; file?: string | undefined } = {}): EducationSource {
+// export is made by running the vault MCP's CLI, the local default.
+export function createEducationSource({ file }: { file?: string | undefined } = {}): EducationSource {
   let cached: EducationDataset | undefined;
   return {
     async load() {
@@ -102,20 +121,16 @@ export function createEducationSource({ command = 'severino-vault-mcp', file }: 
         cached = parseExport(await fs.readFile(file, 'utf8'), file);
         return cached;
       }
+      const label = `${EXPORT_COMMAND} export education`;
       let stdout: string;
       try {
-        ({ stdout } = await execFileAsync(command, ['export', 'education']));
+        ({ stdout } = await execFileAsync(EXPORT_COMMAND, ['export', 'education']));
       } catch (caught) {
         const error = caught as ExecError;
-        let detail: string | undefined;
-        try { detail = (JSON.parse(error.stdout ?? '') as { errors?: string[] }).errors?.join('\n  '); }
-        catch { detail = error.stderr?.trim() || error.message; }
-        throw new Error(
-          `education export failed (${command} export education):\n  ${detail}\n` +
-          'Install/update with: tools reinstall severino-vault-mcp',
-        );
+        const detail = reportedErrors(error.stdout)?.join('\n  ') ?? (error.stderr?.trim() || error.message);
+        throw new Error(`education export failed (${label}):\n  ${detail}\nInstall/update with: tools reinstall ${EXPORT_COMMAND}`);
       }
-      cached = parseExport(stdout, `${command} export education`);
+      cached = parseExport(stdout, label);
       return cached;
     },
   };
