@@ -46,7 +46,7 @@ See the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 
 ### The build needs no secrets and no private access
 
-Cloudflare Pages clones this repository, runs `npm run build:static`, and
+Cloudflare Pages clones this repository, runs `npm run build`, and
 uploads `dist/`. The build:
 
 - never touches the private vault: it builds from the committed snapshot
@@ -430,7 +430,7 @@ ships to visitors:
 - **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), then
   uploads a CycloneDX SBOM artifact on `main`.
-- **Preview guard** runs `npm run check:preview` before release to prove that
+- **Preview guard** runs `mise run checks:preview` before release to prove that
   feature branches receive the review wrapper and `main` remains unmodified.
 - **Workflow lint** runs actionlint when GitHub Actions workflow files change
   ([`.github/workflows/workflow-lint.yml`](../.github/workflows/workflow-lint.yml)).
@@ -509,9 +509,9 @@ Signing and verification are scripted:
 [`npm run sign:security`](../bin/sign-security.ts) strips the existing
 signature, re-signs the body with `security@jseverino.com`, and writes it
 back.
-[`npm run check:security`](../tests/audits/check-security-txt.ts) verifies the signature,
+[`mise run checks:security-txt`](../tests/audits/check-security-txt.ts) verifies the signature,
 confirms all RFC 9116 required fields are present, fails if `Expires` is
 within 30 days, and confirms the `Encryption` URL resolves to a local WKD
-file. `check:security` runs in `publish:check` before the build, so an
-unsigned or expired `security.txt` fails the gate. The full set of gates is in
+file. It is one of the static gates, so an unsigned or expired
+`security.txt` fails before the build. The full set of gates is in
 [`tests/README.md`](../tests/README.md).

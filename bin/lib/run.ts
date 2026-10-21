@@ -1,4 +1,4 @@
-// Process harness for the bin/ gate runners: per-command timeout, spawn failures as failed results,
+// Process harness for the bin/ tools: per-command timeout, spawn failures as failed results,
 // output captured or streamed.
 import { spawn, spawnSync } from 'node:child_process';
 import { stripVTControlCharacters } from 'node:util';
@@ -28,9 +28,6 @@ export interface RunOptions {
   env?: NodeJS.ProcessEnv | undefined;
   timeout?: number | undefined;
   stdio?: 'capture' | 'inherit' | 'stderr' | undefined;
-  heartbeatMs?: number | undefined;
-  onHeartbeat?: ((elapsedMs: number) => void) | undefined;
-  signal?: AbortSignal | undefined;
 }
 
 export interface SpawnOptions {
@@ -89,17 +86,9 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
   };
 }
 
-// Never rejects: code is non-zero on non-zero exit, signal, abort, timeout, or spawn failure. timeout 0 disables it.
+// Never rejects: code is non-zero on non-zero exit, signal, timeout, or spawn failure. timeout 0 disables it.
 export function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
-  const {
-    cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture',
-    heartbeatMs = 0, onHeartbeat = () => {}, signal,
-  } = options;
-
-  if (signal?.aborted) {
-    const stderr = `[aborted before start: ${cmd} ${args.join(' ')}]`;
-    return Promise.resolve({ code: 1, stdout: '', stderr, output: stderr, duration: 0, timedOut: false });
-  }
+  const { cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture' } = options;
 
   return new Promise((resolve) => {
     const start = Date.now();
@@ -119,9 +108,7 @@ export function run(cmd: string, args: readonly string[], options: RunOptions = 
     const settle = (code: number | null) => {
       if (settled) return;
       settled = true;
-      signal?.removeEventListener('abort', stop);
       clearTimeout(timer);
-      clearInterval(heartbeat);
       if (timedOut) stderr += `${stderr ? '\n' : ''}[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`;
       if (spawnError) stderr += `${stderr ? '\n' : ''}[failed to start: ${spawnError.message}]`;
       const finalCode = spawnError || timedOut ? (code || 1) : (code ?? 1);
@@ -140,17 +127,12 @@ export function run(cmd: string, args: readonly string[], options: RunOptions = 
       // Escalate if the process ignores SIGTERM.
       setTimeout(() => { if (!settled) child.kill('SIGKILL'); }, 5_000).unref();
     };
-    signal?.addEventListener('abort', stop, { once: true });
     const timer = timeout > 0
       ? setTimeout(() => {
           timedOut = true;
           stop();
         }, timeout)
       : undefined;
-    const heartbeat = heartbeatMs > 0
-      ? setInterval(() => onHeartbeat(Date.now() - start), heartbeatMs)
-      : undefined;
-    heartbeat?.unref();
 
     if (!inherit) {
       child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });

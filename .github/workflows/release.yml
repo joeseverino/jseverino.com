@@ -44,7 +44,7 @@ jobs:
           astro-cache: 'true'
 
       - name: Build the site
-        run: npm run -s build:static
+        run: npm run -s build
         env:
           PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
 

@@ -199,7 +199,7 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit.
 
 Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
 
-`stylelint.config.ts` extends the standard modern CSS ruleset and documents the project-specific exceptions. `npm run check:css-vars` fails when a custom property is defined but never referenced. Both run in `npm run check` and affect development and CI only.
+`stylelint.config.ts` extends the standard modern CSS ruleset and documents the project-specific exceptions. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links
@@ -293,7 +293,7 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 The policy is `default-src 'none'` plus the site's own origin, the hashes, Turnstile, and Cloudflare Web Analytics, with no `'unsafe-inline'`, `'unsafe-eval'`, nonce, `'strict-dynamic'`, or `blob:`. It carries `report-to csp-endpoint` pointing at `/api/csp-report` (with a `Reporting-Endpoints` header), a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and Trusted Types enforcement. `/contact/*` has its own rule in `_headers`: Pages merges the headers of every matching rule, so the rule detaches the global policy (`! Content-Security-Policy`), sets one without Trusted Types, and adds a report-only `require-trusted-types-for 'script'` header, because Turnstile's script trips it. The policy module is [`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`, `inlineHashes`, `hashSource`). The only request-time CSP is the preview proxy's, which hashes the markup it fetches and nonces the bridge script sitedrift injects; it is not served on production.
 
-The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); the contract-projections audit fails when it is stale.
+The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `npm run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); `mise run checks:contracts` fails when it is stale.
 
 Component scripts are external `/_astro/*.js` bundles (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). Besides the hashed theme-bootstrap script, the only inline `<script>` in production HTML is the JSON-LD data block.
 
@@ -351,7 +351,7 @@ The action is **Block**, the only one offered: non-compliant payloads are reject
 
 ## 11. Build Output
 
-`npm run build:static` produces a deployable static site in `dist/`, locally and on Cloudflare Pages; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names it.
+`npm run build` produces a deployable static site in `dist/`, locally and on Cloudflare Pages; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names it.
 
 [`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs `astro build`, then `sitedrift cloudflare`. On
 non-production Pages branches, sitedrift preserves the generated pages and
@@ -441,7 +441,7 @@ Favicons, social cards, and HD brand marks are all generated from one place:
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
 - `npm run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
 
-The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `npm run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.ts`; `npm run sync:tokens -- --check` is the non-mutating drift gate the contract-projections audit runs. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
+The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `npm run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.ts`; `npm run sync:tokens -- --check` is the non-mutating drift gate `mise run checks:contracts` runs. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
 
 To restyle the brand, edit `tokens.json` upstream, run `npm run sync:tokens`, then re-run the generators (`--color-primary`/`-deep` land in [`src/styles/brand.css`](../src/styles/brand.css), which `base.css` imports, so the brand identity ships inside the one stylesheet).
 
@@ -526,21 +526,21 @@ To exercise the edge runtime locally, build first and serve the output through
 `wrangler pages dev`:
 
 ```sh
-npm run build:static
+npm run build
 npm run serve:edge
 ```
 
-The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `npm run test:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `diagnose` gate execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
+The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
 
 ## 14. Release Gate
 
-Every gate derives its checks from [`tests/audits/registry.ts`](../tests/audits/registry.ts). Which audit runs under which gate, and what each asserts, are the generated [gate coverage](../tests/ARCHITECTURE.md#gate-coverage) and [audit](../tests/ARCHITECTURE.md#2-audits) tables in `tests/ARCHITECTURE.md`.
+Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [gate table](./Commands.md#gates).
 
-- [`bin/gate-check.ts`](../bin/gate-check.ts) (`npm run gate:check`) runs the fast pre-build invariants, collect-all.
-- [`bin/publish-check.ts`](../bin/publish-check.ts) (`npm run publish:check`) is the local publish gate: clean, sync from the vault (skippable with `--no-sync`), the pre-build audits, the production build, the post-build audits, stopping at the first failure.
-- [`bin/diagnose.ts`](../bin/diagnose.ts) (`npm run diagnose`) runs every audit without stopping, fails if validation changed the worktree, and writes one report.
+- `mise run fast` runs the static `checks:*` gates, collect-all.
+- `mise run check` runs them, then the production build, then the `built:*` gates on what it built; CI's `build` job runs exactly this.
+- `mise run browser` builds once and runs the three `browser:*` suites one at a time; `mise run ci` is `check` and then `browser`.
 
-Audits run concurrently, capped by memory, and report in registry order. All gates share one process harness ([`bin/lib/run.ts`](../bin/lib/run.ts)) that enforces per-check timeouts and surfaces spawn failures. Preview review and the live post-deploy checks stay separate: they depend on external state or human judgment.
+mise runs the gates of a phase side by side, prints each one's output whole under its name, enforces each task's timeout, and ends on the gates that failed; a failing gate prints its own fix. Preview review and the live post-deploy checks stay separate: they depend on external state or human judgment.
 
 [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) is the post-deploy production
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
@@ -556,11 +556,9 @@ GitHub Actions provide the remote quality gate:
 - [`ci`](../.github/workflows/ci.yml) runs independent jobs: none waits on
   another, so a failure always reports as a failure on its own required check
   (a job skipped because an upstream job failed would report as passing).
-  `build` runs `npm run gate:check`, then the publish gate
-  (`npm run publish:check -- --no-sync --after-gate`, which skips the audits
-  the gate step just ran and the edge suite its own job runs) on the artifact `bin/build-static.ts`
-  produces, the same one Cloudflare ships, so the committed tree must pass
-  everything the local gate passes. A CycloneDX SBOM is uploaded on
+  `build` runs `mise run check`: the static gates, then the gates on the
+  artifact `bin/build-static.ts` produces, the same one Cloudflare ships, so
+  the committed tree must pass everything the local gate passes. A CycloneDX SBOM is uploaded on
   `main`. The `playwright` matrix: `e2e` serves the build with `astro preview`
   and runs functional checks across Chromium, Firefox, and WebKit on three
   workers; `visual` builds the synthetic content in `tests/fixtures/content`

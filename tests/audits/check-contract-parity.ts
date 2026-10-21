@@ -11,7 +11,8 @@ import {
 } from '../../src/lib/content-contract.ts';
 import { abort } from './lib.ts';
 
-const fail: (message: string) => never = (message) => abort('check-contract-parity', message);
+const fail: (message: string) => never = (message) => abort('check-contract-parity', message,
+  'fix: edit contracts/content.v1.json, run `npm run sync:contract`, and commit the generated schema; never hand-edit a projection');
 
 const writeupFields = contentContract.collections?.writeups?.fields;
 if (!writeupFields || Object.keys(writeupFields).length === 0) {

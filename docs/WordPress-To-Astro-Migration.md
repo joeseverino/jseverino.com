@@ -281,10 +281,10 @@ site is a read-only snapshot of a private editorial system.
 Automated quality gates replaced manual WordPress maintenance (plugin updates,
 theme checks, security scanning). Before any content update is published, the
 site is validated against the project's engineering standards. The
-`publish:check` script is the final gate:
+`check` gate is the final one:
 
 ```sh
-npm run publish:check
+mise run check
 ```
 
 On a typical run (observed May 24, 2026), this validates:

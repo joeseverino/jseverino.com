@@ -39,5 +39,6 @@ for (const image of large.slice(0, 25)) {
 }
 
 if (process.env.STRICT_ASSET_AUDIT === '1') {
+  console.error(`fix: shrink each image above below ${formatBytes(warnBytes)}: the committed file under public/assets/, or the content original it was encoded from`);
   process.exitCode = 1;
 }

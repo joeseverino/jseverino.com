@@ -1,5 +1,5 @@
 name: setup
-description: Node from .nvmrc, then a clean install from the lockfile with the npm download cache.
+description: The mise toolchain and environment from mise.toml, then a clean install from the lockfile with the npm download cache.
 
 # The checkout comes first in the calling job: a local action is read from the
 # working tree, so it cannot check the repository out itself.
@@ -14,14 +14,28 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Disable Astro telemetry
+    # The mise release mise.toml's min_version names, so CI runs the mise a
+    # laptop is held to.
+    - name: Read the mise version
+      id: mise
       shell: bash
-      run: echo 'ASTRO_TELEMETRY_DISABLED=1' >> "$GITHUB_ENV"
+      run: echo "version=$(sed -n 's/^min_version = "\(.*\)"$/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
 
-    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+    # Installs the tools mise.lock records, checksums included (MISE_LOCKED), and
+    # exports mise.toml's [env] to every later step.
+    - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+      env:
+        MISE_LOCKED: '1'
       with:
-        node-version-file: .nvmrc
-        cache: ${{ inputs.install == 'true' && 'npm' || '' }}
+        version: ${{ steps.mise.outputs.version }}
+
+    - name: Restore the npm download cache
+      if: inputs.install == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.npm
+        key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: npm-${{ runner.os }}-
 
     # --no-audit: dependency review and the weekly audit workflow enforce
     # advisories; an install would only print them.

@@ -1,8 +1,8 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart TB
-    A["Source change"] --> G["gate:check<br/>fast pre-build audits"]
-    G --> B["publish:check<br/>security.txt, WCAG contrast<br/>vault / Zod / MCP parity<br/>functions + edge parity<br/>unit suite, sitedrift guard<br/>CSS lint, astro check + build<br/>asset + page weight, links<br/>HTML, SEO, routes"]
-    D["diagnose<br/>every audit in one pass<br/>Playwright e2e + visual, edge<br/>clean worktree"] -.-> PR
+    A["Source change"] --> G["mise run fast<br/>checks:*: security.txt, WCAG contrast<br/>content + functions parity<br/>unit suite, sitedrift guard<br/>types, CSS lint, astro check"]
+    G --> B["mise run check<br/>+ the build<br/>built:*: asset + page weight, links<br/>HTML, SEO, routes"]
+    D["mise run browser<br/>browser:*: e2e, visual, edge"] -.-> PR
     B --> PR["Pull request"]
     PR --> CI["CI<br/>build, e2e, visual, edge, CodeQL"]
     PR --> PV["Preview<br/>deploy-verify --origin"]

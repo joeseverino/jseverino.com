@@ -32,17 +32,10 @@ jobs:
         with:
           astro-cache: 'true'
 
-      - name: Gate audits
-        run: npm run -s gate:check
-        env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-gate.md
-
-      # The same registry-driven gate that runs locally before a push. --no-sync
-      # because CI has no vault; src/content is the committed snapshot.
-      - name: Publish gate
-        run: npm run publish:check -- --no-sync --after-gate
-        env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
+      # The gate a laptop runs: every static gate, the build, every gate on the
+      # build. src/content is the committed snapshot; CI has no vault.
+      - name: Gates
+        run: mise run check
 
       - name: Generate SBOM
         if: github.event_name != 'pull_request'
@@ -55,19 +48,8 @@ jobs:
           path: sbom.cdx.json
           if-no-files-found: error
 
-      - name: Keep the summaries for the PR comment
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: summary-build
-          path: |
-            ${{ runner.temp }}/summary-gate.md
-            ${{ runner.temp }}/summary-build.md
-          retention-days: 1
-          if-no-files-found: ignore
-
-  # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, `edge` so the
-  # ruleset's required checks match. The visual leg runs on macOS because the baselines
+  # One job, three legs, each running one browser:* task. `name` keeps the check-run names
+  # `e2e`, `visual`, `edge` so the ruleset's required checks match. The visual leg runs on macOS because the baselines
   # are macOS Chromium renders.
   playwright:
     name: ${{ matrix.suite }}
@@ -82,19 +64,16 @@ jobs:
             os: ubuntu-24.04
             browsers: chromium firefox webkit
             prebuild: true
-            config: tests/playwright.config.ts
           - suite: visual
             title: Visual baselines
             os: macos-26
             browsers: chromium
             prebuild: false
-            config: tests/playwright.visual.config.ts
           - suite: edge
             title: Edge runtime
             os: ubuntu-24.04
             browsers: ''
             prebuild: true
-            config: tests/playwright.edge.config.ts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -139,9 +118,9 @@ jobs:
           PREBUILD: ${{ matrix.prebuild }}
 
       - name: ${{ matrix.title }}
-        run: npx playwright test -c "$CONFIG"
+        run: mise run "browser:$SUITE"
         env:
-          CONFIG: ${{ matrix.config }}
+          SUITE: ${{ matrix.suite }}
           PREBUILT: ${{ matrix.prebuild && '1' || '' }}
           PLAYWRIGHT_REPORT: '1'
 

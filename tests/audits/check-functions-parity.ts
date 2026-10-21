@@ -90,4 +90,5 @@ if (insertCount === 0) failures.push('no INSERT statements found in functions/ap
 
 finish(failures, `contact contract drives OpenAPI/handler; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP`, {
   heading: 'check-functions-parity: the serverless boundary disagrees with its schemas:',
+  fix: 'fix: the contact handler, contracts/contact.openapi.json (API Shield), and cloudflare/d1.sql (D1) change together',
 });

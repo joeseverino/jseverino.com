@@ -40,5 +40,5 @@ const unused = [...definitions]
 finish(
   unused.map(([property, locations]) => `${property} (${locations.join(', ')})`),
   `${definitions.size} CSS custom properties, all referenced`,
-  { heading: 'Unused CSS custom properties:' },
+  { heading: 'Unused CSS custom properties:', fix: 'fix: remove the property from src/styles/, or add the var(...) use that needs it' },
 );

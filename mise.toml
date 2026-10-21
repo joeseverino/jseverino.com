@@ -1,0 +1,180 @@
+# The toolchain and every gate, declared once.
+#
+#   mise install        the pinned tools (versions here, checksums in mise.lock)
+#   mise run fast       the static gates, collect-all
+#   mise run check      does my change work: the static gates, the production
+#                       build, then every gate on what it built
+#   mise run browser    the browser suites, one at a time
+#   mise run ci         every gate the pipeline runs
+#   mise run <gate>     one gate, e.g. `mise run checks:types`
+#   mise tasks          the list
+#
+# A gate is a task named <job>:<gate>: checks:* run before a build, built:*
+# against the build in dist/, browser:* in a browser. Each aggregate runs its
+# job by glob (`mise run -c 'checks:*'`), so a gate added here runs locally and
+# in CI with no second list to edit. `-c` keeps going past a failure and names
+# every gate that failed. Under `-c` a task whose dependency failed still
+# starts, so no built:* gate depends on the build: the aggregates run the build
+# first and the built:* gates only after it succeeded. A failing gate prints
+# its own fix. No gate declares `sources`: mise judges them by file times
+# alone, and a verdict also turns on the environment and on files no list would
+# name. A task whose body is more than one line is a file under mise-tasks/,
+# declared in its own #MISE header.
+#
+# Node also stays in .nvmrc, which Cloudflare Pages reads for its build;
+# checks:repo-policy holds the two pins equal. npm packages come from
+# package-lock.json; node_modules/.bin is on every task's PATH.
+
+min_version = "2026.10.15"
+
+[settings.task]
+# Gates that run together print one after another, each whole and labeled,
+# so each gate's failures sit under its own name.
+output = "keep-order"
+
+[env]
+_.path = ["node_modules/.bin"]
+ASTRO_TELEMETRY_DISABLED = "1"
+WRANGLER_SEND_METRICS = "false"
+
+[tools]
+node = "24.22.0"
+
+# ------------------------------------------------------------------ checks
+
+[tasks.checks]
+description = "CI job build, first phase: every static gate, collect-all"
+alias = "fast"
+run = "mise run -c 'checks:*'"
+
+[tasks."checks:duplication"]
+description = "No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files)"
+run = "node tests/audits/check-duplication.ts"
+
+[tasks."checks:contracts"]
+description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source"
+run = "node tests/audits/check-contract-projections.ts"
+
+[tasks."checks:drafts"]
+description = "No document under src/content is `published: false`"
+run = "node tests/audits/check-no-drafts.ts"
+
+[tasks."checks:security-txt"]
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 30 days out, and its Encryption URL names a committed WKD key"
+run = "node tests/audits/check-security-txt.ts"
+
+[tasks."checks:contrast"]
+description = "Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1)"
+run = "node tests/audits/check-contrast.ts"
+
+[tasks."checks:parity"]
+description = "The Astro writeup schema, the public projection, the writeup store, and the `site manage` TUI all read their fields from the content contract"
+run = "node tests/audits/check-contract-parity.ts"
+
+[tasks."checks:types"]
+description = "Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib"
+run = ["astro sync", "tsc -p .", "tsc -p functions"]
+
+[tasks."checks:astro"]
+description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
+# astro sync and astro check both rewrite .astro/; never at once.
+wait_for = ["checks:types"]
+env = { NODE_OPTIONS = "--max-old-space-size=4096" }
+run = "astro check --minimumSeverity warning --tsconfig tsconfig.astro.json"
+
+[tasks."checks:functions"]
+description = "The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines"
+run = "node tests/audits/check-functions-parity.ts"
+
+[tasks."checks:preview"]
+description = "The sitedrift review wrapper is present on preview branches and absent on main"
+run = "node tests/audits/check-sitedrift-preview.ts"
+
+[tasks."checks:unit"]
+description = "The node:test specs under tests/unit pass"
+run = "node --test 'tests/unit/**/*.test.ts'"
+
+[tasks."checks:docs-sync"]
+description = "The generated blocks in docs/Commands.md match bin/help.ts and these tasks"
+run = "node bin/sync-docs.ts --check"
+
+[tasks."checks:docs"]
+description = "Every relative link and its #anchor, `npm run` script, `mise run` task, and backticked repo path in the engineering docs resolves"
+run = "node tests/audits/check-docs.ts"
+
+[tasks."checks:css-lint"]
+description = "Stylelint passes over src/styles"
+run = "stylelint 'src/styles/**/*.css'"
+
+[tasks."checks:css-vars"]
+description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
+run = "node tests/audits/check-css.ts"
+
+[tasks."checks:repo-policy"]
+description = "Node, npm, and lockfile pins agree; no secrets or build output tracked; stylesheet rules hold; TypeScript only, no explicit any or unexplained suppressions; actions SHA-pinned, runners fixed, every job time-boxed"
+run = "node tests/audits/check-repository-policy.ts"
+
+[tasks."checks:patch"]
+description = "No whitespace errors or conflict markers in the working tree"
+run = "git diff --check"
+
+# ------------------------------------------------------------------- build
+
+[tasks.build]
+description = "The production build: astro build, the sitedrift wrap, the CSP hashes"
+timeout = "10m"
+run = "node bin/build-static.ts"
+
+# ------------------------------------------------------------------- built
+
+[tasks.built]
+description = "CI job build, last phase: every gate on the build in dist/, collect-all"
+run = "mise run -c 'built:*'"
+
+[tasks."built:assets"]
+description = "No image the build ships (committed or encoded from content) exceeds 1.5 MB"
+env = { STRICT_ASSET_AUDIT = "1" }
+run = "node tests/audits/audit-assets.ts"
+
+[tasks."built:links"]
+description = "Every internal href, src, poster, and srcset in the built HTML resolves to an emitted file or a Function route"
+run = "node tests/audits/check-links.ts"
+
+[tasks."built:weight"]
+description = "Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget"
+run = "node tests/audits/check-page-weight.ts"
+
+[tasks."built:html"]
+description = "No built page repeats an id, every <img> has alt, headings never skip a level, and no literal `::name` directive reaches the page text"
+run = "node tests/audits/check-html.ts"
+
+[tasks."built:routes"]
+description = "Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
+run = "node tests/audits/check-routes.ts"
+
+[tasks."built:seo"]
+description = "Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD"
+run = "node tests/audits/check-seo.ts"
+
+# ----------------------------------------------------------------- browser
+# Each suite builds what it serves unless PREBUILT is set, which `mise run
+# browser` and the CI legs set after building once. Arguments after the task
+# name go to Playwright: `mise run browser:e2e --ui`,
+# `mise run browser:visual --update-snapshots`.
+
+[tasks."browser:e2e"]
+description = "The functional Playwright specs pass across Chromium, Firefox, and WebKit"
+timeout = "15m"
+run = "playwright test -c tests/playwright.config.ts"
+
+[tasks."browser:visual"]
+description = "Screenshots of the fixture build match the committed macOS Chromium baselines"
+# The baselines are macOS Chromium renders; any other platform renders fonts differently.
+skip_if = "test \"$(uname)\" != Darwin"
+timeout = "10m"
+run = "playwright test -c tests/playwright.visual.config.ts"
+
+[tasks."browser:edge"]
+description = "Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
+timeout = "5m"
+run = "playwright test -c tests/playwright.edge.config.ts"

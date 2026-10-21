@@ -1,4 +1,4 @@
-// Shared audit plumbing. finish() exits 1 with problems under one heading or prints the `ok` line;
+// Shared audit plumbing. finish() exits 1 with problems under one heading and the fix, or prints the `ok` line;
 // builtPages() fails an empty or stale outDir as a broken build.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,8 +24,9 @@ export function finish(problems: readonly string[], ok: string, { heading, bulle
   console.log(`ok       ${ok}`);
 }
 
-export function abort(auditName: string, message: string): never {
+export function abort(auditName: string, message: string, fix?: string): never {
   console.error(`${auditName}: ${message}`);
+  if (fix) console.error(fix);
   process.exit(1);
 }
 

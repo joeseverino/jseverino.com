@@ -107,6 +107,7 @@ if (import.meta.main) {
     for (const { a, b, tokens } of clones) {
       console.error(`- ${a.file}:${a.start}-${a.end} = ${b.file}:${b.start}-${b.end} (${tokens} tokens)`);
     }
+    console.error('fix: extract one shared primitive (bin/lib, src/lib, functions/lib, or a test helper) and import it from both; generated files and test content are exempt in IGNORED above');
     process.exit(1);
   }
   const { code, tests } = THRESHOLDS;

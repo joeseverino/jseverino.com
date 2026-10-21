@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // `npm run help`: npm scripts grouped by role, filtered against package.json.
 // Unlisted scripts show under "Other". The groups also feed docs/Commands.md
-// (rendered by bin/sync-docs.ts).
+// (rendered by bin/sync-docs.ts). The gates are mise tasks: `mise tasks`.
 import { styleText } from 'node:util';
 import { packageScripts } from '../src/lib/json.ts';
 
@@ -16,20 +16,18 @@ export const GROUPS = [
       'sync:contact-openapi': 'Regenerate contact OpenAPI from its request contract',
       'sync:tokens': 'Pull design + brand tokens from `severino-brand` into the repo',
       'sync:edge-site': 'Regenerate the edge runtime\'s copy of the site identity (`functions/generated/site.ts`)',
-      'sync:docs': 'Regenerate the generated blocks in `docs/Commands.md` and `tests/ARCHITECTURE.md`',
-      'diagnose': 'Validate the current snapshot without syncing; report all failures',
+      'sync:docs': 'Regenerate the generated blocks in `docs/Commands.md` (these scripts and the mise tasks)',
       'diff:build': 'Build HEAD vs the working tree; show what changed in the shipped site',
+      'help': 'Print this list grouped by role; `mise tasks` lists the gates',
     },
   },
   {
     title: 'Release',
     items: {
-      'publish:check': 'Fast local build gate (`-- --no-sync` for code-only changes)',
-      'gate:check': "The registry's fast pre-build audits, collect-all; the first step of CI's `build` job",
       'deploy:verify': 'After the merge deploys, from a residential IP: verify remote CI + the live production deploy',
       'diff:content': 'What a content change means by slug: published, edited, removed, pages, generated (`-- --json`)',
       'audit': '`npm audit` against `.github/audit-allowlist.json`: fails on a high/critical advisory not accepted or past review',
-      'build': "Type-check, then produce the static build (what CI's `build` job wraps)",
+      'build': "The production build: astro build, the sitedrift wrap, the CSP hashes (Cloudflare Pages' build command)",
     },
   },
   {
@@ -48,12 +46,6 @@ export const GROUPS = [
       'sign:security': 'Re-sign `public/.well-known/security.txt`',
       'preview:seo': "Preview a page's Google snippet + metadata from built HTML",
       'preview': 'Serve the built site locally',
-      'test:unit': 'Unit suite: markdown DSL, Cloudflare functions, gate harness, registry, audit rules',
-      'test:e2e': 'Playwright functional specs across Chromium, Firefox, WebKit',
-      'test:e2e:ui': 'Playwright in interactive UI mode',
-      'test:e2e:visual': 'Visual-regression snapshots (macOS Chromium)',
-      'test:e2e:visual:update': 'Re-baseline visual snapshots after an intentional design change',
-      'test:edge': 'Serve the build through the Cloudflare runtime and assert headers, the CSP hashes, cache rules, and the functions',
       'serve:edge': 'Serve the build through `wrangler pages dev` for by-hand checks (headers + functions active)',
       'cloudflare:check': 'Diff the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift)',
       'cloudflare:plan': 'The Cloudflare API calls an apply would make',
@@ -64,31 +56,6 @@ export const GROUPS = [
       'github:apply': 'Plan, or with `-- --yes` apply `.github/repo.json` (admin token)',
       'check:lighthouse': 'Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)',
       'clean:generated': 'Remove build output and build caches',
-    },
-  },
-  {
-    title: 'Internal (run by the commands above)',
-    items: {
-      'check': 'CSS lint + unused-var audit + `astro check` (used by `build`)',
-      'check:astro': '`astro check` over the .astro files, content schemas, and imports (`-- --json` for machine output)',
-      'build:static': '`astro build` + sitedrift wrap (`-- --timings` profiles the Astro build)',
-      'lint:css': 'Stylelint over `src/styles/`',
-      'check:security': 'security.txt signature, required fields, expiry, WKD file',
-      'check:contrast': 'WCAG ratios for every text/background pair in `base.css`',
-      'check:parity': 'The content contract, the Astro schema, the writeup store, and the `site manage` TUI agree on writeup fields',
-      'check:types': 'Strict TypeScript over the whole repo (Node program, then the Workers program for `functions/`)',
-      'check:functions': 'Contact handler, OpenAPI schema, and D1 schema agree',
-      'check:preview': 'Sitedrift wrapping on previews, absent on main',
-      'check:docs': 'Every doc link and anchor, `npm run` reference, and backticked repo path resolves',
-      'check:css-vars': 'No CSS custom property is defined but never used',
-      'check:links': 'Every internal reference in the built site resolves',
-      'check:weight': 'Per-page HTML and total CSS/JS stay inside their byte budgets',
-      'check:html': 'No duplicate ids; every image carries alt; headings never skip a level; no unprocessed `::directive`',
-      'check:seo': 'Title, canonical, og:title, og:image, valid JSON-LD on every page',
-      'check:routes': '`_routes.json` sends only the Function routes to Functions; every page is static and `_headers` is complete',
-      'check:repo-policy': 'Node pin, lockfile alignment, clean tree, TypeScript only, SHA-pinned Actions',
-      'audit:assets': 'Image count + weight report (the gates run it strict)',
-      'help': 'Print the live grouped list of all of the above',
     },
   },
 ];

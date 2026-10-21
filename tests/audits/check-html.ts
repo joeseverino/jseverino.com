@@ -71,5 +71,6 @@ if (import.meta.main) {
 
   finish(problems, `${pages.length} pages: ${idCount} ids unique per page, ${imgCount} images all carry alt, headings never skip a level, no unprocessed directives`, {
     heading: 'check-html: structural problems in the built HTML:',
+    fix: 'fix: correct the component or content at the reported page; a decorative image takes alt="", never a missing attribute; a leaked directive is a typo or one the page\'s renderer does not support',
   });
 }

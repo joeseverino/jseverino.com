@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Classify a content change by slug: writeups published, edited, or removed, pages
-// touched, generated files riding along. Shared by publish, land, and publish:check.
+// touched, generated files riding along. Shared by publish and land.
 //
 //   node bin/content-diff.ts [--range <a..b> | --cached] [--json]
 import { cli, flag } from './lib/args.ts';

@@ -96,11 +96,11 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site publish [--dry-run] [--full] [--from <ref>]',
     help: [
       `Preflight, then a fresh content/<date> branch from origin/${DEFAULT_BRANCH} in a temporary worktree (the`,
-      'checkout is never touched), the sync, the content diff, the fast gate, a',
+      'checkout is never touched), the sync, the content diff, mise run fast, a',
       'commit of exactly the files the sync declares, push, and the PR. It does not merge: site land does.',
       '',
       '  --dry-run      stop after the commit, print the summary and PR body, remove the worktree and branch',
-      '  --full         run the whole publish gate (build + post-build audits) instead of the fast gate',
+      '  --full         run mise run check (the build and the gates on it) instead of mise run fast',
       `  --from         cut the branch from this ref instead of origin/${DEFAULT_BRANCH}`,
     ].join('\n'),
     options: {
@@ -158,7 +158,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   seo: define({
     summary: 'Preview a built page\'s search snippet and metadata',
     usage: 'site seo <page> [--result]',
-    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (npm run build:static).',
+    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (npm run build).',
     options: { result: flag },
     positionals: [1, 1],
     run: async ({ values, positionals: [page], out }) => (await local()).seo({ page, result: values.result, out }),

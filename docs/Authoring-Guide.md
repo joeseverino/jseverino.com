@@ -118,9 +118,9 @@ A fenced block tagged `terminal` renders as a terminal:
 
 ````md
 ```terminal
-$ npm run publish:check
-check      0 errors, 0 warnings
-build      93 pages built
+$ mise run build
+[build] 93 page(s) built in 41.2s
+[build] Complete!
 ```
 ````
 
@@ -201,7 +201,7 @@ Before publishing:
 - Images use local relative paths and captions are descriptive.
 - No private hostnames, keys, internal notes, or vault metadata appear in body
   content.
-- `site validate` passes, then `npm run publish:check` after the sync (see
+- `site validate` passes, then `mise run check` after the sync (see
   [Release Checklist](./Release-Checklist.md)).
 
 ## Related Docs

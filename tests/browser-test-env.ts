@@ -1,5 +1,5 @@
 // Build-time values shared by every browser-test entry point, so Playwright's
-// build and diagnose's PREBUILT path serve the same artifact.
+// own build and the PREBUILT one (`mise run browser`, CI) serve the same artifact.
 import os from 'node:os';
 import type { ReporterDescription } from '@playwright/test';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';

@@ -25,11 +25,7 @@ const child = spawn(
     '127.0.0.1',
     `--compatibility-date=${edgeRuntime.compatibilityDate}`,
   ],
-  {
-    cwd: root,
-    stdio: 'inherit',
-    env: { ...process.env, WRANGLER_SEND_METRICS: 'false' },
-  },
+  { cwd: root, stdio: 'inherit' },
 );
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

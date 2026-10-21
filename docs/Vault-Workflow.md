@@ -107,12 +107,10 @@ A vault page may link to a repo-managed asset, but the asset itself is not synce
 
 ```sh
 npm run sync:content
-npm run check
-npm run build:static
-npm run publish:check
+mise run check
 ```
 
-`npm run publish:check` is the final local gate before committing generated content changes.
+`mise run check` is the final local gate before committing generated content changes.
 
 The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
 

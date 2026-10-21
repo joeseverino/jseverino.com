@@ -25,58 +25,23 @@ The worktree is clean before the gate runs.
 
 ## 2. Local Release Gate
 
-Run every audit in one pass (macOS, for the visual baselines):
+Run every gate the pipeline runs (macOS, for the visual baselines):
 
 ```sh
-npm run diagnose
+mise run ci
 ```
 
-`diagnose` runs every audit in
-[`tests/audits/registry.ts`](../tests/audits/registry.ts), including the
-cross-browser, edge runtime, and visual suites, without stopping at the first
-failure, then fails if validation changed repository state. On failure it
-writes `.validation-report.md` with each fix and rerun command;
-`-- --fast` runs only the static checks, `-- --no-tests` skips the browser
-suites, and `-s diagnose -- --json` emits one JSON document.
+`mise run ci` runs `mise run check` (every static gate, the production
+build, every gate on the build) and then `mise run browser` (the
+cross-browser, visual, and edge runtime suites, one at a time). Each phase
+keeps going past a failure and ends on the list of gates that failed; each
+failing gate prints its own fix. `mise run fast` runs only the static gates.
+The [gate table](./Commands.md#gates) says what each gate asserts.
 
-A clean `publish:check` reports one line per step:
-
-```text
-sync         content snapshot updated
-content      no content changes
-dupes        <n> files, no clone of 30+ tokens over 3+ lines (40/4 between tests)
-contracts    generated brand, API, schema, CSS, and edge identity projections match their canonical sources
-manifest     <n> synced images have manifest entries; all <n> named files exist
-drafts       <n> committed documents, none a draft
-security     signed, 5 fields present, expires in <n>d, WKD file present
-contrast     light <ratio>:1  <pair> (<fg> on <bg>)
-parity       one content contract drives Astro/public/MCP/CLI/TUI (<fingerprint>)
-types        passed
-edge         contact contract drives OpenAPI/handler; <n> D1 inserts and <n> row types match storage; inserts cap per IP
-preview      preview wrapped; main unchanged
-unit         passed
-docs-sync    generated blocks in docs/Commands.md and tests/ARCHITECTURE.md match their sources
-docs         <n> docs, <n> local links, <n> script refs, <n> repo paths resolve
-css-lint     passed
-css-vars     passed
-check        0 errors, 0 warnings
-repo-policy  Node, npm, lockfile, stylesheet, TypeScript-only, and workflow pins hold
-build        <n> pages built
-assets       Images: <n>; Total image weight: <n>; No images over 1.5 MB.
-links        <n> pages, <n> internal references (<n> unique) resolve
-weight       <n> pages within budget: heaviest <page> <n>KB/150KB, CSS <n>KB/75KB, JS <n>KB/25KB
-html         <n> pages: <n> ids unique per page, <n> images all carry alt, headings never skip a level, no unprocessed directives
-routes       <n> Function routes invoke Functions; no built HTML page does; _headers has the CSP on /* and the /contact/* override
-seo          <n> pages: title, canonical, og:title, og:image, valid JSON-LD
-edge-runtime <n> passed (<n>s)
-```
-
-`parity` reads `skipped` where `CI` is set.
-
-For a focused frontend check without the full diagnostic run:
+For a focused frontend check without the full run:
 
 ```sh
-npm run test:e2e:visual
+mise run browser:visual
 ```
 
 The visual suite renders the fixture content in `tests/fixtures/content`, not
@@ -85,7 +50,7 @@ fails, inspect the expected, actual, and diff images in `test-results/visual/`.
 For an intentional design change only, update and review the baselines:
 
 ```sh
-npm run test:e2e:visual:update
+mise run browser:visual --update-snapshots
 git diff -- tests/playwright/visual.spec.ts-snapshots/
 ```
 
@@ -99,13 +64,13 @@ committing:
 
 ```sh
 npm run sign:security
-npm run check:security
+mise run checks:security-txt
 ```
 
 `sign:security` strips any existing PGP wrapper, clear-signs the body with
-`security@jseverino.com`, and writes the result back in place. `check:security`
-is also wired into `publish:check`, so a release with an unsigned, expired, or
-WKD-mismatched `security.txt` fails the gate before the build runs.
+`security@jseverino.com`, and writes the result back in place.
+`checks:security-txt` is one of the static gates, so a release with an unsigned,
+expired, or WKD-mismatched `security.txt` fails before the build runs.
 
 ## 3. Pull Request And Merge
 
@@ -329,7 +294,7 @@ verified. Do not raise the score for planned items.
 Recommended evidence to record:
 
 - final commit SHA;
-- `diagnose` output summary;
+- `mise run ci` closing lines;
 - signed tag verification result;
 - Cloudflare deploy URL or timestamp;
 - live header check summary;

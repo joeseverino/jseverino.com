@@ -48,5 +48,8 @@ if (totalJs > BUDGET.totalJsBytes) {
 finish(
   failures,
   `${htmlFiles.length} pages within budget: heaviest ${heaviestPage.rel} ${kb(heaviestPage.size)}/${kb(BUDGET.pageHtmlBytes)}, CSS ${kb(totalCss)}/${kb(BUDGET.totalCssBytes)}, JS ${kb(totalJs)}/${kb(BUDGET.totalJsBytes)}`,
-  { heading: 'check-page-weight: performance budget exceeded:' },
+  {
+    heading: 'check-page-weight: performance budget exceeded:',
+    fix: 'fix: reduce the page or bundle, or raise BUDGET here in its own commit',
+  },
 );

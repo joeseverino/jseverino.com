@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Engineering docs integrity: every relative link, image, `npm run` reference, backticked repo
-// path and #fragment resolves. src/content is excluded; fenced code is skipped for links;
-// `npm run` refs are checked everywhere. Backticked paths resolve if git tracks or ignores them.
+// Engineering docs integrity: every relative link, image, `npm run` and `mise run` reference,
+// backticked repo path and #fragment resolves. src/content is excluded; fenced code is skipped for
+// links; script and task refs are checked everywhere. Backticked paths resolve if git tracks or ignores them.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,6 +12,7 @@ import { finish } from './lib.ts';
 import { isExternal } from '../../src/lib/refs.ts';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { spawnResult } from '../../bin/lib/run.ts';
+import { miseTasks, namesTask } from '../../bin/lib/mise.ts';
 
 // Backticked paths that are deliberate examples; none names a repo file.
 export const EXAMPLE_PATHS: ReadonlySet<string> = new Set([]);
@@ -131,6 +132,10 @@ if (import.meta.main) {
 
   const linkPattern = /(?:!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\))|(?:<img[^>]+src="([^"]+)")/g;
   const npmRunPattern = /npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g;
+  // `mise run [-c] [-j N] <task>`, the task bare or quoted as a glob; a name ending in a
+  // `<placeholder>` is an example, not a reference.
+  const miseRunPattern = /mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]+)(?![\w:.*<-])/g;
+  const tasks = miseTasks();
 
   const problems: string[] = [];
   const index = repoIndex(siteRoot);
@@ -182,6 +187,11 @@ if (import.meta.main) {
           problems.push(`${doc}:${lineIndex + 1}  unknown npm script -> npm run ${name}`);
         }
       }
+
+      for (const [, name = ''] of line.matchAll(miseRunPattern)) {
+        scriptRefCount += 1;
+        if (!namesTask(name, tasks)) problems.push(`${doc}:${lineIndex + 1}  unknown mise task -> mise run ${name}`);
+      }
     });
   }
 
@@ -189,7 +199,8 @@ if (import.meta.main) {
     problems.push(`${ref.doc}:${ref.line}  no such path -> ${ref.path}`);
   }
 
-  finish(problems, `${docs.length} docs, ${linkCount} local links, ${scriptRefCount} script refs, ${allPathRefs.length} repo paths resolve`, {
+  finish(problems, `${docs.length} docs, ${linkCount} local links, ${scriptRefCount} script and task refs, ${allPathRefs.length} repo paths resolve`, {
     heading: 'check-docs: documentation references that do not resolve:',
+    fix: 'fix: correct the reference at the reported file:line, or restore its target; an intentional example path goes in EXAMPLE_PATHS here',
   });
 }

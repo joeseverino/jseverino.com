@@ -27,7 +27,7 @@ jobs:
 
       - name: Check security.txt Expires
         id: check
-        run: node tests/audits/check-security-txt.ts
+        run: mise run checks:security-txt
 
       - name: Open or update issue
         if: always() && steps.check.outputs.days_remaining != '' && fromJSON(steps.check.outputs.days_remaining) < 60
@@ -47,7 +47,7 @@ jobs:
               '',
               '1. Bump the `Expires:` field in `public/.well-known/security.txt`.',
               '2. Run `npm run sign:security` to re-sign.',
-              '3. Run `npm run check:security` to verify.',
+              '3. Run `mise run checks:security-txt` to verify.',
               '4. Commit and push.',
               '',
               'This issue was opened automatically by `.github/workflows/security-txt-expires.yml`.',

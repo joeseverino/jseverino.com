@@ -1,7 +1,7 @@
 // Job-summary and log helpers for the bin/ runners. Inert outside GitHub Actions.
 import fs from 'node:fs';
 
-export const inActions = process.env.GITHUB_ACTIONS === 'true';
+const inActions = process.env.GITHUB_ACTIONS === 'true';
 
 // The workflow-command escaping @actions/core applies, so text cannot end the command or start another.
 const escapeData = (text: string): string => text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
@@ -32,9 +32,9 @@ export function cell(text: unknown): string {
 }
 
 // ok is true, false, or null (skipped).
-export type Outcome = boolean | null;
+type Outcome = boolean | null;
 
-export function outcome(ok: Outcome): string {
+function outcome(ok: Outcome): string {
   if (ok === true) return 'pass';
   if (ok === false) return '**FAIL**';
   return 'skipped';

@@ -35,6 +35,10 @@ try {
   assert.equal(fs.readFileSync(path.join(production, 'index.html'), 'utf8'), original);
 
   console.log('ok       preview wrapped; main unchanged');
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  console.error('fix: the sitedrift wrapper belongs on preview branches and never on main; check the sitedrift step in bin/build-static.ts');
+  process.exitCode = 1;
 } finally {
   fs.rmSync(preview, { recursive: true, force: true });
   fs.rmSync(production, { recursive: true, force: true });

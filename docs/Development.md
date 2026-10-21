@@ -6,14 +6,17 @@ How the repository is built, checked, and shipped. Every script is in
 
 ## Setup
 
-Node comes from [`.nvmrc`](../.nvmrc) and npm from `package.json`'s
-`packageManager`. Copy [`.env.example`](../.env.example) to `.env` for the
-Turnstile test keys, then:
+[mise](https://mise.jdx.dev) installs the toolchain: Node, pinned in
+[`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock),
+and the same version in [`.nvmrc`](../.nvmrc), which Cloudflare Pages reads.
+npm comes from `package.json`'s `packageManager`. Copy
+[`.env.example`](../.env.example) to `.env` for the Turnstile test keys, then:
 
 ```sh
+mise install
 npm ci
 npm run dev                # Astro dev server
-npm run build:static && npm run serve:edge   # the build on the Cloudflare runtime
+npm run build && npm run serve:edge   # the build on the Cloudflare runtime
 ```
 
 ## Code
@@ -21,7 +24,7 @@ npm run build:static && npm run serve:edge   # the build on the Cloudflare runti
 Everything is TypeScript, run directly by Node 24, which strips the types: no
 build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
 properties) is out, so `erasableSyntaxOnly` is on and every relative import
-names its `.ts` file. `npm run check:types` is the one strict
+names its `.ts` file. `mise run checks:types` is the one strict
 check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, `functions/lib/`, or a test helper, and the
 gate fails on duplicated code.
@@ -29,25 +32,22 @@ gate fails on duplicated code.
 ## Gates
 
 ```sh
-npm run gate:check         # fast invariants: types, policy, docs, lint, duplication
-npm run publish:check      # the pre-publish gate: + unit tests, astro check, the build, post-build audits, the edge suite
-npm run diagnose           # the local gate: every audit in one pass; writes .validation-report.md on failure
-npm run diff:build         # build HEAD and the working tree, report any change to shipped output
-npm run deploy:verify      # after a merge: required checks, then the live deployment
+mise run fast             # the static gates: types, policy, docs, lint, duplication, unit tests, astro check
+mise run check            # + the production build, then every gate on it (CI's build job)
+mise run browser          # the browser suites, one at a time: e2e, visual, edge
+mise run ci               # check, then browser: every gate the pipeline runs
+npm run diff:build        # build HEAD and the working tree, report any change to shipped output
+npm run deploy:verify     # after a merge: required checks, then the live deployment
 ```
 
-`npm run diagnose` validates the current checkout without vault access or
-content synchronization. Run `npm run sync:content` explicitly before checking
-new editorial content. Fast diagnosis preserves the existing build and caches;
-all modes check workspace idempotence and report the scope actually executed.
-Signature verification uses an isolated keyring containing only the committed
-WKD public keys. Unit-test Git repositories disable signing locally; production
-commit signing remains configured by the author.
-
-Every gate reads its audits from
-[`tests/audits/registry.ts`](../tests/audits/registry.ts). The browser suites
-(e2e across Chromium, Firefox, and WebKit, and the visual baselines) run in CI
-and in `diagnose`.
+Every gate is a mise task named `<job>:<gate>` (`mise tasks` lists them; the
+[gate table](./Commands.md#gates) says what each asserts), and CI runs the same
+tasks. The gates validate the current checkout without vault access; run
+`npm run sync:content` explicitly before checking new editorial content. A
+failing gate prints its own fix. Signature verification uses an isolated
+keyring containing only the committed WKD public keys. Unit-test Git
+repositories disable signing locally; production commit signing remains
+configured by the author.
 
 ![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](./diagrams/validation-flow.png)
 
@@ -67,7 +67,7 @@ matches what changed:
 | Rendered or interactive behavior | [`tests/playwright/`](../tests/playwright/) |
 | Headers, CSP, or Functions as Cloudflare serves them | [`tests/edge/`](../tests/edge/) |
 
-A new audit is registered in `tests/audits/registry.ts`;
+A new audit is a task in `mise.toml`;
 [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md#adding-a-new-audit) has the
 steps.
 
@@ -75,7 +75,7 @@ steps.
 
 | Workflow | Purpose | Verified Result |
 | --- | --- | --- |
-| [`ci`](../.github/workflows/ci.yml) | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs the gate audits (repository policy, documentation integrity, stylesheet lint) and then the registry publish gate `publish:check --no-sync` on the same artifact `build-static` ships (plus a CycloneDX SBOM on `main`). The `playwright` matrix runs `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `wrangler pages dev` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact function's refusals, and byte-exact `security.txt`, all before anything deploys. | Green checks on the committed tree, SBOM artifact on `main`, and a summary on every job. |
+| [`ci`](../.github/workflows/ci.yml) | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs `mise run check`: the static gates, then the gates on the same artifact `build-static` ships (plus a CycloneDX SBOM on `main`). The `playwright` matrix runs each `browser:*` task in its own leg: `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `wrangler pages dev` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact function's refusals, and byte-exact `security.txt`, all before anything deploys. | Green checks on the committed tree, SBOM artifact on `main`, and a summary on every browser leg. |
 | [`deploy`](../.github/workflows/deploy.yml) | Starts when Cloudflare Pages reports its check-run complete (nothing polls). Runs `deploy-verify --origin` against that deployment's own `*.pages.dev` URL (headers, inline-code hash coverage, cache rules, every sitemap route, 404, contact refusal, `security.txt`), and keeps one pull-request comment current with the CI summaries and the deployment result, whichever finishes first. Records each verified deployment as a GitHub `production` or `preview` deployment. Also recovers the CI run GitHub suppresses after a Dependabot auto-merge. | One updating PR comment; a verification summary for every deployment. |
 | [`dist`](../.github/workflows/dist.yml) | On each push to `main`, builds the site and commits the output to the `dist` branch ([Dist Branch](./Dist-Branch.md)). | A `deploy: <sha>` commit on `dist`, or none when the output is unchanged. |
 | [`codeql`](../.github/workflows/codeql.yml) | Scans the TypeScript for semantic vulnerabilities; skipped (reported as passing) on pull requests that touch only content. | Zero open CodeQL alerts. |
@@ -94,7 +94,7 @@ checkouts) is in [Security](./Security.md#supply-chain-and-ci).
 
 ## Documentation
 
-Docs change in the same commit as the code they describe. `npm run check:docs`
-fails when a relative link, anchor, image, `npm run` reference, or backticked
-repo path points at nothing. The command overview and the audit tables are
+Docs change in the same commit as the code they describe. `mise run checks:docs`
+fails when a relative link, anchor, image, `npm run` or `mise run` reference,
+or backticked repo path points at nothing. The command and gate overviews are
 generated: `npm run sync:docs`.

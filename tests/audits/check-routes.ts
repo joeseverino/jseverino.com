@@ -43,4 +43,5 @@ if (!policy('/contact/*', '! Content-Security-Policy') || !policy('/contact/*', 
 
 finish(problems, `${pages.length} pages are static; ${fnPaths.length} Function routes are the only routes that invoke Functions; _headers carries the policy`, {
   heading: 'check-routes: public/_routes.json or _headers is wrong for this build:',
+  fix: 'fix: keep `include` in public/_routes.json to the Function routes under functions/, and rebuild so bin/build-csp.ts fills the _headers placeholders',
 });

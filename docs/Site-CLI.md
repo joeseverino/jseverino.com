@@ -6,7 +6,7 @@ and [`bin/site/`](../bin/site/), on top of the same modules the npm scripts
 use: the content sync ([`bin/content-sync/`](../bin/content-sync/)), the
 content diff ([`bin/content-diff.ts`](../bin/content-diff.ts)), the shared
 preflight ([`bin/lib/preflight.ts`](../bin/lib/preflight.ts)), and the
-audit registry.
+mise gates.
 
 ```sh
 npm run site -- <command>     # or `npm link` once, then: site <command>
@@ -69,7 +69,7 @@ The content model a client edits against is
 | `site new <slug>` | Scaffold `05 Writeups/<slug>/` from the vault template (`published: false`) |
 | `site validate [<slug>] [--draft]` | Resolve every reference, the frontmatter contract, and the catalog without writing (`sync-content --check`) |
 | `site dev [--drafts] [--host <host>] [--port <port>]` | Astro dev server; drafts come from the gitignored `.cache/drafts` overlay, never the committed snapshot |
-| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, fast gate (`--full`: the whole publish gate), a commit of exactly the declared outputs, push, open the PR. Never merges |
+| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, `mise run fast` (`--full`: `mise run check`), a commit of exactly the declared outputs, push, open the PR. Never merges |
 | `site land [<pr>] [--timeout <min>]` | A PR into `main` (the latest open `content/*` PR when none is named): read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge pinned to that head, wait for the merge commit's Cloudflare Pages deploy, verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. `--timeout` bounds the waits for checks and deploy. Merges only when invoked |
 | `site verify <slug> [--origin <url>]` | Live checks for one writeup (`bin/deploy-verify.ts --slug`), on production or on the deployment at `--origin` |
 | `site status` | Repo, dependency, vault, build, and open content PR state |
@@ -115,7 +115,7 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 
 | Layer | Owns | Examples |
 | :--- | :--- | :--- |
-| npm scripts | build, audits, tests | `npm run diagnose`, `npm run sync:content` |
+| mise tasks and npm scripts | gates; build and tools | `mise run check`, `npm run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
 | [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
 | [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads, the schema apply, header checks | `contactSubmissions`, `checkSecurityHeaders` |
@@ -182,7 +182,7 @@ not ready yet (yellow).
 Status is gathered once and cached; the `as of` timestamp shows its age, and
 `r` regathers it. Actions run inline: the TUI drops out of its
 alternate screen, streams the real command output (`site status`,
-`site validate`, `npm run diagnose`, `npm run build`, `npm run test:e2e`,
+`site validate`, `mise run check`, `npm run build`, `mise run browser:e2e`,
 `site publish`), and returns on a keypress.
 
 ![site manage Site tab with the dev server running: the toggled action label and the running-server status line](./images/site-cli/manage-site-tab-dev-running.png)
@@ -199,7 +199,7 @@ Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 `SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
-`build:static` refuses anything outside `tests/fixtures`, so drafts never
+`npm run build` refuses anything outside `tests/fixtures`, so drafts never
 reach a build), `SITE_JSON=1` switches Astro
 to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
 (default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`

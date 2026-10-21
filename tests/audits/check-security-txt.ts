@@ -21,7 +21,8 @@ const wkdEncryptionRe = new RegExp(
 
 const expiresWarnDays = 30;
 
-const fail: (message: string) => never = (message) => abort('check-security-txt', message);
+const fail: (message: string) => never = (message) => abort('check-security-txt', message,
+  'fix: run `npm run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key');
 
 try {
   if (!fs.existsSync(SECURITY_FILE)) fail(`missing ${path.relative(siteRoot, SECURITY_FILE)}`);

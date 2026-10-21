@@ -1,0 +1,15 @@
+#!/bin/sh
+#MISE description="Does my change work: every static gate, the production build, then every gate on what it built (CI job build)"
+#MISE timeout="30m"
+
+# Each phase reports every failure it finds. The built:* gates run only on a
+# build that succeeded, never on a stale or partial dist/.
+status=0
+mise run -c checks || status=1
+if mise run build; then
+  mise run -c built || status=1
+else
+  echo 'check: the build failed, so the built:* gates did not run' >&2
+  status=1
+fi
+exit "$status"

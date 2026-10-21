@@ -5,15 +5,17 @@ how to test an upgrade before taking it.
 
 ## Runtime and package manager
 
-Node comes from [`.nvmrc`](../.nvmrc), an exact LTS release. `engines.node` in
+Node comes from [`mise.toml`](../mise.toml), an exact LTS release, and the same
+version is in [`.nvmrc`](../.nvmrc) for Cloudflare Pages. `engines.node` in
 `package.json` names the same major, and `packageManager` pins the npm release
 that Node version bundles, so a fresh install of the pinned Node needs nothing
-else. `npm run check:repo-policy` fails when the running Node's major.minor or
-npm's major disagrees with those pins. Patch drift passes, so a Node security
+else. `mise run checks:repo-policy` fails when the two Node pins differ, or the
+running Node's major.minor or npm's major disagrees with them. Patch drift passes, so a Node security
 release does not block the gates before the pin moves.
 
-CI reads the same `.nvmrc` through `actions/setup-node`, so bumping the file
-moves every workflow at once.
+CI installs Node from `mise.toml` and `mise.lock` through `jdx/mise-action`,
+so a bump moves every workflow at once; a Node bump changes `mise.toml`,
+`mise.lock` (`mise lock`), and `.nvmrc` together.
 
 ## Deliberate holds
 
@@ -45,5 +47,5 @@ and a review date, in
 2. `npm ls <package>` shows one resolved copy, and `npm outdated` lists only
    the holds above.
 3. `npm run audit` passes.
-4. `npm run diagnose` passes, including the visual baselines. A browser
+4. `mise run ci` passes, including the visual baselines. A browser
    upgrade can shift rendering; inspect any diff before regenerating.

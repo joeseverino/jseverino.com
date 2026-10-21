@@ -101,7 +101,7 @@ so. They need no account system, write API, or database.
 
 ## Repository Integration
 
-`npm run build:static`
+`npm run build`
 ([`bin/build-static.ts`](../bin/build-static.ts)) runs `astro build`, then
 `sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
 output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
@@ -151,7 +151,7 @@ report receiver, headers, and static assets are unchanged.
 Run the guard before release:
 
 ```sh
-npm run check:preview
+mise run checks:preview
 ```
 
 It builds simulated outputs and asserts that a feature branch receives the
@@ -190,8 +190,7 @@ binding, secret, upload endpoint, or public write path.
 
 ```sh
 npm install --save-dev 'sitedrift@^<version>'
-npm run check
-npm run check:preview
+mise run fast
 ```
 
 Review upstream release notes and verify an immutable Pages deployment before

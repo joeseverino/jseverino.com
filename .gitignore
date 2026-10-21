@@ -19,7 +19,6 @@ node_modules
 /playwright-report/
 /test-results/
 .playwright-mcp/
-.validation-report.md
 
 # Environment and local machine files
 .env

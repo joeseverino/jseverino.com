@@ -32,7 +32,6 @@ export default defineConfig({
     stderr: 'pipe',
     env: {
       ...browserTestEnv,
-      ASTRO_TELEMETRY_DISABLED: '1',
       SITE_CONTENT_ROOT: 'tests/fixtures/content',
     },
   },

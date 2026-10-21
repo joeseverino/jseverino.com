@@ -1,7 +1,7 @@
 %%{init: { "htmlLabels": false } }%%
 flowchart TB
-    A["Source change"] --> B["gate:check"] --> C["publish:check"] --> D["Push branch, open PR"]
-    G["diagnose: every check, one pass"] -.-> C
+    A["Source change"] --> B["mise run fast"] --> C["mise run check"] --> D["Push branch, open PR"]
+    G["mise run browser: the browser suites"] -.-> C
     D --> CI
     D --> P["Cloudflare Pages preview"] --> V["deploy-verify --origin on the preview"]
     CI --> M["Merge: site land"]

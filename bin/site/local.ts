@@ -25,7 +25,7 @@ export interface DevOptions {
 // the lock file it leaves names the server.
 export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptions): Promise<DevResult> {
   requireReady(await preflight(drafts ? ['deps', 'vault'] : ['deps'], { root }), out);
-  const env: NodeJS.ProcessEnv = { ASTRO_TELEMETRY_DISABLED: '1' };
+  const env: NodeJS.ProcessEnv = {};
   if (drafts) {
     const synced = await runScript('bin/sync-content.ts', ['--drafts'], { out, timeout: SYNC_TIMEOUT_MS });
     if (!synced.ok) throw new SiteError('the drafts sync failed', { result: synced, fix: 'site validate --draft' });

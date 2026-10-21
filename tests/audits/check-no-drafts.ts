@@ -16,5 +16,5 @@ const drafts = documents.filter((file) => parseFrontmatter(fs.readFileSync(file,
 
 finish(drafts.map((file) => `published: false in ${path.relative(siteRoot, file)}`), `${documents.length} committed documents, none a draft`, {
   bullet: '- ',
-  fix: 'run: npm run sync:content (drafts belong in the overlay `site dev --drafts` writes)',
+  fix: 'fix: run `npm run sync:content` (drafts belong in the overlay `site dev --drafts` writes)',
 });

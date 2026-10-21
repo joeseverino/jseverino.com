@@ -20,6 +20,11 @@ const majorMinor = (version: string): string => version.split('.').slice(0, 2).j
 if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
   failures.push(`Node ${actualNode} does not match .nvmrc (${expectedNode}; major.minor must agree)`);
 }
+// Cloudflare Pages reads .nvmrc and every other run takes mise's node, so the two pins are one version.
+const miseNode = /^node = "([^"]+)"$/m.exec(read('mise.toml'))?.[1];
+if (miseNode !== expectedNode) {
+  failures.push(`mise.toml pins node ${miseNode ?? '(none)'} but .nvmrc pins ${expectedNode}`);
+}
 
 type DependencyField = 'dependencies' | 'devDependencies' | 'optionalDependencies';
 type Manifest = { name?: string; version?: string; engines?: { node?: string }; packageManager?: string } & Partial<Record<DependencyField, Record<string, string>>>;
@@ -172,5 +177,9 @@ for (const file of automation) {
 finish(
   failures,
   `Node ${actualNode}, ${packageJson.packageManager}; lockfile aligned; stylesheet architecture clean; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; actions and runners pinned; every job time-boxed`,
-  { heading: 'repository policy failed:', bullet: '- ' },
+  {
+    heading: 'repository policy failed:',
+    bullet: '- ',
+    fix: 'fix: the rule each line names: the Node and npm pins (.nvmrc, mise.toml, engines, packageManager), the lockfile, a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (SHA pin, fixed runner, timeout-minutes)',
+  },
 );

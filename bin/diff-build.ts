@@ -20,7 +20,7 @@ function run(command: string, args: readonly string[], cwd: string, extraEnv: No
   const { code } = spawnResult(command, args, {
     cwd,
     stdio: 'inherit',
-    env: { ASTRO_TELEMETRY_DISABLED: '1', ...extraEnv },
+    env: extraEnv,
   });
   if (code !== 0) throw new Error(`${command} ${args.join(' ')} exited ${code}`);
 }

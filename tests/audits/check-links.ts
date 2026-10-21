@@ -70,4 +70,5 @@ for (const { rel, html } of pages) {
 
 finish(failures, `${pages.length} pages, ${referenceCount} internal references (${checked.size} unique) resolve`, {
   heading: 'check-links: internal references that do not resolve in the build output:',
+  fix: 'fix: correct the link at the reported page, or restore the missing target',
 });

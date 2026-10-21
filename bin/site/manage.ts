@@ -127,9 +127,9 @@ function runCommandInline(bin: string, args: readonly string[], title: string): 
 const INLINE_ACTIONS: Record<string, { bin: string; args: readonly string[]; title: string; reloads?: true }> = {
   h: { bin: SITE[0], args: [SITE[1], 'status'], title: 'Repository status (site status)' },
   v: { bin: SITE[0], args: [SITE[1], 'validate'], title: 'Publish gate (site validate)' },
-  g: { bin: 'npm', args: ['run', '-s', 'diagnose'], title: 'Full diagnostic gate (npm run diagnose)' },
+  g: { bin: 'mise', args: ['run', 'check'], title: 'Static gates, build, and built-site gates (mise run check)' },
   b: { bin: 'npm', args: ['run', '-s', 'build'], title: 'Astro build (npm run build)' },
-  t: { bin: 'npm', args: ['run', '-s', 'test:e2e'], title: 'Playwright suite (npm run test:e2e)' },
+  t: { bin: 'mise', args: ['run', 'browser:e2e'], title: 'Playwright suite (mise run browser:e2e)' },
   p: { bin: SITE[0], args: [SITE[1], 'publish'], title: 'Open the content PR (site publish)', reloads: true },
 };
 

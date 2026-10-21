@@ -24,6 +24,7 @@ if (contentOverride !== undefined && !permittedContentRoot(contentOverride, site
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
 const sitedrift = path.join(siteRoot, 'node_modules/sitedrift/sitedrift.mjs');
 
+// Cloudflare Pages builds without mise, so the build sets the variable mise's [env] sets everywhere else.
 function run(command: string, args: readonly string[]): void {
   const { code } = spawnResult(command, args, { cwd: siteRoot, stdio: 'inherit', env: { ASTRO_TELEMETRY_DISABLED: '1' } });
   if (code !== 0) process.exit(code);

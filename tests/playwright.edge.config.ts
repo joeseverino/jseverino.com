@@ -18,9 +18,9 @@ export default defineConfig({
   projects: [{ name: 'edge' }],
   webServer: {
     cwd: webServerCwd,
-    // PREBUILT is set by bin/diagnose.ts after its own build.
+    // PREBUILT is set by `mise run browser` after its one build, and by CI, which builds while system deps install.
     command: [
-      process.env.PREBUILT ? null : 'npm run build:static',
+      process.env.PREBUILT ? null : 'node bin/build-static.ts',
       'node bin/edge-serve.ts',
     ].filter(Boolean).join(' && '),
     url: origin,

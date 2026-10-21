@@ -54,9 +54,9 @@ export default defineConfig({
   ],
   webServer: {
     cwd: webServerCwd,
-    // PREBUILT is set by bin/diagnose.ts and by CI, which builds while system deps install.
+    // PREBUILT is set by `mise run browser` after its one build, and by CI, which builds while system deps install.
     command: [
-      process.env.PREBUILT ? null : 'npm run build:static',
+      process.env.PREBUILT ? null : 'node bin/build-static.ts',
       // --ignore-lock keeps the server in the foreground Playwright owns (Astro
       // detaches it when it detects an agent) and beside a running visual preview.
       `npm run preview -- --host 127.0.0.1 --port ${PORT} --ignore-lock`,

@@ -33,4 +33,5 @@ for (const { rel, html } of pages) {
 
 finish(problems, `${pages.length} pages: title, canonical, og:title, og:image, valid JSON-LD`, {
   heading: 'check-seo: pages with missing or invalid SEO metadata:',
+  fix: 'fix: check src/components/SeoHead.astro and the page frontmatter',
 });

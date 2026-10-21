@@ -42,8 +42,8 @@ export function siteActionSpecs(status: Partial<SiteStatus>): SiteActionSpec[] {
     { key: 'd', label: status.devServerOpen ? 'Stop Dev Server' : 'Start Dev Server', desc: `starts/stops Astro at port ${DEV_PORT}` },
     { key: 'h', label: 'Status', desc: 'repository, dependencies, vault, open content PRs' },
     { key: 'v', label: 'Validate', desc: 'the publish gate over every published writeup' },
-    { key: 'g', label: 'Run Diagnose', desc: 'the collect-all gate: every audit in one pass' },
-    { key: 'b', label: 'Build Site', desc: 'type-check and the static build' },
+    { key: 'g', label: 'Run Gates', desc: 'every static gate, the build, every gate on the build' },
+    { key: 'b', label: 'Build Site', desc: 'the static build' },
     { key: 't', label: 'Run Tests', desc: 'Playwright suite' },
     { key: 'p', label: 'Publish', desc: 'open a content PR from the vault (merge with site land)' },
   ];

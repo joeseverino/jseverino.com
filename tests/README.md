@@ -4,24 +4,23 @@ Every change passes four layers: Node audits that assert invariants about the
 source and the build, unit tests for the pure logic, Playwright specs that drive
 the **built** output in a browser and through the Cloudflare runtime, and
 post-deploy probes against each deployment. This directory holds the first
-three; [`bin/`](../bin/) sequences them into gates.
+three; [`mise.toml`](../mise.toml) names each one a gate and sequences them.
 
 > This file is the tour. Every audit with its fix, every spec, and the CI
 > workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
 ```
 tests/
-├── audits/        Node checks: assert an invariant, exit non-zero on failure
-│   └── registry.ts   the audit inventory: which audits exist, which gate runs each
-├── unit/          node:test specs for pure logic (Markdown DSL, Functions, gate harness, audit rules)
+├── audits/        Node checks: assert an invariant, exit non-zero with the fix on failure
+├── unit/          node:test specs for pure logic (Markdown DSL, Functions, process harness, audit rules)
 ├── edge/          request specs against dist/ served by wrangler pages dev (Functions, _headers, built policy)
 ├── playwright/    browser specs against dist/ through a preview server
 └── fixtures/      the synthetic content the visual suite builds
 ```
 
-Every gate (`gate:check`, `publish:check`, `diagnose`) reads its
-audits from [`audits/registry.ts`](./audits/registry.ts), so a new audit runs in
-every gate that claims it.
+Each check is a mise task named `<job>:<gate>` (`checks:*` before the build,
+`built:*` on it, `browser:*` in a browser), and each aggregate runs its job by
+glob, so a new task runs locally and in CI with no second list to edit.
 
 ## How it fits together
 
@@ -32,23 +31,15 @@ pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
-| `npm run gate:check` | local and CI, first | the fast invariants: duplication, types, repository policy, docs, CSS lint, the snapshot's manifest and draft guards |
-| `npm run publish:check` | local and CI | the pre-build audits, `astro check`, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
+| `mise run fast` | local | the static gates: duplication, types, repository policy, docs, CSS lint, unit tests, `astro check`, the draft guard |
+| `mise run check` | local and CI (`build`) | the static gates, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
+| `mise run browser` | local and CI (`e2e`, `visual`, `edge`) | one build, then the cross-browser, visual, and edge runtime suites, one at a time |
 | `npm run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status, the dependency audit, and open CodeQL alerts |
 
-The exact audit list per gate is the generated [gate coverage](./ARCHITECTURE.md#gate-coverage) table.
-
-### The one-stop gate: `npm run diagnose`
-
-Runs **every** audit in the registry without stopping at the first failure:
-
-- **Green** prints one summary line.
-- **Red** writes `.validation-report.md`: one row per failure, the fix, and the
-  exact command to rerun that check. Long output is clipped; the rerun command
-  shows the rest.
-- **`--json`** prints one document (per-check status, durations, rerun and fix
-  for each failure) for agents and CI.
-- `--fast` runs only the static checks; `--no-tests` skips the browser suites.
+Every gate with what it asserts is the generated [gate table](../docs/Commands.md#gates).
+`mise run ci` runs `check` and then `browser`: every gate the pipeline runs.
+Each phase keeps going past a failure and ends on the gates that failed; each
+failing gate prints its own fix.
 
 ## The layers
 
@@ -58,14 +49,14 @@ boundaries (vault/Zod/MCP and handler/OpenAPI/D1), strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
 (including unprocessed directives), Functions routing, and SEO metadata.
-The [audit table](./ARCHITECTURE.md#2-audits) says what each one asserts and how to fix it.
+The [gate table](../docs/Commands.md#gates) says what each one asserts; a failing one prints its fix.
 
 **[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
 build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
 [`src/lib/markdown/`](../src/lib/markdown/) is pinned block by block to the
 HTML it must produce, and its guard to what it refuses. The Cloudflare Pages Functions (contact API, CSP report
 endpoint, preview proxy) run request in, response out, with D1 and
-Turnstile stubbed. The gate harness, the registry, the `site` CLI's publish and
+Turnstile stubbed. The process harness, the `site` CLI's publish and
 land flows, and each audit's rule are tested too. Node runs the specs directly
 by stripping types.
 
@@ -109,17 +100,18 @@ The full baseline gallery and more diff/failure examples are in
 ## Run it
 
 ```sh
-npm run help                     # grouped list of every script by role
+mise tasks                                   # every gate with what it asserts
+npm run help                                 # every npm script by role
 
-npm run gate:check               # fast invariants, collect-all
-npm run publish:check            # local build gate
-npm run diagnose                 # everything, no short-circuit (--fast | --no-tests | --json)
+mise run fast                                # the static gates, collect-all
+mise run check                               # + the build and every gate on it
+mise run ci                                  # + the browser suites
 
-npm run test:unit                # unit suite (fast, no browser)
-npm run test:edge                # the edge runtime suite
-npm run test:e2e                 # functional specs across Chromium, Firefox, WebKit
-npm run test:e2e:visual          # visual regression (macOS Chromium)
-npm run test:e2e:visual:update   # re-baseline after an intentional design change
+mise run checks:unit                         # unit suite (fast, no browser)
+mise run browser:edge                        # the edge runtime suite
+mise run browser:e2e                         # functional specs across Chromium, Firefox, WebKit
+mise run browser:visual                      # visual regression (macOS Chromium)
+mise run browser:visual --update-snapshots   # re-baseline after an intentional design change
 ```
 
 ---

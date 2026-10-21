@@ -8,13 +8,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 import { cli } from './lib/args.ts';
-import { firstFailureLine } from './lib/audit-summary.ts';
 import { spawnResult, status } from './lib/run.ts';
 import { annotate, appendSummary, table } from './lib/step-summary.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 
 cli({ usage: 'usage: node bin/lighthouse-check.ts\n\nRuns Lighthouse against the URLs in tests/lighthouse.json.' });
+
+// The first line of a failed run's log that reads as the reason, for its table row.
+function firstFailureLine(log: string): string {
+  const lines = log.split('\n').map((line) => line.trim()).filter(Boolean);
+  return lines.find((line) => /^(error|failed|fail|✖|✗|-\s)/i.test(line)) ?? lines.at(-1) ?? 'failed';
+}
 
 const chromePath = process.env.CHROME_PATH || chromium.executablePath();
 if (!fs.existsSync(chromePath)) {

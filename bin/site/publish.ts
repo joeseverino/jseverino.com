@@ -71,16 +71,18 @@ async function syncInWorktree({ root, worktree, scratch }: StageContext): Promis
 
 export type GateContext = Pick<StageContext, 'root' | 'worktree' | 'out'> & { full: boolean };
 
-// CI runs the full build and browser suites on the PR, so locally the fast gate is enough;
-// --full runs the whole publish gate instead.
+// CI runs the full build and browser suites on the PR, so locally the static gates are enough;
+// --full also builds and runs the gates on the build (`mise run check`). The worktree is
+// this repository's own fresh checkout, so its mise.toml is trusted for the run.
 async function gateInWorktree({ worktree, full, out }: GateContext): Promise<void> {
+  const options = { cwd: worktree, env: { MISE_TRUSTED_CONFIG_PATHS: worktree } };
   if (full) {
-    await step('publish gate', process.execPath, ['bin/publish-check.ts', '--no-sync'], { cwd: worktree, timeout: GATE_TIMEOUT_MS });
-    out.ok('gate', 'publish gate passed (--full)');
+    await step('check', 'mise', ['run', 'check'], { ...options, timeout: GATE_TIMEOUT_MS });
+    out.ok('gate', 'mise run check passed (--full)');
     return;
   }
-  await step('fast gate', process.execPath, ['bin/gate-check.ts'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
-  out.ok('gate', 'fast gate passed');
+  await step('fast gate', 'mise', ['run', 'fast'], { ...options, timeout: BUILD_TIMEOUT_MS });
+  out.ok('gate', 'mise run fast passed');
 }
 
 // Changes the sync did not declare mean it wrote something publish would not

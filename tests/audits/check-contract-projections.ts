@@ -16,6 +16,7 @@ for (const [name, script] of checks) {
     runSync(process.execPath, [script, '--check'], { cwd: siteRoot });
   } catch (error) {
     console.error(`${name} is stale\n${errorMessage(error)}`);
+    console.error(`fix: run \`node ${script}\` and commit the result; a projection always equals what its script derives from the canonical input`);
     process.exit(1);
   }
 }

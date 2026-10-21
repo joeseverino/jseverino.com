@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // Runs against the fixture build (tests/fixtures/content), never real content.
-// After an intended change, re-baseline with `npm run test:e2e:visual:update`.
+// After an intended change, re-baseline with `mise run browser:visual --update-snapshots`.
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 } as const;
 const MOBILE_VIEWPORT = { width: 412, height: 880 } as const;

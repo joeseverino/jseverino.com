@@ -97,9 +97,10 @@ docs/         architecture, operations, and guides
 ## Working on it
 
 ```sh
+mise install             # Node, pinned in mise.toml
 npm ci
 npm run dev              # local site
-npm run diagnose         # the local gate: every audit, the build, the browser suites
+mise run check           # the gate: every static check, the build, every check on the build
 npm run site -- --help   # scaffold, validate, publish, and verify writeups
 ```
 
