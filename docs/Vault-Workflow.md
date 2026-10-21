@@ -112,16 +112,23 @@ mise run check
 
 `mise run check` is the final local gate before committing generated content changes.
 
-The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
+The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts), each from an environment variable with no default: a missing one stops the command on a line that names it. Machine paths never enter this public repository. They live in the `[env]` table of a gitignored `mise.local.toml` at the checkout root, which mise loads beside `mise.toml`:
 
-| Source | Override | Default |
+```toml
+[env]
+VAULT_DIR = "/path/to/labs-vault"
+LIFE_VAULT_DIR = "/path/to/life-vault"
+RESUME_ENGINE_DIR = "/path/to/resume-engine"
+```
+
+| Source | Variable | When unset |
 | :--- | :--- | :--- |
-| Labs vault | `VAULT_DIR`, then `NOTES_HOME` | `~/Documents/Code/Severino Labs` |
-| Life vault | `LIFE_VAULT_DIR` | `~/Documents/Life` |
-| resume-engine | `RESUME_ENGINE_DIR` | `~/Code/Assets/resume-engine` |
-| Education export | `EDUCATION_EXPORT_FILE` | none: `severino-vault-mcp export education` is run |
+| Labs vault | `VAULT_DIR`, then `NOTES_HOME` | the command stops |
+| Life vault | `LIFE_VAULT_DIR` | the command stops |
+| resume-engine | `RESUME_ENGINE_DIR` | the command stops |
+| Education export | `EDUCATION_EXPORT_FILE` | `severino-vault-mcp export education` is run |
 
-The export is held to [`education-export-v1.json`](../public/schemas/education-export-v1.json), whether it is a file or the command's output. A runner on another machine supplies all four inputs explicitly, and [`explicit-inputs.test.ts`](../tests/unit/explicit-inputs.test.ts) runs the sync CLI with an empty home to hold that. The site never decrypts the vault: a runner hands it plain directories.
+`site publish` runs the sync in a temporary worktree, which has no `mise.local.toml`; the variables reach it through the environment the command inherits. The export is held to [`education-export-v1.json`](../public/schemas/education-export-v1.json), whether it is a file or the command's output. [`explicit-inputs.test.ts`](../tests/unit/explicit-inputs.test.ts) runs the sync CLI with an empty home and only the variables it is given, to hold that nothing reads a path of its own. The site never decrypts the vault: a runner hands it plain directories.
 
 `Career/resume.md` in the Life vault is the resume's canonical file. Obsidian or any other client may edit it; the grammar that renders it lives in resume-engine, so every client validates and previews through that grammar.
 

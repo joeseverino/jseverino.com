@@ -5,6 +5,7 @@ import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';
 import { run } from './run.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 interface LockEntry {
   version?: string;
@@ -72,7 +73,12 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `gh is not authenticated: ${result.output.trim().split('\n').at(-1)}`, fix: 'gh auth login' };
   },
   async vault() {
-    const root = vaultRoot();
+    let root: string;
+    try {
+      root = vaultRoot();
+    } catch (error) {
+      return { ok: false, detail: errorMessage(error), fix: 'set VAULT_DIR in mise.local.toml [env]' };
+    }
     const missing = [WRITEUPS_FOLDER, PAGES_FOLDER].filter((folder) => !fs.existsSync(path.join(root, folder)));
     return missing.length === 0
       ? { ok: true, detail: `vault at ${root}` }

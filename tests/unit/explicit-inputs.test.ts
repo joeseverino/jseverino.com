@@ -31,18 +31,26 @@ describe('the sync CLI on a machine with nothing of the author\'s', () => {
     assert.deepEqual(JSON.parse(run.stdout), { ok: true, documents: [] });
   });
 
-  test('without one, stops on a single line that names the path and the variable', () => {
+  test('without one, stops on a single line that names the variable and where to set it', () => {
     const run = sync({});
     assert.equal(run.status, 2);
     assert.equal(run.stderr.trim().split('\n').length, 1);
-    assert.match(run.stderr, new RegExp(`vault not found: ${RegExp.escape(home)}.*\\(set VAULT_DIR\\)`));
+    assert.match(run.stderr, /vault not configured: set VAULT_DIR in mise\.local\.toml \[env\]/);
+  });
+
+  test('pointed at a missing vault, stops on a single line that names the path and the variable', () => {
+    const missing = path.join(root, 'missing');
+    const run = sync({ VAULT_DIR: missing });
+    assert.equal(run.status, 2);
+    assert.equal(run.stderr.trim().split('\n').length, 1);
+    assert.match(run.stderr, new RegExp(`vault not found: ${RegExp.escape(missing)}.*\\(set VAULT_DIR\\)`));
   });
 });
 
 describe('where each input comes from', () => {
-  test('only the path defaults and the local audit log read the home directory', () => {
+  test('only the local audit log reads the home directory', () => {
     const readers = trackedFiles(fromRoot('.'), 'bin', 'src', 'functions')
       .filter((file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('));
-    assert.deepEqual(readers.sort(), ['bin/lib/local-paths.ts', 'bin/lib/site-ops.ts']);
+    assert.deepEqual(readers.sort(), ['bin/lib/site-ops.ts']);
   });
 });
