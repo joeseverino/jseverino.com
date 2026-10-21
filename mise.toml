@@ -158,8 +158,8 @@ description = "Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay wi
 run = "node tests/audits/check-page-weight.ts"
 
 [tasks."built:html"]
-description = "No built page repeats an id, every <img> has alt, headings never skip a level, and no literal `::name` directive reaches the page text"
-run = "node tests/audits/check-html.ts"
+description = "html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
+run = ["html-validate dist", "node tests/audits/check-html.ts"]
 
 [tasks."built:routes"]
 description = "Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"

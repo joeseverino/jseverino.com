@@ -75,6 +75,7 @@
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.19.2",
     "fast-check": "^4.10.2",
+    "html-validate": "^11.16.2",
     "lighthouse": "^13.5.0",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v2.0.0/severino-brand-2.0.0.tgz",
     "sharp": "^0.35.4",

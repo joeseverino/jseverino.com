@@ -25,7 +25,7 @@ gate prints its own fix. CI runs the same tasks, one aggregate per job.
 | `mise run build` | The production build: astro build, the sitedrift wrap, the CSP hashes |
 | `mise run built` | CI job build, last phase: every gate on the build in dist/, collect-all |
 | `mise run built:assets` | No image the build ships (committed or encoded from content) exceeds 1.5 MB |
-| `mise run built:html` | No built page repeats an id, every <img> has alt, headings never skip a level, and no literal `::name` directive reaches the page text |
+| `mise run built:html` | html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text |
 | `mise run built:links` | Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route |
 | `mise run built:routes` | Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/* |
 | `mise run built:seo` | Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD |

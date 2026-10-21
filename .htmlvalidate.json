@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/html-validate/schema/config.json",
+  "root": true,
+  "rules": {
+    "no-dup-id": "error",
+    "wcag/h37": "error",
+    "heading-level": "error"
+  }
+}

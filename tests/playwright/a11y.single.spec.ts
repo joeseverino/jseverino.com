@@ -11,7 +11,7 @@ const summarize = (results: Awaited<ReturnType<typeof scan>>) =>
       `${violation.id} (${violation.impact}): ${violation.help}; ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target}`,
   );
 
-// axe-core over the key page archetypes. check-html covers cheap structural rules;
+// axe-core over the key page archetypes. built:html covers cheap structural rules;
 // this runs the full WCAG A/AA ruleset where contrast and landmarks resolve.
 // Engine-independent, so *.single.
 
