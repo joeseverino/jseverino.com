@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { escapeHtml } from '../../src/lib/html.ts';
 
 export interface Org {
   name: string;
@@ -36,17 +37,17 @@ export async function loadGrammar(resumeEngineRoot: string): Promise<Grammar> {
 
 // An org heading. A multi-role org carries its summarized tenure span with the
 // location tucked under it; `href` links the name (resume orgs to their
-// /education/ page).
+// /education/ page). Every value is text from the vault, escaped where it lands.
 export function orgRow(org: Org, { tenure, href }: { tenure?: string | undefined; href?: string | undefined } = {}): string {
   const meta = tenure
-    ? `<span class="resume-org-meta"><span class="resume-dates">${tenure}</span><span class="resume-loc">${org.location}</span></span>`
-    : `<span class="resume-loc">${org.location}</span>`;
-  const name = href ? `<a href="${href}">${org.name}</a>` : org.name;
+    ? `<span class="resume-org-meta"><span class="resume-dates">${escapeHtml(tenure)}</span><span class="resume-loc">${escapeHtml(org.location)}</span></span>`
+    : `<span class="resume-loc">${escapeHtml(org.location)}</span>`;
+  const name = href ? `<a href="${escapeHtml(href)}">${escapeHtml(org.name)}</a>` : escapeHtml(org.name);
   return `<h3 class="resume-org"><span>${name}</span>${meta}</h3>`;
 }
 
 export const roleRow = (role: Role): string =>
-  `<p class="resume-role"><strong>${role.title}</strong><span class="resume-dates">${role.dates}</span></p>`;
+  `<p class="resume-role"><strong>${escapeHtml(role.title)}</strong><span class="resume-dates">${escapeHtml(role.dates)}</span></p>`;
 
 function lineRow(grammar: Grammar, line: string): string {
   const role = grammar.matchRole(line);
@@ -54,12 +55,12 @@ function lineRow(grammar: Grammar, line: string): string {
 
   const cert = line.startsWith('- ') ? grammar.matchCert(line.slice(2)) : null;
   if (cert) {
-    return `<p class="resume-cert"><a href="${cert.url}">${cert.name}</a><span class="resume-issuer">${cert.issuer}</span><span class="resume-dates">${cert.date}</span></p>`;
+    return `<p class="resume-cert"><a href="${escapeHtml(cert.url)}">${escapeHtml(cert.name)}</a><span class="resume-issuer">${escapeHtml(cert.issuer)}</span><span class="resume-dates">${escapeHtml(cert.date)}</span></p>`;
   }
 
   const projectMeta = grammar.matchProjectMeta(line);
   if (projectMeta) {
-    return `<p class="resume-projmeta"><a href="${projectMeta.href}">${projectMeta.label}</a><span class="resume-dates">${projectMeta.date}</span></p>`;
+    return `<p class="resume-projmeta"><a href="${escapeHtml(projectMeta.href)}">${escapeHtml(projectMeta.label)}</a><span class="resume-dates">${escapeHtml(projectMeta.date)}</span></p>`;
   }
 
   return line;

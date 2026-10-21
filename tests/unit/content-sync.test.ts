@@ -157,6 +157,14 @@ describe('document rows', () => {
       roleRow({ title: 'BS', dates: '2020' }),
     ].join('\n'));
   });
+
+  test('vault text is escaped wherever it lands in the markup', () => {
+    assert.equal(
+      orgRow({ name: 'R&D <Lab>', location: 'Town "A"' }, { href: '/x?a=1&b=2' }),
+      '<h3 class="resume-org"><span><a href="/x?a=1&amp;b=2">R&amp;D &lt;Lab&gt;</a></span><span class="resume-loc">Town &quot;A&quot;</span></h3>',
+    );
+    assert.equal(roleRow({ title: 'A & B', dates: "'24" }), '<p class="resume-role"><strong>A &amp; B</strong><span class="resume-dates">&#39;24</span></p>');
+  });
 });
 
 describe('education', () => {
