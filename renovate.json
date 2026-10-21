@@ -8,7 +8,7 @@
     ":semanticCommitScope(deps)"
   ],
   "schedule": ["* * * * 1"],
-  "minimumReleaseAge": "14 days",
+  "minimumReleaseAge": "7 days",
   "internalChecksFilter": "strict",
   "platformCommit": "enabled",
   "vulnerabilityAlerts": {
@@ -17,9 +17,9 @@
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
-      "description": "config:best-practices holds npm releases three days through security:minimumReleaseAgeNpm, a package rule a top-level value does not reach; npm gets the same 14 days as everything else.",
+      "description": "config:best-practices holds npm releases three days through security:minimumReleaseAgeNpm, a package rule a top-level value does not reach; npm gets the same 7 days as everything else.",
       "matchDatasources": ["npm"],
-      "minimumReleaseAge": "14 days"
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "Everything short of a major moves together, digests included, so a week's updates are one pull request.",

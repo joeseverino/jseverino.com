@@ -12,7 +12,7 @@ itself runs outside this repository, so no workflow carries it. The file extends
 development dependencies pinned exactly, weekly lock file maintenance) and adds
 this repository's rules, each with a `description`:
 
-- Every update short of a major waits 14 days after its release, npm included
+- Every update short of a major waits 7 days after its release, npm included
   (the preset's own npm rule holds only three), then lands in one weekly pull
   request.
 - Astro and its `@astrojs/*` integrations move in a pull request of their own,
@@ -66,7 +66,7 @@ row here naming the dependent that pins it and the condition for removal.
 
 GitHub's vulnerability alerts are on, and Renovate reads them and the OSV
 database: a fix for a known advisory opens at once, outside the weekly schedule
-and the 14-day hold. Dependabot security updates are off, so the fix arrives
+and the 7-day hold. Dependabot security updates are off, so the fix arrives
 once, from Renovate. An advisory with no fixed release to take is accepted by
 dismissing its alert with a reason, which keeps the decision beside the alert
 in the repository's security tab.

@@ -601,7 +601,7 @@ GitHub Actions provide the remote quality gate:
 - [`scorecard`](../.github/workflows/scorecard.yml) runs OpenSSF Scorecard twice: a SARIF pass uploaded to GitHub code scanning, and a JSON pass rendered into the job summary as the aggregate score with every check and its reason. Both land in one artifact.
 Dependency updates come from Renovate, which runs outside this repository;
 [`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
-the actionlint container) moves in one weekly pull request after a 14-day
+the actionlint container) moves in one weekly pull request after a 7-day
 release age; Astro and its integrations, `sitedrift` (bundled into the
 production edge functions), Node (one update across `mise.toml`, `mise.lock`
 and `.nvmrc`), and each major come on their own, and the held majors in

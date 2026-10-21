@@ -416,7 +416,7 @@ The build toolchain is a supply-chain surface even though only prebuilt output
 ships to visitors:
 
 - **Renovate** updates every pin (npm, GitHub Actions, the actionlint
-  container, Node) once a release is 14 days old, in one weekly pull request
+  container, Node) once a release is 7 days old, in one weekly pull request
   with Astro, `sitedrift`, Node and each major apart, and opens a fix at once
   for any advisory that GitHub's vulnerability alerts or OSV report
   ([`renovate.json`](../renovate.json)). An advisory with no fix to take is
