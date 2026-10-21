@@ -204,7 +204,5 @@ Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
 the build refuses anything outside `tests/fixtures`, so drafts never
 reach a build), `SITE_JSON=1` switches Astro
-to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
-(default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`
-(default `~/.local/state/jseverino.com/audit.log`), and `CLOUDFLARE_API_TOKEN`
-from the environment (`op run`).
+to JSON logs (set by `--json`). The site operations read `CLOUDFLARE_API_TOKEN` from the environment
+(`op run`) and log PII access to `~/.local/state/jseverino.com/audit.log`.

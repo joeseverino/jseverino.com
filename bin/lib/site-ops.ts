@@ -6,7 +6,7 @@ import path from 'node:path';
 import { DetailedError } from './detailed-error.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
 import { cspReportUri } from '../../src/lib/edge-expectations.ts';
-import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
@@ -21,14 +21,15 @@ export interface SiteOpsConfig {
   fetch: typeof fetch;
 }
 
-// Cloudflare credentials come from the environment (CLOUDFLARE_API_TOKEN,
-// injected by `op run`), the same as every other Cloudflare script here.
-export function siteOpsConfig(env: NodeJS.ProcessEnv = process.env): SiteOpsConfig {
+// The production site; tests pass their own. Cloudflare credentials come from
+// the environment (CLOUDFLARE_API_TOKEN, injected by `op run`), the same as
+// every other Cloudflare script here.
+export function siteOpsConfig(): SiteOpsConfig {
   return {
-    d1Database: env.SITE_D1_DATABASE || 'jseverino-contact',
-    siteRepo: env.SITE_REPO || siteRoot,
-    siteOrigin: env.SITE_ORIGIN || SITE_ORIGIN,
-    auditLog: env.SITE_AUDIT_LOG || path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
+    d1Database: SITE.d1,
+    siteRepo: siteRoot,
+    siteOrigin: SITE_ORIGIN,
+    auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
     run: spawnResult,
     fetch: globalThis.fetch,
   };
