@@ -3,7 +3,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createLogger, createServer } from 'vite';
 import { getViteConfig } from 'astro/config';
@@ -23,18 +22,8 @@ export interface DocumentInput {
 }
 
 export async function renderDocument(input: DocumentInput): Promise<string> {
-  // Astro resolves the config and tsconfig aliases from the working directory.
-  const cwd = process.cwd();
-  process.chdir(ROOT);
-  try {
-    return await render(input);
-  } finally {
-    process.chdir(cwd);
-  }
-}
-
-async function render(input: DocumentInput): Promise<string> {
-  const config = await getViteConfig({}, { root: ROOT, logLevel: 'silent' })({ command: 'serve', mode: 'development' });
+  // The Vite root is where Astro looks for the tsconfig and its path aliases.
+  const config = await getViteConfig({ root: ROOT }, { root: ROOT, logLevel: 'silent' })({ command: 'serve', mode: 'development' });
   const server = await createServer({
     ...config,
     configFile: false,
