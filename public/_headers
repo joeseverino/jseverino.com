@@ -1,6 +1,6 @@
 # Static-asset headers: https://developers.cloudflare.com/workers/static-assets/headers/
-# They apply to the assets only; the Worker's own responses (/api/*,
-# /__sitedrift/*) set theirs in code.
+# They apply to the assets only; the Worker's own responses (the API routes and
+# the preview proxy) set theirs in code.
 # Cloudflare MERGES the headers of every matching rule rather than letting the most
 # specific one win. For a single-value header like Cache-Control that means
 # overlapping path rules combine, so they must not contradict: the immutable rule
