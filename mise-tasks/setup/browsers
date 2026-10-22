@@ -1,0 +1,27 @@
+#!/bin/sh
+#MISE description="Install Playwright's browsers (BROWSERS, space-separated; CACHE_HIT=true installs only their system packages) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT"
+#MISE timeout="20m"
+set -eu
+
+# The install, mostly apt on Linux, runs in the background so the build does
+# not wait on it.
+pid=''
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+if [ -n "${BROWSERS:-}" ]; then
+  if [ "${CACHE_HIT:-}" = true ]; then
+    set -- install-deps
+  else
+    set -- install --with-deps
+  fi
+  # shellcheck disable=SC2086 # the browser list is space-separated
+  playwright "$@" $BROWSERS >"$log" 2>&1 &
+  pid=$!
+fi
+if [ "${PREBUILD:-}" = true ]; then
+  node tests/browser-test-env.ts build
+fi
+if [ -n "$pid" ] && ! wait "$pid"; then
+  cat "$log" >&2
+  exit 1
+fi

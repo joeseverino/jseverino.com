@@ -103,20 +103,9 @@ jobs:
           path: ${{ runner.os == 'macOS' && '~/Library/Caches/ms-playwright' || '~/.cache/ms-playwright' }}
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browsers }}
 
-      # The apt install runs in the background while the site builds, then the suite serves
-      # that build (PREBUILT).
+      # The suite then serves this build (PREBUILT).
       - name: Install browsers and build
-        run: |
-          set -euo pipefail
-          pid=''
-          if [ -n "$BROWSERS" ]; then
-            if [ "$CACHE_HIT" = 'true' ]; then cmd='install-deps'; else cmd='install --with-deps'; fi
-            # shellcheck disable=SC2086 # word-split the command and browser list
-            npx playwright $cmd $BROWSERS > "$RUNNER_TEMP/browsers.log" 2>&1 &
-            pid=$!
-          fi
-          if [ "$PREBUILD" = 'true' ]; then node tests/browser-test-env.ts build; fi
-          if [ -n "$pid" ] && ! wait "$pid"; then cat "$RUNNER_TEMP/browsers.log"; exit 1; fi
+        run: mise run setup:browsers
         env:
           BROWSERS: ${{ matrix.browsers }}
           CACHE_HIT: ${{ steps.browsers.outputs.cache-hit }}
