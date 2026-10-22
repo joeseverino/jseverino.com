@@ -9,6 +9,7 @@ import { fromRoot } from '../../src/lib/site-root.ts';
 const require = createRequire(import.meta.url);
 
 export interface WranglerConfig {
+  name: string;
   compatibility_date: string;
   d1_databases: { binding: string; database_name: string }[];
 }

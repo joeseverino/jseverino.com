@@ -107,7 +107,7 @@ function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string {
     '## Content',
     '',
     ...sections.flatMap(([heading, lines]) => [`**${heading}**`, '', ...lines, '']),
-    'The URLs go live when this merges. Until then, the Cloudflare Pages check on this PR links a preview deployment of this commit.',
+    'The URLs go live when this merges. Until then, the deploy check on this PR links an Access-protected preview of this commit.',
     '',
     ...(diff.generated.count > 0
       ? [

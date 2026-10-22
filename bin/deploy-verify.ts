@@ -4,17 +4,18 @@
 // shared with tests/edge.
 //
 //   node bin/deploy-verify.ts                        # production, from a clean main
+//   node bin/deploy-verify.ts --version <id> [--preview]
 //   node bin/deploy-verify.ts --origin <url> [--preview]
 //   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
 //
-// --origin verifies one Pages deployment (<hash>.pages.dev, outside the zone): served
-// responses only, no git/check-run preconditions, no HSTS. --preview marks a
-// branch preview, where sitedrift wraps every HTML route. --slug verifies one writeup
-// after a publish.
+// --version verifies one uploaded Worker version at its preview URL (outside the zone,
+// behind Access), and --origin any other deployment: served responses only, no
+// git/check-run preconditions, no HSTS. --preview marks a branch preview, where sitedrift
+// wraps every HTML route. --slug verifies one writeup after a publish.
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import { DEFAULT_BRANCH, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, DEPLOY_CHECK, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, previewOrigin, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import {
   cacheRuleFindings,
@@ -36,15 +37,18 @@ import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } fr
 import { errorMessage } from '../src/lib/error-message.ts';
 
 const { values: cli } = parseCli({
-  usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
+  usage: 'usage: node bin/deploy-verify.ts [--version <id> | --origin <url>] [--preview] [--slug <writeup>]',
   options: {
+    version: { type: 'string' },
     origin: { type: 'string' },
     preview: flag,
     slug: { type: 'string' },
   },
 });
-const origin = (cli.origin ?? siteOrigin).replace(/\/$/, '');
-const deployment = Boolean(cli.origin);
+// A version's preview URL carries the first eight characters of its ID.
+const target = cli.version ? previewOrigin(cli.version.slice(0, 8)) : cli.origin;
+const origin = (target ?? siteOrigin).replace(/\/$/, '');
+const deployment = Boolean(target);
 
 // Sitemap <loc>s name the canonical origin; fetch them from the target.
 const onTarget = (url: string): string => {
@@ -53,12 +57,10 @@ const onTarget = (url: string): string => {
 };
 
 // The main ruleset's required checks, less the ones that only run on pull
-// requests, plus the Pages build itself.
+// requests. The deploy check is one of them, so main's commit is waited on until it is live.
 const PULL_REQUEST_ONLY = new Set(['dependency-review']);
-const requiredChecks = async (): Promise<string[]> => [...new Set([
-  ...(await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name)),
-  'Cloudflare Pages',
-])];
+const requiredChecks = async (): Promise<string[]> =>
+  (await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name));
 
 const production = !deployment && !cli.slug;
 const report = createReport('Deploy verification', 'Check');
@@ -85,7 +87,7 @@ async function waitForChecks(sha: string): Promise<string> {
   const started = Date.now();
   let lastReport = '';
 
-  group('remote      waiting for required checks and the Cloudflare Pages build');
+  group(`remote      waiting for the required checks and the ${DEPLOY_CHECK} check`);
   try {
     return await pollChecks(sha, deadline, started, (report) => {
       // Log only when the pending set changes.
@@ -106,7 +108,7 @@ async function pollChecks(sha: string, deadline: number, started: number, report
       `waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`,
     ),
   });
-  if (!checks) throw new Error('timed out waiting for required GitHub and Cloudflare checks');
+  if (!checks) throw new Error('timed out waiting for the required checks');
   const failed = checks.filter((check) => check.status === 'completed' && !passed(check));
   if (failed.length > 0) {
     throw new Error(`remote checks failed: ${failed.map((check) => `${check.name}=${check.conclusion}`).join(', ')}`);
@@ -277,7 +279,7 @@ async function verifySecurityTxt(): Promise<string> {
 }
 
 async function verifyProductionGuard(): Promise<string> {
-  // 404 from the Function; 403 once the zone's WAF rule blocks the path first
+  // 404 from the Worker; 403 once the zone's WAF rule blocks the path first
   // (cloudflare/zone.json, sitedrift-production).
   const sitedrift = await fetchChecked(`${origin}/__sitedrift/config.json`);
   if (![403, 404].includes(sitedrift.status)) {

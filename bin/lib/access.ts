@@ -1,20 +1,20 @@
-// Access service-token headers for this project's Pages deployments, sent only to its pages.dev host and subdomains.
-import { PAGES_HOST } from '../../src/lib/site-config.ts';
+// Access service-token headers for the Worker's preview URLs, sent only to hosts of the form
+// <one label><PREVIEW_HOST_SUFFIX>.
+import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 
 export const ACCESS_ID_ENV = 'CF_ACCESS_CLIENT_ID';
 export const ACCESS_SECRET_ENV = 'CF_ACCESS_CLIENT_SECRET';
 
-export function isPagesDeployment(target: string, host = PAGES_HOST): boolean {
-  const url = new URL(target);
-  if (url.protocol !== 'https:') return false;
-  return url.hostname === host || (url.hostname.endsWith(`.${host}`) && !url.hostname.slice(0, -host.length - 1).includes('.'));
+export function isPreviewDeployment(target: string, suffix = PREVIEW_HOST_SUFFIX): boolean {
+  const { protocol, hostname } = new URL(target);
+  if (protocol !== 'https:' || !hostname.endsWith(suffix)) return false;
+  return /^[a-z0-9-]+$/.test(hostname.slice(0, -suffix.length));
 }
 
 export function accessHeaders(target: string, env: NodeJS.ProcessEnv = process.env): Record<string, string> {
   const id = env[ACCESS_ID_ENV];
   const secret = env[ACCESS_SECRET_ENV];
-  if (!id || !secret) return {};
-  if (!isPagesDeployment(target)) return {};
+  if (!id || !secret || !isPreviewDeployment(target)) return {};
   return { 'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret };
 }
 

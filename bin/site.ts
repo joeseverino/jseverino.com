@@ -118,7 +118,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: [
       'Defaults to your most recent content PR. Reads the required checks from main\'s ruleset and waits',
       'until each has reported and passed on the PR head, squash-merges, waits for',
-      'the merge commit\'s Cloudflare Pages deployment, verifies each published or edited writeup on',
+      'the merge commit\'s production deploy, verifies each published or edited writeup on',
       'production (and that removed ones return 404), then runs hq sync if the hq CLI exists.',
       'Only a content/* PR into main is landed. An already-merged PR skips straight to the deploy wait.',
       '--timeout bounds the waits for checks and deploy, in minutes (default 30).',

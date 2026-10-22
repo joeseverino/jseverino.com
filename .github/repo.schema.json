@@ -71,7 +71,7 @@
       }
     },
     "variables": {
-      "description": "Actions variables (not secrets), by name. The dist workflow builds with the public Turnstile site key that Cloudflare Pages holds as a project variable. Variables not listed here are left alone.",
+      "description": "Actions variables (not secrets), by name. The ci build job builds the site it deploys with the public Turnstile site key. Variables not listed here are left alone.",
       "type": "object",
       "additionalProperties": { "type": "string" }
     },

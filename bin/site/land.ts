@@ -1,18 +1,17 @@
 // site land: merge one content PR and see it live. Waits for main's required checks on the PR head,
-// squash-merges, waits for the Cloudflare Pages deployment, then verifies each changed writeup on production.
+// squash-merges, waits for the merge commit's deploy, then verifies each changed writeup on production.
 // Every wait polls real state against one deadline.
 import { contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { preflight, type CheckName } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
-import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
+import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, DEPLOY_CHECK, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, requireReady, runScript, type Output } from './cli.ts';
 import { git, gh, ghJson } from './git.ts';
 import type { HqSync, LandResult, PullRequestRef, ScriptRun, Verified } from './types.ts';
 
 const PR_FIELDS = 'number,url,title,state,baseRefName,headRefName,headRefOid,mergeCommit,isDraft';
-const PAGES_CHECK = 'Cloudflare Pages';
 
 // The PR_FIELDS gh returns.
 interface PullRequest extends PullRequestRef {
@@ -70,19 +69,19 @@ async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: numb
   out.ok('checks', `${required.length} required checks passed`);
 }
 
-// The merge commit's Cloudflare Pages check-run, completed and successful.
+// The merge commit's deploy check-run, completed and successful.
 async function waitForDeploy(sha: string, deadline: number, intervalMs: number, out: Output): Promise<void> {
-  out.step('deploy', `waiting for ${PAGES_CHECK} on ${sha.slice(0, 12)}`);
-  const runs = await awaitChecks(SITE_REPOSITORY, sha, [PAGES_CHECK], { deadline, intervalMs });
-  const check = runs?.find((entry) => entry.name === PAGES_CHECK);
-  if (!check) timedOut(`${PAGES_CHECK} on ${sha.slice(0, 12)}`, { sha });
+  out.step('deploy', `waiting for the ${DEPLOY_CHECK} check on ${sha.slice(0, 12)}`);
+  const runs = await awaitChecks(SITE_REPOSITORY, sha, [DEPLOY_CHECK], { deadline, intervalMs });
+  const check = runs?.find((entry) => entry.name === DEPLOY_CHECK);
+  if (!check) timedOut(`the ${DEPLOY_CHECK} check on ${sha.slice(0, 12)}`, { sha });
   if (check.conclusion !== 'success') {
-    throw new SiteError(`${PAGES_CHECK} ${check.conclusion} for ${sha.slice(0, 12)}`, {
+    throw new SiteError(`the ${DEPLOY_CHECK} check concluded ${check.conclusion} for ${sha.slice(0, 12)}`, {
       result: { sha, details: check.details_url },
       fix: `inspect the deployment (${check.details_url}), fix it, and publish again`,
     });
   }
-  out.ok('deploy', `${PAGES_CHECK} succeeded`);
+  out.ok('deploy', `the ${DEPLOY_CHECK} check succeeded`);
 }
 
 const verifyLive = (slug: string, out: Output): Promise<ScriptRun> => runScript('bin/deploy-verify.ts', ['--slug', slug], { out, timeout: 5 * 60_000 });

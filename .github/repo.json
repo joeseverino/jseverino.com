@@ -62,7 +62,7 @@
             { "context": "visual" },
             { "context": "edge" },
             { "context": "dependency-review" },
-            { "context": "Cloudflare Pages", "integration_id": 85455 }
+            { "context": "deploy", "integration_id": 15368 }
           ]
         }
       },

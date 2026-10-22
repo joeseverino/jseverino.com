@@ -11,6 +11,7 @@ import { land } from '../../bin/site/land.ts';
 import { SiteError, createOutput } from '../../bin/site/cli.ts';
 import { git } from '../../bin/lib/git.ts';
 import { tempDir, write } from './helpers/fs.ts';
+import { DEPLOY_CHECK } from '../../src/lib/site-config.ts';
 
 const out = createOutput({ quiet: true });
 const NOW = new Date(2026, 9, 2, 14, 5);
@@ -289,7 +290,7 @@ describe('site land', () => {
       mergeSha,
       rules: rules('build', 'e2e'),
       headPolls: [[], [run('build', 'in_progress')], [run('build', 'completed', 'success'), run('e2e', 'completed', 'success')]],
-      checkRuns: [{ name: 'Cloudflare Pages', status: 'completed', conclusion: 'success', details_url: 'https://dash.example' }],
+      checkRuns: [{ name: DEPLOY_CHECK, status: 'completed', conclusion: 'success', details_url: 'https://dash.example' }],
     });
 
     const verified: string[] = [];
@@ -351,11 +352,11 @@ describe('site land', () => {
     const mergeSha = git(seed, 'rev-parse', 'HEAD');
     scenario({
       pr: { ...OPEN_PR, state: 'MERGED', mergeCommit: { oid: mergeSha } },
-      checkRuns: [{ name: 'Cloudflare Pages', status: 'in_progress' }],
+      checkRuns: [{ name: DEPLOY_CHECK, status: 'in_progress' }],
     });
     await assert.rejects(
       land({ root: checkout, pr: '7', out, intervalMs: 5, timeoutMs: 50 }),
-      (error: Error & { code: number }) => error.code === 4 && /timed out waiting for Cloudflare Pages/.test(error.message),
+      (error: Error & { code: number }) => error.code === 4 && error.message.includes(`timed out waiting for the ${DEPLOY_CHECK} check`),
     );
   });
 });
