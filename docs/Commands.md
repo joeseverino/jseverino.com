@@ -261,6 +261,8 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 ## `checks:astro`
 
+- Depends: sync:worker-types
+
 - **Usage:** `checks:astro`
 
 `astro check` reports no errors or warnings in the .astro files, content schemas, or imports
@@ -357,9 +359,11 @@ security.txt is clear-signed with a valid signature, carries the RFC 9116 fields
 
 ## `checks:types`
 
+- Depends: sync:worker-types
+
 - **Usage:** `checks:types`
 
-Every TypeScript file compiles under one strict program, the Worker's routes again under the Workers runtime types, and those types match wrangler.jsonc (fix: `wrangler types src/generated/worker-configuration.d.ts`)
+Every TypeScript file compiles under one strict program, and the Worker's routes again under the Workers runtime types wrangler.jsonc declares
 
 ## `checks:unit`
 
@@ -398,6 +402,8 @@ Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches u
 After the merge deploys, from a residential IP: verify remote CI and the live production deploy
 
 ## `dev`
+
+- Depends: sync:worker-types
 
 - **Usage:** `dev`
 
@@ -533,4 +539,10 @@ Regenerate typed content-contract projections
 - **Usage:** `sync:tokens`
 
 Pull design and brand tokens from `severino-brand` into the repo
+
+## `sync:worker-types`
+
+- **Usage:** `sync:worker-types`
+
+Write the Worker's `Env` and runtime types from wrangler.jsonc into src/generated/worker-configuration.d.ts
 <!-- /mise-tasks -->

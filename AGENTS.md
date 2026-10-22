@@ -38,9 +38,9 @@ A single gate (`mise run built:weight`) is for iterating on a failure.
 - Generated files are written by their sync script and checked by
   `mise run checks:contracts`: the token block in `src/styles/tokens.css`
   (`mise run sync:tokens`), and `src/generated/content-schema.ts`.
-  `src/generated/worker-configuration.d.ts` is written by `wrangler types`
-  from `wrangler.jsonc` and checked by
-  `mise run checks:types`. The task list in `docs/Commands.md` is written by
+  `src/generated/worker-configuration.d.ts` is gitignored and written from
+  `wrangler.jsonc` by `mise run sync:worker-types`, which every task that
+  type-checks depends on. The task list in `docs/Commands.md` is written by
   `mise generate task-docs --inject --output docs/Commands.md` and checked by
   `mise run checks:docs-sync`.
 - `main` is production: once `ci` passes on its tip, the `deploy` workflow

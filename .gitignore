@@ -4,6 +4,7 @@ node_modules
 # Astro and Wrangler generated state
 .astro/
 .wrangler/
+/src/generated/worker-configuration.d.ts
 
 # Build output
 /dist/

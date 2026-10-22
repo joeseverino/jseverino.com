@@ -122,6 +122,7 @@ run = "node tests/audits/check-security-txt.ts"
 
 [tasks."checks:astro"]
 description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
+depends = ["sync:worker-types"]
 # astro sync and astro check both rewrite .astro/; never at once.
 wait_for = ["checks:types"]
 env = { NODE_OPTIONS = "--max-old-space-size=4096" }
@@ -255,6 +256,7 @@ run = "node bin/site.ts"
 
 [tasks.dev]
 description = "Start the local dev server"
+depends = ["sync:worker-types"]
 raw_args = true
 interactive = true
 run = "astro dev"
@@ -273,6 +275,14 @@ run = "node bin/sync-content-contract.ts"
 description = "Regenerate contact OpenAPI from its request contract"
 raw_args = true
 run = "node bin/sync-contact-openapi.ts"
+
+# Gitignored, so every task that type-checks or resolves `Env` depends on this
+# one, as Cloudflare directs: `wrangler types` before any task that relies on
+# TypeScript. Warnings and errors only, so a gate run does not print the Env.
+[tasks."sync:worker-types"]
+description = "Write the Worker's `Env` and runtime types from wrangler.jsonc into src/generated/worker-configuration.d.ts"
+env = { WRANGLER_LOG = "warn" }
+run = "wrangler types src/generated/worker-configuration.d.ts"
 
 [tasks."sync:tokens"]
 description = "Pull design and brand tokens from `severino-brand` into the repo"

@@ -303,9 +303,10 @@ a gitignored `.env` holds Turnstile's test keys
 `mise run preview` read it. The build reads no other variable and no GitHub
 token.
 
-`wrangler types` writes [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts),
-the `Env` interface and the Workers runtime types for that compatibility date.
+`mise run sync:worker-types` runs `wrangler types`, which writes the `Env`
+interface and the Workers runtime types for that compatibility date into
+`src/generated/worker-configuration.d.ts`. The file is gitignored: every task
+that type-checks or resolves `Env` (`checks:types`, `checks:astro`, `dev`)
+depends on that task, so the types follow every config or `workerd` change.
 [`tsconfig.worker.json`](../src/tsconfig.worker.json) compiles the on-demand routes
-under them, apart from the Node and DOM program, and `mise run checks:types`
-runs `wrangler types --check`, so the file follows every config or `workerd`
-change.
+under them, apart from the Node and DOM program.
