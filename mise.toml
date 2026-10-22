@@ -173,12 +173,12 @@ description = "jactionlint finds no syntax, expression, action-input or shellche
 run = "jactionlint --profile correctness --no-hints"
 
 [tasks."checks:renovate"]
-description = "Renovate's own validator finds no error, warning or needed migration in renovate.json"
-# Pinned here and moved by renovate.json's regex manager for this file. npm
+description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
+# Pinned here and moved by .github/renovate.json's regex manager for this file. npm
 # prints only errors, so the deprecation warnings of Renovate's own
 # dependencies stay out of the gate's output.
 env = { npm_config_loglevel = "error" }
-run = "npx --yes --package renovate@44.161.1 -- renovate-config-validator --strict --no-global renovate.json"
+run = "npx --yes --package renovate@44.161.1 -- renovate-config-validator --strict --no-global .github/renovate.json"
 
 [tasks."checks:tasks"]
 description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"

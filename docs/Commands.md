@@ -335,7 +335,7 @@ No whitespace errors or conflict markers in the working tree
 
 - **Usage:** `checks:renovate`
 
-Renovate's own validator finds no error, warning or needed migration in renovate.json
+Renovate's own validator finds no error, warning or needed migration in .github/renovate.json
 
 ## `checks:repo-policy`
 

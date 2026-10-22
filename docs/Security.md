@@ -403,7 +403,7 @@ ships to visitors:
   Node) once a release is 7 days old, in one weekly pull request
   with Astro, `sitedrift`, Node and each major apart, and opens a fix at once
   for any advisory that GitHub's vulnerability alerts or OSV report
-  ([`renovate.json`](../renovate.json)). An advisory with no fix to take is
+  ([`.github/renovate.json`](../.github/renovate.json)). An advisory with no fix to take is
   accepted by dismissing its alert with a reason.
 - **CodeQL** default setup scans the JavaScript/TypeScript and the workflows
   on every push and PR to `main` and on a weekly schedule, and the `main`

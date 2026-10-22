@@ -598,7 +598,7 @@ CodeQL runs as GitHub's default setup, declared in
 requires its results ([GitHub Settings](./GitHub-Settings.md)).
 
 Dependency updates come from Renovate, which runs outside this repository;
-[`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
+[`.github/renovate.json`](../.github/renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
 the mise tools) moves in one weekly pull request after a 7-day
 release age; Astro and its integrations, `sitedrift` (bundled into the
 Worker), and each major come on their own, and the held majors in

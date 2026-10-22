@@ -6,7 +6,7 @@ latest major on purpose, and how an update is reviewed before it merges.
 ## Updates
 
 Renovate is the only dependency updater, and
-[`renovate.json`](../renovate.json) is its whole configuration here; Renovate
+[`.github/renovate.json`](../.github/renovate.json) is its whole configuration here; Renovate
 itself runs outside this repository, so no workflow carries it. The file extends
 `config:best-practices` (actions and container images pinned by digest,
 development dependencies pinned exactly, weekly lock file maintenance) and adds
@@ -46,7 +46,7 @@ whose majors Renovate holds for that reason.
 
 ## Deliberate holds
 
-Each hold is a rule in [`renovate.json`](../renovate.json) that disables the
+Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json) that disables the
 package's major updates.
 
 | Package | Held at | Why | Revisit when |
