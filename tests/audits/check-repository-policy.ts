@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import { load } from 'js-yaml';
+import type { HastNode } from 'satteri';
+import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
+import { parseHtml } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 import { finish } from './lib.ts';
 
@@ -104,33 +108,68 @@ if (javascript.length > 0) {
   failures.push(`JavaScript files are tracked; convert them to TypeScript: ${javascript.join(', ')}`);
 }
 
-// Type errors get fixed. @ts-expect-error with a reason is the one escape hatch (it fails once the error is gone).
-// Split so this line does not match itself.
-const suppression = new RegExp(String.raw`@ts-(?:ignore|nocheck)\b|@ts-expect-` + String.raw`error(?!\s+\S)`);
-const suppressed = existingTracked.filter(
-  (file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && suppression.test(read(file)),
-);
+// Type errors get fixed: no explicit `any`, and @ts-expect-error with a reason is the
+// one escape hatch (it fails once the error is gone). An .astro file's TypeScript is
+// its frontmatter and its <script> elements.
+const SUPPRESSION = /@ts-(?:ignore|nocheck)\b|@ts-expect-error(?!\s+\S)/;
+
+const scriptBodies = (node: HastNode): string[] =>
+  node.type === 'element' && node.tagName === 'script'
+    ? node.children.flatMap((child) => (child.type === 'text' ? [child.value] : []))
+    : 'children' in node ? node.children.flatMap(scriptBodies) : [];
+
+function scripts(file: string, source: string): string[] {
+  if (!file.endsWith('.astro')) return [source];
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
+  return [frontmatter, ...scriptBodies(parseHtml(source))];
+}
+
+function typeEscapes(script: string): { any: boolean; suppressed: boolean } {
+  const sourceFile = ts.createSourceFile('script.ts', script, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const comments = new Map<number, string>();
+  let any = false;
+  const visit = (node: ts.Node): void => {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) any = true;
+    for (const range of [...ts.getLeadingCommentRanges(script, node.pos) ?? [], ...ts.getTrailingCommentRanges(script, node.end) ?? []]) {
+      comments.set(range.pos, script.slice(range.pos, range.end));
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  visit(sourceFile.endOfFileToken);
+  return { any, suppressed: [...comments.values()].some((comment) => SUPPRESSION.test(comment)) };
+}
+
+const escapes = existingTracked
+  .filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file))
+  .map((file) => ({ file, found: scripts(file, read(file)).map(typeEscapes) }));
+const anyTyped = escapes.filter(({ found }) => found.some(({ any }) => any)).map(({ file }) => file);
+const suppressed = escapes.filter(({ found }) => found.some(({ suppressed }) => suppressed)).map(({ file }) => file);
 if (suppressed.length > 0) {
   failures.push(`type-check suppressions without a reason (use @ts-expect-error <reason>): ${suppressed.join(', ')}`);
 }
-
-const explicitAny = /(?::|<|,|\|)\s*any\b(?!-)|\bas\s+any\b/;
-const code = (source: string): string[] => source.split('\n').map((line) => line.replace(/(?:^|\s)\/\/.*$/, '')).filter((line) => !/^\s*\*/.test(line));
-const anyTyped = existingTracked.filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && code(read(file)).some((line) => explicitAny.test(line)));
 if (anyTyped.length > 0) failures.push(`explicit any (use unknown and narrow): ${anyTyped.join(', ')}`);
 
-const automation = tracked.filter(
-  (name) => name.startsWith('.github/workflows/') || /^\.github\/actions\/.+\/action\.ya?ml$/.test(name),
-);
-for (const file of automation) {
-  const source = read(file);
-  // `-latest` labels move to a new OS on GitHub's schedule, outside this repo's control.
-  for (const [, label = ''] of source.matchAll(/^\s*(?:-\s*)?(?:runs-on|os):\s*(\S+)/gm)) {
-    if (/-latest$/.test(label)) failures.push(`${file} runs on a floating runner label: ${label}`);
+interface Job {
+  'runs-on'?: string | string[];
+  'timeout-minutes'?: number | string;
+  uses?: string;
+  strategy?: { matrix?: { os?: string[]; include?: { os?: string }[] } };
+}
+
+for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name))) {
+  const { jobs = {} } = load(read(file)) as { jobs?: Record<string, Job> };
+  for (const [name, job] of Object.entries(jobs)) {
+    // A job calling a reusable workflow takes its runner and timeout from that workflow.
+    if (job.uses) continue;
+    const matrix = job.strategy?.matrix;
+    const labels = [job['runs-on'] ?? [], matrix?.os ?? [], (matrix?.include ?? []).map(({ os }) => os ?? '')].flat();
+    // `-latest` labels move to a new OS on GitHub's schedule, outside this repo's control.
+    for (const label of labels.filter((label) => label.endsWith('-latest'))) {
+      failures.push(`${file} job ${name} runs on a floating runner label: ${label}`);
+    }
+    if (job['timeout-minutes'] === undefined) failures.push(`${file} job ${name} has no timeout-minutes`);
   }
-  const jobs = source.match(/^    runs-on:/gm)?.length ?? 0;
-  const timeouts = source.match(/^    timeout-minutes:/gm)?.length ?? 0;
-  if (jobs !== timeouts) failures.push(`${file} has ${jobs} job(s) but ${timeouts} timeout-minutes`);
 }
 
 finish(
