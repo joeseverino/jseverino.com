@@ -149,9 +149,10 @@ that writes it, and consumers read the deployed JSON.
 derives from it: the typed Astro schema, MCP projection, CLI/tool schemas, and
 the `site manage` TUI.
 
-**`mise run site draft-alt <slug>`**: drafts `cover_alt` text for one writeup
-via the Claude API, for human review before it lands in the vault; `--apply`
-writes it. See [`Site-CLI.md`](./Site-CLI.md).
+**`mise run site draft-alt <slug>|--all`**: drafts `cover_alt` text for one
+writeup, or with `--all` for every published writeup missing one, via the
+Claude API, for human review before it lands in the vault; `--apply` writes
+each draft. See [`Site-CLI.md`](./Site-CLI.md).
 
 **`mise run sign:security`**: clear-signs `public/.well-known/security.txt`
 with the security@ key. The signature, fields, and expiry are verified by
