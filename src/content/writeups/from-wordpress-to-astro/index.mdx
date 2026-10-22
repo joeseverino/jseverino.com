@@ -6,7 +6,7 @@ description: >-
   gate.
 published: true
 published_at: 2026-06-17T00:00:00.000Z
-last_reviewed: '2026-10-05'
+last_reviewed: '2026-10-22'
 cover_image: ./images/pagespeed-perfect-scores-cover.png
 cover_alt: >-
   Google PageSpeed Insights reporting 100 for Performance, Accessibility, Best
@@ -43,7 +43,7 @@ The new site is a snapshot. I write each article as markdown in a private vault,
 Before, every request ran through PHP, MySQL, and the theme and plugin layer. After, the page is built once and Cloudflare serves a static file.
 :::
 
-Astro builds every page to a file ahead of time, and Cloudflare serves those files. There is no runtime to keep alive. The only dynamic pieces left are two small Cloudflare functions, the [contact form](https://github.com/joeseverino/jseverino.com/blob/main/functions/api/contact.ts) and a [security report collector](https://github.com/joeseverino/jseverino.com/blob/main/functions/api/csp-report.ts), each a single file I can read top to bottom.
+Astro builds every page to a file ahead of time, and Cloudflare serves those files. There is no runtime to keep alive. The only dynamic pieces left are two small Cloudflare functions, the [contact form](https://github.com/joeseverino/jseverino.com/blob/main/src/pages/api/contact.ts) and a [security report collector](https://github.com/joeseverino/jseverino.com/blob/main/src/pages/api/csp-report.ts), each a single file I can read top to bottom.
 
 ## Why It's Better
 
