@@ -100,8 +100,9 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
-      // lightningcss folds `animation-timeline: scroll()` into the `animation` shorthand,
-      // invalid syntax that kills the scroll-driven header shadow. esbuild leaves it alone.
+      // lightningcss, Vite's default, folds `animation-timeline: scroll()` into the `animation`
+      // shorthand, which no browser parses, so the scroll-driven header shadow never runs.
+      // esbuild keeps the longhand; it is a devDependency because Vite only lists it as an optional peer.
       cssMinify: 'esbuild',
       // Silences the bundler's report of Astro's "use astro:head-inject" directive in MDX modules.
       rolldownOptions: {
