@@ -427,7 +427,8 @@ ships to visitors:
   ([`.github/repo.json`](../.github/repo.json)).
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
-- **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
+- **Build CI** installs the npm packages from the lockfile (`npm ci`, run by
+  mise's `[deps.npm]` provider), then runs the gate audits and the publish gate on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
   Each release carries the attested SBOM.
 - **Preview guard** runs `mise run checks:preview` before release to prove that

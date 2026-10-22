@@ -90,7 +90,7 @@ The sync script:
 
 - resolves the path against the source folder;
 - refuses paths outside that folder;
-- writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under `.cache/` (`SITE_CACHE_DIR` moves it);
+- writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under the cache root every checkout shares (`SITE_CACHE_DIR` in `mise.toml`);
 - leaves the reference relative, so Astro's image pipeline encodes the AVIF and WebP variants at build time.
 
 ### What does NOT live in the vault

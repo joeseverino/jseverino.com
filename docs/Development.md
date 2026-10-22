@@ -10,17 +10,33 @@ How the repository is built, checked, and shipped. Every script is in
 [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock),
 and the same version in [`.nvmrc`](../.nvmrc), which Cloudflare Pages reads.
 npm comes from `package.json`'s `packageManager`. `mise install` installs the
-tools, then its `postinstall` hook runs `npm ci` from the lockfile, so a fresh
-checkout is ready after that one command (CI installs packages per job in its
-setup action instead). Machine paths for the content sync go in a gitignored
+tools. The npm packages come from mise's `[deps.npm]` provider: before any
+`mise run` or `mise exec`, it runs `npm ci` from the lockfile whenever
+`package.json` or `package-lock.json` changed since the last install or
+`node_modules` is missing, so a fresh checkout or a pull that moves the
+lockfile is installed by the first task it runs (`mise deps install npm` runs
+it on its own). CI installs packages per job in its setup action instead.
+Machine paths for the content sync go in a gitignored
 `mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)). Copy
 [`.env.example`](../.env.example) to `.env` for the Turnstile test keys, then:
 
 ```sh
 mise install
+mise doctor project                     # is this checkout ready to work in
 mise run dev                            # Astro dev server
 mise run build && mise run serve:edge   # the build on the Cloudflare runtime
 ```
+
+`mise doctor project` runs the readiness checks `mise.toml` declares under
+`[doctor.checks]`: the npm packages match the lockfile, `gh` is signed in,
+the cache root exists, Playwright's browsers are installed, and no `mise.toml`
+above the checkout is loaded. Each failure prints its fix. It never runs on
+its own and is no gate: CI has no `gh` login, and the checks describe this
+machine, not the change.
+
+Every checkout and worktree shares one cache root, `SITE_CACHE_DIR` in
+`mise.toml`'s `[env]` (under the platform cache directory): the content
+sync's image masters, and Astro's encoded images in `astro/`.
 
 ## Code
 

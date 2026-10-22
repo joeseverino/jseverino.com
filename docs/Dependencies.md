@@ -37,7 +37,11 @@ running Node's major.minor or npm's major disagrees with them. Patch drift passe
 release does not block the gates before the pin moves.
 
 CI installs Node from `mise.toml` and `mise.lock` through `jdx/mise-action`,
-so a bump moves every workflow at once. Renovate proposes a Node update as one
+so a bump moves every workflow at once. mise itself has no pin: the action
+installs the newest release at least seven days old (its
+`minimum_release_age`), the same hold Renovate gives every other update, and
+`min_version` in `mise.toml` is the floor every machine must meet, raised by
+hand to a release at least that old. Renovate proposes a Node update as one
 pull request across `mise.toml`, `mise.lock` and `.nvmrc`. A Node major also
 moves `engines.node`, the npm major in `packageManager` and `@types/node`,
 whose majors Renovate holds for that reason.

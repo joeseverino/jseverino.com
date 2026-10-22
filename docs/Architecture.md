@@ -103,7 +103,7 @@ Main responsibilities:
 - Date `last_reviewed` from the committed snapshot: a writeup whose projected body changed gets today; an unchanged one keeps the later of the vault's date and the committed one, so a re-sync is idempotent.
 - Report every file written or removed (`--report`), the exact set `site publish` commits.
 
-The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, image masters, document rows, education, prune, the compile check, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract, and compiles every document with the site's renderer, without writing anything (`site validate`), so an MDX error or a refused block surfaces with its line before a build. Masters are cached under the gitignored `.cache/` by source hash and encoder version, outside `node_modules` so `npm ci` keeps them; each is written to a temp name and renamed, so an interrupted sync leaves no partial file. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
+The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, image masters, document rows, education, prune, the compile check, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract, and compiles every document with the site's renderer, without writing anything (`site validate`), so an MDX error or a refused block surfaces with its line before a build. Masters are cached by source hash and encoder version under the cache root every checkout and worktree shares (`SITE_CACHE_DIR` in `mise.toml`'s `[env]`); each is written to a temp name and renamed, so an interrupted sync leaves no partial file. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
 
 ## 4. Content Collections
 
@@ -256,10 +256,11 @@ settings (AVIF quality 60, WebP 82) live in the image service config in
 asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
-Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` sets, under the
-user cache directory, so every checkout and worktree shares one cache and
-`npm ci` leaves it alone. CI restores it with `actions/cache` (the
-`astro-cache` input of the setup action). A build re-encodes only new or
+Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` derives from the
+repository's cache root (`SITE_CACHE_DIR`), so every checkout and worktree
+shares one cache. CI restores it with `actions/cache` (the `astro-cache`
+input of the setup action), except in the release job, which encodes every
+image itself so no cache another workflow wrote reaches a release. A build re-encodes only new or
 changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
@@ -615,7 +616,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The Node setup and `npm ci` live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml).
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Its tool and package caches are ones the lockfiles verify (mise's downloads against `mise.lock`'s checksums, npm's against `package-lock.json`'s integrity hashes), so a cache another workflow wrote cannot change what a job installs; the release job also skips the Astro image cache, the one cache nothing verifies.
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

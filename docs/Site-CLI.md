@@ -28,7 +28,7 @@ Every non-interactive command:
   ```json
   { "protocolVersion": 1, "ok": true, "command": "publish", "status": "pr-opened", "pr": "https://…", "next": "…" }
   { "protocolVersion": 1, "ok": false, "command": "publish", "status": "failed",
-    "error": { "message": "preflight failed: deps", "code": 3, "fix": "cd … && npm ci" } }
+    "error": { "message": "preflight failed: deps", "code": 3, "fix": "cd … && mise deps install npm --force" } }
   ```
 
   The document's type is `SiteResult` in [`bin/site/types.ts`](../bin/site/types.ts),
@@ -202,7 +202,8 @@ and `astro dev stop`. The server is the one Astro's lock file
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
-`SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
+`SITE_CACHE_DIR`, set in `mise.toml`'s `[env]`, is the cache root every checkout and
+worktree shares: the sync's image masters, and Astro's encodes in `astro/`;
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
 the build refuses anything outside `tests/fixtures`, so drafts never

@@ -96,8 +96,8 @@ docs/         architecture, operations, and guides
 ## Working on it
 
 ```sh
-mise install             # the pinned tools, then npm ci from the lockfile
-mise run dev             # local site
+mise install             # the pinned tools
+mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
 mise run check           # the gate: every static check, the build, every check on the build
 mise run site --help     # scaffold, validate, publish, and verify writeups
 ```

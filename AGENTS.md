@@ -19,7 +19,9 @@ The rules for changing this repository. Setup, tasks and layout are in
 
 ## Start here
 
-1. `mise install` pins every tool and installs the npm dependencies.
+1. `mise install` pins every tool; the first `mise run` installs the npm
+   dependencies from the lockfile, and every later one reinstalls them when
+   the lockfile moves. `mise doctor project` says whether the checkout is ready.
 2. Branch from the latest `main`: `git fetch origin && git switch -c <type>/<slug> origin/main`.
 3. While editing, run `mise run fast`. Before committing, run `mise run check`
    (static gates, the production build, then every gate on the build). CI runs
