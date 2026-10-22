@@ -58,8 +58,9 @@ disables the package's major updates, and the `wrangler` hold disables all of it
 
 ## No overrides
 
-`package.json` has no `overrides` block: `npm ls esbuild sharp workerd` resolves one
-copy of each across Astro, Vite, and `wrangler`. An override is added only for a
+`package.json` has no `overrides` block: the lockfile installs one copy each of
+`esbuild`, `sharp`, `workerd`, `miniflare`, and `wrangler` across Astro, Vite, and
+the Cloudflare adapter, which `checks:repo-policy` enforces. An override is added only for a
 duplicate native binary or a split `esbuild`, with a row here naming the
 dependent that pins it and the condition for removal.
 
@@ -78,8 +79,7 @@ Every version change arrives as a Renovate pull request; none is installed by
 hand, which would skip the release-age hold. Before merging one:
 
 1. The lockfile diff keeps the platform binaries for both macOS and Linux (a
-   lock regenerated on one platform can drop the other's), and
-   `npm ls <package>` on the branch shows one resolved copy.
+   lock regenerated on one platform can drop the other's).
 2. The required checks pass, the visual baselines included. A browser upgrade
    can shift rendering; inspect any diff before regenerating a baseline.
 3. For Astro or `sitedrift`, review the upstream release notes and the pull

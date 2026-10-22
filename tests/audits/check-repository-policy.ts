@@ -46,6 +46,14 @@ if (npmPin && npmVersion.split('.')[0] !== npmPin[1]) {
   failures.push(`npm ${npmVersion} is on PATH; packageManager pins ${packageJson.packageManager}`);
 }
 
+// A second copy of a native binary or of the Workers toolchain is a package two
+// dependents disagree on; docs/Dependencies.md says which pin or hold settles it.
+const lock: { packages: Record<string, unknown> } = JSON.parse(read('package-lock.json'));
+for (const name of ['esbuild', 'sharp', 'workerd', 'miniflare', 'wrangler']) {
+  const copies = Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
+  if (copies.length > 1) failures.push(`package-lock.json installs ${copies.length} copies of ${name}: ${copies.join(', ')}`);
+}
+
 const tracked = trackedFiles(root);
 const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, file)));
 const forbiddenTracked = tracked.filter(
@@ -168,10 +176,10 @@ for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
+  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
   },
 );
