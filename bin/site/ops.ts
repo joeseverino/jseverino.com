@@ -54,7 +54,7 @@ export async function d1Apply({ confirm, out }: { confirm: boolean; out: Output 
 
 export async function headers({ path, out }: { path: string | undefined; out: Output }): Promise<HeadersResult> {
   const result = await guard(() => checkSecurityHeaders(siteOpsConfig(), path ?? '/'), {
-    fix: 'check the network connection and SITE_ORIGIN, then rerun',
+    fix: 'check the network connection, then rerun',
     usage: 'pass a root-relative path, e.g. site headers /contact/',
   });
   out.text(`${result.httpStatus} ${result.url}`);

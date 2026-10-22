@@ -10,7 +10,8 @@ import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY } from '../../sr
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, SiteError, assertSlug, requireReady, runScript, type Output } from './cli.ts';
 import type { DevResult, DraftAltResult, PullRequestRef, ScriptRun, SeoResult, StatusResult, VerifyResult } from './types.ts';
-import { liveDevServer } from './dev-server.ts';
+import { servingDevServer } from './dev-server.ts';
+import { repoState } from './git.ts';
 
 export interface DevOptions {
   drafts: boolean;
@@ -21,8 +22,8 @@ export interface DevOptions {
 }
 
 // Under --json Astro's own output goes to stderr and Astro reports in JSON.
-// When Astro detects an agent it serves from a detached process and exits;
-// the lock file it leaves names the server.
+// When Astro detects an agent it serves in the background (astro dev
+// --background) and exits; the lock file it leaves names the server.
 export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptions): Promise<DevResult> {
   requireReady(await preflight(drafts ? ['deps', 'vault'] : ['deps'], { root }), out);
   const env: NodeJS.ProcessEnv = {};
@@ -31,11 +32,11 @@ export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptio
     if (!synced.ok) throw new SiteError('the drafts sync failed', { result: synced, fix: 'site validate --draft' });
     env.SITE_CONTENT_ROOT = path.relative(root, draftsOverlay());
   }
-  const args = ['astro', 'dev', ...(host ? ['--host', host] : []), ...(port ? ['--port', port] : []), ...(out.json ? ['--json'] : [])];
+  const args = ['dev', ...(host ? ['--host', host] : []), ...(port ? ['--port', port] : []), ...(out.json ? ['--json'] : [])];
   out.step('dev', `astro dev${drafts ? ' with drafts from the overlay' : ''} (ctrl-c stops it)`);
-  const result = await run('npx', args, { cwd: root, env, timeout: 0, stdio: out.json ? 'stderr' : 'inherit' });
+  const result = await run('astro', args, { cwd: root, env, timeout: 0, stdio: out.json ? 'stderr' : 'inherit' });
   if (result.code !== 0 && result.code !== 130) throw new SiteError(`astro dev exited ${result.code}`, { result: { exitCode: result.code } });
-  const server = result.code === 0 ? liveDevServer(root) : null;
+  const server = result.code === 0 ? await servingDevServer(root) : null;
   if (server) out.ok('dev', `serving ${server.url} in the background (pid ${server.pid})`);
   return {
     drafts,
@@ -43,30 +44,21 @@ export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptio
     url: server?.url ?? null,
     pid: server?.pid ?? null,
     exitCode: result.code,
-    next: server ? 'npx astro dev stop' : null,
+    next: server ? 'astro dev stop' : null,
   };
 }
 
-const gitLine = async (root: string, args: string[]): Promise<string | null> => {
-  const result = await run('git', args, { cwd: root });
-  return result.code === 0 ? result.stdout.trim() : null;
-};
-
 export async function status({ out, root = siteRoot }: { out: Output; root?: string }): Promise<StatusResult> {
-  // Independent probes; gh is a network round trip, so nothing waits on it.
-  const [branch, porcelain, counts, prs] = await Promise.all([
-    gitLine(root, ['branch', '--show-current']),
-    gitLine(root, ['status', '--porcelain=v1']),
-    gitLine(root, ['rev-list', '--left-right', '--count', `HEAD...origin/${DEFAULT_BRANCH}`]),
+  // gh is a network round trip, so the git probes run beside it.
+  const [{ branch, changes: dirty, ahead, behind }, prs] = await Promise.all([
+    repoState(root),
     run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY], { cwd: root, timeout: 30_000 }),
   ]);
-  const dirty = (porcelain ?? '').split('\n').filter(Boolean).length;
-  const [ahead = null, behind = null] = counts ? counts.split(/\s+/).map(Number) : [];
   const drift = lockfileDrift(root);
   const vault = vaultRoot();
   const result = {
     repo: root,
-    branch: branch || null,
+    branch,
     dirty,
     ahead,
     behind,
@@ -109,8 +101,10 @@ export async function seo({ page, result: resultOnly, out }: { page: string | un
   return { page, ...result, next: null };
 }
 
-export async function draftAlt({ slug: requested, apply, out }: { slug: string | undefined; apply: boolean; out: Output }): Promise<DraftAltResult> {
-  const slug = assertSlug(requested);
-  const result = await front('bin/draft-cover-alt.ts', [slug, ...(apply ? ['--apply'] : [])], { out, what: 'cover_alt draft' });
-  return { slug, applied: Boolean(apply), ...result, next: apply ? `site validate ${slug} --draft` : `site draft-alt ${slug} --apply` };
+export async function draftAlt({ slug: requested, all, apply, out }: { slug: string | undefined; all: boolean; apply: boolean; out: Output }): Promise<DraftAltResult> {
+  if (all === (requested !== undefined)) throw new SiteError('pass one writeup slug or --all', { code: EXIT.usage, fix: 'site draft-alt --help' });
+  const slug = all ? null : assertSlug(requested);
+  const result = await front('bin/draft-cover-alt.ts', [slug ?? '--all', ...(apply ? ['--apply'] : [])], { out, what: 'cover_alt draft' });
+  const target = slug ?? '--all';
+  return { slug, all, applied: apply, ...result, next: apply ? `site validate${slug ? ` ${slug}` : ''} --draft` : `site draft-alt ${target} --apply` };
 }

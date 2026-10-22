@@ -1,13 +1,14 @@
 // site manage's state: writeup rows, staged edits, and Site tab status. Nothing here draws or reads keys.
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { GREEN, RED, RESET, YELLOW } from './tui.ts';
-import { DEV_PORT, isListening } from './dev-server.ts';
+import { headStatus, servingDevServer } from './dev-server.ts';
+import { repoState } from './git.ts';
 import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { spawnResult } from '../lib/run.ts';
-import { WriteupError, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
+import { SECURITY_FILE, expiryProblem, parseFields, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
+import { WriteupError, byFeaturedOrder, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
-import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SLUG, SiteError, createOutput } from './cli.ts';
 import { checkContent } from '../content-sync/sync.ts';
@@ -135,12 +136,6 @@ function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: R
   };
 }
 
-// Trimmed stdout of a command, or null when it fails.
-function probe(command: string, args: string[]): string | null {
-  const result = spawnResult(command, args, { cwd: siteRoot });
-  return result.code === 0 ? result.stdout.trim() : null;
-}
-
 function builtStatus(distPath: string): string {
   try {
     return `Present (built ${statSync(distPath).mtime.toISOString().slice(0, 16).replace('T', ' ')})`;
@@ -149,26 +144,38 @@ function builtStatus(distPath: string): string {
   }
 }
 
-export function loadSiteStatus(): SiteStatus {
-  const branch = probe('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-  const changes = branch === null ? null : probe('git', ['status', '--porcelain']);
-  const [commitHash = '', commitSubject = '', commitAge = ''] = (probe('git', ['log', '-1', '--format=%h%x09%s%x09%cr']) ?? '').split('\t');
-  const counts = probe('git', ['rev-list', '--left-right', '--count', 'HEAD...@{u}']);
-  const [ahead, behind, ...extra] = (counts ?? '').split(/\s+/);
-  const security = probe(process.execPath, ['tests/audits/check-security-txt.ts']);
-  const distPath = resolveBuiltDir(siteRoot);
+// The checks-security-txt gate's signature and expiry checks, as one line.
+// Any failure, gpg missing included, is the line the tab shows.
+function securityStatus(): string {
+  try {
+    const verified = verifySecuritySignature(SECURITY_FILE);
+    if (verified.code !== 0 || !/\b(GOODSIG|VALIDSIG)\b/.test(verified.stdout)) return 'signature invalid or missing';
+    const { Expires = '' } = parseFields(stripSignature(readFileSync(SECURITY_FILE, 'utf8')));
+    const days = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
+    return expiryProblem(Expires) ?? `signed, expires in ${days}d`;
+  } catch (error) {
+    return errorMessage(error);
+  }
+}
 
+export async function loadSiteStatus(): Promise<SiteStatus> {
+  // The network and git probes run while gpg verifies.
+  const pending = Promise.all([servingDevServer(siteRoot), repoState(siteRoot), headStatus(SITE_ORIGIN, 2_000)]);
+  const security = securityStatus();
+  const [devServer, repo, liveCode] = await pending;
+  const distPath = resolveBuiltDir(siteRoot);
+  const upstream = `origin/${DEFAULT_BRANCH}`;
   return {
-    devServerOpen: isListening(DEV_PORT),
-    gitBranch: branch ?? 'unknown',
-    gitChanges: changes ? changes.split('\n').length : 0,
-    gitAheadBehind: counts === null ? 'no upstream' : ahead && behind && extra.length === 0 ? `${ahead} ahead, ${behind} behind` : '',
-    commitHash,
-    commitSubject,
-    commitAge,
+    devServerOpen: devServer !== null,
+    gitBranch: repo.branch ?? 'detached HEAD',
+    gitChanges: repo.changes,
+    gitAheadBehind: repo.ahead === null ? `${upstream} unknown` : `${repo.ahead} ahead, ${repo.behind} behind ${upstream}`,
+    commitHash: repo.commit?.hash ?? '',
+    commitSubject: repo.commit?.subject ?? '',
+    commitAge: repo.commit?.age ?? '',
     distStatus: distPath ? builtStatus(distPath) : 'not built',
-    securityStatus: security === null ? 'signature invalid or missing' : (security.split('\n').at(-1) ?? '').replace(/^ok\s+/, '').trim(),
-    liveCode: probe('curl', ['-s', '-o', '/dev/null', '-m', '2', '-w', '%{http_code}', SITE_ORIGIN]) ?? '',
+    securityStatus: security,
+    liveCode: liveCode === null ? '' : String(liveCode),
     loadedAt: new Date().toTimeString().slice(0, 8),
   };
 }
@@ -177,12 +184,7 @@ export async function load(): Promise<Model> {
   const loaded = loadSnapshot();
   const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
-  const featured = summaries
-    .filter((w) => w.featured)
-    .sort(
-      (a, b) =>
-        (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || a.slug.localeCompare(b.slug),
-    );
+  const featured = summaries.filter((w) => w.featured).toSorted(byFeaturedOrder);
   const rest = summaries
     .filter((w) => !w.featured)
     .sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
@@ -221,7 +223,7 @@ export async function reload(model: Model): Promise<void> {
   model.mode = oldMode === 'confirm-reload' ? 'list' : oldMode;
   model.tab = oldTab;
   model.actionCursor = oldActionCursor;
-  if (oldTab === 'site') model.siteStatus = loadSiteStatus();
+  if (oldTab === 'site') model.siteStatus = await loadSiteStatus();
   model.flash = next.flash || `${GREEN}reloaded writeups and validation status from disk${RESET}`;
 }
 
@@ -331,7 +333,10 @@ export async function createWriteup(model: Model, slug: string): Promise<boolean
     if (summary && fingerprint(next.writeups.filter((w) => w.slug !== slug)) === model.sourceFingerprint) {
       model.sourceFingerprint = next.sourceFingerprint;
     }
-  } catch {}
+  } catch (error) {
+    // An unreadable vault leaves the row the scaffold's defaults.
+    if (!(error instanceof WriteupError)) throw error;
+  }
   const contractFields = collectionFields('writeups');
   const item = toItem(summary ?? { slug, title: slug, published: false }, contractFields);
   model.items.push(item);

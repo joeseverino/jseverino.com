@@ -93,7 +93,114 @@
         "next": {
           "$ref": "#/$defs/next"
         }
-      }
+      },
+      "allOf": [
+        {
+          "description": "apply-plan, set, and link report each completed write as a receipt: audit and cache-invalidation evidence, absent when nothing was written (a link always writes).",
+          "if": {
+            "properties": {
+              "command": {
+                "enum": [
+                  "apply-plan",
+                  "set",
+                  "link"
+                ]
+              }
+            },
+            "required": [
+              "command"
+            ]
+          },
+          "then": {
+            "properties": {
+              "receipt": {
+                "$ref": "#/$defs/receipt"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "command": {
+                "const": "link"
+              }
+            },
+            "required": [
+              "command"
+            ]
+          },
+          "then": {
+            "required": [
+              "receipt"
+            ]
+          }
+        }
+      ]
+    },
+    "receipt": {
+      "description": "A completed write, shaped as bin/lib/writeups/receipt.ts defines MutationReceipt. Evidence only, never a second source of truth.",
+      "type": "object",
+      "required": [
+        "receipt_version",
+        "operation",
+        "entity",
+        "changed_fields",
+        "affected_projections",
+        "idempotency_key",
+        "metadata"
+      ],
+      "properties": {
+        "receipt_version": {
+          "const": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entity": {
+          "type": "object",
+          "required": [
+            "type",
+            "id"
+          ],
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "changed_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "affected_projections": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "before_fingerprint": {
+          "type": "string"
+        },
+        "after_fingerprint": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     },
     "help": {
       "description": "`--help --json`: the usage as data.",

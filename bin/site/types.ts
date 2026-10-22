@@ -42,8 +42,8 @@ export interface ValidateResult extends Step {
 
 export interface DevResult extends Step {
   drafts: boolean;
-  // Astro detached the server (it does when it detects an agent caller);
-  // url and pid come from .astro/dev.json.
+  // Astro served in the background (it does when it detects an agent
+  // caller); url and pid come from its lock file, .astro/dev.json.
   background: boolean;
   url: string | null;
   pid: number | null;
@@ -138,7 +138,9 @@ export interface SeoResult extends Step, ScriptRun {
 }
 
 export interface DraftAltResult extends Step, ScriptRun {
-  slug: string;
+  // null under --all: every published writeup missing cover_alt.
+  slug: string | null;
+  all: boolean;
   applied: boolean;
 }
 

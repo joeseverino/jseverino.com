@@ -165,11 +165,11 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   }),
   'draft-alt': define({
     summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
-    usage: 'site draft-alt <slug> [--apply]',
-    help: 'Needs ANTHROPIC_API_KEY. --apply writes the draft to the writeup\'s cover_alt.',
-    options: { apply: flag },
-    positionals: [1, 1],
-    run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, apply: values.apply, out }),
+    usage: 'site draft-alt <slug>|--all [--apply]',
+    help: 'Needs ANTHROPIC_API_KEY. --all drafts for every published writeup missing cover_alt. --apply writes each draft to its cover_alt.',
+    options: { all: flag, apply: flag },
+    positionals: [0, 1],
+    run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, all: values.all, apply: values.apply, out }),
   }),
   writeups: define({
     summary: 'List the vault\'s writeups with publish and featured state',
@@ -271,7 +271,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   headers: define({
     summary: 'Check the live security headers on one path',
     usage: 'site headers [<path>]',
-    help: 'HEAD against the production origin (SITE_ORIGIN overrides), redirects not followed.',
+    help: 'HEAD against the production origin, redirects not followed.',
     positionals: [0, 1],
     run: async ({ positionals: [pathname], out }) => (await siteOps()).headers({ path: pathname, out }),
   }),
@@ -341,12 +341,12 @@ export function failureDocument(command: string | undefined, error: unknown): Si
   };
 }
 
-function emit<C extends CommandName>(json: boolean, document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
-  if (json) console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
+function emit<C extends CommandName>(document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
+  console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
 }
 
 function printHelp(json: boolean, name: CommandName | undefined): number {
-  if (json) emit(true, helpDocument(name));
+  if (json) emit(helpDocument(name));
   else console.log(name ? commandHelp(COMMANDS[name]) : mainHelp());
   return EXIT.ok;
 }
@@ -377,7 +377,7 @@ async function runCommand<C extends CommandName>(name: C, rest: string[], json: 
     throw new SiteError(`usage: ${command.usage}`, { code: EXIT.usage, fix: `site ${name} --help` });
   }
   const result = await command.run({ values: parsed.values, positionals: parsed.positionals, out });
-  emit<C>(json, successDocument(name, result));
+  if (json) emit<C>(successDocument(name, result));
   return EXIT.ok;
 }
 
@@ -396,7 +396,7 @@ async function main(argv: string[]): Promise<number> {
   } catch (error) {
     const failure = failureDocument(name, error);
     if (json) {
-      emit(true, failure);
+      emit(failure);
     } else {
       console.error(`failed: ${terminalText(failure.error.message)}`);
       if (failure.error.fix) console.error(`fix: ${terminalText(failure.error.fix)}`);

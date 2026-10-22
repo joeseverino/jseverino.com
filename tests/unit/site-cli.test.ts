@@ -48,6 +48,14 @@ test('manage --json is a usage error with a JSON error document', () => {
   assert.match(doc.error.message, /interactive/);
 });
 
+test('draft-alt takes one slug or --all, never both or neither', () => {
+  for (const args of [['draft-alt'], ['draft-alt', 'alpha', '--all']]) {
+    const result = site(...args, '--json');
+    assert.equal(result.status, 2, args.join(' '));
+    assert.match((JSON.parse(result.stdout) as SiteFailure).error.message, /one writeup slug or --all/);
+  }
+});
+
 test('human-readable stdout and JSON progress neutralize untrusted terminal controls', (t) => {
   const payload = 'report\x1b[2J\x1b[H\x1b]52;c;Y2xpcGJvYXJk\x07\r\x08\x9b2J\u202e';
   for (const json of [false, true]) {

@@ -2,8 +2,8 @@
 // the writeup store. The one interactive command: it refuses to start without a terminal.
 // Model in ./manage-model.ts, frames in ./manage-render.ts, dev server in ./dev-server.ts.
 import { spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import path from 'node:path';
-import { setTimeout as delay } from 'node:timers/promises';
 import {
   RESET, BOLD, DIM, GREEN, YELLOW, RED,
   fitFrame,
@@ -14,7 +14,7 @@ import { siteRoot } from '../../src/lib/site-root.ts';
 import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
 import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
-import { DEV_PORT, isListening, listeners, running, startDevServer, stopDevServer, type StartedServer } from './dev-server.ts';
+import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
 import {
   FIELDS, SITE, createWriteup, diff, load, loadSiteStatus, reload, type Model,
 } from './manage-model.ts';
@@ -27,7 +27,7 @@ import { handleManageKey, pasteManageInput, type ManageEffect } from './manage-i
 const REPLAY = !!process.env.MANAGE_TUI_KEYS;
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
-function gatherSiteStatus(model: Model): string {
+async function gatherSiteStatus(model: Model): Promise<string> {
   const cols = terminalColumns();
   if (!REPLAY) {
     process.stdout.write(
@@ -37,15 +37,11 @@ function gatherSiteStatus(model: Model): string {
     );
   }
   const t0 = Date.now();
-  model.siteStatus = loadSiteStatus();
+  model.siteStatus = await loadSiteStatus();
   return ((Date.now() - t0) / 1000).toFixed(1);
 }
 
-// Stops only the server this session started; a listener manage did not
-// start is named and left alone.
-let started: StartedServer | null = null;
 let devBusy = false;
-const DEV_START_TIMEOUT_MS = 15_000;
 
 async function toggleDevServer(model: Model): Promise<void> {
   if (devBusy) {
@@ -60,48 +56,30 @@ async function toggleDevServer(model: Model): Promise<void> {
   }
 }
 
+// The lock names the server, so the toggle stops whichever Astro dev server serves this checkout.
 async function switchDevServer(model: Model): Promise<void> {
-  if (isListening(DEV_PORT)) {
-    if (!started) {
-      model.flash = `${YELLOW}port ${DEV_PORT} is served by a process this session did not start (pid ${listeners(DEV_PORT).join(', ')}); stop it there${RESET}`;
-      return;
-    }
-    model.flash = `${YELLOW}stopping dev server...${RESET}`;
-    draw(model);
-    const stopped = await stopDevServer(started, { cwd: siteRoot, port: DEV_PORT });
-    started = null;
-    model.siteStatus = loadSiteStatus();
-    model.flash = stopped ? `${GREEN}dev server stopped${RESET}` : `${RED}dev server did not stop; check port ${DEV_PORT}${RESET}`;
+  const serving = await servingDevServer(siteRoot);
+  model.flash = `${YELLOW}${serving ? 'stopping' : 'starting'} dev server...${RESET}`;
+  draw(model);
+  if (serving) {
+    await stopDevServer(siteRoot);
+    const left = await servingDevServer(siteRoot);
+    model.siteStatus = await loadSiteStatus();
+    model.flash = left
+      ? `${RED}dev server did not stop (pid ${left.pid}); run astro dev stop to see why${RESET}`
+      : `${GREEN}dev server stopped${RESET}`;
     return;
   }
-  model.flash = `${YELLOW}starting dev server...${RESET}`;
-  draw(model);
-  started = startDevServer([SITE[0], SITE[1], 'dev'], { cwd: siteRoot, port: DEV_PORT });
-  const deadline = Date.now() + DEV_START_TIMEOUT_MS;
-  let up = false;
-  while (started && Date.now() < deadline) {
-    if (isListening(DEV_PORT)) {
-      up = true;
-      break;
-    }
-    if (!running(started)) {
-      up = isListening(DEV_PORT);
-      break;
-    }
-    await delay(200);
-  }
-  if (!up && started) {
-    await stopDevServer(started, { cwd: siteRoot, port: DEV_PORT });
-    started = null;
-  }
-  model.siteStatus = loadSiteStatus();
-  model.flash = up
-    ? `${GREEN}dev server started on http://127.0.0.1:${DEV_PORT}${RESET}`
-    : `${RED}dev server did not start on port ${DEV_PORT}; run site dev in a terminal to see why${RESET}`;
+  await startDevServer(siteRoot);
+  const started = await servingDevServer(siteRoot);
+  model.siteStatus = await loadSiteStatus();
+  model.flash = started
+    ? `${GREEN}dev server started on ${started.url}${RESET}`
+    : `${RED}dev server did not start; .astro/dev.log says why${RESET}`;
 }
 
 // Replay scripts never run real commands.
-function runCommandInline(bin: string, args: readonly string[], title: string): void {
+async function runCommandInline(bin: string, args: readonly string[], title: string): Promise<void> {
   if (!process.stdin.isTTY) return;
   setTitle(`site manage: ${title}`);
   process.stdin.setRawMode(false);
@@ -114,13 +92,14 @@ function runCommandInline(bin: string, args: readonly string[], title: string): 
   process.stdout.write(`\n${rule(terminalColumns())}\n`);
   process.stdout.write(`Finished with exit code ${res.status ?? res.signal}. Press any key to return...`);
 
-  // Node keeps the TTY fd non-blocking, so fs.readSync(0, …) EAGAINs straight
-  // through "press any key"; block in a child that owns the terminal instead.
-  spawnSync('bash', ['-c', 'read -rsn1'], { stdio: 'inherit' });
-
-  enterAlt({ pushTitle: false });
+  // The keypress that returns is not a TUI key, so the input pump is off until it arrives.
+  process.stdin.off('data', onInput);
   process.stdin.setRawMode(true);
   process.stdin.resume();
+  await once(process.stdin, 'data');
+  process.stdin.on('data', onInput);
+
+  enterAlt({ pushTitle: false });
 }
 
 // What each Site tab action key runs inline; publish reloads the writeups, the rest the site status.
@@ -140,9 +119,9 @@ async function runAction(model: Model, key: string): Promise<void> {
   }
   const action = INLINE_ACTIONS[key];
   if (!action) return;
-  runCommandInline(action.bin, action.args, action.title);
+  await runCommandInline(action.bin, action.args, action.title);
   if (action.reloads) await reload(model);
-  else model.siteStatus = loadSiteStatus();
+  else model.siteStatus = await loadSiteStatus();
 }
 
 function openInObsidian(model: Model): void {
@@ -283,7 +262,7 @@ async function execute(effect: ManageEffect): Promise<void> {
     case 'open': openInObsidian(model); return;
     case 'action': await runAction(model, effect.key); return;
     case 'refresh': {
-      const seconds = gatherSiteStatus(model);
+      const seconds = await gatherSiteStatus(model);
       if (effect.announce) model.flash = `${GREEN}status refreshed${RESET}${DIM} in ${seconds}s${RESET}`;
       return;
     }
@@ -301,6 +280,7 @@ function pasteInput(text: string): void {
 }
 
 const { feedInput, flushInput } = createInputPump({ onKey: handleKey, onPaste: pasteInput });
+const onInput = (buf: Buffer): void => feedInput(buf.toString('utf8'));
 
 export async function manage(): Promise<never> {
   const smoke = process.env.MANAGE_TUI_SMOKE;
@@ -319,7 +299,7 @@ export async function manage(): Promise<never> {
       process.stdout.write(detailFrame(model) + '\n');
     } else if (smoke === 'site') {
       model.tab = 'site';
-      model.siteStatus = loadSiteStatus();
+      model.siteStatus = await loadSiteStatus();
       process.stdout.write(siteFrame(model) + '\n');
     } else {
       process.stdout.write(listFrame(model) + '\n');
@@ -348,7 +328,7 @@ export async function manage(): Promise<never> {
   process.on('SIGINT', () => finish(0, 'cancelled · nothing written'));
   process.stdin.setRawMode(true);
   process.stdin.resume();
-  process.stdin.on('data', (buf: Buffer) => feedInput(buf.toString('utf8')));
+  process.stdin.on('data', onInput);
   // finish() exits the process; until then the TUI owns it.
   return new Promise(() => {});
 }

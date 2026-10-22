@@ -33,9 +33,11 @@ Every non-interactive command:
 
   The document's type is `SiteResult` in [`bin/site/types.ts`](../bin/site/types.ts),
   a union discriminated by `ok` and `command`, so a caller can import it.
+  `apply-plan`, `set`, and `link` add a `receipt` for each completed write:
+  audit and cache-invalidation evidence, never a second source of truth.
   `site dev --json` sends Astro's own output to stderr; when Astro detects an
-  agent and serves from a background process, the result carries
-  `background: true` with the server's `url` and `pid`.
+  agent it serves in the background (`astro dev --background`), and the
+  result carries `background: true` with the server's `url` and `pid`.
 - with `--json`, sets `SITE_JSON=1` for every process the command starts.
   Under it, [`bin/build-static.ts`](../bin/build-static.ts) runs
   `astro build --json` and the astro-check audit runs `astro check --json`,
@@ -79,7 +81,7 @@ The content model a client edits against is
 | `site featured [<slug> <slot\|up\|down\|top\|bottom\|off>]` | Show or reorder the home-page featured list (renumbers `1..N`) |
 | `site tech [<query>]` | Search the technology catalog |
 | `site seo <page> [--result]` | Search-snippet preview from the last build |
-| `site draft-alt <slug> [--apply]` | Draft `cover_alt` from the cover image (Claude API) |
+| `site draft-alt <slug>\|--all [--apply]` | Draft `cover_alt` from the cover image (Claude API); `--all` drafts for every published writeup missing one |
 | `site writeups [--filter all\|published\|draft\|featured]` | Every writeup with its publish and featured state |
 | `site dashboard` | Every writeup, the featured order, the draft gate, and the `sourceFingerprint` a plan is checked against |
 | `site tag <slug>` | Which writeups use a technology slug, and how many are published |
@@ -191,9 +193,10 @@ alternate screen, streams the real command output (`site status`,
 ![site manage Site tab with the dev server running: the toggled action label and the running-server status line](./images/site-cli/manage-site-tab-dev-running.png)
 
 The dev server action is a toggle: the same key starts and stops it, and the
-action label follows the live state. A stop sends SIGTERM to the process group
-the start created (SIGKILL after three seconds) and touches nothing else: a
-server on the port that this session did not start is named and left running.
+action label follows the live state. It runs Astro's own `astro dev --background`
+and `astro dev stop`. The server is the one Astro's lock file
+(`.astro/dev.json`) names, and it counts as running while it answers HTTP;
+`astro dev logs` shows its output.
 
 ## Configuration
 

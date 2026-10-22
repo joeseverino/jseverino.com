@@ -40,7 +40,9 @@ function timedOut(what: string, result: object): never {
 
 // Every context main's ruleset requires, reported and passed on the PR head.
 // An empty requirement is an error: a fresh PR has reported nothing yet, so
-// "nothing required" cannot be told apart from "nothing reported".
+// "nothing required" cannot be told apart from "nothing reported". The list
+// comes from the ruleset because `gh pr checks --watch --required` waits only
+// on checks that have already reported.
 async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: number, out: Output): Promise<void> {
   const required = await requiredContexts(SITE_REPOSITORY, DEFAULT_BRANCH);
   if (required.length === 0) {
