@@ -10,7 +10,7 @@ each check a gate and sequences them:
 | Directory | What it holds | How it runs |
 | :--- | :--- | :--- |
 | [`tests/audits/`](./audits/) | Node scripts that read the source tree or the build and assert invariants. No browser. | `mise run checks:<gate>`, `mise run built:<gate>` |
-| [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Cloudflare functions, the process harness, and the audits' rules. No browser, no build. | `mise run checks:unit` |
+| [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Worker's API handlers, the process harness, and the audits' rules. No browser, no build. | `mise run checks:unit` |
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the built site (`dist/` via the preview server). | `mise run browser:e2e`, `mise run browser:visual` |
 | [`tests/edge/`](./edge/) | Request specs against the build served through `astro preview` (the Workers runtime). | `mise run browser:edge` |
 
@@ -45,10 +45,9 @@ Four steps; the gates enforce most of them:
 
 ## 1. The gate ladder
 
-![The gate ladder: what each local gate runs, then CI and preview verification on the pull request, the merge, and what deploy:verify checks in production](../docs/diagrams/gate-ladder.png)
-
-<sup>Diagram source: [`docs/diagrams/gate-ladder.mmd`](../docs/diagrams/gate-ladder.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+The [validation flow](../docs/Development.md#gates) traces a change from the
+local gates through the pull request's CI and preview to production; the
+sections below say what each gate asserts.
 
 ### The gates
 
@@ -118,7 +117,7 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 ### TypeScript type check
 
-`mise run checks:types`: `astro sync`, `tsc -p .`, `wrangler types --check`, then `tsc -p tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into `worker-configuration.d.ts`; `wrangler types --check` fails when that file is stale. `astro check` reads [`tsconfig.astro.json`](../tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
+`mise run checks:types`: `astro sync`, `tsc -p .`, `wrangler types --check`, then `tsc -p tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts); `wrangler types --check` fails when that file is stale. `astro check` reads [`tsconfig.astro.json`](../tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
 
 ### `checks:duplication`
 
@@ -131,10 +130,12 @@ consumes [`contracts/contact.v1.json`](../contracts/contact.v1.json) instead of 
 every handler `INSERT` names only columns the D1 schema defines with matching
 bind counts, and that `wrangler.jsonc` binds the D1 database `site-config.ts` names. A persistence mismatch fails before deployment. The API Shield
 document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
-is regenerated and compared whole by `mise run checks:contracts`.
+is regenerated and compared whole by `mise run checks:contracts`, which also
+runs `make:icons --check` so the committed vector brand marks (`favicon.svg`,
+`mark.svg`, `wordmark-caps.svg`) match what the engine renders.
 
 ### `check-sitedrift-preview.ts`
-Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'main'` and that production builds (`main`) ship as untampered Astro pages with `/__sitedrift` returning 404.
+Runs the deploy's own wrap ([`bin/wrap-preview.ts`](../bin/wrap-preview.ts)) on simulated builds: a feature branch (`WORKERS_CI=1`, `WORKERS_CI_BRANCH` other than `main`) gets the sitedrift review wrapper with the CSP filled again to cover it, and `main`'s build stays the untampered Astro page with no `__sitedrift` files.
 
 ### `check-css.ts`
 Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--variable)` usages from the stylesheets and from every `.astro` and `.ts` file under `src/` (a token consumed only in a template or script still counts), and fails listing any custom property that is defined but never consumed.
@@ -144,8 +145,9 @@ Runs after the build over every image in the outDir, committed under `public/ass
 
 ### `check-repository-policy.ts`
 Structural health:
-- **Node version**: the `node` pin in [`mise.toml`](../mise.toml) equals [`.nvmrc`](../.nvmrc), the running Node matches it on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
-- **Clean tree**: no committed `.env` / `.dev.vars`, no `dist/` or `playwright-report/`.
+- **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
+- **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
+- **Clean tree**: no committed `.env`, no `dist/` or `playwright-report/`.
 - **Stylesheets**: component styles live in `src/styles` modules.
 - **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
@@ -163,7 +165,7 @@ What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of 
 
 ### `check-docs.ts`
 What no link checker knows, over the same tracked docs (gitignored local files such as `AGENTS.md` are never read):
-- every `mise run <task>` reference names a task, and no `npm run` names anything but `build`, the one npm script (every other command is a mise task),
+- every `mise run <task>` reference names a task, and no doc runs an npm script (every command is a mise task),
 - every backticked repo path resolves. A token in inline code is a repo path when its first segment is a top-level entry (`bin/site.ts`, `docs/`, `dist/`); it resolves when `git ls-files` tracks it or a file under it, or when `git check-ignore` reports it ignored (generated output such as `dist/` and `.cache/`). A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked up to the directory before it. Intentional example paths go in `EXAMPLE_PATHS` in the audit.
 
 Paths inside fenced code blocks are example syntax and skipped; script and task references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which the weekly link check covers).
@@ -422,10 +424,10 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 
 ### Post-deploy verification
 
-`bin/deploy-verify.ts` (`mise run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it is not run from CI, because Cloudflare Bot Fight Mode challenges GitHub-hosted runners. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each deployment's own `*.pages.dev` URL, which is outside the zone: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
+`bin/deploy-verify.ts` (`mise run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it is not run from CI, because Cloudflare Bot Fight Mode challenges GitHub-hosted runners. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each Worker version's own preview URL on workers.dev, which is outside the zone, before production takes that version: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
 
 1. **Repo state**: local branch is `main`, clean, fully pushed.
-2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and Cloudflare Pages report success.
+2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and `deploy` report success.
 3. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source and the home page's inline script and stylesheet covered by its hashes (`inline`),

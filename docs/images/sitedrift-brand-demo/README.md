@@ -2,13 +2,11 @@
 
 These images document a temporary red-brand experiment. `branding-engine`
 generated the coordinated brand change from one source-of-truth edit, while
-`sitedrift` compared the resulting Cloudflare preview with the unchanged navy
+`sitedrift` compared the resulting branch preview with the unchanged navy
 production site.
 
 The full explanation appears in
-[Deployment Preview Review](../../Deployment-Preview-Review.md). The exact
-historical deployment remains at `6ef83545.jseverino.pages.dev`, behind
-Cloudflare Access with every preview.
+[Deployment Preview Review](../../Deployment-Preview-Review.md).
 
 ## What Each Capture Shows
 
@@ -16,10 +14,6 @@ Cloudflare Access with every preview.
   `src/lib/brand.ts`, and branding-engine regenerates the Open Graph card.
 - `github-generated-assets-diff.png`: the same token change propagates through
   the GitHub social preview and transparent mark.
-- `cloudflare-deployment.png`: the exact branch, commit, successful deployment,
-  immutable URL, and build duration are tied together.
-- `cloudflare-build-log.png`: the normal Cloudflare build invokes sitedrift and
-  wraps all 83 generated preview pages automatically.
 - `red-brand-solo.png`: the generated branch remains a fully interactive site.
 - `red-vs-live-split.png`: all brand surfaces change together while layout and
   content remain aligned.

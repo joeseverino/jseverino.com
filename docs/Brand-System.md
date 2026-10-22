@@ -53,10 +53,13 @@ byte-for-byte identical.
 
 The result is one engine with several consumers:
 
-![The site, brand kit, and local brand tool all consume the shared branding engine](./diagrams/branding-engine-consumers.png)
-
-<sup>Diagram source: [`docs/diagrams/branding-engine-consumers.mmd`](./diagrams/branding-engine-consumers.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+```mermaid
+flowchart TB
+    BE["branding-engine (public: npm + GitHub)"]
+    JS["jseverino.com (npm optionalDep)"] --> BE
+    SB["severino-brand (npm dependency)"] --> BE
+    TB["tools/brand (local checkout)"] --> BE
+```
 
 - **The site** depends on the engine to regenerate its favicons, social cards, and
   header wordmark, and commits the output. Its production build never runs the
@@ -101,8 +104,7 @@ surfaces.
 
 ![Brand-only pixel differences](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-The demonstration deployment is still at `6ef83545.jseverino.pages.dev`, behind
-Cloudflare Access with every preview. The branch went back to navy afterward.
+The branch went back to navy afterward.
 
 ## How The Site Consumes It
 
@@ -126,7 +128,9 @@ upstream contract:
 - `bin/make-icons.ts`, `bin/make-og-image.ts`, and `bin/make-github-social.ts`
   import `markSvg` / `renderCard` from `branding-engine` instead of a local copy,
   and pass it the synced `BRAND`. The engine is generic; the tokens supply the color.
-- The generated assets in `public/assets/` are committed. To restyle the brand,
+- The generated assets in `public/assets/` are committed. `mise run checks:contracts`
+  runs `make:icons --check`, which fails when the vector marks (`favicon.svg`,
+  `mark.svg`, `wordmark-caps.svg`) differ from what the engine renders. To restyle the brand,
   edit `tokens.json` upstream, run `mise run sync:tokens`, re-run the generators,
   and commit the new tokens and assets together.
 

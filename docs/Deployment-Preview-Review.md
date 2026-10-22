@@ -1,8 +1,10 @@
 # Deployment Preview Review
 
-Every non-production Cloudflare Pages deployment of `jseverino.com` carries a
-compact [sitedrift](https://github.com/joeseverino/sitedrift) review layer. The
-preview deployment is DEV; the current `https://jseverino.com` release is LIVE.
+Every pull request's preview of `jseverino.com` carries a compact
+[sitedrift](https://github.com/joeseverino/sitedrift) review layer. The preview
+is a version of the `jseverino` Worker on its workers.dev preview URL, behind
+Cloudflare Access; it is DEV, and the current `https://jseverino.com` release is
+LIVE.
 
 ## Case Study: One Brand Change, Fully Reviewed
 
@@ -14,41 +16,25 @@ deployment with the live site.
 The demonstration changed the primary brand token in `src/lib/brand.ts` from
 navy to red. `branding-engine` propagated that one decision through the favicon,
 marks, header wordmark, interface color, Open Graph card, and GitHub social
-preview. Only a Cloudflare branch preview received the change; production stayed
-navy.
+preview. Only the branch's preview received the change; production stayed navy.
 
 ![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
 
-[Open the immutable red-brand comparison](https://6ef83545.jseverino.pages.dev/).
-This URL stays pinned to the demonstration build. Preview deployments sit behind
-Cloudflare Access (see [Cloudflare](./Cloudflare.md)), so the link opens only for
-the owner.
+### 1. Turn A Commit Into A Reviewable Version
 
-### 1. Turn A Git Commit Into A Reviewable Artifact
+No separate review server exists. Once `ci` passes, the `deploy` workflow wraps
+the build `ci` gated in the sitedrift viewer and uploads it as a Worker version
+tagged with the commit. Its `deploy` check on the commit names the version's own
+URL, which never moves, and the branch alias, which follows the next push.
 
-Cloudflare records the repository, branch, commit, deployment status, duration,
-and immutable URL together. A reviewer can identify the exact code under review,
-and a doc can link to a deployment that does not move on the next push.
-
-[![Cloudflare deployment details for the red-brand commit](./images/sitedrift-brand-demo/cloudflare-deployment.png)](https://6ef83545.jseverino.pages.dev/)
-
-### 2. Add The Review Layer During The Normal Build
-
-No separate review server exists. The Cloudflare build runs the repository's
-static build command, which wraps the 83 generated HTML files with the installed
-sitedrift dependency on non-production branches. Cloudflare uploads the static
-assets and the scoped route in the same deployment.
-
-![Cloudflare build log showing sitedrift wrapping 83 preview pages](./images/sitedrift-brand-demo/cloudflare-build-log.png)
-
-### 3. Confirm The Branch Works By Itself
+### 2. Confirm The Branch Works By Itself
 
 Solo mode presents DEV as a normal, interactive website with a compact review
 bar. The layer must not break navigation, menus, scrolling, or responsive layout.
 
-[![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)](https://6ef83545.jseverino.pages.dev/)
+![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)
 
-### 4. Compare The Complete Result With Production
+### 3. Compare The Complete Result With Production
 
 Split mode places the red branch and navy production site on the same route and
 scroll position. Structure and content stay aligned; the brand change appears in
@@ -57,14 +43,14 @@ change; `sitedrift` shows how far it reached.
 
 ![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
-### 5. Isolate Changed Pixels
+### 4. Isolate Changed Pixels
 
 Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
 The sparse result shows the branch changed branding, not layout or content.
 
 ![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-### 6. Check More Than Appearance
+### 5. Check More Than Appearance
 
 Both deployments receive the same metadata preview and SEO checklist. Here the
 title, description, canonical URL, headings, Open Graph fields, favicon, and
@@ -78,7 +64,7 @@ that fails, redirects, or gets heavier.
 
 ![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
 
-### 7. Leave Review Context Without Adding A Service
+### 6. Leave Review Context Without Adding A Service
 
 Review notes live only in that browser's `localStorage`, and the interface says
 so. They need no account system, write API, or database.
@@ -101,14 +87,24 @@ so. They need no account system, write API, or database.
 
 ## Repository Integration
 
-`mise run build`
-([`bin/build-static.ts`](../bin/build-static.ts)) runs `astro build`, then
-`sitedrift cloudflare --dir <outDir> --live <origin> --brand <owner>`, with the
-output directory from [`src/lib/build-output.ts`](../src/lib/build-output.ts)
-and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts).
-`--nonce __CSP_INLINE__` is a build-time marker on every tag the viewer writes;
-`bin/build-csp.ts` hashes and strips it after the wrap, so the build's CSP covers
-wrapped pages like any other.
+The build is the same for production and a preview. The `deploy` workflow's
+`preview` job wraps it afterwards with `mise run preview:wrap`
+([`bin/wrap-preview.ts`](../bin/wrap-preview.ts)), which:
+
+1. refuses `dist/server/wrangler.json` unless every key is one the Cloudflare
+   adapter writes, it names the `jseverino` Worker, and its script and assets
+   sit inside the build, since wrangler reads that file beside the Cloudflare
+   token;
+2. calls sitedrift's `installCloudflarePreview` on `dist/client/`, with the
+   origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.ts),
+   to install the DEV-versus-LIVE review shell and keep the original pages
+   under `__sitedrift_source/`;
+3. runs [`bin/build-csp.ts`](../bin/build-csp.ts) again from
+   `dist/_headers.template`, so the policy hashes the viewer's inline tags,
+   which carry the same `__CSP_INLINE__` marker as the site's.
+
+The job then runs `wrangler versions upload` with the branch's alias and
+`deploy-verify --origin <preview URL> --preview`.
 
 The scoped on-demand route,
 [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts),
@@ -130,18 +126,25 @@ this route's guards:
 
 ## Preview Build Flow
 
-![A feature branch build is transformed into the sitedrift review shell with preview and live routes](./diagrams/preview-build-flow.png)
+```mermaid
+flowchart TB
+    PR["Pull request: ci passes"] --> Art["The site artifact ci gated"]
+    Art --> Wrap["mise run preview:wrap: sitedrift viewer, CSP filled again"]
+    Wrap --> Up["wrangler versions upload, with the branch alias"]
+    Up --> Verify["deploy-verify --origin --preview"]
+    Verify ==> Shell["Review shell at / on the preview URL, behind Access"]
+    Shell --> Dev["DEV: the branch preview"]
+    Shell --> Live["LIVE: production proxy"]
+```
 
-<sup>Diagram source: [`docs/diagrams/preview-build-flow.mmd`](./diagrams/preview-build-flow.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
-
-The branch alias and immutable deployment URL expose the same interface. Verify
-against the immutable URL, which cannot move to a newer build mid-test.
+The branch alias and the version URL expose the same interface. Verify against
+the version URL, which cannot move to a newer build mid-test.
 
 ## Production Invariant
 
-The addon does not wrap production. `sitedrift cloudflare` exits without
-changing the Astro output when `CF_PAGES_BRANCH=main`.
+Production is never wrapped. The `production` job ships the build as `ci`
+left it and never runs the wrap, and `installCloudflarePreview` itself leaves
+the output unchanged unless `WORKERS_CI=1` names a branch other than `main`.
 
 The route is part of the Worker, so it still exists in production. It answers
 `404` there on the production host check and on the
@@ -155,8 +158,9 @@ Run the guard before release:
 mise run checks:preview
 ```
 
-It builds simulated outputs and asserts that a feature branch receives the
-wrapper while `main` stays the original Astro document.
+It runs the deploy's own wrap on simulated outputs and asserts that a feature
+branch receives the wrapper, with the CSP filled again, while `main` stays the
+original Astro document.
 
 ## Security Boundary
 
@@ -176,7 +180,7 @@ binding, secret, upload endpoint, or public write path.
 
 ## Review Procedure
 
-1. Open the immutable `########.jseverino.pages.dev` deployment.
+1. Open the version URL the commit's `deploy` check names.
 2. Confirm DEV Solo mode renders the intended branch.
 3. Switch DEV/LIVE and inspect the same route.
 4. Use Split with linked scrolling for layout and content review.
@@ -189,13 +193,9 @@ binding, secret, upload endpoint, or public write path.
 
 ## Dependency Updates
 
-```sh
-npm install --save-dev 'sitedrift@^<version>'
-mise run fast
-```
-
-Review upstream release notes and verify an immutable Pages deployment before
-merging. A sitedrift update changes both build tooling (HTML transform) and the
+Renovate opens each sitedrift update in a pull request of its own
+([Dependencies](./Dependencies.md#updates)). Review the upstream release notes
+and the pull request's preview before merging. A sitedrift update changes both build tooling (HTML transform) and the
 preview runtime (edge proxy).
 
 ## Related Docs

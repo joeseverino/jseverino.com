@@ -24,10 +24,8 @@ glob, so a new task runs locally and in CI with no second list to edit.
 
 ## How it fits together
 
-![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](../docs/diagrams/validation-flow.png)
-
-<sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](../docs/diagrams/validation-flow.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+The [validation flow](../docs/Development.md#gates) traces a change from the
+local gates through the pull request's CI and preview to production.
 
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
