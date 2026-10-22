@@ -12,9 +12,6 @@ import { trackedFiles } from '../../bin/lib/git.ts';
 import { spawnResult } from '../../bin/lib/run.ts';
 import { miseTasks, namesTask } from '../../bin/lib/mise.ts';
 
-// Backticked paths that are deliberate examples; none names a repo file.
-export const EXAMPLE_PATHS: ReadonlySet<string> = new Set([]);
-
 export interface PathRef {
   line: number;
   path: string;
@@ -50,7 +47,7 @@ export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathR
     for (const [, span = ''] of text.matchAll(/`([^`]+)`/g)) {
       for (const token of span.trim().split(/\s+/)) {
         const found = repoPath(token, topLevel);
-        if (found && !EXAMPLE_PATHS.has(found)) refs.push({ line: index + 1, path: found });
+        if (found) refs.push({ line: index + 1, path: found });
       }
     }
   });
@@ -62,6 +59,14 @@ export function npmScriptRuns(line: string): string[] {
   return [...line.matchAll(/npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g)]
     .map(([, name = '']) => name)
     .filter((name) => !name.startsWith('-'));
+}
+
+// The tasks a line of a doc runs: `mise run [-c] [-j N] <task>`, the task bare or quoted as a
+// glob. A name ends on a word character or `*`, so the punctuation after it is prose; a name
+// running on into a `<placeholder>` is an example, not a reference.
+export function miseTaskRuns(line: string): string[] {
+  return [...line.matchAll(/mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]*[\w*])(?![:.-]*[\w*<])/g)]
+    .map(([, name = '']) => name);
 }
 
 export interface RepoIndex {
@@ -109,9 +114,6 @@ if (import.meta.main) {
   const docs = trackedFiles(siteRoot, ...pathspecs).filter((file) => file.endsWith('.md') && fs.existsSync(path.join(siteRoot, file)));
   if (docs.length === 0) abort('check-docs', `no tracked docs match ${pathspecs.join(' ')}`);
 
-  // `mise run [-c] [-j N] <task>`, the task bare or quoted as a glob; a name ending in a
-  // `<placeholder>` is an example, not a reference.
-  const miseRunPattern = /mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]+)(?![\w:.*<-])/g;
   const tasks = miseTasks();
 
   const problems: string[] = [];
@@ -128,7 +130,7 @@ if (import.meta.main) {
         problems.push(`${doc}:${lineIndex + 1}  runs an npm script -> npm run ${name} (package.json has none; every command is \`mise run <task>\`)`);
       }
 
-      for (const [, name = ''] of line.matchAll(miseRunPattern)) {
+      for (const name of miseTaskRuns(line)) {
         taskRefCount += 1;
         if (!namesTask(name, tasks)) problems.push(`${doc}:${lineIndex + 1}  unknown mise task -> mise run ${name}`);
       }
@@ -141,6 +143,6 @@ if (import.meta.main) {
 
   finish(problems, `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths resolve`, {
     heading: 'check-docs: documentation references that do not resolve:',
-    fix: 'fix: correct the reference at the reported file:line, or restore its target; an intentional example path goes in EXAMPLE_PATHS here',
+    fix: 'fix: correct the reference at the reported file:line, or restore its target',
   });
 }

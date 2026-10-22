@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import { miseTaskRuns, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
@@ -43,6 +43,14 @@ test('the repo index sees tracked files and ignored generated output', () => {
   assert.ok(index.tracked.has('tests/audits'));
   assert.deepEqual([...index.ignored(['dist/index.html', 'bin/site.ts'])], ['dist/index.html']);
   assert.ok(index.topLevel.has('bin') && index.topLevel.has('node_modules'));
+});
+
+test('a task name stops before the punctuation after it, and a placeholder is no task', () => {
+  assert.deepEqual(miseTaskRuns('then `mise run fast`, or mise run fast.'), ['fast', 'fast']);
+  assert.deepEqual(miseTaskRuns('mise run fast: checks:*'), ['fast']);
+  assert.deepEqual(miseTaskRuns("mise run -c 'checks:*' and mise run -j 2 built:weight"), ['checks:*', 'built:weight']);
+  assert.deepEqual(miseTaskRuns('A["mise run browser:e2e"] --> B'), ['browser:e2e']);
+  assert.deepEqual(miseTaskRuns('mise run sync:<name> or mise run <task>'), []);
 });
 
 test('a doc line that runs any npm script is caught, the build included', () => {
