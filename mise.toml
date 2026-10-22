@@ -114,8 +114,8 @@ alias = "fast"
 run = "mise run -c 'checks:*'"
 
 [tasks."checks:contracts"]
-description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS) matches what its script derives from the canonical source"
-run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check"
+description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source"
+run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: make:icons --check"
 
 [tasks."checks:drafts"]
 description = "No document under src/content is `published: false`"
@@ -328,6 +328,7 @@ run = "node bin/lighthouse-check.ts"
 
 [tasks."make:icons"]
 description = "Regenerate favicons and brand marks"
+raw_args = true
 run = "node bin/make-icons.ts"
 
 [tasks."make:og"]
