@@ -5,8 +5,8 @@
 //   mise run snapshot:github
 //
 // The token comes from GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`.
-import { writeFileSync } from 'node:fs';
 import { cli } from './lib/args.ts';
+import { writeJson } from '../src/lib/json.ts';
 import { createClient, resolveToken } from './lib/github.ts';
 import type { GithubRepo } from '../src/lib/github.ts';
 import { SITE } from '../src/lib/site-config.ts';
@@ -40,5 +40,5 @@ const repos: GithubRepo[] = (await github.list<Repository>(`/users/${SITE.github
   // Code-point order, so the committed file only moves when the data does.
   .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 
-writeFileSync(fromRoot(OUTPUT), `${JSON.stringify(repos, null, 2)}\n`);
+writeJson(fromRoot(OUTPUT), repos);
 console.log(`Wrote ${OUTPUT} (${repos.length} repos).`);

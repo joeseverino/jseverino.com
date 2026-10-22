@@ -7,7 +7,7 @@ import { checkMode } from './lib/args.ts';
 import { writeOrCheck } from './lib/projection.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
-import { readJson } from '../src/lib/json.ts';
+import { jsonText, readJson } from '../src/lib/json.ts';
 
 const check = checkMode('usage: node bin/sync-contact-openapi.ts [--check]');
 const contract = readJson<{ request: unknown }>(fromRoot('contracts/contact.v1.json'));
@@ -57,6 +57,5 @@ const document = {
     },
   },
 };
-const output = `${JSON.stringify(document, null, 2)}\n`;
-writeOrCheck([{ file: fromRoot('contracts/contact.openapi.json'), content: output }], { check });
+writeOrCheck([{ file: fromRoot('contracts/contact.openapi.json'), content: jsonText(document) }], { check });
 if (check) console.log('ok       contact OpenAPI derives from contracts/contact.v1.json');
