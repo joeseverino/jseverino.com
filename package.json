@@ -22,7 +22,7 @@
     "sitedrift": "^0.5.0"
   },
   "optionalDependencies": {
-    "branding-engine": "^0.9.0"
+    "branding-engine": "https://github.com/joeseverino/branding-engine/releases/download/v0.9.1/branding-engine-0.9.1.tgz"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
