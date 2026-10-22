@@ -1,7 +1,7 @@
 // git and gh for publish/land, where every failure is fatal and carries the
 // command's stderr, and the working-tree state site status and site manage show.
-import { git as gitQuery, statusEntries } from '../lib/git.ts';
-import { run, runSync, spawnResult } from '../lib/run.ts';
+import { gitAsync, git as gitQuery, statusEntries } from '../lib/git.ts';
+import { runSync, spawnResult } from '../lib/run.ts';
 import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { SiteError } from './cli.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
@@ -58,10 +58,7 @@ export interface RepoState {
   commit: { hash: string; subject: string; age: string } | null;
 }
 
-const probe = async (root: string, args: string[]): Promise<string | null> => {
-  const result = await run('git', args, { cwd: root });
-  return result.code === 0 ? result.stdout.trim() : null;
-};
+const probe = (root: string, args: string[]): Promise<string | null> => gitAsync(root, ...args).catch(() => null);
 
 // Three independent probes, run at once. porcelain=v2 --branch names the branch in its headers.
 export async function repoState(root: string): Promise<RepoState> {
