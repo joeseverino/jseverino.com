@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // public/_routes.json sends only Function routes to Pages Functions, so every page is a static
 // asset: no page view spends the Functions quota. Also checks the built _headers is complete
 // (no placeholder, no duplicate path, policy rules present).

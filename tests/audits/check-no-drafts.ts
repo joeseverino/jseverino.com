@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // The committed snapshot holds published content only: a draft synced into
 // src/content would deploy. Drafts preview from the gitignored overlay.
 import fs from 'node:fs';

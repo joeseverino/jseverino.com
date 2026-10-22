@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // WCAG 2.1 contrast for every color-on-background pair the site CSS renders, against AA.
 // Tokens are `light-dark()` pairs, so each pair is measured once per theme.
 

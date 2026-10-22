@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -13,17 +12,19 @@ import {
 } from '../../bin/lib/security-txt.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SITE } from '../../src/lib/site-config.ts';
-import { abort } from './lib.ts';
+import { finish } from './lib.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 const wkdEncryptionRe = new RegExp(
   `^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
 );
 
-const fail: (message: string) => never = (message) => abort('check-security-txt', message,
-  'fix: run `mise run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key');
+// Each step needs the one before it, so the first problem ends the check.
+function fail(message: string): never {
+  throw new Error(message);
+}
 
-try {
+function check(): string {
   if (!fs.existsSync(SECURITY_FILE)) fail(`missing ${path.relative(siteRoot, SECURITY_FILE)}`);
   const raw = fs.readFileSync(SECURITY_FILE, 'utf8');
 
@@ -62,7 +63,17 @@ try {
     fail(`Encryption points at ${Encryption} but local file is missing: ${path.relative(siteRoot, wkdFile)}`);
   }
 
-  console.log(`ok       signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`);
-} catch (error) {
-  fail(errorMessage(error));
+  return `signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`;
 }
+
+let problems: string[] = [];
+let ok = '';
+try {
+  ok = check();
+} catch (error) {
+  problems = [errorMessage(error)];
+}
+finish(problems, ok, {
+  heading: 'check-security-txt:',
+  fix: 'fix: run `mise run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key',
+});

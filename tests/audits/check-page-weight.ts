@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Byte budgets over the built output: per-page HTML, the inlined stylesheet, total JS.
 // Set from the measured baseline with headroom.
 

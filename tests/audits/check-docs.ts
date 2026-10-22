@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Engineering docs integrity that no link checker knows: every `mise run` reference names a task,
 // no `npm run` names anything but the build (every other command is a mise task), and every
 // backticked repo path resolves (git tracks or ignores it). Command refs are checked everywhere,

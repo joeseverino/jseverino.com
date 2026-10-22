@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // No literal `::name` directive reaches a built page's text. Ids, alt text, and heading levels are
 // html-validate's (.htmlvalidate.json), which runs first in the same gate.
 

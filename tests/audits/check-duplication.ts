@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // No copy-pasted code: a run of identical tokens appearing twice in tracked TypeScript
 // fails the gate. Tokens come from the TS scanner, so formatting and comments never matter;
 // import and re-export lines are skipped. Specs and unit tests get a looser threshold.
