@@ -69,6 +69,8 @@ WRANGLER_SEND_METRICS = "false"
 # The engineering docs the docs gates read, as git pathspecs, so a gate reads
 # only tracked files and never a local or untracked copy.
 docs = "README.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+# The statuses the online link checks (links:*) count as a live link.
+links_accept = "200,204,206,301,302,303,307,308,403,429,999"
 
 # `mise doctor project`: is this checkout ready to work in. Local only and
 # never a gate: CI has no gh login, and these describe the machine, not the
@@ -240,6 +242,23 @@ run = "playwright test -c tests/playwright.visual.config.ts"
 description = "Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
 timeout = "5m"
 run = "playwright test -c tests/playwright.edge.config.ts"
+
+# ------------------------------------------------------------------- links
+# Every external link, online. Never a gate: the verdict turns on other sites,
+# so the link check workflow runs these weekly and on a pull request that
+# touches a document. 403, 429 and 999 come from sites that wall off automated
+# clients, and a link that answers at all is not dead; a 404 or a connection
+# failure still fails. Arguments after the task name go to lychee: CI adds
+# `--format markdown --output "$GITHUB_STEP_SUMMARY"`.
+
+[tasks."links:docs"]
+description = "Every external link in the engineering docs answers (online)"
+run = "lychee --no-progress --verbose --accept {{vars.links_accept}} $(git ls-files -- {{vars.docs}})"
+
+[tasks."links:content"]
+description = "Every external link in the published content answers (online); links to jseverino.com itself are built:links' job"
+# A page a pull request adds would 404 on the live site until it deploys.
+run = "lychee --no-progress --verbose --accept {{vars.links_accept}} --base-url https://jseverino.com --exclude '^https://jseverino\\.com' $(git ls-files -- 'src/content/*.md' 'src/content/*.mdx')"
 
 # ------------------------------------------------------------------- tools
 # Every other command. A task whose script takes arguments passes them through

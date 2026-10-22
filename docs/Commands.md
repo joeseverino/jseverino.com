@@ -427,6 +427,18 @@ Build HEAD and the working tree; show what changed in the shipped site
 
 Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)
 
+## `links:content`
+
+- **Usage:** `links:content`
+
+Every external link in the published content answers (online); links to jseverino.com itself are built:links' job
+
+## `links:docs`
+
+- **Usage:** `links:docs`
+
+Every external link in the engineering docs answers (online)
+
 ## `make:content-index`
 
 - **Usage:** `make:content-index`
