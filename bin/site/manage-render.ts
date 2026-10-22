@@ -1,5 +1,5 @@
 // site manage's frames: pure functions of the model returning the screen as a string.
-import { RESET, BOLD, DIM, INVERT, GREEN, YELLOW, RED, CYAN, MAGENTA, truncate, lineEditor } from './tui.ts';
+import { RESET, BOLD, DIM, INVERT, GREEN, YELLOW, RED, CYAN, MAGENTA, truncate, lineEditor, terminalColumns } from './tui.ts';
 import { DEV_PORT } from './dev-server.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { FIELDS, current, diff, fieldValue, hasStaged, type Item, type Model, type SiteStatus } from './manage-model.ts';
@@ -15,9 +15,6 @@ const flashLines = (model: Model): string[] => (model.flash ? [`  ${model.flash}
 
 // The divider between the featured list and the writeups that are not featured.
 const notFeaturedDivider = (cols: number): string => `  ${DIM}──── not featured ${'─'.repeat(Math.max(4, cols - 22))}${RESET}`;
-
-const TEST_COLUMNS = Number.parseInt(process.env.MANAGE_TUI_COLUMNS || '', 10);
-const TEST_ROWS = Number.parseInt(process.env.MANAGE_TUI_ROWS || '', 10);
 
 export function drawTabBar(model: Model): string {
   const writeupsActive = model.tab === 'writeups';
@@ -53,18 +50,6 @@ export function siteActionSpecs(status: Partial<SiteStatus>): SiteActionSpec[] {
     { key: 't', label: 'Run Tests', desc: 'Playwright suite' },
     { key: 'p', label: 'Publish', desc: 'open a content PR from the vault (merge with site land)' },
   ];
-}
-
-export function terminalColumns(): number {
-  return Number.isFinite(TEST_COLUMNS) && TEST_COLUMNS > 0
-    ? TEST_COLUMNS
-    : process.stdout.columns || 110;
-}
-
-export function terminalRows(): number {
-  return Number.isFinite(TEST_ROWS) && TEST_ROWS > 0
-    ? TEST_ROWS
-    : process.stdout.rows || 30;
 }
 
 function stateIcon(model: Model, item: Item): string {
@@ -198,7 +183,7 @@ export function detailFrame(model: Model): string {
 export function siteFrame(model: Model): string {
   const cols = terminalColumns();
   const status = model.siteStatus;
-  if (!status) return `${drawTabBar(model)}\n\n  Site status has not been loaded.\n`;
+  if (!status) return `${drawTabBar(model)}\n\n  ${model.flash || 'Site status has not been loaded.'}\n`;
 
   const out = frameHead(model, cols);
   out.push(`  ${BOLD}site manage${RESET}${DIM}: manage local servers, pre-flight checks, and publish${RESET}`);

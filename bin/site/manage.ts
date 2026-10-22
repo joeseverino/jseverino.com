@@ -1,13 +1,12 @@
 // site manage: every writeup on one screen. Edits stage locally and save in one transactional plan through
 // the writeup store. The one interactive command: it refuses to start without a terminal.
 // Model in ./manage-model.ts, frames in ./manage-render.ts, dev server in ./dev-server.ts.
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
 import {
-  RESET, BOLD, DIM, GREEN, YELLOW, RED,
-  fitFrame,
-  enterAlt, leaveAlt, createTitleSetter, createInputPump, NAMED_KEYS,
+  RESET, BOLD, DIM, GREEN, YELLOW, RED, NAMED_KEYS,
+  anyKey, fitFrame, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows,
 } from './tui.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -18,26 +17,17 @@ import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts
 import {
   FIELDS, SITE, createWriteup, diff, load, loadSiteStatus, reload, type Model,
 } from './manage-model.ts';
-import { currentFrame, detailFrame, drawTabBar, listFrame, rule, siteActionSpecs, siteFrame, terminalColumns, terminalRows } from './manage-render.ts';
+import { currentFrame, detailFrame, listFrame, rule, siteActionSpecs, siteFrame } from './manage-render.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { handleManageKey, pasteManageInput, type ManageEffect } from './manage-input.ts';
 
-// MANAGE_TUI_KEYS replays a comma-separated key script without a TTY and prints the final frame;
-// MANAGE_TUI_SMOKE renders one static frame. Used by tests/unit/site-manage.test.ts.
-const REPLAY = !!process.env.MANAGE_TUI_KEYS;
-
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {
-  const cols = terminalColumns();
-  if (!REPLAY) {
-    process.stdout.write(
-      '\x1b[2J\x1b[H\n' + drawTabBar(model) + '\n' +
-      `  ${rule(cols)}\n\n` +
-      `  ${DIM}gathering site status…${RESET}\n`,
-    );
-  }
+  model.flash = `${DIM}gathering site status…${RESET}`;
+  draw(model);
   const t0 = Date.now();
   model.siteStatus = await loadSiteStatus();
+  model.flash = '';
   return ((Date.now() - t0) / 1000).toFixed(1);
 }
 
@@ -81,25 +71,14 @@ async function switchDevServer(model: Model): Promise<void> {
 // Replay scripts never run real commands.
 async function runCommandInline(bin: string, args: readonly string[], title: string): Promise<void> {
   if (!process.stdin.isTTY) return;
-  setTitle(`site manage: ${title}`);
-  process.stdin.setRawMode(false);
-  process.stdin.pause();
-  leaveAlt({ popTitle: false });
-  process.stdout.write(`\n=== ${BOLD}${title}${RESET} ===\n\n`);
-
-  const res = spawnSync(bin, args, { cwd: siteRoot, stdio: 'inherit' });
-
-  process.stdout.write(`\n${rule(terminalColumns())}\n`);
-  process.stdout.write(`Finished with exit code ${res.status ?? res.signal}. Press any key to return...`);
-
-  // The keypress that returns is not a TUI key, so the input pump is off until it arrives.
-  process.stdin.off('data', onInput);
-  process.stdin.setRawMode(true);
-  process.stdin.resume();
-  await once(process.stdin, 'data');
-  process.stdin.on('data', onInput);
-
-  enterAlt({ pushTitle: false });
+  await lendTerminal(`site manage: ${title}`, async () => {
+    process.stdout.write(`\n=== ${BOLD}${title}${RESET} ===\n\n`);
+    const child = spawn(bin, args, { cwd: siteRoot, stdio: 'inherit' });
+    const [code, signal] = await once(child, 'close') as [number | null, NodeJS.Signals | null];
+    process.stdout.write(`\n${rule(terminalColumns())}\n`);
+    process.stdout.write(`Finished with exit code ${code ?? signal}. Press any key to return...`);
+    await anyKey();
+  });
 }
 
 // What each Site tab action key runs inline; publish reloads the writeups, the rest the site status.
@@ -133,19 +112,20 @@ function openInObsidian(model: Model): void {
     encodeURIComponent(vaultName) +
     '&file=' +
     encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`);
-  spawnSync('open', [uri]);
+  spawn('open', [uri], { stdio: 'ignore' }).once('error', (error) => {
+    model.flash = `${RED}could not open Obsidian: ${error.message}${RESET}`;
+    draw(model);
+  });
   model.flash = `${DIM}opened ${item.slug} in Obsidian${RESET}`;
 }
 
 function draw(model: Model): void {
-  if (REPLAY) return;
   let title = 'site manage: Writeups';
   if (model.tab === 'site') title = 'site manage: Site';
   else if (model.mode === 'detail' || model.mode === 'edit') {
     title = `site manage: ${model.items[model.cursor]?.slug || 'Writeups'}`;
   }
-  setTitle(title);
-  process.stdout.write('\x1b[H\x1b[2J' + fitFrame(currentFrame(model), terminalColumns(), terminalRows()));
+  paint(currentFrame(model), title);
 }
 
 // What a failed save left in the vault.
@@ -220,17 +200,12 @@ function apply(model: Model): number {
 }
 
 let model: Model;
-let setTitle: (title: string) => void = () => {};
 
 let done = false;
 function finish(code: number, message: string | null, runApply = false): void {
   if (done) return;
   done = true;
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(false);
-    process.stdin.pause();
-    leaveAlt();
-  }
+  restore();
   if (message) process.stdout.write(message + '\n');
   if (runApply) code = apply(model);
   if (!runApply && model.created.length) {
@@ -279,12 +254,12 @@ function pasteInput(text: string): void {
   enqueue(() => pasteManageInput(model, text));
 }
 
-const { feedInput, flushInput } = createInputPump({ onKey: handleKey, onPaste: pasteInput });
-const onInput = (buf: Buffer): void => feedInput(buf.toString('utf8'));
-
+// MANAGE_TUI_KEYS replays a comma-separated key script without a TTY and prints the final frame;
+// MANAGE_TUI_SMOKE renders one static frame. Used by tests/unit/site-manage.test.ts.
 export async function manage(): Promise<never> {
   const smoke = process.env.MANAGE_TUI_SMOKE;
-  if (!REPLAY && !smoke && (!process.stdin.isTTY || !process.stdout.isTTY)) {
+  const replay = process.env.MANAGE_TUI_KEYS;
+  if (!replay && !smoke && (!process.stdin.isTTY || !process.stdout.isTTY)) {
     throw new SiteError('site manage is interactive and needs a terminal', {
       code: EXIT.usage,
       fix: 'non-interactive callers use site featured, site validate, and site status (each with --json)',
@@ -307,28 +282,24 @@ export async function manage(): Promise<never> {
     process.exit(0);
   }
 
-  if (REPLAY) {
-    // e.g. MANAGE_TUI_KEYS='down,enter' or 'p,s'. Unknown tokens are fed
-    // literally, so 'n,my-slug,enter' types a slug into the line editor.
-    for (const token of (process.env.MANAGE_TUI_KEYS ?? '').split(',')) {
+  if (replay) {
+    // e.g. MANAGE_TUI_KEYS='down,enter' or 'p,s'. An unnamed token is typed
+    // one character at a time, so 'n,my-slug,enter' types a slug into the line editor.
+    for (const token of replay.split(',')) {
       const t = token.trim();
-      if (t.startsWith('paste:')) feedInput(`\x1b[200~${t.slice(6)}\x1b[201~`);
-      else if (t) feedInput(NAMED_KEYS[t] ?? t);
+      const named = NAMED_KEYS[t];
+      if (t.startsWith('paste:')) pasteInput(t.slice(6));
+      else if (named) handleKey(named);
+      else for (const character of t) handleKey(character);
     }
-    flushInput();
     await pending;
-    process.stdout.write(fitFrame(currentFrame(model), terminalColumns(), terminalRows()) + '\n');
+    process.stdout.write(fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n') + '\n');
     process.exit(0);
   }
 
-  setTitle = createTitleSetter();
-  enterAlt();
+  openTerminal({ onKey: handleKey, onPaste: pasteInput });
   draw(model);
   process.stdout.on('resize', () => draw(model));
-  process.on('SIGINT', () => finish(0, 'cancelled · nothing written'));
-  process.stdin.setRawMode(true);
-  process.stdin.resume();
-  process.stdin.on('data', onInput);
   // finish() exits the process; until then the TUI owns it.
   return new Promise(() => {});
 }

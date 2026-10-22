@@ -1,4 +1,7 @@
 // Terminal primitives behind `site manage`.
+import { once } from 'node:events';
+import os from 'node:os';
+import { emitKeypressEvents as nodeEmitKeypressEvents, type Key } from 'node:readline';
 import { stripVTControlCharacters } from 'node:util';
 
 export const RESET = '\x1b[0m';
@@ -155,12 +158,23 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   return `${leftHidden ? '…' : ''}${before}${INVERT}${cursorChar}${RESET}${after}${rightHidden ? '…' : ''}`;
 }
 
+// MANAGE_TUI_COLUMNS / MANAGE_TUI_ROWS pin the frame size for tests; otherwise the terminal reports its own.
+function pinnedSize(name: string): number | undefined {
+  const value = Number.parseInt(process.env[name] ?? '', 10);
+  return value > 0 ? value : undefined;
+}
+const PINNED_COLUMNS = pinnedSize('MANAGE_TUI_COLUMNS');
+const PINNED_ROWS = pinnedSize('MANAGE_TUI_ROWS');
+
+export const terminalColumns = (): number => PINNED_COLUMNS ?? (process.stdout.columns || 110);
+export const terminalRows = (): number => PINNED_ROWS ?? (process.stdout.rows || 30);
+
 // Clip lines to the width; if taller than the terminal, keep header/footer and window the body around the ▸ row.
-export function fitFrame(frame: string, cols: number, rows: number): string {
-  const width = Math.max(1, cols - 1);
+export function fitFrame(frame: string, cols: number, rows: number): string[] {
+  const width = Math.max(1, cols);
   const height = Math.max(6, rows);
   const lines = frame.split('\n').map((line) => clipAnsi(line, width));
-  if (lines.length <= height) return lines.join('\n');
+  if (lines.length <= height) return lines;
 
   const topCount = Math.min(6, Math.max(2, height - 4));
   const bottomCount = Math.min(3, Math.max(1, height - topCount - 1));
@@ -175,31 +189,11 @@ export function fitFrame(frame: string, cols: number, rows: number): string {
   const body = lines.slice(start, end);
   if (start > bodyStart && body.length > 1) body[0] = `  ${DIM}↑ more${RESET}`;
   if (end < bodyEnd && body.length > 1) body[body.length - 1] = `  ${DIM}↓ more${RESET}`;
-  return [...lines.slice(0, topCount), ...body, ...lines.slice(-bottomCount)].join('\n');
-}
-
-// \x1b[22;0t / \x1b[23;0t push/pop the window title; the 1049 pair is the alt screen. A command run
-// inline leaves and re-enters the screen without touching the title stack.
-export function enterAlt({ pushTitle = true } = {}): void {
-  process.stdout.write(`${pushTitle ? '\x1b[22;0t' : ''}\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h`);
-}
-
-export function leaveAlt({ popTitle = true } = {}): void {
-  process.stdout.write(`\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l${popTitle ? '\x1b[23;0t' : ''}`);
-}
-
-// setTitle that skips writes when the title is unchanged.
-export function createTitleSetter(): (title: string) => void {
-  let lastTitle = '';
-  return function setTitle(title: string): void {
-    if (title === lastTitle) return;
-    lastTitle = title;
-    process.stdout.write(`\x1b]0;${title}\x07`);
-  };
+  return [...lines.slice(0, topCount), ...body, ...lines.slice(-bottomCount)];
 }
 
 // Named keys for replay harnesses: a comma-separated MANAGE_TUI_KEYS script
-// maps through this before being fed to the pump.
+// maps through this straight to the key handler.
 export const NAMED_KEYS: Readonly<Record<string, string>> = {
   up: '\x1b[A', down: '\x1b[B', left: '\x1b[D', right: '\x1b[C',
   enter: '\r', esc: '\x1b', space: ' ', tab: '\t', backspace: '\x7f',
@@ -207,85 +201,128 @@ export const NAMED_KEYS: Readonly<Record<string, string>> = {
   'ctrl-r': '\x12', 'ctrl-c': '\x03', 'ctrl-u': '\x15', 'ctrl-w': '\x17',
 };
 
-interface InputPump {
-  feedInput(chunk: string): void;
-  flushInput(): void;
+export interface KeyHandlers {
+  onKey(sequence: string): void;
+  onPaste(text: string): void;
 }
 
-// Parses raw stdin into keys: bytes, CSI sequences, bracketed paste, and a 30 ms timeout that tells a lone Esc
-// from an escape sequence.
-export function createInputPump({ onKey, onPaste }: { onKey: (key: string) => void; onPaste?: (text: string) => void }): InputPump {
-  let pendingInput = '';
-  let escapeTimer: NodeJS.Timeout | null = null;
+// Node reads escapeCodeTimeout from emitKeypressEvents' second argument
+// (lib/internal/readline/emitKeypressEvents.js), but its types call that argument a readline
+// Interface, which declares no such field; this signature states what Node reads.
+const emitKeypressEvents = nodeEmitKeypressEvents as unknown as (
+  stream: NodeJS.ReadableStream,
+  options: { escapeCodeTimeout: number },
+) => void;
 
-  function drainInput(final = false): void {
-    while (pendingInput) {
-      if (pendingInput[0] !== '\x1b') {
-        const key = Array.from(pendingInput)[0] ?? '';
-        pendingInput = pendingInput.slice(key.length);
-        onKey(key);
-        continue;
-      }
+// How long a lone Esc waits for the rest of a sequence; Node's default is GNU readline's 500 ms.
+const ESCAPE_TIMEOUT_MS = 30;
 
-      if (pendingInput.length === 1) {
-        if (final) {
-          pendingInput = '';
-          onKey('\x1b');
-        }
-        return;
-      }
+// Delivers each key as its raw sequence, and a bracketed paste as one string. Returns the detach.
+export function listenForKeys(stream: NodeJS.ReadableStream, handlers: KeyHandlers): () => void {
+  emitKeypressEvents(stream, { escapeCodeTimeout: ESCAPE_TIMEOUT_MS });
+  let pasted: string | null = null;
+  const onKeypress = (_text: string | undefined, key: Key): void => {
+    if (key.name === 'paste-start') pasted = '';
+    else if (key.name === 'paste-end') {
+      const text = pasted ?? '';
+      pasted = null;
+      handlers.onPaste(text);
+    } else if (pasted !== null) pasted += key.sequence ?? '';
+    else handlers.onKey(key.sequence ?? '');
+  };
+  stream.on('keypress', onKeypress);
+  return () => stream.off('keypress', onKeypress);
+}
 
-      if (pendingInput.startsWith('\x1b[')) {
-        if (pendingInput.startsWith('\x1b[200~')) {
-          const end = pendingInput.indexOf('\x1b[201~', 6);
-          if (end === -1) {
-            if (!final) return;
-            pendingInput = pendingInput.slice(6);
-            if (onPaste) onPaste(pendingInput);
-            pendingInput = '';
-            return;
-          }
-          const pasted = pendingInput.slice(6, end);
-          pendingInput = pendingInput.slice(end + 6);
-          if (onPaste) onPaste(pasted);
-          continue;
-        }
-        const match = pendingInput.match(/^\x1b\[[0-?]*[ -/]*[@-~]/);
-        if (!match) {
-          if (!final) return;
-          pendingInput = pendingInput.slice(1);
-          onKey('\x1b');
-          continue;
-        }
-        pendingInput = pendingInput.slice(match[0].length);
-        onKey(match[0]);
-        continue;
-      }
+// The alt screen, a hidden cursor, no autowrap, and bracketed paste, each paired with what turns it off.
+const SCREEN_ON = '\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h';
+const SCREEN_OFF = '\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l';
+const TITLE_PUSH = '\x1b[22;0t';
+const TITLE_POP = '\x1b[23;0t';
+// Synchronized output (DEC 2026): the terminal shows the frame only once it is complete.
+const SYNC_BEGIN = '\x1b[?2026h';
+const SYNC_END = '\x1b[?2026l';
 
-      pendingInput = pendingInput.slice(1);
-      onKey('\x1b');
-    }
+const QUIT_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
+const quit = (signal: NodeJS.Signals): never => process.exit(128 + os.constants.signals[signal]);
+const ignore = (): void => {};
+
+interface Session {
+  handlers: KeyHandlers;
+  detachKeys: (() => void) | null;
+  title: string;
+}
+let session: Session | null = null;
+
+function attachKeys(active: Session): void {
+  process.stdin.setRawMode(true);
+  active.detachKeys = listenForKeys(process.stdin, active.handlers);
+  process.stdin.resume();
+}
+
+function detachKeys(active: Session): void {
+  active.detachKeys?.();
+  active.detachKeys = null;
+  process.stdin.setRawMode(false);
+  process.stdin.pause();
+}
+
+function titleSequence(active: Session, title: string): string {
+  if (title === active.title) return '';
+  active.title = title;
+  return `\x1b]0;${title}\x07`;
+}
+
+// Takes the terminal for the TUI. Every way out of the process runs restore().
+export function openTerminal(handlers: KeyHandlers): void {
+  if (session) return;
+  session = { handlers, detachKeys: null, title: '' };
+  process.on('exit', restore);
+  for (const signal of QUIT_SIGNALS) process.on(signal, quit);
+  process.stdout.write(TITLE_PUSH + SCREEN_ON);
+  attachKeys(session);
+}
+
+// Returns the terminal to how the TUI found it. Safe to call more than once.
+export function restore(): void {
+  if (!session) return;
+  detachKeys(session);
+  session = null;
+  process.stdout.write(SCREEN_OFF + TITLE_POP);
+}
+
+// The one writer: each frame repaints the whole screen in a single synchronized write.
+export function paint(frame: string, title: string): void {
+  if (!session?.detachKeys) return;
+  const lines = fitFrame(frame, terminalColumns(), terminalRows());
+  process.stdout.write(`${SYNC_BEGIN}${titleSequence(session, title)}\x1b[H${lines.join('\x1b[K\n')}\x1b[K\x1b[J${SYNC_END}`);
+}
+
+// Lends the terminal to a command on the normal screen in cooked mode; Ctrl+C reaches only the command.
+export async function lendTerminal<T>(title: string, work: () => Promise<T>): Promise<T> {
+  const active = session;
+  if (!active?.detachKeys) return work();
+  detachKeys(active);
+  process.off('SIGINT', quit).on('SIGINT', ignore);
+  process.stdout.write(titleSequence(active, title) + SCREEN_OFF);
+  try {
+    return await work();
+  } finally {
+    process.off('SIGINT', ignore).on('SIGINT', quit);
+    process.stdout.write(SCREEN_ON);
+    attachKeys(active);
   }
+}
 
-  function flushInput(): void {
-    if (escapeTimer) {
-      clearTimeout(escapeTimer);
-      escapeTimer = null;
-    }
-    drainInput(true);
+// Waits for any one key while the terminal is lent out.
+export async function anyKey(): Promise<void> {
+  process.stdin.setRawMode(true);
+  const keypress = once(process.stdin, 'keypress');
+  process.stdin.resume();
+  try {
+    await keypress;
+  } finally {
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
   }
-
-  function feedInput(chunk: string): void {
-    if (escapeTimer) {
-      clearTimeout(escapeTimer);
-      escapeTimer = null;
-    }
-    pendingInput += chunk;
-    drainInput();
-    if (pendingInput === '\x1b' || pendingInput.startsWith('\x1b[')) {
-      escapeTimer = setTimeout(flushInput, 30);
-    }
-  }
-
-  return { feedInput, flushInput };
 }

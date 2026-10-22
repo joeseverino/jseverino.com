@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { PassThrough } from 'node:stream';
+import { setTimeout as delay } from 'node:timers/promises';
 import { handleManageKey, pasteManageInput } from '../../bin/site/manage-input.ts';
+import { listenForKeys } from '../../bin/site/tui.ts';
 import { FIELDS, hasStaged, type Model } from '../../bin/site/manage-model.ts';
 import { siteActionSpecs, siteFrame } from '../../bin/site/manage-render.ts';
 
@@ -20,6 +23,38 @@ function model(): Model {
     siteStatus: null, actionCursor: 0, sourceFingerprint: 'fixture',
   };
 }
+
+function keyStream() {
+  const stream = new PassThrough();
+  const events: string[] = [];
+  const detach = listenForKeys(stream, {
+    onKey: (sequence) => events.push(`key ${sequence}`),
+    onPaste: (text) => events.push(`paste ${text}`),
+  });
+  return { stream, events, detach };
+}
+
+test('a lone Escape arrives as a key well inside readline\'s 500 ms default', async () => {
+  const { stream, events, detach } = keyStream();
+  stream.write('\x1b');
+  await delay(150);
+  assert.deepEqual(events, ['key \x1b']);
+  detach();
+});
+
+test('keys arrive as their raw sequences, a bracketed paste as one string, and split characters whole', async () => {
+  const { stream, events, detach } = keyStream();
+  const accent = Buffer.from('é');
+  stream.write('\x1b[1;5Cq\x1b[200~a\r\nb\x1b[201~');
+  stream.write(accent.subarray(0, 1));
+  stream.write(accent.subarray(1));
+  await delay(10);
+  assert.deepEqual(events, ['key \x1b[1;5C', 'key q', 'paste a\r\nb', 'key é']);
+  detach();
+  stream.write('x');
+  await delay(10);
+  assert.equal(events.length, 4);
+});
 
 test('moving a writeup across the divider stages the new order without requesting a write', () => {
   const state = model();
