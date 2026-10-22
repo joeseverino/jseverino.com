@@ -104,7 +104,10 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browsers }}
 
       # The suite then serves this build (PREBUILT).
+      # Under a minute with the image cache, about eight when it is cold; a stalled apt fails
+      # here instead of holding the job to its timeout.
       - name: Install browsers and build
+        timeout-minutes: 12
         run: mise run setup:browsers
         env:
           BROWSERS: ${{ matrix.browsers }}

@@ -4,10 +4,8 @@
 set -eu
 
 # The install, mostly apt on Linux, runs in the background so the build does
-# not wait on it.
+# not wait on it. Its output streams, so a stalled apt shows where it stopped.
 pid=''
-log=$(mktemp)
-trap 'rm -f "$log"' EXIT
 if [ -n "${BROWSERS:-}" ]; then
   if [ "${CACHE_HIT:-}" = true ]; then
     set -- install-deps
@@ -15,13 +13,12 @@ if [ -n "${BROWSERS:-}" ]; then
     set -- install --with-deps
   fi
   # shellcheck disable=SC2086 # the browser list is space-separated
-  playwright "$@" $BROWSERS >"$log" 2>&1 &
+  playwright "$@" $BROWSERS &
   pid=$!
 fi
 if [ "${PREBUILD:-}" = true ]; then
   node tests/browser-test-env.ts build
 fi
-if [ -n "$pid" ] && ! wait "$pid"; then
-  cat "$log" >&2
-  exit 1
+if [ -n "$pid" ]; then
+  wait "$pid"
 fi
