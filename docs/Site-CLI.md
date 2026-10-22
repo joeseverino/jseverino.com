@@ -198,6 +198,85 @@ and `astro dev stop`. The server is the one Astro's lock file
 (`.astro/dev.json`) names, and it counts as running while it answers HTTP;
 `astro dev logs` shows its output.
 
+### Driving it on a pseudo-terminal
+
+The unit tests replay keys without a terminal (`MANAGE_TUI_KEYS`). To check
+what a real terminal shows (colors, the focus window, a command run inline),
+drive `site manage` on a pseudo-terminal. macOS `script(1)` needs a terminal on
+its own stdin, so use Python's `pty`: save the script below at a gitignored
+path such as `.cache/pty-drive.py` and run it from the checkout root against a
+throwaway vault (the files `makeVault()` in `tests/unit/site-manage.test.ts`
+writes):
+
+```sh
+python3 .cache/pty-drive.py <vault> 16 90 '\x1b[B' '\t' q
+```
+
+The arguments are the vault, rows, columns, then each key as a raw string. It
+pauses after each key, prints each last frame's text and the colors drawn, and
+always ends the TUI (Ctrl+C, then SIGKILL). Prefix `NO_COLOR=1` or
+`FORCE_COLOR=1` to check styling.
+
+```python
+"""Drives `site manage` on a pseudo-terminal: python3 pty-drive.py <vault> <rows> <cols> <keys...>"""
+import fcntl, os, pty, re, select, struct, sys, termios, time
+
+vault, rows, cols, *keys = sys.argv[1:]
+root = os.getcwd()
+
+pid, fd = pty.fork()
+if pid == 0:
+    fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('HHHH', int(rows), int(cols), 0, 0))
+    os.chdir(root)
+    os.environ['VAULT_DIR'] = vault
+    os.environ['TERM'] = 'xterm-256color'
+    os.execvp('node', ['node', 'bin/site.ts', 'manage'])
+
+
+def drain(seconds):
+    out = b''
+    end = time.time() + seconds
+    while time.time() < end:
+        ready, _, _ = select.select([fd], [], [], 0.05)
+        if ready:
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            out += chunk
+    return out
+
+
+def exited(seconds):
+    end = time.time() + seconds
+    while time.time() < end:
+        if os.waitpid(pid, os.WNOHANG)[0]:
+            return True
+        drain(0.2)
+    return False
+
+
+screens = [drain(3)]
+for key in keys:
+    os.write(fd, key.encode().decode('unicode_escape').encode())
+    screens.append(drain(2.5))
+if not exited(5):
+    os.write(fd, b'\x03')
+    if not exited(5):
+        os.kill(pid, 9)
+        os.waitpid(pid, 0)
+
+for i, raw in enumerate(screens):
+    text = raw.decode('utf8', 'replace')
+    frames = text.split('\x1b[?2026h')
+    plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07', '', frames[-1])
+    colors = sorted(set(re.findall(r'\x1b\[(3[0-7]|9[0-7])m', text)))
+    print(f'--- after {"start" if i == 0 else repr(keys[i - 1])}: {len(frames) - 1} frames, colors {colors}')
+    print(plain)
+```
+
 ## Configuration
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)

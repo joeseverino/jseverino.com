@@ -368,5 +368,5 @@ interactive = true
 run = "node bin/sign-security.ts"
 
 [tasks."clean:generated"]
-description = "Remove build output (`dist/`) and the Astro and Vite caches; synced content is left alone"
+description = "Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches under SITE_CACHE_DIR and synced content are left alone"
 run = "rm -rf dist .astro node_modules/.vite"

@@ -399,7 +399,7 @@ Every gate the pipeline runs: check, then the browser suites
 
 - **Usage:** `clean:generated`
 
-Remove build output (`dist/`) and the Astro and Vite caches; synced content is left alone
+Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches under SITE_CACHE_DIR and synced content are left alone
 
 ## `cloudflare`
 

@@ -12,7 +12,7 @@ node_modules
 /dist/
 /dist-visual/
 
-# Image-encode cache and the drafts preview overlay (bin/lib/cache.ts)
+# The drafts preview overlay (bin/lib/cache.ts); caches live under SITE_CACHE_DIR
 /.cache/
 
 # Playwright artifacts
