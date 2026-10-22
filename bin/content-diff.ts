@@ -52,7 +52,7 @@ const GENERATED = /^src\/content\/.+\/images\//;
 
 type WriteupChange = 'published' | 'edited' | 'removed';
 
-export function classify(files: readonly ChangedFile[]): ContentDiff {
+function classify(files: readonly ChangedFile[]): ContentDiff {
   const writeups = new Map<string, WriteupChange>();
   const pages = new Set<string>();
   const generated: string[] = [];

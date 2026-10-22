@@ -38,7 +38,7 @@ function publishState(model: Model, item: Item) {
 // The horizontal rule under a frame's header and between its sections.
 export const rule = (cols: number): string => '─'.repeat(Math.max(40, cols - 4));
 
-export function drawTabBar(model: Model): string {
+function drawTabBar(model: Model): string {
   const tabs = TABS.map(({ name, label }) => {
     const text = `  ${label}${name === 'writeups' ? ` (${model.items.length})` : ''}  `;
     return tint(name === model.tab ? 'active' : 'muted', text);

@@ -25,19 +25,21 @@ function run(command: string, args: readonly string[], cwd: string, extraEnv: No
 }
 
 // Sitemap dates, the site key, and Astro's content hash in bundled file names vary without source changes.
-const HASHED_BUNDLE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}\.(js|css)\b/g;
-const HASHED_IMAGE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)\b/g;
+// Each hash suffix is matched in a reference (after an /_astro/ path) and at the end of a file name.
+const HASHES = [String.raw`\.[A-Za-z0-9_-]{8}\.(js|css)`, String.raw`\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)`];
+const HASHED_REFS = HASHES.map((hash) => new RegExp(String.raw`(\/_astro\/[^"'\s)]*?)${hash}\b`, 'g'));
+const HASHED_NAMES = HASHES.map((hash) => new RegExp(`${hash}$`));
 
 function normalize(text: string): string {
-  return text
-    .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
-    .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"')
-    .replace(HASHED_BUNDLE, '$1.HASH.$2')
-    .replace(HASHED_IMAGE, '$1.HASH.$2');
+  return HASHED_REFS.reduce(
+    (normalized, ref) => normalized.replace(ref, '$1.HASH.$2'),
+    text
+      .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
+      .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"'),
+  );
 }
 
-const normalizeName = (name: string): string =>
-  name.replace(/\.[A-Za-z0-9_-]{8}\.(js|css)$/, '.HASH.$1').replace(/\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)$/, '.HASH.$1');
+const normalizeName = (name: string): string => HASHED_NAMES.reduce((normalized, hash) => normalized.replace(hash, '.HASH.$1'), name);
 
 function collect(dir: string): Map<string, string> {
   return new Map(
