@@ -245,14 +245,14 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
     usage: 'site contact [--limit <n>] [--pii]',
-    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii returns full names, emails, and messages and is written to the audit log.',
+    help: 'Needs CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID (op run). --pii returns full names, emails, and messages and is written to the audit log.',
     options: { limit: { type: 'string' }, pii: flag },
     run: async ({ values, out }) => (await siteOps()).contact({ limit: values.limit, pii: values.pii, out }),
   }),
   csp: define({
     summary: 'CSP violation reports from D1: recent rows, or counts by directive',
     usage: 'site csp [--count] [--limit <n>] [--directive <name>] [--pii]',
-    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
+    help: 'Needs CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
     options: {
       count: flag,
       limit: { type: 'string' },

@@ -91,8 +91,8 @@ The content model a client edits against is
 | `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
 | `site contract` | The writeup field contract and its fingerprint |
 | `site render <slug\|-> [--document]` | One writeup body (`html`) rendered exactly as the build ships it, from the vault or stdin (`-`); `--document` adds `document`, a self-contained page in the site's article layout with its styles inlined, for previews |
-| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
-| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1, or counts by directive |
+| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1 through Cloudflare's HTTP API, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
+| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1 through the HTTP API, or counts by directive |
 | `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
 | `site headers [<path>]` | Live security headers on one path, with named pass/fail checks |
 | `site manage` | The interactive manager (below) |
@@ -123,7 +123,7 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 | mise tasks | gates, the build, and tools | `mise run check`, `mise run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
 | [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
-| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads, the schema apply, header checks | `contactSubmissions`, `checkSecurityHeaders` |
+| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters), the schema apply (wrangler), header checks | `contactSubmissions`, `checkSecurityHeaders` |
 
 Every write to writeup frontmatter (featured order, publish flags, field edits
 in `site manage`, `site set`, `site featured`) goes through the writeup store:
@@ -287,5 +287,12 @@ worktree shares: the sync's image masters, and Astro's encodes in `astro/`;
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
 the build refuses anything outside `tests/fixtures`, so drafts never
 reach a build), `SITE_JSON=1` switches Astro
-to JSON logs (set by `--json`). The site operations read `CLOUDFLARE_API_TOKEN` from the environment
+to JSON logs (set by `--json`). `site contact` and `site csp` also need `CLOUDFLARE_ACCOUNT_ID` and a token scoped
+Account · D1 · Read; without either, they stop on one line naming it, and nothing else in the CLI is affected:
+
+```sh
+CLOUDFLARE_API_TOKEN="op://<vault>/<item>/credential" CLOUDFLARE_ACCOUNT_ID="op://<vault>/<item>/account id" op run -- mise run site csp --count
+```
+
+The site operations read `CLOUDFLARE_API_TOKEN` from the environment
 (`op run`) and log PII access to `~/.local/state/jseverino.com/audit.log`.

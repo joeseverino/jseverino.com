@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { DetailedError } from './detailed-error.ts';
 import { INSTALL_PACKAGES } from './preflight.ts';
+import { createClient } from './cloudflare.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
 import { SITE, SITE_ORIGIN, cspReportUri } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
@@ -17,25 +18,33 @@ export interface SiteOpsConfig {
   siteRepo: string;
   siteOrigin: string;
   auditLog: string;
+  token: string | undefined;
+  accountId: string | undefined;
   run: Runner;
   fetch: typeof fetch;
 }
 
 // The production site; tests pass their own. Cloudflare credentials come from
-// the environment (CLOUDFLARE_API_TOKEN, injected by `op run`), the same as
-// every other Cloudflare script here.
+// the environment (injected by `op run`), the same as every other Cloudflare script here.
 export function siteOpsConfig(): SiteOpsConfig {
   return {
     d1Database: SITE.d1,
     siteRepo: siteRoot,
     siteOrigin: SITE_ORIGIN,
     auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
+    token: process.env.CLOUDFLARE_API_TOKEN,
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
     run: spawnResult,
     fetch: globalThis.fetch,
   };
 }
 
 export class SiteOpsError extends DetailedError {}
+
+const MISSING = {
+  CLOUDFLARE_API_TOKEN: 'CLOUDFLARE_API_TOKEN is not set: D1 reads need an API token with Account · D1 · Read',
+  CLOUDFLARE_ACCOUNT_ID: 'CLOUDFLARE_ACCOUNT_ID is not set: D1 reads need the account id the token (Account · D1 · Read) belongs to',
+};
 
 type Row = Record<string, unknown>;
 
@@ -50,8 +59,6 @@ const bounded = (value: number | undefined, fallback: number, max = 100): number
   return Math.max(1, Math.min(n, max));
 };
 
-const sqlString = (value: string): string => `'${value.replaceAll("'", "''")}'`;
-
 // Run the repo's own wrangler, failing clearly when it is not installed.
 function runWrangler(config: SiteOpsConfig, args: string[], timeout: number): SpawnResult {
   const bin = path.join(config.siteRepo, 'node_modules', '.bin', 'wrangler');
@@ -59,22 +66,27 @@ function runWrangler(config: SiteOpsConfig, args: string[], timeout: number): Sp
   return config.run(bin, args, { cwd: config.siteRepo, timeout });
 }
 
-function runD1(config: SiteOpsConfig, sql: string, timeout = 20_000): D1Result {
-  const proc = runWrangler(config, ['d1', 'execute', config.d1Database, '--remote', '--json', '--command', sql], timeout);
-  if (proc.code !== 0) {
-    throw new SiteOpsError(`wrangler d1 execute failed: ${proc.stderr.trim() || proc.error?.message || `exit ${proc.code}`}`, {
-      exit_code: proc.code, stdout: proc.stdout.trim(),
-    });
-  }
-  let payload: unknown;
+// Cloudflare's D1 HTTP API: the database is found by name, and every value travels in `params`.
+// https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/query/
+async function queryD1(config: SiteOpsConfig, sql: string, params: (string | number)[] = []): Promise<D1Result> {
+  const { token, accountId } = config;
+  if (!token) throw new SiteOpsError(MISSING.CLOUDFLARE_API_TOKEN, { credentials: true });
+  if (!accountId) throw new SiteOpsError(MISSING.CLOUDFLARE_ACCOUNT_ID, { credentials: true });
+  const client = createClient({ token, fetch: config.fetch });
+  client.ids.account = accountId;
   try {
-    payload = JSON.parse(proc.stdout);
-  } catch {
-    throw new SiteOpsError('wrangler returned non-JSON output', { stdout: proc.stdout });
+    const databases = await client.get<{ uuid: string; name: string }[]>(`/accounts/:account/d1/database?name=${encodeURIComponent(config.d1Database)}`);
+    const database = databases.find((candidate) => candidate.name === config.d1Database);
+    if (!database) throw new SiteOpsError(`the token cannot see a D1 database named ${config.d1Database}`);
+    client.ids.database = database.uuid;
+    const payload = await client.request<{ results?: Row[]; meta?: Row; success?: boolean }[]>('POST', '/accounts/:account/d1/database/:database/query', { sql, params });
+    const first = payload.result?.[0];
+    if (first?.success === false) throw new SiteOpsError('D1 reported a failed statement', { result: first });
+    return { database: config.d1Database, results: first?.results ?? [], meta: first?.meta ?? {} };
+  } catch (error) {
+    if (error instanceof SiteOpsError) throw error;
+    throw new SiteOpsError(`D1 query failed: ${errorMessage(error)}`);
   }
-  const first = (Array.isArray(payload) ? payload[0] : undefined) as { success?: boolean; results?: Row[]; meta?: Row } | undefined;
-  if (first?.success === false) throw new SiteOpsError('D1 reported a failed statement', { result: first });
-  return { database: config.d1Database, results: first?.results ?? [], meta: first?.meta ?? {} };
 }
 
 // PII is released only once its access is on record, so an unwritable log fails the read.
@@ -122,11 +134,11 @@ export interface PiiRows extends D1Result {
 
 // Recent contact submissions. Redacted by default (abbreviated name, masked
 // email, message preview); includePii releases full rows and is audited.
-export function contactSubmissions(config: SiteOpsConfig, { limit, includePii = false }: { limit?: number | undefined; includePii?: boolean } = {}): PiiRows {
+export async function contactSubmissions(config: SiteOpsConfig, { limit, includePii = false }: { limit?: number | undefined; includePii?: boolean } = {}): Promise<PiiRows> {
   const n = bounded(limit, 10);
-  const result = runD1(config,
+  const result = await queryD1(config,
     'SELECT id, created_at, name, email, message, status, browser, device, country, source_url, ip_address, user_agent, admin_notes '
-    + `FROM contact_submissions ORDER BY created_at DESC LIMIT ${n};`);
+    + 'FROM contact_submissions ORDER BY created_at DESC LIMIT ?;', [n]);
   if (includePii) {
     audit(config, 'contact_pii_access', `rows=${result.results.length}`);
     return { ...result, piiReleased: true };
@@ -140,16 +152,16 @@ export function contactSubmissions(config: SiteOpsConfig, { limit, includePii = 
 }
 
 // Recent CSP reports; client identifiers only with includePii (audited).
-export function cspReports(
+export async function cspReports(
   config: SiteOpsConfig,
   { limit, directive, includePii = false }: { limit?: number | undefined; directive?: string | undefined; includePii?: boolean } = {},
-): PiiRows {
+): Promise<PiiRows> {
   const n = bounded(limit, 20);
   const filter = directive?.trim().slice(0, 128);
-  const where = filter ? `WHERE effective_directive = ${sqlString(filter)} ` : '';
+  const where = filter ? 'WHERE effective_directive = ? ' : '';
   const columns = 'id, created_at, effective_directive, blocked_uri, document_uri, source_file, status_code'
     + (includePii ? ', ip_address, user_agent, country, raw_report' : '');
-  const result = runD1(config, `SELECT ${columns} FROM csp_reports ${where}ORDER BY created_at DESC LIMIT ${n};`);
+  const result = await queryD1(config, `SELECT ${columns} FROM csp_reports ${where}ORDER BY created_at DESC LIMIT ?;`, [...(filter ? [filter] : []), n]);
   if (includePii) {
     audit(config, 'csp_pii_access', `rows=${result.results.length}`);
     return { ...result, piiReleased: true };
@@ -163,9 +175,9 @@ export interface CspCounts {
   byDirective: { effective_directive: string; count: number }[];
 }
 
-export function cspCounts(config: SiteOpsConfig): CspCounts {
-  const total = runD1(config, 'SELECT COUNT(*) AS total FROM csp_reports;');
-  const grouped = runD1(config,
+export async function cspCounts(config: SiteOpsConfig): Promise<CspCounts> {
+  const total = await queryD1(config, 'SELECT COUNT(*) AS total FROM csp_reports;');
+  const grouped = await queryD1(config,
     "SELECT COALESCE(effective_directive, '(unknown)') AS effective_directive, COUNT(*) AS count FROM csp_reports "
     + 'GROUP BY effective_directive ORDER BY count DESC, effective_directive ASC;');
   return {
