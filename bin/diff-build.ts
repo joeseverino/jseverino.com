@@ -47,20 +47,18 @@ function collect(dir: string): Map<string, string> {
   );
 }
 
-function firstDivergence(a: string, b: string) {
-  let i = 0;
-  while (i < Math.min(a.length, b.length) && a[i] === b[i]) i += 1;
-  const window = 70;
-  return {
-    at: i,
-    base: a.slice(Math.max(0, i - 25), i + window),
-    curr: b.slice(Math.max(0, i - 25), i + window),
-  };
+// Writes the normalized text of `files` from a tree under `dir`, so git can diff the two sides.
+function writeTree(dir: string, tree: ReadonlyMap<string, string>, files: readonly string[]): void {
+  for (const file of files) {
+    fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+    fs.writeFileSync(path.join(dir, file), tree.get(file) ?? '');
+  }
 }
 
 const buildStatic = (root: string): void => run(process.execPath, [path.join(root, 'bin/build-static.ts')], root);
 
-const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'jsev-diffbuild-'));
+using scratch = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'jsev-diffbuild-'));
+const worktree = path.join(scratch.path, 'baseline');
 const realNodeModules = fs.realpathSync(path.join(siteRoot, 'node_modules'));
 
 try {
@@ -85,13 +83,13 @@ try {
   if (onlyCurrent.length) console.log(`\nadded (${onlyCurrent.length}):\n  ${onlyCurrent.join('\n  ')}`);
 
   if (changed.length) {
-    console.log(`\nchanged (${changed.length}):`);
-    for (const f of changed) {
-      const d = firstDivergence(baseline.get(f) ?? '', current.get(f) ?? '');
-      console.log(`\n  ${f}  (first diff @ char ${d.at})`);
-      console.log(`    baseline: ${JSON.stringify(d.base)}`);
-      console.log(`    current : ${JSON.stringify(d.curr)}`);
-    }
+    console.log(`\nchanged (${changed.length}):\n  ${changed.join('\n  ')}\n`);
+    using sides = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'jsev-diffbuild-sides-'));
+    writeTree(path.join(sides.path, 'baseline'), baseline, changed);
+    writeTree(path.join(sides.path, 'current'), current, changed);
+    // Exit 1 means the trees differ, which `changed` already says.
+    const { code } = spawnResult('git', ['diff', '--no-index', 'baseline', 'current'], { cwd: sides.path, stdio: 'inherit' });
+    if (code !== 0 && code !== 1) throw new Error(`git diff --no-index exited ${code}`);
   }
 
   if (!onlyBaseline.length && !onlyCurrent.length && !changed.length) {
@@ -99,5 +97,4 @@ try {
   }
 } finally {
   spawnResult('git', ['worktree', 'remove', '--force', worktree], { cwd: siteRoot, stdio: 'ignore' });
-  fs.rmSync(worktree, { recursive: true, force: true });
 }
