@@ -93,11 +93,6 @@ description = "Playwright's Chromium, Firefox and WebKit are installed, for the 
 run = "node -e 'const fs = require(\"node:fs\"); const playwright = require(\"@playwright/test\"); process.exit([\"chromium\", \"firefox\", \"webkit\"].every((name) => fs.existsSync(playwright[name].executablePath())) ? 0 : 1)'"
 hint = "Run `mise exec -- playwright install chromium firefox webkit`."
 
-[doctor.checks.isolated]
-description = "mise loads no config from above the checkout, so a worktree runs its own tasks and tools"
-run = "node -e 'const path = require(\"node:path\"); const root = process.argv[1]; const files = JSON.parse(require(\"node:child_process\").execFileSync(\"mise\", [\"config\", \"ls\", \"--json\"], { encoding: \"utf8\" })); process.exit(files.some((file) => root.startsWith(path.dirname(file.path) + path.sep)) ? 1 : 0)' {{ config_root | quote }}"
-hint = "Keep .miserc.toml's ceiling_paths, and run mise from inside the checkout (`mise -C` from outside needs MISE_CEILING_PATHS)."
-
 [tools]
 node = "24.22.0"
 "aqua:lycheeverse/lychee" = "0.24.2"

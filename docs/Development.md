@@ -28,8 +28,8 @@ mise run build && mise run preview      # the build on the Workers runtime
 
 `mise doctor project` runs the readiness checks `mise.toml` declares under
 `[doctor.checks]`: the npm packages match the lockfile, `gh` is signed in,
-the cache root exists, Playwright's browsers are installed, and no `mise.toml`
-above the checkout is loaded. Each failure prints its fix. It never runs on
+the cache root exists, and Playwright's browsers are installed. Each failure
+prints its fix. It never runs on
 its own and is no gate: CI has no `gh` login, and the checks describe this
 machine, not the change.
 
