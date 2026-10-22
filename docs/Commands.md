@@ -62,7 +62,8 @@ dev server at it with `SITE_CONTENT_ROOT`; the committed snapshot is left alone.
 Obsidian vault into `src/content/` and their assets into `public/assets/`.
 The synced snapshot is committed, so the public repo never depends on the
 private vault. Never edit the synced files by hand; the next sync overwrites
-them. Caches live under the gitignored `.cache/`. See [`Vault-Workflow.md`](./Vault-Workflow.md).
+them. Its image masters are cached under the cache root every checkout
+shares (`SITE_CACHE_DIR`). See [`Vault-Workflow.md`](./Vault-Workflow.md).
 
 **`mise run sync:tokens`**: serializes the lockfile-pinned `severino-brand`
 web contract into committed build inputs: the `:root` block in
