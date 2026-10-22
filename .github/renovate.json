@@ -94,6 +94,14 @@
       "datasourceTemplate": "pypi"
     },
     {
+      "description": "Runner labels a job takes from its matrix (`os:`); the github-actions manager reads only `runs-on:`.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStrings": ["\\bos: (?<depName>ubuntu|macos|windows)-(?<currentValue>\\S+)"],
+      "datasourceTemplate": "github-runners",
+      "autoReplaceStringTemplate": "os: {{depName}}-{{newValue}}"
+    },
+    {
       "description": "The Renovate release checks:renovate validates this file with, pinned in the task itself.",
       "customType": "regex",
       "managerFilePatterns": ["/^mise\\.toml$/"],
