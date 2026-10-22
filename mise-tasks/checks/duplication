@@ -8,25 +8,26 @@ set -eu
 ignore='**/src/generated/**,**/functions/generated/**,tests/fixtures/content/**,**/*.d.ts'
 imports='(?m)^import\s[^;]*;,(?m)^export\s+(?:type\s+)?(?:\*|\{[^}]*\})\s+from\s[^;]*;'
 
-reports=$(mktemp -d)
-trap 'rm -rf "$reports"' EXIT
-
-# jscpd exits 1 for a clone and for a scan it could not run alike, so it runs
-# without --exit-code: a failed scan stops here with jscpd's own error, and only
-# the clone count in its JSON report earns the fix.
-clones=0
+# jscpd exits 3 (--exit-code) for clones and 1 for a scan it could not run,
+# which stops here with its own error. --silent leaves one summary line; a scan
+# that finds clones runs again with the console reporter to list them.
+failed=0
 scan() {
-  jscpd --format typescript --no-tips --fail-on-empty --ignore-pattern "$imports" \
-    --reporters console,json --output "$reports/$1" \
+  set -- --format typescript --no-tips --fail-on-empty --ignore-pattern "$imports" \
     --min-tokens "$1" --min-lines "$2" --ignore "$ignore$3" .
-  found=$(node -p 'require(process.argv[1]).statistics.total.clones' "$reports/$1/jscpd-report.json")
-  clones=$((clones + found))
+  status=0
+  jscpd --silent --exit-code 3 "$@" || status=$?
+  case $status in
+    0) ;;
+    3) jscpd "$@"; failed=1 ;;
+    *) exit "$status" ;;
+  esac
 }
 
 scan 30 3 ',tests/unit/**,tests/playwright/**,tests/edge/**'
 scan 40 4 ''
 
-if [ "$clones" -gt 0 ]; then
+if [ "$failed" -eq 1 ]; then
   echo 'fix: extract one shared primitive beside the copies (bin/lib, src/lib, functions/lib, or a test helper) and import it from each' >&2
   exit 1
 fi
