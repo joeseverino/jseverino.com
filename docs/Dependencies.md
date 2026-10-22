@@ -8,8 +8,10 @@ latest major on purpose, and how an update is reviewed before it merges.
 Renovate is the only dependency updater, and
 [`.github/renovate.json`](../.github/renovate.json) is its whole configuration here; Renovate
 itself runs outside this repository, so no workflow carries it. The file extends
-`config:best-practices` (actions and container images pinned by digest,
-development dependencies pinned exactly, weekly lock file maintenance) and adds
+`config:best-practices` (actions and container images pinned by digest, a pin
+update proposed for each development dependency `package.json` still declares
+as a `^` range, weekly lock file maintenance; the lockfile fixes the installed
+version either way) and adds
 this repository's rules, each with a `description`:
 
 - Every update short of a major waits 7 days after its release, npm included
