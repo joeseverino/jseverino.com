@@ -2,6 +2,7 @@
 // state and every call is recorded; an unknown route fails the test.
 
 import { API_BASE } from '../../../bin/lib/github.ts';
+import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
 
@@ -16,18 +17,11 @@ export interface FakeState {
   rulesets: (Fields & { id: number; name: string })[];
 }
 
-export interface RecordedCall {
-  method: string;
-  path: string;
-  body: unknown;
-  authorization: string | null;
-}
-
 const REPO = '/repos/joeseverino/jseverino.com';
 
 export function createGithubFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);
-  const calls: RecordedCall[] = [];
+  const { calls, record, writes } = callRecorder(API_BASE, token);
   let nextId = 900;
 
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -85,14 +79,8 @@ export function createGithubFake(seed: FakeState, token: string) {
   ];
 
   async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
-    const href = input instanceof Request ? input.url : String(input);
-    if (!href.startsWith(API_BASE)) throw new Error(`unexpected host: ${new URL(href).origin}`);
-    const path = new URL(href).pathname;
-    const method = init.method ?? 'GET';
-    const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
-    const authorization = new Headers(init.headers).get('authorization');
-    calls.push({ method, path, body, authorization });
-    if (authorization !== `Bearer ${token}`) return json({ message: 'Bad credentials' }, 401);
+    const { path, method, body, authorized } = record(input, init);
+    if (!authorized) return json({ message: 'Bad credentials' }, 401);
     if (path !== REPO && !path.startsWith(`${REPO}/`)) throw new Error(`the fake has no route for ${method} ${path}`);
     const rest = path.slice(REPO.length);
     for (const [verb, pattern, handle] of routes) {
@@ -102,6 +90,5 @@ export function createGithubFake(seed: FakeState, token: string) {
     throw new Error(`the fake has no route for ${method} ${path}`);
   }
 
-  const writes = () => calls.filter((call) => call.method !== 'GET');
   return { fetch, calls, writes, state };
 }

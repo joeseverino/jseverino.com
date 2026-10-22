@@ -105,6 +105,12 @@ function fixture() {
   return { origin, seed, checkout };
 }
 
+// Publish works in its own worktree: the checkout keeps no content branch and no extra worktree.
+function assertCheckoutLeftAlone(checkout: string): void {
+  assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
+  assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+}
+
 const syncWriting = (files: Record<string, string>, extra: Record<string, string> = {}) =>
   async ({ worktree }: { worktree: string }) => {
     for (const [file, content] of Object.entries({ ...files, ...extra })) write(path.join(worktree, file), content);
@@ -173,8 +179,7 @@ describe('site publish', () => {
 
     assert.equal(git(checkout, 'branch', '--show-current'), 'stale');
     assert.equal(git(checkout, 'rev-parse', 'HEAD'), before);
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
 
     const calls = ghCalls();
     assert.ok(calls.some((call) => call.startsWith('pr create --base main --head content/2026-10-02-1405')));
@@ -226,8 +231,7 @@ describe('site publish', () => {
       assert.match(cleanup[0] ?? '', /^removing the worktree failed .*git worktree prune/);
       return true;
     });
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
   });
 
   test('--dry-run commits in the worktree, then leaves no branch, worktree, or push', async () => {
@@ -237,8 +241,7 @@ describe('site publish', () => {
     assert.match(result.commit, /^[0-9a-f]{40}$/);
     assert.match(result.body, /\*\*Published\*\*/);
     assert.match(result.body, /2 generated files/);
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
     assert.equal(git(origin, 'branch', '--list', 'content/*'), '');
     assert.deepEqual(ghCalls(), [], 'a dry run needs no gh at all');
   });

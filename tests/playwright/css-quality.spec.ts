@@ -132,6 +132,18 @@ test('buttons and cards keep a stable click target through press and release', a
   await expect(page).toHaveURL(new RegExp(`${RegExp.escape(href!)}$`));
 });
 
+// Rests the pointer half a pixel inside the first match's bottom edge, coming from
+// outside it, and returns the target with the box it had before the hover.
+async function hoverBottomEdge(page: Page, selector: string) {
+  const target = page.locator(selector).first();
+  await target.scrollIntoViewIfNeeded();
+  await page.mouse.move(0, 0);
+  const box = await target.boundingBox();
+  if (!box) throw new Error(`${selector} has no box`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height - 0.5);
+  return { target, box };
+}
+
 // Sample the target geometry, including the bottom edge, where a raised hover
 // state can move the target out from under the pointer and loop.
 for (const { name, selector, path } of [
@@ -140,12 +152,7 @@ for (const { name, selector, path } of [
 ]) {
   test(`${name} stays stationary at its bottom hover edge`, async ({ page }) => {
     await page.goto(path);
-    const target = page.locator(selector).first();
-    await target.scrollIntoViewIfNeeded();
-    await page.mouse.move(0, 0);
-    const box = await target.boundingBox();
-    expect(box).not.toBeNull();
-    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
+    const { target, box } = await hoverBottomEdge(page, selector);
     await expect(target.locator('.card-surface')).toHaveCSS('translate', '0px -2px');
     const frames = await target.evaluate(async (element) => {
       const samples: { x: number; y: number; hovered: boolean }[] = [];
@@ -157,8 +164,8 @@ for (const { name, selector, path } of [
       return samples;
     });
     for (const frame of frames) {
-      expect(frame.x).toBeCloseTo(box!.x, 1);
-      expect(frame.y).toBeCloseTo(box!.y, 1);
+      expect(frame.x).toBeCloseTo(box.x, 1);
+      expect(frame.y).toBeCloseTo(box.y, 1);
       expect(frame.hovered).toBe(true);
     }
   });
@@ -167,11 +174,7 @@ for (const { name, selector, path } of [
 for (const selector of ['.button:not(.secondary)', '.button.secondary']) {
   test(`${selector} keeps hover at its bottom border`, async ({ page }) => {
     await page.goto('/');
-    const target = page.locator(selector).first();
-    await target.scrollIntoViewIfNeeded();
-    const box = await target.boundingBox();
-    expect(box).not.toBeNull();
-    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height - 0.5);
+    const { target } = await hoverBottomEdge(page, selector);
     await expect(target).toHaveCSS('translate', '0px -1px');
     const hovered = await target.evaluate(async (element) => {
       for (let i = 0; i < 30; i++) {

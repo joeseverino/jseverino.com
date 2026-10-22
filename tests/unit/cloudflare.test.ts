@@ -21,7 +21,7 @@ const DESIRED_FIELDS = {
   rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {} }));
+const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {} }));
 
 describe('cloudflare/zone.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
@@ -113,27 +113,16 @@ describe('check', () => {
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
-    const fake = createCloudflareFake(seed, TOKEN);
-    const { output } = await run(fake, 'check');
-    assert.ok(fake.calls.every((call) => call.authorization === `Bearer ${TOKEN}`));
-    assert.ok(!output.includes(TOKEN));
+    const output = await bearerOnly(createCloudflareFake(seed, TOKEN), TOKEN);
     assert.ok(!output.includes('zone-0001') && !output.includes('account-0001'), 'no zone or account id in output');
   });
 
-  test('a missing token stops before any request', async () => {
-    const fake = createCloudflareFake(seed, TOKEN);
-    await assert.rejects(main({ argv: ['check'], env: {}, fetch: fake.fetch, write: () => {} }), /CLOUDFLARE_API_TOKEN/);
-    assert.equal(fake.calls.length, 0);
-  });
+  test('a missing token stops before any request', () => missingTokenStops(createCloudflareFake(seed, TOKEN), /CLOUDFLARE_API_TOKEN/));
 });
 
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
-    const fake = createCloudflareFake(seed, TOKEN);
-    const { code, output } = await run(fake, 'plan', '--json');
-    assert.equal(code, 0);
-    const { calls } = JSON.parse(output);
-    const lines = calls.map((call: { method: string; path: string }) => `${call.method} ${call.path}`);
+    const lines = await planLines(createCloudflareFake(seed, TOKEN));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/automatic_https_rewrites'));
     assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
@@ -148,16 +137,9 @@ describe('plan', () => {
     const rules = (verb: string) => lines.findIndex((line: string) => line.startsWith(`${verb} /zones/:zone/rulesets/ruleset-fw/rules`));
     assert.ok(rules('DELETE') < rules('POST'), 'deletes come before creates, so a plan at the rule limit frees a slot first');
     assert.ok(!lines.some((line: string) => line.includes('settings/tls_1_3')), 'settings already right are left alone');
-    assert.equal(fake.writes().length, 0);
   });
 
-  test('apply without --yes is a plan', async () => {
-    const fake = createCloudflareFake(seed, TOKEN);
-    const { code, output } = await run(fake, 'apply');
-    assert.equal(code, 0);
-    assert.match(output, /re-run with --yes/);
-    assert.equal(fake.writes().length, 0);
-  });
+  test('apply without --yes is a plan', () => applyWithoutYesIsAPlan(createCloudflareFake(seed, TOKEN)));
 });
 
 describe('apply --yes', () => {
@@ -205,10 +187,7 @@ describe('apply --yes', () => {
       ['jseverino-com-contact', fs.readFileSync(path.join(siteRoot, desired.schemaValidation.file), 'utf8')],
     ]);
 
-    const before = fake.writes().length;
-    const second = await run(fake, 'apply', '--yes');
-    assert.match(second.output, /no API calls needed/);
-    assert.equal(fake.writes().length, before, 'a second apply makes no writes');
+    await reapplyIsNoOp(fake);
   });
 
   test('creates a missing firewall entrypoint whole', async () => {

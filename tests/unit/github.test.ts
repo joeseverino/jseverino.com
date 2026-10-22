@@ -16,7 +16,7 @@ const desired = read<DesiredState>('.github/repo.json');
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, topics: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
+const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
@@ -76,26 +76,15 @@ describe('check', () => {
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
-    const fake = createGithubFake(seed, TOKEN);
-    const { output } = await run(fake, 'check');
-    assert.ok(fake.calls.every((call) => call.authorization === `Bearer ${TOKEN}`));
-    assert.ok(!output.includes(TOKEN));
+    await bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
   });
 
-  test('a missing token stops before any request', async () => {
-    const fake = createGithubFake(seed, TOKEN);
-    await assert.rejects(main({ argv: ['check'], env: {}, fetch: fake.fetch, write: () => {} }), /GITHUB_TOKEN/);
-    assert.equal(fake.calls.length, 0);
-  });
+  test('a missing token stops before any request', () => missingTokenStops(createGithubFake(seed, TOKEN), /GITHUB_TOKEN/));
 });
 
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
-    const fake = createGithubFake(seed, TOKEN);
-    const { code, output } = await run(fake, 'plan', '--json');
-    assert.equal(code, 0);
-    const { calls } = JSON.parse(output);
-    const lines = calls.map((call: { method: string; path: string }) => `${call.method} ${call.path}`);
+    const lines = await planLines(createGithubFake(seed, TOKEN));
     const repo = '/repos/joeseverino/jseverino.com';
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
@@ -107,16 +96,9 @@ describe('plan', () => {
       `PUT ${repo}/private-vulnerability-reporting`,
       `PUT ${repo}/topics`,
     ]);
-    assert.equal(fake.writes().length, 0);
   });
 
-  test('apply without --yes is a plan', async () => {
-    const fake = createGithubFake(seed, TOKEN);
-    const { code, output } = await run(fake, 'apply');
-    assert.equal(code, 0);
-    assert.match(output, /re-run with --yes/);
-    assert.equal(fake.writes().length, 0);
-  });
+  test('apply without --yes is a plan', () => applyWithoutYesIsAPlan(createGithubFake(seed, TOKEN)));
 });
 
 describe('apply --yes', () => {
@@ -141,10 +123,7 @@ describe('apply --yes', () => {
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);
     assert.deepEqual(fake.state.variables.map((entry) => entry.name).sort(), ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'], 'variables not in repo.json are left alone');
 
-    const before = fake.writes().length;
-    const second = await run(fake, 'apply', '--yes');
-    assert.match(second.output, /no API calls needed/);
-    assert.equal(fake.writes().length, before, 'a second apply makes no writes');
+    await reapplyIsNoOp(fake);
   });
 
   test('one apply turns CodeQL default setup on before the ruleset that requires its results', async () => {

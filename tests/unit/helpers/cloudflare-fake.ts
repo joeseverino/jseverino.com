@@ -5,6 +5,7 @@ import {
   API_BASE,
   type AccessApp, type ApiSchema, type LiveRule, type Operation, type Rule, type RulesList, type ValidationSettings, type Widget,
 } from '../../../bin/lib/cloudflare.ts';
+import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
 
@@ -25,13 +26,6 @@ export interface FakeState {
   widgets: Widget[];
 }
 
-export interface RecordedCall {
-  method: string;
-  path: string;
-  body: unknown;
-  authorization: string | null;
-}
-
 type Groups = [string, string];
 type Handler = (groups: Groups, url: URL, body: unknown) => Response;
 
@@ -41,7 +35,7 @@ const route = <B = unknown>(method: string, pattern: RegExp, handle: (groups: Gr
 
 export function createCloudflareFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);
-  const calls: RecordedCall[] = [];
+  const { calls, record, writes } = callRecorder(API_BASE, token);
   let next = 1;
   const newId = (prefix: string) => `${prefix}-new-${next++}`;
 
@@ -170,15 +164,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
   ];
 
   async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
-    const href = input instanceof Request ? input.url : String(input);
-    const url = new URL(href);
-    if (!href.startsWith(API_BASE)) throw new Error(`unexpected host: ${url.origin}`);
-    const path = url.pathname.slice(new URL(API_BASE).pathname.length);
-    const method = init.method ?? 'GET';
-    const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
-    const authorization = new Headers(init.headers).get('authorization');
-    calls.push({ method, path: `${path}${url.search}`, body, authorization });
-    if (authorization !== `Bearer ${token}`) return fail(403, 'Authentication error');
+    const { url, path, method, body, authorized } = record(input, init);
+    if (!authorized) return fail(403, 'Authentication error');
     for (const [verb, pattern, handle] of routes) {
       const match = verb === method ? path.match(pattern) : null;
       if (match) return handle(match.slice(1) as Groups, url, body);
@@ -186,6 +173,5 @@ export function createCloudflareFake(seed: FakeState, token: string) {
     throw new Error(`the fake has no route for ${method} ${path}`);
   }
 
-  const writes = () => calls.filter((call) => call.method !== 'GET');
   return { fetch, calls, writes, state };
 }

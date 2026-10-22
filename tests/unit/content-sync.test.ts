@@ -242,20 +242,22 @@ async function fixtureVault() {
   return vault;
 }
 
+// A sync of the fixture vault into `root`, with no resume engine and no education export.
+const syncOptions = (vault: string, root: string) => ({
+  layout: committedLayout(root),
+  vaultRoot: vault,
+  lifeVaultRoot: path.join(vault, 'life'),
+  resumeEngineRoot: path.join(vault, 'no-resume-engine'),
+  cacheDir: path.join(root, '.cache/images'),
+  educationSource: { load: async () => ({ institutions: [] }) },
+});
+
 describe('syncContent and checkContent against a temp vault', () => {
   test('writes the public snapshot, declares every file, and prunes the rest', async () => {
     const vault = await fixtureVault();
     const root = scratch.make();
     write(path.join(root, 'src/content/writeups/gone/index.mdx'), '---\ntitle: Gone\n---\n');
-    const result = await syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'no-resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      date: '2026-07-26',
-    });
+    const result = await syncContent({ ...syncOptions(vault, root), date: '2026-07-26' });
 
     assert.deepEqual(result.removed, ['src/content/writeups/gone/index.mdx']);
     assert.ok(result.written.includes('src/content/technology-groups.md'));
@@ -285,15 +287,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       'export const orgRoleDates = () => [];',
       'export const tenureSpan = () => "";',
     ].join('\n'));
-    const result = await syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      includeDrafts: true,
-    });
+    const result = await syncContent({ ...syncOptions(vault, root), resumeEngineRoot: path.join(vault, 'resume-engine'), includeDrafts: true });
     assert.deepEqual(result.warnings, ['draft writeups/draft: missing image images/missing.png']);
     assert.ok(result.written.includes('src/content/writeups/draft/index.mdx'));
   });
@@ -305,15 +299,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       'technologies:', '  - astro', '---', '', 'See [the notes](notes.md).', '',
     ].join('\n'));
     const root = scratch.make();
-    await assert.rejects(syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'no-resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      date: '2026-07-26',
-    }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
+    await assert.rejects(syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
     const checked = await checkContent({ vaultRoot: vault });
     const live = checked.documents.find((doc) => doc.slug === 'live');
     assert.ok(live?.issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(live?.issues));
