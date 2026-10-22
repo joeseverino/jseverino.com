@@ -184,6 +184,8 @@ reports direct dependency freshness locally. The publishing workflow
 <!-- mise-tasks -->
 ## `browser`
 
+- Depends: deps
+
 - **Usage:** `browser`
 
 Every browser gate, one at a time: one build with the test site key, then each suite
@@ -207,6 +209,8 @@ Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _hea
 Screenshots of the fixture build match the committed macOS Chromium baselines
 
 ## `build`
+
+- Depends: deps
 
 - **Usage:** `build`
 
@@ -261,6 +265,8 @@ Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget
 Does my change work: every static gate, the production build, then every gate on what it built (CI job build)
 
 ## `checks`
+
+- Depends: deps
 
 - **Usage:** `checks`
 - **Aliases:** `fast`
@@ -407,6 +413,8 @@ Install the npm packages from package-lock.json; skipped while node_modules matc
 
 ## `dev`
 
+- Depends: deps
+
 - **Usage:** `dev`
 
 Start the local dev server
@@ -495,6 +503,8 @@ Serve the build through `wrangler pages dev` for by-hand checks (headers and fun
 Re-sign `public/.well-known/security.txt`
 
 ## `site`
+
+- Depends: deps
 
 - **Usage:** `site`
 

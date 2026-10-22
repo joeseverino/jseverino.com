@@ -35,8 +35,10 @@ output = "keep-order"
 
 [hooks]
 # A fresh checkout is ready after one `mise install`: the tools, then the npm
-# packages from the lockfile (the deps task, which skips itself while
-# node_modules matches the lockfile).
+# packages from the lockfile. The entry tasks (checks, build, browser, site,
+# dev) depend on the deps task too, so a pull that moves the lockfile is
+# installed before anything runs; the task skips itself while node_modules
+# matches the lockfile.
 postinstall = { task = "deps" }
 
 [env]
@@ -67,6 +69,7 @@ node = "24.22.0"
 [tasks.checks]
 description = "CI job build, first phase: every static gate, collect-all"
 alias = "fast"
+depends = ["deps"]
 run = "mise run -c 'checks:*'"
 
 [tasks."checks:duplication"]
@@ -163,6 +166,7 @@ run = "git diff --check"
 [tasks.build]
 description = "The production build: astro build, the sitedrift wrap, the CSP hashes"
 timeout = "10m"
+depends = ["deps"]
 run = "node bin/build-static.ts"
 
 # ------------------------------------------------------------------- built
@@ -241,12 +245,14 @@ description = "The publishing workflow CLI: `mise run site <command>` (validate,
 raw_args = true
 interactive = true
 quiet = true
+depends = ["deps"]
 run = "node bin/site.ts"
 
 [tasks.dev]
 description = "Start the local dev server"
 raw_args = true
 interactive = true
+depends = ["deps"]
 run = "astro dev"
 
 [tasks."sync:content"]

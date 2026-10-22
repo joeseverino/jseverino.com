@@ -1,6 +1,7 @@
 #!/bin/sh
 #MISE description="Every browser gate, one at a time: one build with the test site key, then each suite"
 #MISE timeout="45m"
+#MISE depends=["deps"]
 set -eu
 
 # One suite at a time: each one starts browsers and a server, and two at once
