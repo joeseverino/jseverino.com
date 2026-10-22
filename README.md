@@ -50,11 +50,11 @@ The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
 
 ## Performance
 
-The PageSpeed Insights scores are in
-[`docs/Security.md`](./docs/Security.md#external-verification). The build
-enforces them: every page has a weight budget for HTML, CSS, and JavaScript,
-every shipped image one of its own, images ship as AVIF and WebP with fixed
-dimensions, and a weekly Lighthouse run fails below 95 on accessibility.
+PageSpeed Insights scored the homepage 100 in every category on desktop and
+99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces them: every
+page has a weight budget for HTML, CSS, and JavaScript, every shipped image one
+of its own, images ship as AVIF and WebP with fixed dimensions, and a weekly
+Lighthouse run fails below 95 on accessibility.
 
 ## Verify it yourself
 
@@ -69,8 +69,8 @@ gpg --auto-key-locate clear,wkd --locate-keys security@jseverino.com
 curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 ```
 
-- [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com)
-  scans the live headers on demand.
+- [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
+  A+, 145 / 100, 12 of 12 tests on 2026-10-03.
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
   and CodeQL's default setup publish their results to code scanning, and a
   pull request cannot merge past a high-severity CodeQL alert.
