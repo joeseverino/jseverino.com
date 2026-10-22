@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { linkHref, metaContent, parseHtml, title } from '../../src/lib/html.ts';
+import { elementsNamed, linkHref, metaContent, parseHtml, textContent, title } from '../../src/lib/html.ts';
 
 const page = parseHtml(`<!doctype html><html><head>
 <title> R&amp;D &#39;Notes&#x27; &mdash; Example </title>
@@ -20,4 +20,10 @@ test('readers report an absent element as undefined', () => {
   assert.equal(metaContent(page, 'robots'), undefined);
   assert.equal(linkHref(page, 'icon'), undefined);
   assert.equal(title(parseHtml('<p>no head</p>')), undefined);
+});
+
+test('elementsNamed walks the whole tree in document order; textContent reads a script raw', () => {
+  const doc = parseHtml('<head><script type="application/ld+json">{"a":"&amp;"}</script></head><body><div><script>let b = 1 < 2;</script></div></body>');
+  assert.deepEqual(elementsNamed(doc, 'script').map(textContent), ['{"a":"&amp;"}', 'let b = 1 < 2;']);
+  assert.deepEqual(elementsNamed(doc, 'style'), []);
 });

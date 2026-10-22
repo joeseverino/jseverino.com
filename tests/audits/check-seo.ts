@@ -2,9 +2,9 @@
 // and its og:image is a file the build emitted.
 import fs from 'node:fs';
 import path from 'node:path';
-import { linkHref, metaContent, parseHtml, title } from '../../src/lib/html.ts';
+import { elementsNamed, linkHref, metaContent, parseHtml, textContent, title } from '../../src/lib/html.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
-import { builtPages, elementsNamed, finish, rawText } from './lib.ts';
+import { builtPages, finish } from './lib.ts';
 
 const { distDir, pages } = builtPages('check-seo');
 
@@ -28,7 +28,7 @@ const problems = pages.flatMap(({ rel, html }) => {
       .filter((script) => script.properties.type === 'application/ld+json')
       .map((script) => {
         try {
-          JSON.parse(rawText(script));
+          JSON.parse(textContent(script));
           return undefined;
         } catch {
           return 'invalid JSON-LD';

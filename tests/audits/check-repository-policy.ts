@@ -4,9 +4,9 @@ import { load } from 'js-yaml';
 import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
-import { parseHtml } from '../../src/lib/html.ts';
+import { elementsNamed, parseHtml, textContent } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
-import { elementsNamed, finish, rawText } from './lib.ts';
+import { finish } from './lib.ts';
 
 const failures: string[] = [];
 
@@ -114,7 +114,7 @@ const SUPPRESSION = /@ts-(?:ignore|nocheck)\b|@ts-expect-error(?!\s+\S)/;
 function scripts(file: string, source: string): string[] {
   if (!file.endsWith('.astro')) return [source];
   const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
-  return [frontmatter, ...elementsNamed(parseHtml(source), 'script').map(rawText)];
+  return [frontmatter, ...elementsNamed(parseHtml(source), 'script').map(textContent)];
 }
 
 function typeEscapes(script: string): { any: boolean; suppressed: boolean } {

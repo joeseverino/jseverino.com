@@ -19,8 +19,13 @@ function* elements(node: HastNode): Generator<Element> {
 const find = (doc: HastNode, test: (element: Element) => boolean): Element | undefined =>
   elements(doc).find(test);
 
-const text = (node: HastNode): string =>
-  node.type === 'text' ? node.value : 'children' in node ? node.children.map(text).join('') : '';
+// Every element with this tag name, in document order.
+export const elementsNamed = (doc: HastNode, tagName: string): Element[] =>
+  elements(doc).filter((el) => el.tagName === tagName).toArray();
+
+// The text of a node and everything under it, as the DOM's textContent.
+export const textContent = (node: HastNode): string =>
+  node.type === 'text' ? node.value : 'children' in node ? node.children.map(textContent).join('') : '';
 
 // A `<meta>` keyed by `name` (description, robots) or `property` (og:*).
 export function metaContent(doc: HastNode, key: string): string | undefined {
@@ -40,5 +45,5 @@ export function linkHref(doc: HastNode, rel: string): string | undefined {
 
 export function title(doc: HastNode): string | undefined {
   const element = find(doc, (el) => el.tagName === 'title');
-  return element && text(element).trim();
+  return element && textContent(element).trim();
 }
