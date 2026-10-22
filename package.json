@@ -9,11 +9,11 @@
   },
   "packageManager": "npm@11.19.1",
   "dependencies": {
-    "@astrojs/markdown-satteri": "^0.4.4",
-    "@astrojs/mdx": "^8.1.0",
+    "@astrojs/markdown-satteri": "^0.4.5",
+    "@astrojs/mdx": "^8.1.1",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.4.0",
+    "astro": "^7.4.2",
     "js-yaml": "^5.5.0",
     "satteri": "^0.10.5",
     "sitedrift": "^0.5.0"
@@ -22,15 +22,15 @@
     "branding-engine": "https://github.com/joeseverino/branding-engine/releases/download/v0.9.1/branding-engine-0.9.1.tgz"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@astrojs/cloudflare": "^14.3.4",
+    "@astrojs/check": "^0.9.12",
+    "@astrojs/cloudflare": "^14.4.2",
     "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.19.2",
     "ajv": "^8.20.0",
     "fast-check": "^4.10.2",
-    "html-validate": "^11.16.2",
-    "jscpd": "^5.4.1",
+    "html-validate": "^11.17.0",
+    "jscpd": "^5.4.2",
     "lighthouse": "^13.5.0",
     "lightningcss": "^1.33.0",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v2.0.0/severino-brand-2.0.0.tgz",
@@ -38,8 +38,8 @@
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "wrangler": "^4.151.0"
+    "vite": "^8.3.5",
+    "wrangler": "4.151.0"
   },
   "allowScripts": {
     "esbuild": false,

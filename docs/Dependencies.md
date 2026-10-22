@@ -46,18 +46,19 @@ whose majors Renovate holds for that reason.
 
 ## Deliberate holds
 
-Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json) that disables the
-package's major updates.
+Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json): a major hold
+disables the package's major updates, and the `wrangler` hold disables all of its updates.
 
 | Package | Held at | Why | Revisit when |
 | :--- | :--- | :--- | :--- |
 | `typescript` | 6.x | The audits and the site CLI call the TypeScript compiler API (scanner and program APIs), and Astro's language tools load it. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's tooling and the compiler API used by `tests/audits` support 7.x. |
 | `@types/node` | 24.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 24 does not have. | `mise.toml` moves to a newer Node major. |
+| `wrangler` | 4.151.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler`; this pin moves to the same release. |
 | `npm` (`packageManager`) | 11.x | The pin names the npm release the pinned Node bundles. | `mise.toml` moves to a Node major that bundles a newer npm. |
 
 ## No overrides
 
-`package.json` has no `overrides` block: `npm ls esbuild sharp` resolves one
+`package.json` has no `overrides` block: `npm ls esbuild sharp workerd` resolves one
 copy of each across Astro, Vite, and `wrangler`. An override is added only for a
 duplicate native binary or a split `esbuild`, with a row here naming the
 dependent that pins it and the condition for removal.
