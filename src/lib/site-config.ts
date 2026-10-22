@@ -38,8 +38,4 @@ export const writeupPath = (slug: string): string => `/portfolio/${slug}/`;
 export const writeupUrl = (slug: string, origin = SITE_ORIGIN): string => `${origin}${writeupPath(slug)}`;
 export const tagPath = (slug: string): string => `/tag/${slug}/`;
 
-// Off: the zone injects the beacon. On: the layout emits it; switch the zone's Web Analytics
-// site to "Enable with JS Snippet installation" in the same release, or pages carry two beacons.
-// Steps in docs/Cloudflare.md.
-export const WEB_ANALYTICS: { emitBeacon: boolean; token: string } = { emitBeacon: false, token: '' };
 export const SITE_REPOSITORY = `${SITE.github}/${SITE.domain}`;

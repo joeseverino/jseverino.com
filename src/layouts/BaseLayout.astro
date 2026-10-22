@@ -6,7 +6,6 @@ import Footer from '@components/Footer.astro';
 import SocialIconsDefs from '@components/SocialIconsDefs.astro';
 import { SURFACE } from '@lib/brand.ts';
 import { site } from '@lib/site.ts';
-import { WEB_ANALYTICS } from '@lib/site-config.ts';
 import { CSP_INLINE_MARKER } from '../lib/csp.ts';
 import '@styles/base.css';
 
@@ -18,12 +17,8 @@ type Props = {
 
 const { seo = {}, preconnect = [] } = Astro.props;
 
-// static.cloudflareinsights.com serves the Web Analytics beacon; preconnect warms DNS and TLS for it.
+// The zone injects the Web Analytics beacon from static.cloudflareinsights.com; preconnect warms DNS and TLS for it.
 const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnect];
-if (WEB_ANALYTICS.emitBeacon && !WEB_ANALYTICS.token) {
-  throw new Error('WEB_ANALYTICS.emitBeacon needs the Web Analytics site token in src/lib/site-config.ts');
-}
-const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
 ---
 
 <!doctype html>
@@ -72,13 +67,5 @@ const beaconConfig = JSON.stringify({ token: WEB_ANALYTICS.token });
       <slot />
       <Footer />
     </div>
-    {WEB_ANALYTICS.emitBeacon && (
-      <script
-        is:inline
-        defer
-        src="https://static.cloudflareinsights.com/beacon.min.js"
-        data-cf-beacon={beaconConfig}
-      ></script>
-    )}
   </body>
 </html>
