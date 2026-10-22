@@ -25,7 +25,7 @@ import {
   inlineHashFindings,
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
-import { cli as parseCli, flag } from './lib/args.ts';
+import { cli, exitWith, flag } from './lib/args.ts';
 import { routeFile } from './lib/routes.ts';
 import { git } from './lib/git.ts';
 import { mapLimit } from './lib/map-limit.ts';
@@ -36,19 +36,19 @@ import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 
-const { values: cli } = parseCli({
-  usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
-  options: {
-    origin: { type: 'string' },
-    preview: flag,
-    slug: { type: 'string' },
-  },
-});
-const origin = (cli.origin ?? siteOrigin).replace(/\/$/, '');
-const deployment = Boolean(cli.origin);
+// What one run verifies: the origin it fetches from, and which checks apply there.
+interface Target {
+  origin: string;
+  // One deployment named by --origin: served responses only, without HSTS.
+  deployment: boolean;
+  // The live site from a clean main: also the remote checks, the dist branch and code scanning.
+  production: boolean;
+}
+
+type Report = ReturnType<typeof createReport>;
 
 // Sitemap <loc>s name the canonical origin; fetch them from the target.
-const onTarget = (url: string): string => {
+const onTarget = ({ origin }: Target, url: string): string => {
   const { pathname, search } = new URL(url);
   return `${origin}${pathname}${search}`;
 };
@@ -58,9 +58,6 @@ const onTarget = (url: string): string => {
 const PULL_REQUEST_ONLY = new Set(['dependency-review']);
 const requiredChecks = async (): Promise<string[]> =>
   (await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name));
-
-const production = !deployment && !cli.slug;
-const report = createReport('Deploy verification', 'Check');
 
 async function fetchChecked(url: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(url, {
@@ -113,7 +110,7 @@ async function pollChecks(sha: string, deadline: number, started: number, report
   return `${names.length} required checks passed after ${Math.round((Date.now() - started) / 1000)}s`;
 }
 
-async function verifyHeaders(pathname: string): Promise<void> {
+async function verifyHeaders({ origin, deployment }: Target, pathname: string): Promise<void> {
   const response = await fetchChecked(`${origin}${pathname}`, { method: 'HEAD' });
   if (response.status !== 200) {
     throw new Error(`${pathname} returned ${response.status}, expected 200`);
@@ -123,10 +120,11 @@ async function verifyHeaders(pathname: string): Promise<void> {
   assertClean([...cspFindings(headers, pathname), ...staticHeaderFindings(headers), ...hsts], pathname);
 }
 
-async function collectSitemapUrls(): Promise<string[]> {
+async function collectSitemapUrls(target: Target): Promise<string[]> {
+  const { origin } = target;
   const index = `${origin}/sitemap-index.xml`;
   const publicUrls = await sitemapUrls(index, async (url) => {
-    const response = await fetchChecked(url === index ? url : onTarget(url));
+    const response = await fetchChecked(url === index ? url : onTarget(target, url));
     if (response.status !== 200) {
       throw new Error(`${url === index ? 'live sitemap index' : url} returned ${response.status}`);
     }
@@ -145,9 +143,9 @@ const ROUTE_CONCURRENCY = 8;
 const routeStatuses = (urls: readonly string[]): Promise<{ url: string; status: number }[]> =>
   mapLimit(urls, ROUTE_CONCURRENCY, async (url) => ({ url, status: (await fetchChecked(url, { method: 'HEAD' })).status }));
 
-async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> {
+async function verifyLiveRoutes(target: Target, publicUrls: readonly string[]): Promise<string> {
   const notOk = (results: { url: string; status: number }[]) => results.filter((result) => result.status !== 200);
-  let failures = notOk(await routeStatuses(publicUrls.map(onTarget)));
+  let failures = notOk(await routeStatuses(publicUrls.map((url) => onTarget(target, url))));
   if (failures.length > 0) {
     await sleep(ROUTE_RETRY_MS);
     failures = notOk(await routeStatuses(failures.map(({ url }) => url)));
@@ -159,7 +157,7 @@ async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> 
 }
 
 // A 200 whose inline tags are not in the CSP header renders unthemed or unstyled.
-async function verifyInlineHashes(): Promise<string> {
+async function verifyInlineHashes({ origin }: Target): Promise<string> {
   const response = await fetchChecked(`${origin}/`);
   if (response.status !== 200) throw new Error(`/ returned ${response.status}, expected 200`);
   const csp = headersToRecord(response.headers)['content-security-policy'];
@@ -167,7 +165,7 @@ async function verifyInlineHashes(): Promise<string> {
   return 'the inline theme script and the inlined stylesheet are covered by the policy hashes';
 }
 
-async function verifyCacheRules(): Promise<string> {
+async function verifyCacheRules({ origin }: Target): Promise<string> {
   const home = await fetchChecked(`${origin}/`);
   const html = await home.text();
   const fingerprinted = html.match(/(?:src|href)="(\/_astro\/[^"]+)"/)?.[1];
@@ -182,7 +180,7 @@ async function verifyCacheRules(): Promise<string> {
   return `${fingerprinted} is immutable for a year; ${chrome} revalidates hourly`;
 }
 
-async function verifyNotFound(): Promise<string> {
+async function verifyNotFound({ origin }: Target): Promise<string> {
   const probe = `/deploy-verify-${Date.now().toString(36)}`;
   const response = await fetchChecked(`${origin}${probe}`);
   if (response.status !== 404) {
@@ -199,7 +197,7 @@ async function verifyNotFound(): Promise<string> {
 
 // The dist branch holds the HTML the build produced; the site must serve the same bytes.
 // A push to main publishes it a few minutes after the deploy, so a mismatch is retried.
-async function verifyDist(urls: string[]): Promise<string> {
+async function verifyDist(target: Target, urls: string[]): Promise<string> {
   const deadline = Date.now() + 6 * 60_000;
   for (;;) {
     git(siteRoot, 'fetch', '--quiet', 'origin', DIST_BRANCH);
@@ -207,7 +205,7 @@ async function verifyDist(urls: string[]): Promise<string> {
     for (const url of urls) {
       const { pathname } = new URL(url);
       const published = spawnResult('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot });
-      if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
+      if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(target, url))).text()) stale.push(pathname);
     }
     if (stale.length === 0) {
       const { verified, reason } = await commitVerification(repository, DIST_BRANCH);
@@ -221,7 +219,7 @@ async function verifyDist(urls: string[]): Promise<string> {
 
 // On the zone, API Shield refuses a body without turnstileToken before the function runs; a deployment
 // outside the zone reaches the function. Neither probe stores anything: the function refuses first.
-async function verifyContactGate(): Promise<string> {
+async function verifyContactGate({ origin, deployment }: Target): Promise<string> {
   const submit = async (extra: Record<string, string>) => {
     const response = await fetchChecked(`${origin}/api/contact`, {
       method: 'POST',
@@ -249,14 +247,14 @@ async function verifyContactGate(): Promise<string> {
 }
 
 // The site key is a build-time variable; losing it still builds but ships `data-sitekey=""`.
-async function verifyTurnstileKey(): Promise<string> {
+async function verifyTurnstileKey({ origin }: Target): Promise<string> {
   const html = await (await fetchChecked(`${origin}/contact/`)).text();
   const key = /data-sitekey="([^"]*)"/.exec(html)?.[1] ?? '';
   assertClean(/^[\w-]{16,}$/.test(key) ? [] : [`the contact form carries data-sitekey="${key}"`], '/contact/ Turnstile site key');
   return 'the contact form carries a Turnstile site key';
 }
 
-async function verifySecurityTxt(): Promise<string> {
+async function verifySecurityTxt({ origin }: Target): Promise<string> {
   const response = await fetchChecked(`${origin}/.well-known/security.txt`);
   if (response.status !== 200) {
     throw new Error(`/.well-known/security.txt returned ${response.status}, expected 200`);
@@ -269,7 +267,7 @@ async function verifySecurityTxt(): Promise<string> {
   return 'live security.txt matches the committed, signed file';
 }
 
-async function verifyProductionGuard(): Promise<string> {
+async function verifyProductionGuard({ origin }: Target): Promise<string> {
   // 404 from the Worker; 403 once the zone's WAF rule blocks the path first
   // (cloudflare/zone.json, sitedrift-production).
   const sitedrift = await fetchChecked(`${origin}/__sitedrift/config.json`);
@@ -279,13 +277,13 @@ async function verifyProductionGuard(): Promise<string> {
   return `sitedrift route is ${sitedrift.status === 403 ? 'blocked at the zone' : 'absent'}`;
 }
 
-async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promise<string> {
+async function verifyWriteup(target: Target, slug: string, publicUrls: readonly string[]): Promise<string> {
   const pathname = writeupPath(slug);
   if (!publicUrls.some((url) => new URL(url).pathname === pathname)) {
     throw new Error(`${pathname} is not in the sitemap`);
   }
-  await verifyHeaders(pathname);
-  const html = await (await fetchChecked(`${origin}${pathname}`)).text();
+  await verifyHeaders(target, pathname);
+  const html = await (await fetchChecked(`${target.origin}${pathname}`)).text();
   const images = [
     ...new Set(
       [...html.matchAll(/(?:src|srcset)="([^"]+)"/g)]
@@ -296,7 +294,7 @@ async function verifyWriteup(slug: string, publicUrls: readonly string[]): Promi
   ];
   const broken: string[] = [];
   for (const image of images) {
-    const response = await fetchChecked(`${origin}${image}`, { method: 'HEAD' });
+    const response = await fetchChecked(`${target.origin}${image}`, { method: 'HEAD' });
     if (response.status !== 200) broken.push(`${response.status} ${image}`);
   }
   if (broken.length > 0) throw new Error(`broken images on ${pathname}: ${broken.join(', ')}`);
@@ -312,7 +310,7 @@ async function verifyCodeScanning(): Promise<string> {
   return 'zero open CodeQL alerts';
 }
 
-async function check(name: string, verify: () => string | Promise<string>): Promise<boolean> {
+async function check(report: Report, name: string, verify: () => string | Promise<string>): Promise<boolean> {
   try {
     const detail = await verify();
     report.add(name, true, detail);
@@ -327,19 +325,20 @@ async function check(name: string, verify: () => string | Promise<string>): Prom
   }
 }
 
-function skip(name: string, reason: string): void {
+function skip(report: Report, name: string, reason: string): void {
   report.add(name, null, reason);
   status(name, `skipped: ${reason}`);
 }
 
-async function verifyPageHeaders(urls: readonly string[]): Promise<string> {
+async function verifyPageHeaders(target: Target, urls: readonly string[]): Promise<string> {
+  const { production } = target;
   const paths = ['/', '/contact/'];
   if (production) {
     const writeup = urls.map((url) => new URL(url).pathname).find((pathname) => /^\/portfolio\/[^/]+\/?$/.test(pathname));
     if (!writeup) throw new Error('live sitemap lists no /portfolio/ writeup to header-check');
     paths.push(writeup);
   }
-  for (const pathname of paths) await verifyHeaders(pathname);
+  for (const pathname of paths) await verifyHeaders(target, pathname);
   return `CSP, Trusted Types staging, and static security headers${production ? ' and HSTS' : ''} passed on ${paths.join(', ')}`;
 }
 
@@ -358,39 +357,50 @@ function releaseCandidate(): string {
   return sha;
 }
 
-async function main(): Promise<void> {
-  const sha = production ? releaseCandidate() : process.env.DEPLOY_SHA ?? 'deployment';
-  status('target', `${origin}${cli.preview ? ' (preview)' : ''}`);
+export async function main(): Promise<number> {
+  const { values } = cli({
+    usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
+    options: {
+      origin: { type: 'string' },
+      preview: flag,
+      slug: { type: 'string' },
+    },
+  });
+  const { slug, preview } = values;
+  const deployment = Boolean(values.origin);
+  const target: Target = { origin: (values.origin ?? siteOrigin).replace(/\/$/, ''), deployment, production: !deployment && !slug };
+  const { origin, production } = target;
+  const report = createReport('Deploy verification', 'Check');
+  const run = (name: string, verify: (target: Target) => string | Promise<string>) => check(report, name, () => verify(target));
 
-  let deployed = true;
-  if (production) {
-    deployed = await check('remote', () => waitForChecks(sha));
-  }
+  const sha = production ? releaseCandidate() : process.env.DEPLOY_SHA ?? 'deployment';
+  status('target', `${origin}${preview ? ' (preview)' : ''}`);
+
+  const deployed = production ? await run('remote', () => waitForChecks(sha)) : true;
 
   let urls: string[] = [];
-  const sitemapOk = await check('sitemap', async () => {
-    urls = await collectSitemapUrls();
+  const sitemapOk = await run('sitemap', async () => {
+    urls = await collectSitemapUrls(target);
     return `${urls.length} URLs listed`;
   });
   const fromSitemap = (name: string, verify: () => string | Promise<string>) =>
-    sitemapOk ? check(name, verify) : skip(name, 'sitemap unavailable');
+    sitemapOk ? check(report, name, verify) : skip(report, name, 'sitemap unavailable');
 
-  const { slug } = cli;
   if (slug) {
-    await fromSitemap('writeup', () => verifyWriteup(slug, urls));
+    await fromSitemap('writeup', () => verifyWriteup(target, slug, urls));
   } else {
-    await fromSitemap('headers', () => verifyPageHeaders(urls));
-    await fromSitemap('routes', () => verifyLiveRoutes(urls));
-    if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(urls));
+    await fromSitemap('headers', () => verifyPageHeaders(target, urls));
+    await fromSitemap('routes', () => verifyLiveRoutes(target, urls));
+    if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(target, urls));
     const served = [['production', verifyProductionGuard], ['inline', verifyInlineHashes], ['cache', verifyCacheRules], ['turnstile', verifyTurnstileKey]] as const;
     for (const [name, verify] of served) {
-      if (cli.preview) skip(name, 'branch previews serve HTML through the sitedrift viewer');
-      else await check(name, verify);
+      if (preview) skip(report, name, 'branch previews serve HTML through the sitedrift viewer');
+      else await run(name, verify);
     }
-    await check('not-found', verifyNotFound);
-    await check('contact', verifyContactGate);
-    await check('security-txt', verifySecurityTxt);
-    if (production) await check('security', verifyCodeScanning);
+    await run('not-found', verifyNotFound);
+    await run('contact', verifyContactGate);
+    await run('security-txt', verifySecurityTxt);
+    if (production) await run('security', verifyCodeScanning);
   }
 
   const against = `for \`${sha.slice(0, 12)}\` against ${origin}`;
@@ -400,14 +410,13 @@ async function main(): Promise<void> {
     : `${failed.length} of ${report.rows.length} checks failed ${against}.`);
   if (failed.length > 0) {
     const stalled = deployed ? '' : ' (deployment never reached a verified state)';
-    throw new Error(`${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);
+    console.error(`\nfailed: ${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);
+    return 1;
   }
   const summary = `${report.rows.filter((row) => row.ok).length} checks passed ${against}`;
   if (production) annotate('notice', 'deploy-verify', summary);
   console.log(`\nok ${summary}`);
+  return 0;
 }
 
-main().catch((error: unknown) => {
-  console.error(`\nfailed: ${errorMessage(error)}`);
-  process.exit(1);
-});
+if (import.meta.main) await exitWith('deploy-verify', main);
