@@ -24,8 +24,8 @@ this repository's rules, each with a `description`:
   ruleset requires. Nothing merges on its own: each pull request runs the
   required checks and is merged like any other.
 
-`npx --package renovate@<version> -- renovate-config-validator --strict
---no-global renovate.json` checks a change to the file.
+`mise run checks:renovate` checks a change to the file with Renovate's own
+validator, at the release the task pins.
 
 ## Runtime and package manager
 

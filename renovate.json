@@ -77,6 +77,13 @@
         "--from (?<depName>fonttools)==(?<currentValue>\\S+)"
       ],
       "datasourceTemplate": "pypi"
+    },
+    {
+      "description": "The Renovate release checks:renovate validates this file with, pinned in the task itself.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^mise\\.toml$/"],
+      "matchStrings": ["--package (?<depName>renovate)@(?<currentValue>\\S+)"],
+      "datasourceTemplate": "npm"
     }
   ]
 }
