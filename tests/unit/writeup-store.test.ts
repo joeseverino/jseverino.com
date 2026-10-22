@@ -139,9 +139,24 @@ describe('scalar writes', () => {
     assert.equal(replaceScalar(original, 'cover_alt', 'x'), '---\r\ntitle: |-\r\n  Old\r\npublished: true\r\ncover_alt: x\r\n---\r\nBody\r\n');
   });
 
+  test('a write lands in the block the parser reads: after a BOM, before the first closing fence', () => {
+    const cases = [
+      ['﻿---\ntitle: A\n---\nbody\n', '﻿---\ntitle: A\ncover_alt: x\n---\nbody\n'],
+      ['---\ntitle: A\n---- \nmore: yes\n---\nbody\n', '---\ntitle: A\ncover_alt: x\n---- \nmore: yes\n---\nbody\n'],
+      ['---\n---\nbody\n', '---\ncover_alt: x\n---\nbody\n'],
+      ['---\r\n---\r\nbody\r\n', '---\r\ncover_alt: x\r\n---\r\nbody\r\n'],
+    ];
+    for (const [original = '', expected] of cases) {
+      const updated = replaceScalar(original, 'cover_alt', 'x');
+      assert.equal(updated, expected);
+      assert.equal(parseFrontmatter(updated).data.cover_alt, 'x');
+    }
+  });
+
   test('scalar updates refuse unfenced documents and collection values', () => {
     assert.throws(() => replaceScalar('---\ntitle: &t Old\nalt: *t\n---\nBody\n', 'title', 'x'), /must be a scalar/);
     assert.throws(() => replaceScalar('title: body\n', 'title', 'x'), /fenced frontmatter/);
+    assert.throws(() => replaceScalar('---\ntitle: Old\n', 'title', 'x'), /fenced frontmatter/);
     assert.throws(() => replaceScalar('---\ntitle: [a, b]\n---\nBody\n', 'title', 'x'), /must be a scalar/);
   });
 });
@@ -197,8 +212,9 @@ describe('frontmatter writes', () => {
     assert.equal(result.receipt?.operation, 'writeup.update');
   });
 
-  test('a hand-written nonstandard bool is rewritten even though it reads as true', () => {
+  test('only a YAML boolean is true; a hand-written `yes` reads as false until rewritten', () => {
     fs.writeFileSync(file('draft-piece'), DRAFT.replace('published: false', 'published: yes'));
+    assert.equal(loadWriteups(store).find((w) => w.slug === 'draft-piece')?.published, false);
     const result = updateFrontmatter(store, 'draft-piece', { published: true });
     assert.equal(result.noOp, false);
     assert.deepEqual(result.changedFields, ['published']);
@@ -309,7 +325,7 @@ describe('featured order and plans', () => {
     const before = read('lead-piece');
     const edited = `${before}\nAn edit from another writer.\n`;
     fs.writeFileSync(file('lead-piece'), edited);
-    const outcome = transactionalReplace(store.writeupsDir, new Map([[file('lead-piece'), { before, after: `${before}\nMine.\n` }]]));
+    const outcome = transactionalReplace(new Map([[file('lead-piece'), { before, after: `${before}\nMine.\n` }]]));
     assert.equal(outcome.ok, false);
     assert.match(outcome.ok ? '' : outcome.error, /file changed during transaction/);
     assert.equal(read('lead-piece'), edited);

@@ -1,8 +1,9 @@
 ---
 import ContentPage from '@layouts/ContentPage.astro';
 import { getPage } from '@lib/content.ts';
+import { TURNSTILE_ORIGIN } from '@lib/csp.ts';
 
 const page = await getPage('contact');
 ---
 
-<ContentPage page={page} preconnect={['https://challenges.cloudflare.com']} prose={false} />
+<ContentPage page={page} preconnect={[TURNSTILE_ORIGIN]} prose={false} />

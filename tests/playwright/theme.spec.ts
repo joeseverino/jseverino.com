@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './helpers/test.ts';
 import { rgb } from './helpers/colors.ts';
 import { SURFACE } from '../../src/lib/brand.ts';
 

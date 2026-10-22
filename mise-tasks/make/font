@@ -1,0 +1,24 @@
+#!/bin/sh
+#MISE description="Re-subset the Inter webfont to the site's characters, weights 400-700 and the optical-size axis, from the committed file or an upstream Inter release"
+#USAGE flag "--source <font>" help="Inter variable font to start from (default: the committed font)"
+#USAGE flag "--output <font>" help="Where to write the result (default: the committed font)"
+set -eu
+
+font=public/assets/fonts/inter/inter-variable-latin.woff2
+source=${usage_source:-$font}
+output=${usage_output:-$font}
+
+# Latin, ligature and dotless-i glyphs Inter's kerning expects, punctuation, arrows, U+FFFD.
+unicodes=U+0020-007E,U+00A0-00FF,U+0131,U+0152-0153,U+2000-200B,U+2010-2015,U+2018-201F,U+2020-2022,U+2026,U+2030,U+2039-203A,U+2044,U+20AC,U+2122,U+2190-2199,U+2212,U+2215,U+FEFF,U+FFFD
+
+fonttools() {
+  uvx --with brotli==1.2.0 --from fonttools==4.67.0 "$@"
+}
+
+instance=$(mktemp)
+trap 'rm -f "$instance"' EXIT
+
+fonttools fonttools varLib.instancer --quiet --output "$instance" "$source" wght=400:700
+fonttools pyftsubset "$instance" --output-file="$output" --unicodes="$unicodes" \
+  --layout-features='*' --name-IDs='*' --notdef-outline --flavor=woff2
+echo "wrote $output: $(wc -c <"$output" | tr -d ' ') bytes"

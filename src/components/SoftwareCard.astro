@@ -27,7 +27,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
           entry.title
         )}
       </h2>
-      {(pkg || entry.selfHosted) && (
+      {(pkg || entry.selfHosted || entry.archived) && (
         <div class="software-badges">
           {pkg && (
             <span class={`badge badge--${pkg.registry}`}>
@@ -38,6 +38,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
             <span class="badge badge--muted"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
           )}
           {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
+          {entry.archived && <span class="badge badge--muted">Archived</span>}
         </div>
       )}
     </div>

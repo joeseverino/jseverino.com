@@ -13,10 +13,10 @@ Public repository [dashed] {
   Content schema [icon: shield, note: generated from the contract]
 }
 
-Cloudflare Pages [icon: cloud, anchor, note: build · edge]
+CI build [icon: cloud, anchor, note: gates · Worker deploy]
 
 05 Writeups > Content sync
 06 Pages > Content sync
 Content sync > src/content
 src/content > Content schema
-Content schema > Cloudflare Pages
+Content schema > CI build

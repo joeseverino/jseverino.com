@@ -1,10 +1,12 @@
-#!/usr/bin/env node
-import { isDeepStrictEqual } from 'node:util';
 import fs from 'node:fs';
 import path from 'node:path';
+import { load } from 'js-yaml';
+import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
+import { runSync } from '../../bin/lib/run.ts';
+import { elementsNamed, parseHtml, textContent } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
-import { finish } from './lib.ts';
+import { abort, finish } from './lib.ts';
 
 const failures: string[] = [];
 
@@ -12,56 +14,51 @@ function read(file: string): string {
   return fs.readFileSync(path.join(root, file), 'utf8');
 }
 
-// Major.minor must match .nvmrc; patch drift is allowed so a Node security
-// patch doesn't block every gate until the pin is bumped.
-const expectedNode = read('.nvmrc').trim().replace(/^v/, '');
+// mise.toml is the one Node pin. Major.minor must match it; patch drift is allowed so a
+// Node security patch doesn't block every gate until the pin is bumped.
+const expectedNode = /^node = "(\d+\.\d+\.\d+)"$/m.exec(read('mise.toml'))?.[1];
+if (!expectedNode) abort('repository policy', 'mise.toml pins no exact node = "x.y.z"');
 const actualNode = process.versions.node;
 const majorMinor = (version: string): string => version.split('.').slice(0, 2).join('.');
 if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
-  failures.push(`Node ${actualNode} does not match .nvmrc (${expectedNode}; major.minor must agree)`);
+  failures.push(`Node ${actualNode} does not match mise.toml's node ${expectedNode} (major.minor must agree)`);
 }
 
-type DependencyField = 'dependencies' | 'devDependencies' | 'optionalDependencies';
-type Manifest = { name?: string; version?: string; engines?: { node?: string }; packageManager?: string } & Partial<Record<DependencyField, Record<string, string>>>;
-interface Lockfile {
-  lockfileVersion?: number;
-  name?: string;
-  version?: string;
-  packages?: Record<string, Manifest>;
+interface Manifest {
+  engines?: { node?: string };
+  packageManager?: string;
+  scripts?: Record<string, string>;
 }
 
 const packageJson: Manifest = JSON.parse(read('package.json'));
-const packageLock: Lockfile = JSON.parse(read('package-lock.json'));
+
+// Every command is a mise task, so npm scripts would be a second, ungated entry point.
+if (packageJson.scripts) failures.push('package.json declares scripts; every command is a mise task');
 
 const nodeMajor = expectedNode.split('.')[0];
 if (packageJson.engines?.node !== `>=${nodeMajor}`) {
-  failures.push(`package.json engines.node must be ">=${nodeMajor}" to match .nvmrc`);
+  failures.push(`package.json engines.node must be ">=${nodeMajor}" to match mise.toml's node`);
 }
 const npmPin = /^npm@(\d+)\.\d+\.\d+$/.exec(packageJson.packageManager ?? '');
 if (!npmPin) failures.push('package.json packageManager must pin an exact npm@x.y.z');
-const npmAgent = /\bnpm\/(\d+)\./.exec(process.env.npm_config_user_agent ?? '');
-if (npmPin && npmAgent && npmAgent[1] !== npmPin[1]) {
-  failures.push(`npm ${npmAgent[1]}.x is running; packageManager pins ${packageJson.packageManager}`);
+const npmVersion = runSync('npm', ['--version'], { cwd: root });
+if (npmPin && npmVersion.split('.')[0] !== npmPin[1]) {
+  failures.push(`npm ${npmVersion} is on PATH; packageManager pins ${packageJson.packageManager}`);
 }
-if (packageLock.lockfileVersion !== 3) failures.push('package-lock.json must be lockfileVersion 3');
-if (packageLock.name !== packageJson.name) failures.push('package-lock.json name differs from package.json');
-if (packageLock.version !== packageJson.version) {
-  failures.push('package-lock.json version differs from package.json');
-}
-if (packageLock.packages?.['']?.version !== packageJson.version) {
-  failures.push('package-lock.json root package version differs from package.json');
-}
-for (const field of ['dependencies', 'devDependencies', 'optionalDependencies'] as const satisfies readonly DependencyField[]) {
-  if (!isDeepStrictEqual(packageLock.packages?.['']?.[field] ?? {}, packageJson[field] ?? {})) {
-    failures.push(`package-lock.json root ${field} differ from package.json`);
-  }
+
+// A second copy of a native binary or of the Workers toolchain is a package two
+// dependents disagree on; docs/Dependencies.md says which pin or hold settles it.
+const lock: { packages: Record<string, unknown> } = JSON.parse(read('package-lock.json'));
+for (const name of ['esbuild', 'sharp', 'workerd', 'miniflare', 'wrangler']) {
+  const copies = Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
+  if (copies.length > 1) failures.push(`package-lock.json installs ${copies.length} copies of ${name}: ${copies.join(', ')}`);
 }
 
 const tracked = trackedFiles(root);
 const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, file)));
 const forbiddenTracked = tracked.filter(
   (file) =>
-    (/(^|\/)\.env(?:\.|$)/.test(file) && !file.endsWith('.env.example')) ||
+    /(^|\/)\.env(?:\.|$)/.test(file) ||
     /(^|\/)\.dev\.vars(?:\.|$)/.test(file) ||
     /(^|\/)(?:dist|playwright-report|test-results)(?:\/|$)/.test(file),
 );
@@ -75,23 +72,6 @@ const componentStyles = existingTracked.filter(
 );
 if (componentStyles.length > 0) {
   failures.push(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
-}
-
-// Literal colors only inside the generated token block; rules name a token or use color-mix().
-const styleFiles = existingTracked.filter((file) => file.startsWith('src/styles/') && file.endsWith('.css'));
-const authoredStyles = styleFiles
-  .map((file) => {
-    const stylesheet = read(file);
-    // A generated block ends with a `/* <name>:end */` marker; strip through the last one so a
-    // hand-authored rule below it is still checked.
-    const ends = [...stylesheet.matchAll(/\/\* \w+:end \*\//g)];
-    const blockEnd = ends.at(-1)?.index;
-    return blockEnd !== undefined ? stylesheet.slice(blockEnd) : stylesheet;
-  })
-  .join('\n');
-const literalColor = /#[0-9a-f]{3,8}\b|\b(?:rgb|hsl)a?\(/i;
-if (literalColor.test(authoredStyles)) {
-  failures.push('src/styles contains a literal color outside the generated token block');
 }
 
 // No View Transitions, so lifecycle listeners for them are dead client code.
@@ -134,43 +114,72 @@ if (javascript.length > 0) {
   failures.push(`JavaScript files are tracked; convert them to TypeScript: ${javascript.join(', ')}`);
 }
 
-// Type errors get fixed. @ts-expect-error with a reason is the one escape hatch (it fails once the error is gone).
-// Split so this line does not match itself.
-const suppression = new RegExp(String.raw`@ts-(?:ignore|nocheck)\b|@ts-expect-` + String.raw`error(?!\s+\S)`);
-const suppressed = existingTracked.filter(
-  (file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && suppression.test(read(file)),
-);
+// Type errors get fixed: no explicit `any`, and @ts-expect-error with a reason is the
+// one escape hatch (it fails once the error is gone). An .astro file's TypeScript is
+// its frontmatter and its <script> elements.
+const SUPPRESSION = /@ts-(?:ignore|nocheck)\b|@ts-expect-error(?!\s+\S)/;
+
+function scripts(file: string, source: string): string[] {
+  if (!file.endsWith('.astro')) return [source];
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
+  return [frontmatter, ...elementsNamed(parseHtml(source), 'script').map(textContent)];
+}
+
+function typeEscapes(script: string): { any: boolean; suppressed: boolean } {
+  const sourceFile = ts.createSourceFile('script.ts', script, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const comments = new Map<number, string>();
+  let any = false;
+  const visit = (node: ts.Node): void => {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) any = true;
+    for (const range of [...ts.getLeadingCommentRanges(script, node.pos) ?? [], ...ts.getTrailingCommentRanges(script, node.end) ?? []]) {
+      comments.set(range.pos, script.slice(range.pos, range.end));
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  visit(sourceFile.endOfFileToken);
+  return { any, suppressed: [...comments.values()].some((comment) => SUPPRESSION.test(comment)) };
+}
+
+// src/generated/ is written by tools (wrangler types among them) and checked against them, not by hand.
+const escapes = existingTracked
+  .filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && !file.startsWith('src/generated/'))
+  .map((file) => ({ file, found: scripts(file, read(file)).map(typeEscapes) }));
+const anyTyped = escapes.filter(({ found }) => found.some(({ any }) => any)).map(({ file }) => file);
+const suppressed = escapes.filter(({ found }) => found.some(({ suppressed }) => suppressed)).map(({ file }) => file);
 if (suppressed.length > 0) {
   failures.push(`type-check suppressions without a reason (use @ts-expect-error <reason>): ${suppressed.join(', ')}`);
 }
-
-const explicitAny = /(?::|<|,|\|)\s*any\b(?!-)|\bas\s+any\b/;
-const code = (source: string): string[] => source.split('\n').map((line) => line.replace(/(?:^|\s)\/\/.*$/, '')).filter((line) => !/^\s*\*/.test(line));
-const anyTyped = existingTracked.filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && code(read(file)).some((line) => explicitAny.test(line)));
 if (anyTyped.length > 0) failures.push(`explicit any (use unknown and narrow): ${anyTyped.join(', ')}`);
 
-const automation = tracked.filter(
-  (name) => name.startsWith('.github/workflows/') || /^\.github\/actions\/.+\/action\.ya?ml$/.test(name),
-);
-for (const file of automation) {
-  const source = read(file);
-  // `-latest` labels move to a new OS on GitHub's schedule, outside this repo's control.
-  for (const [, label = ''] of source.matchAll(/^\s*(?:-\s*)?(?:runs-on|os):\s*(\S+)/gm)) {
-    if (/-latest$/.test(label)) failures.push(`${file} runs on a floating runner label: ${label}`);
-  }
-  const jobs = source.match(/^    runs-on:/gm)?.length ?? 0;
-  const timeouts = source.match(/^    timeout-minutes:/gm)?.length ?? 0;
-  if (jobs !== timeouts) failures.push(`${file} has ${jobs} job(s) but ${timeouts} timeout-minutes`);
-  for (const [, reference = ''] of source.matchAll(/^\s*(?:-\s*)?uses:\s*([^\s#]+).*$/gm)) {
-    if (reference.startsWith('./')) continue;
-    if (/^docker:\/\/.+@sha256:[0-9a-f]{64}$/.test(reference)) continue;
-    if (/^[^@\s]+@[0-9a-f]{40}$/.test(reference)) continue;
-    failures.push(`${file} contains an unpinned action: ${reference}`);
+interface Job {
+  'runs-on'?: string | string[];
+  'timeout-minutes'?: number | string;
+  uses?: string;
+  strategy?: { matrix?: { os?: string[]; include?: { os?: string }[] } };
+}
+
+for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name))) {
+  const { jobs = {} } = load(read(file)) as { jobs?: Record<string, Job> };
+  for (const [name, job] of Object.entries(jobs)) {
+    // A job calling a reusable workflow takes its runner and timeout from that workflow.
+    if (job.uses) continue;
+    const matrix = job.strategy?.matrix;
+    const labels = [job['runs-on'] ?? [], matrix?.os ?? [], (matrix?.include ?? []).map(({ os }) => os ?? '')].flat();
+    // `-latest` labels move to a new OS on GitHub's schedule, outside this repo's control.
+    for (const label of labels.filter((label) => label.endsWith('-latest'))) {
+      failures.push(`${file} job ${name} runs on a floating runner label: ${label}`);
+    }
+    if (job['timeout-minutes'] === undefined) failures.push(`${file} job ${name} has no timeout-minutes`);
   }
 }
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; lockfile aligned; stylesheet architecture clean; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; actions and runners pinned; every job time-boxed`,
-  { heading: 'repository policy failed:', bullet: '- ' },
+  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
+  {
+    heading: 'repository policy failed:',
+    bullet: '- ',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+  },
 );

@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from './helpers/test.ts';
 
 async function fillContact(page: Page, name: string, email: string, message: string): Promise<void> {
   await page.locator('#contact-name').fill(name);

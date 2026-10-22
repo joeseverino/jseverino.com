@@ -4,7 +4,6 @@ import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser
 // The visual suite builds tests/fixtures/content into dist-visual/, so a content
 // publish never moves a baseline. Baselines are macOS Chromium renders.
 const PORT = 4322;
-const astro = 'npx astro';
 const config = '--config tests/fixtures/astro.config.ts';
 
 export default defineConfig({
@@ -24,7 +23,7 @@ export default defineConfig({
   webServer: {
     cwd: webServerCwd,
     // --ignore-lock: the e2e preview may be running at the same time.
-    command: `${astro} build ${config} && ${astro} preview ${config} --host 127.0.0.1 --port ${PORT} --ignore-lock`,
+    command: `astro build ${config} && astro preview ${config} --host 127.0.0.1 --port ${PORT} --ignore-lock`,
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: false,
     timeout: 120_000,
@@ -32,7 +31,6 @@ export default defineConfig({
     stderr: 'pipe',
     env: {
       ...browserTestEnv,
-      ASTRO_TELEMETRY_DISABLED: '1',
       SITE_CONTENT_ROOT: 'tests/fixtures/content',
     },
   },

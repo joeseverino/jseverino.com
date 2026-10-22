@@ -1,11 +1,14 @@
 name: setup
-description: Node from .nvmrc, then a clean install from the lockfile with the npm download cache.
+description: The mise toolchain and environment from mise.toml, then the npm packages from the lockfile through mise's [deps.npm] provider.
 
-# The checkout comes first in the calling job: a local action is read from the
-# working tree, so it cannot check the repository out itself.
+# The calling job checks out first: these steps read mise.toml, mise.lock and
+# package-lock.json from the working tree.
 inputs:
   install:
-    description: Run npm ci. Scripts that import no packages skip it.
+    description: >-
+      How to install the npm packages: 'true' through mise's [deps.npm] provider; 'no-scripts' with
+      `npm ci --ignore-scripts`, for a job that holds a secret, so no package install script runs beside
+      it; 'false' not at all. A job that does not install runs its task with `mise run --no-deps`.
     default: 'true'
   astro-cache:
     description: Restore and save Astro's image cache, for jobs that build the site.
@@ -14,29 +17,59 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Disable Astro telemetry
-      shell: bash
-      run: echo 'ASTRO_TELEMETRY_DISABLED=1' >> "$GITHUB_ENV"
-
-    - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+    # Tool downloads, which mise verifies against mise.lock's checksums before
+    # use, so a cache written by another workflow cannot change what is
+    # installed. That holds in release jobs too, so the action's own cache of
+    # installed tools, which nothing verifies, stays off everywhere. A job that
+    # needs only some tools sets MISE_ENABLE_TOOLS at the job level, so the
+    # install and every later `mise run` see the same list; the key names it,
+    # so a job with fewer tools never saves a partial cache under the full key.
+    - name: Restore the tool download cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        node-version-file: .nvmrc
-        cache: ${{ inputs.install == 'true' && 'npm' || '' }}
+        path: ${{ runner.os == 'macOS' && '~/Library/Caches/mise/downloads-cas' || '~/.cache/mise/downloads-cas' }}
+        key: mise-downloads-${{ runner.os }}-${{ runner.arch }}-${{ env.MISE_ENABLE_TOOLS || 'all' }}-${{ hashFiles('mise.lock') }}
 
-    # --no-audit: dependency review and the weekly audit workflow enforce
-    # advisories; an install would only print them.
+    # The mise release mise.toml's min_version names, so CI runs the mise every
+    # machine is held to; Renovate moves min_version after its release-age hold.
+    - name: Read the mise version
+      id: mise
+      shell: bash
+      run: python3 -c "import tomllib; print('version=' + tomllib.load(open('mise.toml', 'rb'))['min_version'])" >> "$GITHUB_OUTPUT"
+
+    # Installs the tools mise.lock records (mise.toml sets `locked`) and exports
+    # mise.toml's [env] to every later step.
+    - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
+      with:
+        version: ${{ steps.mise.outputs.version }}
+        cache: false
+
+    - name: Restore the npm download cache
+      if: inputs.install != 'false'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.npm
+        key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: npm-${{ runner.os }}-
+
+    # npm checks every package against the lockfile's integrity hash, so the
+    # restored download cache cannot change what is installed.
     - name: Install dependencies
       if: inputs.install == 'true'
       shell: bash
-      run: npm ci --no-audit --no-fund
+      run: mise deps install npm
 
-    # Astro writes every encoded image variant to node_modules/.astro keyed by source and
-    # options, so a partial restore is still correct. The Pages build cache keeps the same
-    # directory.
+    - name: Install dependencies without their install scripts
+      if: inputs.install == 'no-scripts'
+      shell: bash
+      run: npm ci --ignore-scripts
+
+    # Astro writes every encoded image variant to the cacheDir mise's [env] names, keyed
+    # by source and options, so a partial restore is still correct.
     - name: Restore the image cache
       if: inputs.astro-cache == 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: node_modules/.astro
+        path: ${{ env.ASTRO_CACHE_DIR }}
         key: astro-${{ runner.os }}-${{ hashFiles('src/content/**/*.png', 'src/content/**/*.jpg', 'src/content/**/*.jpeg', 'src/content/**/*.webp', 'astro.config.ts', 'package-lock.json') }}
         restore-keys: astro-${{ runner.os }}-

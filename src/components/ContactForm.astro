@@ -1,6 +1,7 @@
 ---
 import contactContract from '../../contracts/contact.v1.json' with { type: 'json' };
 import { site } from '@lib/site.ts';
+import { TURNSTILE_SCRIPT_URL } from '@lib/api/turnstile.ts';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
@@ -10,7 +11,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
 
 <div class="contact-intake">
   <p class="contact-fallback prose">If the form is unavailable, <a href={linkedin.href}>get in touch on LinkedIn</a>.</p>
-  <form class="contact-intake-form" action="/api/contact" method="post" hidden>
+  <form class="contact-intake-form" action="/api/contact" method="post" data-timeout-ms={contactContract.runtime.submitTimeoutMs} hidden>
     <div class="contact-field">
       <label for="contact-name">Name</label>
       <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
@@ -36,7 +37,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
   </form>
 </div>
 
-<script is:inline async src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+<script is:inline async src={TURNSTILE_SCRIPT_URL}></script>
 
 <script>
   const form = document.querySelector<HTMLFormElement>('.contact-intake-form');
@@ -77,7 +78,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
         const response = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(15_000),
+          signal: AbortSignal.timeout(Number(form.dataset.timeoutMs)),
           body: JSON.stringify({
             ...Object.fromEntries(
               [...data.entries()].filter(([name]) => name !== 'cf-turnstile-response'),

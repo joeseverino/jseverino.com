@@ -1,9 +1,9 @@
 // Engine shared by the desired-state tools (bin/cloudflare.ts, bin/github.ts): diff item shapes and the
 // check / plan / apply flow. A tool supplies the live read, the diff, and the executor.
+import { isDeepStrictEqual } from 'node:util';
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
 import { readJson } from '../../src/lib/json.ts';
-import { canonicalJson } from '../../src/lib/canonical-json.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 // What the client needs from fetch: a URL string and an init.
@@ -25,7 +25,6 @@ export interface Call {
   path: string;
   body?: unknown;
   saveAs?: Record<string, string>;
-  awaitBulk?: boolean;
 }
 
 export type Step = Call | { use: Record<string, string> };
@@ -52,7 +51,7 @@ export function loadDesired<T>(file: string, schemaFile: string): T {
 }
 
 // Key order never counts: APIs return fields in an order of their own.
-export const same = (a: unknown, b: unknown): boolean => canonicalJson(a) === canonicalJson(b);
+export const same: (a: unknown, b: unknown) => boolean = isDeepStrictEqual;
 const show = (value: unknown): string => (value === undefined || value === null ? 'absent' : typeof value === 'string' ? value : JSON.stringify(value));
 
 export function item(area: string, name: string, want: unknown, have: unknown, status: ItemStatus, steps: Step[] = [], note = ''): Item {

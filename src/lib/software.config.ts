@@ -2,7 +2,7 @@
 // repos show, their prominence/order, their writeup cross-links, and the
 // non-GitHub facts GitHub can't know (PyPI/npm packages, self-hosted). Repo
 // descriptions, language, and last-pushed come from GitHub; edit that copy on
-// the repo. Forks and archived repos are excluded automatically.
+// the repo. Forks are excluded automatically; archived repos stay, labelled Archived.
 
 import { SITE } from './site-config.ts';
 

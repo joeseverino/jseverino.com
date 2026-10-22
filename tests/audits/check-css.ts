@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { walkFiles } from '../../src/lib/walk.ts';
 import { abort, finish } from './lib.ts';
 
 const srcDir = path.join(siteRoot, 'src');
-const listFiles = (dir: string, pattern: RegExp): string[] => walkFiles(dir, { filter: (file) => pattern.test(file) });
+const listFiles = (dir: string, pattern: RegExp): string[] =>
+  fs.readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((file) => pattern.test(file)).map((file) => path.join(dir, file));
 
 // Definitions come from the stylesheets; usages can live anywhere in src/:
 // a var(--x) in an .astro template or a JS string still justifies the token.
@@ -40,5 +40,5 @@ const unused = [...definitions]
 finish(
   unused.map(([property, locations]) => `${property} (${locations.join(', ')})`),
   `${definitions.size} CSS custom properties, all referenced`,
-  { heading: 'Unused CSS custom properties:' },
+  { heading: 'Unused CSS custom properties:', fix: 'fix: remove the property from src/styles/, or add the var(...) use that needs it' },
 );

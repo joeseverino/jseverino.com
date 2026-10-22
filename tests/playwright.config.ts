@@ -1,11 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
-import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
+import { previewServer, suiteArtifacts, workers } from './browser-test-env.ts';
 
 const PORT = 4321;
 const mobile = /\.mobile\.spec\.ts$/;
 const single = /\.single\.spec\.ts$/;
 // The visual suite renders fixture content; tests/playwright.visual.config.ts owns it.
 const visualSpec = /visual\.spec\.ts$/;
+
+// The preview serves production's headers. Cross-Origin-Opener-Policy moves Firefox's first
+// navigation into a new browsing context group, which drops Playwright's emulated color scheme,
+// so the page never sees dark mode; tests/edge asserts the header itself.
+const firefox = { launchOptions: { firefoxUserPrefs: { 'browser.tabs.remote.useCrossOriginOpenerPolicy': false } } };
 
 export default defineConfig({
   testDir: './playwright',
@@ -33,12 +38,12 @@ export default defineConfig({
     },
     {
       name: 'firefox-desktop',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'], ...firefox },
       testIgnore: [mobile, single, visualSpec],
     },
     {
       name: 'firefox-mobile',
-      use: { ...devices['Desktop Firefox'], viewport: { width: 393, height: 851 } },
+      use: { ...devices['Desktop Firefox'], ...firefox, viewport: { width: 393, height: 851 } },
       testMatch: mobile,
     },
     {
@@ -52,21 +57,5 @@ export default defineConfig({
       testMatch: mobile,
     },
   ],
-  webServer: {
-    cwd: webServerCwd,
-    // PREBUILT is set by bin/diagnose.ts and by CI, which builds while system deps install.
-    command: [
-      process.env.PREBUILT ? null : 'npm run build:static',
-      // --ignore-lock keeps the server in the foreground Playwright owns (Astro
-      // detaches it when it detects an agent) and beside a running visual preview.
-      `npm run preview -- --host 127.0.0.1 --port ${PORT} --ignore-lock`,
-    ].filter(Boolean).join(' && '),
-    url: `http://localhost:${PORT}`,
-    // A prebuilt artifact is served fresh, never by whatever holds the port.
-    reuseExistingServer: !process.env.CI && !process.env.PREBUILT,
-    timeout: 120_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    env: browserTestEnv,
-  },
+  webServer: previewServer({ port: PORT, timeout: 120_000 }),
 });

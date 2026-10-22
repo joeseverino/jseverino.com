@@ -28,6 +28,7 @@ export type SoftwareEntry = {
   updatedAt?: string | undefined;
   featured: boolean;
   selfHosted: boolean;
+  archived: boolean;
   writeupSlug?: string | undefined;
   package?: SoftwarePackage | undefined;
   order: number;
@@ -37,7 +38,7 @@ function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-// From the committed snapshot (`npm run snapshot:software`), so a build never calls PyPI or npm.
+// From the committed snapshot (`mise run snapshot:software`), so a build never calls PyPI or npm.
 const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
 
 function enrich(pkg: SoftwarePackage): void {
@@ -52,10 +53,7 @@ async function build(): Promise<SoftwareEntry[]> {
   const repos = await getGithubRepos();
 
   const entries: SoftwareEntry[] = repos
-    .filter(
-      (repo) =>
-        !repo.fork && !repo.archived && !SKIP.has(repo.name) && repo.description.trim() !== '',
-    )
+    .filter((repo) => !repo.fork && !SKIP.has(repo.name) && repo.description.trim() !== '')
     .map((repo) => {
       const config = PACKAGES[repo.name];
       const pkg: SoftwarePackage | undefined = config ? { ...config } : undefined;
@@ -69,6 +67,7 @@ async function build(): Promise<SoftwareEntry[]> {
         updatedAt: repo.pushedAt || undefined,
         featured: rank >= 0,
         selfHosted: SELF_HOSTED.has(repo.name),
+        archived: repo.archived,
         writeupSlug: WRITEUPS[repo.name],
         package: pkg,
         order: rank >= 0 ? rank : 999,

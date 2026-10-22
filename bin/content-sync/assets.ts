@@ -5,30 +5,17 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { defineMdastPlugin, htmlToHast, markdownToHtml, type HastNode } from 'satteri';
 import sharp from 'sharp';
+import { features } from '../../src/lib/markdown/index.ts';
 import { isExternal } from '../../src/lib/refs.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
-
-const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`;
-const DESTINATION = String.raw`(<[^>\n]*>|[^)\s]+)`;
-// Link text may hold one level of brackets, so [![img](a)](b) yields both a and b.
-const TEXT = String.raw`(?:[^\[\]\n]|\[[^\]\n]*\])*`;
-
-// Each pattern captures the destination as group 1.
-const REFERENCE_PATTERNS = [
-  new RegExp(String.raw`!\[${TEXT}\]\(\s*${DESTINATION}${TITLE}\s*\)`, 'g'),
-  new RegExp(String.raw`(?<!!)\[${TEXT}\]\(\s*${DESTINATION}${TITLE}\s*\)`, 'g'),
-  new RegExp(String.raw`^ {0,3}\[[^\]\n]+\]:[ \t]*${DESTINATION}`, 'gm'),
-  /\b(?:src|href)\s*=\s*["']([^"']+)["']/g,
-];
-
-const unwrap = (destination: string): string => destination.replace(/^<(.*)>$/, '$1');
 
 // The folder-relative path (`images/...`) a destination names, or undefined
 // when it is external, an anchor, or a site-absolute path.
 export function normalizeLocalAssetRef(destination: unknown): string | undefined {
   if (typeof destination !== 'string' || !destination.trim()) return undefined;
-  const ref = unwrap(destination.trim());
+  const ref = destination.trim();
   if (isExternal(ref)) return undefined;
   const [withoutHash = ''] = ref.split('#');
   const [withoutQuery = ''] = withoutHash.split('?');
@@ -47,13 +34,33 @@ export interface Reference {
   raw: string;
 }
 
-export function collectReferences(markdown: string): Reference[] {
-  const found = new Map<string, string>();
-  for (const pattern of REFERENCE_PATTERNS) {
-    for (const [, raw = ''] of markdown.matchAll(pattern)) {
-      const ref = normalizeLocalAssetRef(raw);
-      if (ref && !found.has(ref)) found.set(ref, raw);
+// The src and href of every element in a raw HTML fragment.
+function* htmlDestinations(node: HastNode): Generator<string> {
+  if (node.type === 'element') {
+    for (const name of ['src', 'href']) {
+      const value = node.properties[name];
+      if (typeof value === 'string') yield value;
     }
+  }
+  if ('children' in node) for (const child of node.children) yield* htmlDestinations(child);
+}
+
+// Vault sources are Obsidian Markdown, so they parse as Markdown with the
+// site's features: code is skipped, and raw HTML is read as HTML.
+export function collectReferences(markdown: string): Reference[] {
+  const destinations: string[] = [];
+  const collector = defineMdastPlugin({
+    name: 'collect-references',
+    link: ({ url }) => void destinations.push(url),
+    image: ({ url }) => void destinations.push(url),
+    definition: ({ url }) => void destinations.push(url),
+    html: ({ value }) => void destinations.push(...htmlDestinations(htmlToHast(value, { fragment: true }))),
+  });
+  markdownToHtml(markdown, { features, mdastPlugins: [collector] });
+  const found = new Map<string, string>();
+  for (const raw of destinations) {
+    const ref = normalizeLocalAssetRef(raw);
+    if (ref && !found.has(ref)) found.set(ref, raw);
   }
   return [...found].map(([ref, raw]) => ({ ref, raw }));
 }
@@ -110,17 +117,6 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
     issues.push(`Obsidian wikilink does not render on the site: ${match[0]}`);
   }
   return issues;
-}
-
-// Run fn over items with at most `limit` in flight.
-export async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  const queue = items.entries();
-  const worker = async () => {
-    for (const [index, item] of queue) results[index] = await fn(item, index);
-  };
-  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
-  return results;
 }
 
 // Encodes in flight: one per core, within half of memory (an encode peaks near 120 MB).

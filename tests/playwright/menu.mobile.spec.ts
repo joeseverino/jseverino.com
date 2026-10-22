@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './helpers/test.ts';
 
 async function menu(page: Page) {
   await page.goto('/');

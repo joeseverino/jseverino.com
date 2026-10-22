@@ -1,15 +1,31 @@
 // Terminal primitives behind `site manage`.
-import { stripVTControlCharacters } from 'node:util';
+import { once } from 'node:events';
+import os from 'node:os';
+import { emitKeypressEvents as nodeEmitKeypressEvents, type Key as Keypress } from 'node:readline';
+import { stripVTControlCharacters, styleText } from 'node:util';
 
-export const RESET = '\x1b[0m';
-export const BOLD = '\x1b[1m';
-export const DIM = '\x1b[2m';
-export const INVERT = '\x1b[7m';
-export const GREEN = '\x1b[32m';
-export const YELLOW = '\x1b[33m';
-export const RED = '\x1b[31m';
-export const CYAN = '\x1b[36m';
-export const MAGENTA = '\x1b[35m';
+// What a piece of text means; tint() turns it into styling only when a frame is drawn.
+export type Tone = 'plain' | 'strong' | 'muted' | 'ok' | 'warn' | 'error' | 'accent' | 'draft' | 'active' | 'grabbed';
+export interface Note {
+  tone: Tone;
+  text: string;
+}
+
+const TONES: Record<Tone, Parameters<typeof styleText>[0]> = {
+  plain: [],
+  strong: 'bold',
+  muted: 'dim',
+  ok: 'green',
+  warn: 'yellow',
+  error: 'red',
+  accent: 'cyan',
+  draft: 'magenta',
+  active: ['bold', 'inverse'],
+  grabbed: 'inverse',
+};
+
+// styleText writes no styling when stdout is not a terminal or NO_COLOR is set, and FORCE_COLOR overrides both.
+export const tint = (tone: Tone, text: string): string => styleText(TONES[tone], text);
 
 const SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
@@ -19,7 +35,8 @@ function graphemes(text: string): string[] {
 
 function cellWidth(grapheme: string | undefined): number {
   if (!grapheme || /^[\p{Cc}\p{Cf}\p{Mn}\p{Me}]+$/u.test(grapheme)) return 0;
-  if (/\p{Extended_Pictographic}/u.test(grapheme)) return 2;
+  // An emoji draws two cells; a pictograph in text presentation (©, ™, ↔) draws one.
+  if (/\p{RGI_Emoji}/v.test(grapheme)) return 2;
   const cp = grapheme.codePointAt(0) ?? 0;
   return (
     cp >= 0x1100 && (
@@ -82,9 +99,21 @@ function prefixByWidth(text: string, width: number): string {
   return out;
 }
 
+// The SGR code that closes each one styleText opens.
+function closerOf(code: number): number | undefined {
+  if (code === 1 || code === 2) return 22;
+  if (code === 3 || code === 4 || code === 7 || code === 8 || code === 9) return 20 + code;
+  if ((code >= 30 && code <= 37) || (code >= 90 && code <= 97)) return 39;
+  if ((code >= 40 && code <= 47) || (code >= 100 && code <= 107)) return 49;
+  return undefined;
+}
+
+// Clips to a width in cells, passing escape sequences through. A clip that cuts a styled span off
+// before its close ends with a reset, so the style cannot bleed into the next line.
 function clipAnsi(text: string, width: number): string {
   if (width <= 0) return '';
-  const ansi = /\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))/y;
+  const ansi = /\x1b(?:\[([0-?]*)[ -/]*([@-~])|\][^\x07]*(?:\x07|\x1b\\))/y;
+  const open = new Set<number>();
   let out = '';
   let visible = 0;
   let i = 0;
@@ -96,6 +125,14 @@ function clipAnsi(text: string, width: number): string {
     if (match) {
       out += match[0];
       i += match[0].length;
+      if (match[2] === 'm') {
+        for (const code of (match[1] || '0').split(';').map(Number)) {
+          const closer = closerOf(code);
+          if (code === 0) open.clear();
+          else if (closer) open.add(closer);
+          else open.delete(code);
+        }
+      }
       continue;
     }
 
@@ -118,7 +155,7 @@ function clipAnsi(text: string, width: number): string {
     if (clipped) break;
   }
 
-  return clipped ? out + RESET : out;
+  return clipped && open.size ? `${out}\x1b[0m` : out;
 }
 
 export function truncate(text: unknown, width: number): string {
@@ -129,6 +166,10 @@ export function truncate(text: unknown, width: number): string {
   return clipAnsi(s, width - 1) + '…';
 }
 
+// The TUI hides the terminal's cursor, so the editor draws its own in inverse video even under
+// NO_COLOR: without it a field shows no cursor at all.
+const cursorCell = (text: string): string => styleText('inverse', text, { validateStream: false });
+
 export function lineEditor(input: string, cursorIndex: number, width: number): string {
   const next = nextBoundary(input, cursorIndex);
   const cursorChar = input.slice(cursorIndex, next) || ' ';
@@ -137,7 +178,7 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   if (displayWidth(input) + (cursorIndex === input.length ? 1 : 0) <= available) {
     const before = input.slice(0, cursorIndex);
     const after = input.slice(next);
-    return `${before}${INVERT}${cursorChar}${RESET}${after}`;
+    return `${before}${cursorCell(cursorChar)}${after}`;
   }
 
   const rightSource = input.slice(next);
@@ -152,140 +193,208 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   const after = prefixByWidth(rightSource, afterBudget);
   const rightHidden = after.length < rightSource.length;
 
-  return `${leftHidden ? '…' : ''}${before}${INVERT}${cursorChar}${RESET}${after}${rightHidden ? '…' : ''}`;
+  return `${leftHidden ? '…' : ''}${before}${cursorCell(cursorChar)}${after}${rightHidden ? '…' : ''}`;
 }
 
-// Clip lines to the width; if taller than the terminal, keep header/footer and window the body around the ▸ row.
-export function fitFrame(frame: string, cols: number, rows: number): string {
-  const width = Math.max(1, cols - 1);
-  const height = Math.max(6, rows);
-  const lines = frame.split('\n').map((line) => clipAnsi(line, width));
-  if (lines.length <= height) return lines.join('\n');
+// MANAGE_TUI_COLUMNS / MANAGE_TUI_ROWS pin the frame size for tests; otherwise the terminal reports its own.
+function pinnedSize(name: string): number | undefined {
+  const value = Number.parseInt(process.env[name] ?? '', 10);
+  return value > 0 ? value : undefined;
+}
+const PINNED_COLUMNS = pinnedSize('MANAGE_TUI_COLUMNS');
+const PINNED_ROWS = pinnedSize('MANAGE_TUI_ROWS');
 
-  const topCount = Math.min(6, Math.max(2, height - 4));
-  const bottomCount = Math.min(3, Math.max(1, height - topCount - 1));
-  const bodyBudget = height - topCount - bottomCount;
-  const bodyStart = topCount;
-  const bodyEnd = lines.length - bottomCount;
-  const selected = lines.findIndex((line) => line.includes('▸'));
-  const active = selected >= bodyStart && selected < bodyEnd ? selected : bodyStart;
-  let start = Math.max(bodyStart, active - Math.floor(bodyBudget / 2));
-  start = Math.min(start, Math.max(bodyStart, bodyEnd - bodyBudget));
-  const end = Math.min(bodyEnd, start + bodyBudget);
-  const body = lines.slice(start, end);
-  if (start > bodyStart && body.length > 1) body[0] = `  ${DIM}↑ more${RESET}`;
-  if (end < bodyEnd && body.length > 1) body[body.length - 1] = `  ${DIM}↓ more${RESET}`;
-  return [...lines.slice(0, topCount), ...body, ...lines.slice(-bottomCount)].join('\n');
+export const terminalColumns = (): number => PINNED_COLUMNS ?? (process.stdout.columns || 110);
+export const terminalRows = (): number => PINNED_ROWS ?? (process.stdout.rows || 30);
+
+// A screen in three regions: the header and footer always show, and the body scrolls to keep
+// its focus line (an index into body) in view.
+export interface Frame {
+  head: string[];
+  body: string[];
+  foot: string[];
+  focus: number;
 }
 
-// \x1b[22;0t / \x1b[23;0t push/pop the window title; the 1049 pair is the alt screen. A command run
-// inline leaves and re-enters the screen without touching the title stack.
-export function enterAlt({ pushTitle = true } = {}): void {
-  process.stdout.write(`${pushTitle ? '\x1b[22;0t' : ''}\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h`);
+export const frameLines = (frame: Frame): string[] => [...frame.head, ...frame.body, ...frame.foot];
+
+// Clips every line to the width; a frame taller than the terminal windows its body around the focus.
+export function fitFrame(frame: Frame, cols: number, rows: number): string[] {
+  const width = Math.max(1, cols);
+  const height = Math.max(1, rows);
+  const clip = (lines: string[]): string[] => lines.map((line) => clipAnsi(line, width));
+  const { head, body, foot } = frame;
+  if (head.length + body.length + foot.length <= height) return clip(frameLines(frame));
+
+  const budget = Math.max(1, height - head.length - foot.length);
+  const focus = Math.min(Math.max(0, frame.focus), body.length - 1);
+  const start = Math.max(0, Math.min(focus - Math.floor(budget / 2), body.length - budget));
+  const end = Math.min(body.length, start + budget);
+  const shown = body.slice(start, end);
+  if (start > 0 && shown.length > 1) shown[0] = `  ${tint('muted', '↑ more')}`;
+  if (end < body.length && shown.length > 1) shown[shown.length - 1] = `  ${tint('muted', '↓ more')}`;
+  // A terminal shorter than the header and footer keeps the footer, which names the keys.
+  return clip([...head, ...shown, ...foot]).slice(-height);
 }
 
-export function leaveAlt({ popTitle = true } = {}): void {
-  process.stdout.write(`\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l${popTitle ? '\x1b[23;0t' : ''}`);
+// Every key the TUI names: its sequences (the first is canonical, and replay scripts send it)
+// and its label in the key hints. Any other key is the character it types.
+export const KEYS = {
+  up: { sequences: ['\x1b[A'], label: '↑' },
+  down: { sequences: ['\x1b[B'], label: '↓' },
+  left: { sequences: ['\x1b[D'], label: '←' },
+  right: { sequences: ['\x1b[C'], label: '→' },
+  'shift-up': { sequences: ['\x1b[1;2A'], label: 'Shift+↑' },
+  'shift-down': { sequences: ['\x1b[1;2B'], label: 'Shift+↓' },
+  home: { sequences: ['\x1b[H', '\x1b[1~'], label: 'Home' },
+  end: { sequences: ['\x1b[F', '\x1b[4~'], label: 'End' },
+  delete: { sequences: ['\x1b[3~'], label: 'Delete' },
+  backspace: { sequences: ['\x7f', '\b'], label: 'Backspace' },
+  enter: { sequences: ['\r'], label: 'enter' },
+  esc: { sequences: ['\x1b'], label: 'esc' },
+  space: { sequences: [' '], label: 'space' },
+  tab: { sequences: ['\t'], label: 'tab' },
+  'ctrl-c': { sequences: ['\x03'], label: 'Ctrl+C' },
+  'ctrl-r': { sequences: ['\x12'], label: 'Ctrl+R' },
+  'ctrl-u': { sequences: ['\x15'], label: 'Ctrl+U' },
+  'ctrl-w': { sequences: ['\x17'], label: 'Ctrl+W' },
+} as const satisfies Record<string, { sequences: readonly [string, ...string[]]; label: string }>;
+
+export type KeyName = keyof typeof KEYS;
+// A binding names a key from KEYS, or the one character a key types.
+export type Key = KeyName | (string & {});
+
+const isKeyName = (name: string): name is KeyName => Object.hasOwn(KEYS, name);
+const NAME_OF = new Map<string, KeyName>(
+  Object.entries(KEYS).flatMap(([name, key]) => key.sequences.map((sequence): [string, KeyName] => [sequence, name as KeyName])),
+);
+
+export const keyOf = (sequence: string): Key => NAME_OF.get(sequence) ?? sequence;
+export const keyLabel = (key: Key): string => (isKeyName(key) ? KEYS[key].label : key);
+export const keySequence = (name: string): string | undefined => (isKeyName(name) ? KEYS[name].sequences[0] : undefined);
+
+export interface KeyHandlers {
+  onKey(sequence: string): void;
+  onPaste(text: string): void;
 }
 
-// setTitle that skips writes when the title is unchanged.
-export function createTitleSetter(): (title: string) => void {
-  let lastTitle = '';
-  return function setTitle(title: string): void {
-    if (title === lastTitle) return;
-    lastTitle = title;
-    process.stdout.write(`\x1b]0;${title}\x07`);
+// Node reads escapeCodeTimeout from emitKeypressEvents' second argument
+// (lib/internal/readline/emitKeypressEvents.js), but its types call that argument a readline
+// Interface, which declares no such field; this signature states what Node reads.
+const emitKeypressEvents = nodeEmitKeypressEvents as unknown as (
+  stream: NodeJS.ReadableStream,
+  options: { escapeCodeTimeout: number },
+) => void;
+
+// How long a lone Esc waits for the rest of a sequence; Node's default is GNU readline's 500 ms.
+const ESCAPE_TIMEOUT_MS = 30;
+
+// Delivers each key as its raw sequence, and a bracketed paste as one string. Returns the detach.
+export function listenForKeys(stream: NodeJS.ReadableStream, handlers: KeyHandlers): () => void {
+  emitKeypressEvents(stream, { escapeCodeTimeout: ESCAPE_TIMEOUT_MS });
+  let pasted: string | null = null;
+  const onKeypress = (_text: string | undefined, key: Keypress): void => {
+    if (key.name === 'paste-start') pasted = '';
+    else if (key.name === 'paste-end') {
+      const text = pasted ?? '';
+      pasted = null;
+      handlers.onPaste(text);
+    } else if (pasted !== null) pasted += key.sequence ?? '';
+    else handlers.onKey(key.sequence ?? '');
   };
+  stream.on('keypress', onKeypress);
+  return () => stream.off('keypress', onKeypress);
 }
 
-// Named keys for replay harnesses: a comma-separated MANAGE_TUI_KEYS script
-// maps through this before being fed to the pump.
-export const NAMED_KEYS: Readonly<Record<string, string>> = {
-  up: '\x1b[A', down: '\x1b[B', left: '\x1b[D', right: '\x1b[C',
-  enter: '\r', esc: '\x1b', space: ' ', tab: '\t', backspace: '\x7f',
-  home: '\x1b[H', end: '\x1b[F', delete: '\x1b[3~', slash: '/',
-  'ctrl-r': '\x12', 'ctrl-c': '\x03', 'ctrl-u': '\x15', 'ctrl-w': '\x17',
-};
+// The alt screen, a hidden cursor, no autowrap, and bracketed paste, each paired with what turns it off.
+const SCREEN_ON = '\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?2004h';
+const SCREEN_OFF = '\x1b[?2004l\x1b[?7h\x1b[?25h\x1b[?1049l';
+const TITLE_PUSH = '\x1b[22;0t';
+const TITLE_POP = '\x1b[23;0t';
+// Synchronized output (DEC 2026): the terminal shows the frame only once it is complete.
+const SYNC_BEGIN = '\x1b[?2026h';
+const SYNC_END = '\x1b[?2026l';
 
-interface InputPump {
-  feedInput(chunk: string): void;
-  flushInput(): void;
+const QUIT_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
+const quit = (signal: NodeJS.Signals): never => process.exit(128 + os.constants.signals[signal]);
+const ignore = (): void => {};
+
+interface Session {
+  handlers: KeyHandlers;
+  detachKeys: (() => void) | null;
+  title: string;
+}
+let session: Session | null = null;
+
+function attachKeys(active: Session): void {
+  process.stdin.setRawMode(true);
+  active.detachKeys = listenForKeys(process.stdin, active.handlers);
+  process.stdin.resume();
 }
 
-// Parses raw stdin into keys: bytes, CSI sequences, bracketed paste, and a 30 ms timeout that tells a lone Esc
-// from an escape sequence.
-export function createInputPump({ onKey, onPaste }: { onKey: (key: string) => void; onPaste?: (text: string) => void }): InputPump {
-  let pendingInput = '';
-  let escapeTimer: NodeJS.Timeout | null = null;
+function detachKeys(active: Session): void {
+  active.detachKeys?.();
+  active.detachKeys = null;
+  process.stdin.setRawMode(false);
+  process.stdin.pause();
+}
 
-  function drainInput(final = false): void {
-    while (pendingInput) {
-      if (pendingInput[0] !== '\x1b') {
-        const key = Array.from(pendingInput)[0] ?? '';
-        pendingInput = pendingInput.slice(key.length);
-        onKey(key);
-        continue;
-      }
+function titleSequence(active: Session, title: string): string {
+  if (title === active.title) return '';
+  active.title = title;
+  return `\x1b]0;${title}\x07`;
+}
 
-      if (pendingInput.length === 1) {
-        if (final) {
-          pendingInput = '';
-          onKey('\x1b');
-        }
-        return;
-      }
+// Takes the terminal for the TUI. Every way out of the process runs restore().
+export function openTerminal(handlers: KeyHandlers): void {
+  if (session) return;
+  session = { handlers, detachKeys: null, title: '' };
+  process.on('exit', restore);
+  for (const signal of QUIT_SIGNALS) process.on(signal, quit);
+  process.stdout.write(TITLE_PUSH + SCREEN_ON);
+  attachKeys(session);
+}
 
-      if (pendingInput.startsWith('\x1b[')) {
-        if (pendingInput.startsWith('\x1b[200~')) {
-          const end = pendingInput.indexOf('\x1b[201~', 6);
-          if (end === -1) {
-            if (!final) return;
-            pendingInput = pendingInput.slice(6);
-            if (onPaste) onPaste(pendingInput);
-            pendingInput = '';
-            return;
-          }
-          const pasted = pendingInput.slice(6, end);
-          pendingInput = pendingInput.slice(end + 6);
-          if (onPaste) onPaste(pasted);
-          continue;
-        }
-        const match = pendingInput.match(/^\x1b\[[0-?]*[ -/]*[@-~]/);
-        if (!match) {
-          if (!final) return;
-          pendingInput = pendingInput.slice(1);
-          onKey('\x1b');
-          continue;
-        }
-        pendingInput = pendingInput.slice(match[0].length);
-        onKey(match[0]);
-        continue;
-      }
+// Returns the terminal to how the TUI found it. Safe to call more than once.
+export function restore(): void {
+  if (!session) return;
+  detachKeys(session);
+  session = null;
+  process.stdout.write(SCREEN_OFF + TITLE_POP);
+}
 
-      pendingInput = pendingInput.slice(1);
-      onKey('\x1b');
-    }
+// The one writer: each frame repaints the whole screen in a single synchronized write.
+export function paint(frame: Frame, title: string): void {
+  if (!session?.detachKeys) return;
+  const lines = fitFrame(frame, terminalColumns(), terminalRows());
+  process.stdout.write(`${SYNC_BEGIN}${titleSequence(session, title)}\x1b[H${lines.join('\x1b[K\n')}\x1b[K\x1b[J${SYNC_END}`);
+}
+
+// Lends the terminal to a command on the normal screen in cooked mode; Ctrl+C reaches only the command.
+export async function lendTerminal<T>(title: string, work: () => Promise<T>): Promise<T> {
+  const active = session;
+  if (!active?.detachKeys) return work();
+  detachKeys(active);
+  process.off('SIGINT', quit).on('SIGINT', ignore);
+  process.stdout.write(titleSequence(active, title) + SCREEN_OFF);
+  try {
+    return await work();
+  } finally {
+    process.off('SIGINT', ignore).on('SIGINT', quit);
+    process.stdout.write(SCREEN_ON);
+    attachKeys(active);
   }
+}
 
-  function flushInput(): void {
-    if (escapeTimer) {
-      clearTimeout(escapeTimer);
-      escapeTimer = null;
-    }
-    drainInput(true);
+// Waits for any one key while the terminal is lent out.
+export async function anyKey(): Promise<void> {
+  process.stdin.setRawMode(true);
+  const keypress = once(process.stdin, 'keypress');
+  process.stdin.resume();
+  try {
+    await keypress;
+  } finally {
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
   }
-
-  function feedInput(chunk: string): void {
-    if (escapeTimer) {
-      clearTimeout(escapeTimer);
-      escapeTimer = null;
-    }
-    pendingInput += chunk;
-    drainInput();
-    if (pendingInput === '\x1b' || pendingInput.startsWith('\x1b[')) {
-      escapeTimer = setTimeout(flushInput, 30);
-    }
-  }
-
-  return { feedInput, flushInput };
 }

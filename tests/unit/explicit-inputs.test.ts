@@ -31,18 +31,28 @@ describe('the sync CLI on a machine with nothing of the author\'s', () => {
     assert.deepEqual(JSON.parse(run.stdout), { ok: true, documents: [] });
   });
 
-  test('without one, stops on a single line that names the path and the variable', () => {
-    const run = sync({});
+  // Each way to lack a vault stops on one line that says what to do about it.
+  const stopsOnOneLine = (env: Record<string, string>, message: RegExp) => {
+    const run = sync(env);
     assert.equal(run.status, 2);
     assert.equal(run.stderr.trim().split('\n').length, 1);
-    assert.match(run.stderr, new RegExp(`vault not found: ${RegExp.escape(home)}.*\\(set VAULT_DIR\\)`));
+    assert.match(run.stderr, message);
+  };
+
+  test('without one, stops on a line that names the variable and where to set it', () => {
+    stopsOnOneLine({}, /vault not configured: set VAULT_DIR in mise\.local\.toml \[env\]/);
+  });
+
+  test('pointed at a missing vault, stops on a line that names the path and the variable', () => {
+    const missing = path.join(root, 'missing');
+    stopsOnOneLine({ VAULT_DIR: missing }, new RegExp(`vault not found: ${RegExp.escape(missing)}.*\\(set VAULT_DIR\\)`));
   });
 });
 
 describe('where each input comes from', () => {
-  test('only the path defaults and the local audit log read the home directory', () => {
-    const readers = trackedFiles(fromRoot('.'), 'bin', 'src', 'functions')
+  test('only the local audit log reads the home directory', () => {
+    const readers = trackedFiles(fromRoot('.'), 'bin', 'src')
       .filter((file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('));
-    assert.deepEqual(readers.sort(), ['bin/lib/local-paths.ts', 'bin/lib/site-ops.ts']);
+    assert.deepEqual(readers.sort(), ['bin/lib/site-ops.ts']);
   });
 });

@@ -13,6 +13,20 @@ export const SIGNING_EMAIL = `security@${SITE.domain}`;
 export const EXPECTED_CANONICAL = `${SITE_ORIGIN}/.well-known/security.txt`;
 export const REQUIRED_FIELDS = ['Contact', 'Encryption', 'Expires', 'Canonical', 'Policy'];
 
+// The monthly scheduled check fails, and GitHub emails the failure, at least
+// twice before the file lapses.
+export const EXPIRES_MIN_DAYS = 60;
+
+// Why an Expires value fails the gate at `now`, or undefined when it passes.
+export function expiryProblem(expires: string, now = Date.now()): string | undefined {
+  const at = new Date(expires).getTime();
+  if (Number.isNaN(at)) return `security.txt Expires is not a parseable date: ${expires}`;
+  if (at <= now) return `security.txt Expires (${expires}) is in the past`;
+  const days = Math.floor((at - now) / 86_400_000);
+  if (days < EXPIRES_MIN_DAYS) return `security.txt Expires in ${days}d (< ${EXPIRES_MIN_DAYS}d). Bump it, re-sign, commit.`;
+  return undefined;
+}
+
 export function stripSignature(text: string): string {
   const begin = text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----');
   if (begin === -1) return text.trim() + '\n';

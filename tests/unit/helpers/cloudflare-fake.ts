@@ -3,8 +3,9 @@
 
 import {
   API_BASE,
-  type AccessApp, type ApiSchema, type LiveRule, type Operation, type Rule, type RulesList, type ValidationSettings, type Widget,
+  type AccessApp, type ApiSchema, type LiveRule, type Operation, type Rule, type ValidationSettings, type Widget,
 } from '../../../bin/lib/cloudflare.ts';
+import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
 
@@ -15,21 +16,12 @@ export interface FakeState {
   dnssec: Fields;
   botManagement: Fields;
   rulesets: Record<string, { id: string; phase?: string; rules: LiveRule[] }>;
-  lists: (RulesList & { items: Fields[] })[];
-  project: { name: string; source?: { type?: string; config?: Fields }; deployment_configs: Record<string, Fields> };
   accessApps: AccessApp[];
   schemas: ApiSchema[];
   validationSettings: ValidationSettings;
   operations: Operation[];
   operationSettings: Record<string, Fields>;
   widgets: Widget[];
-}
-
-export interface RecordedCall {
-  method: string;
-  path: string;
-  body: unknown;
-  authorization: string | null;
 }
 
 type Groups = [string, string];
@@ -41,7 +33,7 @@ const route = <B = unknown>(method: string, pattern: RegExp, handle: (groups: Gr
 
 export function createCloudflareFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);
-  const calls: RecordedCall[] = [];
+  const { calls, record, writes } = callRecorder(API_BASE, token);
   let next = 1;
   const newId = (prefix: string) => `${prefix}-new-${next++}`;
 
@@ -57,18 +49,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
   };
   const setting = (id: string) => state.settings[id] && { id, ...state.settings[id] };
 
-  function ruleset(scope: string, phase: string) {
-    return state.rulesets[`${scope}/${phase}`];
-  }
-  function rulesetById(id: string) {
-    return Object.values(state.rulesets).find((entry) => entry.id === id);
-  }
-  const list = (id: string) => {
-    const found = state.lists.find((entry) => entry.id === id);
-    if (!found) throw new Error(`the fake has no list ${id}`);
-    return found;
-  };
-
+  const ruleset = (phase: string) => state.rulesets[`zones/${phase}`];
+  const rulesetById = (id: string) => Object.values(state.rulesets).find((entry) => entry.id === id);
   const routes: [string, RegExp, Handler][] = [
     route('GET', /^\/zones$/, (_g, url) => ok(url.searchParams.get('name') === state.zone.name ? [state.zone] : [])),
     route('GET', /^\/zones\/zone-0001\/settings$/, () => ok(Object.keys(state.settings).map(setting))),
@@ -87,51 +69,31 @@ export function createCloudflareFake(seed: FakeState, token: string) {
     }),
     route('GET', /^\/zones\/zone-0001\/dnssec$/, () => ok(state.dnssec)),
     route<Fields>('PATCH', /^\/zones\/zone-0001\/dnssec$/, (_g, _u, body) => ok(Object.assign(state.dnssec, body))),
-    route('GET', /^\/(zones|accounts)\/[^/]+\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([scope, phase]) =>
-      ruleset(scope, phase) ? ok(ruleset(scope, phase)) : fail(404, 'could not find entrypoint ruleset')),
-    route<{ rules: Rule[] }>('PUT', /^\/(zones|accounts)\/[^/]+\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([scope, phase], _u, body) => {
+    route('GET', /^\/zones\/zone-0001\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([phase]) =>
+      ruleset(phase) ? ok(ruleset(phase)) : fail(404, 'could not find entrypoint ruleset')),
+    route<{ rules: Rule[] }>('PUT', /^\/zones\/zone-0001\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([phase], _u, body) => {
       const created = { id: newId('ruleset'), phase, rules: body.rules.map((rule) => ({ id: newId('rule'), ...rule })) };
-      state.rulesets[`${scope}/${phase}`] = created;
+      state.rulesets[`zones/${phase}`] = created;
       return ok(created);
     }),
-    route<Rule>('POST', /^\/(?:zones|accounts)\/[^/]+\/rulesets\/([^/]+)\/rules$/, ([id], _u, body) => {
+    route<Rule>('POST', /^\/zones\/zone-0001\/rulesets\/([^/]+)\/rules$/, ([id], _u, body) => {
       const target = rulesetById(id);
       if (!target) return fail(404, 'no ruleset');
       target.rules.push({ id: newId('rule'), ...body });
       return ok(target);
     }),
-    route<Rule>('PATCH', /^\/(?:zones|accounts)\/[^/]+\/rulesets\/([^/]+)\/rules\/([^/]+)$/, ([id, ruleId], _u, body) => {
+    route<Rule>('PATCH', /^\/zones\/zone-0001\/rulesets\/([^/]+)\/rules\/([^/]+)$/, ([id, ruleId], _u, body) => {
       const target = rulesetById(id);
       const index = target?.rules.findIndex((entry) => entry.id === ruleId) ?? -1;
       if (!target || index === -1) return fail(404, 'no rule');
       target.rules[index] = { id: ruleId, ...body };
       return ok(target);
     }),
-    route('DELETE', /^\/(?:zones|accounts)\/[^/]+\/rulesets\/([^/]+)\/rules\/([^/]+)$/, ([id, ruleId]) => {
+    route('DELETE', /^\/zones\/zone-0001\/rulesets\/([^/]+)\/rules\/([^/]+)$/, ([id, ruleId]) => {
       const target = rulesetById(id);
       if (!target) return fail(404, 'no ruleset');
       target.rules = target.rules.filter((entry) => entry.id !== ruleId);
       return ok(target);
-    }),
-    route('GET', /^\/accounts\/account-0001\/rules\/lists$/, () => ok(state.lists.map(({ items, ...entry }) => ({ ...entry, num_items: items.length })))),
-    route<{ name: string; kind: string }>('POST', /^\/accounts\/account-0001\/rules\/lists$/, (_g, _u, body) => {
-      const created = { id: newId('list'), ...body, items: [] };
-      state.lists.push(created);
-      return ok({ id: created.id, name: created.name, kind: created.kind });
-    }),
-    route('GET', /^\/accounts\/account-0001\/rules\/lists\/bulk_operations\/([^/]+)$/, ([id]) => ok({ id, status: 'completed' })),
-    route('GET', /^\/accounts\/account-0001\/rules\/lists\/([^/]+)\/items$/, ([id]) => ok(list(id).items)),
-    route<Fields[]>('PUT', /^\/accounts\/account-0001\/rules\/lists\/([^/]+)\/items$/, ([id], _u, body) => {
-      list(id).items = body.map((entry) => ({ id: newId('item'), ...entry }));
-      return ok({ operation_id: newId('op') });
-    }),
-    route('GET', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, ([name]) => name === state.project.name ? ok(state.project) : fail(404, 'Project not found')),
-    route<{ deployment_configs?: Record<string, Fields>; source?: { type?: string; config?: Fields } }>('PATCH', /^\/accounts\/account-0001\/pages\/projects\/([^/]+)$/, (_g, _u, body) => {
-      if (body.source) state.project.source = body.source;
-      for (const [env, config] of Object.entries(body.deployment_configs ?? {})) {
-        state.project.deployment_configs[env] = { ...state.project.deployment_configs[env], ...config };
-      }
-      return ok(state.project);
     }),
     route('GET', /^\/accounts\/account-0001\/access\/apps$/, (_g, url) => page(state.accessApps, url)),
     route('GET', /^\/zones\/zone-0001\/schema_validation\/schemas$/, () => ok(state.schemas)),
@@ -170,15 +132,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
   ];
 
   async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
-    const href = input instanceof Request ? input.url : String(input);
-    const url = new URL(href);
-    if (!href.startsWith(API_BASE)) throw new Error(`unexpected host: ${url.origin}`);
-    const path = url.pathname.slice(new URL(API_BASE).pathname.length);
-    const method = init.method ?? 'GET';
-    const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
-    const authorization = new Headers(init.headers).get('authorization');
-    calls.push({ method, path: `${path}${url.search}`, body, authorization });
-    if (authorization !== `Bearer ${token}`) return fail(403, 'Authentication error');
+    const { url, path, method, body, authorized } = record(input, init);
+    if (!authorized) return fail(403, 'Authentication error');
     for (const [verb, pattern, handle] of routes) {
       const match = verb === method ? path.match(pattern) : null;
       if (match) return handle(match.slice(1) as Groups, url, body);
@@ -186,6 +141,5 @@ export function createCloudflareFake(seed: FakeState, token: string) {
     throw new Error(`the fake has no route for ${method} ${path}`);
   }
 
-  const writes = () => calls.filter((call) => call.method !== 'GET');
   return { fetch, calls, writes, state };
 }

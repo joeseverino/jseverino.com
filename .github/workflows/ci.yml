@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Every job starts at once and none depends on another, so a failure reports on its own
-# check and a required check is never left skipped (which counts as passing). Cloudflare
-# Pages builds and deploys on its own; the deploy workflow verifies it.
+# check and a required check is never left skipped (which counts as passing). The build
+# job's gated output is what the deploy workflow ships once this run passes.
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -28,51 +28,38 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
-      - name: Gate audits
-        run: npm run -s gate:check
+      # The gate a laptop runs: every static gate, the build, every gate on the
+      # build. src/content is the committed snapshot; CI has no vault. The build
+      # carries the production site key because it is the one that ships.
+      - name: Gates
+        run: mise run check
         env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-gate.md
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
 
-      # The same registry-driven gate that runs locally before a push. --no-sync
-      # because CI has no vault; src/content is the committed snapshot.
-      - name: Publish gate
-        run: npm run publish:check -- --no-sync --after-gate
-        env:
-          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
-
-      - name: Generate SBOM
-        if: github.event_name != 'pull_request'
-        run: npm sbom --sbom-format=cyclonedx > sbom.cdx.json
-
+      # The deploy workflow downloads this, unchanged for production and wrapped
+      # for a preview. Hidden files hold .well-known/ and the asset ignore list.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: github.event_name != 'pull_request'
         with:
-          name: sbom
-          path: sbom.cdx.json
+          name: site
+          path: dist/
+          include-hidden-files: true
+          retention-days: 7
           if-no-files-found: error
 
-      - name: Keep the summaries for the PR comment
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: summary-build
-          path: |
-            ${{ runner.temp }}/summary-gate.md
-            ${{ runner.temp }}/summary-build.md
-          retention-days: 1
-          if-no-files-found: ignore
-
-  # One job, three legs. `name` keeps the check-run names `e2e`, `visual`, `edge` so the
-  # ruleset's required checks match. The visual leg runs on macOS because the baselines
+  # One job, three legs, each running one browser:* task. `name` keeps the check-run names
+  # `e2e`, `visual`, `edge` so the ruleset's required checks match. The visual leg runs on macOS because the baselines
   # are macOS Chromium renders.
   playwright:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    # Node alone: the suites run Playwright and wrangler from the lockfile.
+    env:
+      MISE_ENABLE_TOOLS: node
     strategy:
       fail-fast: false
       matrix:
@@ -82,30 +69,27 @@ jobs:
             os: ubuntu-24.04
             browsers: chromium firefox webkit
             prebuild: true
-            config: tests/playwright.config.ts
           - suite: visual
             title: Visual baselines
             os: macos-26
             browsers: chromium
             prebuild: false
-            config: tests/playwright.visual.config.ts
           - suite: edge
             title: Edge runtime
             os: ubuntu-24.04
             browsers: ''
             prebuild: true
-            config: tests/playwright.edge.config.ts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           astro-cache: ${{ matrix.prebuild }}
 
       # Cache the browser binaries by Playwright version, not by lockfile hash:
-      # every Dependabot PR rewrites the lockfile and would otherwise miss.
+      # every dependency update rewrites the lockfile and would otherwise miss.
       - name: Read Playwright version
         if: matrix.browsers != ''
         id: playwright
@@ -119,29 +103,21 @@ jobs:
           path: ${{ runner.os == 'macOS' && '~/Library/Caches/ms-playwright' || '~/.cache/ms-playwright' }}
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browsers }}
 
-      # The apt install runs in the background while the site builds, then the suite serves
-      # that build (PREBUILT).
+      # The suite then serves this build (PREBUILT).
+      # Under a minute with the image cache, about eight when it is cold; a stalled apt fails
+      # here instead of holding the job to its timeout.
       - name: Install browsers and build
-        run: |
-          set -euo pipefail
-          pid=''
-          if [ -n "$BROWSERS" ]; then
-            if [ "$CACHE_HIT" = 'true' ]; then cmd='install-deps'; else cmd='install --with-deps'; fi
-            # shellcheck disable=SC2086 # word-split the command and browser list
-            npx playwright $cmd $BROWSERS > "$RUNNER_TEMP/browsers.log" 2>&1 &
-            pid=$!
-          fi
-          if [ "$PREBUILD" = 'true' ]; then node tests/browser-test-env.ts build; fi
-          if [ -n "$pid" ] && ! wait "$pid"; then cat "$RUNNER_TEMP/browsers.log"; exit 1; fi
+        timeout-minutes: 12
+        run: mise run setup:browsers
         env:
           BROWSERS: ${{ matrix.browsers }}
           CACHE_HIT: ${{ steps.browsers.outputs.cache-hit }}
           PREBUILD: ${{ matrix.prebuild }}
 
       - name: ${{ matrix.title }}
-        run: npx playwright test -c "$CONFIG"
+        run: mise run "browser:$SUITE"
         env:
-          CONFIG: ${{ matrix.config }}
+          SUITE: ${{ matrix.suite }}
           PREBUILT: ${{ matrix.prebuild && '1' || '' }}
           PLAYWRIGHT_REPORT: '1'
 

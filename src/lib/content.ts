@@ -45,18 +45,21 @@ function collectionSlug(id: string): string {
   return id.replace(/\/index(?:\.mdx)?$/, '').replace(/\.mdx$/, '');
 }
 
+// The fields a page and a writeup both carry, read the same way.
+function entryHeading(entry: CollectionEntry<'pages' | 'writeups'>): { slug: string; title: string; description: string } {
+  return { slug: collectionSlug(entry.id), title: entry.data.title, description: entry.data.description ?? '' };
+}
+
 const loadPages = asyncCache(() => {
   return getCollection('pages', (page) => import.meta.env.DEV || page.data.published);
 });
 
 function toPageContent(entry: CollectionEntry<'pages'>): PageContent {
-  const slug = collectionSlug(entry.id);
+  const heading = entryHeading(entry);
   return {
-    slug,
-    title: entry.data.title,
-    description: entry.data.description ?? '',
+    ...heading,
     intro: entry.data.intro,
-    path: entry.data.path || (slug === 'home' ? '/' : `/${slug}/`),
+    path: entry.data.path || (heading.slug === 'home' ? '/' : `/${heading.slug}/`),
     entry,
   };
 }
@@ -116,12 +119,8 @@ export const getWriteups = asyncCache<Writeup[]>(async () => {
   );
 
   const writeups = entries.map((entry) => {
-    const slug = collectionSlug(entry.id);
-
     return {
-      slug,
-      title: entry.data.title,
-      description: entry.data.description ?? '',
+      ...entryHeading(entry),
       date: normalizeDate(entry.data.published_at),
       lastReviewed: normalizeDate(entry.data.last_reviewed) || undefined,
       technologies: entry.data.technologies,

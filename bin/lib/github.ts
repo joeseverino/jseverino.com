@@ -1,6 +1,90 @@
-// The gh CLI as functions, for scripts where gh is authenticated (locally, or in Actions via GH_TOKEN).
+// GitHub's REST API for the bin/ scripts: one client over fetch, and the
+// repository reads the deploy and land flows make with it.
 import { setTimeout as delay } from 'node:timers/promises';
-import { runSync } from './run.ts';
+import type { Fetch } from './drift.ts';
+import { spawnResult } from './run.ts';
+
+export const API_BASE = 'https://api.github.com';
+const TIMEOUT_MS = 30_000;
+
+class GitHubError extends Error {
+  status: number;
+
+  constructor(method: string, path: string, status: number, message?: string) {
+    super(`${method} ${path} → ${status}${message ? ` (${message})` : ''}`);
+    this.status = status;
+  }
+}
+
+// GITHUB_TOKEN (Actions), then GH_TOKEN, then the gh CLI's login.
+export const resolveToken = (env: NodeJS.ProcessEnv = process.env): string | undefined =>
+  env.GITHUB_TOKEN || env.GH_TOKEN || spawnResult('gh', ['auth', 'token']).stdout.trim() || undefined;
+
+export interface ClientOptions {
+  token: string | undefined;
+  // Read at each request when omitted, so a test can stand in for the global.
+  fetch?: Fetch | undefined;
+}
+
+export type Client = ReturnType<typeof createClient>;
+
+// The token only ever goes into the Authorization header.
+export function createClient({ token, fetch }: ClientOptions) {
+  if (!token) throw new Error('no GitHub token: set GITHUB_TOKEN or GH_TOKEN, or sign in with `gh auth login`');
+
+  async function send(method: string, url: string, body?: unknown): Promise<Response> {
+    const response = await (fetch ?? globalThis.fetch)(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    if (!response.ok) {
+      const payload: { message?: string } = await response.json().catch(() => ({}));
+      throw new GitHubError(method, new URL(url).pathname, response.status, payload.message);
+    }
+    return response;
+  }
+
+  async function request<T>(method: string, path: string, body?: unknown): Promise<T | undefined> {
+    const text = await (await send(method, `${API_BASE}${path}`, body)).text();
+    return text ? (JSON.parse(text) as T) : undefined;
+  }
+
+  return {
+    request,
+    get: async <T>(path: string): Promise<T> => (await request<T>('GET', path)) as T,
+    // Every page of a list, following the Link header's next page.
+    list: async <T>(path: string): Promise<T[]> => {
+      const items: T[] = [];
+      for (let url: string | undefined = `${API_BASE}${path}`; url;) {
+        const response = await send('GET', url);
+        items.push(...(await response.json() as T[]));
+        url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
+      }
+      return items;
+    },
+    // Features answer 204 or 200 when on and 404 when off.
+    isOn: async (path: string): Promise<boolean> => {
+      try {
+        await request('GET', path);
+        return true;
+      } catch (error) {
+        if (error instanceof GitHubError && error.status === 404) return false;
+        throw error;
+      }
+    },
+  };
+}
+
+// The client the repository reads below share, signed in on first use.
+let shared: Client | undefined;
+const github = (): Client => (shared ??= createClient({ token: resolveToken() }));
 
 // The REST fields the callers read.
 export interface CheckRun {
@@ -15,15 +99,8 @@ export interface CodeScanningAlert {
   html_url: string;
 }
 
-// The caller names the response shape; gh returns parsed JSON.
-function ghApi<T>(pathname: string, params: Record<string, string | number> = {}): T {
-  const args = ['api', pathname, '--method', 'GET'];
-  for (const [key, value] of Object.entries(params)) args.push('-f', `${key}=${value}`);
-  return JSON.parse(runSync('gh', args)) as T;
-}
-
-const checkRuns = (repository: string, sha: string): CheckRun[] =>
-  ghApi<{ check_runs: CheckRun[] }>(`repos/${repository}/commits/${sha}/check-runs`, { per_page: 100 }).check_runs;
+const checkRuns = async (repository: string, sha: string): Promise<CheckRun[]> =>
+  (await github().get<{ check_runs: CheckRun[] }>(`/repos/${repository}/commits/${sha}/check-runs?per_page=100`)).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.
 const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
@@ -35,19 +112,19 @@ interface BranchRule {
 }
 
 // The status-check contexts the rulesets applying to a branch require.
-export const requiredContexts = (repository: string, branch: string): string[] => [
-  ...new Set(ghApi<BranchRule[]>(`repos/${repository}/rules/branches/${branch}`)
+export const requiredContexts = async (repository: string, branch: string): Promise<string[]> => [
+  ...new Set((await github().get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
     .filter((rule) => rule.type === 'required_status_checks')
     .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
     .map((check) => check.context)),
 ];
 
 // GitHub's verdict on a commit's signature.
-export const commitVerification = (repository: string, ref: string): { verified: boolean; reason: string } =>
-  ghApi<{ commit: { verification: { verified: boolean; reason: string } } }>(`repos/${repository}/commits/${ref}`).commit.verification;
+export const commitVerification = async (repository: string, ref: string): Promise<{ verified: boolean; reason: string }> =>
+  (await github().get<{ commit: { verification: { verified: boolean; reason: string } } }>(`/repos/${repository}/commits/${ref}`)).commit.verification;
 
-export const openCodeScanningAlerts = (repository: string, tool: string): CodeScanningAlert[] =>
-  ghApi<CodeScanningAlert[]>(`repos/${repository}/code-scanning/alerts`, { state: 'open', tool_name: tool, per_page: 100 });
+export const openCodeScanningAlerts = (repository: string, tool: string): Promise<CodeScanningAlert[]> =>
+  github().get<CodeScanningAlert[]>(`/repos/${repository}/code-scanning/alerts?${new URLSearchParams({ state: 'open', tool_name: tool, per_page: '100' })}`);
 
 export interface AwaitChecksOptions {
   deadline: number;
@@ -68,7 +145,7 @@ export async function awaitChecks(
   { deadline, intervalMs = 10_000, failFast = false, onPending = () => {} }: AwaitChecksOptions,
 ): Promise<CheckRun[] | null> {
   for (;;) {
-    const runs = new Map(checkRuns(repository, sha).map((check) => [check.name, check]));
+    const runs = new Map((await checkRuns(repository, sha)).map((check) => [check.name, check]));
     const failed = names.some((name) => {
       const check = runs.get(name);
       return check?.status === 'completed' && !passed(check);

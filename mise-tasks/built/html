@@ -1,0 +1,6 @@
+#!/bin/sh
+#MISE description="html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
+set -eu
+
+html-validate --config tests/html-validate.json dist
+node tests/audits/check-html.ts

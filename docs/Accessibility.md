@@ -26,7 +26,7 @@ Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it 
 
 Body images use the alt text from the markdown source. The `|width` and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`npm run check:html` fails on a missing one). No image on the site uses it today.
+An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`mise run built:html` fails on a missing one). No image on the site uses it today.
 
 ## Focus Management
 
@@ -76,25 +76,7 @@ The three-state control in the footer ([`src/components/ThemeToggle.astro`](../s
 
 The palette is documented in CSS custom properties in [`src/styles/tokens.css`](../src/styles/tokens.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
-`npm run check:contrast` measures every pair below once per theme and fails the gate under 4.5:1.
-
-| Pair | Light | Dark |
-|---|---|---|
-| `--color-text` on `--color-bg` (body text) | 19.8:1 | 14.7:1 |
-| `--color-muted` on `--color-bg` (metadata, captions, dates) | 5.2:1 | 7.5:1 |
-| `--color-text-alt` on `--color-bg` | 5.8:1 | 8.4:1 |
-| `--color-primary` on `--color-bg` (links, kickers) | 10.4:1 | 6.5:1 |
-| `--color-text` on `--color-surface` (cards, fields) | 19.8:1 | 13.5:1 |
-| `--color-muted` on `--color-surface` | 5.2:1 | 6.8:1 |
-| `--color-text` on `--color-soft` (hero chip, card media) | 17.8:1 | 12.7:1 |
-| `--color-muted` on `--color-soft` | 4.7:1 | 6.5:1 |
-| `--color-primary` on `--color-soft` (active pills) | 9.3:1 | 5.6:1 |
-| `--color-bg` on `--color-primary` (button label) | 10.4:1 | 6.5:1 |
-| `--color-code-text` on `--color-code-bg` (inline code) | 17.1:1 | 12.5:1 |
-
-Terminal label `#94a3b8` on `#111827` is ≈ 6.4:1 and identical in both themes, since that group does not recolor.
-
-All current pairs meet AA. Add new ones to the `pairs` array in [`tests/audits/check-contrast.ts`](../tests/audits/check-contrast.ts) and to this table together when a component introduces a novel color-on-color combination.
+The [axe sweep](../tests/playwright/a11y.single.spec.ts) renders the key page archetypes once in the light scheme and once in the dark, and axe's `color-contrast` rule measures each text node against the background it actually renders on, so a token change, a new component, or an opacity that drops a pair under AA fails `mise run browser:e2e`. The code-block and terminal palette is measured the same way in both.
 
 ## What's Intentionally Not Done
 
@@ -108,12 +90,9 @@ All current pairs meet AA. Add new ones to the `pairs` array in [`tests/audits/c
 Quick checks after layout or component changes:
 
 ```sh
-npm run build:static
-npm run lint:css
-npm run check:css-vars
-npm run check:contrast
-CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e
-CI=1 ASTRO_TELEMETRY_DISABLED=1 npm run test:e2e:visual -- --project=chromium-desktop
+mise run check
+mise run browser:e2e
+mise run browser:visual
 # Then in the built HTML:
 # - exactly one <main id="main"> per page
 # - every <img> has an alt attribute
@@ -124,16 +103,14 @@ Playwright runs the functional accessibility and layout checks in Chromium,
 Firefox, and WebKit desktop and mobile projects. Chromium on macOS owns the
 visual baselines to avoid engine- and OS-specific font-rasterization noise. When
 an intentional design change alters a baseline, inspect the expected, actual,
-and diff images, then run `npm run test:e2e:visual:update --
---project=chromium-desktop`. Commit the reviewed PNG changes with the frontend
+and diff images, then run `mise run browser:visual --update-snapshots`. Commit the reviewed PNG changes with the frontend
 change. Never update snapshots only to make CI green. A manual keyboard pass
 through the home, a portfolio article, the portfolio listing, and the contact
 form remains useful before large interaction changes.
 
-Three layers are machine-enforced on every gate run: WCAG contrast math over the
-color tokens (`npm run check:contrast`), structural HTML over every built page
+Two layers are machine-enforced on every gate run: structural HTML over every built page
 (unique ids, alt on every image, no unprocessed `::directive` text;
-`npm run check:html`), and an axe-core WCAG A/AA sweep over the key page
+`mise run built:html`), and an axe-core WCAG A/AA sweep over the key page
 archetypes in a real browser
 ([`tests/playwright/a11y.single.spec.ts`](../tests/playwright/a11y.single.spec.ts)).
 
@@ -141,4 +118,4 @@ archetypes in a real browser
 
 - [`docs/SEO.md`](./SEO.md): heading hierarchy and image alt strategy
 - [`docs/Architecture.md`](./Architecture.md): render model
-- [`SECURITY.md`](../SECURITY.md): contact form and form-field handling
+- [`SECURITY.md`](../.github/SECURITY.md): contact form and form-field handling

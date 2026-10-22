@@ -1,7 +1,8 @@
 // In-memory GitHub REST fake seeded from tests/fixtures/github/live-drifted.json. Writes mutate
 // state and every call is recorded; an unknown route fails the test.
 
-import { API_BASE } from '../../../bin/lib/github-settings.ts';
+import { API_BASE } from '../../../bin/lib/github.ts';
+import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
 
@@ -9,24 +10,18 @@ export interface FakeState {
   repo: Fields;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  codeScanning: Fields;
   permissions: Fields;
   workflow: Fields;
   variables: { name: string; value: string }[];
   rulesets: (Fields & { id: number; name: string })[];
 }
 
-export interface RecordedCall {
-  method: string;
-  path: string;
-  body: unknown;
-  authorization: string | null;
-}
-
 const REPO = '/repos/joeseverino/jseverino.com';
 
 export function createGithubFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);
-  const calls: RecordedCall[] = [];
+  const { calls, record, writes } = callRecorder(API_BASE, token);
   let nextId = 900;
 
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
@@ -53,6 +48,9 @@ export function createGithubFake(seed: FakeState, token: string) {
     ['GET', /^\/private-vulnerability-reporting$/, () => json({ enabled: state.privateReporting })],
     ['PUT', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', true)],
     ['DELETE', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', false)],
+    ['GET', /^\/code-scanning\/default-setup$/, () => json(state.codeScanning)],
+    // Enabling queues a first analysis: 202 with the run.
+    ['PATCH', /^\/code-scanning\/default-setup$/, (_id, body) => (Object.assign(state.codeScanning, body), json({ run_id: 42, run_url: `${API_BASE}${REPO}/actions/runs/42` }, 202))],
     ['GET', /^\/actions\/permissions$/, () => json(state.permissions)],
     ['PUT', /^\/actions\/permissions$/, (_id, body) => (Object.assign(state.permissions, body), empty())],
     ['GET', /^\/actions\/permissions\/workflow$/, () => json(state.workflow)],
@@ -81,14 +79,8 @@ export function createGithubFake(seed: FakeState, token: string) {
   ];
 
   async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
-    const href = input instanceof Request ? input.url : String(input);
-    if (!href.startsWith(API_BASE)) throw new Error(`unexpected host: ${new URL(href).origin}`);
-    const path = new URL(href).pathname;
-    const method = init.method ?? 'GET';
-    const body: unknown = typeof init.body === 'string' ? JSON.parse(init.body) : undefined;
-    const authorization = new Headers(init.headers).get('authorization');
-    calls.push({ method, path, body, authorization });
-    if (authorization !== `Bearer ${token}`) return json({ message: 'Bad credentials' }, 401);
+    const { path, method, body, authorized } = record(input, init);
+    if (!authorized) return json({ message: 'Bad credentials' }, 401);
     if (path !== REPO && !path.startsWith(`${REPO}/`)) throw new Error(`the fake has no route for ${method} ${path}`);
     const rest = path.slice(REPO.length);
     for (const [verb, pattern, handle] of routes) {
@@ -98,6 +90,5 @@ export function createGithubFake(seed: FakeState, token: string) {
     throw new Error(`the fake has no route for ${method} ${path}`);
   }
 
-  const writes = () => calls.filter((call) => call.method !== 'GET');
   return { fetch, calls, writes, state };
 }

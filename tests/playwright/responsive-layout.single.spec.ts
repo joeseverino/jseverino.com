@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
 // Include tablet and the narrowest supported phone, not only screenshot sizes.

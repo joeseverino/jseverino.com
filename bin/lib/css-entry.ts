@@ -1,13 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import { bundle } from 'lightningcss';
 
-const IMPORT = /^@import\s+(?:url\()?['"](.+?)['"]\)?;\s*$/gm;
-
+// A stylesheet entry with every @import inlined in cascade order. Comments are dropped.
 export function readCssEntry(entryPath: string): string {
-  const entry = fs.readFileSync(entryPath, 'utf8');
-  const directory = path.dirname(entryPath);
-  const modules = [...entry.matchAll(IMPORT)].map((match) =>
-    fs.readFileSync(path.resolve(directory, match[1] ?? ''), 'utf8'),
-  );
-  return `${entry.replace(IMPORT, '').trim()}\n\n${modules.join('\n')}`;
+  return bundle({ filename: entryPath }).code.toString();
 }

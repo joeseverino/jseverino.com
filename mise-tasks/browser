@@ -1,0 +1,10 @@
+#!/bin/sh
+#MISE description="Every browser gate, one at a time: one build with the test site key, then each suite"
+#MISE timeout="45m"
+set -eu
+
+# One suite at a time: each one starts browsers and a server, and two at once
+# exhaust a small machine's memory. The suites that serve the build serve this
+# one (PREBUILT) rather than each building their own.
+node tests/browser-test-env.ts build
+PREBUILT=1 exec mise run -c -j 1 'browser:*'

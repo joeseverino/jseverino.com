@@ -5,21 +5,22 @@
     "allow_squash_merge": true,
     "allow_merge_commit": false,
     "allow_rebase_merge": false,
-    "allow_auto_merge": true,
+    "allow_auto_merge": false,
     "delete_branch_on_merge": true,
     "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
     "squash_merge_commit_message": "COMMIT_MESSAGES",
     "has_wiki": false,
-    "description": "Personal site and writeups, published from a private Obsidian vault with Astro on Cloudflare Pages. Hash-based CSP, edge-tested, and released with signed provenance.",
+    "description": "Personal site and writeups, published from a private Obsidian vault with Astro on Cloudflare Workers. Hash-based CSP, edge-tested, and released with signed provenance.",
     "homepage": "https://jseverino.com"
   },
-  "topics": ["astro", "cloudflare-d1", "cloudflare-pages", "cloudflare-turnstile", "content-security-policy", "obsidian", "personal-website", "playwright", "slsa", "typescript"],
+  "topics": ["astro", "cloudflare-d1", "cloudflare-turnstile", "cloudflare-workers", "content-security-policy", "obsidian", "personal-website", "playwright", "slsa", "typescript"],
   "security": {
     "secret_scanning": "enabled",
     "secret_scanning_push_protection": "enabled",
-    "dependabot_security_updates": "enabled",
+    "dependabot_security_updates": "disabled",
     "vulnerability_alerts": true,
-    "private_vulnerability_reporting": true
+    "private_vulnerability_reporting": true,
+    "code_scanning": { "state": "configured", "languages": ["actions", "javascript-typescript"] }
   },
   "actions": {
     "allowed_actions": "all",
@@ -61,9 +62,14 @@
             { "context": "visual" },
             { "context": "edge" },
             { "context": "dependency-review" },
-            { "context": "analyze typescript", "integration_id": 15368 },
-            { "context": "Cloudflare Pages", "integration_id": 85455 }
+            { "context": "deploy", "integration_id": 15368 }
           ]
+        }
+      },
+      {
+        "type": "code_scanning",
+        "parameters": {
+          "code_scanning_tools": [{ "tool": "CodeQL", "alerts_threshold": "errors", "security_alerts_threshold": "high_or_higher" }]
         }
       },
       { "type": "non_fast_forward" },

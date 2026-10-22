@@ -22,13 +22,13 @@ The result:
 - pages are generated as static HTML, CSS, JavaScript, and optimized assets;
 - screenshots are encoded to responsive AVIF and WebP at build time by the [image pipeline](./Architecture.md#8-image-pipeline);
 - [metadata, sitemap, RSS, JSON-LD, and canonical URLs](./SEO.md) are generated from the same content source;
-- Cloudflare Pages serves the site without exposing a WordPress runtime (see [Architecture](./Architecture.md)).
+- Cloudflare serves the site without exposing a WordPress runtime (see [Architecture](./Architecture.md)).
 
 ## Decision Drivers
 
 | Driver | WordPress Site | Astro Site |
 | --- | --- | --- |
-| Public runtime | PHP, WordPress, theme, plugins, database | Static files on Cloudflare Pages |
+| Public runtime | PHP, WordPress, theme, plugins, database | Static files on Cloudflare |
 | Admin surface | Public WordPress admin path unless externally protected | No public admin application |
 | Plugin risk | Plugin/theme code executes in the public origin | No production plugin runtime |
 | Content source | Database plus theme/plugin behavior | Markdown snapshot generated from the [private vault](./Vault-Workflow.md) |
@@ -47,13 +47,13 @@ Browser -> Cloudflare -> WordPress origin -> PHP runtime -> database -> theme/pl
 After:
 
 ```text
-Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browser
+Private vault -> sync script -> Astro static build -> Cloudflare -> browser
 ```
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
 assets, applies headers (including a build-time hash CSP), and handles the
-[contact form endpoint](../functions/api/contact.ts) and the
-[CSP report endpoint](../functions/api/csp-report.ts). Preview deployments also
+[contact form endpoint](../src/pages/api/contact.ts) and the
+[CSP report endpoint](../src/pages/api/csp-report.ts). Preview deployments also
 carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for
 visual and SEO comparison against the live site. It no longer fronts a public
 WordPress page renderer.
@@ -129,9 +129,8 @@ better SEO than the legacy WordPress homepage.
 | Lighthouse Accessibility | 96 | **100** |
 | Lighthouse SEO | 85 | **92** |
 
-That baseline predates the final homepage polish. The current PageSpeed
-snapshot below shows 100 Performance, 100 Accessibility, 100 Best Practices, and
-100 SEO on both mobile and desktop. The article comparison is more
+That baseline predates the final homepage polish; the current PageSpeed
+scores are in [Security](./Security.md#external-verification). The article comparison is more
 representative of the asset-pipeline win because portfolio writeups carry the
 largest image payloads.
 
@@ -217,26 +216,8 @@ The May 24, 2026 Astro article baseline reported:
 
 This article baseline records the payload reduction when the decision was
 validated. The homepage PageSpeed results measure a different surface: the
-migration cut the writeup pages' payload, and later homepage work brought the
-homepage to 100 in every PageSpeed category.
-
-## Current PageSpeed Snapshot
-
-After post-migration work, Google PageSpeed Insights reported 100 in every
-category for the live homepage on May 27, 2026 at 9:14 PM CDT:
-
-| Mode | Performance | Accessibility | Best Practices | SEO | FCP | LCP | TBT | CLS | Speed Index |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Mobile, emulated Moto G Power / Slow 4G | 100 | 100 | 100 | 100 | 0.9 s | 1.8 s | 0 ms | 0 | 1.4 s |
-| Desktop, emulated desktop / custom throttling | 100 | 100 | 100 | 100 | 0.3 s | 0.5 s | 0 ms | 0 | 0.4 s |
-
-The PageSpeed run used Lighthouse 13.3.0 against `https://jseverino.com/`.
-The Best Practices panel passed the trust-and-safety checks for effective CSP,
-strong HSTS, and Trusted Types mitigation, with no Lighthouse-visible UX or
-compatibility regressions from the security headers.
-Compared with the May 24 homepage baseline, the current run raises SEO from 92
-to 100 while keeping Accessibility at 100 and adding 100 Best Practices and 100
-Performance scores on both throttled mobile and desktop profiles.
+migration cut the writeup pages' payload, and later work raised the homepage's
+scores ([Security](./Security.md#external-verification)).
 
 ## Security And Operations Impact
 
@@ -251,12 +232,12 @@ Work the migration removed from production operations:
 
 The remaining dynamic pieces are narrow and explicit:
 
-- [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact
+- [`src/pages/api/contact.ts`](../src/pages/api/contact.ts) handles contact
   submissions with Turnstile verification, input validation, rate limiting, and
   D1 storage.
-- [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) stores filtered
+- [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) stores filtered
   browser CSP violation reports in the same D1 database for operational review.
-- [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
+- [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)
   provides a read-only comparison route only when a preview build generated its
   configuration; production requests fail closed with `404`.
 
@@ -281,16 +262,16 @@ site is a read-only snapshot of a private editorial system.
 Automated quality gates replaced manual WordPress maintenance (plugin updates,
 theme checks, security scanning). Before any content update is published, the
 site is validated against the project's engineering standards. The
-`publish:check` script is the final gate:
+`check` gate is the final one:
 
 ```sh
-npm run publish:check
+mise run check
 ```
 
 On a typical run (observed May 24, 2026), this validates:
 - **Integrity:** Zero TypeScript errors and zero Astro check warnings.
 - **Scale:** Successful build of 70+ pages and 500+ optimized images.
-- **Optimization:** [Image weight limits](./Architecture.md#14-release-gate) (no single asset over
+- **Optimization:** [Image weight limits](../tests/ARCHITECTURE.md#check-page-weightts) (no single image at or over
   1.5 MB).
 
 Operational work moved from monitoring a live runtime to verifying a static
@@ -332,4 +313,4 @@ jq -r '.log.entries[] |
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md): the sync pipeline and editorial process.
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md): guidelines for content structure and assets.
 - [`docs/SEO.md`](./SEO.md): metadata and search engine optimization strategy.
-- [`SECURITY.md`](../SECURITY.md): vulnerability reporting and security posture.
+- [`SECURITY.md`](../.github/SECURITY.md): vulnerability reporting and security posture.

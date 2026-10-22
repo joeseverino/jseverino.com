@@ -1,11 +1,13 @@
 // Pure checks returning findings (empty means correct). tests/edge runs them against
-// `wrangler pages dev`; bin/deploy-verify.ts runs the same ones against production.
+// the local Worker runtime; bin/deploy-verify.ts runs the same ones against production.
 // `headers` is keyed by lower-cased name, as Playwright's response.headers() returns.
-import { SITE_ORIGIN } from './site-config.ts';
-import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from '../../functions/lib/csp.ts';
-
-export const cspReportPath = '/api/csp-report';
-export const cspReportUri = `${SITE_ORIGIN}${cspReportPath}`;
+// The header and cache values expected are public/_headers' own, so a finding means the edge served
+// something other than the file; the CSP clauses below are a policy of their own.
+import fs from 'node:fs';
+import { cspReportPath, cspReportUri } from './site-config.ts';
+import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from './csp.ts';
+import { parseHeaders } from './headers-file.ts';
+import { fromRoot } from './site-root.ts';
 
 export type HeaderRecord = Record<string, string>;
 
@@ -64,26 +66,62 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   return findings;
 }
 
-const staticSecurityHeaders = Object.freeze({
-  'x-content-type-options': 'nosniff',
-  'x-frame-options': 'SAMEORIGIN',
-  'x-permitted-cross-domain-policies': 'none',
-  'referrer-policy': 'strict-origin-when-cross-origin',
-  'cross-origin-opener-policy': 'same-origin',
-  'cross-origin-resource-policy': 'same-site',
-});
+interface FileHeaders {
+  set: Map<string, string>;
+  detached: Set<string>;
+}
 
-export function staticHeaderFindings(headers: HeaderRecord): string[] {
-  const findings: string[] = [];
-  for (const [name, expected] of Object.entries(staticSecurityHeaders)) {
-    const received = headers[name];
-    if ((received ?? '').toLowerCase() !== expected.toLowerCase()) {
-      findings.push(`${name} is ${received ?? '<missing>'}, expected ${expected}`);
+const headersFile = parseHeaders(fs.readFileSync(fromRoot('public/_headers'), 'utf8'));
+// bin/build-csp.ts fills these at build time; cspFindings checks what they become.
+const PLACEHOLDER = /^__[A-Z_]+__$/;
+
+// A path rule as a pattern: `*` is a splat, `:name` one segment. Host rules never match a pathname.
+const rulePattern = (rule: string): RegExp =>
+  new RegExp(`^${rule.split('*').map((part) => part.split(/:\w+/).map(RegExp.escape).join('[^/]+')).join('.*')}$`);
+
+// Rules' lines merged as Cloudflare merges them: a repeated header joins with a comma, a detach drops it.
+function merged(rules: readonly (readonly string[])[]): FileHeaders {
+  const set = new Map<string, string>();
+  const detached = new Set<string>();
+  for (const lines of rules) {
+    for (const line of lines) {
+      if (line.startsWith('!')) {
+        detached.add(line.slice(1).trim().toLowerCase());
+        continue;
+      }
+      const colon = line.indexOf(':');
+      const name = line.slice(0, colon).trim().toLowerCase();
+      const value = line.slice(colon + 1).trim();
+      set.set(name, set.has(name) ? `${set.get(name)}, ${value}` : value);
     }
   }
-  if (!(headers['permissions-policy'] ?? '').includes('camera=()')) findings.push('permissions-policy does not deny the camera');
-  if (headers['access-control-allow-origin'] !== undefined) findings.push('access-control-allow-origin leaks onto an HTML response');
+  for (const name of detached) set.delete(name);
+  return { set, detached };
+}
+
+// What public/_headers gives the static asset at a path.
+export const fileHeaders = (pathname: string): FileHeaders =>
+  merged([...headersFile].filter(([rule]) => !rule.includes('://') && rulePattern(rule).test(pathname)).map(([, lines]) => lines));
+
+function headerFindings(headers: HeaderRecord, expected: FileHeaders, names: Iterable<string>): string[] {
+  const findings: string[] = [];
+  for (const name of names) {
+    const value = expected.set.get(name) ?? '';
+    const received = headers[name];
+    if ((received ?? '').toLowerCase() !== value.toLowerCase()) findings.push(`${name} is ${received ?? '<missing>'}, expected ${value}`);
+  }
+  for (const name of expected.detached) {
+    if (headers[name] !== undefined) findings.push(`${name} leaks onto a response public/_headers detaches it from`);
+  }
   return findings;
+}
+
+// The headers the `/*` rule gives every route, less the policy placeholders.
+const everyRoute = merged([headersFile.get('/*') ?? []]);
+
+export function staticHeaderFindings(headers: HeaderRecord): string[] {
+  const names = [...everyRoute.set].filter(([, value]) => !PLACEHOLDER.test(value)).map(([name]) => name);
+  return headerFindings(headers, everyRoute, names);
 }
 
 // HSTS is a Cloudflare zone setting, so only a production probe can assert it.
@@ -102,22 +140,17 @@ export async function inlineHashFindings(html: string, csp: string | null | unde
   for (const hash of [...scriptHashes, ...styleHashes]) {
     if (!(csp ?? '').includes(`'${hash}'`)) findings.push(`content-security-policy does not carry the hash of an inline tag (${hash})`);
   }
-  if (html.includes(CSP_INLINE_MARKER)) findings.push(`the build-time ${CSP_INLINE_MARKER} marker reached the response`);
-  if (/<(?:script|style)\b[^>]*\snonce=/i.test(html)) findings.push('a script or style tag still carries a nonce attribute');
+  // The build marker is the only nonce a static page carries; any other was minted where nothing issues one.
+  const nonces = [...html.matchAll(/<(?:script|style)\b[^>]*\snonce="([^"]*)"/gi)].map((match) => match[1]);
+  if (nonces.some((nonce) => nonce !== CSP_INLINE_MARKER)) findings.push(`a script or style tag carries a nonce other than ${CSP_INLINE_MARKER}`);
   return findings;
 }
 
-export function cacheRuleFindings(headers: HeaderRecord, { immutable }: { immutable: boolean }): string[] {
-  const value = headers['cache-control'] ?? '';
-  const findings: string[] = [];
-  if (immutable) {
-    if (!value.includes('max-age=31536000') || !value.includes('immutable')) findings.push(`fingerprinted asset cache-control is ${value || '<missing>'}`);
-  } else {
-    if (!value.includes('max-age=3600') || !value.includes('must-revalidate')) findings.push(`chrome asset cache-control is ${value || '<missing>'}`);
-    if (value.includes('immutable')) findings.push('a chrome asset is pinned immutable, which would hold a stale logo for a year');
-  }
-  if (headers['access-control-allow-origin'] !== undefined) findings.push('access-control-allow-origin leaks onto a static asset');
-  return findings;
+// The Cache-Control public/_headers gives the asset at `pathname`, and none of the headers it detaches.
+export function cacheRuleFindings(headers: HeaderRecord, pathname: string): string[] {
+  const expected = fileHeaders(pathname);
+  if (!expected.set.has('cache-control')) return [`public/_headers gives ${pathname} no Cache-Control`];
+  return headerFindings(headers, expected, ['cache-control']);
 }
 
 // The contact function refuses a missing or invalid Turnstile token with 400 before the honeypot and the D1 write.

@@ -2,9 +2,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';
-import { run } from './run.ts';
+import { failureDetail, run } from './run.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 
 interface LockEntry {
   version?: string;
@@ -15,6 +16,11 @@ interface LockEntry {
 
 const lockPackages = (file: string): Record<string, LockEntry> =>
   readJson<{ packages?: Record<string, LockEntry> }>(file).packages ?? {};
+
+// The clean install from the lockfile (mise.toml [deps.npm]). --force because
+// the provider judges freshness by the lockfile's hash, while lockfileDrift
+// compares every installed package, so it can find drift the provider calls fresh.
+export const INSTALL_PACKAGES = 'mise deps install npm --force';
 
 // Installed packages that differ from the lockfile. npm's hidden lockfile
 // (node_modules/.package-lock.json) records what is installed; optional
@@ -57,13 +63,14 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
     const drift = lockfileDrift(root);
     return drift.length === 0
       ? { ok: true, detail: 'node_modules matches package-lock.json' }
-      : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && npm ci` };
+      : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && ${INSTALL_PACKAGES}` };
   },
   async fetch({ root }) {
-    const result = await run('git', ['fetch', '--quiet', 'origin', DEFAULT_BRANCH], { cwd: root, timeout: 60_000 });
+    const args = ['fetch', '--quiet', 'origin', DEFAULT_BRANCH];
+    const result = await run('git', args, { cwd: root, timeout: 60_000 });
     return result.code === 0
       ? { ok: true, detail: `fetched origin/${DEFAULT_BRANCH}` }
-      : { ok: false, detail: `git fetch failed: ${result.stderr.trim()}`, fix: 'check the network and the origin remote, then retry' };
+      : { ok: false, detail: `git fetch failed: ${failureDetail('git', args, result)}`, fix: 'check the network and the origin remote, then retry' };
   },
   async gh({ root }) {
     const result = await run('gh', ['auth', 'status'], { cwd: root, timeout: 30_000 });
@@ -72,15 +79,21 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `gh is not authenticated: ${result.output.trim().split('\n').at(-1)}`, fix: 'gh auth login' };
   },
   async vault() {
-    const root = vaultRoot();
+    let root: string;
+    try {
+      root = vaultRoot();
+    } catch (error) {
+      return { ok: false, detail: errorMessage(error), fix: 'set VAULT_DIR in mise.local.toml [env]' };
+    }
     const missing = [WRITEUPS_FOLDER, PAGES_FOLDER].filter((folder) => !fs.existsSync(path.join(root, folder)));
     return missing.length === 0
       ? { ok: true, detail: `vault at ${root}` }
       : { ok: false, detail: `vault not reachable: ${missing.map((folder) => path.join(root, folder)).join(', ')} missing`, fix: 'set VAULT_DIR to the vault root' };
   },
   async clean({ root }) {
-    const result = await run('git', ['status', '--porcelain=v1', '--untracked-files=no'], { cwd: root });
-    if (result.code !== 0) return { ok: false, detail: `git status failed: ${result.stderr.trim()}`, fix: `check that ${root} is a git checkout, then retry` };
+    const args = ['status', '--porcelain=v1', '--untracked-files=no'];
+    const result = await run('git', args, { cwd: root });
+    if (result.code !== 0) return { ok: false, detail: `git status failed: ${failureDetail('git', args, result)}`, fix: `check that ${root} is a git checkout, then retry` };
     const dirty = result.stdout.split('\n').filter(Boolean);
     return dirty.length === 0
       ? { ok: true, detail: 'no uncommitted tracked changes' }

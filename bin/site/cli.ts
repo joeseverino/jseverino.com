@@ -42,10 +42,13 @@ export async function translate<T, E extends Error>(
 }
 
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+// SLUG in words, for every message that states the rule.
+export const SLUG_RULE = 'lowercase-kebab-case (a-z, 0-9, hyphens)';
+export const slugMessage = (slug: string): string => `slug must be ${SLUG_RULE}: '${slug}'`;
 
 export function assertSlug(slug: string | undefined): string {
   if (slug === undefined || !SLUG.test(slug)) {
-    throw new SiteError(`slug must be lowercase-kebab-case (a-z, 0-9, hyphens): '${slug ?? ''}'`, { code: EXIT.usage });
+    throw new SiteError(slugMessage(slug ?? ''), { code: EXIT.usage });
   }
   return slug;
 }

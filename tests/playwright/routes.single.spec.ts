@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/test.ts';
 import { sitemapUrls } from '../../src/lib/sitemap.ts';
 
 // Route-level responses: every sitemap page, plus the endpoint and error routes

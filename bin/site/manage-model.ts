@@ -1,15 +1,18 @@
 // site manage's state: writeup rows, staged edits, and Site tab status. Nothing here draws or reads keys.
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { GREEN, RED, RESET, YELLOW } from './tui.ts';
-import { DEV_PORT, isListening } from './dev-server.ts';
+import type { Note, Tone } from './tui.ts';
+import { headStatus, servingDevServer, type DevLock } from './dev-server.ts';
+import { repoState } from './git.ts';
 import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { spawnResult } from '../lib/run.ts';
-import { WriteupError, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
+import { SECURITY_FILE, expiryProblem, parseFields, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
+import { WriteupError, byFeaturedOrder, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
-import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { SLUG, SiteError, createOutput } from './cli.ts';
+import { SLUG, SiteError, createOutput, slugMessage } from './cli.ts';
+import type { CommandName } from './types.ts';
+import type { MiseTask } from '../lib/mise.ts';
 import { checkContent } from '../content-sync/sync.ts';
 import { newWriteup } from './authoring.ts';
 import { collectionFields, type FieldSpec, type FieldType } from '../../src/lib/content-contract.ts';
@@ -17,6 +20,52 @@ import { errorMessage } from '../../src/lib/error-message.ts';
 import { fingerprint } from '../lib/writeups/receipt.ts';
 
 export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
+
+// The tabs in order; the number key for each is its position.
+export const TABS = [
+  { name: 'writeups', label: 'Writeups' },
+  { name: 'site', label: 'Site' },
+] as const;
+export type Tab = (typeof TABS)[number]['name'];
+
+// How a session ends, as the terminal is handed back.
+export const OUTCOME = {
+  cancelled: 'cancelled · nothing written',
+  discarded: 'discarded · nothing written',
+  exited: 'exited',
+  unchanged: 'no changes · nothing written',
+} as const;
+
+// The Site tab's actions. A command runs on the lent terminal: `site` is this checkout's own CLI.
+export interface SiteAction {
+  key: string;
+  label: string | ((status: SiteStatus) => string);
+  command: 'dev-server' | readonly ['site', CommandName] | readonly ['mise', 'run', string];
+  reloads?: true;
+}
+
+export const SITE_ACTIONS: readonly SiteAction[] = [
+  { key: 'd', label: (status) => `${status.devServer ? 'Stop' : 'Start'} Dev Server`, command: 'dev-server' },
+  { key: 'h', label: 'Status', command: ['site', 'status'] },
+  { key: 'v', label: 'Validate', command: ['site', 'validate'] },
+  { key: 'g', label: 'Run Gates', command: ['mise', 'run', 'check'] },
+  { key: 'b', label: 'Build Site', command: ['mise', 'run', 'build'] },
+  { key: 't', label: 'Run Tests', command: ['mise', 'run', 'browser:e2e'] },
+  // Publishing changes the writeups, so it reloads them.
+  { key: 'p', label: 'Publish', command: ['site', 'publish'], reloads: true },
+];
+
+export type CommandSummaries = Readonly<Record<CommandName, { summary: string }>>;
+
+// Each action's description is its command's own: a site command's summary, a mise task's description.
+export function describeActions(commands: CommandSummaries, tasks: readonly MiseTask[]): Map<string, string> {
+  const describe = ({ command }: SiteAction): string => {
+    if (command === 'dev-server') return "starts or stops Astro's dev server in the background";
+    if (command[0] === 'site') return commands[command[1]].summary;
+    return tasks.find((task) => task.name === command[2])?.description ?? '';
+  };
+  return new Map(SITE_ACTIONS.map((action) => [action.key, describe(action)]));
+}
 
 // The writeup snapshot, or a load failure the TUI shows instead of crashing.
 function loadSnapshot(): WriteupDashboard {
@@ -69,20 +118,20 @@ export interface Item {
   [field: string]: unknown;
 }
 
-type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
-export type Tab = 'writeups' | 'site';
+export type Mode = 'list' | 'move' | 'detail' | 'edit' | 'new' | 'confirm-quit' | 'confirm-reload';
 
 export interface SiteStatus {
-  devServerOpen: boolean;
+  devServer: DevLock | null;
   gitBranch: string;
   gitChanges: number;
   gitAheadBehind: string;
   commitHash: string;
   commitSubject: string;
   commitAge: string;
-  distStatus: string;
-  securityStatus: string;
-  liveCode: string;
+  build: Note;
+  security: Note;
+  // The live site's HEAD status, or null when nothing answered.
+  live: { code: number | null; tone: Tone };
   loadedAt: string;
 }
 
@@ -95,13 +144,15 @@ export interface Model {
   field: number;
   input: string;
   inputCursor: number;
-  flash: string;
+  flash: Note | null;
   created: string[];
   issues: Map<string, string[]>;
   origFeatured: string[];
   origPublished: Map<string, boolean>;
   siteStatus: SiteStatus | null;
   actionCursor: number;
+  // Each Site action's description, by key (describeActions).
+  descriptions: ReadonlyMap<string, string>;
   sourceFingerprint: string;
 }
 
@@ -135,40 +186,48 @@ function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: R
   };
 }
 
-// Trimmed stdout of a command, or null when it fails.
-function probe(command: string, args: string[]): string | null {
-  const result = spawnResult(command, args, { cwd: siteRoot });
-  return result.code === 0 ? result.stdout.trim() : null;
-}
-
-function builtStatus(distPath: string): string {
+function builtStatus(distPath: string | null): Note {
+  if (!distPath) return { tone: 'muted', text: 'not built' };
   try {
-    return `Present (built ${statSync(distPath).mtime.toISOString().slice(0, 16).replace('T', ' ')})`;
+    return { tone: 'ok', text: `Present (built ${statSync(distPath).mtime.toISOString().slice(0, 16).replace('T', ' ')})` };
   } catch {
-    return 'Present';
+    return { tone: 'ok', text: 'Present' };
   }
 }
 
-export function loadSiteStatus(): SiteStatus {
-  const branch = probe('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
-  const changes = branch === null ? null : probe('git', ['status', '--porcelain']);
-  const [commitHash = '', commitSubject = '', commitAge = ''] = (probe('git', ['log', '-1', '--format=%h%x09%s%x09%cr']) ?? '').split('\t');
-  const counts = probe('git', ['rev-list', '--left-right', '--count', 'HEAD...@{u}']);
-  const [ahead, behind, ...extra] = (counts ?? '').split(/\s+/);
-  const security = probe(process.execPath, ['tests/audits/check-security-txt.ts']);
-  const distPath = resolveBuiltDir(siteRoot);
+// The checks-security-txt gate's signature and expiry checks, as one line.
+// Any failure, gpg missing included, is the line the tab shows.
+function securityStatus(): Note {
+  try {
+    const verified = verifySecuritySignature(SECURITY_FILE);
+    if (verified.code !== 0 || !/\b(GOODSIG|VALIDSIG)\b/.test(verified.stdout)) return { tone: 'error', text: 'signature invalid or missing' };
+    const { Expires = '' } = parseFields(stripSignature(readFileSync(SECURITY_FILE, 'utf8')));
+    const problem = expiryProblem(Expires);
+    if (problem) return { tone: 'error', text: problem };
+    const days = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
+    return { tone: 'ok', text: `signed, expires in ${days}d` };
+  } catch (error) {
+    return { tone: 'error', text: errorMessage(error) };
+  }
+}
 
+export async function loadSiteStatus(): Promise<SiteStatus> {
+  // The network and git probes run while gpg verifies.
+  const pending = Promise.all([servingDevServer(siteRoot), repoState(siteRoot), headStatus(SITE_ORIGIN, 2_000)]);
+  const security = securityStatus();
+  const [devServer, repo, liveCode] = await pending;
+  const upstream = `origin/${DEFAULT_BRANCH}`;
   return {
-    devServerOpen: isListening(DEV_PORT),
-    gitBranch: branch ?? 'unknown',
-    gitChanges: changes ? changes.split('\n').length : 0,
-    gitAheadBehind: counts === null ? 'no upstream' : ahead && behind && extra.length === 0 ? `${ahead} ahead, ${behind} behind` : '',
-    commitHash,
-    commitSubject,
-    commitAge,
-    distStatus: distPath ? builtStatus(distPath) : 'not built',
-    securityStatus: security === null ? 'signature invalid or missing' : (security.split('\n').at(-1) ?? '').replace(/^ok\s+/, '').trim(),
-    liveCode: probe('curl', ['-s', '-o', '/dev/null', '-m', '2', '-w', '%{http_code}', SITE_ORIGIN]) ?? '',
+    devServer,
+    gitBranch: repo.branch ?? 'detached HEAD',
+    gitChanges: repo.changes,
+    gitAheadBehind: repo.ahead === null ? `${upstream} unknown` : `${repo.ahead} ahead, ${repo.behind} behind ${upstream}`,
+    commitHash: repo.commit?.hash ?? '',
+    commitSubject: repo.commit?.subject ?? '',
+    commitAge: repo.commit?.age ?? '',
+    build: builtStatus(resolveBuiltDir(siteRoot)),
+    security,
+    live: { code: liveCode, tone: liveCode !== null && liveCode < 400 ? 'ok' : 'error' },
     loadedAt: new Date().toTimeString().slice(0, 8),
   };
 }
@@ -177,12 +236,7 @@ export async function load(): Promise<Model> {
   const loaded = loadSnapshot();
   const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
-  const featured = summaries
-    .filter((w) => w.featured)
-    .sort(
-      (a, b) =>
-        (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || a.slug.localeCompare(b.slug),
-    );
+  const featured = summaries.filter((w) => w.featured).toSorted(byFeaturedOrder);
   const rest = summaries
     .filter((w) => !w.featured)
     .sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
@@ -199,13 +253,14 @@ export async function load(): Promise<Model> {
     field: 0,
     input: '',
     inputCursor: 0,
-    flash: gate.error ? `${RED}gate issues unavailable: ${gate.error}${RESET}` : '',
+    flash: gate.error ? { tone: 'error', text: `gate issues unavailable: ${gate.error}` } : null,
     created: [],
     issues: gate.issues,
     origFeatured: featured.map((w) => w.slug),
     origPublished: new Map(items.map((i) => [i.slug, i.published])),
     siteStatus: null,
     actionCursor: 0,
+    descriptions: new Map(),
     sourceFingerprint: loaded.sourceFingerprint,
   };
 }
@@ -215,14 +270,15 @@ export async function reload(model: Model): Promise<void> {
   const oldMode = model.mode;
   const oldTab = model.tab;
   const oldActionCursor = model.actionCursor;
+  const { descriptions } = model;
   const next = await load();
-  Object.assign(model, next);
+  Object.assign(model, next, { descriptions });
   model.cursor = Math.min(model.items.length, oldCursor);
   model.mode = oldMode === 'confirm-reload' ? 'list' : oldMode;
   model.tab = oldTab;
   model.actionCursor = oldActionCursor;
-  if (oldTab === 'site') model.siteStatus = loadSiteStatus();
-  model.flash = next.flash || `${GREEN}reloaded writeups and validation status from disk${RESET}`;
+  if (oldTab === 'site') model.siteStatus = await loadSiteStatus();
+  model.flash = next.flash ?? { tone: 'ok', text: 'reloaded writeups and validation status from disk' };
 }
 
 export function fieldValue(item: Item, field: Field): unknown {
@@ -309,17 +365,17 @@ export function togglePublished(model: Model): void {
 
 export async function createWriteup(model: Model, slug: string): Promise<boolean> {
   if (!SLUG.test(slug)) {
-    model.flash = `${RED}slug must be lowercase-kebab-case: '${slug}'${RESET}`;
+    model.flash = { tone: 'error', text: slugMessage(slug) };
     return false;
   }
   if (model.items.some((i) => i.slug === slug)) {
-    model.flash = `${RED}writeup already exists: ${slug}${RESET}`;
+    model.flash = { tone: 'error', text: `writeup already exists: ${slug}` };
     return false;
   }
   try {
     await newWriteup({ slug, out: createOutput({ quiet: true }) });
   } catch (error) {
-    model.flash = `${RED}site new failed: ${errorMessage(error)}${RESET}`;
+    model.flash = { tone: 'error', text: `site new failed: ${errorMessage(error)}` };
     return false;
   }
   // Pull the scaffold's real frontmatter so the detail view edits the truth.
@@ -331,7 +387,10 @@ export async function createWriteup(model: Model, slug: string): Promise<boolean
     if (summary && fingerprint(next.writeups.filter((w) => w.slug !== slug)) === model.sourceFingerprint) {
       model.sourceFingerprint = next.sourceFingerprint;
     }
-  } catch {}
+  } catch (error) {
+    // An unreadable vault leaves the row the scaffold's defaults.
+    if (!(error instanceof WriteupError)) throw error;
+  }
   const contractFields = collectionFields('writeups');
   const item = toItem(summary ?? { slug, title: slug, published: false }, contractFields);
   model.items.push(item);
@@ -341,8 +400,8 @@ export async function createWriteup(model: Model, slug: string): Promise<boolean
   const gate = await gateIssues(slug);
   model.issues.set(slug, gate.issues.get(slug) ?? []);
   model.flash = gate.error
-    ? `${YELLOW}created ${WRITEUPS_FOLDER}/${slug}/; gate issues unavailable: ${gate.error}${RESET}`
-    : `${GREEN}created ${WRITEUPS_FOLDER}/${slug}/ · fill in the frontmatter${RESET}`;
+    ? { tone: 'warn', text: `created ${WRITEUPS_FOLDER}/${slug}/; gate issues unavailable: ${gate.error}` }
+    : { tone: 'ok', text: `created ${WRITEUPS_FOLDER}/${slug}/ · fill in the frontmatter` };
   return true;
 }
 

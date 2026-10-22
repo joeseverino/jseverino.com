@@ -9,7 +9,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
-import { walkFiles } from '../src/lib/walk.ts';
 import { cli } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 
@@ -20,47 +19,48 @@ function run(command: string, args: readonly string[], cwd: string, extraEnv: No
   const { code } = spawnResult(command, args, {
     cwd,
     stdio: 'inherit',
-    env: { ASTRO_TELEMETRY_DISABLED: '1', ...extraEnv },
+    env: extraEnv,
   });
   if (code !== 0) throw new Error(`${command} ${args.join(' ')} exited ${code}`);
 }
 
 // Sitemap dates, the site key, and Astro's content hash in bundled file names vary without source changes.
-const HASHED_BUNDLE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}\.(js|css)\b/g;
-const HASHED_IMAGE = /(\/_astro\/[^"'\s)]*?)\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)\b/g;
+// Each hash suffix is matched in a reference (after an /_astro/ path) and at the end of a file name.
+const HASHES = [String.raw`\.[A-Za-z0-9_-]{8}\.(js|css)`, String.raw`\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)`];
+const HASHED_REFS = HASHES.map((hash) => new RegExp(String.raw`(\/_astro\/[^"'\s)]*?)${hash}\b`, 'g'));
+const HASHED_NAMES = HASHES.map((hash) => new RegExp(`${hash}$`));
 
 function normalize(text: string): string {
-  return text
-    .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
-    .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"')
-    .replace(HASHED_BUNDLE, '$1.HASH.$2')
-    .replace(HASHED_IMAGE, '$1.HASH.$2');
-}
-
-const normalizeName = (name: string): string =>
-  name.replace(/\.[A-Za-z0-9_-]{8}\.(js|css)$/, '.HASH.$1').replace(/\.[A-Za-z0-9_-]{8}_[A-Za-z0-9]+\.(avif|webp|jpg|png)$/, '.HASH.$1');
-
-function collect(dir: string): Map<string, string> {
-  return new Map(
-    walkFiles(dir, { filter: (file) => TEXT_EXT.test(file) })
-      .map((file) => [normalizeName(path.relative(dir, file)), normalize(fs.readFileSync(file, 'utf8'))]),
+  return HASHED_REFS.reduce(
+    (normalized, ref) => normalized.replace(ref, '$1.HASH.$2'),
+    text
+      .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
+      .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"'),
   );
 }
 
-function firstDivergence(a: string, b: string) {
-  let i = 0;
-  while (i < Math.min(a.length, b.length) && a[i] === b[i]) i += 1;
-  const window = 70;
-  return {
-    at: i,
-    base: a.slice(Math.max(0, i - 25), i + window),
-    curr: b.slice(Math.max(0, i - 25), i + window),
-  };
+const normalizeName = (name: string): string => HASHED_NAMES.reduce((normalized, hash) => normalized.replace(hash, '.HASH.$1'), name);
+
+function collect(dir: string): Map<string, string> {
+  return new Map(
+    fs.readdirSync(dir, { recursive: true, encoding: 'utf8' })
+      .filter((file) => TEXT_EXT.test(file))
+      .map((file) => [normalizeName(file), normalize(fs.readFileSync(path.join(dir, file), 'utf8'))]),
+  );
+}
+
+// Writes the normalized text of `files` from a tree under `dir`, so git can diff the two sides.
+function writeTree(dir: string, tree: ReadonlyMap<string, string>, files: readonly string[]): void {
+  for (const file of files) {
+    fs.mkdirSync(path.dirname(path.join(dir, file)), { recursive: true });
+    fs.writeFileSync(path.join(dir, file), tree.get(file) ?? '');
+  }
 }
 
 const buildStatic = (root: string): void => run(process.execPath, [path.join(root, 'bin/build-static.ts')], root);
 
-const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'jsev-diffbuild-'));
+using scratch = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'jsev-diffbuild-'));
+const worktree = path.join(scratch.path, 'baseline');
 const realNodeModules = fs.realpathSync(path.join(siteRoot, 'node_modules'));
 
 try {
@@ -85,13 +85,13 @@ try {
   if (onlyCurrent.length) console.log(`\nadded (${onlyCurrent.length}):\n  ${onlyCurrent.join('\n  ')}`);
 
   if (changed.length) {
-    console.log(`\nchanged (${changed.length}):`);
-    for (const f of changed) {
-      const d = firstDivergence(baseline.get(f) ?? '', current.get(f) ?? '');
-      console.log(`\n  ${f}  (first diff @ char ${d.at})`);
-      console.log(`    baseline: ${JSON.stringify(d.base)}`);
-      console.log(`    current : ${JSON.stringify(d.curr)}`);
-    }
+    console.log(`\nchanged (${changed.length}):\n  ${changed.join('\n  ')}\n`);
+    using sides = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'jsev-diffbuild-sides-'));
+    writeTree(path.join(sides.path, 'baseline'), baseline, changed);
+    writeTree(path.join(sides.path, 'current'), current, changed);
+    // Exit 1 means the trees differ, which `changed` already says.
+    const { code } = spawnResult('git', ['diff', '--no-index', 'baseline', 'current'], { cwd: sides.path, stdio: 'inherit' });
+    if (code !== 0 && code !== 1) throw new Error(`git diff --no-index exited ${code}`);
   }
 
   if (!onlyBaseline.length && !onlyCurrent.length && !changed.length) {
@@ -99,5 +99,4 @@ try {
   }
 } finally {
   spawnResult('git', ['worktree', 'remove', '--force', worktree], { cwd: siteRoot, stdio: 'ignore' });
-  fs.rmSync(worktree, { recursive: true, force: true });
 }

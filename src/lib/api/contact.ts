@@ -1,0 +1,107 @@
+// POST /api/contact (src/pages/api/contact.ts): verifies the Turnstile token and stores the submission in D1.
+
+import { CONTACT_PROPERTIES, CONTACT_RUNTIME, validateContactPayload } from './contact-contract.ts';
+import { SITE_ORIGIN } from '../site-config.ts';
+import type { D1Database } from './d1.ts';
+import { ownPageUrl, requestMeta } from './request-meta.ts';
+import { readRequestJson, requestMediaType } from './request-json.ts';
+import { verifyTurnstile } from './turnstile.ts';
+
+export interface ContactEnv {
+  DB: D1Database;
+  TURNSTILE_SECRET_KEY: string;
+}
+
+const json = (data: unknown, status = 200): Response => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
+
+function parseBrowser(ua: string): string {
+  if (/Edg(?:A|iOS)?\//.test(ua)) return 'Edge';
+  if (/OPR\/|Opera/.test(ua)) return 'Opera';
+  if (/Firefox\/|FxiOS\//.test(ua)) return 'Firefox';
+  if (/Chrome\/|CriOS\//.test(ua)) return 'Chrome';
+  if (/Safari\//.test(ua)) return 'Safari';
+  return 'Unknown';
+}
+
+function parseDevice(ua: string): string {
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/iPad/.test(ua)) return 'iPad';
+  if (/Android/.test(ua)) return 'Android';
+  if (/Macintosh|Mac OS X/.test(ua)) return 'Mac';
+  if (/Windows/.test(ua)) return 'Windows';
+  if (/Linux|X11/.test(ua)) return 'Linux';
+  return 'Unknown';
+}
+
+export async function submitContact(request: Request, env: ContactEnv): Promise<Response> {
+  if (requestMediaType(request) !== 'application/json') {
+    return json({ ok: false, error: 'Invalid request.' }, 415);
+  }
+
+  const payload = await readRequestJson(request, CONTACT_RUNTIME.maxBodyBytes);
+  if (!payload.ok) {
+    return json({ ok: false, error: payload.status === 413 ? 'Request is too large.' : 'Invalid request.' }, payload.status);
+  }
+
+  const validation = validateContactPayload(payload.value);
+  if (!validation.ok) {
+    if (validation.reason === 'missing' && validation.field === 'turnstileToken') {
+      return json({ ok: false, error: 'Please complete the verification challenge.' }, 400);
+    }
+    const error = {
+      missing: 'Please fill in your name, email, and message.',
+      too_short: 'One of the fields is too short.',
+      too_long: 'One of the fields is too long.',
+      email: 'Please enter a valid email address.',
+      uri: 'Invalid request.',
+      invalid: 'Invalid request.',
+    }[validation.reason];
+    return json({ ok: false, error }, 400);
+  }
+  const { name, email, message, company, sourceUrl: submittedSourceUrl, turnstileToken } = validation.value;
+
+  // Honeypot: bots fill the hidden "company" field. Pretend success, store nothing.
+  if (company !== '') return json({ ok: true });
+
+  const { ip, userAgent, country } = requestMeta(request, CONTACT_RUNTIME.maxUserAgentLength);
+
+  if (!(await verifyTurnstile(turnstileToken, ip, env.TURNSTILE_SECRET_KEY))) {
+    return json({ ok: false, error: 'Verification failed. Please try again.' }, 400);
+  }
+
+  const sourceUrl = ownPageUrl(SITE_ORIGIN, submittedSourceUrl, request.headers.get('Referer'))?.slice(0, CONTACT_PROPERTIES.sourceUrl.maxLength) ?? null;
+
+  try {
+    // Turnstile stops most bots; this caps what one IP can store.
+    // The cap is checked inside the INSERT, so concurrent requests cannot race past it.
+    const result = await env.DB.prepare(
+      `INSERT INTO contact_submissions
+         (name, email, message, ip_address, user_agent, browser, device, country, source_url)
+       SELECT * FROM (VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9))
+       WHERE ?4 IS NULL
+          OR (SELECT COUNT(*) FROM contact_submissions
+              WHERE ip_address = ?4 AND created_at > datetime('now', '-1 hour')) < ?10`,
+    )
+      .bind(
+        name,
+        email,
+        message,
+        ip || null,
+        userAgent || null,
+        parseBrowser(userAgent),
+        parseDevice(userAgent),
+        country || null,
+        sourceUrl,
+        CONTACT_RUNTIME.maxPerIpPerHour,
+      )
+      .run();
+    if (result.meta.changes === 0) {
+      return json({ ok: false, error: 'Too many messages from this network. Please try again later.' }, 429);
+    }
+  } catch (error) {
+    console.error('D1 contact persistence failed', error);
+    return json({ ok: false, error: 'Could not save your message. Please try again.' }, 500);
+  }
+
+  return json({ ok: true });
+}

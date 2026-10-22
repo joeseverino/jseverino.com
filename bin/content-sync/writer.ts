@@ -29,8 +29,8 @@ export function createWriter({ root }: { root: string }) {
       written.add(target);
     },
     // Runs once, after a complete pass: an aborted run deletes nothing.
-    async prune(roots: readonly string[]): Promise<void> {
-      removed.push(...(await pruneOrphans(roots, written)));
+    prune(roots: readonly string[]): void {
+      removed.push(...pruneOrphans(roots, written));
     },
     report(): SyncReport {
       return {

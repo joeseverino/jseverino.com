@@ -1,18 +1,18 @@
-// The CSP report endpoint (functions/api/csp-report.ts): both report formats, the noise filters, D1 persistence.
+// The CSP report endpoint (src/lib/api/csp-report.ts): both report formats, the noise filters, D1 persistence.
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { onRequestPost } from '../../functions/api/csp-report.ts';
+import { storeCspReports } from '../../src/lib/api/csp-report.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
-import type { CspReportRow } from '../../functions/lib/database.ts';
+import type { CspReportRow } from '../../src/lib/api/d1.ts';
 import { postRequest } from './helpers/requests.ts';
 
 const reportRequest = (body: unknown, contentType = 'application/csp-report', headers: Record<string, string> = {}): Request =>
   postRequest('https://jseverino.com/api/csp-report', body, { 'Content-Type': contentType, ...headers });
 
 function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
-  return onRequestPost({ request, env: { DB: db } } as Parameters<typeof onRequestPost>[0]);
+  return storeCspReports(request, db as Parameters<typeof storeCspReports>[1]);
 }
 
 const inserts = (db: ReturnType<typeof createD1Stub>) => db.queries.filter((entry) => /INSERT INTO csp_reports/.test(entry.query));

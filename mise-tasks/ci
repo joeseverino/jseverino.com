@@ -1,0 +1,8 @@
+#!/bin/sh
+#MISE description="Every gate the pipeline runs: check, then the browser suites"
+#MISE timeout="90m"
+
+status=0
+mise run check || status=1
+mise run browser || status=1
+exit "$status"

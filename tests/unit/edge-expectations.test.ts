@@ -1,12 +1,12 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../src/lib/csp.ts';
+import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
   cspFindings,
-  cspReportPath,
-  cspReportUri,
+  fileHeaders,
   hstsFindings,
   inlineHashFindings,
   staticHeaderFindings,
@@ -82,11 +82,11 @@ describe('inlineHashFindings', () => {
     assert.match(findings[0] ?? '', /does not carry the hash of an inline tag/);
   });
 
-  test('flags a page with no inline script or style, a missing policy, a marker, and a nonce attribute', async () => {
+  test('flags a page with no inline script or style, a missing policy, and a nonce other than the build marker', async () => {
     assert.equal((await inlineHashFindings('<html><body></body></html>', await policyFor(true))).length, 2);
     assert.ok((await inlineHashFindings(page, undefined)).length >= 2);
-    assert.ok((await inlineHashFindings(`${page}<!-- ${CSP_INLINE_MARKER} -->`, await policyFor(true))).some((finding) => /marker reached the response/.test(finding)));
-    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce attribute/.test(finding)));
+    assert.deepEqual(await inlineHashFindings(page.replace('<script>', `<script nonce="${CSP_INLINE_MARKER}">`), await policyFor(true)), []);
+    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)));
   });
 });
 
@@ -95,7 +95,7 @@ describe('header and cache predicates', () => {
     const findings = staticHeaderFindings({ 'x-content-type-options': 'sniff', 'access-control-allow-origin': '*' }).join(' | ');
     assert.match(findings, /x-content-type-options is sniff, expected nosniff/);
     assert.match(findings, /referrer-policy is <missing>/);
-    assert.match(findings, /permissions-policy does not deny the camera/);
+    assert.match(findings, /permissions-policy is <missing>/);
     assert.match(findings, /access-control-allow-origin leaks/);
   });
 
@@ -104,11 +104,24 @@ describe('header and cache predicates', () => {
     assert.equal(hstsFindings({}).length, 1);
   });
 
-  test('cacheRuleFindings separates fingerprinted from chrome assets', () => {
-    assert.deepEqual(cacheRuleFindings({ 'cache-control': 'public, max-age=31536000, immutable' }, { immutable: true }), []);
-    assert.deepEqual(cacheRuleFindings({ 'cache-control': 'public, max-age=3600, must-revalidate' }, { immutable: false }), []);
-    assert.ok(cacheRuleFindings({ 'cache-control': 'public, max-age=31536000, immutable' }, { immutable: false }).some((finding) => /immutable/.test(finding)));
-    assert.ok(cacheRuleFindings({ 'cache-control': 'max-age=60' }, { immutable: true }).length >= 1);
+  test('cacheRuleFindings holds an asset to the rule public/_headers gives its path', () => {
+    const immutable = fileHeaders('/_astro/a.js').set.get('cache-control') ?? '';
+    const revalidating = fileHeaders('/assets/icons/favicon.svg').set.get('cache-control') ?? '';
+    assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable }, '/_astro/a.js'), []);
+    assert.deepEqual(cacheRuleFindings({ 'cache-control': revalidating }, '/assets/icons/favicon.svg'), []);
+    assert.ok(cacheRuleFindings({ 'cache-control': immutable }, '/assets/icons/favicon.svg').some((finding) => /cache-control is/.test(finding)));
+    assert.ok(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js').some((finding) => /access-control-allow-origin leaks/.test(finding)));
+    assert.equal(cacheRuleFindings({}, '/about/').length, 1);
+  });
+
+  // Cloudflare merges every rule matching a path, so a broad immutable rule would pin the in-place chrome for a year.
+  test('public/_headers pins only write-once paths immutable', () => {
+    for (const pathname of ['/_astro/a.js', '/assets/fonts/inter/inter-variable-latin.woff2']) {
+      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
+    }
+    for (const pathname of ['/favicon.ico', '/assets/icons/favicon.svg', '/assets/brand/mark.svg', '/assets/og/og-default.jpg', '/assets/docs/joseph-severino-resume.pdf']) {
+      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
+    }
   });
 
   test('contactRefusalFindings accepts only the 400 verification refusal', () => {

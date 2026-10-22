@@ -1,0 +1,6 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["../.astro/types.d.ts", "."],
+  // tsconfig.worker.json compiles the Worker's routes under the Workers runtime types.
+  "exclude": ["generated/worker-configuration.d.ts", "pages/api", "integrations/sitedrift-route.ts"]
+}

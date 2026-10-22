@@ -1,0 +1,374 @@
+# The toolchain and every gate, declared once.
+#
+#   mise install        the pinned tools (versions here, checksums in mise.lock)
+#   mise run <task>     first installs the npm packages when package.json or
+#                       package-lock.json changed ([deps.npm]), then the task
+#   mise run fast       the static gates, collect-all
+#   mise run check      does my change work: the static gates, the production
+#                       build, then every gate on what it built
+#   mise run browser    the browser suites, one at a time
+#   mise run ci         every gate the pipeline runs
+#   mise run <gate>     one gate, e.g. `mise run checks:types`
+#   mise tasks          the list
+#
+# A gate is a task named <job>:<gate>: checks:* run before a build, built:*
+# against the build in dist/client/, browser:* in a browser. Each aggregate runs its
+# job by glob (`mise run -c 'checks:*'`), so a gate added here runs locally and
+# in CI with no second list to edit. `-c` keeps going past a failure and names
+# every gate that failed. Under `-c` a task whose dependency failed still
+# starts, so no built:* gate depends on the build: the aggregates run the build
+# first and the built:* gates only after it succeeded. A failing gate prints
+# its own fix. No gate declares `sources`: mise judges them by file times
+# alone, and a verdict also turns on the environment and on files no list would
+# name. A task whose body is more than one line is a file under mise-tasks/,
+# declared in its own #MISE header.
+#
+# Node is pinned here alone; checks:repo-policy holds engines.node and the
+# packageManager npm to it. npm packages come from package-lock.json;
+# node_modules/.bin is on every task's PATH.
+
+# The mise these tasks run on: the floor for every machine and the release CI
+# installs (.github/actions/setup). Renovate moves it after its release-age hold.
+min_version = "2026.10.17"
+
+[settings]
+# For [deps], mise's package installer.
+experimental = true
+# Every tool installs from mise.lock's URLs and checksums, which cover these
+# platforms: the Mac and the Linux CI runners.
+locked = true
+lockfile_platforms = ["macos-arm64", "linux-x64"]
+
+[settings.task]
+# Gates that run together print one after another, each whole and labeled,
+# so each gate's failures sit under its own name.
+output = "keep-order"
+
+# A clean install from the lockfile, run before any `mise run` or `mise exec`
+# while package.json or package-lock.json differs from the last install or
+# node_modules is missing. --no-audit: dependency review and Renovate's alerts
+# enforce advisories; an install would only print them. npm's output goes to
+# stderr, so a task whose stdout another program reads (`site --json`) still
+# prints only its own. CI installs in its setup action, and a job that holds a
+# secret installs nothing and runs its task with `mise run --no-deps`, so no
+# package install script sees the secret.
+[deps.npm]
+auto = true
+run = "npm ci --no-audit --no-fund >&2"
+
+[env]
+_.path = ["node_modules/.bin"]
+ASTRO_TELEMETRY_DISABLED = "1"
+# One cache root for every checkout and worktree of this repository: the
+# content sync's image masters under it, and Astro's encoded images in astro/.
+SITE_CACHE_DIR = "{{ xdg_cache_home }}/jseverino.com"
+ASTRO_CACHE_DIR = "{{ env.SITE_CACHE_DIR }}/astro"
+WRANGLER_SEND_METRICS = "false"
+
+[vars]
+# The engineering docs the docs gates read, as git pathspecs, so a gate reads
+# only tracked files and never a local or untracked copy.
+docs = "README.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+
+# `mise doctor project`: is this checkout ready to work in. Local only and
+# never a gate: CI has no gh login, and these describe the machine, not the
+# change.
+[doctor.checks.packages]
+description = "node_modules is installed from the current package.json and package-lock.json"
+run = "mise deps install npm --explain"
+hint = "Run `mise deps install npm --force`."
+
+[doctor.checks.gh]
+description = "gh is signed in, for site publish, site land and deploy:verify"
+run = "gh auth status"
+hint = "Run `gh auth login`."
+
+[doctor.checks.cache]
+description = "The cache root every checkout and worktree shares exists"
+run = "test -d \"$SITE_CACHE_DIR\""
+hint = "Run `mise exec -- sh -c 'mkdir -p \"$SITE_CACHE_DIR\"'`; the first build or content sync also creates it."
+
+[doctor.checks.browsers]
+description = "Playwright's Chromium, Firefox and WebKit are installed, for the browser suites"
+run = "node -e 'const fs = require(\"node:fs\"); const playwright = require(\"@playwright/test\"); process.exit([\"chromium\", \"firefox\", \"webkit\"].every((name) => fs.existsSync(playwright[name].executablePath())) ? 0 : 1)'"
+hint = "Run `mise exec -- playwright install chromium firefox webkit`."
+
+[tools]
+node = "24.22.1"
+"aqua:lycheeverse/lychee" = "0.24.2"
+"aqua:zizmorcore/zizmor" = "1.31.1"
+"github:jdx/jactionlint" = "2.3.0"
+"aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:astral-sh/uv" = "0.13.5"
+
+# ------------------------------------------------------------------ checks
+
+[tasks.checks]
+description = "CI job build, first phase: every static gate, collect-all"
+alias = "fast"
+run = "mise run -c 'checks:*'"
+
+[tasks."checks:contracts"]
+description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source"
+run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: make:icons --check"
+
+[tasks."checks:drafts"]
+description = "No document under src/content is `published: false`"
+run = "node tests/audits/check-no-drafts.ts"
+
+[tasks."checks:security-txt"]
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
+run = "node tests/audits/check-security-txt.ts"
+
+[tasks."checks:astro"]
+description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
+depends = ["sync:worker-types"]
+# astro sync and astro check both rewrite .astro/; never at once.
+wait_for = ["checks:types"]
+env = { NODE_OPTIONS = "--max-old-space-size=4096" }
+run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
+
+[tasks."checks:d1"]
+description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
+run = "node tests/audits/check-d1-parity.ts"
+
+[tasks."checks:unit"]
+description = "The node:test specs under tests/unit pass"
+run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
+
+[tasks."checks:docs"]
+description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
+run = "node tests/audits/check-docs.ts {{vars.docs}}"
+
+[tasks."checks:doc-links"]
+description = "Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves"
+run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
+
+[tasks."checks:css-lint"]
+description = "Stylelint passes over src/styles"
+run = "stylelint 'src/styles/**/*.css'"
+
+[tasks."checks:css-vars"]
+description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
+run = "node tests/audits/check-css.ts"
+
+[tasks."checks:repo-policy"]
+description = "Node and npm pins agree; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed"
+run = "node tests/audits/check-repository-policy.ts"
+
+[tasks."checks:workflows"]
+description = "zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings a `# zizmor: ignore[<audit>]` comment beside them accepts with a reason"
+# Offline: the online audits need a token and the network, and a gate gives the
+# same verdict on a laptop and in CI.
+run = "zizmor --offline --quiet .github"
+
+[tasks."checks:actionlint"]
+description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
+# The correctness profile is actionlint's checks; zizmor (checks:workflows)
+# owns the security audits.
+run = "jactionlint --profile correctness --no-hints"
+
+[tasks."checks:renovate"]
+description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
+# Pinned here and moved by .github/renovate.json's regex manager for this file. npm
+# prints only errors, so the deprecation warnings of Renovate's own
+# dependencies stay out of the gate's output. The exact pin is the gate on the
+# release, so the machine's npm release-age hold does not apply to this fetch.
+env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
+run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
+
+[tasks."checks:tasks"]
+description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"
+run = "mise tasks validate --errors-only"
+
+[tasks."checks:patch"]
+description = "No whitespace errors or conflict markers in the working tree"
+run = "git diff --check"
+
+# ------------------------------------------------------------------- build
+
+[tasks.build]
+description = "The build every deploy ships: astro build, then the CSP hashes"
+timeout = "10m"
+run = "node bin/build-static.ts"
+
+# ------------------------------------------------------------------- built
+
+[tasks.built]
+description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
+run = "mise run -c 'built:*'"
+
+[tasks."built:links"]
+description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
+# Root-relative and https://jseverino.com/ URLs both resolve against the static
+# build; a directory link needs its index.html, as the assets layer serves it.
+# The excluded paths have no file: the Worker routes (`run_worker_first` in
+# wrangler.jsonc) and Cloudflare's own /cdn-cgi/.
+run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
+
+[tasks."built:weight"]
+description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
+run = "node tests/audits/check-page-weight.ts"
+
+[tasks."built:headers"]
+description = "The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
+run = "node tests/audits/check-headers.ts"
+
+[tasks."built:seo"]
+description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
+run = "node tests/audits/check-seo.ts"
+
+# ----------------------------------------------------------------- browser
+# Each suite builds what it serves unless PREBUILT is set, which `mise run
+# browser` and the CI legs set after building once. Arguments after the task
+# name go to Playwright: `mise run browser:e2e --ui`,
+# `mise run browser:visual --update-snapshots`.
+
+[tasks."browser:e2e"]
+description = "The functional Playwright specs pass across Chromium, Firefox, and WebKit"
+timeout = "15m"
+run = "playwright test -c tests/playwright.config.ts"
+
+[tasks."browser:visual"]
+description = "Screenshots of the fixture build match the committed macOS Chromium baselines"
+# The baselines are macOS Chromium renders; any other platform renders fonts differently.
+skip_if = "test \"$(uname)\" != Darwin"
+timeout = "10m"
+run = "playwright test -c tests/playwright.visual.config.ts"
+
+[tasks."browser:edge"]
+description = "Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
+timeout = "5m"
+run = "playwright test -c tests/playwright.edge.config.ts"
+
+# ------------------------------------------------------------------- tools
+# Every other command. A task whose script takes arguments passes them through
+# untouched (`raw_args`), `--help` included: `mise run site validate`,
+# `mise run cloudflare plan --json`. A task whose output another program reads
+# runs `quiet` with `output = "interleave"`, so mise adds no line and no
+# task-name prefix to its stdout.
+
+[tasks.site]
+description = "The publishing workflow CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)"
+raw_args = true
+interactive = true
+quiet = true
+run = "node bin/site.ts"
+
+[tasks.dev]
+description = "Start the local dev server"
+depends = ["sync:worker-types"]
+raw_args = true
+interactive = true
+run = "astro dev"
+
+[tasks."sync:content"]
+description = "Pull published content from the vault into the repo"
+raw_args = true
+run = "node bin/sync-content.ts"
+
+[tasks."sync:contract"]
+description = "Regenerate typed content-contract projections"
+raw_args = true
+run = "node bin/sync-content-contract.ts"
+
+[tasks."sync:contact-openapi"]
+description = "Regenerate contact OpenAPI from its request contract"
+raw_args = true
+run = "node bin/sync-contact-openapi.ts"
+
+# Gitignored, so every task that type-checks or resolves `Env` depends on this
+# one, as Cloudflare directs: `wrangler types` before any task that relies on
+# TypeScript. Warnings and errors only, so a gate run does not print the Env.
+[tasks."sync:worker-types"]
+description = "Write the Worker's `Env` and runtime types from wrangler.jsonc into src/generated/worker-configuration.d.ts"
+env = { WRANGLER_LOG = "warn" }
+run = "wrangler types src/generated/worker-configuration.d.ts"
+
+[tasks."sync:tokens"]
+description = "Pull design and brand tokens from `severino-brand` into the repo"
+raw_args = true
+run = "node bin/sync-tokens.ts"
+
+[tasks."diff:build"]
+description = "Build HEAD and the working tree; show what changed in the shipped site"
+raw_args = true
+run = "node bin/diff-build.ts"
+
+[tasks."deploy:verify"]
+description = "After the merge deploys, from a residential IP: verify remote CI and the live production deploy"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/deploy-verify.ts"
+
+[tasks."publish:dist"]
+description = "Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)"
+raw_args = true
+run = "node bin/publish-dist.ts"
+
+[tasks.cloudflare]
+description = "`check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/cloudflare.ts"
+
+[tasks.github]
+description = "`check` diffs the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)"
+raw_args = true
+quiet = true
+output = "interleave"
+run = "node bin/github.ts"
+
+[tasks."preview:wrap"]
+description = "Turn the finished build into a branch preview: the sitedrift review viewer over every page, then the CSP filled again to cover it (the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH)"
+run = "node bin/wrap-preview.ts"
+
+[tasks.preview]
+description = "Serve the build through the local Worker runtime: _headers, redirects, the 404 page and the API routes, as production serves them"
+raw_args = true
+run = "astro preview"
+
+[tasks.lighthouse]
+description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
+run = "node bin/lighthouse-check.ts"
+
+[tasks."make:icons"]
+description = "Regenerate favicons and brand marks"
+raw_args = true
+run = "node bin/make-icons.ts"
+
+[tasks."make:og"]
+description = "Regenerate the Open Graph card"
+run = "node bin/make-og-image.ts"
+
+[tasks."make:embed"]
+description = "Regenerate `public/embed/bundle.css`, the embeddable stylesheet (brand vars, base.css, inlined Inter)"
+raw_args = true
+run = "node bin/make-embed-bundle.ts"
+
+[tasks."make:social"]
+description = "Regenerate the GitHub social preview"
+run = "node bin/make-github-social.ts"
+
+[tasks."make:content-index"]
+description = "Emit the published-writeup JSON projection consumed by Severino HQ"
+run = "node bin/make-content-index.ts"
+
+[tasks."snapshot:github"]
+description = "Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads for repos"
+run = "node bin/snapshot-github.ts"
+
+[tasks."snapshot:software"]
+description = "Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails without writing if any lookup fails"
+run = "node bin/snapshot-software.ts"
+
+[tasks."sign:security"]
+description = "Re-sign `public/.well-known/security.txt`"
+interactive = true
+run = "node bin/sign-security.ts"
+
+[tasks."clean:generated"]
+description = "Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches under SITE_CACHE_DIR and synced content are left alone"
+run = "rm -rf dist .astro node_modules/.vite"

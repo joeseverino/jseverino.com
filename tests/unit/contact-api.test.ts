@@ -3,11 +3,11 @@
 
 import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { onRequestPost } from '../../functions/api/contact.ts';
-import { TURNSTILE_TEST_SECRETS, siteverifyAccepts } from '../../functions/lib/turnstile.ts';
+import { submitContact, type ContactEnv } from '../../src/lib/api/contact.ts';
+import { TURNSTILE_TEST_SECRETS, siteverifyAccepts } from '../../src/lib/api/turnstile.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
-import { CONTACT_RUNTIME } from '../../functions/lib/contact-contract.ts';
+import { CONTACT_RUNTIME } from '../../src/lib/api/contact-contract.ts';
 import { postRequest } from './helpers/requests.ts';
 
 const realFetch = globalThis.fetch;
@@ -43,7 +43,7 @@ const contactRequest = (body: unknown, headers: Record<string, string> = {}): Re
 
 function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
   const env = { DB: db, TURNSTILE_SECRET_KEY: 'secret-key' };
-  return onRequestPost({ request, env } as Parameters<typeof onRequestPost>[0]);
+  return submitContact(request, env as ContactEnv);
 }
 
 describe('request validation', () => {
@@ -221,7 +221,7 @@ describe('turnstile verification', () => {
     assert.equal(response.status, 400);
   });
 
-  test('the test secret from .env.example accepts siteverify\'s test hostname and action; production does not', () => {
+  test('Turnstile\'s test secret accepts siteverify\'s test hostname and action; production does not', () => {
     const test = { success: true, hostname: 'localhost', action: 'test' };
     const [passing] = TURNSTILE_TEST_SECRETS;
     assert.equal(siteverifyAccepts(test, passing ?? ''), true);

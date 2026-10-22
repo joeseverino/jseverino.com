@@ -11,13 +11,13 @@ import {
   collectAssetRefs,
   createMasterEncoder,
   defaultConcurrency,
-  mapLimit,
   normalizeLocalAssetRef,
   referenceIssues,
   resolveAssetSource,
   STRAY_REFERENCE,
   strayReferences,
 } from './assets.ts';
+import { mapLimit } from '../lib/map-limit.ts';
 import { compileIssues } from './compile.ts';
 import { loadGrammar, renderDocumentRows, type Grammar } from './documents.ts';
 import { buildEducation } from './education.ts';
@@ -41,7 +41,6 @@ export interface SyncOptions {
   includeDrafts?: boolean;
   snapshotDir?: string;
   educationSource: EducationSource;
-  concurrency?: number;
   date?: string;
 }
 
@@ -87,7 +86,6 @@ function snapshotReader(contentDir: string): (slug: string) => ParsedFrontmatter
   };
 }
 
-
 export async function syncContent({
   layout,
   vaultRoot,
@@ -97,7 +95,6 @@ export async function syncContent({
   includeDrafts = false,
   snapshotDir = layout.content,
   educationSource,
-  concurrency = defaultConcurrency(),
   date = isoDate(),
 }: SyncOptions): Promise<SyncResult> {
   const writer = createWriter({ root: layout.root });
@@ -183,8 +180,8 @@ export async function syncContent({
   }
 
   const master = createMasterEncoder(cacheDir);
-  await mapLimit(assetJobs, concurrency, async ({ source, target }) => writer.write(target, await master(source)));
-  await writer.prune([pagesDir, writeupsDir]);
+  await mapLimit(assetJobs, defaultConcurrency(), async ({ source, target }) => writer.write(target, await master(source)));
+  writer.prune([pagesDir, writeupsDir]);
 
   return {
     ...writer.report(),
@@ -219,10 +216,6 @@ function writeupIssues(data: FrontmatterData, { draft, catalog }: { draft: boole
   return issues;
 }
 
-// Every reference and contract problem across the vault's public documents,
-// without writing. slug narrows to one writeup; draft includes unpublished
-// writeups and tolerates the publish-only rules.
-/** @param {{ vaultRoot: string, slug?: string, draft?: boolean }} options */
 export interface CheckedDocument {
   collection: 'writeups' | 'pages';
   slug: string;
@@ -236,6 +229,9 @@ export interface CheckOptions {
   draft?: boolean | undefined;
 }
 
+// Every reference and contract problem across the vault's public documents,
+// without writing. slug narrows to one writeup; draft includes unpublished
+// writeups and tolerates the publish-only rules.
 export async function checkContent({ vaultRoot, slug, draft = false }: CheckOptions): Promise<{ ok: boolean; documents: CheckedDocument[] }> {
   const vault = createVaultSource({ vaultRoot, includeDrafts: true });
   const catalog = new Set(

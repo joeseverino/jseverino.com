@@ -1,21 +1,20 @@
 # jseverino.com
 
 [![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
-[![codeql](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
 [![scorecard](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
 
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./docs/diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. GitHub Actions builds and gates it, deploys it as a Cloudflare Worker, and commits the shipped site to the dist branch](./docs/diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 This repository is the public build source. The vault stays private: a sync
 step projects only published content through a declared contract, and
-Cloudflare builds from what is committed here, with no access to the vault and
-no secrets.
+GitHub Actions builds from what is committed here, with no access to the vault,
+then deploys the gated build.
 
 ## Stack
 
@@ -25,36 +24,37 @@ no secrets.
 | Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
-| Edge | static pages on Cloudflare Pages under a build-time hash CSP; Pages Functions only for the contact form and CSP reporting |
+| Edge | one Cloudflare Worker with static assets: every page prerendered under a build-time hash CSP, the Worker started only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
-| Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `npm run cloudflare:apply` |
-| Previews | Behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
+| Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
+| Previews | Worker versions on workers.dev behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
-| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Cloudflare runtime through `wrangler pages dev`, and source and build audits |
+| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, and source and build audits |
 
 ## Security
 
 - No origin server, database-backed pages, admin panel, or accounts. The
-  dynamic surface is a handful of small Functions.
+  dynamic surface is two small API routes in one Worker.
 - A hash-based CSP computed at build time: the build hashes the one inline
   script and stylesheet and fails on any other inline code or foreign script, so
   markup that arrives through content never runs. Pages are plain static assets
-  and never invoke a Function.
+  and never start the Worker.
 - Contact submissions are verified with Turnstile (hostname and action), checked
   against a contract, and rate-limited inside the D1 statement.
-- Every deployment is verified by the default branch's code: headers, inline-code
+- CI builds once, gates that build, and deploys those bytes. Each version is
+  verified at its own preview URL before it takes traffic: headers, inline-code
   hash coverage, cache rules, and every sitemap route.
 
 The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
-[`SECURITY.md`](./SECURITY.md).
+[`SECURITY.md`](./.github/SECURITY.md).
 
 ## Performance
 
 PageSpeed Insights scored the homepage 100 in every category on desktop and
-99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces it: every page
-has a weight budget for HTML, CSS, and JavaScript, images ship as AVIF and WebP
-with fixed dimensions, and a weekly Lighthouse run fails below 95 on
-accessibility.
+99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces them: every
+page has a weight budget for HTML, CSS, and JavaScript, every shipped image one
+of its own, images ship as AVIF and WebP with fixed dimensions, and a weekly
+Lighthouse run fails below 95 on accessibility.
 
 ## Verify it yourself
 
@@ -72,21 +72,20 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 - [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
   A+, 145 / 100, 12 of 12 tests on 2026-10-03.
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
-  and [CodeQL](https://github.com/joeseverino/jseverino.com/actions/workflows/codeql.yml)
-  publish their results to code scanning.
+  and CodeQL's default setup publish their results to code scanning, and a
+  pull request cannot merge past a high-severity CodeQL alert.
 - Every commit on `main` is signed and every change lands through a
   squash-merged pull request.
-- Each release carries the build output and its CycloneDX SBOM with Sigstore
-  attestations: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
+- Each release carries the exact build production served and its CycloneDX
+  SBOM, with the Sigstore attestations the deploy issued: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
   scanner result with its date and what was reviewed.
 
 ## Repository
 
 ```text
-src/          Astro pages, components, and the synced content
-functions/    Pages Functions: contact, CSP reports, preview review
-public/       static assets, _headers, _routes.json, _redirects
+src/          Astro pages, the API routes, components, and the synced content
+public/       static assets, _headers, _redirects
 cloudflare/   zone settings and the D1 schema, as code
 contracts/    the content and contact contracts, and the generated OpenAPI
 bin/          the site CLI, the content sync, generators, and checks
@@ -97,10 +96,10 @@ docs/         architecture, operations, and guides
 ## Working on it
 
 ```sh
-npm ci
-npm run dev              # local site
-npm run diagnose         # the local gate: every audit, the build, the browser suites
-npm run site -- --help   # scaffold, validate, publish, and verify writeups
+mise install             # the pinned tools
+mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
+mise run check           # the gate: every static check, the build, every check on the build
+mise run site --help     # scaffold, validate, publish, and verify writeups
 ```
 
 Content ships through the repo's own `site` CLI. `site publish` opens a pull
@@ -117,18 +116,18 @@ and gate issues on one screen.
 | [Architecture](./docs/Architecture.md) | build, content, rendering, images, and the edge |
 | [Development](./docs/Development.md) | setup, code rules, gates, test policy, CI |
 | [Security](./docs/Security.md) | the security design end to end |
-| [Cloudflare](./docs/Cloudflare.md) | what runs where, platform limits, `cloudflare:check` and `apply` |
+| [Cloudflare](./docs/Cloudflare.md) | what runs where, platform limits, `mise run cloudflare check` and `apply` |
 | [Dist Branch](./docs/Dist-Branch.md) | the built site, one commit per deploy, checked against the live site |
-| [GitHub Settings](./docs/GitHub-Settings.md) | merge rules, security features, and the `main` ruleset, `github:check` and `apply` |
+| [GitHub Settings](./docs/GitHub-Settings.md) | merge rules, security features, and the `main` ruleset, `mise run github check` and `apply` |
 | [Vault Workflow](./docs/Vault-Workflow.md) | the private-to-public sync contract |
 | [Site CLI](./docs/Site-CLI.md) | publishing and the `site manage` TUI |
 | [Authoring Guide](./docs/Authoring-Guide.md) | the Markdown extensions |
 | [Deployment Preview Review](./docs/Deployment-Preview-Review.md) | sitedrift on preview deployments |
 | [SEO](./docs/SEO.md) · [Accessibility](./docs/Accessibility.md) | metadata, structured data, and accessibility |
 | [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
-| [Commands](./docs/Commands.md) | every npm script |
+| [Commands](./docs/Commands.md) | every mise task |
 | [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
-| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and testing an upgrade |
+| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and reviewing an update |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |
 | [WordPress to Astro](./docs/WordPress-To-Astro-Migration.md) | why the site left WordPress, with measurements |
 

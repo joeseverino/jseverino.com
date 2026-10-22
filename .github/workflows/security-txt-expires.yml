@@ -1,5 +1,6 @@
 name: security.txt expires
 
+# Fails from 60 days before Expires; GitHub emails the failed scheduled run.
 on:
   schedule:
     # First of every month at 09:00 UTC.
@@ -13,65 +14,17 @@ jobs:
   check-expires:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    permissions:
-      contents: read
-      issues: write
+    env:
+      MISE_ENABLE_TOOLS: node
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup
+      - uses: $/.github/actions/setup
         with:
           install: 'false'
 
+      # The check imports no package, so nothing is installed for it.
       - name: Check security.txt Expires
-        id: check
-        run: node tests/audits/check-security-txt.ts
-
-      - name: Open or update issue
-        if: always() && steps.check.outputs.days_remaining != '' && fromJSON(steps.check.outputs.days_remaining) < 60
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        # Step outputs reach the script through the environment, never spliced
-        # into its source.
-        env:
-          DAYS_REMAINING: ${{ steps.check.outputs.days_remaining }}
-        with:
-          script: |
-            const days = Number(process.env.DAYS_REMAINING);
-            const title = 'security.txt Expires within 60 days: rotate signature';
-            const body = [
-              `\`public/.well-known/security.txt\` expires in **${days} days**.`,
-              '',
-              'Action required:',
-              '',
-              '1. Bump the `Expires:` field in `public/.well-known/security.txt`.',
-              '2. Run `npm run sign:security` to re-sign.',
-              '3. Run `npm run check:security` to verify.',
-              '4. Commit and push.',
-              '',
-              'This issue was opened automatically by `.github/workflows/security-txt-expires.yml`.',
-            ].join('\n');
-
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'security-txt-expires',
-            });
-            if (issues.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                body,
-                labels: ['security-txt-expires'],
-              });
-            } else {
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issues.data[0].number,
-                body,
-              });
-            }
+        run: mise run --no-deps checks:security-txt

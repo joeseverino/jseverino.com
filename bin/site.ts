@@ -96,11 +96,11 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site publish [--dry-run] [--full] [--from <ref>]',
     help: [
       `Preflight, then a fresh content/<date> branch from origin/${DEFAULT_BRANCH} in a temporary worktree (the`,
-      'checkout is never touched), the sync, the content diff, the fast gate, a',
+      'checkout is never touched), the sync, the content diff, mise run fast, a',
       'commit of exactly the files the sync declares, push, and the PR. It does not merge: site land does.',
       '',
       '  --dry-run      stop after the commit, print the summary and PR body, remove the worktree and branch',
-      '  --full         run the whole publish gate (build + post-build audits) instead of the fast gate',
+      '  --full         run mise run check (the build and the gates on it) instead of mise run fast',
       `  --from         cut the branch from this ref instead of origin/${DEFAULT_BRANCH}`,
     ].join('\n'),
     options: {
@@ -118,7 +118,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: [
       'Defaults to your most recent content PR. Reads the required checks from main\'s ruleset and waits',
       'until each has reported and passed on the PR head, squash-merges, waits for',
-      'the merge commit\'s Cloudflare Pages deployment, verifies each published or edited writeup on',
+      'the merge commit\'s production deploy, verifies each published or edited writeup on',
       'production (and that removed ones return 404), then runs hq sync if the hq CLI exists.',
       'Only a content/* PR into main is landed. An already-merged PR skips straight to the deploy wait.',
       '--timeout bounds the waits for checks and deploy, in minutes (default 30).',
@@ -158,18 +158,18 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   seo: define({
     summary: 'Preview a built page\'s search snippet and metadata',
     usage: 'site seo <page> [--result]',
-    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (npm run build:static).',
+    help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (mise run build).',
     options: { result: flag },
     positionals: [1, 1],
     run: async ({ values, positionals: [page], out }) => (await local()).seo({ page, result: values.result, out }),
   }),
   'draft-alt': define({
     summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
-    usage: 'site draft-alt <slug> [--apply]',
-    help: 'Needs ANTHROPIC_API_KEY. --apply writes the draft to the writeup\'s cover_alt.',
-    options: { apply: flag },
-    positionals: [1, 1],
-    run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, apply: values.apply, out }),
+    usage: 'site draft-alt <slug>|--all [--apply]',
+    help: 'Needs ANTHROPIC_API_KEY. --all drafts for every published writeup missing cover_alt. --apply writes each draft to its cover_alt.',
+    options: { all: flag, apply: flag },
+    positionals: [0, 1],
+    run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, all: values.all, apply: values.apply, out }),
   }),
   writeups: define({
     summary: 'List the vault\'s writeups with publish and featured state',
@@ -245,14 +245,14 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   contact: define({
     summary: 'Recent contact form submissions from D1 (redacted unless --pii)',
     usage: 'site contact [--limit <n>] [--pii]',
-    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii returns full names, emails, and messages and is written to the audit log.',
+    help: 'Needs CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID (op run). --pii returns full names, emails, and messages and is written to the audit log.',
     options: { limit: { type: 'string' }, pii: flag },
     run: async ({ values, out }) => (await siteOps()).contact({ limit: values.limit, pii: values.pii, out }),
   }),
   csp: define({
     summary: 'CSP violation reports from D1: recent rows, or counts by directive',
     usage: 'site csp [--count] [--limit <n>] [--directive <name>] [--pii]',
-    help: 'Needs CLOUDFLARE_API_TOKEN (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
+    help: 'Needs CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID (op run). --pii adds ip_address, user_agent, and raw_report and is written to the audit log.',
     options: {
       count: flag,
       limit: { type: 'string' },
@@ -271,7 +271,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   headers: define({
     summary: 'Check the live security headers on one path',
     usage: 'site headers [<path>]',
-    help: 'HEAD against the production origin (SITE_ORIGIN overrides), redirects not followed.',
+    help: 'HEAD against the production origin, redirects not followed.',
     positionals: [0, 1],
     run: async ({ positionals: [pathname], out }) => (await siteOps()).headers({ path: pathname, out }),
   }),
@@ -280,7 +280,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site manage',
     help: 'Every writeup on one screen. Nothing is written until you save. The one interactive command:\nit refuses to start without a TTY, and --json is a usage error.',
     interactive: true,
-    run: async () => (await import('./site/manage.ts')).manage(),
+    run: async () => (await import('./site/manage.ts')).manage(COMMANDS),
   }),
 };
 
@@ -341,12 +341,12 @@ export function failureDocument(command: string | undefined, error: unknown): Si
   };
 }
 
-function emit<C extends CommandName>(json: boolean, document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
-  if (json) console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
+function emit<C extends CommandName>(document: SiteSuccessOf<C> | SiteHelp | SiteFailure): void {
+  console.log(JSON.stringify({ protocolVersion: PROTOCOL_VERSION, ...document }, null, 2));
 }
 
 function printHelp(json: boolean, name: CommandName | undefined): number {
-  if (json) emit(true, helpDocument(name));
+  if (json) emit(helpDocument(name));
   else console.log(name ? commandHelp(COMMANDS[name]) : mainHelp());
   return EXIT.ok;
 }
@@ -377,7 +377,7 @@ async function runCommand<C extends CommandName>(name: C, rest: string[], json: 
     throw new SiteError(`usage: ${command.usage}`, { code: EXIT.usage, fix: `site ${name} --help` });
   }
   const result = await command.run({ values: parsed.values, positionals: parsed.positionals, out });
-  emit<C>(json, successDocument(name, result));
+  if (json) emit<C>(successDocument(name, result));
   return EXIT.ok;
 }
 
@@ -396,7 +396,7 @@ async function main(argv: string[]): Promise<number> {
   } catch (error) {
     const failure = failureDocument(name, error);
     if (json) {
-      emit(true, failure);
+      emit(failure);
     } else {
       console.error(`failed: ${terminalText(failure.error.message)}`);
       if (failure.error.fix) console.error(`fix: ${terminalText(failure.error.fix)}`);

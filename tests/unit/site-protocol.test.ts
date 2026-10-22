@@ -1,18 +1,25 @@
-import { describe, test } from 'node:test';
+import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { EXIT, PROTOCOL_VERSION } from '../../bin/site/types.ts';
 import { failureDocument, successDocument } from '../../bin/site.ts';
 import { SiteError } from '../../bin/site/cli.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read } from './helpers/desired-state.ts';
+import { scratchDirs, write } from './helpers/fs.ts';
 
 const schema = read<JsonSchema>('public/schemas/site-protocol-v1.json');
 
+const scratch = scratchDirs('site-protocol-');
+after(scratch.cleanup);
+
 // One `site` invocation: the exit code and the single JSON document on stdout.
-function site(...args: string[]): { code: number | null; document: Record<string, unknown> } {
-  const run = spawnSync(process.execPath, [fromRoot('bin/site.ts'), ...args, '--json'], { cwd: fromRoot('.'), encoding: 'utf8' });
+function site(args: string[], env: NodeJS.ProcessEnv = {}): { code: number | null; document: Record<string, unknown> } {
+  const run = spawnSync(process.execPath, [fromRoot('bin/site.ts'), ...args, '--json'], {
+    cwd: fromRoot('.'), encoding: 'utf8', env: { ...process.env, ...env },
+  });
   return { code: run.status, document: JSON.parse(run.stdout) as Record<string, unknown> };
 }
 
@@ -31,7 +38,7 @@ describe('the protocol schema', () => {
 
 describe('real documents', () => {
   test('--help is a valid document, and the schema names every command it lists', () => {
-    const { code, document } = site('--help');
+    const { code, document } = site(['--help']);
     assert.equal(code, EXIT.ok);
     assert.deepEqual(problemsIn(document), []);
     const listed = (document.commands as { name: string }[]).map((entry) => entry.name);
@@ -39,14 +46,27 @@ describe('real documents', () => {
   });
 
   test('a command result is valid and carries the version', () => {
-    const { code, document } = site('contract');
+    const { code, document } = site(['contract']);
     assert.equal(code, EXIT.ok);
     assert.equal(document.protocolVersion, PROTOCOL_VERSION);
     assert.deepEqual(problemsIn(document), []);
   });
 
+  test('a write\'s receipt is valid, and the schema holds it to the receipt shape', () => {
+    const vault = path.join(scratch.make(), 'vault');
+    write(path.join(vault, '05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: false\n---\nBody\n');
+    const { code, document } = site(['set', 'alpha', '--title', 'Alpha, retitled'], { VAULT_DIR: vault });
+    assert.equal(code, EXIT.ok);
+    assert.deepEqual(problemsIn(document), []);
+    const receipt = document.receipt as Record<string, unknown>;
+    assert.deepEqual(receipt.changed_fields, ['title']);
+    assert.notDeepEqual(problemsIn({ ...document, receipt: { ...receipt, receipt_version: 2 } }), []);
+    const { receipt: _receipt, ...unreceipted } = document;
+    assert.notDeepEqual(problemsIn({ ...unreceipted, command: 'link' }), [], 'a link always writes, so it always carries a receipt');
+  });
+
   test('a failure is valid, and its error code is the process exit code', () => {
-    const { code, document } = site('nope');
+    const { code, document } = site(['nope']);
     assert.equal(code, EXIT.usage);
     assert.deepEqual(problemsIn(document), []);
     assert.equal((document.error as { code: number }).code, code);
@@ -105,7 +125,7 @@ describe('documents the schema refuses', () => {
 });
 
 describe('the apply-plan input', () => {
-  const plan = (value: unknown): string[] => validate({ $ref: '#/$defs/plan' }, value, schema);
+  const plan = (value: unknown): string[] => validate({ $defs: schema.$defs, $ref: '#/$defs/plan' }, value);
 
   test('accepts updates, a complete featured order, and a fingerprint', () => {
     assert.deepEqual(plan({ updates: [{ slug: 'a', title: 'A' }], featured_order: ['a', 'b'], source_fingerprint: 'abc123' }), []);

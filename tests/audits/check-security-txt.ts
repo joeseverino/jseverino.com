@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -6,29 +5,31 @@ import {
   REQUIRED_FIELDS,
   SECURITY_FILE,
   WKD_DIR,
+  expiryProblem,
   parseFields,
   verifySecuritySignature,
   stripSignature,
 } from '../../bin/lib/security-txt.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SITE } from '../../src/lib/site-config.ts';
-import { abort } from './lib.ts';
+import { finish } from './lib.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 const wkdEncryptionRe = new RegExp(
   `^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
 );
 
-const expiresWarnDays = 30;
+// Each step needs the one before it, so the first problem ends the check.
+function fail(message: string): never {
+  throw new Error(message);
+}
 
-const fail: (message: string) => never = (message) => abort('check-security-txt', message);
-
-try {
+function check(): string {
   if (!fs.existsSync(SECURITY_FILE)) fail(`missing ${path.relative(siteRoot, SECURITY_FILE)}`);
   const raw = fs.readFileSync(SECURITY_FILE, 'utf8');
 
   if (!raw.includes('-----BEGIN PGP SIGNED MESSAGE-----')) {
-    fail('security.txt is not PGP-signed. Run `npm run sign:security`.');
+    fail('security.txt is not PGP-signed. Run `mise run sign:security`.');
   }
 
   const verify = verifySecuritySignature(SECURITY_FILE);
@@ -45,15 +46,9 @@ try {
   const missing = REQUIRED_FIELDS.filter((field) => !fields[field]);
   if (missing.length > 0) fail(`security.txt is missing required field(s): ${missing.join(', ')}`);
 
-  const expires = new Date(Expires);
-  if (Number.isNaN(expires.getTime())) fail(`security.txt Expires is not a parseable date: ${Expires}`);
-  const msUntil = expires.getTime() - Date.now();
-  const daysUntil = Math.floor(msUntil / 86_400_000);
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `days_remaining=${daysUntil}\n`);
-  if (msUntil <= 0) fail(`security.txt Expires (${Expires}) is in the past`);
-  if (daysUntil < expiresWarnDays) {
-    fail(`security.txt Expires in ${daysUntil}d (< ${expiresWarnDays}d). Bump it, re-sign, commit.`);
-  }
+  const expired = expiryProblem(Expires);
+  if (expired) fail(expired);
+  const daysUntil = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
 
   if (Canonical !== EXPECTED_CANONICAL) {
     fail(`security.txt Canonical is "${Canonical}"; expected "${EXPECTED_CANONICAL}"`);
@@ -68,7 +63,17 @@ try {
     fail(`Encryption points at ${Encryption} but local file is missing: ${path.relative(siteRoot, wkdFile)}`);
   }
 
-  console.log(`ok       signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`);
-} catch (error) {
-  fail(errorMessage(error));
+  return `signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`;
 }
+
+let problems: string[] = [];
+let ok = '';
+try {
+  ok = check();
+} catch (error) {
+  problems = [errorMessage(error)];
+}
+finish(problems, ok, {
+  heading: 'check-security-txt:',
+  fix: 'fix: run `mise run sign:security` to sign or re-sign public/.well-known/security.txt with the security@ key',
+});

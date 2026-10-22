@@ -1,6 +1,8 @@
-// Process harness for the bin/ gate runners: per-command timeout, spawn failures as failed results,
+// Process harness for the bin/ tools: per-command timeout, spawn failures as failed results,
 // output captured or streamed.
 import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
+import { text } from 'node:stream/consumers';
 import { stripVTControlCharacters } from 'node:util';
 
 const MINUTE_MS = 60_000;
@@ -28,9 +30,6 @@ export interface RunOptions {
   env?: NodeJS.ProcessEnv | undefined;
   timeout?: number | undefined;
   stdio?: 'capture' | 'inherit' | 'stderr' | undefined;
-  heartbeatMs?: number | undefined;
-  onHeartbeat?: ((elapsedMs: number) => void) | undefined;
-  signal?: AbortSignal | undefined;
 }
 
 export interface SpawnOptions {
@@ -51,21 +50,22 @@ export interface SpawnResult {
 export interface RunSyncOptions {
   cwd?: string | undefined;
   env?: NodeJS.ProcessEnv | undefined;
+  input?: string | undefined;
   raw?: boolean | undefined;
 }
 
-export function status(label: string, detail: string): void {
-  console.log(`${label.padEnd(12)} ${detail}`);
-}
+// Why a command failed, for its error: its stderr, else its stdout, else why it never started.
+export const failureDetail = (
+  cmd: string,
+  args: readonly string[],
+  { stdout, stderr, error }: { stdout: string; stderr: string; error?: Error | undefined },
+): string => stderr.trim() || stdout.trim() || error?.message || `${cmd} ${args.join(' ')} failed`;
 
 // Synchronous run(): trimmed stdout of a command that must succeed, else an error carrying its output.
-// env merges over process.env; raw keeps the output untrimmed (porcelain).
-export function runSync(cmd: string, args: readonly string[], { cwd, env, raw = false }: RunSyncOptions = {}): string {
-  const result = spawnResult(cmd, args, { cwd, env });
-  if (result.code !== 0) {
-    const detail = result.stderr.trim() || result.stdout.trim() || result.error?.message;
-    throw new Error(detail || `${cmd} ${args.join(' ')} failed`);
-  }
+// env merges over process.env; input goes to stdin; raw keeps the output untrimmed (porcelain).
+export function runSync(cmd: string, args: readonly string[], { cwd, env, input, raw = false }: RunSyncOptions = {}): string {
+  const result = spawnResult(cmd, args, { cwd, env, input });
+  if (result.code !== 0) throw new Error(failureDetail(cmd, args, result));
   return raw ? result.stdout : result.stdout.trim();
 }
 
@@ -89,79 +89,37 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
   };
 }
 
-// Never rejects: code is non-zero on non-zero exit, signal, abort, timeout, or spawn failure. timeout 0 disables it.
-export function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
-  const {
-    cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture',
-    heartbeatMs = 0, onHeartbeat = () => {}, signal,
-  } = options;
-
-  if (signal?.aborted) {
-    const stderr = `[aborted before start: ${cmd} ${args.join(' ')}]`;
-    return Promise.resolve({ code: 1, stdout: '', stderr, output: stderr, duration: 0, timedOut: false });
-  }
-
-  return new Promise((resolve) => {
-    const start = Date.now();
-    const inherit = stdio !== 'capture';
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-    let spawnError: Error | null = null;
-    let settled = false;
-
-    const child = spawn(cmd, args, {
-      cwd,
-      env: env ? { ...process.env, ...env } : process.env,
-      stdio: stdio === 'stderr' ? ['inherit', process.stderr, process.stderr] : inherit ? 'inherit' : 'pipe',
-    });
-
-    const settle = (code: number | null) => {
-      if (settled) return;
-      settled = true;
-      signal?.removeEventListener('abort', stop);
-      clearTimeout(timer);
-      clearInterval(heartbeat);
-      if (timedOut) stderr += `${stderr ? '\n' : ''}[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`;
-      if (spawnError) stderr += `${stderr ? '\n' : ''}[failed to start: ${spawnError.message}]`;
-      const finalCode = spawnError || timedOut ? (code || 1) : (code ?? 1);
-      resolve({
-        code: finalCode,
-        stdout,
-        stderr,
-        output: stripVTControlCharacters(`${stdout}\n${stderr}`),
-        duration: Date.now() - start,
-        timedOut,
-      });
-    };
-
-    const stop = () => {
-      child.kill('SIGTERM');
-      // Escalate if the process ignores SIGTERM.
-      setTimeout(() => { if (!settled) child.kill('SIGKILL'); }, 5_000).unref();
-    };
-    signal?.addEventListener('abort', stop, { once: true });
-    const timer = timeout > 0
-      ? setTimeout(() => {
-          timedOut = true;
-          stop();
-        }, timeout)
-      : undefined;
-    const heartbeat = heartbeatMs > 0
-      ? setInterval(() => onHeartbeat(Date.now() - start), heartbeatMs)
-      : undefined;
-    heartbeat?.unref();
-
-    if (!inherit) {
-      child.stdout?.on('data', (data: Buffer) => { stdout += data.toString(); });
-      child.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
-    }
-
-    child.on('error', (error) => {
-      spawnError = error;
-      // 'close' never fires when the process could not spawn.
-      setTimeout(() => settle(1), 0);
-    });
-    child.on('close', (code) => settle(code));
+// Never rejects: code is non-zero on non-zero exit, signal, timeout, or spawn failure. timeout 0 disables it.
+// The timeout sends SIGKILL: spawn signals once, and a child that ignores SIGTERM would outlive it.
+export async function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
+  const { cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture' } = options;
+  const start = Date.now();
+  const child = spawn(cmd, args, {
+    cwd,
+    env: env ? { ...process.env, ...env } : process.env,
+    stdio: stdio === 'stderr' ? ['inherit', process.stderr, process.stderr] : stdio === 'inherit' ? 'inherit' : 'pipe',
+    timeout,
+    killSignal: 'SIGKILL',
   });
+  const [stdout, stderr, exit] = await Promise.all([
+    child.stdout ? text(child.stdout) : '',
+    child.stderr ? text(child.stderr) : '',
+    // A failed spawn emits 'error', which rejects once().
+    once(child, 'close').then(([code]) => ({ code: code as number | null, error: undefined }), (error: Error) => ({ code: null, error })),
+  ]);
+  // Only spawn's timeout kills the child, so a killed child timed out.
+  const timedOut = child.killed;
+  const notes = [
+    stderr,
+    timedOut && `[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`,
+    exit.error && `[failed to start: ${exit.error.message}]`,
+  ].filter(Boolean).join('\n');
+  return {
+    code: exit.code ?? 1,
+    stdout,
+    stderr: notes,
+    output: stripVTControlCharacters(`${stdout}\n${notes}`),
+    duration: Date.now() - start,
+    timedOut,
+  };
 }

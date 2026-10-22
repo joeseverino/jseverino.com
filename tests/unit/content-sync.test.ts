@@ -3,18 +3,19 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
+import { mdxToHast, type HastNode } from 'satteri';
 
 import {
   collectAssetRefs,
   collectReferences,
   createMasterEncoder,
   MASTER_WIDTH,
-  mapLimit,
   referenceIssues,
   resolveAssetSource,
 } from '../../bin/content-sync/assets.ts';
 import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
 import { createWriter } from '../../bin/content-sync/writer.ts';
+import { compileIssues } from '../../bin/content-sync/compile.ts';
 import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
@@ -31,16 +32,28 @@ describe('asset references', () => {
     '![Same](<images/b c.png>)',
     '[Download](images/doc.pdf#page=2)',
     '[![thumb](./images/t.png)](images/full.png)',
-    '[ref]: ./images/ref.png "Ref title"',
     '<img src="./images/raw.png" alt="">',
     '![External](https://example.com/images/x.png)',
     '[Anchor](#images/no)',
     '![Absolute](/assets/og/card.png)',
+    '![Encoded](images/q%20r&amp;s.png)',
+    '',
+    '[ref]: ./images/ref.png "Ref title"',
+    '',
+    '<figure>',
+    '  <img src="images/fig.png">',
+    '  <figcaption><a href=\'images/cap.pdf\'>Caption</a></figcaption>',
+    '</figure>',
+    '',
+    '```md',
+    '![In code](images/code.png)',
+    '```',
   ].join('\n');
 
-  test('every relative destination is found once, titles and brackets aside', () => {
+  test('every relative destination is found once, titles, brackets and HTML aside, code skipped', () => {
     assert.deepEqual([...collectAssetRefs(body)].sort(), [
-      'images/a.png', 'images/b c.png', 'images/doc.pdf', 'images/full.png', 'images/raw.png', 'images/ref.png', 'images/t.png',
+      'images/a.png', 'images/b c.png', 'images/cap.pdf', 'images/doc.pdf', 'images/fig.png', 'images/full.png',
+      'images/q r&s.png', 'images/raw.png', 'images/ref.png', 'images/t.png',
     ]);
   });
 
@@ -70,33 +83,20 @@ describe('asset references', () => {
     ]);
     assert.deepEqual(collectReferences('[a](images/x.png) [b](images/x.png)').length, 1);
   });
-
-  test('mapLimit never runs more than the limit at once', async () => {
-    let running = 0;
-    let peak = 0;
-    const results = await mapLimit([1, 2, 3, 4, 5, 6], 2, async (n: number) => {
-      running += 1;
-      peak = Math.max(peak, running);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      running -= 1;
-      return n * 2;
-    });
-    assert.equal(peak, 2);
-    assert.deepEqual(results, [2, 4, 6, 8, 10, 12]);
-  });
 });
 
 describe('writer and prune', () => {
   test('prune removes what the run did not write, then empty folders; the report names both', async () => {
     const root = scratch.make();
     write(path.join(root, 'content/writeups/old/index.md'), 'stale');
+    write(path.join(root, 'content/writeups/old/images/a.png'), 'stale');
     write(path.join(root, 'content/writeups/kept/index.md'), 'old');
     const writer = createWriter({ root });
     await writer.write(path.join(root, 'content/writeups/kept/index.md'), 'new');
-    await writer.prune([path.join(root, 'content/writeups')]);
+    writer.prune([path.join(root, 'content/writeups')]);
     assert.deepEqual(writer.report(), {
       written: ['content/writeups/kept/index.md'],
-      removed: ['content/writeups/old/index.md'],
+      removed: ['content/writeups/old/images/a.png', 'content/writeups/old/index.md'],
     });
     assert.equal(fs.existsSync(path.join(root, 'content/writeups/old')), false);
     assert.equal(fs.readFileSync(path.join(root, 'content/writeups/kept/index.md'), 'utf8'), 'new');
@@ -143,6 +143,25 @@ describe('document rows', () => {
       '<h3 class="resume-org"><span><a href="/education/school/">School</a></span><span class="resume-loc">City</span></h3>',
       roleRow({ title: 'BS', dates: '2020' }),
     ].join('\n'));
+  });
+
+  test('vault text is escaped wherever it lands in the markup', () => {
+    assert.equal(
+      orgRow({ name: 'R&D <Lab>', location: 'Town "A"' }, { href: '/x?a=1&b=2' }),
+      '<h3 class="resume-org"><span><a href="/x?a=1&amp;b=2">R&amp;D &lt;Lab&gt;</a></span><span class="resume-loc">Town &quot;A&quot;</span></h3>',
+    );
+    assert.equal(roleRow({ title: 'A & B', dates: "'24" }), '<p class="resume-role"><strong>A &amp; B</strong><span class="resume-dates">&#39;24</span></p>');
+  });
+
+  test('a brace in vault text compiles as literal text in the MDX body', () => {
+    const rows = [
+      orgRow({ name: 'Lab {West', location: 'Town }' }, { tenure: '{2024}' }),
+      roleRow({ title: 'Lead {ops}', dates: '2024' }),
+    ].join('\n');
+    assert.deepEqual(compileIssues(rows, 'pages'), []);
+    const text = (node: HastNode): string =>
+      'value' in node && node.type === 'text' ? node.value : 'children' in node ? node.children.map(text).join('') : '';
+    assert.equal(text(mdxToHast(rows)), 'Lab {West{2024}Town }\nLead {ops}2024');
   });
 });
 
@@ -208,20 +227,22 @@ async function fixtureVault() {
   return vault;
 }
 
+// A sync of the fixture vault into `root`, with no resume engine and no education export.
+const syncOptions = (vault: string, root: string) => ({
+  layout: committedLayout(root),
+  vaultRoot: vault,
+  lifeVaultRoot: path.join(vault, 'life'),
+  resumeEngineRoot: path.join(vault, 'no-resume-engine'),
+  cacheDir: path.join(root, '.cache/images'),
+  educationSource: { load: async () => ({ institutions: [] }) },
+});
+
 describe('syncContent and checkContent against a temp vault', () => {
   test('writes the public snapshot, declares every file, and prunes the rest', async () => {
     const vault = await fixtureVault();
     const root = scratch.make();
     write(path.join(root, 'src/content/writeups/gone/index.mdx'), '---\ntitle: Gone\n---\n');
-    const result = await syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'no-resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      date: '2026-07-26',
-    });
+    const result = await syncContent({ ...syncOptions(vault, root), date: '2026-07-26' });
 
     assert.deepEqual(result.removed, ['src/content/writeups/gone/index.mdx']);
     assert.ok(result.written.includes('src/content/technology-groups.md'));
@@ -251,15 +272,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       'export const orgRoleDates = () => [];',
       'export const tenureSpan = () => "";',
     ].join('\n'));
-    const result = await syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      includeDrafts: true,
-    });
+    const result = await syncContent({ ...syncOptions(vault, root), resumeEngineRoot: path.join(vault, 'resume-engine'), includeDrafts: true });
     assert.deepEqual(result.warnings, ['draft writeups/draft: missing image images/missing.png']);
     assert.ok(result.written.includes('src/content/writeups/draft/index.mdx'));
   });
@@ -271,15 +284,7 @@ describe('syncContent and checkContent against a temp vault', () => {
       'technologies:', '  - astro', '---', '', 'See [the notes](notes.md).', '',
     ].join('\n'));
     const root = scratch.make();
-    await assert.rejects(syncContent({
-      layout: committedLayout(root),
-      vaultRoot: vault,
-      lifeVaultRoot: path.join(vault, 'life'),
-      resumeEngineRoot: path.join(vault, 'no-resume-engine'),
-      cacheDir: path.join(root, '.cache/images'),
-      educationSource: { load: async () => ({ institutions: [] }) },
-      date: '2026-07-26',
-    }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
+    await assert.rejects(syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
     const checked = await checkContent({ vaultRoot: vault });
     const live = checked.documents.find((doc) => doc.slug === 'live');
     assert.ok(live?.issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(live?.issues));

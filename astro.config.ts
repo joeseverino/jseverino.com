@@ -1,13 +1,15 @@
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
+import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import { satteri } from '@astrojs/markdown-satteri';
 import sitemap from '@astrojs/sitemap';
 import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
 import { snapshotWriteups } from './src/lib/snapshot.ts';
-import { buildOutDir } from './src/lib/build-output.ts';
+import { astroOutDir } from './src/lib/build-output.ts';
 import { sitemapLastmods } from './src/lib/sitemap.ts';
 import { contentOverlay } from './src/integrations/content-overlay.ts';
+import { sitedriftPreview } from './src/integrations/sitedrift-preview.ts';
 import { processorOptions } from './src/lib/markdown/index.ts';
 import { IMAGE_WIDTHS } from './src/lib/images.ts';
 
@@ -19,8 +21,6 @@ const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
 const devAllowedHosts = env.DEV_ALLOWED_HOSTS ? env.DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
 const devHost = env.DEV_HOST === 'true' || env.DEV_HOST === '1';
 const devPort = env.DEV_PORT ? Number(env.DEV_PORT) : undefined;
-
-const outDir = `./${buildOutDir}`;
 
 // Sitemap lastmod comes from the page's own content date (src/lib/sitemap.ts).
 const lastmods = sitemapLastmods(
@@ -37,8 +37,24 @@ const lastmods = sitemapLastmods(
 
 export default defineConfig({
   site: origin,
-  trailingSlash: 'always',
-  outDir,
+  // Every page is prerendered; the routes that set `prerender = false` run in the Worker.
+  output: 'static',
+  adapter: cloudflare({
+    // Every image is encoded at build time by `image.service` below (sharp and its settings), and
+    // the Worker serves the files. `astro dev` transforms through the local Images binding.
+    imageService: 'compile',
+    // Pages render in Node: the content code reads the filesystem and satteri loads a native binding, neither of which workerd has.
+    prerenderEnvironment: 'node',
+  }),
+  // Nothing uses sessions, so the adapter provisions no KV namespace for them.
+  session: false,
+  // Pages keep their slash through `html_handling` in wrangler.jsonc, which redirects /about to
+  // /about/. Here 'always' would also redirect the API's /api/contact to /api/contact/.
+  trailingSlash: 'ignore',
+  outDir: `./${astroOutDir}`,
+  // Encoded images are cached by source and options, so one cache serves every
+  // checkout and worktree; mise's [env] sets it under the repository's cache root.
+  ...(process.env.ASTRO_CACHE_DIR && { cacheDir: process.env.ASTRO_CACHE_DIR }),
   devToolbar: {
     enabled: false,
   },
@@ -66,6 +82,7 @@ export default defineConfig({
   integrations: [
     mdx(),
     contentOverlay(process.env.SITE_CONTENT_ROOT),
+    sitedriftPreview(),
     sitemap({
       serialize(item) {
         const lastmod = lastmods.get(item.url);

@@ -2,15 +2,18 @@
 
 `site` is this repository's publishing workflow: vault, repo snapshot, pull
 request, production. It lives here, in [`bin/site.ts`](../bin/site.ts)
-and [`bin/site/`](../bin/site/), on top of the same modules the npm scripts
+and [`bin/site/`](../bin/site/), on top of the same modules the other mise tasks
 use: the content sync ([`bin/content-sync/`](../bin/content-sync/)), the
 content diff ([`bin/content-diff.ts`](../bin/content-diff.ts)), the shared
 preflight ([`bin/lib/preflight.ts`](../bin/lib/preflight.ts)), and the
-audit registry.
+mise gates.
 
 ```sh
-npm run site -- <command>     # or `npm link` once, then: site <command>
+mise run site <command>
 ```
+
+Arguments after `site` go to the CLI unchanged, `--help` included. The rest
+of this page writes a command as `site <command>`.
 
 ## Built for an agent caller
 
@@ -25,14 +28,16 @@ Every non-interactive command:
   ```json
   { "protocolVersion": 1, "ok": true, "command": "publish", "status": "pr-opened", "pr": "https://…", "next": "…" }
   { "protocolVersion": 1, "ok": false, "command": "publish", "status": "failed",
-    "error": { "message": "preflight failed: deps", "code": 3, "fix": "cd … && npm ci" } }
+    "error": { "message": "preflight failed: deps", "code": 3, "fix": "cd … && mise deps install npm --force" } }
   ```
 
   The document's type is `SiteResult` in [`bin/site/types.ts`](../bin/site/types.ts),
   a union discriminated by `ok` and `command`, so a caller can import it.
+  `apply-plan`, `set`, and `link` add a `receipt` for each completed write:
+  audit and cache-invalidation evidence, never a second source of truth.
   `site dev --json` sends Astro's own output to stderr; when Astro detects an
-  agent and serves from a background process, the result carries
-  `background: true` with the server's `url` and `pid`.
+  agent it serves in the background (`astro dev --background`), and the
+  result carries `background: true` with the server's `url` and `pid`.
 - with `--json`, sets `SITE_JSON=1` for every process the command starts.
   Under it, [`bin/build-static.ts`](../bin/build-static.ts) runs
   `astro build --json` and the astro-check audit runs `astro check --json`,
@@ -69,14 +74,14 @@ The content model a client edits against is
 | `site new <slug>` | Scaffold `05 Writeups/<slug>/` from the vault template (`published: false`) |
 | `site validate [<slug>] [--draft]` | Resolve every reference, the frontmatter contract, and the catalog without writing (`sync-content --check`) |
 | `site dev [--drafts] [--host <host>] [--port <port>]` | Astro dev server; drafts come from the gitignored `.cache/drafts` overlay, never the committed snapshot |
-| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, fast gate (`--full`: the whole publish gate), a commit of exactly the declared outputs, push, open the PR. Never merges |
-| `site land [<pr>] [--timeout <min>]` | A PR into `main` (the latest open `content/*` PR when none is named): read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge pinned to that head, wait for the merge commit's Cloudflare Pages deploy, verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. `--timeout` bounds the waits for checks and deploy. Merges only when invoked |
+| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, `mise run fast` (`--full`: `mise run check`), a commit of exactly the declared outputs, push, open the PR. Never merges |
+| `site land [<pr>] [--timeout <min>]` | A PR into `main` (the latest open `content/*` PR when none is named): read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge pinned to that head, wait for the merge commit's `deploy` check (the production deploy), verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. `--timeout` bounds the waits for checks and deploy. Merges only when invoked |
 | `site verify <slug> [--origin <url>]` | Live checks for one writeup (`bin/deploy-verify.ts --slug`), on production or on the deployment at `--origin` |
 | `site status` | Repo, dependency, vault, build, and open content PR state |
 | `site featured [<slug> <slot\|up\|down\|top\|bottom\|off>]` | Show or reorder the home-page featured list (renumbers `1..N`) |
 | `site tech [<query>]` | Search the technology catalog |
 | `site seo <page> [--result]` | Search-snippet preview from the last build |
-| `site draft-alt <slug> [--apply]` | Draft `cover_alt` from the cover image (Claude API) |
+| `site draft-alt <slug>\|--all [--apply]` | Draft `cover_alt` from the cover image (Claude API); `--all` drafts for every published writeup missing one |
 | `site writeups [--filter all\|published\|draft\|featured]` | Every writeup with its publish and featured state |
 | `site dashboard` | Every writeup, the featured order, the draft gate, and the `sourceFingerprint` a plan is checked against |
 | `site tag <slug>` | Which writeups use a technology slug, and how many are published |
@@ -86,8 +91,8 @@ The content model a client edits against is
 | `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
 | `site contract` | The writeup field contract and its fingerprint |
 | `site render <slug\|-> [--document]` | One writeup body (`html`) rendered exactly as the build ships it, from the vault or stdin (`-`); `--document` adds `document`, a self-contained page in the site's article layout with its styles inlined, for previews |
-| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
-| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1, or counts by directive |
+| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1 through Cloudflare's HTTP API, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
+| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1 through the HTTP API, or counts by directive |
 | `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
 | `site headers [<path>]` | Live security headers on one path, with named pass/fail checks |
 | `site manage` | The interactive manager (below) |
@@ -115,10 +120,10 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 
 | Layer | Owns | Examples |
 | :--- | :--- | :--- |
-| npm scripts | build, audits, tests | `npm run diagnose`, `npm run sync:content` |
+| mise tasks | gates, the build, and tools | `mise run check`, `mise run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
 | [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
-| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads, the schema apply, header checks | `contactSubmissions`, `checkSecurityHeaders` |
+| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters), the schema apply (wrangler), header checks | `contactSubmissions`, `checkSecurityHeaders` |
 
 Every write to writeup frontmatter (featured order, publish flags, field edits
 in `site manage`, `site set`, `site featured`) goes through the writeup store:
@@ -182,26 +187,112 @@ not ready yet (yellow).
 Status is gathered once and cached; the `as of` timestamp shows its age, and
 `r` regathers it. Actions run inline: the TUI drops out of its
 alternate screen, streams the real command output (`site status`,
-`site validate`, `npm run diagnose`, `npm run build`, `npm run test:e2e`,
+`site validate`, `mise run check`, `mise run build`, `mise run browser:e2e`,
 `site publish`), and returns on a keypress.
 
 ![site manage Site tab with the dev server running: the toggled action label and the running-server status line](./images/site-cli/manage-site-tab-dev-running.png)
 
 The dev server action is a toggle: the same key starts and stops it, and the
-action label follows the live state. A stop sends SIGTERM to the process group
-the start created (SIGKILL after three seconds) and touches nothing else: a
-server on the port that this session did not start is named and left running.
+action label follows the live state. It runs Astro's own `astro dev --background`
+and `astro dev stop`. The server is the one Astro's lock file
+(`.astro/dev.json`) names, and it counts as running while it answers HTTP;
+`astro dev logs` shows its output.
+
+### Driving it on a pseudo-terminal
+
+The unit tests replay keys without a terminal (`MANAGE_TUI_KEYS`). To check
+what a real terminal shows (colors, the focus window, a command run inline),
+drive `site manage` on a pseudo-terminal. macOS `script(1)` needs a terminal on
+its own stdin, so use Python's `pty`: save the script below at a gitignored
+path such as `.cache/pty-drive.py` and run it from the checkout root against a
+throwaway vault (the files `makeVault()` in `tests/unit/site-manage.test.ts`
+writes):
+
+```sh
+python3 .cache/pty-drive.py <vault> 16 90 '\x1b[B' '\t' q
+```
+
+The arguments are the vault, rows, columns, then each key as a raw string. It
+pauses after each key, prints each last frame's text and the colors drawn, and
+always ends the TUI (Ctrl+C, then SIGKILL). Prefix `NO_COLOR=1` or
+`FORCE_COLOR=1` to check styling.
+
+```python
+"""Drives `site manage` on a pseudo-terminal: python3 pty-drive.py <vault> <rows> <cols> <keys...>"""
+import fcntl, os, pty, re, select, struct, sys, termios, time
+
+vault, rows, cols, *keys = sys.argv[1:]
+root = os.getcwd()
+
+pid, fd = pty.fork()
+if pid == 0:
+    fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('HHHH', int(rows), int(cols), 0, 0))
+    os.chdir(root)
+    os.environ['VAULT_DIR'] = vault
+    os.environ['TERM'] = 'xterm-256color'
+    os.execvp('node', ['node', 'bin/site.ts', 'manage'])
+
+
+def drain(seconds):
+    out = b''
+    end = time.time() + seconds
+    while time.time() < end:
+        ready, _, _ = select.select([fd], [], [], 0.05)
+        if ready:
+            try:
+                chunk = os.read(fd, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            out += chunk
+    return out
+
+
+def exited(seconds):
+    end = time.time() + seconds
+    while time.time() < end:
+        if os.waitpid(pid, os.WNOHANG)[0]:
+            return True
+        drain(0.2)
+    return False
+
+
+screens = [drain(3)]
+for key in keys:
+    os.write(fd, key.encode().decode('unicode_escape').encode())
+    screens.append(drain(2.5))
+if not exited(5):
+    os.write(fd, b'\x03')
+    if not exited(5):
+        os.kill(pid, 9)
+        os.waitpid(pid, 0)
+
+for i, raw in enumerate(screens):
+    text = raw.decode('utf8', 'replace')
+    frames = text.split('\x1b[?2026h')
+    plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07', '', frames[-1])
+    colors = sorted(set(re.findall(r'\x1b\[(3[0-7]|9[0-7])m', text)))
+    print(f'--- after {"start" if i == 0 else repr(keys[i - 1])}: {len(frames) - 1} frames, colors {colors}')
+    print(plain)
+```
 
 ## Configuration
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
-`SITE_CACHE_DIR` moves the sync caches and image encodes (default `.cache/`),
+`SITE_CACHE_DIR`, set in `mise.toml`'s `[env]`, is the cache root every checkout and
+worktree shares: the sync's image masters, and Astro's encodes in `astro/`;
 `SITE_CONTENT_ROOT` points the build or dev server at another content tree
 (`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
-`build:static` refuses anything outside `tests/fixtures`, so drafts never
+the build refuses anything outside `tests/fixtures`, so drafts never
 reach a build), `SITE_JSON=1` switches Astro
-to JSON logs (set by `--json`). The site operations read `SITE_D1_DATABASE`
-(default `jseverino-contact`), `SITE_ORIGIN` (production), `SITE_AUDIT_LOG`
-(default `~/.local/state/jseverino.com/audit.log`), and `CLOUDFLARE_API_TOKEN`
-from the environment (`op run`).
+to JSON logs (set by `--json`). `site contact` and `site csp` also need `CLOUDFLARE_ACCOUNT_ID` and a token scoped
+Account · D1 · Read; without either, they stop on one line naming it, and nothing else in the CLI is affected:
+
+```sh
+CLOUDFLARE_API_TOKEN="op://<vault>/<item>/credential" CLOUDFLARE_ACCOUNT_ID="op://<vault>/<item>/account id" op run -- mise run site csp --count
+```
+
+The site operations read `CLOUDFLARE_API_TOKEN` from the environment
+(`op run`) and log PII access to `~/.local/state/jseverino.com/audit.log`.

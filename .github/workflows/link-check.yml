@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths:
       - 'README.md'
-      - 'SECURITY.md'
-      - 'CONTRIBUTING.md'
+      - '.github/SECURITY.md'
+      - '.github/CONTRIBUTING.md'
       - 'docs/**/*.md'
       - 'tests/*.md'
       - 'src/content/**/*.md'
@@ -43,8 +43,8 @@ jobs:
             --verbose
             --accept 200,204,206,301,302,303,307,308,403,429,999
             README.md
-            SECURITY.md
-            CONTRIBUTING.md
+            .github/SECURITY.md
+            .github/CONTRIBUTING.md
             docs/**/*.md
             tests/*.md
           fail: true
@@ -54,7 +54,7 @@ jobs:
         with:
           output: lychee/public-content.md
           # Self-domain links are excluded: a PR adding a page would 404 against live until it
-          # deploys. Internal links are audited against the build by publish-check in CI.
+          # deploys. Internal links are audited against the build by built:links in CI.
           args: >-
             --no-progress
             --verbose

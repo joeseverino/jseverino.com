@@ -10,7 +10,7 @@ const writeups = snapshotWriteups();
 function writeupWhere(predicate: (body: string) => boolean, description: string): string {
   const match = writeups.find((writeup) => predicate(writeup.source));
   if (!match) {
-    throw new Error(`no synced writeup ${description}; run \`npm run sync:content\` and check the vault`);
+    throw new Error(`no synced writeup ${description}; run \`mise run sync:content\` and check the vault`);
   }
   return writeupPath(match.slug);
 }
@@ -26,7 +26,7 @@ export const imageHeavyWriteup = () => {
     .sort((a, b) => b.images - a.images || a.slug.localeCompare(b.slug));
   const [top] = counted;
   if (!top || top.images === 0) {
-    throw new Error('no synced writeup contains images; run `npm run sync:content`');
+    throw new Error('no synced writeup contains images; run `mise run sync:content`');
   }
   return writeupPath(top.slug);
 };

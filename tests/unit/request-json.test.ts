@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readRequestJson } from '../../functions/lib/request-json.ts';
+import { readRequestJson } from '../../src/lib/api/request-json.ts';
 import { streamRequest } from './helpers/requests.ts';
 
 function streamedRequest(chunks: Uint8Array[], headers: Record<string, string> = {}) {

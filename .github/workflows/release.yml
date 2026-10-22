@@ -1,9 +1,9 @@
 name: release
 
 # A version tag (signed by convention, docs/Release-Checklist.md §4; the
-# trigger matches any v* tag) publishes a verifiable
-# release: the build output and its SBOM, each with a Sigstore attestation
-# GitHub issues for this workflow run. Verify with:
+# trigger matches any v* tag) publishes the tagged commit's production deploy as a
+# verifiable release: the archive of the static site the deploy shipped and its SBOM,
+# each with the Sigstore attestation the deploy workflow issued. Nothing is rebuilt. Verify with:
 #   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com
 on:
   push:
@@ -19,13 +19,13 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 10
     permissions:
+      actions: read
       contents: write
-      id-token: write
-      attestations: write
     env:
       TAG: ${{ github.ref_name }}
+      SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -39,41 +39,24 @@ jobs:
             exit 1
           fi
 
-      - uses: ./.github/actions/setup
-        with:
-          astro-cache: 'true'
-
-      - name: Build the site
-        run: npm run -s build:static
+      # The deploy workflow keeps the release files of each production deploy as an
+      # artifact named for its commit, so a tag on a commit main never deployed fails here.
+      - name: Fetch the deployed release files
         env:
-          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
-
-      - name: Package the build and its SBOM
+          GH_TOKEN: ${{ github.token }}
         run: |
-          tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@$(git log -1 --format=%ct)" \
-            -czf "jseverino.com-$TAG.tar.gz" -C dist .
-          npm sbom --sbom-format=cyclonedx > "jseverino.com-$TAG.cdx.json"
-
-      - id: provenance
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-path: jseverino.com-${{ github.ref_name }}.tar.gz
-
-      - id: sbom
-        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
-        with:
-          subject-path: jseverino.com-${{ github.ref_name }}.tar.gz
-          sbom-path: jseverino.com-${{ github.ref_name }}.cdx.json
+          set -euo pipefail
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=release-$SHA" --jq '[.artifacts[] | select(.expired | not)][0].workflow_run.id // empty')
+          if [ -z "$run" ]; then
+            echo "::error::no unexpired production deploy of $SHA; tag a commit main deployed in the last 90 days"
+            exit 1
+          fi
+          gh run download "$run" -n "release-$SHA" -D release
+          for file in release/*; do mv "$file" "${file/$SHA/$TAG}"; done
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-          PROVENANCE: ${{ steps.provenance.outputs.bundle-path }}
-          SBOM_BUNDLE: ${{ steps.sbom.outputs.bundle-path }}
         run: |
-          cp "$PROVENANCE" "jseverino.com-$TAG.tar.gz.sigstore.json"
-          cp "$SBOM_BUNDLE" "jseverino.com-$TAG.cdx.json.sigstore.json"
           gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes
-          gh release upload "$TAG" --clobber \
-            "jseverino.com-$TAG.tar.gz" "jseverino.com-$TAG.tar.gz.sigstore.json" \
-            "jseverino.com-$TAG.cdx.json" "jseverino.com-$TAG.cdx.json.sigstore.json"
+          gh release upload "$TAG" --clobber release/*

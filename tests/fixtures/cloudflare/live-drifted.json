@@ -1,5 +1,5 @@
 {
-  "_comment": "Live state shaped like the v4 API responses, close to the zone as audited on 2026-10-02: Cloudflare's defaults for the HTML-rewriting settings, no rate limit, no pages.dev redirect. Ids are placeholders.",
+  "_comment": "Live state shaped like the v4 API responses, close to the zone as audited on 2026-10-02: Cloudflare's defaults for the HTML-rewriting settings, no rate limit. Ids and the preview Access domain are placeholders; the tests point the app at the real preview wildcard.",
   "zone": { "id": "zone-0001", "name": "jseverino.com", "account": { "id": "account-0001", "name": "fixture" } },
   "settings": {
     "min_tls_version": { "value": "1.2", "editable": true },
@@ -32,12 +32,10 @@
       ]
     }
   },
-  "lists": [],
-  "project": { "name": "jseverino", "source": { "type": "github", "config": { "owner": "fixture", "repo_name": "site", "production_branch": "main", "preview_deployment_setting": "all", "preview_branch_includes": ["*"], "preview_branch_excludes": [] } }, "deployment_configs": { "production": { "compatibility_date": "2025-01-01" }, "preview": { "compatibility_date": "2025-01-01" } } },
-  "accessApps": [ { "id": "app-1", "type": "self_hosted", "domain": "*.jseverino.pages.dev", "name": "jseverino previews", "policies": [ { "name": "account members", "decision": "allow", "include": [ { "email_domain": { "domain": "example.com" } } ] }, { "name": "ci", "decision": "non_identity", "include": [ { "service_token": { "token_id": "token-ci" } } ] } ] } ],
+  "accessApps": [ { "id": "app-1", "type": "self_hosted", "domain": "*-site.example.workers.dev", "name": "previews", "policies": [ { "name": "account members", "decision": "allow", "include": [ { "email_domain": { "domain": "example.com" } } ] }, { "name": "ci", "decision": "non_identity", "include": [ { "service_token": { "token_id": "token-ci" } } ] } ] } ],
   "schemas": [ { "schema_id": "schema-old", "name": "jseverino-com-contact", "kind": "openapi_v3", "source": "{\"openapi\":\"3.0.3\",\"paths\":{}}", "validation_enabled": true } ],
   "validationSettings": { "validation_default_mitigation_action": "none", "validation_override_mitigation_action": null },
   "operations": [ { "operation_id": "op-contact", "method": "POST", "host": "jseverino.com", "endpoint": "/api/contact" } ],
   "operationSettings": {},
-  "widgets": [ { "sitekey": "0x4AAAAAAAfixture", "name": "contact", "mode": "managed", "domains": ["jseverino.com", "jseverino.pages.dev"], "clearance_level": "no_clearance", "bot_fight_mode": false, "offlabel": false, "region": "world" } ]
+  "widgets": [ { "sitekey": "0x4AAAAAAAfixture", "name": "contact", "mode": "managed", "domains": ["jseverino.com", "retired.example.com"], "clearance_level": "no_clearance", "bot_fight_mode": false, "offlabel": false, "region": "world" } ]
 }

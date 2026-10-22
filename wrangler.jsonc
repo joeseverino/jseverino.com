@@ -1,0 +1,30 @@
+// The Worker side of the site: Astro's Cloudflare adapter adds `main` and the
+// assets directory at build time and writes the deploy config to dist/server/.
+// The zone side (rules, API Shield, Access) is cloudflare/zone.json.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "jseverino",
+  // The edge suite, `astro dev` and production all run this date.
+  "compatibility_date": "2026-05-19",
+  // Production is served only on the custom domain, never on a workers.dev alias.
+  "workers_dev": false,
+  // Each uploaded version and each pull request's alias gets a workers.dev preview URL,
+  // behind Access (src/lib/site-config.ts names the host).
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  "assets": {
+    // The preview proxy reads the build through this binding.
+    "binding": "ASSETS",
+    // Pages are static assets; only these paths start the Worker.
+    "run_worker_first": ["/api/*", "/__sitedrift/*"],
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  // Set with `wrangler secret put`; locally from .env.
+  "secrets": { "required": ["TURNSTILE_SECRET_KEY"] },
+  "d1_databases": [
+    // HQ reads and writes the same database. Wrangler resolves the ID from
+    // the name at deploy, so the public file carries none.
+    { "binding": "DB", "database_name": "jseverino-contact" }
+  ]
+}

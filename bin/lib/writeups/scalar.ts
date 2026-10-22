@@ -1,6 +1,6 @@
 // In-place frontmatter scalar writes preserve the surrounding document.
 import { dump, EVENT_ID, getScalarValue, parseEvents, SCALAR_STYLE, type ScalarEvent } from 'js-yaml';
-import { FRONTMATTER_SCHEMA } from '../../../src/lib/frontmatter.ts';
+import { FRONTMATTER_SCHEMA, frontmatterBlock } from '../../../src/lib/frontmatter.ts';
 
 export function yamlEscape(value: string): string {
   return dump(value, {
@@ -57,9 +57,11 @@ function rootField(yaml: string, key: string): { key: ScalarEvent; value: Scalar
 
 // YAML event offsets include multiline scalar content without consuming adjacent fields.
 export function replaceScalar(text: string, key: string, rendered: string): string {
-  const block = /^(\uFEFF?---\r?\n)([\s\S]*?)(^---[ \t]*(?:\r?\n|$))/m.exec(text);
-  if (!block || block.index !== 0) throw new Error('scalar updates require fenced frontmatter');
-  const yaml = block[2] ?? '';
+  const block = frontmatterBlock(text);
+  if (!block?.closed) throw new Error('scalar updates require fenced frontmatter');
+  // With the closing fence's line break, every YAML line ends in one.
+  const yaml = `${block.yaml}\n`;
+  const { yamlStart } = block;
   const line = `${key}: ${rendered}`.trimEnd();
   const field = rootField(yaml, key);
   let next: string;
@@ -73,8 +75,7 @@ export function replaceScalar(text: string, key: string, rendered: string): stri
   } else {
     next = yaml + line + (yaml.includes('\r\n') ? '\r\n' : '\n');
   }
-  const start = block[1]?.length ?? 0;
-  return text.slice(0, start) + next + text.slice(start + yaml.length);
+  return text.slice(0, yamlStart) + next + text.slice(yamlStart + yaml.length);
 }
 
 // Apply updates in order; a field counts as changed only when its line changes.

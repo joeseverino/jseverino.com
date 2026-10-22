@@ -1,4 +1,5 @@
-// site publish and site land against a real git remote (bare repo in a temp dir) and a stubbed gh.
+// site publish and site land against a real git remote (bare repo in a temp dir), a stubbed gh, and
+// a stand-in for GitHub's REST API. Both log to one file, so call order is checked across them.
 // The sync and gate are injected; git is real.
 import { after, before, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,6 +11,7 @@ import { land } from '../../bin/site/land.ts';
 import { SiteError, createOutput } from '../../bin/site/cli.ts';
 import { git } from '../../bin/lib/git.ts';
 import { tempDir, write } from './helpers/fs.ts';
+import { DEPLOY_CHECK } from '../../src/lib/site-config.ts';
 
 const out = createOutput({ quiet: true });
 const NOW = new Date(2026, 9, 2, 14, 5);
@@ -36,19 +38,32 @@ if (a === 'pr' && b === 'merge') {
   save();
   process.exit(0);
 }
-if (a === 'api' && b.includes('/rules/branches/')) { console.log(JSON.stringify(scenario.rules ?? [])); process.exit(0); }
-if (a === 'api' && b.includes('/commits/head/')) {
-  // One entry per poll; the last repeats.
-  const polls = scenario.headPolls ?? [[]];
-  const runs = polls.length > 1 ? polls.shift() : polls[0];
-  save();
-  console.log(JSON.stringify({ check_runs: runs }));
-  process.exit(0);
-}
-if (a === 'api') { console.log(JSON.stringify({ check_runs: scenario.checkRuns ?? [] })); process.exit(0); }
 console.error('unexpected gh ' + args.join(' '));
 process.exit(1);
 `;
+
+const STUB_TOKEN = 'stub-token';
+const realFetch = globalThis.fetch;
+
+// GitHub's REST API as the scenario describes it, logged as `api <path>` beside the gh calls.
+const githubApi: typeof fetch = async (input, init) => {
+  const url = new URL(String(input));
+  assert.equal(url.origin, 'https://api.github.com');
+  assert.equal(new Headers(init?.headers).get('authorization'), `Bearer ${STUB_TOKEN}`);
+  fs.appendFileSync(path.join(tmp, 'gh.log'), `api ${url.pathname.slice(1)}\n`);
+  const file = path.join(tmp, 'scenario.json');
+  const state = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const json = (body: unknown) => new Response(JSON.stringify(body));
+  if (url.pathname.includes('/rules/branches/')) return json(state.rules ?? []);
+  if (url.pathname.includes('/commits/head/')) {
+    // One entry per poll; the last repeats.
+    const polls = state.headPolls ?? [[]];
+    const runs = polls.length > 1 ? polls.shift() : polls[0];
+    fs.writeFileSync(file, JSON.stringify(state));
+    return json({ check_runs: runs });
+  }
+  return json({ check_runs: state.checkRuns ?? [] });
+};
 
 const ghCalls = () => fs.readFileSync(path.join(tmp, 'gh.log'), 'utf8').split('\n').filter(Boolean);
 const scenario = (data: Record<string, unknown>) => fs.writeFileSync(path.join(tmp, 'scenario.json'), JSON.stringify(data));
@@ -91,6 +106,12 @@ function fixture() {
   return { origin, seed, checkout };
 }
 
+// Publish works in its own worktree: the checkout keeps no content branch and no extra worktree.
+function assertCheckoutLeftAlone(checkout: string): void {
+  assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
+  assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+}
+
 const syncWriting = (files: Record<string, string>, extra: Record<string, string> = {}) =>
   async ({ worktree }: { worktree: string }) => {
     for (const [file, content] of Object.entries({ ...files, ...extra })) write(path.join(worktree, file), content);
@@ -119,14 +140,17 @@ before(() => {
     VAULT_DIR: path.join(tmp, 'vault'),
     GH_STUB_LOG: path.join(tmp, 'gh.log'),
     GH_STUB_SCENARIO: path.join(tmp, 'scenario.json'),
+    GITHUB_TOKEN: STUB_TOKEN,
   };
   for (const [key, value] of Object.entries(env)) {
     saved[key] = process.env[key];
     process.env[key] = value;
   }
+  globalThis.fetch = githubApi;
 });
 
 after(() => {
+  globalThis.fetch = realFetch;
   for (const [key, value] of Object.entries(saved)) {
     if (value === undefined) delete process.env[key];
     else process.env[key] = value;
@@ -156,8 +180,7 @@ describe('site publish', () => {
 
     assert.equal(git(checkout, 'branch', '--show-current'), 'stale');
     assert.equal(git(checkout, 'rev-parse', 'HEAD'), before);
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
 
     const calls = ghCalls();
     assert.ok(calls.some((call) => call.startsWith('pr create --base main --head content/2026-10-02-1405')));
@@ -209,8 +232,7 @@ describe('site publish', () => {
       assert.match(cleanup[0] ?? '', /^removing the worktree failed .*git worktree prune/);
       return true;
     });
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
   });
 
   test('--dry-run commits in the worktree, then leaves no branch, worktree, or push', async () => {
@@ -220,8 +242,7 @@ describe('site publish', () => {
     assert.match(result.commit, /^[0-9a-f]{40}$/);
     assert.match(result.body, /\*\*Published\*\*/);
     assert.match(result.body, /2 generated files/);
-    assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
-    assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
+    assertCheckoutLeftAlone(checkout);
     assert.equal(git(origin, 'branch', '--list', 'content/*'), '');
     assert.deepEqual(ghCalls(), [], 'a dry run needs no gh at all');
   });
@@ -269,7 +290,7 @@ describe('site land', () => {
       mergeSha,
       rules: rules('build', 'e2e'),
       headPolls: [[], [run('build', 'in_progress')], [run('build', 'completed', 'success'), run('e2e', 'completed', 'success')]],
-      checkRuns: [{ name: 'Cloudflare Pages', status: 'completed', conclusion: 'success', details_url: 'https://dash.example' }],
+      checkRuns: [{ name: DEPLOY_CHECK, status: 'completed', conclusion: 'success', details_url: 'https://dash.example' }],
     });
 
     const verified: string[] = [];
@@ -331,11 +352,11 @@ describe('site land', () => {
     const mergeSha = git(seed, 'rev-parse', 'HEAD');
     scenario({
       pr: { ...OPEN_PR, state: 'MERGED', mergeCommit: { oid: mergeSha } },
-      checkRuns: [{ name: 'Cloudflare Pages', status: 'in_progress' }],
+      checkRuns: [{ name: DEPLOY_CHECK, status: 'in_progress' }],
     });
     await assert.rejects(
       land({ root: checkout, pr: '7', out, intervalMs: 5, timeoutMs: 50 }),
-      (error: Error & { code: number }) => error.code === 4 && /timed out waiting for Cloudflare Pages/.test(error.message),
+      (error: Error & { code: number }) => error.code === 4 && error.message.includes(`timed out waiting for the ${DEPLOY_CHECK} check`),
     );
   });
 });

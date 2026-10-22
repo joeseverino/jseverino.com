@@ -2,7 +2,7 @@
 
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. Background: [WordPress to Astro](./WordPress-To-Astro-Migration.md#operational-shift).
 
-![Published writeups and pages pass through the content sync into src/content and the generated schema before Cloudflare Pages builds them](./diagrams/vault-workflow.png)
+![Published writeups and pages pass through the content sync into src/content and the generated schema before CI builds them and deploys the Worker](./diagrams/vault-workflow.png)
 
 <sup>Diagram source: [`docs/diagrams/vault-workflow.fig`](./diagrams/vault-workflow.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
@@ -90,7 +90,7 @@ The sync script:
 
 - resolves the path against the source folder;
 - refuses paths outside that folder;
-- writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under `.cache/` (`SITE_CACHE_DIR` moves it);
+- writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under the cache root every checkout shares (`SITE_CACHE_DIR` in `mise.toml`);
 - leaves the reference relative, so Astro's image pipeline encodes the AVIF and WebP variants at build time.
 
 ### What does NOT live in the vault
@@ -106,30 +106,35 @@ A vault page may link to a repo-managed asset, but the asset itself is not synce
 ## Local Workflow
 
 ```sh
-npm run sync:content
-npm run check
-npm run build:static
-npm run publish:check
+mise run sync:content
+mise run check
 ```
 
-`npm run publish:check` is the final local gate before committing generated content changes.
+`mise run check` is the final local gate before committing generated content changes.
 
-The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts): an environment override, else a fixed path under the home directory, never a path relative to this checkout.
+The sync finds the vaults and sibling repos through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts), each from an environment variable with no default: a missing one stops the command on a line that names it. Machine paths never enter this public repository. They live in the `[env]` table of a gitignored `mise.local.toml` at the checkout root, which mise loads beside `mise.toml`:
 
-| Source | Override | Default |
+```toml
+[env]
+VAULT_DIR = "/path/to/labs-vault"
+LIFE_VAULT_DIR = "/path/to/life-vault"
+RESUME_ENGINE_DIR = "/path/to/resume-engine"
+```
+
+| Source | Variable | When unset |
 | :--- | :--- | :--- |
-| Labs vault | `VAULT_DIR`, then `NOTES_HOME` | `~/Documents/Code/Severino Labs` |
-| Life vault | `LIFE_VAULT_DIR` | `~/Documents/Life` |
-| resume-engine | `RESUME_ENGINE_DIR` | `~/Code/Assets/resume-engine` |
-| Education export | `EDUCATION_EXPORT_FILE` | none: `severino-vault-mcp export education` is run |
+| Labs vault | `VAULT_DIR`, then `NOTES_HOME` | the command stops |
+| Life vault | `LIFE_VAULT_DIR` | the command stops |
+| resume-engine | `RESUME_ENGINE_DIR` | the command stops |
+| Education export | `EDUCATION_EXPORT_FILE` | `severino-vault-mcp export education` is run |
 
-The export is held to [`education-export-v1.json`](../public/schemas/education-export-v1.json), whether it is a file or the command's output. A runner on another machine supplies all four inputs explicitly, and [`explicit-inputs.test.ts`](../tests/unit/explicit-inputs.test.ts) runs the sync CLI with an empty home to hold that. The site never decrypts the vault: a runner hands it plain directories.
+`site publish` runs the sync in a temporary worktree, which has no `mise.local.toml`; the variables reach it through the environment the command inherits. The export is held to [`education-export-v1.json`](../public/schemas/education-export-v1.json), whether it is a file or the command's output. [`explicit-inputs.test.ts`](../tests/unit/explicit-inputs.test.ts) runs the sync CLI with an empty home and only the variables it is given, to hold that nothing reads a path of its own. The site never decrypts the vault: a runner hands it plain directories.
 
 `Career/resume.md` in the Life vault is the resume's canonical file. Obsidian or any other client may edit it; the grammar that renders it lives in resume-engine, so every client validates and previews through that grammar.
 
-## Cloudflare Build Boundary
+## Build Boundary
 
-Cloudflare Pages builds from the committed repository. It does not read the private vault and does not run `sync:content`.
+CI builds from the committed repository and deploys that build to Cloudflare. It does not read the private vault and does not run `sync:content`.
 
 Published content changes must be synced and committed before deploy. `site publish` does that on a fresh branch and opens the pull request; see [`Site-CLI.md`](./Site-CLI.md).
 
@@ -140,4 +145,4 @@ Published content changes must be synced and committed before deploy. `site publ
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
-- [`SECURITY.md`](../SECURITY.md)
+- [`SECURITY.md`](../.github/SECURITY.md)

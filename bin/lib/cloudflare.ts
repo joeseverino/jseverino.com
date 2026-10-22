@@ -1,12 +1,13 @@
 // Cloudflare desired state (cloudflare/zone.json) against the live zone and account. bin/cloudflare.ts is the CLI.
 // Paths are templates (`:zone`, `:account`, mid-apply ids) so output never prints an id. Rules this repo
 // owns carry a ref starting with `<owner>-`; every other rule is read and never written.
-import { setTimeout as sleep } from 'node:timers/promises';
 import type {
   AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
-  Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, ValidationSettings, Widget, Zone,
+  Operation, OwnedRule, Rule, Ruleset, Setting, ValidationSettings, Widget, Zone,
 } from './cloudflare-types.ts';
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run, type Step } from './drift.ts';
+import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
+import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
+import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run } from './drift.ts';
 
 export type * from './cloudflare-types.ts';
 
@@ -16,7 +17,6 @@ const FIREWALL_PHASE = 'http_request_firewall_custom';
 // Custom rules allowed in the phase, dashboard rules included.
 const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
-const REDIRECT_PHASE = 'http_request_redirect';
 
 class ApiError extends Error {
   status: number;
@@ -33,14 +33,13 @@ export const loadDesired = (file: string, schemaFile: string): DesiredState => l
 export interface ClientOptions {
   token: string | undefined;
   fetch?: Fetch;
-  wait?: (ms: number) => Promise<unknown>;
 }
 
 export type Client = ReturnType<typeof createClient>;
 
 // The token only ever goes into the Authorization header; nothing here
 // formats a request's headers into output.
-export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: ClientOptions) {
+export function createClient({ token, fetch = globalThis.fetch }: ClientOptions) {
   if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
@@ -67,7 +66,6 @@ export function createClient({ token, fetch = globalThis.fetch, wait = sleep }: 
 
   return {
     ids,
-    wait,
     request,
     get: async <T>(template: string): Promise<T> => (await request<T>('GET', template)).result as T,
     // A missing ruleset entrypoint (or setting) answers 404, which reads as absent.
@@ -111,19 +109,12 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
   );
   const operation = operations.find((op) => op.host === sv.host && op.method === sv.method && op.endpoint === sv.endpoint) ?? null;
 
-  const lists = await client.get<RulesList[]>('/accounts/:account/rules/lists');
-  const list = lists.find((entry) => entry.name === desired.pagesDevRedirect.list) ?? null;
-
   return {
     settings,
     dnssec: await client.get<LiveState['dnssec']>('/zones/:zone/dnssec'),
     firewall: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${FIREWALL_PHASE}/entrypoint`),
     ratelimit: await client.maybe<Ruleset>(`/zones/:zone/rulesets/phases/${RATELIMIT_PHASE}/entrypoint`),
-    redirect: await client.maybe<Ruleset>(`/accounts/:account/rulesets/phases/${REDIRECT_PHASE}/entrypoint`),
     botManagement: await client.maybe<Record<string, unknown>>('/zones/:zone/bot_management'),
-    list,
-    listItems: list ? await client.get<LiveState['listItems']>(`/accounts/:account/rules/lists/${q(list.id)}/items`) : [],
-    project: await client.maybe<PagesProject>(`/accounts/:account/pages/projects/${q(desired.pages.project)}`),
     accessApps: await client.list<AccessApp>('/accounts/:account/access/apps'),
     schemas: await client.get<ApiSchema[]>('/zones/:zone/schema_validation/schemas?omit_source=false'),
     validationSettings: await client.get<ValidationSettings>('/zones/:zone/schema_validation/settings'),
@@ -152,34 +143,18 @@ function firewallRule(desired: DesiredState, rule: FirewallRuleSpec): OwnedRule 
 function rateLimitRule(desired: DesiredState): OwnedRule {
   const rule = desired.rateLimit;
   return {
-    ref: ownedRef(desired, rule.id),
-    description: describe(desired, rule.description),
-    expression: rule.expression,
-    action: rule.action,
+    ...firewallRule(desired, rule),
     ratelimit: {
       characteristics: rule.characteristics,
       period: rule.period,
       requests_per_period: rule.requests_per_period,
       mitigation_timeout: rule.mitigation_timeout,
     },
-    enabled: true,
-  };
-}
-
-function redirectRule(desired: DesiredState): OwnedRule {
-  const name = desired.pagesDevRedirect.list;
-  return {
-    ref: ownedRef(desired, 'pages-dev-redirect'),
-    description: describe(desired, `Close the production pages.dev alias (list ${name})`),
-    expression: `http.request.full_uri in $${name}`,
-    action: 'redirect',
-    action_parameters: { from_list: { name, key: 'http.request.full_uri' } },
-    enabled: true,
   };
 }
 
 // The fields a rule is compared on: what this file sets, nothing the API adds.
-const RULE_FIELDS = ['description', 'expression', 'action', 'enabled', 'ratelimit', 'action_parameters'] as const;
+const RULE_FIELDS = ['description', 'expression', 'action', 'enabled', 'ratelimit'] as const;
 const ruleView = (rule: Rule): Record<string, unknown> =>
   Object.fromEntries(
     RULE_FIELDS
@@ -190,8 +165,8 @@ const ruleView = (rule: Rule): Record<string, unknown> =>
 // One phase entrypoint: create, update, or delete the owned rules; leave the
 // rest. A missing entrypoint is created whole, which is safe because nothing
 // else lives in it yet.
-function rulesetItems(desired: DesiredState, area: string, scope: 'zones' | 'accounts', phase: string, live: Ruleset | null, wanted: OwnedRule[]): Item[] {
-  const base = `/${scope}/:${scope === 'zones' ? 'zone' : 'account'}/rulesets`;
+function rulesetItems(desired: DesiredState, area: string, phase: string, live: Ruleset | null, wanted: OwnedRule[]): Item[] {
+  const base = '/zones/:zone/rulesets';
   if (!live) {
     return wanted.map((rule, index) =>
       item(area, rule.ref, 'present', null, 'drift', index === 0
@@ -279,68 +254,6 @@ function dnssecItem(desired: DesiredState, live: LiveState): Item {
     desired.dnssec === 'active' ? 'then publish the DS record at the registrar unless it is Cloudflare' : '');
 }
 
-function redirectItems(desired: DesiredState, live: LiveState): Item[] {
-  const want = desired.pagesDevRedirect;
-  const entry = pick(want, ['source_url', 'target_url', 'status_code', 'preserve_query_string', 'subpath_matching', 'preserve_path_suffix', 'include_subdomains']);
-  const items: Item[] = [];
-  const putItems: Call = { method: 'PUT', path: '/accounts/:account/rules/lists/:list/items', body: [{ redirect: entry }], awaitBulk: true };
-
-  if (!live.list) {
-    items.push(item('redirect', `list ${want.list}`, 'redirect list', null, 'drift', [
-      { method: 'POST', path: '/accounts/:account/rules/lists', body: { name: want.list, kind: 'redirect', description: describe(desired, 'pages.dev alias redirect') }, saveAs: { list: 'id' } },
-      putItems,
-    ]));
-  } else {
-    const current = live.listItems.map((row) => pick(row.redirect, Object.keys(entry)));
-    const steps: Step[] = [{ use: { list: live.list.id } }, putItems];
-    items.push(live.list.kind !== 'redirect'
-      ? item('redirect', `list ${want.list}`, 'redirect list', `${live.list.kind} list`, 'manual', [], 'a list of another kind holds the name')
-      : current.length === 1 && same(current[0], entry)
-        ? item('redirect', `list ${want.list}`, entry, current[0], 'ok')
-        : item('redirect', `list ${want.list}`, entry, current, 'drift', steps));
-  }
-  items.push(...rulesetItems(desired, 'redirect', 'accounts', REDIRECT_PHASE, live.redirect, [redirectRule(desired)]));
-  return items;
-}
-
-function pagesItems(desired: DesiredState, live: LiveState, compatibilityDate: string): Item[] {
-  const project = desired.pages.project;
-  if (!live.project) return [item('pages', project, 'project', null, 'manual', [], 'create the Pages project with Git integration')];
-  const configs = live.project.deployment_configs ?? {};
-  const have = { production: configs.production?.compatibility_date, preview: configs.preview?.compatibility_date };
-  const want = { production: compatibilityDate, preview: compatibilityDate };
-  const items = [same(have, want)
-    ? item('pages', 'compatibility_date', want, have, 'ok')
-    : item('pages', 'compatibility_date', want, have, 'drift', [{
-        method: 'PATCH',
-        path: `/accounts/:account/pages/projects/${q(project)}`,
-        body: { deployment_configs: { production: { compatibility_date: compatibilityDate }, preview: { compatibility_date: compatibilityDate } } },
-      }], 'the edge suite runs this date (tests/browser-test-env.ts)')];
-
-  const config = fields(live.project.source?.config);
-  const branches = { include: config.preview_branch_includes ?? [], exclude: config.preview_branch_excludes ?? [] };
-  const wantBranches = desired.pages.previewBranches;
-  items.push(config.preview_deployment_setting === 'custom' && same(branches, wantBranches)
-    ? item('pages', 'preview branches', wantBranches, branches, 'ok')
-    : item('pages', 'preview branches', wantBranches, branches, 'drift', [{
-        method: 'PATCH',
-        path: `/accounts/:account/pages/projects/${q(project)}`,
-        // The whole source config goes back: a partial one would drop the repository link.
-        body: { source: { type: live.project.source?.type, config: { ...config, preview_deployment_setting: 'custom', preview_branch_includes: wantBranches.include, preview_branch_excludes: wantBranches.exclude } } },
-      }]));
-
-  const previews = `*.${project}.pages.dev`;
-  const apps = live.accessApps.filter((app) => app.domain === previews || (app.self_hosted_domains ?? []).includes(previews)
-    || (app.destinations ?? []).some((destination) => destination.uri === previews));
-  const covered = apps.length > 0;
-  items.push(covered === desired.pages.previewAccess
-    ? item('pages', 'preview access', desired.pages.previewAccess, covered, 'ok')
-    : item('pages', 'preview access', desired.pages.previewAccess, covered, 'manual', [],
-        'Pages project → Settings → General → Enable access policy'));
-  if (covered) items.push(previewPolicyItem(apps, desired.pages.previewPolicy));
-  return items;
-}
-
 const SERVICE_TOKEN_RULES = new Set(['service_token', 'any_valid_service_token']);
 
 // A policy that admits only service tokens: Service Auth, every include rule a token.
@@ -348,31 +261,37 @@ const isServiceAuthOnly = (policy: AccessPolicy): boolean =>
   policy.decision === 'non_identity' && (policy.include ?? []).length > 0
   && (policy.include ?? []).every((rule) => Object.keys(rule).length > 0 && Object.keys(rule).every((key) => SERVICE_TOKEN_RULES.has(key)));
 
+// Every Worker preview answers on <label><PREVIEW_HOST_SUFFIX>, so one Access
+// application on the wildcard covers them all.
+const PREVIEW_HOSTS = `*${PREVIEW_HOST_SUFFIX}`;
+const coversPreviews = (app: AccessApp): boolean => app.domain === PREVIEW_HOSTS
+  || (app.self_hosted_domains ?? []).includes(PREVIEW_HOSTS)
+  || (app.destinations ?? []).some((destination) => destination.uri === PREVIEW_HOSTS);
+
 // Previews are reached only by CI's service token and the tailnet proxy's.
-// Any other policy (an email, a group, everyone) is reported; apply never
-// edits Access, so a person fixes it in the dashboard.
-function previewPolicyItem(apps: AccessApp[], want: DesiredState['pages']['previewPolicy']): Item {
+// A missing application, or any other policy (an email, a group, everyone),
+// is reported; apply never edits Access, so a person fixes it in the dashboard.
+function previewAccessItem(desired: DesiredState, live: LiveState): Item {
+  const want = desired.preview.accessPolicy;
+  const apps = live.accessApps.filter(coversPreviews);
+  if (apps.length === 0) {
+    return item('preview', 'access policy', want, null, 'manual', [],
+      `Zero Trust → Access → Applications: add a self-hosted application for ${PREVIEW_HOSTS} with a Service Auth policy`);
+  }
   const policies = apps.flatMap((app) => app.policies ?? []);
   const human = policies.filter((policy) => !isServiceAuthOnly(policy));
   const describePolicy = (policy: AccessPolicy) => `${policy.name ?? 'unnamed'} (${policy.decision ?? 'no decision'})`;
-  if (policies.length > 0 && human.length === 0) return item('pages', 'preview access policy', want, 'service-auth-only', 'ok');
-  return item('pages', 'preview access policy', want, policies.length ? human.map(describePolicy).join(', ') : 'no policies', 'manual', [],
-    'Zero Trust → Access → Applications → the preview app: keep only Service Auth policies that include the CI and proxy service tokens');
-}
-
-function canonicalJson(text: string): string | null {
-  try {
-    return JSON.stringify(JSON.parse(text));
-  } catch {
-    return null;
-  }
+  if (policies.length > 0 && human.length === 0) return item('preview', 'access policy', want, 'service-auth-only', 'ok');
+  return item('preview', 'access policy', want, policies.length ? human.map(describePolicy).join(', ') : 'no policies', 'manual', [],
+    `Zero Trust → Access → Applications → ${PREVIEW_HOSTS}: keep only Service Auth policies that include the CI and proxy service tokens`);
 }
 
 function schemaValidationItems(desired: DesiredState, live: LiveState, openapi: string): Item[] {
   const sv = desired.schemaValidation;
   const items: Item[] = [];
   const named = live.schemas.filter((schema) => schema.name === sv.name);
-  const current = named.find((schema) => canonicalJson(schema.source) === canonicalJson(openapi));
+  const wanted = canonicalJsonText(openapi);
+  const current = named.find((schema) => canonicalJsonText(schema.source) === wanted);
   if (!current) {
     items.push(item('api-shield', `schema ${sv.name}`, sv.file, named.length ? 'stale source' : null, 'drift', [
       { method: 'POST', path: '/zones/:zone/schema_validation/schemas', body: { kind: 'openapi_v3', name: sv.name, source: openapi, validation_enabled: true } },
@@ -432,29 +351,18 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
   ]);
 }
 
-function diff(desired: DesiredState, live: LiveState, { openapi, compatibilityDate }: { openapi: string; compatibilityDate: string }): Item[] {
+function diff(desired: DesiredState, live: LiveState, openapi: string): Item[] {
   return [
     ...settingsItems(desired, live),
     botManagementItem(desired, live),
     dnssecItem(desired, live),
-    ...rulesetItems(desired, 'waf', 'zones', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
+    ...rulesetItems(desired, 'waf', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
     firewallBudgetItem(desired, live),
-    ...rulesetItems(desired, 'ratelimit', 'zones', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),
-    ...redirectItems(desired, live),
-    ...pagesItems(desired, live, compatibilityDate),
+    ...rulesetItems(desired, 'ratelimit', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),
+    previewAccessItem(desired, live),
     ...schemaValidationItems(desired, live, openapi),
     turnstileItem(desired, live),
   ];
-}
-
-async function awaitBulk(client: Client, operationId: string): Promise<void> {
-  for (let attempt = 0; attempt < 30; attempt += 1) {
-    const operation = await client.get<{ status: string; error?: string }>(`/accounts/:account/rules/lists/bulk_operations/${q(operationId)}`);
-    if (operation.status === 'completed') return;
-    if (operation.status === 'failed') throw new Error(`list bulk operation failed: ${operation.error ?? 'no detail'}`);
-    await client.wait(1000);
-  }
-  throw new Error('list bulk operation did not complete in 30 s');
 }
 
 // A field a later step depends on; a response without it must not become the id "undefined".
@@ -464,17 +372,16 @@ function required(result: Record<string, unknown>, field: string, step: Call): s
   return String(value);
 }
 
-export const createRun = (desired: DesiredState, client: Client, context: { openapi: string; compatibilityDate: string }): Run => ({
+export const createRun = (desired: DesiredState, client: Client, openapi: string): Run => ({
   target: desired.zone,
   source: 'cloudflare/zone.json',
-  survey: async () => diff(desired, await readLive(client, desired), context),
+  survey: async () => diff(desired, await readLive(client, desired), openapi),
   apply: (items, log) => applySteps(items, {
     use: (ids) => Object.assign(client.ids, ids),
     log,
     async call(step) {
       const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
       for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = required(result, field, step);
-      if (step.awaitBulk) await awaitBulk(client, required(result, 'operation_id', step));
     },
   }),
 });

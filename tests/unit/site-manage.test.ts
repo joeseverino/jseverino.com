@@ -20,7 +20,8 @@ function makeVault(): string {
   return vault;
 }
 
-const manage = (vault: string, env: Record<string, string>) => spawnSync(process.execPath, ['bin/site.ts', 'manage'], {
+// An undefined value unsets the variable for the child.
+const manage = (vault: string, env: Record<string, string | undefined>) => spawnSync(process.execPath, ['bin/site.ts', 'manage'], {
   cwd: siteRoot,
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'pipe'],
@@ -41,6 +42,13 @@ test('the list frame shows featured order, drafts, and gate issues from site val
   assert.match(frame, /1 ● {3}alpha/);
   assert.match(frame, /· ◌ ! beta/);
   assert.match(frame, /\[draft\]/);
+});
+
+test('frames carry color only when the environment asks for it', () => {
+  const vault = makeVault();
+  const sgr = /\x1b\[[\d;]*m/;
+  assert.doesNotMatch(manage(vault, { MANAGE_TUI_SMOKE: 'list', FORCE_COLOR: undefined }).stdout, sgr);
+  assert.match(manage(vault, { MANAGE_TUI_SMOKE: 'list', FORCE_COLOR: '1' }).stdout, sgr);
 });
 
 test('staged moves stay staged until save', () => {
@@ -83,6 +91,6 @@ test('a scaffold does not absorb an outside edit made after the session loaded',
   const loaded = model.sourceFingerprint;
   const alpha = path.join(vault, '05 Writeups/alpha/index.md');
   fs.writeFileSync(alpha, fs.readFileSync(alpha, 'utf8').replace(/^title: .*$/m, 'title: Edited elsewhere'));
-  assert.ok(await createWriteup(model, 'delta'), stripVTControlCharacters(model.flash));
+  assert.ok(await createWriteup(model, 'delta'), model.flash?.text);
   assert.equal(model.sourceFingerprint, loaded);
 });

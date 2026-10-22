@@ -1,36 +1,44 @@
-#!/usr/bin/env node
-
+// Every built page carries the metadata search engines and link previews read,
+// and its og:image is a file the build emitted.
+import fs from 'node:fs';
+import path from 'node:path';
+import { elementsNamed, linkHref, metaContent, parseHtml, textContent, title } from '../../src/lib/html.ts';
+import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { builtPages, finish } from './lib.ts';
 
-const { pages } = builtPages('check-seo');
+const { distDir, pages } = builtPages('check-seo');
 
-const problems: string[] = [];
-
-for (const { rel, html } of pages) {
-
-  // Redirect stubs (e.g. Astro.redirect) are not indexable content pages.
-  if (/http-equiv=["']refresh["']/i.test(html)) continue;
-
-  const missing: string[] = [];
-
-  if (!/<title>[^<]*\S[^<]*<\/title>/.test(html)) missing.push('non-empty <title>');
-  if (!/<link[^>]+rel=["']canonical["']/.test(html)) missing.push('canonical link');
-  if (!/<meta[^>]+property=["']og:title["']/.test(html)) missing.push('og:title');
-  if (!/<meta[^>]+property=["']og:image["']/.test(html)) missing.push('og:image');
-
-  for (const match of html.matchAll(
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/g,
-  )) {
-    try {
-      JSON.parse(match[1] ?? '');
-    } catch {
-      missing.push('invalid JSON-LD');
-    }
-  }
-
-  if (missing.length) problems.push(`${rel}: missing ${missing.join(', ')}`);
+// SeoHead.astro writes og:image as an absolute URL on the site; it must name an emitted file.
+function imageProblem(content: string): string | undefined {
+  const url = URL.parse(content);
+  if (url?.origin !== SITE_ORIGIN) return `og:image ${content} is not a ${SITE_ORIGIN} URL`;
+  const file = path.join(distDir, decodeURIComponent(url.pathname));
+  return fs.statSync(file, { throwIfNoEntry: false })?.isFile() ? undefined : `og:image ${url.pathname} is not in the build`;
 }
 
-finish(problems, `${pages.length} pages: title, canonical, og:title, og:image, valid JSON-LD`, {
+const problems = pages.flatMap(({ rel, html }) => {
+  const doc = parseHtml(html);
+  const image = metaContent(doc, 'og:image');
+  const found = [
+    title(doc) ? undefined : 'no non-empty <title>',
+    linkHref(doc, 'canonical') ? undefined : 'no canonical link',
+    metaContent(doc, 'og:title') ? undefined : 'no og:title',
+    image ? imageProblem(image) : 'no og:image',
+    ...elementsNamed(doc, 'script')
+      .filter((script) => script.properties.type === 'application/ld+json')
+      .map((script) => {
+        try {
+          JSON.parse(textContent(script));
+          return undefined;
+        } catch {
+          return 'invalid JSON-LD';
+        }
+      }),
+  ];
+  return found.filter((problem) => problem !== undefined).map((problem) => `${rel}: ${problem}`);
+});
+
+finish(problems, `${pages.length} pages: title, canonical, og:title, og:image in the build, valid JSON-LD`, {
   heading: 'check-seo: pages with missing or invalid SEO metadata:',
+  fix: 'fix: check src/components/SeoHead.astro and the page frontmatter',
 });

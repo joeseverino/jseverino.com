@@ -1,0 +1,99 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro and each major on their own, security fixes at once.",
+  "extends": [
+    "config:best-practices",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(build)",
+    ":semanticCommitScope(deps)"
+  ],
+  "schedule": ["* * * * 1"],
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "platformCommit": "enabled",
+  "vulnerabilityAlerts": {
+    "description": "A fix for an advisory GitHub reports opens at once, outside the schedule and the release-age hold."
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "config:best-practices holds npm releases three days through security:minimumReleaseAgeNpm, a package rule a top-level value does not reach; npm gets the same 7 days as everything else.",
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Joe's own packages ship from his repositories, so their release is the change being made: no hold.",
+      "matchPackageNames": ["branding-engine", "severino-brand", "sitedrift"],
+      "minimumReleaseAge": "0 days"
+    },
+    {
+      "description": "Node's security releases carry no package advisory for the alerts to see, and they ship from the Node project's own release process, not an npm publish: no hold.",
+      "matchDepNames": ["node"],
+      "minimumReleaseAge": "0 days"
+    },
+    {
+      "description": "Everything short of a major moves together, digests included, so a week's updates are one pull request.",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "dependencies",
+      "groupSlug": "weekly"
+    },
+    {
+      "description": "Astro and its integrations release together and are tested together.",
+      "matchPackageNames": ["astro", "@astrojs/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "astro"
+    },
+    {
+      "description": "sitedrift is bundled into the production edge functions, so it comes alone and is merged by hand.",
+      "matchPackageNames": ["sitedrift"],
+      "groupName": "sitedrift",
+      "automerge": false
+    },
+    {
+      "description": "wrangler stays on the release the Cloudflare adapter's Vite plugin pins, so it moves by hand with the adapter; checks:repo-policy fails while two copies are installed (docs/Dependencies.md).",
+      "matchPackageNames": ["wrangler"],
+      "enabled": false
+    },
+    {
+      "description": "Held at TypeScript 6: the audits and Astro's language tools call the compiler API that TypeScript 7 does not ship (docs/Dependencies.md).",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "@types/node and npm follow the Node major in mise.toml, so their majors move with a Node major (docs/Dependencies.md).",
+      "matchPackageNames": ["@types/node", "npm"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "The mise release CI installs and every machine is held to, which min_version names; mise's own manager reads only the tools.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^mise\\.toml$/"],
+      "matchStrings": ["min_version = \"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "jdx/mise",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    },
+    {
+      "description": "The Python packages the font task runs through uvx, pinned in the task itself.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^mise-tasks/make/font$/"],
+      "matchStrings": [
+        "--with (?<depName>brotli)==(?<currentValue>\\S+)",
+        "--from (?<depName>fonttools)==(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "pypi"
+    },
+    {
+      "description": "The Renovate release checks:renovate validates this file with, pinned in the task itself.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^mise\\.toml$/"],
+      "matchStrings": ["--package (?<depName>renovate)@(?<currentValue>\\S+)"],
+      "datasourceTemplate": "npm"
+    }
+  ]
+}

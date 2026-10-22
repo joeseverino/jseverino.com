@@ -44,17 +44,6 @@ interface RateLimitSpec {
   mitigation_timeout: 10;
 }
 
-type PagesDevRedirect = {
-  list: string;
-  source_url: string;
-  target_url: string;
-  status_code: 301 | 302 | 307 | 308;
-  preserve_query_string: boolean;
-  subpath_matching: boolean;
-  preserve_path_suffix: boolean;
-  include_subdomains: boolean;
-};
-
 interface SchemaValidationSpec {
   name: string;
   file: string;
@@ -85,8 +74,7 @@ export interface DesiredState {
   firewall: FirewallRuleSpec[];
   rateLimit: RateLimitSpec;
   botManagement: BotManagement;
-  pagesDevRedirect: PagesDevRedirect;
-  pages: { project: string; previewAccess: boolean; previewPolicy: 'service-auth-only'; previewBranches: { include: string[]; exclude: string[] } };
+  preview: { accessPolicy: 'service-auth-only' };
   schemaValidation: SchemaValidationSpec;
   turnstile: { domains: string[] };
 }
@@ -127,7 +115,6 @@ export interface Rule {
     requests_per_period: number;
     mitigation_timeout: number;
   };
-  action_parameters?: unknown;
 }
 
 export type OwnedRule = Rule & { ref: string };
@@ -136,12 +123,6 @@ export type LiveRule = Rule & { id: string };
 export interface Ruleset {
   id: string;
   rules?: LiveRule[];
-}
-
-export interface RulesList {
-  id: string;
-  name: string;
-  kind: string;
 }
 
 export interface Operation {
@@ -178,11 +159,6 @@ export interface AccessApp {
   policies?: AccessPolicy[];
 }
 
-export interface PagesProject {
-  source?: { type?: string; config?: Record<string, unknown> };
-  deployment_configs?: Partial<Record<'production' | 'preview', { compatibility_date?: string }>>;
-}
-
 export interface Widget {
   sitekey: string;
   domains?: string[];
@@ -194,11 +170,7 @@ export interface LiveState {
   dnssec: { status?: string } | null;
   firewall: Ruleset | null;
   ratelimit: Ruleset | null;
-  redirect: Ruleset | null;
   botManagement: Record<string, unknown> | null;
-  list: RulesList | null;
-  listItems: { redirect?: Record<string, unknown> }[];
-  project: PagesProject | null;
   accessApps: AccessApp[];
   schemas: ApiSchema[];
   validationSettings: ValidationSettings | null;

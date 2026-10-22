@@ -89,13 +89,12 @@ Vault writeups carry a `cover_alt` frontmatter field that describes the *actual*
 
 ## Preview deployments
 
-Cloudflare Pages assigns a `*.pages.dev` URL to every branch and version
-preview. Indexed, those URLs would split ranking signal away from the canonical
-domain. [`public/_headers`](../public/_headers) adds `X-Robots-Tag: noindex` to
-every response from `https://:project.pages.dev/*` and
-`https://:version.:project.pages.dev/*`. `https://jseverino.com/` is unaffected.
+Every preview is a Worker version with a workers.dev preview URL, one per
+version and one per branch alias. Indexed, those URLs would split ranking signal
+away from the canonical domain, so they carry `X-Robots-Tag: noindex` and sit
+behind Access ([Preview access](./Cloudflare.md#preview-access)).
 
-Preview deployments (any branch but `main`) are wrapped by
+Previews (any branch but `main`) are wrapped by
 [sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel
 renders DEV and LIVE search snippets together, highlights title, description,
 and canonical differences, and checks H1 count, viewport, language, Open Graph,
@@ -111,14 +110,14 @@ indexable: canonical metadata still points at `jseverino.com` and the
 
 The production CSP is hash-based and built at build time by [`bin/build-csp.ts`](../bin/build-csp.ts). It allows the site scripts, Cloudflare Web Analytics, and Turnstile without adding `'unsafe-inline'` to the production HTML policy. The policy also advertises the CSP reporting endpoint so browser policy violations can be reviewed without weakening enforcement. Measured response snapshots against the previous runtime are in the [migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security).
 
-[`public/_headers`](../public/_headers) carries the other security headers; the CSP is written into the built `dist/_headers` from placeholders there. CSP reports are received by [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
+[`public/_headers`](../public/_headers) carries the other security headers; the CSP is written into the built `dist/client/_headers` from placeholders there. CSP reports are received by [`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts) and stored in D1 after extension and off-site noise filtering. The filter rejects reports whose blocked URI uses a browser-extension scheme **and** reports whose `source_file` starts with one of those schemes, so extension-injected content scripts cannot pollute the D1 sink even when the blocked URI looks same-origin.
 
 ## Validation Checklist
 
 After major metadata changes:
 
 ```sh
-npm run build:static
+mise run build
 ```
 
 Then inspect generated HTML for:
@@ -134,7 +133,7 @@ Then inspect generated HTML for:
 - `dist/sitemap-0.xml` URLs each carry a `<lastmod>`;
 - `ProjectCard` and article hero `<img alt>` describes the image, not the writeup title.
 
-For a non-production Pages deployment, also open sitedrift's SEO panel and
+For a pull request's preview, also open sitedrift's SEO panel and
 confirm DEV/LIVE differences are intentional. Its checks are a quick
 browser-level signal; generated-HTML inspection, structured-data validation,
 Search Console, and Lighthouse still apply.
@@ -146,4 +145,4 @@ Search Console, and Lighthouse still apply.
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
 - [`docs/Deployment-Preview-Review.md`](./Deployment-Preview-Review.md)
-- [`SECURITY.md`](../SECURITY.md)
+- [`SECURITY.md`](../.github/SECURITY.md)

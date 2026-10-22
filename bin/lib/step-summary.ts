@@ -1,7 +1,7 @@
-// Job-summary and log helpers for the bin/ runners. Inert outside GitHub Actions.
+// Log, job-summary and annotation helpers for the bin/ runners. Everything but status() is inert outside GitHub Actions.
 import fs from 'node:fs';
 
-export const inActions = process.env.GITHUB_ACTIONS === 'true';
+const inActions = process.env.GITHUB_ACTIONS === 'true';
 
 // The workflow-command escaping @actions/core applies, so text cannot end the command or start another.
 const escapeData = (text: string): string => text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
@@ -12,6 +12,11 @@ export const annotation = (kind: 'error' | 'warning' | 'notice', title: string, 
 
 export function annotate(kind: 'error' | 'warning' | 'notice', title: string, message: string): void {
   if (inActions) console.log(annotation(kind, title, message));
+}
+
+// One aligned log line per step, in and out of Actions.
+export function status(label: string, detail: string): void {
+  console.log(`${label.padEnd(12)} ${detail}`);
 }
 
 export function group(title: string): void {
@@ -32,9 +37,9 @@ export function cell(text: unknown): string {
 }
 
 // ok is true, false, or null (skipped).
-export type Outcome = boolean | null;
+type Outcome = boolean | null;
 
-export function outcome(ok: Outcome): string {
+function outcome(ok: Outcome): string {
   if (ok === true) return 'pass';
   if (ok === false) return '**FAIL**';
   return 'skipped';

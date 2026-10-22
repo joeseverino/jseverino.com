@@ -4,8 +4,10 @@ import {
 } from '../lib/site-ops.ts';
 import { EXIT, SiteError, translate, type Output } from './cli.ts';
 import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
+import { INSTALL_PACKAGES } from '../lib/preflight.ts';
 
-const CLOUDFLARE_FIX = 'needs CLOUDFLARE_API_TOKEN in the environment (op run) and npm ci in the site repo';
+const CLOUDFLARE_FIX = `needs CLOUDFLARE_API_TOKEN in the environment (op run) and ${INSTALL_PACKAGES} in the site repo`;
+const D1_READ_FIX = 'set CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID through op run';
 
 // fix names the remedy for a failure; usage, for a refused or malformed request.
 const guard = <T>(work: () => T | Promise<T>, { fix, usage }: { fix: string; usage?: string }): Promise<T> =>
@@ -26,7 +28,7 @@ const limit = (value: string | undefined): number | undefined => {
 };
 
 export async function contact({ limit: max, pii, out }: { limit: string | undefined; pii: boolean; out: Output }): Promise<ContactResult> {
-  const result = await guard(() => contactSubmissions(siteOpsConfig(), { limit: limit(max), includePii: pii }), { fix: CLOUDFLARE_FIX });
+  const result = await guard(() => contactSubmissions(siteOpsConfig(), { limit: limit(max), includePii: pii }), { fix: D1_READ_FIX });
   for (const row of result.results) out.text(`  ${String(row.created_at)}  ${String(row.name)}  ${String(row.email)}  ${String(row.message_preview ?? row.message ?? '')}`);
   if (result.advisory) out.step('redacted', result.advisory);
   return { ...result, next: null };
@@ -36,12 +38,12 @@ export async function csp({
   count, limit: max, directive, pii, out,
 }: { count: boolean; limit: string | undefined; directive: string | undefined; pii: boolean; out: Output }): Promise<CspResult> {
   if (count) {
-    const counts = await guard(() => cspCounts(siteOpsConfig()), { fix: CLOUDFLARE_FIX });
+    const counts = await guard(() => cspCounts(siteOpsConfig()), { fix: D1_READ_FIX });
     out.text(`  total ${counts.total}`);
     for (const row of counts.byDirective) out.text(`  ${String(row.count).padStart(6)}  ${row.effective_directive}`);
     return { mode: 'count', ...counts, next: null };
   }
-  const result = await guard(() => cspReports(siteOpsConfig(), { limit: limit(max), directive, includePii: pii }), { fix: CLOUDFLARE_FIX });
+  const result = await guard(() => cspReports(siteOpsConfig(), { limit: limit(max), directive, includePii: pii }), { fix: D1_READ_FIX });
   for (const row of result.results) out.text(`  ${String(row.created_at)}  ${String(row.effective_directive)}  ${String(row.blocked_uri)}`);
   return { mode: 'list', ...result, next: null };
 }
@@ -54,7 +56,7 @@ export async function d1Apply({ confirm, out }: { confirm: boolean; out: Output 
 
 export async function headers({ path, out }: { path: string | undefined; out: Output }): Promise<HeadersResult> {
   const result = await guard(() => checkSecurityHeaders(siteOpsConfig(), path ?? '/'), {
-    fix: 'check the network connection and SITE_ORIGIN, then rerun',
+    fix: 'check the network connection, then rerun',
     usage: 'pass a root-relative path, e.g. site headers /contact/',
   });
   out.text(`${result.httpStatus} ${result.url}`);

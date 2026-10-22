@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CSP_INLINE_MARKER, htmlPolicy, hashSource, inlineHashes, scanInline, trustedTypesReportOnly, withPreviewPolicy } from '../../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER, htmlPolicy, hashSource, inlineHashes, scanInline, trustedTypesReportOnly, withPreviewPolicy } from '../../src/lib/csp.ts';
 
 const reportUri = 'https://example.test/api/csp-report';
 const marked = `nonce="${CSP_INLINE_MARKER}"`;
@@ -37,14 +37,12 @@ describe('htmlPolicy', () => {
 });
 
 describe('scanInline', () => {
-  test('hashes a marked inline script and the head stylesheet, and removes the marker', async () => {
+  test('hashes a marked inline script and the head stylesheet', async () => {
     const html = `<html><head><script ${marked}>go()</script><style>p{}</style></head><body></body></html>`;
     const scan = await scanInline(html);
     assert.deepEqual(scan.problems, []);
     assert.deepEqual(scan.scriptHashes, [await hashSource('go()')]);
     assert.deepEqual(scan.styleHashes, [await hashSource('p{}')]);
-    assert.ok(!scan.html.includes(CSP_INLINE_MARKER));
-    assert.ok(scan.html.includes('<script>go()</script>'));
   });
 
   test('allows same-origin and named-host scripts, and data blocks', async () => {

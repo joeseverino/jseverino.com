@@ -2,7 +2,7 @@
 
 The security design of [jseverino.com](https://jseverino.com): a static site
 with no server-side runtime behind its pages, and a few small dynamic surfaces
-at the edge. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
+at the edge. To report a vulnerability, see [`SECURITY.md`](../.github/SECURITY.md).
 
 ## A minimal attack surface
 
@@ -13,13 +13,12 @@ and served from Cloudflare's edge. The site has no application server, database 
 or plugin runtime. With no origin process to reach, injection, auth bypass,
 and origin RCE do not apply to the serving layer.
 
-Per-request code is limited to Cloudflare Pages Functions for the contact
-form, the CSP report receiver, and the read-only `/__sitedrift/*`
+Per-request code is limited to on-demand routes in the site's Worker for the
+contact form, the CSP report receiver, and the read-only `/__sitedrift/*`
 preview-review route (see below). The sitedrift route returns `404` in
 production because its configuration is generated only for preview
-deployments. Every other route, every HTML page included, is a flat file.
-[`public/_routes.json`](../public/_routes.json) lists only the Function
-routes, so page views never invoke Functions. The
+deployments. Every other route, every HTML page included, is a flat file, and
+page views never start the Worker ([Worker routing](./Cloudflare.md#worker-routing)). The
 [migration comparison](./WordPress-To-Astro-Migration.md) has the measurements.
 
 ### The private/public boundary is one auditable step
@@ -46,8 +45,9 @@ See the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 
 ### The build needs no secrets and no private access
 
-Cloudflare Pages clones this repository, runs `npm run build:static`, and
-uploads `dist/`. The build:
+GitHub Actions checks out this repository, runs `mise run build` inside
+`mise run check`, and keeps the gated build as the `site` artifact the
+`deploy` workflow uploads with wrangler. The build:
 
 - never touches the private vault: it builds from the committed snapshot
   alone;
@@ -55,22 +55,24 @@ uploads `dist/`. The build:
   site key), and the GitHub data comes from a committed snapshot;
 - is reproducible: dependencies install from the committed
   [`package-lock.json`](../package-lock.json) via `npm ci`, and the Node
-  version is pinned in [`.nvmrc`](../.nvmrc).
+  version is pinned in [`mise.toml`](../mise.toml) with its checksums in
+  [`mise.lock`](../mise.lock).
 
-The one server-side secret (the Turnstile secret key) lives only in the
-Pages Function's runtime environment, set in the Cloudflare dashboard. It is
-not in the build or the repo, and `.env` / `.dev.vars` files are gitignored.
+The one server-side secret, the Turnstile secret key, lives only in the
+Worker's runtime environment, never in the build or the repo
+([Worker configuration](./Cloudflare.md#worker-configuration)).
 
 ## The contact form: the visitor-facing dynamic surface
 
-The contact page is static HTML, but submissions POST to a Cloudflare Pages
-Function at `/api/contact` ([`functions/api/contact.ts`](../functions/api/contact.ts)). It is
+The contact page is static HTML, but submissions POST to a Worker route
+at `/api/contact` ([`src/pages/api/contact.ts`](../src/pages/api/contact.ts),
+handler in [`src/lib/api/contact.ts`](../src/lib/api/contact.ts)). It is
 single-purpose and layered:
 
 | Control | What it does |
 |---|---|
-| **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the function runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
-| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `npm run cloudflare:check` reports when the live zone differs. |
+| **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the Worker runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
+| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the Worker runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero Worker compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `mise run cloudflare check` reports when the live zone differs. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API (with an idempotency key) before anything is stored. The response must name this site's hostname and the contact widget's action, so a token solved on another site or widget is refused. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, checked by a `COUNT(*)` inside the `INSERT` itself, so concurrent requests cannot race past it. Excess returns HTTP 429. |
@@ -104,16 +106,8 @@ under the contact form.
 ### D1 schema
 
 Submissions land in a Cloudflare D1 SQLite database. The schema is
-committed at [`cloudflare/d1.sql`](../cloudflare/d1.sql); every statement is
-`IF NOT EXISTS`, so re-applying it adds new indexes without touching data:
-
-```sh
-# Production database:
-wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
-
-# Local database (for `wrangler pages dev`):
-wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
-```
+committed at [`cloudflare/d1.sql`](../cloudflare/d1.sql), and how it is
+applied is in [Worker configuration](./Cloudflare.md#worker-configuration).
 
 The `contact_submissions` table:
 
@@ -154,13 +148,12 @@ for grouping recurring policy issues, and `(ip_address, created_at DESC)` and
 `(blocked_uri, created_at DESC)` for the per-IP cap and the one-hour duplicate
 check the receiver runs inside its `INSERT`.
 
-Bindings and environment variables are in
-[Architecture §13 Runtime Configuration](./Architecture.md#13-runtime-configuration).
-
 ## HTTP response headers
 
-Cloudflare Pages applies [`public/_headers`](../public/_headers) to static
-assets, which covers every page. Function responses set their own headers.
+The assets layer applies [`public/_headers`](../public/_headers) to static
+assets, which covers every page. [`src/middleware.ts`](../src/middleware.ts)
+gives the Worker's own responses the `/*` rule's security headers, with a
+policy that carries no hashes.
 `public/_headers` holds placeholders, and
 [`bin/build-csp.ts`](../bin/build-csp.ts) writes the finished
 `Content-Security-Policy` and `Reporting-Endpoints` headers into
@@ -177,32 +170,24 @@ on every request.
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates the browsing context group, blocking `window.opener` access from cross-origin pages (tab-napping, Spectre-class side channels). |
 | `Cross-Origin-Resource-Policy` | `same-site` | Blocks other sites from embedding the site's assets (hotlinking). `same-site` lets subdomains of `jseverino.com` load shared assets, which `same-origin` would block. |
-| `Permissions-Policy` | `accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()` | Denies every permission-gated browser feature the site does not use. |
+| `Permissions-Policy` | the deny list in [`public/_headers`](../public/_headers) | Denies every permission-gated browser feature the site does not use. |
 
-Fingerprinted bundles (`/_astro/*`) and write-once content (`/assets/writeups/*`,
-`/assets/pages/*`, the font) are served `immutable` with a one-year cache;
-chrome assets replaced in place (icons, brand marks, OG cards, documents) get a
-one-hour `must-revalidate` cache, which the zone honors because its Browser
-Cache TTL respects origin headers. HTML is revalidated on every request and
-never edge-cached. Those asset routes and the global `/*` rule also strip any
+The cache rules per path are in [Architecture](./Architecture.md#cache-behavior).
+The asset rules and the global `/*` rule also strip any
 `Access-Control-Allow-Origin` an upstream layer might add, so responses carry
-no CORS headers (the site has no public cross-origin asset use).
-
-Preview deployments at `*.pages.dev` carry `X-Robots-Tag: noindex`, set in
-[`public/_headers`](../public/_headers) under the
-`https://:project.pages.dev/*` and `https://:version.:project.pages.dev/*`
-rules. The custom domain is unaffected.
+no CORS headers (the site has no public cross-origin asset use). Preview URLs
+carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
 
 ### Preview review route
 
-[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
-exports the preview proxy from the locked `sitedrift` development dependency.
+[`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)
+runs the preview proxy from the locked `sitedrift` development dependency.
 It is constrained to `/__sitedrift/*`, accepts only `GET` and `HEAD`, and fixes
 the LIVE destination to `https://jseverino.com`. It shares no bindings
 with the contact form, exposes no D1, and cannot forward contact-form writes.
 
 The review shell and proxy configuration are generated only for non-`main`
-Pages branches. Without them the Function fails closed with `404`. It forwards
+branches. Without them the route fails closed with `404`. It forwards
 only content-negotiation headers to LIVE, never cookies or authorization.
 Hosted notes stay in browser `localStorage`. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
@@ -221,20 +206,20 @@ broad `https:`. `style-src` is `'self'` plus the hash of the
 one inlined stylesheet (identical on every page, so one hash), and no
 `style="..."` attributes are emitted in production HTML.
 
-After the build and the preview wrap, [`bin/build-csp.ts`](../bin/build-csp.ts) scans every built HTML page,
+After the build, and again after a preview's sitedrift wrap, [`bin/build-csp.ts`](../bin/build-csp.ts) scans every built HTML page,
 hashes the inline script and stylesheet with SHA-256, and writes the policy into
-`dist/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`,
+`dist/client/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`,
 `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders in
 `public/_headers`. The theme-bootstrap script is the only inline executable
 script: an `is:inline` script in
 [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) marked at
-build time with a `nonce="__CSP_INLINE__"` attribute that `build-csp` strips
-from the output. The build fails on any inline script or style the site did not
+build time with a `nonce="__CSP_INLINE__"` attribute. The marker stays in the
+page and grants nothing, since the policy names no nonce. The build fails on any inline script or style the site did not
 emit, and on any external script outside same-origin,
 `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`.
 It also fails if more than 4 inline script hashes or 4 style hashes exist, or
 if any `_headers` line exceeds 2000 characters. The policy module is
-[`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`,
+[`src/lib/csp.ts`](../src/lib/csp.ts) (`htmlPolicy`, `scanInline`,
 `inlineHashes`, `hashSource`).
 
 Astro's `security.csp` option is not used. It delivers the policy in a `<meta>`
@@ -250,7 +235,7 @@ Besides the theme-bootstrap script, the only inline `<script>` in production
 HTML is the JSON-LD block, which browsers treat as data and never execute.
 
 The one request-time CSP is the preview review proxy
-([`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)).
+([`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)).
 It serves markup fetched while the request runs, so it generates a nonce for
 the bridge script sitedrift injects and adds a hash for each inline script and
 style in the fetched page. It is not served on production (`404` there).
@@ -275,7 +260,7 @@ The enforced policy reports through `report-to csp-endpoint` and the
 API support for CSP (Firefox); the others ignore it when `report-to` is
 present. The enforced policy also carries `require-trusted-types-for 'script'`
 on every page except `/contact/` (see Trusted Types below). The report receiver
-([`functions/api/csp-report.ts`](../functions/api/csp-report.ts)) accepts both
+([`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts)) accepts both
 legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
 payload size, filters reports to `https://jseverino.com` documents, drops common
 browser-extension blocked-URI schemes and any report whose `source_file`
@@ -292,14 +277,13 @@ identical to one stored in the last hour is skipped, and each IP gets at most
 enforced policy on every page except the contact form. It blocks DOM-XSS sinks (`innerHTML`, `outerHTML`,
 `insertAdjacentHTML`, `document.write`, script text and URLs) unless the value
 goes through a `TrustedTypePolicy`. The site's scripts touch only `classList`,
-`dataset`, `style`, and text, and the report log has shown no first-party
-violation since 2026-09-19.
+`dataset`, `style`, and text.
 `/contact/` stays on a `Content-Security-Policy-Report-Only` header carrying the
 same directive: Turnstile's `api.js` assigns to `innerHTML`, script text, and
 script URLs without a policy, and that third-party script cannot be patched
 here. Violations land in the same `/api/csp-report` D1 sink with
 `disposition="report"`; reassess when Turnstile ships a compliant build.
-`public/_headers` gives `/contact/*` its own rule. Pages merges the headers of
+`public/_headers` gives `/contact/*` its own rule. The assets layer merges the headers of
 every matching rule, so the exception is a detach plus a new line: the rule
 removes the global policy (`! Content-Security-Policy`), sets one without
 Trusted Types, and adds
@@ -338,9 +322,9 @@ certificate misissuance, and DNS spoofing.
 ## Cloudflare edge posture
 
 The zone and account settings are code: [`cloudflare/zone.json`](../cloudflare/zone.json)
-declares them, `npm run cloudflare:check` diffs the live state against it
+declares them, `mise run cloudflare check` diffs the live state against it
 with a read-only token and exits non-zero while anything differs, and
-`npm run cloudflare:plan` / `cloudflare:apply` preview and write the
+`mise run cloudflare plan` / `apply` preview and write the
 difference with a separate write token. What it declares, briefly:
 
 - **TLS:** minimum TLS 1.3, TLS 1.3 on, 0-RTT off, Always Use HTTPS, HTTP/3, DNSSEC active.
@@ -349,16 +333,16 @@ difference with a separate write token. What it declares, briefly:
   the right content type per endpoint, and the preview proxy blocked on the
   production hosts.
 - **Rate limit:** 15 `/api/*` requests per 10 seconds per IP, then a 10-second block.
-- **`*.pages.dev` is outside the zone.** The production alias
-  `jseverino.pages.dev` 301s to `https://jseverino.com` through a Bulk
-  Redirect, and preview deployments sit behind Cloudflare Access.
+- **workers.dev is outside the zone.** The Worker has no workers.dev
+  production alias, and its preview URLs admit only service tokens
+  ([Preview access](./Cloudflare.md#preview-access)).
 - **Nothing rewrites HTML.** Rocket Loader, Email Obfuscation, Server-Side
   Excludes, and Automatic HTTPS Rewrites must stay off, because each would
   inject markup the build-time hashes do not cover.
 - **JavaScript Detections and Bot Fight Mode must be off.** The detections
   inject an inline script with per-request values into HTML, which a static hash
   policy cannot cover. Both are declared as `botManagement` in
-  `cloudflare/zone.json` and applied with `npm run cloudflare:apply` (see
+  `cloudflare/zone.json` and applied with `mise run cloudflare apply` (see
   [docs/Cloudflare.md](./Cloudflare.md#bot-management)).
 
 [docs/Cloudflare.md](./Cloudflare.md) has the platform limits behind
@@ -371,7 +355,7 @@ Independent scanners verify the HTTP and DNS controls. Current snapshot:
 | Scanner | Result | Notes |
 | --- | --- | --- |
 | [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com) | A+, 145 / 100, 12 / 12 tests passed (2026-10-03) | Bonus points come from `default-src 'none'` with no `'unsafe-*'`, Subresource Integrity on all scripts, `Referrer-Policy`, `X-Frame-Options` via CSP `frame-ancestors`, and `Cross-Origin-Resource-Policy`. The outstanding recommendation is HSTS preload, deferred: preload is effectively irreversible across every current and future subdomain. |
-| Google PageSpeed Insights | 100 / 100 / 100 / 100 on mobile and desktop (2026-05-27, 9:14 PM CDT) | Lighthouse 13.3.0 passed the Best Practices trust-and-safety checks for effective CSP, strong HSTS, and Trusted Types mitigation while preserving 100 Performance, Accessibility, Best Practices, and SEO scores. |
+| Google PageSpeed Insights | Homepage 100 / 100 / 100 / 100 on desktop and 99 / 100 / 100 / 100 on mobile, for Performance, Accessibility, Best Practices, and SEO (2026-09-05) | Best Practices includes Lighthouse's trust-and-safety checks for an effective CSP, strong HSTS, and Trusted Types mitigation. The weekly [`lighthouse`](../.github/workflows/lighthouse.yml) run fails below 95 on accessibility. |
 | [Pentest-Tools Light Website Scanner](https://pentest-tools.com/website-vulnerability-scanning/website-scanner) | Low, 0 critical / 0 high / 0 medium / 3 low (2026-05-27, 40 tests) | The three low findings were reviewed and dismissed as not applicable to this site's threat model; see below. |
 
 The Pentest-Tools low findings, accepted:
@@ -415,57 +399,71 @@ Types regressions on `/contact/`. Full procedure in
 The build toolchain is a supply-chain surface even though only prebuilt output
 ships to visitors:
 
-- **Dependabot** opens grouped update PRs (npm weekly, GitHub Actions
-  monthly) after a seven-day cooldown that security updates skip
-  ([`.github/dependabot.yml`](../.github/dependabot.yml)).
-- **CodeQL** scans the JavaScript/TypeScript on every push and PR to `main`
-  and on a weekly schedule ([`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml)).
+- **Renovate** updates every pin (npm, GitHub Actions, the mise tools,
+  Node) once a release is 7 days old, in one weekly pull request
+  with Astro, `sitedrift`, Node and each major apart, and opens a fix at once
+  for any advisory that GitHub's vulnerability alerts or OSV report
+  ([`.github/renovate.json`](../.github/renovate.json)). An advisory with no fix to take is
+  accepted by dismissing its alert with a reason.
+- **CodeQL** default setup scans the JavaScript/TypeScript and the workflows
+  on every push and PR to `main` and on a weekly schedule, and the `main`
+  ruleset holds a merge on a high-severity alert
+  ([`.github/repo.json`](../.github/repo.json)).
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
-- **npm audit** runs weekly over the lockfile (`npm run audit`) and fails on a
-  high or critical advisory that
-  [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) does not
-  accept, or accepts past its review date
-  ([`.github/workflows/npm-audit.yml`](../.github/workflows/npm-audit.yml)).
-- **Build CI** runs `npm ci`, the gate audits, and the publish gate on every
-  push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), then
-  uploads a CycloneDX SBOM artifact on `main`.
-- **Preview guard** runs `npm run check:preview` before release to prove that
-  feature branches receive the review wrapper and `main` remains unmodified.
-- **Workflow lint** runs actionlint when GitHub Actions workflow files change
-  ([`.github/workflows/workflow-lint.yml`](../.github/workflows/workflow-lint.yml)).
+- **Build CI** installs the npm packages from the lockfile (`npm ci`, run by
+  mise's `[deps.npm]` provider), then runs the gate audits and the publish gate on every
+  push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
+  Each release carries the attested SBOM.
+- **Preview wrap** is unit-tested in `mise run checks:unit`
+  ([`tests/unit/wrap-preview.test.ts`](../tests/unit/wrap-preview.test.ts)):
+  a feature branch receives the review wrapper with the CSP filled again,
+  `main`'s build is left as the adapter wrote it, and a deploy config the
+  adapter would not write is refused.
+- **Workflow lint** runs jactionlint's correctness profile (actionlint's
+  checks, with shellcheck on every `run:` script) in `mise run fast`
+  (`checks:actionlint`).
+- **Workflow audit** runs zizmor over every workflow and action in
+  `mise run fast` (`checks:workflows`): actions pinned to commit SHAs,
+  permissions, template injection, credential persistence, and dangerous
+  triggers. Each accepted finding carries a `# zizmor: ignore[<audit>]`
+  comment and its reason on the line it is found.
 - **Link checks** run lychee against repository documentation and public
   Markdown content separately, with reports uploaded as workflow artifacts
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).
 - **Lighthouse** checks selected live URLs on a weekly/manual schedule with the
   lockfile's Lighthouse (`bin/lighthouse-check.ts`) and uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](../.github/workflows/lighthouse.yml)).
-- **OpenSSF Scorecard** runs weekly/manual checks, uploads SARIF to code
-  scanning, and preserves the generated SARIF as an artifact
-  ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
-  Each run's job summary carries the aggregate and every check's reason.
+- **OpenSSF Scorecard** runs weekly/manual checks and uploads SARIF to code
+  scanning ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
   The checks below maximum follow from a one-person repo (Branch-Protection,
   Code-Review, Fuzzing, CII-Best-Practices, Contributors), from the
   all-rights-reserved license, and from Vulnerabilities, which counts every
-  OSV advisory in the lockfile, including the ones
-  [`.github/audit-allowlist.json`](../.github/audit-allowlist.json) accepts.
+  OSV advisory in the lockfile, including the ones whose alerts are dismissed
+  as accepted.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
-  Elevated scopes (notably `security-events: write` for SARIF upload in
-  `codeql.yml` and `scorecard.yml`) are granted per job, never per workflow. The deploy verification job holds the Access
-  service token, so it runs the default branch's verifier and takes only the
-  deployment URL from the triggering event.
+  Elevated scopes (notably `security-events: write` for the SARIF upload in
+  `scorecard.yml`) are granted per job, never per workflow. The `deploy`
+  workflow holds the Cloudflare token (in the `production` environment) and the
+  Access service token, so it runs only the default branch's code and never
+  checks out a pull request. A pull request's build does reach wrangler, so
+  `bin/wrap-preview.ts` first refuses a deploy config with any key the adapter
+  does not write (wrangler would run a `build.command` on the runner), another
+  Worker's name, or a script or asset directory outside the build.
 - **Code-scanning dashboard.** CodeQL findings are fixed at the source and
-  `npm run deploy:verify` fails while one is open. Scorecard findings that do
+  `mise run deploy:verify` fails while one is open. Scorecard findings that do
   not apply to a solo personal repo are dismissed with a documented reason;
   its Vulnerabilities finding stays open while an accepted advisory is in the
   lockfile.
-- **Attested releases.** A signed version tag runs `release.yml`, which builds
-  the tagged commit and attests the build output and its SBOM through Sigstore
+- **Attested releases.** Every production deploy packages the exact
+  `dist/client/` it shipped with an SBOM and attests both through Sigstore. A
+  signed version tag runs `release.yml`, which publishes those files for the
+  tagged commit without rebuilding
   ([`.github/workflows/release.yml`](../.github/workflows/release.yml)); `gh
   attestation verify` checks a release against this repository's workflow.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
-  the actionlint container is pinned by digest, Lighthouse runs from the
-  lockfile, and dependencies install from the committed lockfile.
+  the command-line tools install from `mise.lock` with their checksums,
+  Lighthouse runs from the lockfile, and dependencies install from the committed lockfile.
 
 ## Content and rendering
 
@@ -483,9 +481,9 @@ ships to visitors:
 - **Escaped structured data.** JSON-LD injected into `<head>` has `<`
   characters escaped so a string value can never break out into live markup. See [`src/components/SeoHead.astro`](../src/components/SeoHead.astro).
 - **Analytics is cookieless.** The only analytics is Cloudflare Web Analytics,
-  a small beacon the Cloudflare proxy injects (or the layout emits, when
-  `WEB_ANALYTICS.emitBeacon` in `src/lib/site-config.ts` is on). It sets no
-  cookies or cross-site identifiers and needs no consent banner.
+  a small beacon the zone injects into each page
+  ([Web Analytics](./Cloudflare.md#web-analytics)). It sets no cookies or
+  cross-site identifiers and needs no consent banner.
 
 ## security.txt and the disclosure key
 
@@ -506,12 +504,12 @@ The committed `security.txt` is OpenPGP clear-signed by
 clients verify the file is unchanged.
 
 Signing and verification are scripted:
-[`npm run sign:security`](../bin/sign-security.ts) strips the existing
+[`mise run sign:security`](../bin/sign-security.ts) strips the existing
 signature, re-signs the body with `security@jseverino.com`, and writes it
 back.
-[`npm run check:security`](../tests/audits/check-security-txt.ts) verifies the signature,
+[`mise run checks:security-txt`](../tests/audits/check-security-txt.ts) verifies the signature,
 confirms all RFC 9116 required fields are present, fails if `Expires` is
-within 30 days, and confirms the `Encryption` URL resolves to a local WKD
-file. `check:security` runs in `publish:check` before the build, so an
-unsigned or expired `security.txt` fails the gate. The full set of gates is in
+within 60 days, and confirms the `Encryption` URL resolves to a local WKD
+file. It is one of the static gates, so an unsigned or expired
+`security.txt` fails before the build. The full set of gates is in
 [`tests/README.md`](../tests/README.md).

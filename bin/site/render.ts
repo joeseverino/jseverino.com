@@ -3,12 +3,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
 import { renderMarkdown } from '../lib/render.ts';
+import { optionalString } from '../lib/writeups/store.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 import { EXIT, SiteError, assertSlug, type Output } from './cli.ts';
 import type { RenderResult } from './types.ts';
 
-const text = (value: unknown): string => (value instanceof Date ? value.toISOString().slice(0, 10) : typeof value === 'string' ? value : '');
+const text = (value: unknown): string => optionalString(value) ?? '';
 
 // `-` reads the markdown from stdin (an unsaved editor buffer); otherwise the
 // slug names a writeup in the vault. The body is what the sync ships (the
