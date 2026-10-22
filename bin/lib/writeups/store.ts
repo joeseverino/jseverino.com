@@ -68,7 +68,9 @@ export interface OrderEntry {
   featured: boolean;
 }
 
-const optionalString = (value: unknown): string | null => {
+// A frontmatter scalar as text, or null when absent or empty. YAML reads an
+// unquoted date as a Date.
+export const optionalString = (value: unknown): string | null => {
   if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) return null;
   return value instanceof Date ? isoDate(value) : String(value);
 };
