@@ -325,7 +325,7 @@ No document under src/content is `published: false`
 
 - **Usage:** `checks:duplication`
 
-No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files)
+jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere
 
 ## `checks:functions`
 

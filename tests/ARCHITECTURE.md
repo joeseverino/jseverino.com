@@ -83,7 +83,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | Logic | [manage TUI](#the-unit-layer) | `tests/unit/site-manage.test.ts` | `site manage` refuses to start without a terminal, and its frames render the featured order, drafts, and gate issues. |
 | Logic | [process harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
 | Logic | [task references](#the-unit-layer) | `tests/unit/mise.test.ts` | A `mise run` reference in a doc names a task by its name, an alias, or a glob matching one, and nothing else. |
-| Logic | [audit logic](#the-unit-layer) | `tests/unit/check-docs.test.ts`, `tests/unit/check-html.test.ts`, `tests/unit/duplication.test.ts` | The pure halves of the docs, HTML, and duplication audits: path extraction and resolution, directive leaks, clone detection. |
+| Logic | [audit logic](#the-unit-layer) | `tests/unit/check-docs.test.ts`, `tests/unit/check-html.test.ts` | The pure halves of the docs and HTML audits: path extraction and resolution, directive leaks. |
 | Docs | [commands/docs parity](#the-unit-layer) | `tests/unit/docs-parity.test.ts` | Every script appears in `docs/Commands.md`, and `docs/Development.md` names every gate aggregate. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Console stays clean; hero, navigation, and header behave in every engine. |
 | E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
@@ -120,9 +120,9 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 `mise run checks:types`: `tsc -p .` then `tsc -p functions`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`functions/tsconfig.json`](../functions/tsconfig.json) compiles the Pages functions again under the `WebWorker` lib with no Node types; the Cloudflare-runtime globals that lib doesn't know are declared in the `functions/` tree, narrower than `@cloudflare/workers-types`. `astro check` reads [`tsconfig.astro.json`](../tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
 
-### `check-duplication.ts`
+### `checks:duplication`
 
-Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting and comments never matter, and import lines are skipped) and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; between two test files the bar is 40 tokens over 4 lines, since specs repeat a little setup. The fix is always one shared primitive both sites import. Generated projections (`src/generated/`, `functions/generated/`) and the fixture content are exempt. The scanner is the existing `typescript` dependency.
+[jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, generated projections (`src/generated/`, `functions/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
 
 ### `check-functions-parity.ts`
 
@@ -187,7 +187,7 @@ A third pre-build layer beside the audits and browser specs: `node:test` suites 
 - **The content renderer** ([`content-render.test.ts`](./unit/content-render.test.ts)), described below.
 - **The Cloudflare Pages functions**, the production code that otherwise first runs on Cloudflare. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. `csp.test.ts` verifies the policy module: the build-time hash policy and the preview proxy's request-time nonce and hash policy.
 - **The process harness** ([`run-harness.test.ts`](./unit/run-harness.test.ts)): the failure modes a green run never exercises (non-zero exits, missing binaries, and hung commands must all resolve as failed results, never hang a caller).
-- **The audits' pure logic** ([`check-docs.test.ts`](./unit/check-docs.test.ts), [`check-html.test.ts`](./unit/check-html.test.ts), [`duplication.test.ts`](./unit/duplication.test.ts)): each audit exports its rule and runs only under `import.meta.main`, so the rule is tested without a repo or a build.
+- **The audits' pure logic** ([`check-docs.test.ts`](./unit/check-docs.test.ts), [`check-html.test.ts`](./unit/check-html.test.ts)): each audit exports its rule and runs only under `import.meta.main`, so the rule is tested without a repo or a build.
 - **Task references** ([`mise.test.ts`](./unit/mise.test.ts)): how `checks:docs` decides that a `mise run` reference names a task.
 - **Commands/docs parity** ([`docs-parity.test.ts`](./unit/docs-parity.test.ts)): every script in [`docs/Commands.md`](../docs/Commands.md), every gate aggregate in [`docs/Development.md`](../docs/Development.md).
 

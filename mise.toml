@@ -48,6 +48,10 @@ WRANGLER_SEND_METRICS = "false"
 # The engineering docs the docs gates read, as git pathspecs, so a gate reads
 # only tracked files and never a local or untracked copy.
 docs = "README.md SECURITY.md CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+# checks:duplication: the files and lines jscpd reads, the same in both runs.
+jscpd = "--format typescript --exit-code --no-tips --fail-on-empty --ignore-pattern '(?m)^import\\s[^;]*;,(?m)^export\\s+(?:type\\s+)?(?:\\*|\\{[^}]*\\})\\s+from\\s[^;]*;'"
+jscpd_ignore = "**/src/generated/**,**/functions/generated/**,tests/fixtures/content/**,**/*.d.ts"
+jscpd_fix = "fix: extract one shared primitive beside the copies (bin/lib, src/lib, functions/lib, or a test helper) and import it from each"
 
 [tools]
 node = "24.22.0"
@@ -65,8 +69,14 @@ alias = "fast"
 run = "mise run -c 'checks:*'"
 
 [tasks."checks:duplication"]
-description = "No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeScript (40/4 between two test files)"
-run = "node tests/audits/check-duplication.ts"
+description = "jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere"
+# jscpd takes one threshold per run: the code bar, then the looser bar specs get
+# for their repeated setup. Generated projections, fixture content, and import
+# lines repeat by design.
+run = [
+  "jscpd {{vars.jscpd}} --min-tokens 30 --min-lines 3 --ignore '{{vars.jscpd_ignore}},tests/unit/**,tests/playwright/**,tests/edge/**' . || { echo '{{vars.jscpd_fix}}' >&2; exit 1; }",
+  "jscpd {{vars.jscpd}} --min-tokens 40 --min-lines 4 --ignore '{{vars.jscpd_ignore}}' . || { echo '{{vars.jscpd_fix}}' >&2; exit 1; }",
+]
 
 [tasks."checks:contracts"]
 description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source"
