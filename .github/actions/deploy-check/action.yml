@@ -1,0 +1,62 @@
+name: deploy check
+description: >-
+  Opens the deploy check-run on the commit a deploy job ships, or closes it with the job's outcome and
+  summary. The job runs on the default branch's commit, so its own check-runs land there; this one
+  lands on the commit that was deployed, where main's ruleset, `site land` and deploy-verify look for it.
+
+inputs:
+  sha:
+    description: The commit to open the check on.
+    default: ''
+  id:
+    description: The check-run to close, from the open step's `id` output. Empty opens one.
+    default: ''
+  status:
+    description: The job's status (`job.status`), when closing.
+    default: ''
+  summary:
+    description: A Markdown file whose text becomes the check's summary, when closing.
+    default: ''
+  token:
+    description: 'A token with the checks: write permission.'
+    default: ${{ github.token }}
+
+outputs:
+  id:
+    description: The opened check-run's id.
+    value: ${{ steps.open.outputs.id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Open the deploy check
+      id: open
+      if: inputs.id == ''
+      shell: bash
+      run: echo "id=$(gh api "repos/$GITHUB_REPOSITORY/check-runs" -f name="$NAME" -f head_sha="$SHA" -f status=in_progress -f details_url="$RUN_URL" --jq .id)" >> "$GITHUB_OUTPUT"
+      env:
+        # DEPLOY_CHECK in src/lib/site-config.ts; tests/unit/deploy-workflow.test.ts holds them equal.
+        NAME: deploy
+        SHA: ${{ inputs.sha }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        GH_TOKEN: ${{ inputs.token }}
+
+    # success and cancelled pass through; anything else fails the check, because branch
+    # protection counts a neutral or skipped conclusion as passing.
+    - name: Close the deploy check
+      if: inputs.id != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        case "$STATUS" in success | cancelled) conclusion=$STATUS ;; *) conclusion=failure ;; esac
+        if [ ! -s "$SUMMARY" ]; then
+          SUMMARY=$RUNNER_TEMP/deploy-check.md
+          printf 'The deploy ended (%s) before it wrote a summary; the run has the log.\n' "$STATUS" > "$SUMMARY"
+        fi
+        gh api -X PATCH "repos/$GITHUB_REPOSITORY/check-runs/$ID" -f status=completed -f conclusion="$conclusion" \
+          -f "output[title]=Deploy: $conclusion" -F "output[summary]=@$SUMMARY" > /dev/null
+      env:
+        ID: ${{ inputs.id }}
+        STATUS: ${{ inputs.status }}
+        SUMMARY: ${{ inputs.summary }}
+        GH_TOKEN: ${{ inputs.token }}

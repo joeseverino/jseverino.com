@@ -17,8 +17,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Every job starts at once and none depends on another, so a failure reports on its own
-# check and a required check is never left skipped (which counts as passing). Cloudflare
-# Pages builds and deploys on its own; the deploy workflow verifies it.
+# check and a required check is never left skipped (which counts as passing). The build
+# job's gated output is what the deploy workflow ships once this run passes.
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -33,9 +33,22 @@ jobs:
           astro-cache: 'true'
 
       # The gate a laptop runs: every static gate, the build, every gate on the
-      # build. src/content is the committed snapshot; CI has no vault.
+      # build. src/content is the committed snapshot; CI has no vault. The build
+      # carries the production site key because it is the one that ships.
       - name: Gates
         run: mise run check
+        env:
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+
+      # The deploy workflow downloads this, unchanged for production and wrapped
+      # for a preview. Hidden files hold .well-known/ and the asset ignore list.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: dist/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
 
   # One job, three legs, each running one browser:* task. `name` keeps the check-run names
   # `e2e`, `visual`, `edge` so the ruleset's required checks match. The visual leg runs on macOS because the baselines

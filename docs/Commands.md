@@ -207,7 +207,7 @@ Screenshots of the fixture build match the committed macOS Chromium baselines
 
 - **Usage:** `build`
 
-The production build: astro build, the sitedrift wrap, the CSP hashes
+The build every deploy ships: astro build, then the CSP hashes
 
 ## `built`
 
@@ -478,6 +478,12 @@ Regenerate the GitHub social preview
 - **Usage:** `preview`
 
 Serve the build through the local Worker runtime: _headers, redirects, the 404 page and the API routes, as production serves them
+
+## `preview:wrap`
+
+- **Usage:** `preview:wrap`
+
+Turn the finished build into a branch preview: the sitedrift review viewer over every page, then the CSP filled again to cover it (the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH)
 
 ## `publish:dist`
 

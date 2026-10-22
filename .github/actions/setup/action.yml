@@ -5,7 +5,10 @@ description: The mise toolchain and environment from mise.toml, then the npm pac
 # package-lock.json from the working tree.
 inputs:
   install:
-    description: Install the npm packages. A job that holds a secret skips it, so no package install script runs beside the secret, and runs its task with `mise run --no-deps`.
+    description: >-
+      How to install the npm packages: 'true' through mise's [deps.npm] provider; 'no-scripts' with
+      `npm ci --ignore-scripts`, for a job that holds a secret, so no package install script runs beside
+      it; 'false' not at all. A job that does not install runs its task with `mise run --no-deps`.
     default: 'true'
   astro-cache:
     description: Restore and save Astro's image cache, for jobs that build the site.
@@ -42,7 +45,7 @@ runs:
         cache: false
 
     - name: Restore the npm download cache
-      if: inputs.install == 'true'
+      if: inputs.install != 'false'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.npm
@@ -55,6 +58,11 @@ runs:
       if: inputs.install == 'true'
       shell: bash
       run: mise deps install npm
+
+    - name: Install dependencies without their install scripts
+      if: inputs.install == 'no-scripts'
+      shell: bash
+      run: npm ci --ignore-scripts
 
     # Astro writes every encoded image variant to the cacheDir mise's [env] names, keyed
     # by source and options, so a partial restore is still correct.

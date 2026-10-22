@@ -1,9 +1,11 @@
 # zizmor (`mise run checks:workflows`) audits every workflow and action. Each
 # entry here is a finding accepted on purpose, with the reason.
 rules:
-  # deploy.yml's workflow_run trigger only reads the ci run's job-summary
-  # artifacts into the pull request comment. It checks out the default branch,
-  # never the triggering head, and runs no code the event supplies.
+  # deploy.yml's workflow_run trigger runs the default branch's code. A pull
+  # request's ci build reaches it only as data: the preview job checks that its
+  # deploy config names this Worker, wraps it and uploads it, and never checks out
+  # or runs the pull request's code. The production and dist jobs check out the
+  # pushed main commit.
   dangerous-triggers:
     ignore:
-      - deploy.yml:6
+      - deploy.yml:8
