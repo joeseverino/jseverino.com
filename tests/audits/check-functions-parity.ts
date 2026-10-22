@@ -1,6 +1,6 @@
-#!/usr/bin/env node
-// Contract lineage across the serverless boundary: contracts/contact.v1.json is canonical,
-// OpenAPI and the handler derive from it, and D1 is checked against the handler INSERTs.
+// Contract lineage across the serverless boundary: the handler validates through
+// contracts/contact.v1.json, and D1 is checked against the handler INSERTs.
+// checks:contracts holds the OpenAPI projection to the contract.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,22 +11,12 @@ const read = (file: string): string => fs.readFileSync(path.join(siteRoot, file)
 
 const failures: string[] = [];
 
-const contract: { request: unknown } = JSON.parse(read('contracts/contact.v1.json'));
-const openapi: { components?: { schemas?: { ContactSubmission?: unknown } } } = JSON.parse(read('contracts/contact.openapi.json'));
-const submission = openapi.components?.schemas?.ContactSubmission;
-if (!submission) {
-  failures.push('contracts/contact.openapi.json has no components.schemas.ContactSubmission');
-} else {
-  if (JSON.stringify(submission) !== JSON.stringify(contract.request)) {
-    failures.push('OpenAPI ContactSubmission is stale; run mise run sync:contact-openapi');
-  }
-  const contactSrc = read('functions/api/contact.ts');
-  if (!/\bvalidateContactPayload\s*\(/.test(contactSrc)) {
-    failures.push('contact handler does not validate through the canonical contract adapter');
-  }
-  if (/interface ContactPayload|MAX_SOURCE_URL_LENGTH|name\.length\s*>/.test(contactSrc)) {
-    failures.push('contact handler has reintroduced a second request schema or field limit');
-  }
+const contactSrc = read('functions/api/contact.ts');
+if (!/\bvalidateContactPayload\s*\(/.test(contactSrc)) {
+  failures.push('contact handler does not validate through the canonical contract adapter');
+}
+if (/interface ContactPayload|MAX_SOURCE_URL_LENGTH|name\.length\s*>/.test(contactSrc)) {
+  failures.push('contact handler has reintroduced a second request schema or field limit');
 }
 
 const sql = read('cloudflare/d1.sql');
@@ -88,7 +78,7 @@ for (const file of fs.readdirSync(path.join(siteRoot, 'functions/api'))) {
 }
 if (insertCount === 0) failures.push('no INSERT statements found in functions/api; the parser or the handlers changed shape');
 
-finish(failures, `contact contract drives OpenAPI/handler; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP`, {
+finish(failures, `contact handler validates through the contract; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP`, {
   heading: 'check-functions-parity: the serverless boundary disagrees with its schemas:',
-  fix: 'fix: the contact handler, contracts/contact.openapi.json (API Shield), and cloudflare/d1.sql (D1) change together',
+  fix: 'fix: the contact handler and cloudflare/d1.sql (D1) change together',
 });

@@ -96,7 +96,7 @@ env = { NODE_OPTIONS = "--max-old-space-size=4096" }
 run = "astro check --silent --minimumSeverity warning --tsconfig tsconfig.astro.json"
 
 [tasks."checks:functions"]
-description = "The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines"
+description = "The contact handler consumes the contact contract, and every INSERT names only columns cloudflare/d1.sql defines"
 run = "node tests/audits/check-functions-parity.ts"
 
 [tasks."checks:preview"]

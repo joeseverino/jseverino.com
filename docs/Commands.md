@@ -337,7 +337,7 @@ No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeSc
 
 - **Usage:** `checks:functions`
 
-The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines
+The contact handler consumes the contact contract, and every INSERT names only columns cloudflare/d1.sql defines
 
 ## `checks:patch`
 

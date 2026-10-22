@@ -136,13 +136,12 @@ Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting an
 
 ### `check-functions-parity.ts`
 
-It verifies that
-[`contracts/contact.v1.json`](../contracts/contact.v1.json) exactly projects to
-[`contracts/contact.openapi.json`](../contracts/contact.openapi.json), that the Pages Function
-consumes the contract instead of restating its fields and limits, and that
+It verifies that the Pages Function
+consumes [`contracts/contact.v1.json`](../contracts/contact.v1.json) instead of restating its fields and limits, and that
 every handler `INSERT` names only columns the D1 schema defines with matching
-bind counts. A stale API Shield document or persistence mismatch fails before
-deployment.
+bind counts. A persistence mismatch fails before deployment. The API Shield
+document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
+is regenerated and compared whole by `mise run checks:contracts`.
 
 ### `check-sitedrift-preview.ts`
 Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'main'` and that production builds (`main`) ship as untampered Astro pages with `/__sitedrift` returning 404.
