@@ -4,18 +4,17 @@
 // shared with tests/edge.
 //
 //   node bin/deploy-verify.ts                        # production, from a clean main
-//   node bin/deploy-verify.ts --version <id> [--preview]
 //   node bin/deploy-verify.ts --origin <url> [--preview]
 //   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
 //
-// --version verifies one uploaded Worker version at its preview URL (outside the zone,
-// behind Access), and --origin any other deployment: served responses only, no
-// git/check-run preconditions, no HSTS. --preview marks a branch preview, where sitedrift
-// wraps every HTML route. --slug verifies one writeup after a publish.
+// --origin verifies one deployment, such as a Worker version at its preview URL (outside
+// the zone, behind Access): served responses only, no git/check-run preconditions, no
+// HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
+// verifies one writeup after a publish.
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import { DEFAULT_BRANCH, DEPLOY_CHECK, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, previewOrigin, writeupPath } from '../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, DEPLOY_CHECK, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import {
   cacheRuleFindings,
@@ -37,18 +36,15 @@ import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } fr
 import { errorMessage } from '../src/lib/error-message.ts';
 
 const { values: cli } = parseCli({
-  usage: 'usage: node bin/deploy-verify.ts [--version <id> | --origin <url>] [--preview] [--slug <writeup>]',
+  usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
   options: {
-    version: { type: 'string' },
     origin: { type: 'string' },
     preview: flag,
     slug: { type: 'string' },
   },
 });
-// A version's preview URL carries the first eight characters of its ID.
-const target = cli.version ? previewOrigin(cli.version.slice(0, 8)) : cli.origin;
-const origin = (target ?? siteOrigin).replace(/\/$/, '');
-const deployment = Boolean(target);
+const origin = (cli.origin ?? siteOrigin).replace(/\/$/, '');
+const deployment = Boolean(cli.origin);
 
 // Sitemap <loc>s name the canonical origin; fetch them from the target.
 const onTarget = (url: string): string => {

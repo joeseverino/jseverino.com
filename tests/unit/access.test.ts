@@ -3,17 +3,17 @@ import { test } from 'node:test';
 
 import { accessHeaders, isAccessChallenge, isPreviewDeployment } from '../../bin/lib/access.ts';
 import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
-import { PREVIEW_HOST_SUFFIX, SITE, previewOrigin } from '../../src/lib/site-config.ts';
+import { PREVIEW_HOST_SUFFIX, SITE } from '../../src/lib/site-config.ts';
 
 const env = { CF_ACCESS_CLIENT_ID: 'id', CF_ACCESS_CLIENT_SECRET: 'secret' };
 
 test('access headers go only to the Worker\'s preview URLs, and only with both values', () => {
-  assert.deepEqual(accessHeaders(`${previewOrigin('0b43cfea')}/`, env), {
+  assert.deepEqual(accessHeaders(`https://0b43cfea${PREVIEW_HOST_SUFFIX}/`, env), {
     'CF-Access-Client-Id': 'id',
     'CF-Access-Client-Secret': 'secret',
   });
   assert.deepEqual(accessHeaders('https://jseverino.com/', env), {});
-  assert.deepEqual(accessHeaders(`${previewOrigin('0b43cfea')}/`, { CF_ACCESS_CLIENT_ID: 'id' }), {});
+  assert.deepEqual(accessHeaders(`https://0b43cfea${PREVIEW_HOST_SUFFIX}/`, { CF_ACCESS_CLIENT_ID: 'id' }), {});
 });
 
 test('the token goes to one-label preview hosts of this Worker only', () => {

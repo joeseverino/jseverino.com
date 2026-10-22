@@ -41,8 +41,8 @@ runs:
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         GH_TOKEN: ${{ inputs.token }}
 
-    # success and cancelled pass through; anything else fails the check, because branch
-    # protection counts a neutral or skipped conclusion as passing.
+    # The check takes the job's status when it is success or cancelled, and failure for any
+    # other, since branch protection would count a neutral or skipped check as passing.
     - name: Close the deploy check
       if: inputs.id != ''
       shell: bash

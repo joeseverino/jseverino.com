@@ -3,7 +3,7 @@ name: release
 # A version tag (signed by convention, docs/Release-Checklist.md §4; the
 # trigger matches any v* tag) publishes the tagged commit's production deploy as a
 # verifiable release: the archive of the static site the deploy shipped and its SBOM,
-# each with the Sigstore attestation the deploy job issued. Nothing is rebuilt. Verify with:
+# each with the Sigstore attestation the deploy workflow issued. Nothing is rebuilt. Verify with:
 #   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com
 on:
   push:
