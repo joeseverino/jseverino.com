@@ -40,11 +40,9 @@ export default defineConfig({
   // Every page is prerendered; the routes that set `prerender = false` run in the Worker.
   output: 'static',
   adapter: cloudflare({
-    // `image.service` below (sharp and its settings) encodes every image at build time. `compile`
-    // swaps sharp for the adapter's own service and drops those settings; the default sends images
-    // to the Images binding. `astro dev` serves images from the Worker runtime, where sharp
-    // cannot load, so there they pass through unencoded.
-    imageService: process.env.NODE_ENV === 'development' ? 'passthrough' : 'custom',
+    // Every image is encoded at build time by `image.service` below (sharp and its settings), and
+    // the Worker serves the files. `astro dev` transforms through the local Images binding.
+    imageService: 'compile',
     // Pages render in Node: the content code reads the filesystem and satteri loads a native binding, neither of which workerd has.
     prerenderEnvironment: 'node',
   }),

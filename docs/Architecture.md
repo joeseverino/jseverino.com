@@ -265,7 +265,9 @@ and cover as a `<picture>`: an AVIF `<source>` and a WebP `<img>`, each at 512,
 Every browser the site's CSS supports decodes both formats. The encoder
 settings (AVIF quality 60, WebP 82) live in the image service config in
 [`astro.config.ts`](../astro.config.ts), and the widths in
-[`src/lib/images.ts`](../src/lib/images.ts).
+[`src/lib/images.ts`](../src/lib/images.ts). The Cloudflare adapter's `compile`
+image service runs that sharp service at build time and has the Worker serve
+the encoded files; `astro dev` transforms through the local Images binding.
 
 `Picture.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and
 `built:weight` fails on any shipped image at or over 1.5 MB. Social cards are a 1200px
