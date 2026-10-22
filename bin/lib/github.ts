@@ -99,8 +99,10 @@ export interface CodeScanningAlert {
   html_url: string;
 }
 
-const checkRuns = async (repository: string, sha: string): Promise<CheckRun[]> =>
-  (await github().get<{ check_runs: CheckRun[] }>(`/repos/${repository}/commits/${sha}/check-runs?per_page=100`)).check_runs;
+// A commit's latest run of each check. This read and requiredContexts take the client of a
+// script that holds its own.
+export const checkRuns = async (repository: string, sha: string, client = github()): Promise<CheckRun[]> =>
+  (await client.get<{ check_runs: CheckRun[] }>(`/repos/${repository}/commits/${sha}/check-runs?per_page=100`)).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.
 const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
@@ -112,8 +114,8 @@ interface BranchRule {
 }
 
 // The status-check contexts the rulesets applying to a branch require.
-export const requiredContexts = async (repository: string, branch: string): Promise<string[]> => [
-  ...new Set((await github().get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
+export const requiredContexts = async (repository: string, branch: string, client = github()): Promise<string[]> => [
+  ...new Set((await client.get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
     .filter((rule) => rule.type === 'required_status_checks')
     .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
     .map((check) => check.context)),

@@ -24,6 +24,17 @@ test('the deploy check-run the workflow writes is the one main requires, from th
   assert.deepEqual(required.find((check) => check.context === DEPLOY_CHECK), { context: DEPLOY_CHECK, integration_id: GITHUB_ACTIONS_APP });
 });
 
+// The report job runs bin/pr-comment.ts beside a pull-requests: write token, so it checks out the
+// default branch's code (no ref), never the pull request's.
+test('the PR comment runs from the default branch\'s checkout', () => {
+  const { jobs } = yaml<{ jobs: Record<string, { steps: { uses?: string; run?: string; with?: Record<string, string> }[] }> }>('.github/workflows/deploy.yml');
+  const steps = jobs.report?.steps ?? [];
+  const checkout = steps.find((step) => step.uses?.startsWith('actions/checkout@'));
+  assert.ok(checkout, 'the report job checks out');
+  assert.equal(checkout.with?.ref, undefined);
+  assert.ok(steps.some((step) => step.run?.includes('bin/pr-comment.ts')));
+});
+
 // A workflow_run job's own check-run lands on the default branch's commit, which is often the
 // deployed one, so a job sharing the name would satisfy the wait before anything deployed.
 test('no workflow job is named like the deploy check', () => {
