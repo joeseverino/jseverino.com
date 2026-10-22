@@ -215,7 +215,7 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit.
 
 Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
 
-`stylelint.config.ts` extends the standard modern CSS ruleset, documents the project-specific exceptions, and refuses a literal color: a rule names a token. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
+The `stylelint` key in [`package.json`](../package.json) extends the standard modern CSS ruleset and refuses a literal color: a rule names a custom property or mixes one with `color-mix()`. Its exceptions: `no-descending-specificity` reports false ordering positives under native nesting, logical longhands and the WebKit backdrop prefix are intentional, and the style rules it turns off (empty lines, hex length, class-name pattern, keyword case) are conventions this code does not use. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links

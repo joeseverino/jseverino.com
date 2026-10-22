@@ -45,5 +45,31 @@
     "esbuild": false,
     "workerd": false,
     "fsevents": false
+  },
+  "stylelint": {
+    "extends": [
+      "stylelint-config-standard"
+    ],
+    "rules": {
+      "at-rule-empty-line-before": null,
+      "color-hex-length": null,
+      "comment-empty-line-before": null,
+      "custom-property-empty-line-before": null,
+      "declaration-block-single-line-max-declarations": null,
+      "declaration-empty-line-before": null,
+      "no-descending-specificity": null,
+      "declaration-block-no-redundant-longhand-properties": null,
+      "property-no-vendor-prefix": null,
+      "selector-class-pattern": null,
+      "value-keyword-case": null,
+      "color-no-hex": true,
+      "color-named": "never",
+      "function-disallowed-list": [
+        "rgb",
+        "rgba",
+        "hsl",
+        "hsla"
+      ]
+    }
   }
 }
