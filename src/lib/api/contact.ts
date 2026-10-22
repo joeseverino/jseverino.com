@@ -5,7 +5,7 @@ import { SITE_ORIGIN } from '../site-config.ts';
 import type { D1Database } from './d1.ts';
 import { ownPageUrl, requestMeta } from './request-meta.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
-import { SITEVERIFY_URL, siteverifyAccepts, type Siteverify } from './turnstile.ts';
+import { verifyTurnstile } from './turnstile.ts';
 
 export interface ContactEnv {
   DB: D1Database;
@@ -31,28 +31,6 @@ function parseDevice(ua: string): string {
   if (/Windows/.test(ua)) return 'Windows';
   if (/Linux|X11/.test(ua)) return 'Linux';
   return 'Unknown';
-}
-
-// A token only counts if it was solved on this site, by the contact widget.
-async function verifyTurnstile(token: string, ip: string, secret: string): Promise<boolean> {
-  const body = new FormData();
-  body.append('secret', secret);
-  body.append('response', token);
-  if (ip) body.append('remoteip', ip);
-  body.append('idempotency_key', crypto.randomUUID());
-
-  try {
-    const res = await fetch(SITEVERIFY_URL, {
-      method: 'POST',
-      body,
-      signal: AbortSignal.timeout(CONTACT_RUNTIME.turnstileTimeoutMs),
-    });
-    if (!res.ok) return false;
-    const data = (await res.json()) as Siteverify;
-    return siteverifyAccepts(data, secret);
-  } catch {
-    return false;
-  }
 }
 
 export async function submitContact(request: Request, env: ContactEnv): Promise<Response> {
