@@ -205,7 +205,9 @@ run = "mise run -c 'built:*'"
 description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
 # Root-relative and https://jseverino.com/ URLs both resolve against the static
 # build; a directory link needs its index.html, as the assets layer serves it.
-run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' dist/client"
+# The excluded paths have no file: the Worker routes (`run_worker_first` in
+# wrangler.jsonc) and Cloudflare's own /cdn-cgi/.
+run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
 
 [tasks."built:weight"]
 description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
