@@ -6,6 +6,7 @@ import type {
   AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
   Operation, OwnedRule, PagesProject, Rule, Ruleset, RulesList, Setting, ValidationSettings, Widget, Zone,
 } from './cloudflare-types.ts';
+import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
 import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run, type Step } from './drift.ts';
 
 export type * from './cloudflare-types.ts';
@@ -356,19 +357,12 @@ function previewPolicyItem(apps: AccessApp[], want: DesiredState['pages']['previ
     'Zero Trust → Access → Applications → the preview app: keep only Service Auth policies that include the CI and proxy service tokens');
 }
 
-function canonicalJson(text: string): string | null {
-  try {
-    return JSON.stringify(JSON.parse(text));
-  } catch {
-    return null;
-  }
-}
-
 function schemaValidationItems(desired: DesiredState, live: LiveState, openapi: string): Item[] {
   const sv = desired.schemaValidation;
   const items: Item[] = [];
   const named = live.schemas.filter((schema) => schema.name === sv.name);
-  const current = named.find((schema) => canonicalJson(schema.source) === canonicalJson(openapi));
+  const wanted = canonicalJsonText(openapi);
+  const current = named.find((schema) => canonicalJsonText(schema.source) === wanted);
   if (!current) {
     items.push(item('api-shield', `schema ${sv.name}`, sv.file, named.length ? 'stale source' : null, 'drift', [
       { method: 'POST', path: '/zones/:zone/schema_validation/schemas', body: { kind: 'openapi_v3', name: sv.name, source: openapi, validation_enabled: true } },
