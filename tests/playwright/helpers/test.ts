@@ -37,9 +37,11 @@ export async function settle(page: Page): Promise<void> {
 
 // Any route turns on Playwright's WebKit interception for every request, and that fails
 // Turnstile's blob: load (shown on Turnstile's own demo page), so this error is the harness's.
+// macOS WebKit reports the cause and Linux WebKit only that the load failed.
 export function isWebKitInterceptionBlobError(message: ConsoleMessage): boolean {
+  const text = message.text();
   return message.type() === 'error'
     && message.page()?.context().browser()?.browserType().name() === 'webkit'
     && message.location().url.startsWith('blob:https://challenges.cloudflare.com/')
-    && message.text().includes('WebKitBlobResource error 1.');
+    && (text.includes('WebKitBlobResource error 1.') || text === 'Failed to load resource');
 }
