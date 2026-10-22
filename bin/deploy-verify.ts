@@ -179,10 +179,10 @@ async function verifyCacheRules(): Promise<string> {
   const chrome = html.match(/href="(\/assets\/icons\/[^"]+)"/)?.[1];
   if (!fingerprinted || !chrome) throw new Error('/ references no _astro asset or no icon to check cache rules on');
 
-  for (const [pathname, immutable] of [[fingerprinted, true], [chrome, false]] as const) {
+  for (const pathname of [fingerprinted, chrome]) {
     const response = await fetchChecked(`${origin}${pathname}`, { method: 'HEAD' });
     if (response.status !== 200) throw new Error(`${pathname} returned ${response.status}, expected 200`);
-    assertClean(cacheRuleFindings(headersToRecord(response.headers), { immutable }), pathname);
+    assertClean(cacheRuleFindings(headersToRecord(response.headers), pathname), pathname);
   }
   return `${fingerprinted} is immutable for a year; ${chrome} revalidates hourly`;
 }

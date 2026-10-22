@@ -68,14 +68,12 @@ test('the contact page enforces everything but Trusted Types, which it only repo
   expect(withoutTrustedTypes(contact['content-security-policy'])).toBe(withoutTrustedTypes(home['content-security-policy']));
 });
 
-test('fingerprinted assets are immutable for a year and chrome assets are not', async ({ request }) => {
-  const fingerprinted = await request.get(firstFile('_astro', (name) => /\.(css|js)$/.test(name)));
-  expect(fingerprinted.status()).toBe(200);
-  expect(cacheRuleFindings(fingerprinted.headers(), { immutable: true })).toEqual([]);
-
-  const icon = await request.get(firstFile('assets/icons', (name) => !name.startsWith('.')));
-  expect(icon.status()).toBe(200);
-  expect(cacheRuleFindings(icon.headers(), { immutable: false })).toEqual([]);
+test('fingerprinted and chrome assets carry the cache rules public/_headers gives them', async ({ request }) => {
+  for (const pathname of [firstFile('_astro', (name) => /\.(css|js)$/.test(name)), firstFile('assets/icons', (name) => !name.startsWith('.'))]) {
+    const response = await request.get(pathname);
+    expect(response.status()).toBe(200);
+    expect(cacheRuleFindings(response.headers(), pathname)).toEqual([]);
+  }
 });
 
 test('an unknown route returns a real 404', async ({ request }) => {
@@ -98,9 +96,10 @@ test.describe('static serving', () => {
   });
 
   test('an asset keeps its cache rule and the security headers', async ({ request }) => {
-    const icon = await request.get(firstFile('assets/icons', (name) => !name.startsWith('.')));
+    const pathname = firstFile('assets/icons', (name) => !name.startsWith('.'));
+    const icon = await request.get(pathname);
     expect(icon.status()).toBe(200);
-    expect(cacheRuleFindings(icon.headers(), { immutable: false })).toEqual([]);
+    expect(cacheRuleFindings(icon.headers(), pathname)).toEqual([]);
     expect(staticHeaderFindings(icon.headers()).filter((finding) => !finding.startsWith('access-control'))).toEqual([]);
   });
 
