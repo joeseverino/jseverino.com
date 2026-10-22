@@ -50,7 +50,7 @@ const tracked = trackedFiles(root);
 const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, file)));
 const forbiddenTracked = tracked.filter(
   (file) =>
-    (/(^|\/)\.env(?:\.|$)/.test(file) && !file.endsWith('.env.example')) ||
+    /(^|\/)\.env(?:\.|$)/.test(file) ||
     /(^|\/)\.dev\.vars(?:\.|$)/.test(file) ||
     /(^|\/)(?:dist|playwright-report|test-results)(?:\/|$)/.test(file),
 );

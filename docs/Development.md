@@ -16,8 +16,23 @@ tools. The npm packages come from mise's `[deps.npm]` provider: before any
 lockfile is installed by the first task it runs (`mise deps install npm` runs
 it on its own). CI installs packages per job in its setup action instead.
 Machine paths for the content sync go in a gitignored
-`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)). Copy
-[`.env.example`](../.env.example) to `.env` for the Turnstile test keys, then:
+`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)).
+
+The contact form needs Cloudflare Turnstile keys. For local work, put
+Turnstile's always-passing test keys in a gitignored `.env`:
+
+```sh
+PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+```
+
+Astro reads the site key at build time, and the local Worker runtime
+(`mise run dev`, `mise run preview`) reads the secret. With a test secret,
+[`turnstile.ts`](../src/lib/api/turnstile.ts) also accepts siteverify's test
+hostname (`localhost`) and action (`test`); any other secret requires
+`jseverino.com` and the contact action. Production keeps the site key as a
+repository variable and the secret as a Worker secret
+([Cloudflare](./Cloudflare.md#worker-configuration)). Then:
 
 ```sh
 mise install

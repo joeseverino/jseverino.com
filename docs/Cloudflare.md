@@ -298,9 +298,10 @@ mise exec -- wrangler d1 execute jseverino-contact --local --file=./cloudflare/d
 `TURNSTILE_SECRET_KEY` never appears in the repository, the build output, or
 the public site. It is listed under `secrets.required`, so `wrangler types`
 declares it and the local runtime warns when `.env` lacks it. For local work,
-copy [`.env.example`](../.env.example) to `.env` (gitignored), which holds
-Turnstile's test keys; `astro dev` and `mise run preview` read it. The build
-reads no other variable and no GitHub token.
+a gitignored `.env` holds Turnstile's test keys
+([Development, Setup](./Development.md#setup)); `astro dev` and
+`mise run preview` read it. The build reads no other variable and no GitHub
+token.
 
 `wrangler types` writes [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts),
 the `Env` interface and the Workers runtime types for that compatibility date.
