@@ -122,6 +122,12 @@ run = "node tests/audits/check-no-drafts.ts"
 description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
 run = "node tests/audits/check-security-txt.ts"
 
+[tasks."checks:types"]
+description = "Every TypeScript file compiles under one strict program, and the Worker's routes again under the Workers runtime types wrangler.jsonc declares"
+depends = ["sync:worker-types"]
+# astro sync writes the generated types under .astro/ that tsc reads.
+run = ["astro sync --silent", "tsc -p .", "tsc -p src/tsconfig.worker.json"]
+
 [tasks."checks:astro"]
 description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
 depends = ["sync:worker-types"]
@@ -211,6 +217,13 @@ description = "Every internal link, src, and srcset in the build, its #fragment 
 # The excluded paths have no file: the Worker routes (`run_worker_first` in
 # wrangler.jsonc) and Cloudflare's own /cdn-cgi/.
 run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
+
+[tasks."built:html"]
+description = "html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
+run = [
+  "html-validate --config tests/html-validate.json dist",
+  "node tests/audits/check-html.ts",
+]
 
 [tasks."built:weight"]
 description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
