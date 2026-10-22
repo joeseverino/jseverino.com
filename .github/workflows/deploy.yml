@@ -8,7 +8,9 @@ name: deploy
 # write (wrangler would run a `build.command` on the runner) and any other Worker or path.
 # Each deploy reports on the commit it shipped through the deploy check-run
 # (.github/actions/deploy-check).
-on:
+# zizmor's dangerous-triggers finding is accepted on the line below for the reason above:
+# no job checks out or runs the pull request's code on the runner.
+on: # zizmor: ignore[dangerous-triggers]
   workflow_run:
     workflows: [ci]
     types: [completed]

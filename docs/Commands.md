@@ -382,7 +382,7 @@ The node:test specs under tests/unit pass
 
 - **Usage:** `checks:workflows`
 
-zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings .github/zizmor.yml accepts with a reason
+zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings a `# zizmor: ignore[<audit>]` comment beside them accepts with a reason
 
 ## `ci`
 

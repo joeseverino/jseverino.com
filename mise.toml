@@ -165,11 +165,10 @@ description = "Node and npm pins agree; no secrets or build output tracked; comp
 run = "node tests/audits/check-repository-policy.ts"
 
 [tasks."checks:workflows"]
-description = "zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings .github/zizmor.yml accepts with a reason"
+description = "zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings a `# zizmor: ignore[<audit>]` comment beside them accepts with a reason"
 # Offline: the online audits need a token and the network, and a gate gives the
-# same verdict on a laptop and in CI. The config is named because zizmor's
-# discovery does not find it from a linked worktree.
-run = "zizmor --offline --quiet --config .github/zizmor.yml .github"
+# same verdict on a laptop and in CI.
+run = "zizmor --offline --quiet .github"
 
 [tasks."checks:actionlint"]
 description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
