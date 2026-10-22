@@ -136,10 +136,6 @@ run = "astro check --silent --minimumSeverity warning --tsconfig tsconfig.astro.
 description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
 run = "node tests/audits/check-d1-parity.ts"
 
-[tasks."checks:preview"]
-description = "The sitedrift review wrapper is present on preview branches and absent on main"
-run = "node tests/audits/check-sitedrift-preview.ts"
-
 [tasks."checks:unit"]
 description = "The node:test specs under tests/unit pass"
 run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"

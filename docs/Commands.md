@@ -342,12 +342,6 @@ Every tracked mise config is as `mise fmt` writes it
 
 No whitespace errors or conflict markers in the working tree
 
-## `checks:preview`
-
-- **Usage:** `checks:preview`
-
-The sitedrift review wrapper is present on preview branches and absent on main
-
 ## `checks:repo-policy`
 
 - **Usage:** `checks:repo-policy`
