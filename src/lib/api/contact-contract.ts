@@ -1,4 +1,5 @@
-import { contactContract as contract } from '../generated/contact-contract.ts';
+// The request schema and runtime limits of contracts/contact.v1.json, applied to a submission.
+import contract from '../../../contracts/contact.v1.json' with { type: 'json' };
 
 type ContractProperty = {
   readonly type: string;

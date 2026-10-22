@@ -12,7 +12,7 @@
 #   mise tasks          the list
 #
 # A gate is a task named <job>:<gate>: checks:* run before a build, built:*
-# against the build in dist/, browser:* in a browser. Each aggregate runs its
+# against the build in dist/client/, browser:* in a browser. Each aggregate runs its
 # job by glob (`mise run -c 'checks:*'`), so a gate added here runs locally and
 # in CI with no second list to edit. `-c` keeps going past a failure and names
 # every gate that failed. Under `-c` a task whose dependency failed still
@@ -114,8 +114,8 @@ alias = "fast"
 run = "mise run -c 'checks:*'"
 
 [tasks."checks:contracts"]
-description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source"
-run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: sync:edge-site --check"
+description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS) matches what its script derives from the canonical source"
+run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check"
 
 [tasks."checks:drafts"]
 description = "No document under src/content is `published: false`"
@@ -132,9 +132,9 @@ wait_for = ["checks:types"]
 env = { NODE_OPTIONS = "--max-old-space-size=4096" }
 run = "astro check --silent --minimumSeverity warning --tsconfig tsconfig.astro.json"
 
-[tasks."checks:functions"]
-description = "The contact handler consumes the contact contract, and every INSERT names only columns cloudflare/d1.sql defines"
-run = "node tests/audits/check-functions-parity.ts"
+[tasks."checks:d1"]
+description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
+run = "node tests/audits/check-d1-parity.ts"
 
 [tasks."checks:preview"]
 description = "The sitedrift review wrapper is present on preview branches and absent on main"
@@ -195,7 +195,7 @@ run = "node bin/build-static.ts"
 # ------------------------------------------------------------------- built
 
 [tasks.built]
-description = "CI job build, last phase: every gate on the build in dist/, collect-all"
+description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
 run = "mise run -c 'built:*'"
 
 [tasks."built:assets"]
@@ -203,18 +203,18 @@ description = "No image the build ships (committed or encoded from content) exce
 run = "node tests/audits/check-assets.ts"
 
 [tasks."built:links"]
-description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route"
-# Root-relative and https://jseverino.com/ URLs both resolve against dist/; a
-# directory link needs its index.html, as Pages serves it.
-run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/$1' dist"
+description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
+# Root-relative and https://jseverino.com/ URLs both resolve against the static
+# build; a directory link needs its index.html, as the assets layer serves it.
+run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' dist/client"
 
 [tasks."built:weight"]
 description = "Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget"
 run = "node tests/audits/check-page-weight.ts"
 
-[tasks."built:routes"]
-description = "Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
-run = "node tests/audits/check-routes.ts"
+[tasks."built:headers"]
+description = "The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
+run = "node tests/audits/check-headers.ts"
 
 [tasks."built:seo"]
 description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
@@ -239,7 +239,7 @@ timeout = "10m"
 run = "playwright test -c tests/playwright.visual.config.ts"
 
 [tasks."browser:edge"]
-description = "Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
+description = "Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
 timeout = "5m"
 run = "playwright test -c tests/playwright.edge.config.ts"
 
@@ -283,11 +283,6 @@ description = "Pull design and brand tokens from `severino-brand` into the repo"
 raw_args = true
 run = "node bin/sync-tokens.ts"
 
-[tasks."sync:edge-site"]
-description = "Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`)"
-raw_args = true
-run = "node bin/sync-edge-site.ts"
-
 [tasks."diff:build"]
 description = "Build HEAD and the working tree; show what changed in the shipped site"
 raw_args = true
@@ -320,13 +315,9 @@ output = "interleave"
 run = "node bin/github.ts"
 
 [tasks.preview]
-description = "Serve the built site locally"
+description = "Serve the build through the local Worker runtime: _headers, redirects, the 404 page and the API routes, as production serves them"
 raw_args = true
 run = "astro preview"
-
-[tasks."serve:edge"]
-description = "Serve the build through `wrangler pages dev` for by-hand checks (headers and functions active)"
-run = "node bin/edge-serve.ts"
 
 [tasks.lighthouse]
 description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"

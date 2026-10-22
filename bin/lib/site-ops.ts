@@ -6,8 +6,7 @@ import path from 'node:path';
 import { DetailedError } from './detailed-error.ts';
 import { INSTALL_PACKAGES } from './preflight.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
-import { cspReportUri } from '../../src/lib/edge-expectations.ts';
-import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { SITE, SITE_ORIGIN, cspReportUri } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 

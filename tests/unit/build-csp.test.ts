@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PLACEHOLDERS, buildCsp } from '../../bin/build-csp.ts';
-import { CSP_INLINE_MARKER, hashSource } from '../../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER, hashSource } from '../../src/lib/csp.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('build-csp-');

@@ -1,9 +1,3 @@
-// What Pages passes an endpoint's onRequestPost.
-export interface PostContext<Env> {
-  request: Request;
-  env: Env;
-}
-
 type JsonBody = { ok: true; value: unknown } | { ok: false; status: 400 | 413 };
 
 export function requestMediaType(request: Request): string {
@@ -34,7 +28,7 @@ export async function readRequestJson(request: Request, maxBytes: number): Promi
       buffer.set(value, length);
       length += value.byteLength;
     }
-    const text = new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, length));
+    const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(buffer.subarray(0, length));
     return { ok: true, value: JSON.parse(text) };
   } catch {
     return { ok: false, status: 400 };

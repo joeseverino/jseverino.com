@@ -42,14 +42,14 @@ what it serves. `mise run ci` is `check` and then `browser`: every gate the
 pipeline runs.
 
 **`mise run browser:edge`**: the edge runtime suite (`tests/edge/`). Serves
-the output through `wrangler pages dev` with the compatibility date declared in
-`tests/browser-test-env.ts`, and asserts what only Cloudflare's runtime
-produces: the hash CSP covering every inline script and style, one identical
-policy on every request, the `/contact/` Trusted Types exemption, the `public/_headers` security and cache rules, a real 404,
-the contact function's refusals (no Turnstile token, wrong content type,
+the output through `astro preview`, which runs the built Worker and its static
+assets in the local Cloudflare runtime under `wrangler.jsonc`, and asserts what
+only that runtime produces: the hash CSP covering every inline script and style, one identical
+policy on every request, the `/contact/` Trusted Types exemption, the `public/_headers` security and cache rules, a real 404, the trailing-slash redirect,
+the contact route's refusals and its security headers (no Turnstile token, wrong content type,
 malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
-WKD key's content type. CI's `edge` leg runs it. **`mise run serve:edge`**
-starts the same runtime on `http://127.0.0.1:8788` for by-hand checks.
+WKD key's content type. CI's `edge` leg runs it. **`mise run preview`**
+starts the same runtime for by-hand checks.
 
 ## Daily, in detail
 
@@ -75,12 +75,6 @@ embedded SHA-256 digest records the exact upstream token source. Like
 self-contained. `mise run sync:tokens --check` (run by
 `mise run checks:contracts`) fails CI on drift. See
 [`Brand-System.md`](./Brand-System.md).
-
-**`mise run sync:edge-site`**: writes `functions/generated/site.ts`, the edge
-runtime's copy of the site identity in `src/lib/site-config.ts` (domain,
-origin, CSP report endpoint). Cloudflare bundles `functions/` on its own, so
-the Functions and the report receiver cannot import `src/lib`; they import
-the projection instead. `mise run checks:contracts` fails when it is stale.
 
 **`mise run diff:build`**: builds the committed HEAD in a temporary worktree
 and the current working tree side by side, then reports any difference in the
@@ -201,7 +195,7 @@ The functional Playwright specs pass across Chromium, Firefox, and WebKit
 
 - **Usage:** `browser:edge`
 
-Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity
+Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity
 
 ## `browser:visual`
 
@@ -219,13 +213,19 @@ The production build: astro build, the sitedrift wrap, the CSP hashes
 
 - **Usage:** `built`
 
-CI job build, last phase: every gate on the build in dist/, collect-all
+CI job build, last phase: every gate on the build in dist/client/, collect-all
 
 ## `built:assets`
 
 - **Usage:** `built:assets`
 
 No image the build ships (committed or encoded from content) exceeds 1.5 MB
+
+## `built:headers`
+
+- **Usage:** `built:headers`
+
+The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*
 
 ## `built:html`
 
@@ -237,13 +237,7 @@ html-validate: no built page repeats an id, every &lt;img> has alt, headings ope
 
 - **Usage:** `built:links`
 
-Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route
-
-## `built:routes`
-
-- **Usage:** `built:routes`
-
-Only the Function routes invoke Functions, and the built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*
+Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route
 
 ## `built:seo`
 
@@ -286,7 +280,7 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 - **Usage:** `checks:contracts`
 
-Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source
+Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS) matches what its script derives from the canonical source
 
 ## `checks:css-lint`
 
@@ -299,6 +293,12 @@ Stylelint passes over src/styles
 - **Usage:** `checks:css-vars`
 
 Every CSS custom property defined in src/styles is referenced somewhere in src/
+
+## `checks:d1`
+
+- **Usage:** `checks:d1`
+
+The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database
 
 ## `checks:doc-links`
 
@@ -329,12 +329,6 @@ No document under src/content is `published: false`
 - **Usage:** `checks:duplication`
 
 jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere
-
-## `checks:functions`
-
-- **Usage:** `checks:functions`
-
-The contact handler consumes the contact contract, and every INSERT names only columns cloudflare/d1.sql defines
 
 ## `checks:mise-fmt`
 
@@ -376,7 +370,7 @@ security.txt is clear-signed with a valid signature, carries the RFC 9116 fields
 
 - **Usage:** `checks:types`
 
-Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib
+Every TypeScript file compiles under one strict program, the Worker's routes again under the Workers runtime types, and those types match wrangler.jsonc (fix: `wrangler types`)
 
 ## `checks:unit`
 
@@ -483,19 +477,13 @@ Regenerate the GitHub social preview
 
 - **Usage:** `preview`
 
-Serve the built site locally
+Serve the build through the local Worker runtime: _headers, redirects, the 404 page and the API routes, as production serves them
 
 ## `publish:dist`
 
 - **Usage:** `publish:dist`
 
 Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)
-
-## `serve:edge`
-
-- **Usage:** `serve:edge`
-
-Serve the build through `wrangler pages dev` for by-hand checks (headers and functions active)
 
 ## `sign:security`
 
@@ -538,12 +526,6 @@ Pull published content from the vault into the repo
 - **Usage:** `sync:contract`
 
 Regenerate typed content-contract projections
-
-## `sync:edge-site`
-
-- **Usage:** `sync:edge-site`
-
-Regenerate the edge runtime's copy of the site identity (`functions/generated/site.ts`)
 
 ## `sync:tokens`
 

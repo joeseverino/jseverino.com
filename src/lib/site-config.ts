@@ -20,6 +20,9 @@ export const SITE: SiteIdentity = {
 };
 
 export const SITE_ORIGIN = `https://${SITE.domain}`;
+// Where browsers send CSP violation reports: src/pages/api/csp-report.ts.
+export const cspReportPath = '/api/csp-report';
+export const cspReportUri = `${SITE_ORIGIN}${cspReportPath}`;
 
 // The branch every PR targets and deploys from, and the prefix `site publish` gives content branches.
 export const DEFAULT_BRANCH = 'main';

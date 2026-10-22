@@ -1,14 +1,10 @@
-// POST /api/csp-report. The endpoint is open, so writes are bounded: one batch per request,
-// identical reports within the hour skipped, a fixed hourly cap per IP.
+// POST /api/csp-report (src/pages/api/csp-report.ts). The endpoint is open, so writes are bounded:
+// one batch per request, identical reports within the hour skipped, a fixed hourly cap per IP.
 
-import { SITE } from '../generated/site.ts';
-import type { D1Database } from '../lib/database.ts';
-import { asString, requestMeta } from '../lib/request-meta.ts';
-import { readRequestJson, requestMediaType, type PostContext } from '../lib/request-json.ts';
-
-interface Env {
-  DB: D1Database;
-}
+import { SITE_ORIGIN } from '../site-config.ts';
+import type { D1Database } from './d1.ts';
+import { asString, requestMeta } from './request-meta.ts';
+import { readRequestJson, requestMediaType } from './request-json.ts';
 
 type LegacyCspReport = {
   'csp-report'?: Record<string, unknown>;
@@ -66,7 +62,7 @@ function rawJson(value: unknown): string {
 }
 
 function isSiteDocument(documentUri: string): boolean {
-  return URL.parse(documentUri)?.origin === SITE.origin;
+  return URL.parse(documentUri)?.origin === SITE_ORIGIN;
 }
 
 function isIgnoredReport(report: NormalizedReport): boolean {
@@ -129,7 +125,7 @@ function normalizeReports(payload: unknown): NormalizedReport[] {
     .filter((report) => report !== null);
 }
 
-export async function onRequestPost({ request, env }: PostContext<Env>): Promise<Response> {
+export async function storeCspReports(request: Request, db: D1Database): Promise<Response> {
   if (!ALLOWED_MEDIA_TYPES.has(requestMediaType(request))) {
     return noContent(415);
   }
@@ -142,7 +138,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
   if (reports.length === 0) return noContent();
 
   const { ip, userAgent, country } = requestMeta(request, MAX_USER_AGENT_LENGTH);
-  const insert = env.DB.prepare(
+  const insert = db.prepare(
     `INSERT INTO csp_reports
        (document_uri, blocked_uri, effective_directive, violated_directive,
         disposition, referrer, source_file, line_number, column_number,
@@ -159,11 +155,11 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
   );
 
   // Reports are diagnostics: the batch that stores new ones also drops those past retention.
-  const purge = env.DB.prepare(`DELETE FROM csp_reports WHERE created_at < datetime('now', ?1)`).bind(`-${RETENTION_DAYS} days`);
+  const purge = db.prepare(`DELETE FROM csp_reports WHERE created_at < datetime('now', ?1)`).bind(`-${RETENTION_DAYS} days`);
 
   try {
     // One batch is one transaction, so the cap and duplicate check see earlier rows of this request.
-    await env.DB.batch([
+    await db.batch([
       purge,
       ...reports.map((report) =>
         insert.bind(

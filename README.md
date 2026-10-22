@@ -83,9 +83,8 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 ## Repository
 
 ```text
-src/          Astro pages, components, and the synced content
-functions/    Pages Functions: contact, CSP reports, preview review
-public/       static assets, _headers, _routes.json, _redirects
+src/          Astro pages, the API routes, components, and the synced content
+public/       static assets, _headers, _redirects
 cloudflare/   zone settings and the D1 schema, as code
 contracts/    the content and contact contracts, and the generated OpenAPI
 bin/          the site CLI, the content sync, generators, and checks

@@ -1,11 +1,8 @@
 // Pure checks returning findings (empty means correct). tests/edge runs them against
-// `wrangler pages dev`; bin/deploy-verify.ts runs the same ones against production.
+// the local Worker runtime; bin/deploy-verify.ts runs the same ones against production.
 // `headers` is keyed by lower-cased name, as Playwright's response.headers() returns.
-import { SITE_ORIGIN } from './site-config.ts';
-import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from '../../functions/lib/csp.ts';
-
-export const cspReportPath = '/api/csp-report';
-export const cspReportUri = `${SITE_ORIGIN}${cspReportPath}`;
+import { cspReportPath, cspReportUri } from './site-config.ts';
+import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from './csp.ts';
 
 export type HeaderRecord = Record<string, string>;
 

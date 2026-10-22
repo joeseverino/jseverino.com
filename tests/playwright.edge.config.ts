@@ -1,8 +1,9 @@
 import { defineConfig } from '@playwright/test';
 import { browserTestEnv, edgeRuntime, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
 
-// `astro preview` serves static files only. `wrangler pages dev` runs the CSP middleware,
-// Pages Functions, and public/_headers against the build, so tests/edge asserts them.
+// `astro preview` serves the build through the Cloudflare adapter's local Worker runtime, which
+// applies _headers, _redirects, wrangler.jsonc's asset handling and the API routes, so
+// tests/edge asserts them as production serves them.
 const origin = `http://127.0.0.1:${edgeRuntime.port}`;
 
 export default defineConfig({
@@ -21,7 +22,8 @@ export default defineConfig({
     // PREBUILT is set by `mise run browser` after its one build, and by CI, which builds while system deps install.
     command: [
       process.env.PREBUILT ? null : 'node bin/build-static.ts',
-      'node bin/edge-serve.ts',
+      // --ignore-lock: see tests/playwright.config.ts.
+      `npx astro preview --host 127.0.0.1 --port ${edgeRuntime.port} --ignore-lock`,
     ].filter(Boolean).join(' && '),
     url: origin,
     // A prebuilt artifact is served fresh, never by whatever holds the port.

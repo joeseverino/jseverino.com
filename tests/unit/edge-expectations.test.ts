@@ -1,12 +1,11 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../src/lib/csp.ts';
+import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
   cspFindings,
-  cspReportPath,
-  cspReportUri,
   hstsFindings,
   inlineHashFindings,
   staticHeaderFindings,

@@ -1,17 +1,13 @@
-// POST /api/contact: verifies the Turnstile token and stores the submission in D1.
+// POST /api/contact (src/pages/api/contact.ts): verifies the Turnstile token and stores the submission in D1.
 
-import {
-  CONTACT_PROPERTIES,
-  CONTACT_RUNTIME,
-  validateContactPayload,
-} from '../lib/contact-contract.ts';
-import { SITE } from '../generated/site.ts';
-import type { D1Database } from '../lib/database.ts';
-import { ownPageUrl, requestMeta } from '../lib/request-meta.ts';
-import { readRequestJson, requestMediaType, type PostContext } from '../lib/request-json.ts';
-import { siteverifyAccepts, type Siteverify } from '../lib/turnstile.ts';
+import { CONTACT_PROPERTIES, CONTACT_RUNTIME, validateContactPayload } from './contact-contract.ts';
+import { SITE_ORIGIN } from '../site-config.ts';
+import type { D1Database } from './d1.ts';
+import { ownPageUrl, requestMeta } from './request-meta.ts';
+import { readRequestJson, requestMediaType } from './request-json.ts';
+import { siteverifyAccepts, type Siteverify } from './turnstile.ts';
 
-interface Env {
+export interface ContactEnv {
   DB: D1Database;
   TURNSTILE_SECRET_KEY: string;
 }
@@ -59,7 +55,7 @@ async function verifyTurnstile(token: string, ip: string, secret: string): Promi
   }
 }
 
-export async function onRequestPost({ request, env }: PostContext<Env>): Promise<Response> {
+export async function submitContact(request: Request, env: ContactEnv): Promise<Response> {
   if (requestMediaType(request) !== 'application/json') {
     return json({ ok: false, error: 'Invalid request.' }, 415);
   }
@@ -95,7 +91,7 @@ export async function onRequestPost({ request, env }: PostContext<Env>): Promise
     return json({ ok: false, error: 'Verification failed. Please try again.' }, 400);
   }
 
-  const sourceUrl = ownPageUrl(SITE.origin, submittedSourceUrl, request.headers.get('Referer'))?.slice(0, CONTACT_PROPERTIES.sourceUrl.maxLength) ?? null;
+  const sourceUrl = ownPageUrl(SITE_ORIGIN, submittedSourceUrl, request.headers.get('Referer'))?.slice(0, CONTACT_PROPERTIES.sourceUrl.maxLength) ?? null;
 
   try {
     // Turnstile stops most bots; this caps what one IP can store.

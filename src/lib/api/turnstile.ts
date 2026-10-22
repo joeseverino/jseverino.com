@@ -1,11 +1,11 @@
 // Which Turnstile siteverify answers the contact function accepts.
-import { SITE } from '../generated/site.ts';
+import { SITE } from '../site-config.ts';
 import { CONTACT_RUNTIME } from './contact-contract.ts';
 
 export type Siteverify = { success?: boolean; hostname?: string; action?: string };
 
 // Cloudflare's published Turnstile test secrets (pass, fail, token spent). Siteverify answers
-// them with documented test values, so local `wrangler pages dev` can submit. Only these exact
+// them with documented test values, so a local run can submit. Only these exact
 // keys relax the check.
 export const TURNSTILE_TEST_SECRETS: ReadonlySet<string> = new Set([
   '1x0000000000000000000000000000000AA',

@@ -84,9 +84,9 @@ test('an unknown route returns a real 404', async ({ request }) => {
   expect(response.headers()['content-type'] ?? '').toContain('text/html');
 });
 
-// public/_routes.json sends only the Function routes to Functions, so every
-// page and asset is served from static assets, with the policy and security
-// headers from public/_headers.
+// Only `run_worker_first` in wrangler.jsonc starts the Worker, so every page
+// and asset is served from static assets, with the policy and security headers
+// from public/_headers.
 test.describe('static serving', () => {
   const probe = Date.now().toString(36);
 
@@ -113,6 +113,12 @@ test.describe('static serving', () => {
   }
 });
 
+test('a page path without its slash redirects to the slashed page', async ({ request }) => {
+  const response = await request.get('/about', { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(response.headers()['location']).toBe('/about/');
+});
+
 test('the preview review proxy is absent from a production build', async ({ request }) => {
   const response = await request.get('/__sitedrift/config.json');
   expect(response.status()).toBe(404);
@@ -129,6 +135,14 @@ test.describe('POST /api/contact', () => {
   test('refuses a submission without a Turnstile token before any external call', async ({ request }) => {
     const response = await request.post('/api/contact', { data: valid });
     expect(contactRefusalFindings(response.status(), await response.json())).toEqual([]);
+  });
+
+  test('answers at its own path, with the security headers the assets layer gives a page', async ({ request }) => {
+    const response = await request.post('/api/contact', { data: valid, maxRedirects: 0 });
+    expect(response.status()).toBe(400);
+    expect(staticHeaderFindings(response.headers())).toEqual([]);
+    expect(response.headers()['content-security-policy']).toContain("default-src 'none'");
+    expect(response.headers()['cache-control']).toBe('no-store');
   });
 
   test('refuses a body that is not JSON', async ({ request }) => {

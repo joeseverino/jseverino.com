@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // Hash each page's inline script and stylesheet, fail on any the policy would not
-// cover, and write the CSP into dist/_headers. Runs after the sitedrift wrap.
+// cover, and write the CSP into the built _headers. Runs after the sitedrift wrap.
 //
 //   node bin/build-csp.ts [dist-dir]
 import fs from 'node:fs';
 import path from 'node:path';
-import { SITE } from '../functions/generated/site.ts';
-import { htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../functions/lib/csp.ts';
+import { cspReportUri } from '../src/lib/site-config.ts';
+import { htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../src/lib/csp.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
@@ -34,12 +34,12 @@ export async function buildCsp(distDir: string): Promise<{ pages: number; script
   }
   for (const { file, scan } of scans) fs.writeFileSync(file, scan.html);
 
-  const input = { scriptHashes, styleHashes, reportUri: SITE.cspReportUri };
+  const input = { scriptHashes, styleHashes, reportUri: cspReportUri };
   const values: Record<(typeof PLACEHOLDERS)[number], string> = {
     __CSP__: htmlPolicy({ ...input, trustedTypes: true }),
     __CSP_CONTACT__: htmlPolicy({ ...input, trustedTypes: false }),
-    __TT_REPORT_ONLY__: trustedTypesReportOnly(SITE.cspReportUri),
-    __REPORTING_ENDPOINTS__: reportingEndpoints(SITE.cspReportUri),
+    __TT_REPORT_ONLY__: trustedTypesReportOnly(cspReportUri),
+    __REPORTING_ENDPOINTS__: reportingEndpoints(cspReportUri),
   };
 
   const headersFile = path.join(distDir, '_headers');

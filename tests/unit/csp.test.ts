@@ -1,6 +1,6 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CSP_INLINE_MARKER, htmlPolicy, hashSource, inlineHashes, scanInline, trustedTypesReportOnly, withPreviewPolicy } from '../../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER, htmlPolicy, hashSource, inlineHashes, scanInline, trustedTypesReportOnly, withPreviewPolicy } from '../../src/lib/csp.ts';
 
 const reportUri = 'https://example.test/api/csp-report';
 const marked = `nonce="${CSP_INLINE_MARKER}"`;

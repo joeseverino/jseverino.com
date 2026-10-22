@@ -1,0 +1,13 @@
+// The Worker program: the on-demand routes and everything they import, under the Workers
+// runtime types `wrangler types` generates from wrangler.jsonc, with neither DOM nor Node globals.
+// Each route hands a generated binding to a handler typed by the subset it calls (src/lib/api/d1.ts),
+// so the subset cannot drift from the real binding.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2025"],
+    "types": []
+  },
+  "include": [".astro/types.d.ts", "worker-configuration.d.ts", "src/pages/api", "src/integrations/sitedrift-route.ts", "src/middleware.ts"],
+  "exclude": []
+}

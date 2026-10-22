@@ -2,7 +2,7 @@
 --
 -- Apply to the remote D1 database:
 --   mise run site d1-apply --confirm
--- Apply to the local dev database (used by `wrangler pages dev`):
+-- Apply to the local database `astro dev` and `astro preview` bind:
 --   wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
@@ -58,7 +58,7 @@ CREATE INDEX IF NOT EXISTS idx_csp_reports_created_at
 CREATE INDEX IF NOT EXISTS idx_csp_reports_effective_directive
   ON csp_reports (effective_directive);
 
--- The per-IP cap and the one-hour duplicate check in functions/api/csp-report.ts.
+-- The per-IP cap and the one-hour duplicate check in src/lib/api/csp-report.ts.
 CREATE INDEX IF NOT EXISTS idx_csp_reports_ip_created_at
   ON csp_reports (ip_address, created_at DESC);
 

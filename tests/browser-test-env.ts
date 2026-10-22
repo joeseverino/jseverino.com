@@ -3,6 +3,7 @@
 import os from 'node:os';
 import type { ReporterDescription } from '@playwright/test';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
+import { wranglerConfig } from '../bin/lib/wrangler-config.ts';
 
 export const browserTestEnv = Object.freeze({
   PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
@@ -33,12 +34,14 @@ export function suiteArtifacts(suite: string): { outputDir: string; reporter: Re
   };
 }
 
-// The Cloudflare runtime the edge suite serves the build through. The
-// compatibility date must match the Pages project (Settings > Runtime in the
-// Cloudflare dashboard) so local semantics are production semantics.
+// The local Worker runtime the edge suite serves the build through. It runs the
+// compatibility date wrangler.jsonc declares, the one production runs; read on
+// demand, since only the zone check needs it.
 export const edgeRuntime = Object.freeze({
   port: 8788,
-  compatibilityDate: '2026-05-19',
+  get compatibilityDate(): string {
+    return wranglerConfig().compatibility_date;
+  },
 });
 
 // `node tests/browser-test-env.ts build` builds the artifact the browser and

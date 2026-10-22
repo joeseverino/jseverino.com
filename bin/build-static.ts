@@ -6,7 +6,7 @@ import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { permittedContentRoot } from '../src/lib/content-root.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
-import { CSP_INLINE_MARKER } from '../functions/lib/csp.ts';
+import { CSP_INLINE_MARKER } from '../src/lib/csp.ts';
 import { jsonLogs, spawnResult } from './lib/run.ts';
 import { cli, flag } from './lib/args.ts';
 
@@ -15,7 +15,6 @@ const { values } = cli({
   options: { timings: flag },
 });
 
-const outDir = buildOutDir;
 const contentOverride = process.env.SITE_CONTENT_ROOT;
 if (contentOverride !== undefined && !permittedContentRoot(contentOverride, siteRoot)) {
   console.error(`build-static: SITE_CONTENT_ROOT=${contentOverride} is not under tests/fixtures; unset it to build src/content`);
@@ -40,7 +39,7 @@ run(astro, ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
 run(process.execPath, [
   sitedrift,
   'cloudflare',
-  '--dir', outDir,
+  '--dir', buildOutDir,
   '--live', SITE_ORIGIN,
   '--brand', SITE.owner,
   // Every inline tag the viewer writes carries the marker build-csp hashes.

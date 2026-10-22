@@ -1,8 +1,9 @@
 #!/bin/sh
-#MISE description="Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib"
+#MISE description="Every TypeScript file compiles under one strict program, the Worker's routes again under the Workers runtime types, and those types match wrangler.jsonc (fix: `wrangler types`)"
 set -eu
 
 # astro sync writes the generated types under .astro/ that tsc reads.
 astro sync --silent
 tsc -p .
-tsc -p functions
+wrangler types --check
+tsc -p tsconfig.worker.json

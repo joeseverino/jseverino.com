@@ -1,4 +1,5 @@
-// Shared subset of D1 used by the edge endpoints; no runtime dependency.
+// The part of the D1 binding the endpoints call. The handlers also run under Node in the unit
+// suite, which has no Workers types; tsconfig.worker.json holds the generated D1Database to it.
 export interface D1Result {
   meta: { changes: number };
 }
@@ -13,7 +14,7 @@ export interface D1Database {
   batch(statements: D1PreparedStatement[]): Promise<D1Result[]>;
 }
 
-// Row shapes of cloudflare/d1.sql; check-functions-parity holds each to its CREATE TABLE.
+// Row shapes of cloudflare/d1.sql; check-d1-parity holds each to its CREATE TABLE.
 
 // D1 table contact_submissions
 export interface ContactSubmissionRow {

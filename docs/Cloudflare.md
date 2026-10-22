@@ -1,8 +1,9 @@
 # Cloudflare
 
-The site runs on Cloudflare: Pages for the static build and the Functions, one
-D1 database, Turnstile, and the zone in front of it. The repo holds the Pages
-configuration files and a desired-state file for the zone and account.
+The site runs on Cloudflare: one Worker with static assets, built by Astro's
+Cloudflare adapter, one D1 database, Turnstile, and the zone in front of it. The
+repo holds the Worker's config ([`wrangler.jsonc`](../wrangler.jsonc)) and a
+desired-state file for the zone and account.
 [`bin/cloudflare.ts`](../bin/cloudflare.ts) checks the live state against it and
 applies the difference.
 
@@ -10,10 +11,11 @@ applies the difference.
 
 | Layer | Lives in | Applied by |
 |---|---|---|
-| Response headers, cache rules | [`public/_headers`](../public/_headers) | every Pages deploy |
-| Redirects | [`public/_redirects`](../public/_redirects) | every Pages deploy |
-| Which requests run Functions | [`public/_routes.json`](../public/_routes.json) | every Pages deploy |
-| Contact form, CSP reports, preview proxy | [`functions/`](../functions/) | every Pages deploy |
+| Response headers, cache rules | [`public/_headers`](../public/_headers) | every deploy |
+| Redirects | [`public/_redirects`](../public/_redirects) | every deploy |
+| Which requests start the Worker, 404 and trailing-slash handling, D1 binding, compatibility date | [`wrangler.jsonc`](../wrangler.jsonc) | every deploy |
+| Contact form, CSP reports | [`src/pages/api/`](../src/pages/api/), handlers in [`src/lib/api/`](../src/lib/api/) | every deploy |
+| Preview proxy | [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts) | every deploy |
 | Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
 | `jseverino.pages.dev` redirect, Pages compatibility date, API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
 | Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare check`, never applied) | Pages project → Settings → General → Enable access policy, then [Preview access](#preview-access) |
@@ -24,26 +26,29 @@ applies the difference.
 descriptions say why each value is what it is. It holds no account or zone ID:
 the tool looks both up from the zone name at runtime.
 
-### Functions routing
+### Worker routing
 
-Every HTML page is a static asset, served without invoking a Function.
-[`_routes.json`](../public/_routes.json) includes only `/api/*` and
-`/__sitedrift/*`, with an empty exclude list. A miss anywhere gets the root
-`404.html`, which carries the same policy as every page. The limit is 100,000
-Function requests a day, used only by the contact form, CSP reports, and the
-preview proxy.
+Every page is prerendered and served as a static asset without starting the
+Worker. `run_worker_first` in [`wrangler.jsonc`](../wrangler.jsonc) sends only
+`/api/*` and `/__sitedrift/*` to it, the routes that set `prerender = false`.
+`not_found_handling: "404-page"` answers a miss anywhere with the root
+`404.html`, which carries the same policy as every page, and
+`html_handling: "auto-trailing-slash"` redirects `/about` to `/about/` with a
+307. Static asset requests are not billed as Worker requests.
 
-[`bin/build-csp.ts`](../bin/build-csp.ts) writes the Content-Security-Policy into
-`dist/_headers` at build time, so it does not depend on a Function running.
-Pages applies `_headers` to static assets only. Function responses set their own
-headers.
+The adapter writes the static site to `dist/client/` and the Worker with its
+deploy config to `dist/server/` (`wrangler.json`, which `wrangler deploy`
+reads). [`bin/build-csp.ts`](../bin/build-csp.ts) writes the
+Content-Security-Policy into `dist/client/_headers` at build time, so it does not
+depend on the Worker. The assets layer applies `_headers` to static assets only,
+so [`src/middleware.ts`](../src/middleware.ts) gives every response the Worker
+renders the `/*` rule's security headers, with a policy that has no hashes.
 
-[`check-routes.ts`](../tests/audits/check-routes.ts) fails the publish gate if a
-Function route does not invoke Functions, if a built HTML page does, if an
-include rule matches no Function route, or if the built `_headers` has a leftover
-placeholder, lists a path twice, lacks a `Content-Security-Policy` on `/*`, or
-lacks the detach-plus-set override on `/contact/*`. The edge suite proves the
-routing and the headers under `wrangler pages dev`.
+[`check-headers.ts`](../tests/audits/check-headers.ts) fails the publish gate if
+the built `_headers` has a leftover placeholder, lists a path twice, lacks a
+`Content-Security-Policy` on `/*`, or lacks the detach-plus-set override on
+`/contact/*`. The edge suite proves the routing and the headers under
+`astro preview`, which serves the build in the local Workers runtime.
 
 ## Platform limits
 
@@ -53,8 +58,7 @@ routing and the headers under `wrangler pages dev`.
 | Rate-limiting rules | 1; path and verified-bot fields; per IP; 10 s period; 10 s block | 1: `/api/*`, 15 requests per 10 s |
 | Bulk Redirects | 15 rules | 1: `jseverino.pages.dev` → `https://jseverino.com` |
 | API Shield schema validation | Block is the only action | Block on `POST /api/contact` |
-| Workers Rate Limiting binding | not available to Pages Functions | the contact and report handlers count in D1 instead |
-| `wrangler.toml` for Pages | compatibility date and flags, D1, vars, per-environment; no rate limiting | not used (below) |
+| Workers Rate Limiting binding | available to the Worker | not used yet: the contact and report handlers count in D1 |
 | Early Hints | always on for Pages, but Function-handled HTML gets no `Link` header | nothing to configure |
 
 Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in the
@@ -139,7 +143,7 @@ values of `ai_bots_protection`, `content_bots_protection`, and
 
 ## Turnstile
 
-The contact handler ([`functions/api/contact.ts`](../functions/api/contact.ts))
+The contact handler ([`src/lib/api/contact.ts`](../src/lib/api/contact.ts))
 accepts a token only when siteverify reports `success`, the hostname
 `jseverino.com` (`SITE.domain`), and the action `contact` (the contract's
 `turnstileAction`, sent by the widget as `data-action`). The widget's allowed
@@ -209,10 +213,21 @@ Then run `mise run cloudflare check` until it exits 0.
 deployments. The repository's own settings follow the same check, plan, and apply
 pattern in [GitHub Settings](./GitHub-Settings.md).
 
-## No `wrangler.toml`
+## `wrangler.jsonc`
 
-A Pages `wrangler.toml` would pin the compatibility date, but it becomes the
-source of truth for every binding and would carry the D1 database ID in a public
-repository. `cloudflare check` already holds the project's compatibility date to
-the one the edge suite runs ([`tests/browser-test-env.ts`](../tests/browser-test-env.ts)),
-and apply sets it.
+[`wrangler.jsonc`](../wrangler.jsonc) is the source of truth for the Worker: its
+name, compatibility date, bindings, asset handling and observability. Astro's
+adapter adds `main` and the assets directory at build time. The D1 binding
+names the database (`jseverino-contact`, `SITE.d1`) and carries no
+`database_id`: at deploy, wrangler looks the database up by name in the account
+and binds it, so the public file holds no account resource ID. `mise run
+checks:d1` holds the binding's name to `SITE.d1`. `TURNSTILE_SECRET_KEY` is
+listed under `secrets.required`, so `wrangler types` declares it and the local
+runtime warns when `.env` lacks it.
+
+`wrangler types` writes [`worker-configuration.d.ts`](../worker-configuration.d.ts),
+the `Env` interface and the Workers runtime types for that compatibility date.
+[`tsconfig.worker.json`](../tsconfig.worker.json) compiles the on-demand routes
+under them, apart from the Node and DOM program, and `mise run checks:types`
+runs `wrangler types --check`, so the file follows every config or `workerd`
+change.
