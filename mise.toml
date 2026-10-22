@@ -166,8 +166,7 @@ run = "mise run -c 'built:*'"
 
 [tasks."built:assets"]
 description = "No image the build ships (committed or encoded from content) exceeds 1.5 MB"
-env = { STRICT_ASSET_AUDIT = "1" }
-run = "node tests/audits/audit-assets.ts"
+run = "node tests/audits/check-assets.ts"
 
 [tasks."built:links"]
 description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Function route"

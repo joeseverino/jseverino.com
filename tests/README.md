@@ -75,10 +75,6 @@ backend), portfolio interactions, `rel=noopener`, and an
 page archetypes. The visual suite renders the fixture content only, so a
 publish never moves a baseline.
 
-> The `audit-` vs `check-` prefix: `check-*` fails on a violation, `audit-*`
-> measures and reports. The gates run the one `audit-*` (`audit-assets`) with
-> `STRICT_ASSET_AUDIT=1`, so an oversized image fails too.
-
 ## What it catches
 
 A full Playwright run, reported:

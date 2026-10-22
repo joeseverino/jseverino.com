@@ -32,13 +32,6 @@ gates and the `built:*` gates only after a build that succeeded. A passing gate
 prints one line; a failing gate prints every failure and its own fix on its
 last lines.
 
-## Naming: `audit-` vs `check-`
-
-The prefix in `tests/audits/` says how a script fails:
-
-- **`check-*`** asserts a binary invariant and exits non-zero on violation. These are gates.
-- **`audit-*`** walks and measures, printing a report. The only one is `audit-assets.ts`; `mise run built:assets` runs it with `STRICT_ASSET_AUDIT=1`, so an image over 1.5 MB fails the gate. Run it bare (`node tests/audits/audit-assets.ts`) for a warn-only report.
-
 ## Adding a new audit
 
 Four steps; the gates enforce most of them:
@@ -149,8 +142,8 @@ Confirms the sitedrift review wrapper is injected when `CF_PAGES_BRANCH !== 'mai
 ### `check-css.ts`
 Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--variable)` usages from the stylesheets and from every `.astro` and `.ts` file under `src/` (a token consumed only in a template or script still counts), and fails listing any custom property that is defined but never consumed.
 
-### `audit-assets.ts`
-Walks `public/assets`, prints image count and total weight, and lists anything over `ASSET_WARN_MB` (default 1.5 MB). `mise run built:assets` runs it with `STRICT_ASSET_AUDIT=1`, so an oversized image fails `mise run check`; run it bare (`node tests/audits/audit-assets.ts`) for a warn-only report.
+### `check-assets.ts`
+Runs after the build over every image in the outDir, committed under `public/assets/` or encoded from content: any at or over 1.5 MB fails, listed largest first. The `ok` line carries the image count and total weight.
 
 ### `check-repository-policy.ts`
 Structural health:
