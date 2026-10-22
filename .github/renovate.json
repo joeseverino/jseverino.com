@@ -50,6 +50,11 @@
       "automerge": false
     },
     {
+      "description": "wrangler stays on the release the Cloudflare adapter's Vite plugin pins, so it moves by hand with the adapter; checks:repo-policy fails while two copies are installed (docs/Dependencies.md).",
+      "matchPackageNames": ["wrangler"],
+      "enabled": false
+    },
+    {
       "description": "Held at TypeScript 6: the audits and Astro's language tools call the compiler API that TypeScript 7 does not ship (docs/Dependencies.md).",
       "matchPackageNames": ["typescript"],
       "matchUpdateTypes": ["major"],
