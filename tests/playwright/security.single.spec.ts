@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/test.ts';
 
 // Links that open a new tab must carry rel="noopener". Engine-independent, so *.single.
 

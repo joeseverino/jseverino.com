@@ -1,4 +1,4 @@
-import { test, expect, type ConsoleMessage } from '@playwright/test';
+import { test, expect, isWebKitInterceptionBlobError, type ConsoleMessage } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
 const turnstileFeaturePolicyWarnings = new Set([
@@ -51,6 +51,7 @@ test('representative routes emit no browser warnings or errors', async ({ page }
       ['warning', 'error'].includes(msg.type())
       && !msg.text().startsWith('Failed to preconnect to ')
       && !isKnownTurnstileWarning(msg)
+      && !isWebKitInterceptionBlobError(msg)
     ) {
       diagnostics.push(`${msg.type()}: ${msg.text()}`);
     }

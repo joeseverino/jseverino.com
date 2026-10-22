@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './helpers/test.ts';
 import { AxeBuilder } from '@axe-core/playwright';
 import { anyWriteup, imageHeavyWriteup } from './helpers/writeups.ts';
 

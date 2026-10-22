@@ -206,6 +206,8 @@ Each case pairs a markdown input with the HTML it must produce, so a processor u
 
 The browser suite runs against the build (`dist/client/`) served by `astro preview`, never Astro's dev server. Config lives in [`tests/playwright.config.ts`](./playwright.config.ts); routing is by filename suffix, so every spec's project matrix is set by its name: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` instead of the full matrix (one run, not six).
 
+Every spec imports `test` and `expect` from [`helpers/test.ts`](./playwright/helpers/test.ts), and `tests/unit/browser-specs.test.ts` holds them to it. On WebKit that module drops `upgrade-insecure-requests` from the preview's document CSP, since WebKit upgrades the plain-http localhost preview and loads nothing; production and `tests/edge/` keep the directive. That route turns on WebKit's interception for every request, which fails Turnstile's `blob:` load, so the module also names that one console error for `smoke.spec.ts` to allow.
+
 The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability (for example, the writeup with a table or the most images), so renaming a writeup in the vault cannot break the code gates. The visual suite is separate: it never renders real content. It builds the synthetic tree in [`fixtures/content/`](./fixtures/content/) and pins the fixture slugs, so a publish cannot move a baseline.
 
 ### `smoke.spec.ts`
