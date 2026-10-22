@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, settle, type Page } from './helpers/test.ts';
 import { tableWriteup } from './helpers/writeups.ts';
 import { rgb } from './helpers/colors.ts';
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
@@ -113,6 +113,7 @@ test('buttons and cards keep a stable click target through press and release', a
   expect(await button.boundingBox()).toEqual(raisedButtonBox);
   await page.mouse.up();
   await expect(page).toHaveURL(/\/portfolio\/$/);
+  await settle(page);
 
   const cardLink = page.locator('.project-card-title a').first();
   const href = await cardLink.getAttribute('href');

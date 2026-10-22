@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, settle, type Page } from './helpers/test.ts';
 
 // Runs against the fixture build (tests/fixtures/content), never real content.
 // After an intended change, re-baseline with `mise run browser:visual --update-snapshots`.
@@ -14,14 +14,6 @@ const SCREENSHOT_OPTIONS = {
   animations: 'disabled',
   maxDiffPixelRatio: 0.01,
 } as const;
-
-// Readiness: fonts resolved and eager images decoded, instead of networkidle.
-async function settle(page: Page) {
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  await expect
-    .poll(() => page.evaluate(() => [...document.images].filter((img) => img.loading !== 'lazy').every((img) => img.complete)))
-    .toBe(true);
-}
 
 async function open(page: Page, path: string, viewport: { width: number; height: number } = DESKTOP_VIEWPORT) {
   await page.setViewportSize(viewport);
