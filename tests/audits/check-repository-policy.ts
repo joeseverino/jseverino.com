@@ -133,8 +133,9 @@ function typeEscapes(script: string): { any: boolean; suppressed: boolean } {
   return { any, suppressed: [...comments.values()].some((comment) => SUPPRESSION.test(comment)) };
 }
 
+// src/generated/ is written by tools (wrangler types among them) and checked against them, not by hand.
 const escapes = existingTracked
-  .filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file))
+  .filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && !file.startsWith('src/generated/'))
   .map((file) => ({ file, found: scripts(file, read(file)).map(typeEscapes) }));
 const anyTyped = escapes.filter(({ found }) => found.some(({ any }) => any)).map(({ file }) => file);
 const suppressed = escapes.filter(({ found }) => found.some(({ suppressed }) => suppressed)).map(({ file }) => file);

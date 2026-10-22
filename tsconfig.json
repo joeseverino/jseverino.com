@@ -28,7 +28,7 @@
     "playwright-report",
     "test-results",
     "public",
-    "worker-configuration.d.ts",
+    "src/generated/worker-configuration.d.ts",
     "src/pages/api",
     "src/integrations/sitedrift-route.ts"
   ]

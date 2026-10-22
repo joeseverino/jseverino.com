@@ -225,7 +225,7 @@ checks:d1` holds the binding's name to `SITE.d1`. `TURNSTILE_SECRET_KEY` is
 listed under `secrets.required`, so `wrangler types` declares it and the local
 runtime warns when `.env` lacks it.
 
-`wrangler types` writes [`worker-configuration.d.ts`](../worker-configuration.d.ts),
+`wrangler types` writes [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts),
 the `Env` interface and the Workers runtime types for that compatibility date.
 [`tsconfig.worker.json`](../tsconfig.worker.json) compiles the on-demand routes
 under them, apart from the Node and DOM program, and `mise run checks:types`

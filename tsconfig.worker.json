@@ -8,6 +8,6 @@
     "lib": ["ES2025"],
     "types": []
   },
-  "include": [".astro/types.d.ts", "worker-configuration.d.ts", "src/pages/api", "src/integrations/sitedrift-route.ts", "src/middleware.ts"],
+  "include": [".astro/types.d.ts", "src/generated/worker-configuration.d.ts", "src/pages/api", "src/integrations/sitedrift-route.ts", "src/middleware.ts"],
   "exclude": []
 }

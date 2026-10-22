@@ -370,7 +370,7 @@ security.txt is clear-signed with a valid signature, carries the RFC 9116 fields
 
 - **Usage:** `checks:types`
 
-Every TypeScript file compiles under one strict program, the Worker's routes again under the Workers runtime types, and those types match wrangler.jsonc (fix: `wrangler types`)
+Every TypeScript file compiles under one strict program, the Worker's routes again under the Workers runtime types, and those types match wrangler.jsonc (fix: `wrangler types src/generated/worker-configuration.d.ts`)
 
 ## `checks:unit`
 
