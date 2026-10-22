@@ -1,8 +1,11 @@
 name: deploy
 
 # Deploys the build ci gated, once ci passes: a pull request's as an Access-protected preview
-# version, a push to main's to production. A workflow_run job runs the default branch's code, so
-# the jobs holding the Cloudflare token never run code from a pull request; its build is data.
+# version, a push to main's to production. A workflow_run job runs the default branch's code. The
+# preview job never checks out the pull request, but it does hand the pull request's build to
+# wrangler beside the Cloudflare token: its Worker bundle is uploaded to run on Cloudflare, and its
+# deploy config is read, so bin/wrap-preview.ts first refuses any config key the adapter does not
+# write (wrangler would run a `build.command` on the runner) and any other Worker or path.
 # Each deploy reports on the commit it shipped through the deploy check-run
 # (.github/actions/deploy-check).
 on:
