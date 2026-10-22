@@ -113,6 +113,15 @@ test('line editing preserves grapheme boundaries and strips pasted control chara
   assert.equal(state.input, 'a  xb');
 });
 
+test('escape sequences the line editor does not handle type nothing into the field', () => {
+  const state = model();
+  press(state, 'n');
+  pasteManageInput(state, 'ab');
+  for (const key of ['\x1b[1;5C', '\x1bx']) press(state, key);
+  assert.equal(state.input, 'ab');
+  assert.equal(state.inputCursor, 2);
+});
+
 test('site navigation returns effects and staged edits remain protected across tabs', () => {
   const state = model();
   press(state, 'p');

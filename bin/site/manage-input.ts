@@ -224,7 +224,8 @@ function lineInput(model: Model, key: string): void {
     model.inputCursor = deleteFrom;
     return;
   }
-  insertText(model, key);
+  // An unhandled escape sequence (Ctrl+Right, Alt+x) is a key, not text.
+  if (!key.startsWith('\x1b')) insertText(model, key);
 }
 
 function insertText(model: Model, text: string): void {
