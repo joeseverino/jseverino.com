@@ -27,13 +27,18 @@ runs:
         path: ${{ runner.os == 'macOS' && '~/Library/Caches/mise/downloads-cas' || '~/.cache/mise/downloads-cas' }}
         key: mise-downloads-${{ runner.os }}-${{ runner.arch }}-${{ env.MISE_ENABLE_TOOLS || 'all' }}-${{ hashFiles('mise.lock') }}
 
-    # The newest mise release at least seven days old, the hold Renovate gives
-    # every other pin; mise.toml's min_version is the floor. Installs the tools
-    # mise.lock records (mise.toml sets `locked`) and exports mise.toml's [env]
-    # to every later step.
+    # The mise release mise.toml's min_version names, so CI runs the mise every
+    # machine is held to; Renovate moves min_version after its release-age hold.
+    - name: Read the mise version
+      id: mise
+      shell: bash
+      run: python3 -c "import tomllib; print('version=' + tomllib.load(open('mise.toml', 'rb'))['min_version'])" >> "$GITHUB_OUTPUT"
+
+    # Installs the tools mise.lock records (mise.toml sets `locked`) and exports
+    # mise.toml's [env] to every later step.
     - uses: jdx/mise-action@9b200bcecbfd6303e69a4a261b2e09e3757440a7 # v5.2.0
       with:
-        minimum_release_age: 7d
+        version: ${{ steps.mise.outputs.version }}
         cache: false
 
     - name: Restore the npm download cache

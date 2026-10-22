@@ -27,9 +27,8 @@
 # checks:repo-policy holds the two pins equal. npm packages come from
 # package-lock.json; node_modules/.bin is on every task's PATH.
 
-# The oldest mise these tasks run on. CI installs the newest release at least
-# seven days old (.github/actions/setup), so raise this only to a release that
-# old, or CI refuses to start.
+# The mise these tasks run on: the floor for every machine and the release CI
+# installs (.github/actions/setup). Renovate moves it after its release-age hold.
 min_version = "2026.10.17"
 
 [settings]
