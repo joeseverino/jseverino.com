@@ -18,10 +18,10 @@
 # every gate that failed. Under `-c` a task whose dependency failed still
 # starts, so no built:* gate depends on the build: the aggregates run the build
 # first and the built:* gates only after it succeeded. A failing gate prints
-# its own fix. No gate declares `sources`: mise judges them by file times
-# alone, and a verdict also turns on the environment and on files no list would
-# name. A task whose body is more than one line is a file under mise-tasks/,
-# declared in its own #MISE header.
+# its own fix. No gate declares `sources`: a verdict also turns on the
+# environment and on files no list would name. Commands that run in sequence
+# are a `run` array; a body that branches or keeps a status is a file under
+# mise-tasks/, declared in its own #MISE header.
 #
 # Node is pinned here alone; checks:repo-policy holds engines.node and the
 # packageManager npm to it. npm packages come from package-lock.json;
@@ -229,6 +229,19 @@ run = "node tests/audits/check-seo.ts"
 # browser` and the CI legs set after building once. Arguments after the task
 # name go to Playwright: `mise run browser:e2e --ui`,
 # `mise run browser:visual --update-snapshots`.
+
+# One suite at a time (-j 1): each starts browsers and a server, and two at
+# once exhaust a small machine's memory. The suites serve this one build.
+[tasks.browser]
+description = "Every browser gate, one at a time: one build with the test site key, then each suite"
+timeout = "45m"
+env = { PREBUILT = "1" }
+run = ["node tests/browser-test-env.ts build", "mise run -c -j 1 'browser:*'"]
+
+[tasks.ci]
+description = "Every gate the pipeline runs: check, then the browser suites"
+timeout = "90m"
+run = "mise run -c -j 1 check ::: browser"
 
 [tasks."browser:e2e"]
 description = "The functional Playwright specs pass across Chromium, Firefox, and WebKit"
