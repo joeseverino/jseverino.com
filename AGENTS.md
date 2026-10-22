@@ -10,6 +10,10 @@ The rules for changing this repository. Setup, tasks and layout are in
   not already do.
 - When a job moves onto a tool, check that tool's docs at the pinned version
   and remove the custom code its features replace.
+- Every fact has one source, and everything else derives from it: the
+  contracts under `contracts/`, the brand tokens, `src/lib/site-config.ts`,
+  the mise tasks. A second copy is generated from the first and checked by
+  `mise run checks:contracts`, never written by hand.
 - Fix a defect everywhere it occurs, and add the gate or test that catches it
   next time.
 
