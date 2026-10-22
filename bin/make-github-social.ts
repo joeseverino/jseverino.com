@@ -15,7 +15,7 @@ await renderBrandCard({
   eyebrow: 'GitHub • Open Source',
   name: SITE.domain,
   tagline: 'Source for my personal site',
-  meta: 'Astro • TypeScript • Cloudflare Pages',
+  meta: 'Astro • TypeScript • Cloudflare Workers',
   url: `github.com/${SITE_REPOSITORY}`,
   outPath: fromRoot('.github/social-preview.png'),
 });
