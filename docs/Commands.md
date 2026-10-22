@@ -351,6 +351,12 @@ Node and npm pins agree; no secrets or build output tracked; component styles li
 
 security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key
 
+## `checks:shellcheck`
+
+- **Usage:** `checks:shellcheck`
+
+ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names
+
 ## `checks:tasks`
 
 - **Usage:** `checks:tasks`

@@ -170,6 +170,10 @@ description = "jactionlint finds no syntax, expression, action-input or shellche
 # owns the security audits.
 run = "jactionlint --profile correctness --no-hints"
 
+[tasks."checks:shellcheck"]
+description = "ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names"
+run = "find mise-tasks -type f -exec shellcheck {} +"
+
 [tasks."checks:renovate"]
 description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
 # Pinned here and moved by .github/renovate.json's regex manager for this file. npm
