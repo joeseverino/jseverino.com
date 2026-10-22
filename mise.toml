@@ -80,10 +80,6 @@ run = "node tests/audits/check-no-drafts.ts"
 description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
 run = "node tests/audits/check-security-txt.ts"
 
-[tasks."checks:contrast"]
-description = "Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1)"
-run = "node tests/audits/check-contrast.ts"
-
 [tasks."checks:types"]
 description = "Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib"
 run = ["astro sync --silent", "tsc -p .", "tsc -p functions"]

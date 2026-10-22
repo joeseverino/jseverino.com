@@ -285,12 +285,6 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, edge site identity) matches what its script derives from the canonical source
 
-## `checks:contrast`
-
-- **Usage:** `checks:contrast`
-
-Every registered text/background color pairing in the tokens meets WCAG AA (4.5:1)
-
 ## `checks:css-lint`
 
 - **Usage:** `checks:css-lint`

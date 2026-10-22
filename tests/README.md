@@ -44,7 +44,7 @@ failing gate prints its own fix.
 ## The layers
 
 **[`tests/audits/`](./audits/)**: Node checks with no browser. Before the build
-they cover the signed `security.txt`, color contrast, the contact
+they cover the signed `security.txt`, the contact
 contract's handler/OpenAPI/D1 parity, strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
@@ -72,7 +72,7 @@ sitemap, so new writeups are covered automatically. Others drive the
 [Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
 backend), portfolio interactions, `rel=noopener`, and an
 [axe-core WCAG A/AA sweep](./ARCHITECTURE.md#a11ysinglespects) over the key
-page archetypes. The visual suite renders the fixture content only, so a
+page archetypes in both color schemes, color contrast included. The visual suite renders the fixture content only, so a
 publish never moves a baseline.
 
 ## What it catches

@@ -92,7 +92,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
 | Routes | [routes + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | Every URL in the sitemap returns 200, plus `robots.txt`, `feed.xml`, and unknown-route 404 behavior. |
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
-| A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser. |
+| A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser, in the light and the dark color scheme. |
 | Post-deploy | [deploy verification](#post-deploy-verification) | `bin/deploy-verify.ts` | Remote CI status, live headers and HSTS, live sitemap 200s, hash coverage of the home page's inline script and stylesheet, cache rules, the contact gate, `security.txt` parity, open CodeQL alerts. The response predicates are the edge suite's, from `src/lib/edge-expectations.ts`. |
 | CI | CodeQL | default setup, `.github/repo.json` | Semantic JS/TS and workflow scanning for injection, XSS, prototype pollution; the ruleset's code scanning rule holds a merge on a high-severity alert. |
 | CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
@@ -112,9 +112,6 @@ Verifies `public/.well-known/security.txt`:
 - `Canonical` matches the production URL and `Encryption` is a WKD URL whose key file exists under `public/.well-known/openpgpkey/hu/`.
 
 Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`mise run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
-
-### `check-contrast.ts`
-Expands the ordered [`src/styles/base.css`](../src/styles/base.css) entrypoint, reads its `--color-*` declarations, computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
 
 ### `check-no-drafts.ts`
 No document under `src/content` carries `published: false`. The committed snapshot is what deploys; `site dev --drafts` writes drafts to the gitignored `.cache/drafts` overlay instead.
@@ -291,7 +288,7 @@ test('submits successfully with simulated turnstile and mocked api', async ({ pa
 ```
 
 ### `a11y.single.spec.ts`
-Runs axe-core's full WCAG A/AA ruleset (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`) against the key page archetypes: home, the portfolio listing, a writeup (resolved via `helpers/writeups.ts`), the contact form, and the resume. Label association, landmark structure, and computed color contrast resolve here; the static audits cover the cheaper structural rules on every page. Failures print the rule id, impact, and an offending node.
+Runs axe-core's full WCAG A/AA ruleset (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`) against the key page archetypes: home, the portfolio listing, a writeup (resolved via `helpers/writeups.ts`), the contact form, the resume, and an open lightbox. Each runs once per color scheme (Playwright's `colorScheme` option), so the `light-dark()` tokens resolve both ways. Label association, landmark structure, and computed color contrast in both themes resolve here; the static audits cover the cheaper structural rules on every page. Failures print the rule id, impact, and an offending node.
 
 ### `routes.single.spec.ts`
 Route-level responses, engine-independent so chromium only: every URL in the sitemap index returns 200 (request-only, no page render); `robots.txt` (200, plain text, contains the `Sitemap:` line), `feed.xml` (200, XML, valid RSS with at least one `<item>`), and an unknown route (returns a real `404` status and renders the not-found page).
