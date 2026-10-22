@@ -1,0 +1,5 @@
+# A worktree nested under .claude/worktrees loads only its own config: mise
+# stops its search below the directory that holds this checkout. mise reads
+# this file from the directory it runs in, before -C, so `mise -C <worktree>`
+# run from outside one needs MISE_CEILING_PATHS instead.
+ceiling_paths = ["{{ config_root | dirname }}"]
