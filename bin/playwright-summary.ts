@@ -29,14 +29,6 @@ interface TestRow {
   file: string;
 }
 
-interface ProjectRow {
-  passed: number;
-  failed: number;
-  flaky: number;
-  skipped: number;
-  duration: number;
-}
-
 function collect(suite: JSONReportSuite, out: TestRow[]): void {
   for (const spec of suite.specs ?? []) {
     for (const test of spec.tests ?? []) {
@@ -71,16 +63,14 @@ const report = readJson<Partial<JSONReport>>(input);
 const tests: TestRow[] = [];
 for (const suite of report.suites ?? []) collect(suite, tests);
 
-const byProject = new Map<string, ProjectRow>();
-for (const test of tests) {
-  const row = byProject.get(test.project) ?? { passed: 0, failed: 0, flaky: 0, skipped: 0, duration: 0 };
-  if (test.status === 'expected') row.passed += 1;
-  else if (test.status === 'unexpected') row.failed += 1;
-  else if (test.status === 'flaky') row.flaky += 1;
-  else row.skipped += 1;
-  row.duration += test.duration;
-  byProject.set(test.project, row);
+function tally(runs: TestRow[]) {
+  const count = (status: string): number => runs.filter((test) => test.status === status).length;
+  const [passed, failed, flaky] = [count('expected'), count('unexpected'), count('flaky')];
+  const duration = runs.reduce((total, test) => total + test.duration, 0);
+  return { passed, failed, flaky, skipped: runs.length - passed - failed - flaky, duration };
 }
+
+const byProject = new Map(Map.groupBy(tests, (test) => test.project).entries().map(([project, runs]) => [project, tally(runs)]));
 
 const rows = [...byProject.entries()]
   .sort(([a], [b]) => a.localeCompare(b))
