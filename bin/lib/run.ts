@@ -50,17 +50,22 @@ export interface SpawnResult {
 export interface RunSyncOptions {
   cwd?: string | undefined;
   env?: NodeJS.ProcessEnv | undefined;
+  input?: string | undefined;
   raw?: boolean | undefined;
 }
 
+// Why a command failed, for its error: its stderr, else its stdout, else why it never started.
+export const failureDetail = (
+  cmd: string,
+  args: readonly string[],
+  { stdout, stderr, error }: { stdout: string; stderr: string; error?: Error | undefined },
+): string => stderr.trim() || stdout.trim() || error?.message || `${cmd} ${args.join(' ')} failed`;
+
 // Synchronous run(): trimmed stdout of a command that must succeed, else an error carrying its output.
-// env merges over process.env; raw keeps the output untrimmed (porcelain).
-export function runSync(cmd: string, args: readonly string[], { cwd, env, raw = false }: RunSyncOptions = {}): string {
-  const result = spawnResult(cmd, args, { cwd, env });
-  if (result.code !== 0) {
-    const detail = result.stderr.trim() || result.stdout.trim() || result.error?.message;
-    throw new Error(detail || `${cmd} ${args.join(' ')} failed`);
-  }
+// env merges over process.env; input goes to stdin; raw keeps the output untrimmed (porcelain).
+export function runSync(cmd: string, args: readonly string[], { cwd, env, input, raw = false }: RunSyncOptions = {}): string {
+  const result = spawnResult(cmd, args, { cwd, env, input });
+  if (result.code !== 0) throw new Error(failureDetail(cmd, args, result));
   return raw ? result.stdout : result.stdout.trim();
 }
 

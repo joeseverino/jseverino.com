@@ -3,7 +3,7 @@
 
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { run } from '../../bin/lib/run.ts';
+import { run, runSync } from '../../bin/lib/run.ts';
 
 describe('run()', () => {
   test('captures stdout and stderr from a passing command', async () => {
@@ -55,5 +55,17 @@ describe('run()', () => {
     const result = await run(process.execPath, ['-e', String.raw`console.log('\x1b[32mgreen\x1b[0m')`]);
     assert.match(result.output, /green/);
     assert.doesNotMatch(result.output, /\x1b/);
+  });
+});
+
+describe('runSync()', () => {
+  test('feeds input on stdin and returns trimmed stdout', () => {
+    assert.equal(runSync(process.execPath, ['-e', 'process.stdin.pipe(process.stdout)'], { input: ' piped \n' }), 'piped');
+  });
+
+  test('a failure carries stderr, else stdout, else why the command never started', () => {
+    assert.throws(() => runSync(process.execPath, ['-e', 'console.error("bad"); process.exit(1)']), /^Error: bad$/);
+    assert.throws(() => runSync(process.execPath, ['-e', 'console.log("said"); process.exit(1)']), /^Error: said$/);
+    assert.throws(() => runSync('definitely-not-a-binary-xyz', []), /ENOENT/);
   });
 });

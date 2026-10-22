@@ -1,7 +1,7 @@
 // git and gh for publish/land, where every failure is fatal and carries the
 // command's stderr, and the working-tree state site status and site manage show.
 import { gitAsync, git as gitQuery, statusEntries } from '../lib/git.ts';
-import { runSync, spawnResult } from '../lib/run.ts';
+import { runSync } from '../lib/run.ts';
 import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { SiteError } from './cli.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
@@ -16,21 +16,18 @@ function call(cmd: string, args: string[], spawn: () => string): string {
 
 export const git = (root: string, ...args: string[]): string => call('git', args, () => gitQuery(root, ...args));
 
-// A command that reads its input on stdin (a pathspec list, a commit message, a PR body).
-const piped = (cmd: string, root: string, input: string, args: string[]): string => call(cmd, args, () => {
-  const result = spawnResult(cmd, args, { cwd: root, input });
-  if (result.code !== 0) throw new Error(result.stderr.trim() || result.stdout.trim() || result.error?.message || 'failed');
-  return result.stdout.trim();
-});
-export const gitInput = (root: string, input: string, ...args: string[]): string => piped('git', root, input, args);
+// gitInput and ghInput feed stdin: a pathspec list, a commit message, a PR body.
+export const gitInput = (root: string, input: string, ...args: string[]): string =>
+  call('git', args, () => runSync('git', args, { cwd: root, input }));
 
 // Every pr subcommand names the repo, so a fork or another remote is never the target.
 const ghArgs = (args: string[]): string[] => (args[0] === 'pr' ? [...args, '-R', SITE_REPOSITORY] : args);
-export function gh(root: string, ...args: string[]): string {
+const runGh = (root: string, args: string[], input?: string): string => {
   const full = ghArgs(args);
-  return call('gh', full, () => runSync('gh', full, { cwd: root }));
-}
-export const ghInput = (root: string, input: string, ...args: string[]): string => piped('gh', root, input, ghArgs(args));
+  return call('gh', full, () => runSync('gh', full, { cwd: root, input }));
+};
+export const gh = (root: string, ...args: string[]): string => runGh(root, args);
+export const ghInput = (root: string, input: string, ...args: string[]): string => runGh(root, args, input);
 // The caller names the shape of the JSON it asked gh for with --json.
 export const ghJson = <T>(root: string, ...args: string[]): T => JSON.parse(gh(root, ...args)) as T;
 

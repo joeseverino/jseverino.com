@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';
-import { run } from './run.ts';
+import { failureDetail, run } from './run.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
@@ -66,10 +66,11 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && ${INSTALL_PACKAGES}` };
   },
   async fetch({ root }) {
-    const result = await run('git', ['fetch', '--quiet', 'origin', DEFAULT_BRANCH], { cwd: root, timeout: 60_000 });
+    const args = ['fetch', '--quiet', 'origin', DEFAULT_BRANCH];
+    const result = await run('git', args, { cwd: root, timeout: 60_000 });
     return result.code === 0
       ? { ok: true, detail: `fetched origin/${DEFAULT_BRANCH}` }
-      : { ok: false, detail: `git fetch failed: ${result.stderr.trim()}`, fix: 'check the network and the origin remote, then retry' };
+      : { ok: false, detail: `git fetch failed: ${failureDetail('git', args, result)}`, fix: 'check the network and the origin remote, then retry' };
   },
   async gh({ root }) {
     const result = await run('gh', ['auth', 'status'], { cwd: root, timeout: 30_000 });
@@ -90,8 +91,9 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
       : { ok: false, detail: `vault not reachable: ${missing.map((folder) => path.join(root, folder)).join(', ')} missing`, fix: 'set VAULT_DIR to the vault root' };
   },
   async clean({ root }) {
-    const result = await run('git', ['status', '--porcelain=v1', '--untracked-files=no'], { cwd: root });
-    if (result.code !== 0) return { ok: false, detail: `git status failed: ${result.stderr.trim()}`, fix: `check that ${root} is a git checkout, then retry` };
+    const args = ['status', '--porcelain=v1', '--untracked-files=no'];
+    const result = await run('git', args, { cwd: root });
+    if (result.code !== 0) return { ok: false, detail: `git status failed: ${failureDetail('git', args, result)}`, fix: `check that ${root} is a git checkout, then retry` };
     const dirty = result.stdout.split('\n').filter(Boolean);
     return dirty.length === 0
       ? { ok: true, detail: 'no uncommitted tracked changes' }

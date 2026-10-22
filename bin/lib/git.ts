@@ -1,12 +1,12 @@
 // The git queries scripts share. Each throws with git's own stderr.
-import { run, runSync } from './run.ts';
+import { failureDetail, run, runSync } from './run.ts';
 
 export const git = (root: string, ...args: string[]): string => runSync('git', args, { cwd: root });
 
 // git() without blocking, for probes run side by side.
 export async function gitAsync(root: string, ...args: string[]): Promise<string> {
   const result = await run('git', args, { cwd: root });
-  if (result.code !== 0) throw new Error(result.stderr.trim() || result.stdout.trim() || `git ${args.join(' ')} failed`);
+  if (result.code !== 0) throw new Error(failureDetail('git', args, result));
   return result.stdout.trim();
 }
 
