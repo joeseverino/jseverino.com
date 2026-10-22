@@ -22,7 +22,9 @@ jobs:
       - uses: $/.github/actions/setup
 
       - name: Install audit browser
-        run: npx playwright install --with-deps chromium
+        run: mise run setup:browsers
+        env:
+          BROWSERS: chromium
 
       # Lighthouse comes from the lockfile (Renovate keeps it current), so
       # the scores here use the same Lighthouse generation PageSpeed Insights
