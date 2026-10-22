@@ -7,6 +7,12 @@ import { FIELDS, current, diff, fieldValue, hasStaged, type Item, type Model, ty
 // The horizontal rule under a frame's header and between its sections.
 export const rule = (cols: number): string => '─'.repeat(Math.max(40, cols - 4));
 
+// Every frame opens with a blank line, the tab bar, and a rule.
+const frameHead = (model: Model, cols: number): string[] => ['', drawTabBar(model), `  ${rule(cols)}`];
+
+// The flash message, when there is one, set off by a blank line.
+const flashLines = (model: Model): string[] => (model.flash ? [`  ${model.flash}`, ''] : []);
+
 // The divider between the featured list and the writeups that are not featured.
 const notFeaturedDivider = (cols: number): string => `  ${DIM}──── not featured ${'─'.repeat(Math.max(4, cols - 22))}${RESET}`;
 
@@ -78,11 +84,7 @@ function stateTag(model: Model, item: Item): { plain: string; text: string } {
 export function listFrame(model: Model): string {
   const cols = terminalColumns();
   const slugWidth = Math.max(...model.items.map((i) => i.slug.length), 10) + 2;
-  const out: string[] = [];
-
-  out.push('');
-  out.push(drawTabBar(model));
-  out.push(`  ${rule(cols)}`);
+  const out = frameHead(model, cols);
   out.push(`  ${BOLD}site manage${RESET}${DIM}: ${GREEN}●${RESET}${DIM} published · ${MAGENTA}◌${RESET}${DIM} draft · ${RED}!${RESET}${DIM} gate issues · edits stay staged until you save${RESET}`);
   out.push('');
   out.push(`  ${BOLD}FEATURED${RESET}  ${DIM}home page renders this order${RESET}`);
@@ -110,11 +112,7 @@ export function listFrame(model: Model): string {
   const onNew = model.cursor === model.items.length;
   out.push(`  ${onNew ? `${CYAN}▸${RESET}` : ' '} ${DIM} +${RESET}     ${onNew ? BOLD : DIM}new writeup…${RESET}`);
 
-  out.push('');
-  if (model.flash) {
-    out.push(`  ${model.flash}`);
-    out.push('');
-  }
+  out.push('', ...flashLines(model));
 
   const { featuredChanged, publishFlips, fieldEdits } = diff(model);
   const staged: string[] = [];
@@ -157,11 +155,7 @@ export function detailFrame(model: Model): string {
   const item = current(model);
   const idx = model.cursor;
   const slot = idx < model.divider ? `featured slot ${idx + 1}` : 'not featured';
-  const out: string[] = [];
-
-  out.push('');
-  out.push(drawTabBar(model));
-  out.push(`  ${rule(cols)}`);
+  const out = frameHead(model, cols);
   out.push(`  ${BOLD}${item.slug}${RESET}  ${stateIcon(model, item)} ${DIM}${item.published ? 'published' : 'draft'} · ${slot}${RESET}`);
   out.push('');
 
@@ -190,11 +184,7 @@ export function detailFrame(model: Model): string {
     for (const issue of issues.slice(0, 6)) out.push(`    ${RED}!${RESET} ${issue}`);
   }
 
-  out.push('');
-  if (model.flash) {
-    out.push(`  ${model.flash}`);
-    out.push('');
-  }
+  out.push('', ...flashLines(model));
   out.push(`  ${DIM}${rule(cols)}${RESET}`);
   if (model.mode === 'edit') {
     out.push(`  ${DIM}type to edit · ←/→ move · enter stage · esc cancel · Ctrl+U clear · Ctrl+W delete word${RESET}`);
@@ -207,13 +197,10 @@ export function detailFrame(model: Model): string {
 
 export function siteFrame(model: Model): string {
   const cols = terminalColumns();
-  const out: string[] = [];
   const status = model.siteStatus;
   if (!status) return `${drawTabBar(model)}\n\n  Site status has not been loaded.\n`;
 
-  out.push('');
-  out.push(drawTabBar(model));
-  out.push(`  ${rule(cols)}`);
+  const out = frameHead(model, cols);
   out.push(`  ${BOLD}site manage${RESET}${DIM}: manage local servers, pre-flight checks, and publish${RESET}`);
   out.push('');
 
@@ -279,11 +266,7 @@ export function siteFrame(model: Model): string {
     out.push(`  ${pointer} ${CYAN}[${a.key}]${RESET} ${label} ${DIM}${a.desc}${RESET}`);
   });
 
-  out.push('');
-  if (model.flash) {
-    out.push(`  ${model.flash}`);
-    out.push('');
-  }
+  out.push('', ...flashLines(model));
 
   out.push(`  ${DIM}${rule(cols)}${RESET}`);
   out.push(`  ${DIM}↑/↓ select · enter run · ←/→ switch tabs · r reload status · q quit${RESET}`);

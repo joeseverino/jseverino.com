@@ -152,17 +152,13 @@ function firewallRule(desired: DesiredState, rule: FirewallRuleSpec): OwnedRule 
 function rateLimitRule(desired: DesiredState): OwnedRule {
   const rule = desired.rateLimit;
   return {
-    ref: ownedRef(desired, rule.id),
-    description: describe(desired, rule.description),
-    expression: rule.expression,
-    action: rule.action,
+    ...firewallRule(desired, rule),
     ratelimit: {
       characteristics: rule.characteristics,
       period: rule.period,
       requests_per_period: rule.requests_per_period,
       mitigation_timeout: rule.mitigation_timeout,
     },
-    enabled: true,
   };
 }
 
