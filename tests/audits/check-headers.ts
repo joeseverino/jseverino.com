@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { builtPages, finish } from './lib.ts';
 import { parseHeaders } from '../../src/lib/headers-file.ts';
+import { PLACEHOLDERS } from '../../bin/build-csp.ts';
 
 const { distDir } = builtPages('check-headers');
 const headersFile = path.join(distDir, '_headers');
@@ -17,7 +18,8 @@ const listed = headersText.split('\n').filter((line) => /^[^\s#]/.test(line));
 for (const rule of new Set(listed.filter((line, i) => listed.indexOf(line) !== i))) {
   problems.push(`_headers lists ${rule} more than once; only the last block applies`);
 }
-if (headersText.includes('__')) problems.push('the built _headers still carries a build placeholder; bin/build-csp.ts did not run');
+const left = PLACEHOLDERS.filter((placeholder) => headersText.includes(placeholder));
+if (left.length > 0) problems.push(`the built _headers still carries ${left.join(', ')}; bin/build-csp.ts did not run`);
 const policy = (rule: string, prefix: string) => (headers.get(rule) ?? []).some((line) => line.startsWith(prefix));
 if (!policy('/*', 'Content-Security-Policy: ')) problems.push('_headers sets no Content-Security-Policy on /*');
 if (!policy('/contact/*', '! Content-Security-Policy') || !policy('/contact/*', 'Content-Security-Policy: ') || !policy('/contact/*', 'Content-Security-Policy-Report-Only: ')) {
