@@ -11,13 +11,13 @@ import {
   collectAssetRefs,
   createMasterEncoder,
   defaultConcurrency,
-  mapLimit,
   normalizeLocalAssetRef,
   referenceIssues,
   resolveAssetSource,
   STRAY_REFERENCE,
   strayReferences,
 } from './assets.ts';
+import { mapLimit } from '../lib/map-limit.ts';
 import { compileIssues } from './compile.ts';
 import { loadGrammar, renderDocumentRows, type Grammar } from './documents.ts';
 import { buildEducation } from './education.ts';

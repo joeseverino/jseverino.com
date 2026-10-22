@@ -28,6 +28,7 @@ import {
 import { cli as parseCli, flag } from './lib/args.ts';
 import { routeFile } from './lib/dist.ts';
 import { git } from './lib/git.ts';
+import { mapLimit } from './lib/map-limit.ts';
 import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
 import { spawnResult } from './lib/run.ts';
 import { annotate, createReport, endGroup, group, status } from './lib/step-summary.ts';
@@ -139,16 +140,10 @@ async function collectSitemapUrls(): Promise<string[]> {
 // A fresh deployment can 404 while it propagates, so a failed route is retried once.
 const ROUTE_RETRY_MS = 5_000;
 
-async function routeStatuses(urls: readonly string[]): Promise<{ url: string; status: number }[]> {
-  const results: { url: string; status: number }[] = [];
-  for (let index = 0; index < urls.length; index += 8) {
-    results.push(...await Promise.all(urls.slice(index, index + 8).map(async (url) => {
-      const response = await fetchChecked(url, { method: 'HEAD' });
-      return { url, status: response.status };
-    })));
-  }
-  return results;
-}
+const ROUTE_CONCURRENCY = 8;
+
+const routeStatuses = (urls: readonly string[]): Promise<{ url: string; status: number }[]> =>
+  mapLimit(urls, ROUTE_CONCURRENCY, async (url) => ({ url, status: (await fetchChecked(url, { method: 'HEAD' })).status }));
 
 async function verifyLiveRoutes(publicUrls: readonly string[]): Promise<string> {
   const notOk = (results: { url: string; status: number }[]) => results.filter((result) => result.status !== 200);

@@ -10,7 +10,6 @@ import {
   collectReferences,
   createMasterEncoder,
   MASTER_WIDTH,
-  mapLimit,
   referenceIssues,
   resolveAssetSource,
 } from '../../bin/content-sync/assets.ts';
@@ -83,20 +82,6 @@ describe('asset references', () => {
       'Obsidian wikilink does not render on the site: ![[embed.png]]',
     ]);
     assert.deepEqual(collectReferences('[a](images/x.png) [b](images/x.png)').length, 1);
-  });
-
-  test('mapLimit never runs more than the limit at once', async () => {
-    let running = 0;
-    let peak = 0;
-    const results = await mapLimit([1, 2, 3, 4, 5, 6], 2, async (n: number) => {
-      running += 1;
-      peak = Math.max(peak, running);
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      running -= 1;
-      return n * 2;
-    });
-    assert.equal(peak, 2);
-    assert.deepEqual(results, [2, 4, 6, 8, 10, 12]);
   });
 });
 
