@@ -172,9 +172,10 @@ run = "jactionlint --profile correctness --no-hints"
 description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
 # Pinned here and moved by .github/renovate.json's regex manager for this file. npm
 # prints only errors, so the deprecation warnings of Renovate's own
-# dependencies stay out of the gate's output.
-env = { npm_config_loglevel = "error" }
-run = "npx --yes --package renovate@44.161.1 -- renovate-config-validator --strict --no-global .github/renovate.json"
+# dependencies stay out of the gate's output. The exact pin is the gate on the
+# release, so the machine's npm release-age hold does not apply to this fetch.
+env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
+run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
 
 [tasks."checks:tasks"]
 description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"
