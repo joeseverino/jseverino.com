@@ -1,5 +1,7 @@
-# Cloudflare Pages headers.
-# Pages MERGES the headers of every matching rule rather than letting the most
+# Static-asset headers: https://developers.cloudflare.com/workers/static-assets/headers/
+# They apply to the assets only; the Worker's own responses (the API routes and
+# the preview proxy) set theirs in code.
+# Cloudflare MERGES the headers of every matching rule rather than letting the most
 # specific one win. For a single-value header like Cache-Control that means
 # overlapping path rules combine, so they must not contradict: the immutable rule
 # is scoped to write-once dirs and must never be a broad /assets/*, or it re-adds
@@ -49,21 +51,16 @@
   Content-Type: application/octet-stream
   Cache-Control: public, max-age=300, must-revalidate
 
-/*.html
-  Cache-Control: public, max-age=300, must-revalidate
-
-# Keep branch and deployment preview URLs out of search indexes. The canonical
+# Keep the Worker's preview URLs (<alias or version>-<worker>.<account>.workers.dev)
+# out of search indexes; a host placeholder matches one label. The canonical
 # custom domain still indexes normally.
-https://:project.pages.dev/*
-  X-Robots-Tag: noindex
-
-https://:version.:project.pages.dev/*
+https://:label.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
 
 # Security headers for every route.
 # The Content-Security-Policy hashes the one inline script and the inlined
 # stylesheet each page carries, so bin/build-csp.ts fills the placeholders below
-# when it builds dist/_headers. Pages MERGES the rules that match a path, so the
+# when it builds the served _headers. Cloudflare MERGES the rules that match a path, so the
 # contact page detaches the global policy and sets its own: Turnstile's script
 # writes to Trusted Types sinks without a policy, so there that directive is
 # reported rather than enforced.
