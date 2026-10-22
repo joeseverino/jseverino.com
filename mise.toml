@@ -145,7 +145,7 @@ description = "The node:test specs under tests/unit pass"
 run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
 
 [tasks."checks:docs"]
-description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script other than `npm run build`"
+description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
 run = "node tests/audits/check-docs.ts {{vars.docs}}"
 
 [tasks."checks:doc-links"]

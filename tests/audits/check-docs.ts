@@ -1,5 +1,5 @@
 // Engineering docs integrity that no link checker knows: every `mise run` reference names a task,
-// no `npm run` names anything but the build (every other command is a mise task), and every
+// no doc runs an npm script (package.json has none; every command is a mise task), and every
 // backticked repo path resolves (git tracks or ignores it). Command refs are checked everywhere,
 // fenced code included. Links and #anchors are lychee's
 // (`mise run checks:doc-links`).
@@ -57,6 +57,13 @@ export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathR
   return refs;
 }
 
+// The npm scripts a line of a doc runs (`npm run <name>`).
+export function npmScriptRuns(line: string): string[] {
+  return [...line.matchAll(/npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g)]
+    .map(([, name = '']) => name)
+    .filter((name) => !name.startsWith('-'));
+}
+
 export interface RepoIndex {
   topLevel: Set<string>;
   tracked: Set<string>;
@@ -102,7 +109,6 @@ if (import.meta.main) {
   const docs = trackedFiles(siteRoot, ...pathspecs).filter((file) => file.endsWith('.md') && fs.existsSync(path.join(siteRoot, file)));
   if (docs.length === 0) abort('check-docs', `no tracked docs match ${pathspecs.join(' ')}`);
 
-  const npmRunPattern = /npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g;
   // `mise run [-c] [-j N] <task>`, the task bare or quoted as a glob; a name ending in a
   // `<placeholder>` is an example, not a reference.
   const miseRunPattern = /mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]+)(?![\w:.*<-])/g;
@@ -111,21 +117,19 @@ if (import.meta.main) {
   const problems: string[] = [];
   const index = repoIndex(siteRoot);
   const allPathRefs: (PathRef & { doc: string })[] = [];
-  let scriptRefCount = 0;
+  let taskRefCount = 0;
 
   for (const doc of docs) {
     const text = fs.readFileSync(path.join(siteRoot, doc), 'utf8');
     allPathRefs.push(...pathRefs(text, index.topLevel).map((ref) => ({ ...ref, doc })));
 
     text.split(/\r?\n/).forEach((line, lineIndex) => {
-      for (const [, name = ''] of line.matchAll(npmRunPattern)) {
-        if (name.startsWith('-')) continue;
-        scriptRefCount += 1;
-        if (name !== 'build') problems.push(`${doc}:${lineIndex + 1}  not an npm script -> npm run ${name} (every command but the build is \`mise run <task>\`)`);
+      for (const name of npmScriptRuns(line)) {
+        problems.push(`${doc}:${lineIndex + 1}  runs an npm script -> npm run ${name} (package.json has none; every command is \`mise run <task>\`)`);
       }
 
       for (const [, name = ''] of line.matchAll(miseRunPattern)) {
-        scriptRefCount += 1;
+        taskRefCount += 1;
         if (!namesTask(name, tasks)) problems.push(`${doc}:${lineIndex + 1}  unknown mise task -> mise run ${name}`);
       }
     });
@@ -135,7 +139,7 @@ if (import.meta.main) {
     problems.push(`${ref.doc}:${ref.line}  no such path -> ${ref.path}`);
   }
 
-  finish(problems, `${docs.length} docs, ${scriptRefCount} script and task refs, ${allPathRefs.length} repo paths resolve`, {
+  finish(problems, `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths resolve`, {
     heading: 'check-docs: documentation references that do not resolve:',
     fix: 'fix: correct the reference at the reported file:line, or restore its target; an intentional example path goes in EXAMPLE_PATHS here',
   });

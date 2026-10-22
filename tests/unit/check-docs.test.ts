@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { missingPaths, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import { missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
@@ -43,4 +43,9 @@ test('the repo index sees tracked files and ignored generated output', () => {
   assert.ok(index.tracked.has('tests/audits'));
   assert.deepEqual([...index.ignored(['dist/index.html', 'bin/site.ts'])], ['dist/index.html']);
   assert.ok(index.topLevel.has('bin') && index.topLevel.has('node_modules'));
+});
+
+test('a doc line that runs any npm script is caught, the build included', () => {
+  assert.deepEqual(npmScriptRuns('run `npm run build -- --timings`, then `npm run -s lint`'), ['build', 'lint']);
+  assert.deepEqual(npmScriptRuns('`npm ci` installs; `mise run build` builds'), []);
 });

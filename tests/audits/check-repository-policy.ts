@@ -27,9 +27,13 @@ if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
 interface Manifest {
   engines?: { node?: string };
   packageManager?: string;
+  scripts?: Record<string, string>;
 }
 
 const packageJson: Manifest = JSON.parse(read('package.json'));
+
+// Every command is a mise task, so npm scripts would be a second, ungated entry point.
+if (packageJson.scripts) failures.push('package.json declares scripts; every command is a mise task');
 
 const nodeMajor = expectedNode.split('.')[0];
 if (packageJson.engines?.node !== `>=${nodeMajor}`) {
@@ -164,10 +168,10 @@ for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
+  `Node ${actualNode}, ${packageJson.packageManager}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
   },
 );

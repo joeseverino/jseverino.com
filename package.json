@@ -8,9 +8,6 @@
     "node": ">=24"
   },
   "packageManager": "npm@11.19.1",
-  "scripts": {
-    "build": "node bin/build-static.ts"
-  },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.4",
     "@astrojs/mdx": "^8.1.0",
