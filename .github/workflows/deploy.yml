@@ -76,7 +76,7 @@ jobs:
         id: upload
         run: |
           set -euo pipefail
-          npx wrangler versions upload --config dist/server/wrangler.json --tag "${SHA:0:12}" --message "$SHA"
+          wrangler versions upload --config dist/server/wrangler.json --tag "${SHA:0:12}" --message "$SHA"
           jq -r 'select(.type == "version-upload") | "url=\(.preview_url // error("no preview URL; are preview URLs on?"))", "alias=\(.preview_alias_url // "")"' \
             "$WRANGLER_OUTPUT_FILE_PATH" >> "$GITHUB_OUTPUT"
         env:
@@ -212,7 +212,7 @@ jobs:
         id: upload
         run: |
           set -euo pipefail
-          npx wrangler versions upload --config dist/server/wrangler.json --tag "${SHA:0:12}" --message "$SHA"
+          wrangler versions upload --config dist/server/wrangler.json --tag "${SHA:0:12}" --message "$SHA"
           jq -r 'select(.type == "version-upload") | "version=\(.version_id)", "url=\(.preview_url // error("no preview URL; are preview URLs on?"))"' \
             "$WRANGLER_OUTPUT_FILE_PATH" >> "$GITHUB_OUTPUT"
         env:
@@ -238,7 +238,7 @@ jobs:
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
 
       - name: Deploy the version
-        run: npx wrangler versions deploy "$VERSION@100%" --yes --config dist/server/wrangler.json --message "$SHA"
+        run: wrangler versions deploy "$VERSION@100%" --yes --config dist/server/wrangler.json --message "$SHA"
         env:
           VERSION: ${{ steps.upload.outputs.version }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
