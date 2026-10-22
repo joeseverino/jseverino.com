@@ -27,6 +27,11 @@
       "minimumReleaseAge": "0 days"
     },
     {
+      "description": "Node's security releases carry no package advisory for the alerts to see, and they ship from the Node project's own release process, not an npm publish: no hold.",
+      "matchDepNames": ["node"],
+      "minimumReleaseAge": "0 days"
+    },
+    {
       "description": "Everything short of a major moves together, digests included, so a week's updates are one pull request.",
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "dependencies",
