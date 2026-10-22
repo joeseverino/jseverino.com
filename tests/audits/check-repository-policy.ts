@@ -1,9 +1,11 @@
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { load } from 'js-yaml';
 import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
+import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
 import { elementsNamed, parseHtml, textContent } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 import { abort, finish } from './lib.ts';
@@ -52,6 +54,22 @@ const lock: { packages: Record<string, unknown> } = JSON.parse(read('package-loc
 for (const name of ['esbuild', 'sharp', 'workerd', 'miniflare', 'wrangler']) {
   const copies = Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
   if (copies.length > 1) failures.push(`package-lock.json installs ${copies.length} copies of ${name}: ${copies.join(', ')}`);
+}
+
+// The Worker's compatibility date keeps up with the runtime wrangler pins, which Renovate moves:
+// it may trail the newest date that workerd supports by at most a quarter, so new runtime
+// behavior is taken on deliberately and never left behind. A later date than workerd's is one
+// the local runtime, and so the edge suite, cannot run.
+const maxTrailDays = 90;
+const { compatibilityDate: supportedDate }: { compatibilityDate: string } = createRequire(import.meta.url)('workerd');
+const compatibilityDate = wranglerConfig().compatibility_date;
+const trailDays = (Date.parse(supportedDate) - Date.parse(compatibilityDate)) / 86_400_000;
+if (Number.isNaN(trailDays)) {
+  failures.push(`wrangler.jsonc compatibility_date "${compatibilityDate}" or workerd's "${supportedDate}" is not a YYYY-MM-DD date`);
+} else if (trailDays > maxTrailDays) {
+  failures.push(`wrangler.jsonc compatibility_date ${compatibilityDate} trails the installed workerd's ${supportedDate} by ${trailDays} days (at most ${maxTrailDays})`);
+} else if (trailDays < 0) {
+  failures.push(`wrangler.jsonc compatibility_date ${compatibilityDate} is past the installed workerd's ${supportedDate}`);
 }
 
 const tracked = trackedFiles(root);
@@ -176,10 +194,10 @@ for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
+  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
   },
 );

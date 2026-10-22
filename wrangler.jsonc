@@ -4,8 +4,9 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "jseverino",
-  // The edge suite, `astro dev` and production all run this date.
-  "compatibility_date": "2026-05-19",
+  // The edge suite, `astro dev` and production all run this date. checks:repo-policy
+  // holds it within 90 days of the newest date the installed workerd supports.
+  "compatibility_date": "2026-10-12",
   // Production is served only on the custom domain, never on a workers.dev alias.
   "workers_dev": false,
   // Each uploaded version and each pull request's alias gets a workers.dev preview URL,

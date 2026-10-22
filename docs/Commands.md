@@ -343,7 +343,7 @@ Renovate's own validator finds no error, warning or needed migration in .github/
 
 - **Usage:** `checks:repo-policy`
 
-Node and npm pins agree; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed
+Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed
 
 ## `checks:security-txt`
 
