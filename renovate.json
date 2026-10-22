@@ -22,6 +22,11 @@
       "minimumReleaseAge": "7 days"
     },
     {
+      "description": "Joe's own packages ship from his repositories, so their release is the change being made: no hold.",
+      "matchPackageNames": ["branding-engine", "severino-brand", "sitedrift"],
+      "minimumReleaseAge": "0 days"
+    },
+    {
       "description": "Everything short of a major moves together, digests included, so a week's updates are one pull request.",
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "dependencies",
