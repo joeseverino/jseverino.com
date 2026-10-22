@@ -39,8 +39,8 @@ describe('.github/repo.json', () => {
     assert.equal(desired.security.code_scanning.state, 'configured');
     const scanning = desired.ruleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;
     assert.ok(scanning?.some((entry) => entry.tool === 'CodeQL'));
-    const gate = desired.ruleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { integration_id?: number }[];
-    assert.ok(!gate.some((check) => check.integration_id === 15368), 'no required check from the GitHub Actions app reports for CodeQL');
+    const gate = desired.ruleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
+    assert.ok(!gate.some((check) => /^analyze\b/i.test(check.context)), 'no required check is a CodeQL workflow job');
   });
 });
 
