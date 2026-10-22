@@ -582,8 +582,9 @@ GitHub Actions provide the remote quality gate:
     `release-<sha>` artifact that [`release`](../.github/workflows/release.yml)
     publishes for a tag.
   - `dist`: commits the attested archive to the [`dist` branch](./Dist-Branch.md).
-  - `report`: keeps one comment per pull request current with `ci`'s job
-    summaries and the preview's.
+  - `report`: runs [`bin/pr-comment.ts`](../bin/pr-comment.ts) from the default
+    branch's checkout to keep one comment per pull request current with `ci`'s
+    job summaries and the preview's.
 
   The Cloudflare token (`CLOUDFLARE_API_TOKEN`) lives in the `production`
   environment, and the Access service token

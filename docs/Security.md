@@ -429,7 +429,7 @@ ships to visitors:
   triggers. Each accepted finding carries a `# zizmor: ignore[<audit>]`
   comment and its reason on the line it is found.
 - **Link checks** run lychee against repository documentation and public
-  Markdown content separately, with reports uploaded as workflow artifacts
+  Markdown content separately, with reports in the job summary
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).
 - **Lighthouse** checks selected live URLs on a weekly/manual schedule with the
   lockfile's Lighthouse (`bin/lighthouse-check.ts`) and uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](../.github/workflows/lighthouse.yml)).

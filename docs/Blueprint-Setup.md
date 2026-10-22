@@ -69,7 +69,7 @@ than `SITE.d1`.
 
 ### CI / external config
 - [`tests/lighthouse.json`](../tests/lighthouse.json): audited URLs.
-- [`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml): `--base-url`.
+- [`mise.toml`](../mise.toml): the `links:content` task's `--base-url`.
 - [`.github/repo.json`](../.github/repo.json): the public `PUBLIC_TURNSTILE_SITE_KEY` the build embeds, and the repository settings.
 
 ### Cloudflare zone and account

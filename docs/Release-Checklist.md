@@ -117,7 +117,7 @@ verifies the live site ([post-deploy verification](../tests/ARCHITECTURE.md#post
 Scheduled checks measure external freshness, which no single deployment
 decides, so they run on their own:
 
-- `link check` uploads `link-check-reports`.
+- `link check` writes each check's Markdown report to the job summary.
 - `lighthouse` uploads `lighthouse-reports`.
 - `scorecard` sends its SARIF to code scanning.
 

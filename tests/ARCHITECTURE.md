@@ -148,6 +148,7 @@ Structural health:
 - **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
 - **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
+- **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
 - **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
 - **No explicit `any`**: an `any` type anywhere in the TypeScript syntax tree of a `.ts` file, or of an `.astro` file's frontmatter and `<script>` elements, fails; `unknown` and narrowing say what the code knows.
 - **No unexplained suppressions**: no `@ts-ignore` or `@ts-nocheck` comment in those same sources; `@ts-expect-error` must carry a reason.
