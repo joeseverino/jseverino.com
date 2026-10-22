@@ -336,6 +336,12 @@ Every tracked mise config is as `mise fmt` writes it
 
 No whitespace errors or conflict markers in the working tree
 
+## `checks:renovate`
+
+- **Usage:** `checks:renovate`
+
+Renovate's own validator finds no error, warning or needed migration in renovate.json
+
 ## `checks:repo-policy`
 
 - **Usage:** `checks:repo-policy`
@@ -478,6 +484,12 @@ Turn the finished build into a branch preview: the sitedrift review viewer over 
 - **Usage:** `publish:dist`
 
 Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)
+
+## `setup:browsers`
+
+- **Usage:** `setup:browsers`
+
+Install Playwright's browsers (BROWSERS, space-separated; CACHE_HIT=true installs only their system packages) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT
 
 ## `sign:security`
 
