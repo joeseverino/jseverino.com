@@ -4,7 +4,7 @@ How `jseverino.com` is built: where data enters, what the build transforms, and 
 
 ## 1. System Shape
 
-The site is a static Astro build deployed to Cloudflare Pages.
+The site is one Astro program on the Cloudflare Workers adapter: every page is prerendered into a static asset, and a few on-demand routes run in the same Worker.
 
 ![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./diagrams/system-shape.png)
 
@@ -13,19 +13,20 @@ pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engin
 
 The request-time execution and data boundary is at the edge:
 
-![Pages are served from static assets; API requests pass the WAF, rate limit, and schema checks at the edge before a Function writes to D1](./diagrams/edge-request-flow.png)
+![Pages are served from static assets; API requests pass the WAF, rate limit, and schema checks at the edge before the Worker writes to D1](./diagrams/edge-request-flow.png)
 
 <sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
 pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
 
-The public serving layer is static. Every HTML page is a plain static asset served without invoking a Function. The only request-time code is Cloudflare Pages Functions, and [`public/_routes.json`](../public/_routes.json) includes only `/api/*` and `/__sitedrift/*`, with an empty exclude list:
+The public serving layer is static. Every HTML page is a prerendered asset the assets layer serves without starting the Worker. [`wrangler.jsonc`](../wrangler.jsonc) sets `run_worker_first` to `/api/*` and `/__sitedrift/*`, so the only request-time code is the on-demand Astro routes under those paths:
 
-- [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact form submissions.
-- [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) receives CSP violation reports and stores filtered records in D1.
-- [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
-  exports a read-only preview-review proxy under `/__sitedrift/*`. It is inert
-  in production: with no generated sitedrift configuration, the route returns
-  `404`.
+- [`src/pages/api/contact.ts`](../src/pages/api/contact.ts) handles contact form submissions through the handler in [`src/lib/api/contact.ts`](../src/lib/api/contact.ts).
+- [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) receives CSP violation reports through [`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts) and stores filtered records in D1.
+- [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)
+  is the read-only preview-review proxy under `/__sitedrift/*`, injected as a
+  route by [`sitedrift-preview.ts`](../src/integrations/sitedrift-preview.ts). It
+  is inert in production: with no generated sitedrift configuration, the route
+  returns `404`.
 
 There is no public admin panel, user account system, comment system, upload endpoint, or origin application server. Measurements are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
@@ -40,7 +41,7 @@ Synced public source files:
   per document, with its image masters in `<slug>/images/`
 - [`src/content/technology-groups.md`](../src/content/technology-groups.md)
 
-Cloudflare Pages builds from the committed snapshot. It does not need vault access.
+The build runs from the committed snapshot. It does not need vault access.
 
 Schema is single-sourced separately from content. [`contracts/content.v1.json`](../contracts/content.v1.json)
 is the canonical, versioned description of page and writeup fields, including
@@ -51,7 +52,7 @@ Tools surfaces. Those consumers do not maintain a second field list.
 
 The contact boundary follows the same pattern. [`contracts/contact.v1.json`](../contracts/contact.v1.json)
 owns request fields, limits, formats, and runtime ceilings. The browser form,
-Cloudflare Pages Function, and generated API Shield OpenAPI document consume or
+Worker handler, and generated API Shield OpenAPI document consume or
 derive from that contract. Contract-projection audits fail when any generated
 surface becomes stale.
 
@@ -283,18 +284,18 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 ## 10. Edge Security
 
-[`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without a Function. Pages applies `_headers` to static assets only, not to Function responses, which set their own headers.
+[`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without the Worker. The assets layer applies `_headers` to static assets only; [`src/middleware.ts`](../src/middleware.ts) gives the responses the Worker renders the `/*` rule's security headers, with a policy that has no hashes.
 
 [`bin/build-csp.ts`](../bin/build-csp.ts) runs from [`bin/build-static.ts`](../bin/build-static.ts) after the sitedrift preview wrap:
 
 1. Scans every built HTML page for inline scripts and styles.
 2. SHA-256 hashes the one inline theme-bootstrap script (an `is:inline` script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro), marked at build time with `nonce="__CSP_INLINE__"`, a marker `build-csp` strips from the output) and the one inlined stylesheet, which is identical on every page and so yields one hash. The stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request.
 3. **Fails the build** on any inline script or style the site did not emit, on any external script outside same-origin, `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`, on more than 4 inline script hashes or 4 style hashes, and on any `_headers` line over 2000 characters.
-4. Writes the finished policy into `dist/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`, `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders.
+4. Writes the finished policy into `dist/client/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`, `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders.
 
-The policy is `default-src 'none'` plus the site's own origin, the hashes, Turnstile, and Cloudflare Web Analytics, with no `'unsafe-inline'`, `'unsafe-eval'`, nonce, `'strict-dynamic'`, or `blob:`. It carries `report-to csp-endpoint` pointing at `/api/csp-report` (with a `Reporting-Endpoints` header), a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and Trusted Types enforcement. `/contact/*` has its own rule in `_headers`: Pages merges the headers of every matching rule, so the rule detaches the global policy (`! Content-Security-Policy`), sets one without Trusted Types, and adds a report-only `require-trusted-types-for 'script'` header, because Turnstile's script trips it. The policy module is [`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`, `inlineHashes`, `hashSource`). The only request-time CSP is the preview proxy's, which hashes the markup it fetches and nonces the bridge script sitedrift injects; it is not served on production.
+The policy is `default-src 'none'` plus the site's own origin, the hashes, Turnstile, and Cloudflare Web Analytics, with no `'unsafe-inline'`, `'unsafe-eval'`, nonce, `'strict-dynamic'`, or `blob:`. It carries `report-to csp-endpoint` pointing at `/api/csp-report` (with a `Reporting-Endpoints` header), a `report-uri` fallback to the same endpoint for browsers that ignore `report-to` (Firefox), and Trusted Types enforcement. `/contact/*` has its own rule in `_headers`: the assets layer merges the headers of every matching rule, so the rule detaches the global policy (`! Content-Security-Policy`), sets one without Trusted Types, and adds a report-only `require-trusted-types-for 'script'` header, because Turnstile's script trips it. The policy module is [`src/lib/csp.ts`](../src/lib/csp.ts) (`htmlPolicy`, `scanInline`, `inlineHashes`, `hashSource`). The only request-time CSP is the preview proxy's, which hashes the markup it fetches and nonces the bridge script sitedrift injects; it is not served on production.
 
-The origin and report endpoint the policy and the report receiver name come from [`functions/generated/site.ts`](../functions/generated/site.ts), a projection of [`src/lib/site-config.ts`](../src/lib/site-config.ts) written by `mise run sync:edge-site` (Cloudflare bundles `functions/` on its own, so it cannot import `src/lib`); `mise run checks:contracts` fails when it is stale.
+The origin and report endpoint the policy and the report receiver name come from [`src/lib/site-config.ts`](../src/lib/site-config.ts), which the build and the Worker import alike.
 
 Component scripts are external `/_astro/*.js` bundles (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). Besides the hashed theme-bootstrap script, the only inline `<script>` in production HTML is the JSON-LD data block.
 
@@ -316,7 +317,7 @@ Submission is marked busy, ignores repeat submissions while pending, and times
 out after fifteen seconds. Success clears the form; failures retain entered
 text and restore the submit control for retry.
 
-The contact function applies:
+The contact handler applies:
 
 - Turnstile verification;
 - honeypot rejection;
@@ -327,7 +328,7 @@ The contact function applies:
 - per-IP hourly rate limiting backed by D1, checked inside the INSERT so concurrent requests cannot race past it;
 - parameterized D1 inserts.
 
-Both API endpoints use [`request-json.ts`](../functions/lib/request-json.ts)
+Both API endpoints use [`request-json.ts`](../src/lib/api/request-json.ts)
 to match media types exactly and read JSON into a bounded byte buffer. The
 reader counts UTF-8 bytes, rejects invalid UTF-8, and cancels oversized streams
 without trusting `Content-Length` or buffering the entire upload first. Each
@@ -337,25 +338,25 @@ The contact runtime contract also sets a five-second Turnstile verification
 timeout covering the response body. Provider HTTP errors fail verification;
 database failures during the capped insert return the documented JSON error. Closed-schema validation rejects unknown own keys,
 including names inherited from `Object.prototype`. Both endpoints share the
-minimal D1 type declarations in [`database.ts`](../functions/lib/database.ts).
+D1 helpers in [`d1.ts`](../src/lib/api/d1.ts).
 
 ### Edge schema validation
 
-Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before any Pages Function runs. The schema lives at [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), next to [`cloudflare/d1.sql`](../cloudflare/d1.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `mise run cloudflare apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
+Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/) pre-validates incoming requests against an OpenAPI 3 schema at the edge, before the Worker runs. The schema lives at [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), next to [`cloudflare/d1.sql`](../cloudflare/d1.sql); the hosted [`public/schemas/cordon-v4.json`](../public/schemas/cordon-v4.json) (served at `/schemas/`, its `$id`, for the [Cordon](https://github.com/joeseverino/cordon) command-surface contract) is the repo's other machine-readable schema. The binding is declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and applied with `mise run cloudflare apply` ([Cloudflare](./Cloudflare.md)). It is not consumed by the build.
 
 Coverage:
 
 - **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
 - **`POST /api/csp-report`**: left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
 
-The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Pages Function compute.
+The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Worker compute.
 
 ## 11. Build Output
 
-`npm run build` produces a deployable static site in `dist/`, locally and on Cloudflare Pages; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names it.
+`npm run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
 
 [`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs `astro build`, then `sitedrift cloudflare`. On
-non-production Pages branches, sitedrift preserves the generated pages and
+non-production branches, sitedrift preserves the generated pages and
 installs its DEV-versus-LIVE review shell, and the build marks the inline
 script on the viewer it wrote for hashing. On `main`, it exits without changing
 Astro's output. See [Deployment Preview Review](./Deployment-Preview-Review.md).
@@ -368,13 +369,12 @@ and stack; `--timings` keeps Astro's log for its summary. Under `site --json`
 The output tree:
 
 ```text
-dist/
+dist/client/                     # the static site the assets layer serves
 ├── _astro/                     # Astro-emitted fingerprinted bundles
 │   ├── *.css                   # Component + global CSS, content-hashed
 │   └── *.js                    # Component <script> blocks, content-hashed
-├── _headers                    # Cloudflare Pages headers (copied from public/)
-├── _redirects                  # Cloudflare Pages redirects (copied from public/)
-├── _routes.json                # Which paths invoke Functions (copied from public/)
+├── _headers                    # Response headers (copied from public/, CSP written at build)
+├── _redirects                  # Redirects (copied from public/)
 ├── content-index.json          # Writeup index for HQ, generated at build
 ├── .well-known/
 │   ├── security.txt            # Clear-signed RFC 9116 disclosure pointer
@@ -389,6 +389,8 @@ dist/
 ├── __sitedrift_source/         # preview only: preserved Astro HTML
 ├── <route>/index.html          # One HTML file per route
 └── sitemap-index.xml           # @astrojs/sitemap output
+
+dist/server/                    # the Worker and its deploy config, wrangler.json
 ```
 
 **Fingerprinting.** Astro hashes every artifact under `_astro/` by content,
@@ -397,12 +399,12 @@ including every encoded content image, so those filenames can be cached
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). `bin/build-csp.ts` verifies at build time that the JSON-LD block is the only other inline script.
 
-**Functions are not in `dist/`.** Cloudflare Pages bundles `functions/` separately at deploy time. The contact endpoint, CSP report endpoint,
-and scoped sitedrift proxy run as Workers at the edge. The sitedrift Function
+**The Worker is not in `dist/client/`.** The adapter writes it to `dist/server/`. The contact endpoint, CSP report endpoint,
+and scoped sitedrift proxy run in that Worker. The sitedrift route
 returns `404` on the production host and on any build without the
 preview-generated configuration, forwards only content-negotiation headers
-(never cookies or authorization) to LIVE, and restores the static security
-headers on what it proxies.
+(never cookies or authorization) to LIVE, and gives what it proxies the
+static security headers.
 
 ### Resource hints
 
@@ -418,7 +420,7 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 
 ## 12. Asset Organization
 
-`public/` is the input side of the asset pipeline. Cloudflare Pages copies its contents verbatim into `dist/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
+`public/` is the input side of the asset pipeline. Astro copies its contents verbatim into `dist/client/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
 
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
@@ -473,13 +475,13 @@ Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/Web
 
 ## 13. Runtime Configuration
 
-The site needs three pieces of Cloudflare Pages project configuration to run: the D1 binding and two Turnstile keys. They are set in the project settings, outside the repo. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
+The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. The two Turnstile keys are set outside the repo. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
 
 ### D1 binding
 
 | Binding | Database | Used by |
 |---|---|---|
-| `DB` | `jseverino-contact` | [`functions/api/contact.ts`](../functions/api/contact.ts), [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) |
+| `DB` | `jseverino-contact` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts), [`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts) |
 
 The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement is `IF NOT EXISTS`, so re-applying it after a change adds the new indexes:
 
@@ -487,7 +489,7 @@ The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement
 # Remote (production):
 mise run site d1-apply --confirm
 
-# Local (for `wrangler pages dev`):
+# Local (for `mise run preview`):
 wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 ```
 
@@ -498,13 +500,13 @@ The same database holds:
 - `contact_submissions`: accepted contact form submissions and triage fields.
 - `csp_reports`: filtered CSP violation reports from browsers.
 
-### Function environment variables
+### Worker secrets
 
 | Variable | Scope | Used by |
 |---|---|---|
-| `TURNSTILE_SECRET_KEY` | Server (Pages Function env) | [`functions/api/contact.ts`](../functions/api/contact.ts) |
+| `TURNSTILE_SECRET_KEY` | Server (Worker secret) | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts) |
 
-The secret half of the Turnstile keypair. It never appears in the repo, the build output, or the public site. It is set in the Pages project's encrypted environment variables. For local development, copy [`.env.example`](../.env.example) to `.dev.vars` (gitignored); `wrangler pages dev` reads it.
+The secret half of the Turnstile keypair. It never appears in the repo, the build output, or the public site. `wrangler.jsonc` lists it under `secrets.required`. For local development, copy [`.env.example`](../.env.example) to `.env` (gitignored); `astro dev` and `mise run preview` read it.
 
 ### Build environment variables
 
@@ -512,29 +514,24 @@ The secret half of the Turnstile keypair. It never appears in the repo, the buil
 |---|---|---|
 | `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
 
-`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable in the Pages project, embedded into the contact form at build. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable, embedded into the contact form at build. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
 
 The build reads no GitHub token: the Software list comes from the committed snapshot. Removing a leftover `GITHUB_TOKEN` build variable is in the [Release Checklist](./Release-Checklist.md).
 
-### No `wrangler.toml`
-
-The repo has no `wrangler.toml`: a Pages project with both dashboard config and a `wrangler.toml` has a precedence conflict, so the binding and environment configuration stay in the dashboard. A pinned compatibility date, the one thing a `wrangler.toml` would add, is covered by `mise run cloudflare check`, which holds the project's date to the edge suite's ([docs/Cloudflare.md](./Cloudflare.md#no-wranglertoml)).
-
 ### Local preview against the real edge runtime
 
-`astro dev` is the day-to-day dev server. It does not run Pages Functions, so
-`/api/contact`, `/api/csp-report`, and
-the hosted sitedrift proxy are inactive locally.
-
-To exercise the edge runtime locally, build first and serve the output through
-`wrangler pages dev`:
+`astro dev` is the day-to-day dev server, and the Cloudflare adapter runs the
+API routes in the Workers runtime there too. To see the build as production
+serves it, build first and run the preview:
 
 ```sh
 mise run build
-mise run serve:edge
+mise run preview
 ```
 
-The site is served at `http://127.0.0.1:8788` with Functions active and the built `_headers` applied, using the compatibility date in [`tests/browser-test-env.ts`](../tests/browser-test-env.ts), which must match the Pages project's runtime setting. `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI http://127.0.0.1:8788/ | grep -i -E 'content-security-policy|reporting-endpoints'` is the quick by-hand check.
+`astro preview` serves `dist/` in the local Workers runtime (workerd) with the
+assets layer's `_headers`, redirects and 404 page, and the API routes active,
+using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI` against the preview's address, filtered for `content-security-policy` and `reporting-endpoints`, is the quick by-hand check.
 
 ## 14. Release Gate
 
@@ -567,10 +564,10 @@ GitHub Actions provide the remote quality gate:
   workers; `visual` builds the synthetic content in `tests/fixtures/content`
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
   publish never moves a baseline; and `edge` serves the build through the
-  Cloudflare runtime with `wrangler pages dev` and asserts what only that
+  Cloudflare runtime with `astro preview` and asserts what only that
   runtime produces: the build-time CSP (hash coverage of every inline script and style, the same policy on every request, the `/contact/` exemption), the
   `public/_headers` security and cache rules, a real 404, the contact
-  function's refusals, and byte-exact `security.txt`. On Linux the browser
+  handler's refusals, and byte-exact `security.txt`. On Linux the browser
   system packages install in the background while the site builds, and the
   suite serves that build. Browser binaries are cached by Playwright version
   rather than lockfile hash, so a dependency update's lockfile rewrite still hits the

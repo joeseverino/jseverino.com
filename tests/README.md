@@ -12,8 +12,8 @@ three; [`mise.toml`](../mise.toml) names each one a gate and sequences them.
 ```
 tests/
 ├── audits/        Node checks: assert an invariant, exit non-zero with the fix on failure
-├── unit/          node:test specs for pure logic (Markdown DSL, Functions, process harness, audit rules)
-├── edge/          request specs against dist/ served by wrangler pages dev (Functions, _headers, built policy)
+├── unit/          node:test specs for pure logic (Markdown DSL, API handlers, process harness, audit rules)
+├── edge/          request specs against dist/ served by astro preview (API routes, _headers, built policy)
 ├── playwright/    browser specs against dist/ through a preview server
 └── fixtures/      the synthetic content the visual suite builds
 ```
@@ -48,20 +48,20 @@ they cover the signed `security.txt`, the contact
 contract's handler/OpenAPI/D1 parity, strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
-(including unprocessed directives), Functions routing, and SEO metadata.
+(including unprocessed directives), the built headers, and SEO metadata.
 The [task list](../docs/Commands.md#every-task) says what each one asserts; a failing one prints its fix.
 
 **[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
 build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
 [`src/lib/markdown/`](../src/lib/markdown/) is pinned block by block to the
-HTML it must produce, and its guard to what it refuses. The Cloudflare Pages Functions (contact API, CSP report
-endpoint, preview proxy) run request in, response out, with D1 and
+HTML it must produce, and its guard to what it refuses. The API handlers (contact, CSP report
+endpoint) and the preview proxy run request in, response out, with D1 and
 Turnstile stubbed. The process harness, the `site` CLI's publish and
 land flows, and each audit's rule are tested too. Node runs the specs directly
 by stripping types.
 
-**[`tests/edge/`](./edge/)**: the build served by `wrangler pages dev`, so the
-Functions and `public/_headers` answer as they do on
+**[`tests/edge/`](./edge/)**: the build served by `astro preview`, so the
+API routes and `public/_headers` answer as they do on
 Cloudflare. [Details](./ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
 
 **[`tests/playwright/`](./playwright/)**: specs against the compiled site. The

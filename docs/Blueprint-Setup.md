@@ -13,13 +13,12 @@ codebase must change. Two kinds exist:
 
 | File | Holds | Consumers |
 | --- | --- | --- |
-| [`src/lib/site-config.ts`](../src/lib/site-config.ts) | `domain`, `owner`, `github`, `d1`, `pagesProject`, `focus` | Site chrome and feeds, GitHub loading and snapshots, `astro.config.ts`, `bin/*`, audits, generated edge identity |
+| [`src/lib/site-config.ts`](../src/lib/site-config.ts) | `domain`, `owner`, `github`, `d1`, `pagesProject`, `focus` | Site chrome and feeds, GitHub loading and snapshots, `astro.config.ts`, `bin/*`, audits, the Worker's CSP and report endpoint |
 | Lockfile-pinned `severino-brand` contract | Brand tokens and glyph geometry | `sync:tokens` emits [`src/lib/brand.ts`](../src/lib/brand.ts), [`src/styles/brand.css`](../src/styles/brand.css), and the generated block in [`tokens.css`](../src/styles/tokens.css) |
 | [`src/lib/site.ts`](../src/lib/site.ts) | editorial chrome: `jobTitle`, `summary`, `skills`, `socialLinks`, `navItems` | `Header`, `Footer`, `SeoHead` |
 | [`src/lib/build-output.ts`](../src/lib/build-output.ts) | the build outDir decision (write side) and built-dir resolution (read side) | `astro.config.ts`, `bin/build-static.ts`, `bin/seo-preview.ts`, `bin/diff-build.ts`, post-build audits via [`tests/audits/lib.ts`](../tests/audits/lib.ts) |
 
-Changing `site-config.ts` propagates structural identity. Run `mise run sync:edge-site`
-to refresh the committed edge projection. Change brand tokens upstream and run
+Changing `site-config.ts` propagates structural identity; nothing is generated from it. Change brand tokens upstream and run
 `mise run sync:tokens`; generated projections are never edited directly. `site.ts`
 carries the human copy (bio, skills, nav, social).
 
@@ -49,9 +48,10 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 - [`SECURITY.md`](../SECURITY.md): contact and disclosure details.
 
 ### Edge runtime
-[`functions/generated/site.ts`](../functions/generated/site.ts) is derived from
-`site-config.ts` by `mise run sync:edge-site`. The Functions (contact form and CSP
-reporting) import that projection, so the domain is declared once.
+The Worker's routes (contact form and CSP reporting) and its middleware import
+`site-config.ts` directly, so the domain is declared once.
+[`wrangler.jsonc`](../wrangler.jsonc) names the Worker (`name`) and the D1
+database (`database_name`); change both for a new instance.
 
 ### Signed / generated artifacts
 - [`public/.well-known/security.txt`](../public/.well-known/security.txt): all URLs,

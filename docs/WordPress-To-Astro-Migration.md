@@ -52,8 +52,8 @@ Private vault -> sync script -> Astro static build -> Cloudflare Pages -> browse
 
 Cloudflare still sits at the edge, but its role is narrower. It serves static
 assets, applies headers (including a build-time hash CSP), and handles the
-[contact form endpoint](../functions/api/contact.ts) and the
-[CSP report endpoint](../functions/api/csp-report.ts). Preview deployments also
+[contact form endpoint](../src/pages/api/contact.ts) and the
+[CSP report endpoint](../src/pages/api/csp-report.ts). Preview deployments also
 carry a [read-only sitedrift review layer](./Deployment-Preview-Review.md) for
 visual and SEO comparison against the live site. It no longer fronts a public
 WordPress page renderer.
@@ -251,12 +251,12 @@ Work the migration removed from production operations:
 
 The remaining dynamic pieces are narrow and explicit:
 
-- [`functions/api/contact.ts`](../functions/api/contact.ts) handles contact
+- [`src/pages/api/contact.ts`](../src/pages/api/contact.ts) handles contact
   submissions with Turnstile verification, input validation, rate limiting, and
   D1 storage.
-- [`functions/api/csp-report.ts`](../functions/api/csp-report.ts) stores filtered
+- [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) stores filtered
   browser CSP violation reports in the same D1 database for operational review.
-- [`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
+- [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)
   provides a read-only comparison route only when a preview build generated its
   configuration; production requests fail closed with `404`.
 

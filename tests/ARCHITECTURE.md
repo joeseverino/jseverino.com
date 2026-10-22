@@ -12,7 +12,7 @@ each check a gate and sequences them:
 | [`tests/audits/`](./audits/) | Node scripts that read the source tree or the build and assert invariants. No browser. | `mise run checks:<gate>`, `mise run built:<gate>` |
 | [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Cloudflare functions, the process harness, and the audits' rules. No browser, no build. | `mise run checks:unit` |
 | [`tests/playwright/`](./playwright/) | Browser specs that drive the built site (`dist/` via the preview server). | `mise run browser:e2e`, `mise run browser:visual` |
-| [`tests/edge/`](./edge/) | Request specs against the build served through `wrangler pages dev`. | `mise run browser:edge` |
+| [`tests/edge/`](./edge/) | Request specs against the build served through `astro preview` (the Workers runtime). | `mise run browser:edge` |
 
 ### Gates are mise tasks
 
@@ -118,18 +118,18 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 ### TypeScript type check
 
-`mise run checks:types`: `tsc -p .` then `tsc -p functions`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`functions/tsconfig.json`](../functions/tsconfig.json) compiles the Pages functions again under the `WebWorker` lib with no Node types; the Cloudflare-runtime globals that lib doesn't know are declared in the `functions/` tree, narrower than `@cloudflare/workers-types`. `astro check` reads [`tsconfig.astro.json`](../tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
+`mise run checks:types`: `astro sync`, `tsc -p .`, `wrangler types --check`, then `tsc -p tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into `worker-configuration.d.ts`; `wrangler types --check` fails when that file is stale. `astro check` reads [`tsconfig.astro.json`](../tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
 
 ### `checks:duplication`
 
-[jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, generated projections (`src/generated/`, `functions/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
+[jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, the generated projection (`src/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
 
-### `check-functions-parity.ts`
+### `check-d1-parity.ts`
 
-It verifies that the Pages Function
+It verifies that the contact handler
 consumes [`contracts/contact.v1.json`](../contracts/contact.v1.json) instead of restating its fields and limits, and that
 every handler `INSERT` names only columns the D1 schema defines with matching
-bind counts. A persistence mismatch fails before deployment. The API Shield
+bind counts, and that `wrangler.jsonc` binds the D1 database `site-config.ts` names. A persistence mismatch fails before deployment. The API Shield
 document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
 is regenerated and compared whole by `mise run checks:contracts`.
 
@@ -159,7 +159,7 @@ What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking. Settings shared with the external link check live in [`lychee.toml`](../lychee.toml).
 - `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
-- `built:links` runs after the build over everything in `dist/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The Function routes and `/cdn-cgi/` have no file and are excluded in `lychee.toml`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
+- `built:links` runs after the build over everything in `dist/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The API routes and `/cdn-cgi/` have no file and are excluded in `lychee.toml`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
 
 ### `check-docs.ts`
 What no link checker knows, over the same tracked docs (gitignored local files such as `AGENTS.md` are never read):
@@ -174,8 +174,8 @@ Runs after the build, as the deterministic complement to the CI Lighthouse run. 
 ### `built:html`
 Runs after the build. Structural assertions over every emitted page, statically. [html-validate](https://html-validate.org), configured in [`.htmlvalidate.json`](../.htmlvalidate.json) with only these rules: `no-dup-id` (duplicate ids silently break fragment links, label association, and `aria-*` references), `wcag/h37` (every `<img>` carries an `alt` attribute; empty `alt` is valid and marks a decorative image, a missing attribute is always an authoring bug), and `heading-level` (a page opens at its one `h1` and never skips a level going down; an `h3` straight under the `h1` hides the structure assistive technology navigates by). Then `check-html.ts` asserts no literal `::name` directive reaches the page text, which no rule covers. A leaked directive is a typo (`::termnial`) or a directive the page's renderer does not support; text inside `<pre>`, `<code>`, `<script>`, `<style>`, and comments is ignored, and `a::b` or `::1` never counts. The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
 
-### `check-routes.ts`
-Runs after the build. [`public/_routes.json`](../public/_routes.json) includes only the Function routes (`/api/*` and `/__sitedrift/*`) with an empty exclude list, so every HTML page and asset is a plain static file that never invokes a Function and never spends the daily Functions quota (100,000 requests, now spent only by the contact form, CSP reports, and the preview proxy). The CSP is written into the built `_headers`, not issued per request. The audit maps every emitted `.html` file to the URLs Pages serves it at and every file in `functions/` to its route, and fails if any built page would invoke a Function, if a Function route would not, if the file breaks the Pages limits (100 rules, 100 characters each), or if the built `_headers` is incomplete. The edge suite proves the same routing under `wrangler pages dev`.
+### `check-headers.ts`
+Runs after the build. Every HTML page and asset is a static file the assets layer serves without starting the Worker; [`wrangler.jsonc`](../wrangler.jsonc)'s `run_worker_first` sends only `/api/*` and `/__sitedrift/*` to it. The CSP is written into the built `_headers`, not issued per request. The audit reads `dist/client/_headers` and fails if a build placeholder is left, a path rule is listed twice, `/*` sets no Content-Security-Policy, or `/contact/*` lacks its own (detach the global policy, then an enforced and a report-only line). The edge suite proves the routing and the headers under `astro preview`.
 
 ### `check-seo.ts`
 Runs after the build, over the emitted HTML in the outDir (`dist`), read through the hast readers in [`src/lib/html.ts`](../src/lib/html.ts). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, an `og:image`, and only valid JSON-LD. The `og:image` URL must be on the site and name a file the build emitted, since `built:links` (lychee) never reads a `<meta content>` value. It also fails on zero pages, since an empty or stale outDir is a broken build.
@@ -185,7 +185,7 @@ Runs after the build, over the emitted HTML in the outDir (`dist`), read through
 A third pre-build layer beside the audits and browser specs: `node:test` suites under [`tests/unit/`](./unit/) that exercise pure logic directly: input in, output out, no browser and no build. The [other checks](#other-checks) table lists every spec; the main surfaces:
 
 - **The content renderer** ([`content-render.test.ts`](./unit/content-render.test.ts)), described below.
-- **The Cloudflare Pages functions**, the production code that otherwise first runs on Cloudflare. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. `csp.test.ts` verifies the policy module: the build-time hash policy and the preview proxy's request-time nonce and hash policy.
+- **The API handlers**, the production code that otherwise first runs on Cloudflare. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. `csp.test.ts` verifies the policy module: the build-time hash policy and the preview proxy's request-time nonce and hash policy.
 - **The process harness** ([`run-harness.test.ts`](./unit/run-harness.test.ts)): the failure modes a green run never exercises (non-zero exits, missing binaries, and hung commands must all resolve as failed results, never hang a caller).
 - **The audits' pure logic** ([`check-docs.test.ts`](./unit/check-docs.test.ts), [`check-html.test.ts`](./unit/check-html.test.ts)): each audit exports its rule and runs only under `import.meta.main`, so the rule is tested without a repo or a build.
 - **Task references** ([`mise.test.ts`](./unit/mise.test.ts)): how `checks:docs` decides that a `mise run` reference names a task.
@@ -391,16 +391,14 @@ When a functional assertion fails, Playwright screenshots the page at the moment
 
 ### The edge runtime suite (`tests/edge/`)
 
-`astro preview` serves static files only. The Pages Functions
-and the served [`public/_headers`](../public/_headers) rules (carrying the CSP that
-`bin/build-csp.ts` writes at build time) exist only on Cloudflare's
-runtime, so the browser suite cannot see them. The edge suite serves the built
-output through `wrangler pages dev` (Cloudflare's `workerd`, bundled with the
-`wrangler` devDependency; no account or token involved) and asserts the served
+The API routes and the served [`public/_headers`](../public/_headers) rules (carrying the CSP that
+`bin/build-csp.ts` writes at build time) exist only in the Workers runtime, so the browser suite
+cannot see them. The edge suite serves the built output through `astro preview`, which runs it
+in Cloudflare's `workerd` through the adapter (no account or token involved), and asserts the served
 responses. Config lives in [`tests/playwright.edge.config.ts`](./playwright.edge.config.ts);
-the port and the compatibility date live in
-[`browser-test-env.ts`](./browser-test-env.ts), and the date must match the
-Pages project's runtime setting. The specs use Playwright's request fixture
+the port lives in
+[`browser-test-env.ts`](./browser-test-env.ts), and the compatibility date is
+the one in [`wrangler.jsonc`](../wrangler.jsonc). The specs use Playwright's request fixture
 only, so no browser is launched.
 
 [`runtime.spec.ts`](./edge/runtime.spec.ts) asserts, against `/` and one writeup
@@ -415,8 +413,8 @@ page picked from the build rather than a pinned slug:
 - `security.txt` is served byte-for-byte from the committed, signed file, and the WKD key is served as `application/octet-stream`.
 
 ```sh
-mise run browser:edge    # build, serve through wrangler pages dev, run the suite
-mise run serve:edge       # the same runtime on http://127.0.0.1:8788, for checks by hand
+mise run browser:edge    # build, serve through astro preview, run the suite
+mise run preview          # the same runtime, for checks by hand
 ```
 
 CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of

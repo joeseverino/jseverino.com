@@ -37,7 +37,7 @@ and a doc can link to a deployment that does not move on the next push.
 No separate review server exists. The Cloudflare build runs the repository's
 static build command, which wraps the 83 generated HTML files with the installed
 sitedrift dependency on non-production branches. Cloudflare uploads the static
-assets and the scoped Function in the same deployment.
+assets and the scoped route in the same deployment.
 
 ![Cloudflare build log showing sitedrift wrapping 83 preview pages](./images/sitedrift-brand-demo/cloudflare-build-log.png)
 
@@ -110,9 +110,10 @@ and the origin and owner from [`src/lib/site-config.ts`](../src/lib/site-config.
 `bin/build-csp.ts` hashes and strips it after the wrap, so the build's CSP covers
 wrapped pages like any other.
 
-The scoped Pages Function,
-[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts), is
-sitedrift's own `onRequest`. Its defaults are this route's guards:
+The scoped on-demand route,
+[`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts),
+runs sitedrift's own preview handler in the site's Worker. Its defaults are
+this route's guards:
 
 - `404` on the production host (and its `www.`) and on any build without
   sitedrift's generated config;
@@ -142,8 +143,8 @@ against the immutable URL, which cannot move to a newer build mid-test.
 The addon does not wrap production. `sitedrift cloudflare` exits without
 changing the Astro output when `CF_PAGES_BRANCH=main`.
 
-Cloudflare bundles `functions/` separately, so the Function still exists in
-production. It answers `404` there on the production host check and on the
+The route is part of the Worker, so it still exists in production. It answers
+`404` there on the production host check and on the
 missing generated config. The `sitedrift-production` WAF rule also blocks
 `/__sitedrift*` on the production hosts at the edge. The site, contact form, CSP
 report receiver, headers, and static assets are unchanged.
@@ -159,14 +160,14 @@ wrapper while `main` stays the original Astro document.
 
 ## Security Boundary
 
-- The Function owns only `/__sitedrift/*`.
+- The route owns only `/__sitedrift/*`.
 - It allows only `GET` and `HEAD`.
 - The LIVE destination is fixed at build time to `https://jseverino.com`.
 - It does not forward contact-form writes, arbitrary origins, cookies, or
   credentials.
 - Hosted frames execute trusted first-party preview code.
 - Notes never leave the browser and are not available through the sitedrift MCP.
-- Application Functions keep their routes; static pages never invoke one.
+- The API routes keep their paths; static pages never start the Worker.
 - Preview hostnames carry `X-Robots-Tag: noindex` and sit behind Cloudflare
   Access.
 

@@ -13,13 +13,13 @@ and served from Cloudflare's edge. The site has no application server, database 
 or plugin runtime. With no origin process to reach, injection, auth bypass,
 and origin RCE do not apply to the serving layer.
 
-Per-request code is limited to Cloudflare Pages Functions for the contact
-form, the CSP report receiver, and the read-only `/__sitedrift/*`
+Per-request code is limited to on-demand routes in the site's Worker for the
+contact form, the CSP report receiver, and the read-only `/__sitedrift/*`
 preview-review route (see below). The sitedrift route returns `404` in
 production because its configuration is generated only for preview
 deployments. Every other route, every HTML page included, is a flat file.
-[`public/_routes.json`](../public/_routes.json) lists only the Function
-routes, so page views never invoke Functions. The
+`run_worker_first` in [`wrangler.jsonc`](../wrangler.jsonc) lists only those
+paths, so page views never start the Worker. The
 [migration comparison](./WordPress-To-Astro-Migration.md) has the measurements.
 
 ### The private/public boundary is one auditable step
@@ -58,18 +58,20 @@ uploads `dist/`. The build:
   version is pinned in [`.nvmrc`](../.nvmrc).
 
 The one server-side secret (the Turnstile secret key) lives only in the
-Pages Function's runtime environment, set in the Cloudflare dashboard. It is
-not in the build or the repo, and `.env` / `.dev.vars` files are gitignored.
+Worker's runtime environment (`wrangler.jsonc` lists it under
+`secrets.required`; `wrangler secret put` sets it). It is not in the build or
+the repo, and `.env` files are gitignored.
 
 ## The contact form: the visitor-facing dynamic surface
 
-The contact page is static HTML, but submissions POST to a Cloudflare Pages
-Function at `/api/contact` ([`functions/api/contact.ts`](../functions/api/contact.ts)). It is
+The contact page is static HTML, but submissions POST to a Worker route
+at `/api/contact` ([`src/pages/api/contact.ts`](../src/pages/api/contact.ts),
+handler in [`src/lib/api/contact.ts`](../src/lib/api/contact.ts)). It is
 single-purpose and layered:
 
 | Control | What it does |
 |---|---|
-| **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the function runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
+| **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the Worker runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
 | **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `mise run cloudflare check` reports when the live zone differs. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API (with an idempotency key) before anything is stored. The response must name this site's hostname and the contact widget's action, so a token solved on another site or widget is refused. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
@@ -111,7 +113,7 @@ committed at [`cloudflare/d1.sql`](../cloudflare/d1.sql); every statement is
 # Production database:
 wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
 
-# Local database (for `wrangler pages dev`):
+# Local database (for `mise run preview`):
 wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 ```
 
@@ -159,8 +161,10 @@ Bindings and environment variables are in
 
 ## HTTP response headers
 
-Cloudflare Pages applies [`public/_headers`](../public/_headers) to static
-assets, which covers every page. Function responses set their own headers.
+The assets layer applies [`public/_headers`](../public/_headers) to static
+assets, which covers every page. [`src/middleware.ts`](../src/middleware.ts)
+gives the Worker's own responses the `/*` rule's security headers, with a
+policy that carries no hashes.
 `public/_headers` holds placeholders, and
 [`bin/build-csp.ts`](../bin/build-csp.ts) writes the finished
 `Content-Security-Policy` and `Reporting-Endpoints` headers into
@@ -195,14 +199,14 @@ rules. The custom domain is unaffected.
 
 ### Preview review route
 
-[`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)
-exports the preview proxy from the locked `sitedrift` development dependency.
+[`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)
+runs the preview proxy from the locked `sitedrift` development dependency.
 It is constrained to `/__sitedrift/*`, accepts only `GET` and `HEAD`, and fixes
 the LIVE destination to `https://jseverino.com`. It shares no bindings
 with the contact form, exposes no D1, and cannot forward contact-form writes.
 
 The review shell and proxy configuration are generated only for non-`main`
-Pages branches. Without them the Function fails closed with `404`. It forwards
+branches. Without them the route fails closed with `404`. It forwards
 only content-negotiation headers to LIVE, never cookies or authorization.
 Hosted notes stay in browser `localStorage`. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
@@ -234,7 +238,7 @@ emit, and on any external script outside same-origin,
 `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`.
 It also fails if more than 4 inline script hashes or 4 style hashes exist, or
 if any `_headers` line exceeds 2000 characters. The policy module is
-[`functions/lib/csp.ts`](../functions/lib/csp.ts) (`htmlPolicy`, `scanInline`,
+[`src/lib/csp.ts`](../src/lib/csp.ts) (`htmlPolicy`, `scanInline`,
 `inlineHashes`, `hashSource`).
 
 Astro's `security.csp` option is not used. It delivers the policy in a `<meta>`
@@ -250,7 +254,7 @@ Besides the theme-bootstrap script, the only inline `<script>` in production
 HTML is the JSON-LD block, which browsers treat as data and never execute.
 
 The one request-time CSP is the preview review proxy
-([`functions/__sitedrift/[[path]].ts`](../functions/__sitedrift/[[path]].ts)).
+([`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts)).
 It serves markup fetched while the request runs, so it generates a nonce for
 the bridge script sitedrift injects and adds a hash for each inline script and
 style in the fetched page. It is not served on production (`404` there).
@@ -275,7 +279,7 @@ The enforced policy reports through `report-to csp-endpoint` and the
 API support for CSP (Firefox); the others ignore it when `report-to` is
 present. The enforced policy also carries `require-trusted-types-for 'script'`
 on every page except `/contact/` (see Trusted Types below). The report receiver
-([`functions/api/csp-report.ts`](../functions/api/csp-report.ts)) accepts both
+([`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts)) accepts both
 legacy CSP report bodies and modern Reporting API `csp-violation` arrays, caps
 payload size, filters reports to `https://jseverino.com` documents, drops common
 browser-extension blocked-URI schemes and any report whose `source_file`

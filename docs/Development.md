@@ -24,7 +24,7 @@ Machine paths for the content sync go in a gitignored
 mise install
 mise doctor project                     # is this checkout ready to work in
 mise run dev                            # Astro dev server
-mise run build && mise run serve:edge   # the build on the Cloudflare runtime
+mise run build && mise run preview      # the build on the Workers runtime
 ```
 
 `mise doctor project` runs the readiness checks `mise.toml` declares under
@@ -45,7 +45,7 @@ build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
 properties) is out, so `erasableSyntaxOnly` is on and every relative import
 names its `.ts` file. `mise run checks:types` is the one strict
 check over the repo; `astro check` covers the `.astro` files. Shared logic lives
-once, in `bin/lib/`, `src/lib/`, `functions/lib/`, or a test helper, and the
+once, in `bin/lib/`, `src/lib/`, or a test helper, and the
 gate fails on duplicated code.
 
 ## Gates
@@ -84,7 +84,7 @@ matches what changed:
 | Pure library logic | [`tests/unit/`](../tests/unit/) |
 | An invariant about the source tree | [`tests/audits/`](../tests/audits/) |
 | Rendered or interactive behavior | [`tests/playwright/`](../tests/playwright/) |
-| Headers, CSP, or Functions as Cloudflare serves them | [`tests/edge/`](../tests/edge/) |
+| Headers, CSP, or the API routes as the Workers runtime serves them | [`tests/edge/`](../tests/edge/) |
 
 A new audit is a task in `mise.toml`;
 [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md#adding-a-new-audit) has the
@@ -94,7 +94,7 @@ steps.
 
 | Workflow | Trigger | Does | Verified result |
 | --- | --- | --- | --- |
-| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs `mise run check`: the static gates (workflow lint and audit included), then the gates on the same artifact `build-static` ships. The `playwright` matrix runs each `browser:*` task in its own leg: `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `wrangler pages dev` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact function's refusals, and byte-exact `security.txt`, all before anything deploys. The Linux legs install browser system packages while the site builds, then serve that build. | Green checks on the committed tree and a summary on every browser leg. |
+| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs `mise run check`: the static gates (workflow lint and audit included), then the gates on the same artifact `build-static` ships. The `playwright` matrix runs each `browser:*` task in its own leg: `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `astro preview` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact handler's refusals, and byte-exact `security.txt`, all before anything deploys. The Linux legs install browser system packages while the site builds, then serve that build. | Green checks on the committed tree and a summary on every browser leg. |
 | [`deploy`](../.github/workflows/deploy.yml) | Cloudflare Pages check-run completed; `ci` completed | `verify` runs the default branch's `deploy-verify --origin` against the deployment's own `*.pages.dev` URL (headers, inline-code hash coverage, cache rules, every sitemap route, 404, contact refusal, `security.txt`) with the Access service token and no branch code; `record` logs each verified deployment as a GitHub `production` or `preview` deployment; `report` keeps one pull-request comment current with the CI summaries and the deployment result, whichever finishes first. | One updating PR comment; a verification summary for every deployment. |
 | [`dist`](../.github/workflows/dist.yml) | push to `main` | Builds the site and commits the output to the `dist` branch ([Dist Branch](./Dist-Branch.md)); the only job with `contents: write`. | A `deploy: <sha>` commit on `dist`, or none when the output is unchanged. |
 | [`dependency review`](../.github/workflows/dependency-review.yml) | pull request | Audits manifest package updates for high-severity advisories, passing at once when no manifest changed; comments only when it blocks. | Pull request status validation. |
