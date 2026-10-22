@@ -193,10 +193,6 @@ run = "node bin/build-static.ts"
 description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
 run = "mise run -c 'built:*'"
 
-[tasks."built:assets"]
-description = "No image the build ships (committed or encoded from content) exceeds 1.5 MB"
-run = "node tests/audits/check-assets.ts"
-
 [tasks."built:links"]
 description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
 # Root-relative and https://jseverino.com/ URLs both resolve against the static
@@ -204,7 +200,7 @@ description = "Every internal link, src, and srcset in the build, its #fragment 
 run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' dist/client"
 
 [tasks."built:weight"]
-description = "Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget"
+description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
 run = "node tests/audits/check-page-weight.ts"
 
 [tasks."built:headers"]

@@ -215,12 +215,6 @@ The build every deploy ships: astro build, then the CSP hashes
 
 CI job build, last phase: every gate on the build in dist/client/, collect-all
 
-## `built:assets`
-
-- **Usage:** `built:assets`
-
-No image the build ships (committed or encoded from content) exceeds 1.5 MB
-
 ## `built:headers`
 
 - **Usage:** `built:headers`
@@ -249,7 +243,7 @@ Every built page has a title, canonical link, og:title, an og:image the build em
 
 - **Usage:** `built:weight`
 
-Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget
+Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget
 
 ## `check`
 

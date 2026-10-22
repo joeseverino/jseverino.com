@@ -35,14 +35,18 @@ export interface BuiltPage {
   html: string;
 }
 
-export function builtPages(auditName: string): { distDir: string; pages: BuiltPage[] } {
+// One walk of the outDir: every emitted file by its path from the outDir, and the HTML pages read.
+export function builtPages(auditName: string): { distDir: string; files: string[]; pages: BuiltPage[] } {
   const distDir = resolveBuiltDir(siteRoot) ?? abort(auditName, 'no build output found. Run `astro build` first.');
-  const pages = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' })
+  const files = fs.readdirSync(distDir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.relative(distDir, path.join(entry.parentPath, entry.name)));
+  const pages = files
     .filter((rel) => rel.endsWith('.html'))
     .map((rel) => {
       const file = path.join(distDir, rel);
       return { file, rel, html: fs.readFileSync(file, 'utf8') };
     });
   if (pages.length === 0) abort(auditName, `no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
-  return { distDir, pages };
+  return { distDir, files, pages };
 }
