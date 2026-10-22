@@ -15,8 +15,17 @@ tools. The npm packages come from mise's `[deps.npm]` provider: before any
 `node_modules` is missing, so a fresh checkout or a pull that moves the
 lockfile is installed by the first task it runs (`mise deps install npm` runs
 it on its own). CI installs packages per job in its setup action instead.
-Machine paths for the content sync go in a gitignored
-`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)).
+Machine paths for the content sync go in the `[env]` of a gitignored
+`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)), and
+so do the dev server's settings, which `astro.config.ts` reads from the
+environment mise exports:
+
+```toml
+[env]
+DEV_ALLOWED_HOSTS = "laptop.example.com"  # comma-separated hostnames the dev server answers to
+DEV_HOST = "true"                         # bind all interfaces
+DEV_PORT = "4322"                         # pin the port
+```
 
 The contact form needs Cloudflare Turnstile keys. For local work, put
 Turnstile's always-passing test keys in a gitignored `.env`:

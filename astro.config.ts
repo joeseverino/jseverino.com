@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import { loadEnv } from 'vite';
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import { satteri } from '@astrojs/markdown-satteri';
@@ -13,14 +12,11 @@ import { sitedriftPreview } from './src/integrations/sitedrift-preview.ts';
 import { processorOptions } from './src/lib/markdown/index.ts';
 import { IMAGE_WIDTHS } from './src/lib/images.ts';
 
-// Local-only dev server settings from the gitignored .env; unset in prod/CI.
-//   DEV_ALLOWED_HOSTS  comma-separated hostnames the dev server answers to
-//   DEV_HOST           "true" binds all interfaces
-//   DEV_PORT           pin the port
-const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
-const devAllowedHosts = env.DEV_ALLOWED_HOSTS ? env.DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
-const devHost = env.DEV_HOST === 'true' || env.DEV_HOST === '1';
-const devPort = env.DEV_PORT ? Number(env.DEV_PORT) : undefined;
+// Dev server settings from the [env] of the gitignored mise.local.toml, which mise exports to every task.
+const { DEV_ALLOWED_HOSTS, DEV_HOST, DEV_PORT } = process.env;
+const devAllowedHosts = DEV_ALLOWED_HOSTS ? DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
+const devHost = DEV_HOST === 'true' || DEV_HOST === '1';
+const devPort = DEV_PORT ? Number(DEV_PORT) : undefined;
 
 // Sitemap lastmod comes from the page's own content date (src/lib/sitemap.ts).
 const lastmods = sitemapLastmods(
