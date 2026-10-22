@@ -10,6 +10,7 @@ import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-confi
 import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
+import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;
@@ -48,37 +49,6 @@ function htmlPath(urlPath: string): string {
   if (urlPath === '/') return path.join(distRoot, 'index.html');
   if (urlPath.endsWith('.html')) return path.join(distRoot, urlPath);
   return path.join(distRoot, urlPath, 'index.html');
-}
-
-const ENTITY_MAP: Record<string, string> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&#39;': "'",
-  '&#x27;': "'",
-};
-
-function decodeEntities(value: string): string {
-  return value.replace(/&(?:amp|lt|gt|quot|#39|#x27);/g, (match) => ENTITY_MAP[match] ?? match);
-}
-
-function attr(html: string, selector: string, attrName = 'content'): string {
-  const pattern = new RegExp(`<meta\\s+[^>]*${RegExp.escape(selector)}[^>]*>`, 'i');
-  const tag = html.match(pattern)?.[0];
-  if (!tag) return '';
-  const value = tag.match(new RegExp(`${attrName}=(["'])(.*?)\\1`, 'i'))?.[2] ?? '';
-  return decodeEntities(value);
-}
-
-function linkHref(html: string, rel: string): string {
-  const tag = html.match(new RegExp(`<link\\s+[^>]*rel=["']${rel}["'][^>]*>`, 'i'))?.[0];
-  const value = tag?.match(/href=(["'])(.*?)\1/i)?.[2] ?? '';
-  return decodeEntities(value);
-}
-
-function title(html: string): string {
-  return decodeEntities(html.match(/<title>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '');
 }
 
 function textWidth(value: string): number {
@@ -133,15 +103,15 @@ if (!fs.existsSync(file)) {
   process.exit(1);
 }
 
-const html = fs.readFileSync(file, 'utf8');
-const canonical = linkHref(html, 'canonical') || new URL(urlPath, siteUrl).href;
-const pageTitle = title(html);
-const description = attr(html, 'name="description"');
-const robots = attr(html, 'name="robots"');
-const ogTitle = attr(html, 'property="og:title"');
-const ogDescription = attr(html, 'property="og:description"');
-const ogImage = attr(html, 'property="og:image"');
-const ogType = attr(html, 'property="og:type"');
+const doc = parseHtml(fs.readFileSync(file, 'utf8'));
+const canonical = linkHref(doc, 'canonical') || new URL(urlPath, siteUrl).href;
+const pageTitle = title(doc) ?? '';
+const description = metaContent(doc, 'description') ?? '';
+const robots = metaContent(doc, 'robots') ?? '';
+const ogTitle = metaContent(doc, 'og:title');
+const ogDescription = metaContent(doc, 'og:description');
+const ogImage = metaContent(doc, 'og:image');
+const ogType = metaContent(doc, 'og:type');
 const titleLength = textWidth(pageTitle);
 const descriptionLength = textWidth(description);
 const relativeFile = path.relative(siteRoot, file);
