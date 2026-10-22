@@ -6,7 +6,6 @@ import {
   SiteOpsError, abbreviateName, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, preview,
   redactEmail, type Runner, type SiteOpsConfig,
 } from '../../bin/lib/site-ops.ts';
-import { INSTALL_PACKAGES } from '../../bin/lib/preflight.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('site-ops-');
@@ -15,7 +14,6 @@ let reply: (args: readonly string[]) => { code: number; stdout: string; stderr?:
 
 function config(overrides: Partial<SiteOpsConfig> = {}): SiteOpsConfig {
   const root = scratch.make();
-  write(path.join(root, 'node_modules', '.bin', 'wrangler'), '');
   const run: Runner = (_cmd, args) => {
     calls.push([...args]);
     const { code, stdout, stderr = '' } = reply(args);
@@ -148,10 +146,13 @@ describe('D1 schema apply', () => {
     assert.equal(calls.length, 0);
   });
 
-  test('a missing wrangler names the fix', () => {
-    const cfg = config();
-    fs.rmSync(path.join(cfg.siteRepo, 'node_modules'), { recursive: true });
-    assert.throws(() => applyD1Schema(cfg, { confirm: true }), (error: Error) => error.message.includes(INSTALL_PACKAGES));
+  test('a wrangler that cannot start reports why', () => {
+    const missing = Object.assign(new Error('spawnSync wrangler ENOENT'), { code: 'ENOENT' });
+    const cfg = config({ run: () => ({ code: 1, stdout: '', stderr: '', error: missing }) });
+    assert.throws(
+      () => applyD1Schema(cfg, { confirm: true }),
+      (error) => error instanceof SiteOpsError && String(error.details.output).includes('ENOENT'),
+    );
   });
 
   test('runs the schema file remotely with confirm', () => {

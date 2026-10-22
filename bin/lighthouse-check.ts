@@ -53,7 +53,7 @@ let version = '';
 for (const url of urls) {
   const base = path.join(outDir, `${slug(url)}-${stamp}`);
   const result = spawnResult(
-    path.join(root, 'node_modules/.bin/lighthouse'),
+    'lighthouse',
     [
       url,
       '--output=json',

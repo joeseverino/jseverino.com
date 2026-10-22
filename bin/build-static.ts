@@ -20,8 +20,6 @@ if (contentOverride !== undefined && !permittedContentRoot(contentOverride, site
   console.error(`build-static: SITE_CONTENT_ROOT=${contentOverride} is not under tests/fixtures; unset it to build src/content`);
   process.exit(2);
 }
-const astro = path.join(siteRoot, 'node_modules/.bin/astro');
-
 function run(command: string, args: readonly string[]): void {
   const { code } = spawnResult(command, args, { cwd: siteRoot, stdio: 'inherit' });
   if (code !== 0) process.exit(code);
@@ -33,5 +31,6 @@ run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // Otherwise silent, unless --timings asks for the summary: a passing build has
 // nothing to say, and Astro prints a fatal error and its stack at any level.
 const logs = jsonLogs() ? ['--json'] : values.timings ? [] : ['--silent'];
-run(astro, ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
+// `astro` resolves from node_modules/.bin, which mise puts on PATH.
+run('astro', ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
 await buildCsp(fromRoot(buildOutDir), fromRoot(headersTemplate));

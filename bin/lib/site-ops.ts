@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DetailedError } from './detailed-error.ts';
-import { INSTALL_PACKAGES } from './preflight.ts';
 import { createClient } from './cloudflare.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
 import { SITE, SITE_ORIGIN, cspReportUri } from '../../src/lib/site-config.ts';
@@ -58,13 +57,6 @@ const bounded = (value: number | undefined, fallback: number, max = 100): number
   const n = Number.isFinite(value) ? Math.trunc(value as number) : fallback;
   return Math.max(1, Math.min(n, max));
 };
-
-// Run the repo's own wrangler, failing clearly when it is not installed.
-function runWrangler(config: SiteOpsConfig, args: string[], timeout: number): SpawnResult {
-  const bin = path.join(config.siteRepo, 'node_modules', '.bin', 'wrangler');
-  if (!fs.existsSync(bin)) throw new SiteOpsError(`wrangler not installed in ${config.siteRepo}; run ${INSTALL_PACKAGES} there`);
-  return config.run(bin, args, { cwd: config.siteRepo, timeout });
-}
 
 // Cloudflare's D1 HTTP API: the database is found by name, and every value travels in `params`.
 // https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/query/
@@ -197,8 +189,9 @@ export interface SchemaApply {
 export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { confirm?: boolean } = {}): SchemaApply {
   const command = `wrangler d1 execute ${config.d1Database} --remote --file=cloudflare/d1.sql`;
   if (!confirm) throw new SiteOpsError('refusing to apply the D1 schema without confirm', { refused: true, command });
-  const proc = runWrangler(config, ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], 120_000);
-  const output = `${proc.stdout}${proc.stderr}`.trim();
+  // `site` runs as a mise task, which puts node_modules/.bin (wrangler) on PATH.
+  const proc = config.run('wrangler', ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], { cwd: config.siteRepo, timeout: 120_000 });
+  const output = `${proc.stdout}${proc.stderr}`.trim() || proc.error?.message || '';
   if (proc.code !== 0) throw new SiteOpsError(`${command} failed`, { exit_code: proc.code, output });
   return { applied: true, command, output };
 }
