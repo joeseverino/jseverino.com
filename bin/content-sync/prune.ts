@@ -1,7 +1,6 @@
 // Remove files under the managed roots that the run did not write, then the directories left empty. Returns the removed files.
 import fs from 'node:fs';
 import path from 'node:path';
-import { walkFiles } from '../../src/lib/walk.ts';
 
 // Deepest first, so a directory holding only empty directories empties too.
 function removeEmptyDirs(root: string): void {
@@ -16,7 +15,10 @@ export function pruneOrphans(roots: readonly string[], keep: ReadonlySet<string>
   const removed: string[] = [];
   for (const root of roots) {
     if (!fs.existsSync(root)) continue;
-    for (const file of walkFiles(root)) {
+    const files = fs.readdirSync(root, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile())
+      .map((entry) => path.join(entry.parentPath, entry.name));
+    for (const file of files) {
       if (keep.has(file)) continue;
       fs.rmSync(file, { force: true });
       removed.push(file);

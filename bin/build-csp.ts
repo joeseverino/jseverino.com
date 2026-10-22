@@ -7,7 +7,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { SITE } from '../functions/generated/site.ts';
 import { htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../functions/lib/csp.ts';
-import { walkFiles } from '../src/lib/walk.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
@@ -19,7 +18,9 @@ const MAX_HASHES = 4;
 export const PLACEHOLDERS = ['__CSP__', '__CSP_CONTACT__', '__TT_REPORT_ONLY__', '__REPORTING_ENDPOINTS__'] as const;
 
 export async function buildCsp(distDir: string): Promise<{ pages: number; scriptHashes: string[]; styleHashes: string[] }> {
-  const files = walkFiles(distDir, { filter: (file) => file.endsWith('.html') });
+  const files = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' })
+    .filter((file) => file.endsWith('.html'))
+    .map((file) => path.join(distDir, file));
   const scans = await Promise.all(files.map(async (file) => ({ file, scan: await scanInline(fs.readFileSync(file, 'utf8')) })));
 
   const problems = scans.flatMap(({ file, scan }) => scan.problems.map((problem) => `${path.relative(distDir, file)}: ${problem}`));

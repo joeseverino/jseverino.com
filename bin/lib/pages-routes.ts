@@ -3,7 +3,6 @@
 // 100 rules total, 100 characters per rule.
 import fs from 'node:fs';
 import path from 'node:path';
-import { walkFiles } from '../../src/lib/walk.ts';
 import { readJson } from '../../src/lib/json.ts';
 
 const MAX_RULES = 100;
@@ -54,12 +53,13 @@ export function htmlUrls(relative: string): [string, string] {
 // functions/ tree: api/contact.ts → /api/contact, __sitedrift/[[path]].ts →
 // /__sitedrift/x.
 export function functionPaths(functionsDir: string): string[] {
-  const routeFile = (file: string, entry: fs.Dirent): boolean => {
-    const dirs = path.relative(functionsDir, file).split(path.sep).slice(0, -1);
-    return !dirs.some((dir) => dir === 'lib' || dir === 'generated') && entry.name.endsWith('.ts') && !entry.name.endsWith('.d.ts') && !entry.name.startsWith('_');
+  const routeFile = (file: string): boolean => {
+    const segments = file.split(path.sep);
+    const name = segments.pop() ?? '';
+    return !segments.some((dir) => dir === 'lib' || dir === 'generated') && name.endsWith('.ts') && !name.endsWith('.d.ts') && !name.startsWith('_');
   };
-  return walkFiles(functionsDir, { filter: routeFile }).map((file) => {
-    const segments = path.relative(functionsDir, file).slice(0, -3).split(path.sep);
+  return fs.readdirSync(functionsDir, { recursive: true, encoding: 'utf8' }).filter(routeFile).map((file) => {
+    const segments = file.slice(0, -3).split(path.sep);
     const name = segments.pop() ?? '';
     const segment = name.startsWith('[') ? 'x' : name === 'index' ? '' : name;
     return `/${[...segments, segment].join('/')}`.replace(/\/$/, '') || '/';

@@ -205,8 +205,6 @@ Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and
 [`base.css`](../src/styles/base.css) imports each focused stylesheet once.
 Contact controls live in `forms.css`; footer, theme controls, and social links
 live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
-The CSS-variable audit reuses the same
-[`walkFiles`](../src/lib/walk.ts) helper as the other file-based audits.
 
 ### Sticky-header shadow
 

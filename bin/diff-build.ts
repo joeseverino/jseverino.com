@@ -9,7 +9,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
-import { walkFiles } from '../src/lib/walk.ts';
 import { cli } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 
@@ -42,8 +41,9 @@ const normalizeName = (name: string): string =>
 
 function collect(dir: string): Map<string, string> {
   return new Map(
-    walkFiles(dir, { filter: (file) => TEXT_EXT.test(file) })
-      .map((file) => [normalizeName(path.relative(dir, file)), normalize(fs.readFileSync(file, 'utf8'))]),
+    fs.readdirSync(dir, { recursive: true, encoding: 'utf8' })
+      .filter((file) => TEXT_EXT.test(file))
+      .map((file) => [normalizeName(file), normalize(fs.readFileSync(path.join(dir, file), 'utf8'))]),
   );
 }
 

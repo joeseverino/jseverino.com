@@ -2,7 +2,6 @@
 // Every image the build ships, with count and weight. STRICT_ASSET_AUDIT=1 fails images at or over the limit.
 import fs from 'node:fs';
 import path from 'node:path';
-import { walkFiles } from '../../src/lib/walk.ts';
 import { builtPages } from './lib.ts';
 
 const { distDir } = builtPages('audit-assets');
@@ -14,12 +13,9 @@ function formatBytes(bytes: number): string {
   return `${bytes} B`;
 }
 
-const images = walkFiles(distDir, { filter: (file) => /\.(?:png|jpe?g|webp|avif|gif|svg)$/i.test(file) })
-  .map((file) => ({
-    file,
-    relative: path.relative(distDir, file),
-    bytes: fs.statSync(file).size,
-  }))
+const images = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' })
+  .filter((relative) => /\.(?:png|jpe?g|webp|avif|gif|svg)$/i.test(relative))
+  .map((relative) => ({ relative, bytes: fs.statSync(path.join(distDir, relative)).size }))
   .sort((a, b) => b.bytes - a.bytes);
 
 const total = images.reduce((sum, image) => sum + image.bytes, 0);

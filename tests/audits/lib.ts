@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { walkFiles } from '../../src/lib/walk.ts';
 
 export { siteRoot };
 
@@ -38,8 +37,12 @@ export interface BuiltPage {
 
 export function builtPages(auditName: string): { distDir: string; pages: BuiltPage[] } {
   const distDir = resolveBuiltDir(siteRoot) ?? abort(auditName, 'no build output found. Run `astro build` first.');
-  const pages = walkFiles(distDir, { filter: (file) => file.endsWith('.html') })
-    .map((file) => ({ file, rel: path.relative(distDir, file), html: fs.readFileSync(file, 'utf8') }));
+  const pages = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' })
+    .filter((rel) => rel.endsWith('.html'))
+    .map((rel) => {
+      const file = path.join(distDir, rel);
+      return { file, rel, html: fs.readFileSync(file, 'utf8') };
+    });
   if (pages.length === 0) abort(auditName, `no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
   return { distDir, pages };
 }

@@ -3,7 +3,7 @@
 // Set from the measured baseline with headroom.
 
 import fs from 'node:fs';
-import { walkFiles } from '../../src/lib/walk.ts';
+import path from 'node:path';
 import { builtPages, finish } from './lib.ts';
 
 const BUDGET = {
@@ -13,7 +13,7 @@ const BUDGET = {
 };
 
 const { distDir, pages: htmlFiles } = builtPages('check-page-weight');
-const files = walkFiles(distDir);
+const files = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' }).map((file) => path.join(distDir, file));
 
 const kb = (bytes: number): string => `${Math.ceil(bytes / 1024)}KB`;
 const sum = (list: readonly string[]): number => list.reduce((total, file) => total + fs.statSync(file).size, 0);
