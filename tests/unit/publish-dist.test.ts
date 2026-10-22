@@ -6,6 +6,7 @@ import path from 'node:path';
 import { publishDist, routeFile } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
+import { DIST_BRANCH } from '../../src/lib/site-config.ts';
 
 let root: string;
 let origin: string;
@@ -17,8 +18,8 @@ const write = (file: string, text: string) => {
   fs.writeFileSync(path.join(site, file), text);
 };
 const head = () => git(repo, 'rev-parse', 'HEAD');
-const publish = (push = true) => publishDist({ repo, dir: site, branch: 'dist', sha: head(), push });
-const tree = () => git(origin, 'ls-tree', '-r', '--name-only', 'dist').split('\n');
+const publish = (push = true) => publishDist({ repo, dir: site, sha: head(), push });
+const tree = () => git(origin, 'ls-tree', '-r', '--name-only', DIST_BRANCH).split('\n');
 
 // The API calls the publisher makes, run against the bare origin. The commit comes back from an
 // identity the publisher never set, as a signed API commit does.
@@ -37,7 +38,7 @@ const fakeApi = async (url: string, init: RequestInit) => {
   return new Response('{}', { status: 200 });
 };
 const publishSigned = () =>
-  publishDist({ repo, dir: site, branch: 'dist', sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
+  publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
 
 beforeEach(() => {
   apiCalls.length = 0;
@@ -73,8 +74,8 @@ describe('publishDist', () => {
     const result = await publish();
     assert.equal(result.status, 'pushed');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
-    assert.equal(git(origin, 'rev-list', '--count', 'dist'), '1');
-    assert.match(git(origin, 'log', '-1', '--format=%B', 'dist'), new RegExp(`Source: ${head()}`));
+    assert.equal(git(origin, 'rev-list', '--count', DIST_BRANCH), '1');
+    assert.match(git(origin, 'log', '-1', '--format=%B', DIST_BRANCH), new RegExp(`Source: ${head()}`));
   });
 
   test('publishes ignored files and leaves the source checkout alone', async () => {
@@ -89,7 +90,7 @@ describe('publishDist', () => {
   test('an unchanged build makes no commit', async () => {
     await publish();
     assert.equal((await publish()).status, 'unchanged');
-    assert.equal(git(origin, 'rev-list', '--count', 'dist'), '1');
+    assert.equal(git(origin, 'rev-list', '--count', DIST_BRANCH), '1');
   });
 
   test('a changed build adds one commit and drops removed files', async () => {
@@ -97,25 +98,21 @@ describe('publishDist', () => {
     write('index.html', '<h1>home v2</h1>');
     fs.rmSync(path.join(site, 'about'), { recursive: true });
     assert.equal((await publish()).status, 'pushed');
-    assert.equal(git(origin, 'rev-list', '--count', 'dist'), '2');
+    assert.equal(git(origin, 'rev-list', '--count', DIST_BRANCH), '2');
     assert.deepEqual(tree(), ['index.html']);
   });
 
   test('without push the commit stays local', async () => {
     assert.equal((await publish(false)).status, 'committed');
-    assert.equal(git(origin, 'branch', '--list', 'dist'), '');
-  });
-
-  test('refuses a branch name it should not publish to', async () => {
-    await assert.rejects(publishDist({ repo, dir: site, branch: '--force', sha: 'abc' }), /not a publishable branch name/);
+    assert.equal(git(origin, 'branch', '--list', DIST_BRANCH), '');
   });
 });
 
 describe('publishDist through the API', () => {
   test('the commit on the branch is the API commit, and the staging ref is gone', async () => {
     const result = await publishSigned();
-    assert.equal(git(origin, 'rev-parse', 'dist'), result.commit);
-    assert.equal(git(origin, 'log', '-1', '--format=%an', 'dist'), 'api', 'made by the API, not by a local identity');
+    assert.equal(git(origin, 'rev-parse', DIST_BRANCH), result.commit);
+    assert.equal(git(origin, 'log', '-1', '--format=%an', DIST_BRANCH), 'api', 'made by the API, not by a local identity');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');
     assert.deepEqual(apiCalls.map((call) => `${call.method} ${call.route}`), ['POST /git/commits', 'POST /git/refs']);
@@ -127,7 +124,7 @@ describe('publishDist through the API', () => {
     apiCalls.length = 0;
     const second = await publishSigned();
     assert.equal(git(origin, 'rev-parse', `${second.commit}^`), first.commit);
-    assert.deepEqual(apiCalls.map((call) => `${call.method} ${call.route}`), ['POST /git/commits', 'PATCH /git/refs/heads/dist']);
+    assert.deepEqual(apiCalls.map((call) => `${call.method} ${call.route}`), ['POST /git/commits', `PATCH /git/refs/heads/${DIST_BRANCH}`]);
   });
 
   test('an unchanged build makes no API call', async () => {
@@ -140,7 +137,7 @@ describe('publishDist through the API', () => {
   test('a failed API call still removes the staging ref', async () => {
     const failing = (): Promise<Response> => Promise.resolve(new Response('{"message":"nope"}', { status: 500 }));
     await assert.rejects(
-      publishDist({ repo, dir: site, branch: 'dist', sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: failing }),
+      publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: failing }),
       /500/,
     );
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');

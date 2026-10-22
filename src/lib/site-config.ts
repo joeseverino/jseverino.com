@@ -27,6 +27,8 @@ export const cspReportUri = `${SITE_ORIGIN}${cspReportPath}`;
 // The branch every PR targets and deploys from, and the prefix `site publish` gives content branches.
 export const DEFAULT_BRANCH = 'main';
 export const CONTENT_BRANCH_PREFIX = 'content/';
+// The generated branch holding the HTML production serves (docs/Dist-Branch.md).
+export const DIST_BRANCH = 'dist';
 // Every preview URL of the Worker is <label><suffix> on the account's workers.dev subdomain: the
 // label is a branch's alias or a version's ID prefix. The Access token goes only to these hosts.
 export const PREVIEW_HOST_SUFFIX = `-${SITE.worker}.severino.workers.dev`;

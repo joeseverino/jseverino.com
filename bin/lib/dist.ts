@@ -1,17 +1,17 @@
-// Publishes a built site as one commit on a branch, from a temporary index, with no checkout of
-// that branch. With a token and repository the commit is made through the API, which signs it.
+// Publishes a built site as one commit on the dist branch, from a temporary index, with no checkout
+// of that branch. With a token and repository the commit is made through the API, which signs it.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Fetch } from './drift.ts';
 import { createClient } from './github.ts';
 import { runSync } from './run.ts';
+import { DIST_BRANCH } from '../../src/lib/site-config.ts';
 
 export interface PublishOptions {
   // The repository checkout whose history the commit joins.
   repo: string;
   dir: string;
-  branch: string;
   // The source commit the build came from.
   sha: string;
   push?: boolean;
@@ -32,8 +32,8 @@ export const routeFile = (pathname: string): string => `${pathname.replace(/^\//
 
 const BOT = { name: 'github-actions[bot]', email: '41898282+github-actions[bot]@users.noreply.github.com' };
 
-export async function publishDist({ repo, dir, branch, sha, push = false, token, repository, fetch }: PublishOptions): Promise<Published> {
-  if (!/^[a-z][a-z0-9/_-]*$/.test(branch)) throw new Error(`not a publishable branch name: ${branch}`);
+export async function publishDist({ repo, dir, sha, push = false, token, repository, fetch }: PublishOptions): Promise<Published> {
+  const branch = DIST_BRANCH;
   const git = (args: string[], options: { cwd?: string; env?: NodeJS.ProcessEnv } = {}) =>
     runSync('git', args, { cwd: options.cwd ?? repo, ...(options.env && { env: options.env }) });
 

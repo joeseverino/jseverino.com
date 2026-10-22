@@ -14,7 +14,7 @@
 import fs from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import { DEFAULT_BRANCH, DEPLOY_CHECK, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
+import { DEFAULT_BRANCH, DEPLOY_CHECK, DIST_BRANCH, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import {
   cacheRuleFindings,
@@ -202,7 +202,7 @@ async function verifyNotFound(): Promise<string> {
 async function verifyDist(urls: string[]): Promise<string> {
   const deadline = Date.now() + 6 * 60_000;
   for (;;) {
-    git(siteRoot, 'fetch', '--quiet', 'origin', 'dist');
+    git(siteRoot, 'fetch', '--quiet', 'origin', DIST_BRANCH);
     const stale: string[] = [];
     for (const url of urls) {
       const { pathname } = new URL(url);
@@ -210,11 +210,11 @@ async function verifyDist(urls: string[]): Promise<string> {
       if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(url))).text()) stale.push(pathname);
     }
     if (stale.length === 0) {
-      const { verified, reason } = await commitVerification(repository, 'dist');
-      if (!verified) throw new Error(`the dist branch tip is not signed (${reason})`);
-      return `${urls.length} pages match the dist branch byte for byte, at a verified commit`;
+      const { verified, reason } = await commitVerification(repository, DIST_BRANCH);
+      if (!verified) throw new Error(`the ${DIST_BRANCH} branch tip is not signed (${reason})`);
+      return `${urls.length} pages match the ${DIST_BRANCH} branch byte for byte, at a verified commit`;
     }
-    if (Date.now() > deadline) throw new Error(`${stale.length} pages differ from the dist branch: ${stale.slice(0, 5).join(', ')}`);
+    if (Date.now() > deadline) throw new Error(`${stale.length} pages differ from the ${DIST_BRANCH} branch: ${stale.slice(0, 5).join(', ')}`);
     await sleep(20_000);
   }
 }
@@ -381,7 +381,7 @@ async function main(): Promise<void> {
   } else {
     await fromSitemap('headers', () => verifyPageHeaders(urls));
     await fromSitemap('routes', () => verifyLiveRoutes(urls));
-    if (production) await fromSitemap('dist', () => verifyDist(urls));
+    if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(urls));
     const served = [['production', verifyProductionGuard], ['inline', verifyInlineHashes], ['cache', verifyCacheRules], ['turnstile', verifyTurnstileKey]] as const;
     for (const [name, verify] of served) {
       if (cli.preview) skip(name, 'branch previews serve HTML through the sitedrift viewer');

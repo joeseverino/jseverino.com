@@ -1,37 +1,30 @@
 #!/usr/bin/env node
 // Commits a built site to the dist branch, one commit per change. See docs/Dist-Branch.md.
 //
-//   node bin/publish-dist.ts [dir] [--branch dist] [--push]
+//   node bin/publish-dist.ts [dir] [--push]
 import { buildOutDir } from '../src/lib/build-output.ts';
-import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
+import { DIST_BRANCH } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { cli, flag } from './lib/args.ts';
 import { publishDist } from './lib/dist.ts';
 import { git } from './lib/git.ts';
 
-const USAGE = `usage: node bin/publish-dist.ts [dir] [--branch dist] [--push]
+const { values, positionals } = cli({
+  usage: `usage: node bin/publish-dist.ts [dir] [--push]
 
   dir       The built site (default: ${buildOutDir}).
-  --branch  The branch to publish to (default: dist).
   --push    Push to origin. With GITHUB_TOKEN and GITHUB_REPOSITORY (Actions sets both) the commit
-            is created through the API, which GitHub signs; otherwise it is pushed unsigned.`;
-const { values, positionals } = cli({
-  usage: USAGE,
+            is created through the API, which GitHub signs; otherwise it is pushed unsigned.`,
   allowPositionals: true,
-  options: { branch: { type: 'string', default: 'dist' }, push: flag },
+  options: { push: flag },
 });
 
-if (values.branch === DEFAULT_BRANCH) {
-  console.error(`refusing to publish over ${DEFAULT_BRANCH}\n\n${USAGE}`);
-  process.exit(2);
-}
 const result = await publishDist({
   repo: siteRoot,
   dir: positionals[0] ?? buildOutDir,
-  branch: values.branch,
   sha: git(siteRoot, 'rev-parse', 'HEAD'),
   push: values.push,
   token: process.env.GITHUB_TOKEN,
   repository: process.env.GITHUB_REPOSITORY,
 });
-console.log(`${result.status} ${result.commit.slice(0, 12)} on ${values.branch}`);
+console.log(`${result.status} ${result.commit.slice(0, 12)} on ${DIST_BRANCH}`);
