@@ -1,6 +1,5 @@
 {
-  "$schema": "./node_modules/html-validate/schema/config.json",
-  "root": true,
+  "$schema": "../node_modules/html-validate/schema/config.json",
   "rules": {
     "no-dup-id": "error",
     "wcag/h37": "error",

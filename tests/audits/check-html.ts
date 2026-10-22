@@ -1,5 +1,5 @@
 // No literal `::name` directive reaches a built page's text. Ids, alt text, and heading levels are
-// html-validate's (.htmlvalidate.json), which runs first in the same gate.
+// html-validate's (tests/html-validate.json), which runs first in the same gate.
 
 import { builtPages, finish } from './lib.ts';
 
