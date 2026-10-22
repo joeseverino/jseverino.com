@@ -280,7 +280,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     usage: 'site manage',
     help: 'Every writeup on one screen. Nothing is written until you save. The one interactive command:\nit refuses to start without a TTY, and --json is a usage error.',
     interactive: true,
-    run: async () => (await import('./site/manage.ts')).manage(),
+    run: async () => (await import('./site/manage.ts')).manage(COMMANDS),
   }),
 };
 

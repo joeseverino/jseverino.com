@@ -3,13 +3,12 @@ import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
 import { setTimeout as delay } from 'node:timers/promises';
 import { handleManageKey, pasteManageInput } from '../../bin/site/manage-input.ts';
-import { listenForKeys } from '../../bin/site/tui.ts';
+import { frameLines, listenForKeys } from '../../bin/site/tui.ts';
 import { FIELDS, hasStaged, type Model } from '../../bin/site/manage-model.ts';
-import { siteActionSpecs, siteFrame } from '../../bin/site/manage-render.ts';
+import { siteFrame } from '../../bin/site/manage-render.ts';
 
 const today = '2026-10-14';
-const actions = siteActionSpecs({}).map((action) => action.key);
-const press = (model: Model, key: string) => handleManageKey(model, key, today, actions);
+const press = (model: Model, key: string) => handleManageKey(model, key, today);
 
 function model(): Model {
   return {
@@ -18,9 +17,9 @@ function model(): Model {
       { slug: 'beta', title: 'Beta', published: false, featured: false, edits: {} },
     ],
     divider: 1, cursor: 0, tab: 'writeups', mode: 'list', field: 0,
-    input: '', inputCursor: 0, flash: '', created: [], issues: new Map(),
+    input: '', inputCursor: 0, flash: null, created: [], issues: new Map(),
     origFeatured: ['alpha'], origPublished: new Map([['alpha', true], ['beta', false]]),
-    siteStatus: null, actionCursor: 0, sourceFingerprint: 'fixture',
+    siteStatus: null, actionCursor: 0, descriptions: new Map(), sourceFingerprint: 'fixture',
   };
 }
 
@@ -116,7 +115,7 @@ test('read-only fields cannot enter edit mode and touching a date uses the suppl
   assert.ok(state.field >= 0);
   press(state, '\r');
   assert.equal(state.mode, 'detail');
-  assert.match(state.flash, /read-only/);
+  assert.match(state.flash?.text ?? '', /read-only/);
   press(state, 't');
   assert.equal(state.items[0]?.edits.lastReviewed, today);
 });
@@ -173,6 +172,6 @@ test('rendering an unloaded site tab does not probe or modify the model', () => 
   const state = model();
   state.tab = 'site';
   const before = structuredClone(state);
-  assert.match(siteFrame(state), /Site status has not been loaded/);
+  assert.match(frameLines(siteFrame(state)).join('\n'), /Site status has not been loaded/);
   assert.deepEqual(state, before);
 });
