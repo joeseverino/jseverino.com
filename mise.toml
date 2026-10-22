@@ -23,9 +23,9 @@
 # name. A task whose body is more than one line is a file under mise-tasks/,
 # declared in its own #MISE header.
 #
-# Node also stays in .nvmrc, which Cloudflare Pages reads for its build;
-# checks:repo-policy holds the two pins equal. npm packages come from
-# package-lock.json; node_modules/.bin is on every task's PATH.
+# Node is pinned here alone; checks:repo-policy holds engines.node and the
+# packageManager npm to it. npm packages come from package-lock.json;
+# node_modules/.bin is on every task's PATH.
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.

@@ -6,7 +6,7 @@ import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
 import { elementsNamed, parseHtml, textContent } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
-import { finish } from './lib.ts';
+import { abort, finish } from './lib.ts';
 
 const failures: string[] = [];
 
@@ -14,18 +14,14 @@ function read(file: string): string {
   return fs.readFileSync(path.join(root, file), 'utf8');
 }
 
-// Major.minor must match .nvmrc; patch drift is allowed so a Node security
-// patch doesn't block every gate until the pin is bumped.
-const expectedNode = read('.nvmrc').trim().replace(/^v/, '');
+// mise.toml is the one Node pin. Major.minor must match it; patch drift is allowed so a
+// Node security patch doesn't block every gate until the pin is bumped.
+const expectedNode = /^node = "(\d+\.\d+\.\d+)"$/m.exec(read('mise.toml'))?.[1];
+if (!expectedNode) abort('repository policy', 'mise.toml pins no exact node = "x.y.z"');
 const actualNode = process.versions.node;
 const majorMinor = (version: string): string => version.split('.').slice(0, 2).join('.');
 if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
-  failures.push(`Node ${actualNode} does not match .nvmrc (${expectedNode}; major.minor must agree)`);
-}
-// Cloudflare Pages reads .nvmrc and every other run takes mise's node, so the two pins are one version.
-const miseNode = /^node = "([^"]+)"$/m.exec(read('mise.toml'))?.[1];
-if (miseNode !== expectedNode) {
-  failures.push(`mise.toml pins node ${miseNode ?? '(none)'} but .nvmrc pins ${expectedNode}`);
+  failures.push(`Node ${actualNode} does not match mise.toml's node ${expectedNode} (major.minor must agree)`);
 }
 
 interface Manifest {
@@ -37,7 +33,7 @@ const packageJson: Manifest = JSON.parse(read('package.json'));
 
 const nodeMajor = expectedNode.split('.')[0];
 if (packageJson.engines?.node !== `>=${nodeMajor}`) {
-  failures.push(`package.json engines.node must be ">=${nodeMajor}" to match .nvmrc`);
+  failures.push(`package.json engines.node must be ">=${nodeMajor}" to match mise.toml's node`);
 }
 const npmPin = /^npm@(\d+)\.\d+\.\d+$/.exec(packageJson.packageManager ?? '');
 if (!npmPin) failures.push('package.json packageManager must pin an exact npm@x.y.z');
@@ -172,6 +168,6 @@ finish(
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (.nvmrc, mise.toml, engines, packageManager), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
   },
 );
