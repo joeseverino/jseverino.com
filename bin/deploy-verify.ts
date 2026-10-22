@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-// Post-merge production verification. Run from a residential IP (Bot Fight Mode
-// challenges GitHub's runners). Expectations come from src/lib/edge-expectations.ts,
-// shared with tests/edge.
+// Post-merge production verification, run from a clean main checkout. Expectations
+// come from src/lib/edge-expectations.ts, shared with tests/edge.
 //
 //   node bin/deploy-verify.ts                        # production, from a clean main
 //   node bin/deploy-verify.ts --origin <url> [--preview]
