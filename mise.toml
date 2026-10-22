@@ -26,7 +26,7 @@
 # checks:repo-policy holds the two pins equal. npm packages come from
 # package-lock.json; node_modules/.bin is on every task's PATH.
 
-min_version = "2026.10.15"
+min_version = "2026.10.17"
 
 [settings.task]
 # Gates that run together print one after another, each whole and labeled,
