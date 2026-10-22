@@ -1,9 +1,6 @@
 # Dependencies
 node_modules
 
-# branding-engine glyph cache (only written when extracting a custom font)
-.brand-cache/
-
 # Astro and Wrangler generated state
 .astro/
 .wrangler/
@@ -29,8 +26,6 @@ node_modules
 mise.local.toml
 .DS_Store
 .claude/
-.gemini/
-.obsidian/
 
 # Stray root-level binaries (export PDFs, screenshots, etc.).
 # Intentional PDFs live under public/assets/docs/.
@@ -39,7 +34,6 @@ mise.local.toml
 
 # Logs
 *.log
-npm-debug.log*
 
 # Generated at build from src/content/writeups (see bin/make-content-index.ts)
 public/content-index.json
