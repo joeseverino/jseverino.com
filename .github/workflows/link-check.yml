@@ -5,8 +5,8 @@ on:
     branches: [main]
     paths:
       - 'README.md'
-      - 'SECURITY.md'
-      - 'CONTRIBUTING.md'
+      - '.github/SECURITY.md'
+      - '.github/CONTRIBUTING.md'
       - 'docs/**/*.md'
       - 'tests/*.md'
       - 'src/content/**/*.md'
@@ -43,8 +43,8 @@ jobs:
             --verbose
             --accept 200,204,206,301,302,303,307,308,403,429,999
             README.md
-            SECURITY.md
-            CONTRIBUTING.md
+            .github/SECURITY.md
+            .github/CONTRIBUTING.md
             docs/**/*.md
             tests/*.md
           fail: true

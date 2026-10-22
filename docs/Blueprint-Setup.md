@@ -45,7 +45,7 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 ### Repo / package
 - [`package.json`](../package.json): `name`.
 - [`README.md`](../README.md): the two badge URLs (`github.com/<owner>/<repo>`).
-- [`SECURITY.md`](../SECURITY.md): contact and disclosure details.
+- [`SECURITY.md`](../.github/SECURITY.md): contact and disclosure details.
 
 ### Edge runtime
 The Worker's routes (contact form and CSP reporting) and its middleware import

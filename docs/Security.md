@@ -2,7 +2,7 @@
 
 The security design of [jseverino.com](https://jseverino.com): a static site
 with no server-side runtime behind its pages, and a few small dynamic surfaces
-at the edge. To report a vulnerability, see [`SECURITY.md`](../SECURITY.md).
+at the edge. To report a vulnerability, see [`SECURITY.md`](../.github/SECURITY.md).
 
 ## A minimal attack surface
 

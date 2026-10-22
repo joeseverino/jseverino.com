@@ -118,4 +118,4 @@ archetypes in a real browser
 
 - [`docs/SEO.md`](./SEO.md): heading hierarchy and image alt strategy
 - [`docs/Architecture.md`](./Architecture.md): render model
-- [`SECURITY.md`](../SECURITY.md): contact form and form-field handling
+- [`SECURITY.md`](../.github/SECURITY.md): contact form and form-field handling

@@ -198,4 +198,4 @@ preview runtime (edge proxy).
 - [Architecture](./Architecture.md)
 - [SEO And Metadata](./SEO.md)
 - [Release Checklist](./Release-Checklist.md)
-- [Security](../SECURITY.md)
+- [Security](../.github/SECURITY.md)

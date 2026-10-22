@@ -147,7 +147,7 @@ each draft. See [`Site-CLI.md`](./Site-CLI.md).
 **`mise run sign:security`**: clear-signs `public/.well-known/security.txt`
 with the security@ key. The signature, fields, and expiry are verified by
 `mise run checks:security-txt` on every gate run, so an expired or tampered
-file cannot ship. See [`SECURITY.md`](../SECURITY.md).
+file cannot ship. See [`SECURITY.md`](../.github/SECURITY.md).
 
 **`mise run site seo <page>`**: renders a Google-style result snippet and the
 full metadata readout for a built page (`--result` for just the snippet).

@@ -145,4 +145,4 @@ Published content changes must be synced and committed before deploy. `site publ
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md)
 - [`docs/SEO.md`](./SEO.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
-- [`SECURITY.md`](../SECURITY.md)
+- [`SECURITY.md`](../.github/SECURITY.md)

@@ -68,7 +68,7 @@ WRANGLER_SEND_METRICS = "false"
 [vars]
 # The engineering docs the docs gates read, as git pathspecs, so a gate reads
 # only tracked files and never a local or untracked copy.
-docs = "README.md SECURITY.md CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+docs = "README.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
 
 # `mise doctor project`: is this checkout ready to work in. Local only and
 # never a gate: CI has no gh login, and these describe the machine, not the

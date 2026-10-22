@@ -31,6 +31,6 @@ Only the deployed site and the `main` branch are supported.
 
 ## Security architecture
 
-[`docs/Security.md`](./docs/Security.md) covers the design: the static origin,
+[`docs/Security.md`](../docs/Security.md) covers the design: the static origin,
 the contact form, the response headers and hash-based CSP, the Cloudflare edge
 posture, and the supply chain.

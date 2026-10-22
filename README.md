@@ -46,7 +46,7 @@ then deploys the gated build.
   hash coverage, cache rules, and every sitemap route.
 
 The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
-[`SECURITY.md`](./SECURITY.md).
+[`SECURITY.md`](./.github/SECURITY.md).
 
 ## Performance
 

@@ -156,7 +156,7 @@ What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of 
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking. Settings shared with the external link check live in [`lychee.toml`](../lychee.toml).
-- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `SECURITY.md`, `CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
+- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
 - `built:links` runs after the build over everything in `dist/client/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The API routes and `/cdn-cgi/` have no file and are excluded in `lychee.toml`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
 
 ### `check-docs.ts`

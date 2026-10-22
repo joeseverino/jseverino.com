@@ -145,4 +145,4 @@ Search Console, and Lighthouse still apply.
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
 - [`docs/Deployment-Preview-Review.md`](./Deployment-Preview-Review.md)
-- [`SECURITY.md`](../SECURITY.md)
+- [`SECURITY.md`](../.github/SECURITY.md)

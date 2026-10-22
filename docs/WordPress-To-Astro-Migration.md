@@ -313,4 +313,4 @@ jq -r '.log.entries[] |
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md): the sync pipeline and editorial process.
 - [`docs/Authoring-Guide.md`](./Authoring-Guide.md): guidelines for content structure and assets.
 - [`docs/SEO.md`](./SEO.md): metadata and search engine optimization strategy.
-- [`SECURITY.md`](../SECURITY.md): vulnerability reporting and security posture.
+- [`SECURITY.md`](../.github/SECURITY.md): vulnerability reporting and security posture.

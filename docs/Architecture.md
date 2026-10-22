@@ -625,4 +625,4 @@ CodeQL findings are fixed at the source, and `mise run deploy:verify` fails whil
 - [`docs/Deployment-Preview-Review.md`](./Deployment-Preview-Review.md)
 - [`docs/Accessibility.md`](./Accessibility.md)
 - [`docs/Release-Checklist.md`](./Release-Checklist.md)
-- [`SECURITY.md`](../SECURITY.md)
+- [`SECURITY.md`](../.github/SECURITY.md)
