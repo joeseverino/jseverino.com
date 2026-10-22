@@ -16,7 +16,7 @@ Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 | `settings` | Squash as the only merge method (rebase merging strips SSH commit signatures), auto-merge off (nothing merges on its own), branches deleted on merge, the squash commit title and message, no wiki, and the About description, homepage and topics (the description makes claims about the site, so it is held to the file) |
 | `security` | Secret scanning and push protection, vulnerability alerts on with Dependabot security updates off (Renovate reads the alerts and opens the fixes, see [Dependencies](./Dependencies.md#advisories)), private vulnerability reporting, and CodeQL default setup for `actions` and `javascript-typescript` |
 | `actions` | Every `uses:` reference pinned to a commit SHA, a read-only default workflow token, and no workflow approving pull requests |
-| `variables` | Actions variables, by name: the public Turnstile site key the [dist workflow](./Dist-Branch.md) builds with. Variables not listed are left alone |
+| `variables` | Actions variables, by name: the public Turnstile site key the `ci` workflow's `build` job builds with. Variables not listed are left alone |
 | `ruleset` | The `main` branch ruleset, compared as a whole: pull request required with squash only, the required status checks, CodeQL results with no error or high-severity alert, no force pushes, no deletion, signed commits required |
 
 The ruleset has no bypass actors: every change to `main`, the owner's included,

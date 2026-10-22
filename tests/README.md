@@ -13,8 +13,8 @@ three; [`mise.toml`](../mise.toml) names each one a gate and sequences them.
 tests/
 ├── audits/        Node checks: assert an invariant, exit non-zero with the fix on failure
 ├── unit/          node:test specs for pure logic (Markdown DSL, API handlers, process harness, audit rules)
-├── edge/          request specs against dist/ served by astro preview (API routes, _headers, built policy)
-├── playwright/    browser specs against dist/ through a preview server
+├── edge/          request specs against the build served by astro preview (API routes, _headers, built policy)
+├── playwright/    browser specs against the build served by astro preview
 └── fixtures/      the synthetic content the visual suite builds
 ```
 
@@ -30,7 +30,7 @@ local gates through the pull request's CI and preview to production.
 | Gate | Runs | Covers |
 | :--- | :--- | :--- |
 | `mise run fast` | local | the static gates: duplication, types, repository policy, docs, CSS lint, unit tests, `astro check`, the draft guard |
-| `mise run check` | local and CI (`build`) | the static gates, the production build, then asset weight, internal links, page weight, structural HTML, routing, and SEO |
+| `mise run check` | local and CI (`build`) | the static gates, the production build, then page and image weight, internal links, structural HTML, the built headers, and SEO |
 | `mise run browser` | local and CI (`e2e`, `visual`, `edge`) | one build, then the cross-browser, visual, and edge runtime suites, one at a time |
 | `mise run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status and open CodeQL alerts |
 
@@ -45,7 +45,7 @@ failing gate prints its own fix.
 they cover the signed `security.txt`, the contact
 contract's handler/OpenAPI/D1 parity, strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
-After the build they cover internal links, page weight, structural HTML
+After the build they cover internal links, page and image weight, structural HTML
 (including unprocessed directives), the built headers, and SEO metadata.
 The [task list](../docs/Commands.md#every-task) says what each one asserts; a failing one prints its fix.
 

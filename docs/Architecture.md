@@ -32,7 +32,7 @@ sequenceDiagram
     Worker-->>Client: JSON with the security headers
 ```
 
-The public serving layer is static. Every HTML page is a prerendered asset the assets layer serves without starting the Worker. [`wrangler.jsonc`](../wrangler.jsonc) sets `run_worker_first` to `/api/*` and `/__sitedrift/*`, so the only request-time code is the on-demand Astro routes under those paths:
+The public serving layer is static: every HTML page is a prerendered asset the assets layer serves without starting the Worker ([Worker routing](./Cloudflare.md#worker-routing)). The only request-time code is the on-demand Astro routes:
 
 - [`src/pages/api/contact.ts`](../src/pages/api/contact.ts) handles contact form submissions through the handler in [`src/lib/api/contact.ts`](../src/lib/api/contact.ts).
 - [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) receives CSP violation reports through [`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts) and stores filtered records in D1.
@@ -267,8 +267,8 @@ settings (AVIF quality 60, WebP 82) live in the image service config in
 [`astro.config.ts`](../astro.config.ts), and the widths in
 [`src/lib/images.ts`](../src/lib/images.ts).
 
-`Picture.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and the
-asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
+`Picture.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and
+`built:weight` fails on any shipped image at or over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
 Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` derives from the
@@ -409,7 +409,7 @@ dist/_headers.template          # the unfilled _headers, for the preview wrap's 
 
 **Fingerprinting.** Astro hashes every artifact under `_astro/` by content,
 including every encoded content image, so those filenames can be cached
-`immutable` for one year. HTML is short-cached and revalidated.
+`immutable` for one year ([Cache behavior](#cache-behavior)).
 
 **External scripts.** Component `<script>` blocks compile to external `/_astro/*.js` modules (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). `bin/build-csp.ts` verifies at build time that the JSON-LD block is the only other inline script.
 
@@ -482,6 +482,13 @@ Stable URLs suit assets that external links bookmark, like `https://jseverino.co
   Replacing an image changes its URL; rename the font when replacing it.
 - Downloadable documents, favicons, brand marks, and OG cards retain stable URLs
   with a one-hour cache and mandatory revalidation after expiry.
+- HTML pages get no rule, so they carry the assets layer's default,
+  `public, max-age=0, must-revalidate` with an ETag
+  ([Cloudflare's static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/)):
+  a browser revalidates a page before each use.
+
+The zone's `browser_cache_ttl` is `0`, so these headers decide browser TTLs
+([Cloudflare](./Cloudflare.md#features-that-stay-off)).
 
 ### When to add a new bucket
 
@@ -489,48 +496,7 @@ Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/Web
 
 ## 13. Runtime Configuration
 
-The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. The Turnstile secret is a Worker secret, and the public site key a repository variable. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
-
-### D1 binding
-
-| Binding | Database | Used by |
-|---|---|---|
-| `DB` | `jseverino-contact` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts), [`src/lib/api/csp-report.ts`](../src/lib/api/csp-report.ts) |
-
-The schema lives at [`cloudflare/d1.sql`](../cloudflare/d1.sql). Every statement is `IF NOT EXISTS`, so re-applying it after a change adds the new indexes:
-
-```sh
-# Remote (production):
-mise run site d1-apply --confirm
-
-# Local (for `mise run preview`):
-wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
-```
-
-The schema is described in detail in [Security](./Security.md#d1-schema).
-
-The same database holds:
-
-- `contact_submissions`: accepted contact form submissions and triage fields.
-- `csp_reports`: filtered CSP violation reports from browsers.
-
-### Worker secrets
-
-| Variable | Scope | Used by |
-|---|---|---|
-| `TURNSTILE_SECRET_KEY` | Server (Worker secret) | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts) |
-
-The secret half of the Turnstile keypair. It never appears in the repo, the build output, or the public site. `wrangler.jsonc` lists it under `secrets.required`. For local development, copy [`.env.example`](../.env.example) to `.env` (gitignored); `astro dev` and `mise run preview` read it.
-
-### Build environment variables
-
-| Variable | Scope | Used by |
-|---|---|---|
-| `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
-
-`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable, embedded into the contact form at build. CI's `build` job reads it from the repository variable declared in [`.github/repo.json`](../.github/repo.json). For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
-
-The build reads no GitHub token: the Software list comes from the committed snapshot.
+The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. Its bindings, the Turnstile secret, the one build variable, and how the D1 schema is applied are in [Cloudflare, Worker configuration](./Cloudflare.md#worker-configuration). Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`.
 
 ### Local preview against the real edge runtime
 
@@ -543,7 +509,7 @@ mise run build
 mise run preview
 ```
 
-`astro preview` serves `dist/` in the local Workers runtime (workerd) with the
+`astro preview` serves the build in the local Workers runtime (workerd) with the
 assets layer's `_headers`, redirects and 404 page, and the API routes active,
 using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI` against the preview's address, filtered for `content-security-policy` and `reporting-endpoints`, is the quick by-hand check.
 

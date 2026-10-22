@@ -84,8 +84,8 @@ from the ruleset.
 
 Once `ci` passes, the `deploy` workflow uploads the pull request's build as a
 preview version, verifies it, and reports on the `deploy` check, whose summary
-names the version URL. Review that version before merging, through the
-tailnet proxy ([preview access](./Cloudflare.md#preview-access)):
+names the version URL. Review that version before merging, with the review
+service token ([preview access](./Cloudflare.md#preview-access)):
 
 1. Confirm compact DEV Solo view loads.
 2. Switch to LIVE and confirm the production comparison target.
@@ -112,8 +112,7 @@ mise run deploy:verify
 ```
 
 It waits for the required checks on that commit, `deploy` included, then
-verifies security headers, the production sitedrift `404`, every live
-sitemap URL, and zero open CodeQL alerts.
+verifies the live site ([post-deploy verification](../tests/ARCHITECTURE.md#post-deploy-verification)).
 
 Scheduled checks measure external freshness, which no single deployment
 decides, so they run on their own:
@@ -122,8 +121,9 @@ decides, so they run on their own:
 - `lighthouse` uploads `lighthouse-reports`.
 - `scorecard` sends its SARIF to code scanning.
 
-Use `npm outdated` when intentionally reviewing dependency freshness; an
-available update is not itself a failed deployment.
+Dependency freshness arrives as Renovate pull requests
+([Dependencies](./Dependencies.md#updates)); an available update is not itself
+a failed deployment.
 
 ## 4. Signed Version Tag
 
@@ -152,27 +152,12 @@ gh attestation verify jseverino.com-v<version>.tar.gz -R joeseverino/jseverino.c
 
 ## 5. Cloudflare Deploy Verification
 
-After the `deploy` workflow ships `main`, verify the live site from a clean browser
-profile or with extensions disabled:
-
-```sh
-curl -I https://jseverino.com/
-curl -I https://jseverino.com/portfolio/zero-trust-private-infrastructure/
-```
-
-Confirm:
-
-- `content-security-policy` is present on HTML responses.
-- The HTML CSP does not include `script-src 'unsafe-inline'`.
-- `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
-- The HTML CSP includes `report-to csp-endpoint` and the `report-uri https://jseverino.com/api/csp-report` fallback.
-- The hash of every inline script and style appears in the header (`deploy:verify`'s `inline` check).
-- The enforced CSP carries `script-src 'self' 'sha256-…'` plus the Turnstile and Web Analytics hosts, and `require-trusted-types-for 'script'`, with no `Content-Security-Policy-Report-Only` header. `/contact/` is the exception: no enforced Trusted Types, and a report-only header carrying it.
-- `strict-transport-security` includes `includeSubDomains`.
-- `x-content-type-options: nosniff` is present.
-- `referrer-policy: strict-origin-when-cross-origin` is present.
-- Cloudflare Web Analytics or challenge scripts do not create first-party site
-  errors in a clean browser profile.
+`mise run deploy:verify` asserts the live headers with the same predicates as
+the [edge suite](../tests/ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
+What it cannot see is a real browser session: after the `deploy` workflow ships
+`main`, open the site in a clean browser profile or with extensions disabled and
+confirm that Cloudflare Web Analytics and the Turnstile challenge create no
+first-party errors.
 
 Browser-extension errors, including AdGuard content script messages, are not site
 release failures unless they reproduce with extensions disabled.
@@ -227,17 +212,7 @@ remote D1 database (`jseverino-contact`, the `d1` value in
 mise run site d1-apply --confirm
 ```
 
-Confirm the expected operational tables exist:
-
-```sh
-npx wrangler d1 execute jseverino-contact --remote --command "SELECT name, type FROM sqlite_master WHERE type IN ('table','index') ORDER BY type, name;"
-```
-
-After deployment, confirm the CSP report table is readable:
-
-```sh
-npx wrangler d1 execute jseverino-contact --remote --command "SELECT COUNT(*) AS csp_report_count FROM csp_reports;"
-```
+Then confirm the reports still arrive: `mise run site csp --count`.
 
 CSP reports from browser extensions are filtered by the report endpoint and
 should not be treated as site regressions.
@@ -249,16 +224,12 @@ Filter that directive's violations to see whether Turnstile still does, and
 whether anything first-party has joined it:
 
 ```sh
-npx wrangler d1 execute jseverino-contact --remote --command \
-  "SELECT created_at, disposition, document_uri, source_file, line_number
-   FROM csp_reports
-   WHERE effective_directive = 'require-trusted-types-for'
-   ORDER BY created_at DESC LIMIT 20;"
+mise run site csp --directive require-trusted-types-for --limit 20
 ```
 
 Promotion criteria: ~7 days of clean reports across `/`, `/contact/`, and
 at least one writeup (verified by the HAR audit in
-[§5](#5-cloudflare-deploy-verification)). When the query returns no rows
+[§5](#5-cloudflare-deploy-verification)). When it returns no rows
 across that window, remove the `/contact/*` override in
 [`public/_headers`](../public/_headers) so the global policy, which enforces
 the directive, applies to the page.
@@ -274,10 +245,9 @@ After deployment, validate the high-value URLs:
 
 Check:
 
-- PageSpeed Insights remains clean for the homepage on mobile and desktop when
-  the change could affect rendering, headers, assets, or SEO. The May 27, 2026
-  baseline was 100 Performance, 100 Accessibility, 100 Best Practices, and
-  100 SEO in both modes.
+- PageSpeed Insights holds the homepage's scores on mobile and desktop
+  ([External verification](./Security.md#external-verification)) when the change
+  could affect rendering, headers, assets, or SEO.
 - Google Search Console URL inspection uses the intended canonical URL.
 - Rich Results Test detects Article or WebSite structured data where expected.
 - The page title, meta description, canonical URL, and Open Graph image are correct.
@@ -290,19 +260,3 @@ Check:
   footer social links, and the contact form.
 - VoiceOver rotor headings show one page `h1`, then article or section headings
   in a coherent order.
-
-## 8. Scorecard Update
-
-Update the scorecard in the private vault only for work that was completed and
-verified. Do not raise the score for planned items.
-
-Recommended evidence to record:
-
-- final commit SHA;
-- `mise run ci` closing lines;
-- signed tag verification result;
-- the Worker version id the `deploy` check names;
-- live header check summary;
-- D1 schema/reporting check summary when applicable;
-- Search Console and Rich Results outcomes;
-- manual keyboard and VoiceOver notes.

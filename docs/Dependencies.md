@@ -1,7 +1,7 @@
 # Dependencies
 
 How dependencies are updated, the runtime pins, the packages held below their
-latest major on purpose, and how to test an upgrade before taking it.
+latest major on purpose, and how an update is reviewed before it merges.
 
 ## Updates
 
@@ -57,12 +57,10 @@ package's major updates.
 
 ## No overrides
 
-`package.json` has no `overrides` block. Earlier `esbuild` and `sharp`
-overrides forced one copy of each across Astro, Vite, and `wrangler`; with the
-current releases, `npm ls esbuild sharp` resolves a single version of each
-without them, so both were removed. If a future release brings back a
-duplicate native binary or a split `esbuild`, add the override back with a
-row here naming the dependent that pins it and the condition for removal.
+`package.json` has no `overrides` block: `npm ls esbuild sharp` resolves one
+copy of each across Astro, Vite, and `wrangler`. An override is added only for a
+duplicate native binary or a split `esbuild`, with a row here naming the
+dependent that pins it and the condition for removal.
 
 ## Advisories
 
@@ -73,12 +71,15 @@ once, from Renovate. An advisory with no fixed release to take is accepted by
 dismissing its alert with a reason, which keeps the decision beside the alert
 in the repository's security tab.
 
-## Testing an upgrade
+## Reviewing an update
 
-1. `npm install <package>@<version>` (never delete `package-lock.json`; a lock
-   regenerated on macOS drops the Linux platform binaries CI needs).
-2. `npm ls <package>` shows one resolved copy, and `npm outdated` lists only
-   the holds above.
-3. `npm audit` reports nothing beyond the dismissed alerts.
-4. `mise run ci` passes, including the visual baselines. A browser
-   upgrade can shift rendering; inspect any diff before regenerating.
+Every version change arrives as a Renovate pull request; none is installed by
+hand, which would skip the release-age hold. Before merging one:
+
+1. The lockfile diff keeps the platform binaries for both macOS and Linux (a
+   lock regenerated on one platform can drop the other's), and
+   `npm ls <package>` on the branch shows one resolved copy.
+2. The required checks pass, the visual baselines included. A browser upgrade
+   can shift rendering; inspect any diff before regenerating a baseline.
+3. For Astro or `sitedrift`, review the upstream release notes and the pull
+   request's preview ([Deployment Preview Review](./Deployment-Preview-Review.md)).

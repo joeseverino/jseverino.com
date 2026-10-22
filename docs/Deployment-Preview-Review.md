@@ -2,9 +2,9 @@
 
 Every pull request's preview of `jseverino.com` carries a compact
 [sitedrift](https://github.com/joeseverino/sitedrift) review layer. The preview
-is a version of the `jseverino` Worker on its workers.dev preview URL, behind
-Cloudflare Access; it is DEV, and the current `https://jseverino.com` release is
-LIVE.
+is a version of the `jseverino` Worker on its workers.dev preview URL
+([Preview access](./Cloudflare.md#preview-access)); it is DEV, and the current
+`https://jseverino.com` release is LIVE.
 
 ## Case Study: One Brand Change, Fully Reviewed
 
@@ -103,8 +103,8 @@ The build is the same for production and a preview. The `deploy` workflow's
    `dist/_headers.template`, so the policy hashes the viewer's inline tags,
    which carry the same `__CSP_INLINE__` marker as the site's.
 
-The job then runs `wrangler versions upload` with the branch's alias and
-`deploy-verify --origin <preview URL> --preview`.
+The job then uploads and verifies the version
+([Architecture](./Architecture.md#14-release-gate) has the job sequence).
 
 The scoped on-demand route,
 [`src/integrations/sitedrift-route.ts`](../src/integrations/sitedrift-route.ts),
@@ -152,15 +152,10 @@ missing generated config. The `sitedrift-production` WAF rule also blocks
 `/__sitedrift*` on the production hosts at the edge. The site, contact form, CSP
 report receiver, headers, and static assets are unchanged.
 
-Run the guard before release:
-
-```sh
-mise run checks:preview
-```
-
-It runs the deploy's own wrap on simulated outputs and asserts that a feature
-branch receives the wrapper, with the CSP filled again, while `main` stays the
-original Astro document.
+`mise run checks:unit` runs the deploy's own wrap on simulated outputs
+([`tests/unit/wrap-preview.test.ts`](../tests/unit/wrap-preview.test.ts)) and
+asserts that a feature branch receives the wrapper, with the CSP filled again,
+while `main` stays the original Astro document.
 
 ## Security Boundary
 
@@ -172,8 +167,8 @@ original Astro document.
 - Hosted frames execute trusted first-party preview code.
 - Notes never leave the browser and are not available through the sitedrift MCP.
 - The API routes keep their paths; static pages never start the Worker.
-- Preview hostnames carry `X-Robots-Tag: noindex` and sit behind Cloudflare
-  Access.
+- Preview hostnames carry `X-Robots-Tag: noindex` and admit only service
+  tokens ([Preview access](./Cloudflare.md#preview-access)).
 
 The surface is read-only: no account system, production content API, database
 binding, secret, upload endpoint, or public write path.

@@ -91,10 +91,8 @@ Vault writeups carry a `cover_alt` frontmatter field that describes the *actual*
 
 Every preview is a Worker version with a workers.dev preview URL, one per
 version and one per branch alias. Indexed, those URLs would split ranking signal
-away from the canonical domain. [`public/_headers`](../public/_headers) adds
-`X-Robots-Tag: noindex` to every response from
-`https://:label.:subdomain.workers.dev/*`, and Access keeps crawlers out in the
-first place. `https://jseverino.com/` is unaffected.
+away from the canonical domain, so they carry `X-Robots-Tag: noindex` and sit
+behind Access ([Preview access](./Cloudflare.md#preview-access)).
 
 Previews (any branch but `main`) are wrapped by
 [sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel

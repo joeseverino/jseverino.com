@@ -26,7 +26,7 @@ then deploys the gated build.
 | Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
 | Edge | one Cloudflare Worker with static assets: every page prerendered under a build-time hash CSP, the Worker started only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
-| Zone | WAF, rate limiting, redirects, and Turnstile declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
+| Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
 | Previews | Worker versions on workers.dev behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
 | Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, and source and build audits |
@@ -50,11 +50,11 @@ The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
 
 ## Performance
 
-PageSpeed Insights scored the homepage 100 in every category on desktop and
-99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces it: every page
-has a weight budget for HTML, CSS, and JavaScript, images ship as AVIF and WebP
-with fixed dimensions, and a weekly Lighthouse run fails below 95 on
-accessibility.
+The PageSpeed Insights scores are in
+[`docs/Security.md`](./docs/Security.md#external-verification). The build
+enforces them: every page has a weight budget for HTML, CSS, and JavaScript,
+every shipped image one of its own, images ship as AVIF and WebP with fixed
+dimensions, and a weekly Lighthouse run fails below 95 on accessibility.
 
 ## Verify it yourself
 
@@ -69,8 +69,8 @@ gpg --auto-key-locate clear,wkd --locate-keys security@jseverino.com
 curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 ```
 
-- [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
-  A+, 145 / 100, 12 of 12 tests on 2026-10-03.
+- [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com)
+  scans the live headers on demand.
 - [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
   and CodeQL's default setup publish their results to code scanning, and a
   pull request cannot merge past a high-severity CodeQL alert.
@@ -127,7 +127,7 @@ and gate issues on one screen.
 | [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
 | [Commands](./docs/Commands.md) | every mise task |
 | [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
-| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and testing an upgrade |
+| [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and reviewing an update |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |
 | [WordPress to Astro](./docs/WordPress-To-Astro-Migration.md) | why the site left WordPress, with measurements |
 

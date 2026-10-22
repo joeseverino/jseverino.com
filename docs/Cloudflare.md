@@ -19,7 +19,7 @@ applies the difference.
 | Zone settings, HSTS, DNSSEC, bot management, WAF custom rules, rate limit | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
 | API Shield, Turnstile hostnames | [`cloudflare/zone.json`](../cloudflare/zone.json) | `mise run cloudflare apply` |
 | Preview Access application and its Service Auth policies | dashboard (checked by `cloudflare check`, never applied) | [Preview access](#preview-access) |
-| The Worker's secret, its custom domain, Web Analytics mode, the D1 database | dashboard or wrangler | by hand ([Standing up the Worker](#standing-up-the-worker)) |
+| The D1 database, the Turnstile widget, the Worker's secret and custom domain, Web Analytics | dashboard or wrangler | by hand ([Standing up the Worker](#standing-up-the-worker)) |
 
 [`cloudflare/zone.json`](../cloudflare/zone.json) is validated by
 [`cloudflare/zone.schema.json`](../cloudflare/zone.schema.json), whose
@@ -78,9 +78,13 @@ rules that name service tokens), with two tokens:
   `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` to the version they
   verify. [`bin/lib/access.ts`](../bin/lib/access.ts) attaches them only to
   `https` hosts of one label plus `PREVIEW_HOST_SUFFIX`.
-- **The tailnet proxy.** A reverse proxy reachable only on the tailnet holds
-  the second token and is how a person opens a preview. It lives outside this
-  repo.
+- **Review.** The second token is how a person opens a preview; it is held
+  outside this repository.
+
+[`public/_headers`](../public/_headers) adds `X-Robots-Tag: noindex` to every
+response from `https://:label.:subdomain.workers.dev/*`, so a preview URL that
+leaks is still kept out of search indexes; `https://jseverino.com/` is
+unaffected.
 
 `zone.json` declares `preview.accessPolicy: "service-auth-only"`. `cloudflare check`
 finds the application by that wildcard and reports a missing application, or
@@ -88,7 +92,7 @@ any other policy on it (an email, a group, everyone, or no policy), as a manual
 item and exits 1. Apply never edits Access: fix it in Zero
 Trust → Access → Applications. Create and rotate each token under Zero Trust →
 Access → Service credentials. A rotated CI token goes into the repository
-secrets, and the proxy's into the proxy's own configuration.
+secrets, and the review token wherever it is held.
 
 ## WAF rules
 
@@ -155,13 +159,10 @@ verification.
 
 ## Web Analytics
 
-By default the zone injects the beacon, which the CSP allows by host
-(`static.cloudflareinsights.com` in `script-src`, `cloudflareinsights.com` in
-`connect-src`). To own the markup instead, set `WEB_ANALYTICS` in
-[`src/lib/site-config.ts`](../src/lib/site-config.ts) to
-`{ emitBeacon: true, token: '<site token>' }` and, in the same release, switch
-the Web Analytics site to **Enable with JS Snippet installation** so the zone
-stops injecting. The token is public; it ships in every page either way.
+The zone injects the Web Analytics beacon into each HTML response, and the
+site emits none of its own. The beacon is an external script the CSP allows by
+host (`static.cloudflareinsights.com` in `script-src`, `cloudflareinsights.com`
+in `connect-src`), so it needs no hash.
 
 ## Running check, plan, and apply
 
@@ -212,50 +213,56 @@ The repository's own settings follow the same check, plan, and apply pattern in
 
 ## Standing up the Worker
 
-CI deploys every version after the first. These steps run once, by hand, for a
-new account or a fresh instance of the site.
+CI deploys every version after the first. These steps run once, by hand and in
+order, for a new account or a fresh instance of the site. The wrangler commands
+run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
 
-### The deploy credentials
+1. **The D1 database.** Create it under the name `SITE.d1` in
+   [`src/lib/site-config.ts`](../src/lib/site-config.ts), then apply the
+   schema:
 
-The `deploy` workflow reads `CLOUDFLARE_API_TOKEN` from the `production`
-environment's secrets and `CLOUDFLARE_ACCOUNT_ID` from the repository variables.
-Scope the token to this account: Workers Scripts edit, plus D1 read so wrangler
-can resolve the database by name. `CF_ACCESS_CLIENT_ID` and
-`CF_ACCESS_CLIENT_SECRET` hold the CI service token ([Preview access](#preview-access)).
+   ```sh
+   mise exec -- wrangler d1 create jseverino-contact
+   mise run site d1-apply --confirm
+   ```
 
-### The first deploy
+2. **The Turnstile widget.** Add one widget for `jseverino.com` (Turnstile →
+   Add widget). Its site key is public: put it in `variables` in
+   [`.github/repo.json`](../.github/repo.json) and run `mise run github apply
+   --yes` ([GitHub Settings](./GitHub-Settings.md)). Its secret key goes only to
+   the Worker, in step 4.
+3. **The deploy credentials.** The `deploy` workflow reads
+   `CLOUDFLARE_API_TOKEN` from the `production` environment's secrets and
+   `CLOUDFLARE_ACCOUNT_ID` from the repository variables. Scope the token to
+   this account: Workers Scripts edit, plus D1 read so wrangler can resolve the
+   database by name. Create the CI service token ([Preview access](#preview-access))
+   and store it as the `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`
+   secrets.
+4. **The first deploy.** `wrangler versions upload` needs a Worker that
+   exists, wrangler refuses to create one whose `secrets.required` are unset,
+   and `wrangler secret put` cannot set a secret on a Worker that does not
+   exist yet, so the first deploy carries the secret itself:
 
-`wrangler versions upload` needs a Worker that exists, and wrangler refuses to
-create one whose `secrets.required` are unset, while `wrangler secret put`
-cannot set a secret on a Worker that does not exist yet. The first deploy
-therefore carries the secret itself:
+   ```sh
+   mise run build
+   TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'printf "TURNSTILE_SECRET_KEY=%s\n" "$TURNSTILE_SECRET_KEY" | mise exec -- wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
+   ```
 
-```sh
-mise run build
-TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'printf "TURNSTILE_SECRET_KEY=%s\n" "$TURNSTILE_SECRET_KEY" | npx wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
-```
-
-Later versions inherit the secret. Rotate it with
-`npx wrangler secret put TURNSTILE_SECRET_KEY --name jseverino`, which deploys a
-new version carrying it.
-
-### The preview Access application
-
-Before CI's first preview, add the self-hosted Access application on
-`*-jseverino.severino.workers.dev` with a Service Auth policy for each token
-([Preview access](#preview-access)), then run `mise run cloudflare check` until
-its `preview` row is `ok`.
-
-### Moving the domain from Pages
-
-A Worker custom domain cannot be attached while the hostname has another DNS
-record, so the move from a Cloudflare Pages project takes three steps, in order:
-
-1. Delete the `jseverino.com` DNS record that points at the Pages project
-   (DNS → Records).
-2. Attach `jseverino.com` to the `jseverino` Worker as a custom domain (Workers
-   & Pages → `jseverino` → Settings → Domains & Routes → Add → Custom domain).
-3. Run `mise run deploy:verify` against production.
+   Later versions inherit the secret. Rotate it with
+   `mise exec -- wrangler secret put TURNSTILE_SECRET_KEY --name jseverino`,
+   which deploys a new version carrying it.
+5. **The custom domain.** A Worker custom domain cannot be attached while the
+   hostname has another DNS record. While `jseverino.com` still points at the
+   Cloudflare Pages project, delete that record first (DNS → Records). Then
+   attach `jseverino.com` to the `jseverino` Worker (Workers & Pages →
+   `jseverino` → Settings → Domains & Routes → Add → Custom domain).
+6. **The preview Access application.** Before CI's first preview, add the
+   self-hosted Access application on `*-jseverino.severino.workers.dev` with a
+   Service Auth policy for each token ([Preview access](#preview-access)).
+7. **The zone.** Run `mise run cloudflare apply --yes`, then
+   `mise run cloudflare check` until it exits 0, its `preview` and `turnstile`
+   rows included ([Running check, plan, and apply](#running-check-plan-and-apply)).
+8. **Verify.** Run `mise run deploy:verify` against production.
 
 Once production verifies on the Worker, delete what Pages left behind: the
 Pages project itself, the Access application that guarded its previews, and the
@@ -263,17 +270,37 @@ Pages project itself, the Access application that guarded its previews, and the
 cloudflare check` passing afterwards confirms nothing it manages depended on
 them.
 
-## `wrangler.jsonc`
+## Worker configuration
 
 [`wrangler.jsonc`](../wrangler.jsonc) is the source of truth for the Worker: its
 name, compatibility date, bindings, asset handling and observability. Astro's
-adapter adds `main` and the assets directory at build time. The D1 binding
-names the database (`jseverino-contact`, `SITE.d1`) and carries no
-`database_id`: at deploy, wrangler looks the database up by name in the account
-and binds it, so the public file holds no account resource ID. `mise run
-checks:d1` holds the binding's name to `SITE.d1`. `TURNSTILE_SECRET_KEY` is
-listed under `secrets.required`, so `wrangler types` declares it and the local
-runtime warns when `.env` lacks it.
+adapter adds `main` and the assets directory at build time.
+
+| Name | Kind | Set in | Read by |
+|---|---|---|---|
+| `DB` | D1 binding to `jseverino-contact` (`SITE.d1`) | `wrangler.jsonc` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts), [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) |
+| `TURNSTILE_SECRET_KEY` | Worker secret | the first deploy, then `wrangler secret put` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts) |
+| `PUBLIC_TURNSTILE_SITE_KEY` | public build variable | the repository variable in [`.github/repo.json`](../.github/repo.json), which CI's `build` job reads | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
+
+The D1 binding carries no `database_id`: at deploy, wrangler looks the database
+up by name in the account and binds it, so the public file holds no account
+resource ID. `mise run checks:d1` holds the binding's name to `SITE.d1`. The
+database holds two tables, `contact_submissions` and `csp_reports`, described
+in [Security](./Security.md#d1-schema). Their schema is
+[`cloudflare/d1.sql`](../cloudflare/d1.sql); every statement is
+`IF NOT EXISTS`, so re-applying it after a change adds only what is new:
+
+```sh
+mise run site d1-apply --confirm                                                 # production
+mise exec -- wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql   # local, for mise run preview
+```
+
+`TURNSTILE_SECRET_KEY` never appears in the repository, the build output, or
+the public site. It is listed under `secrets.required`, so `wrangler types`
+declares it and the local runtime warns when `.env` lacks it. For local work,
+copy [`.env.example`](../.env.example) to `.env` (gitignored), which holds
+Turnstile's test keys; `astro dev` and `mise run preview` read it. The build
+reads no other variable and no GitHub token.
 
 `wrangler types` writes [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts),
 the `Env` interface and the Workers runtime types for that compatibility date.

@@ -44,7 +44,7 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 
 ### Repo / package
 - [`package.json`](../package.json): `name`.
-- [`README.md`](../README.md): the five CI badge URLs (`github.com/<owner>/<repo>`).
+- [`README.md`](../README.md): the two badge URLs (`github.com/<owner>/<repo>`).
 - [`SECURITY.md`](../SECURITY.md): contact and disclosure details.
 
 ### Edge runtime
@@ -79,10 +79,9 @@ than `SITE.d1`.
   with `mise run cloudflare check` / `apply` ([docs/Cloudflare.md](./Cloudflare.md)).
 
 ### Cloudflare dashboard (not in the repo)
-- The D1 database named by `d1` in `site-config.ts` (`npx wrangler d1 create <d1>`),
-  then its schema: `mise run site d1-apply --confirm`.
-- The Turnstile widget and its two keys, the deploy credentials, the Worker's first
-  deploy with its secret, the preview Access application, and the custom domain:
+- The D1 database named by `d1` in `site-config.ts` and its schema, the
+  Turnstile widget and its two keys, the deploy credentials, the Worker's first
+  deploy with its secret, the custom domain, and the preview Access application:
   [Standing up the Worker](./Cloudflare.md#standing-up-the-worker).
 
 ### Content

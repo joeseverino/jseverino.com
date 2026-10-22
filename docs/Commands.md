@@ -85,18 +85,14 @@ lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
 URLs, device preset, and thresholds declared in `tests/lighthouse.json`. Prints a
 score line per page, writes the table to the job summary in CI, and exits
 non-zero on an audit execution failure or an `error`-level threshold. Uses the
-lockfile's Playwright Chromium (`npx playwright install chromium`), with
-`CHROME_PATH` available for an explicit browser override. CI installs Chromium
-and its system dependencies before the audit. Per-page logs accompany the
-reports, including when Chrome fails to launch. Expect best practices in the
-70s from any client Cloudflare distrusts: Bot Fight Mode's injected detection
-script uses deprecated browser APIs (Bot Fight Mode must stay off for the zone,
-since a hash CSP cannot cover it), and PageSpeed Insights is not served that
-script.
+lockfile's Playwright Chromium (`mise exec -- playwright install chromium`),
+with `CHROME_PATH` available for an explicit browser override. CI installs
+Chromium and its system packages with `mise run setup:browsers`
+(`BROWSERS=chromium`) before the audit. Per-page logs accompany the reports,
+including when Chrome fails to launch.
 
-**`mise run deploy:verify`**: run after a production deploy, from a residential IP;
-Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run
-it. Confirms the local HEAD matches origin, waits for every required check
+**`mise run deploy:verify`**: run after a production deploy, from a residential IP
+and a clean `main` checkout. Confirms the local HEAD matches origin, waits for every required check
 (build, e2e, visual, edge, deploy) to pass,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
@@ -171,8 +167,7 @@ and [`GitHub-Settings.md`](./GitHub-Settings.md).
 ## Beyond the tasks
 
 Renovate proposes every dependency update and opens a fix as soon as GitHub
-reports an advisory ([`Dependencies.md`](./Dependencies.md)); `npm outdated`
-reports direct dependency freshness locally. The publishing workflow
+reports an advisory ([`Dependencies.md`](./Dependencies.md)). The publishing workflow
 (`mise run site <command>`: validate, publish, land, featured, and the
 `site manage` TUI) is documented in [`Site-CLI.md`](./Site-CLI.md).
 

@@ -17,9 +17,8 @@ Per-request code is limited to on-demand routes in the site's Worker for the
 contact form, the CSP report receiver, and the read-only `/__sitedrift/*`
 preview-review route (see below). The sitedrift route returns `404` in
 production because its configuration is generated only for preview
-deployments. Every other route, every HTML page included, is a flat file.
-`run_worker_first` in [`wrangler.jsonc`](../wrangler.jsonc) lists only those
-paths, so page views never start the Worker. The
+deployments. Every other route, every HTML page included, is a flat file, and
+page views never start the Worker ([Worker routing](./Cloudflare.md#worker-routing)). The
 [migration comparison](./WordPress-To-Astro-Migration.md) has the measurements.
 
 ### The private/public boundary is one auditable step
@@ -47,8 +46,8 @@ See the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 ### The build needs no secrets and no private access
 
 GitHub Actions checks out this repository, runs `mise run build` inside
-`mise run check`, and keeps the gated `dist/` as the artifact the `deploy`
-workflow uploads with wrangler. The build:
+`mise run check`, and keeps the gated build as the `site` artifact the
+`deploy` workflow uploads with wrangler. The build:
 
 - never touches the private vault: it builds from the committed snapshot
   alone;
@@ -59,10 +58,9 @@ workflow uploads with wrangler. The build:
   version is pinned in [`mise.toml`](../mise.toml) with its checksums in
   [`mise.lock`](../mise.lock).
 
-The one server-side secret (the Turnstile secret key) lives only in the
-Worker's runtime environment (`wrangler.jsonc` lists it under
-`secrets.required`; `wrangler secret put` sets it). It is not in the build or
-the repo, and `.env` files are gitignored.
+The one server-side secret, the Turnstile secret key, lives only in the
+Worker's runtime environment, never in the build or the repo
+([Worker configuration](./Cloudflare.md#worker-configuration)).
 
 ## The contact form: the visitor-facing dynamic surface
 
@@ -108,16 +106,8 @@ under the contact form.
 ### D1 schema
 
 Submissions land in a Cloudflare D1 SQLite database. The schema is
-committed at [`cloudflare/d1.sql`](../cloudflare/d1.sql); every statement is
-`IF NOT EXISTS`, so re-applying it adds new indexes without touching data:
-
-```sh
-# Production database:
-wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
-
-# Local database (for `mise run preview`):
-wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
-```
+committed at [`cloudflare/d1.sql`](../cloudflare/d1.sql), and how it is
+applied is in [Worker configuration](./Cloudflare.md#worker-configuration).
 
 The `contact_submissions` table:
 
@@ -158,9 +148,6 @@ for grouping recurring policy issues, and `(ip_address, created_at DESC)` and
 `(blocked_uri, created_at DESC)` for the per-IP cap and the one-hour duplicate
 check the receiver runs inside its `INSERT`.
 
-Bindings and environment variables are in
-[Architecture §13 Runtime Configuration](./Architecture.md#13-runtime-configuration).
-
 ## HTTP response headers
 
 The assets layer applies [`public/_headers`](../public/_headers) to static
@@ -183,21 +170,13 @@ on every request.
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates the browsing context group, blocking `window.opener` access from cross-origin pages (tab-napping, Spectre-class side channels). |
 | `Cross-Origin-Resource-Policy` | `same-site` | Blocks other sites from embedding the site's assets (hotlinking). `same-site` lets subdomains of `jseverino.com` load shared assets, which `same-origin` would block. |
-| `Permissions-Policy` | `accelerometer=(), ambient-light-sensor=(), autoplay=(), browsing-topics=(), camera=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), interest-cohort=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=()` | Denies every permission-gated browser feature the site does not use. |
+| `Permissions-Policy` | the deny list in [`public/_headers`](../public/_headers) | Denies every permission-gated browser feature the site does not use. |
 
-Fingerprinted bundles (`/_astro/*`) and write-once content (`/assets/writeups/*`,
-`/assets/pages/*`, the font) are served `immutable` with a one-year cache;
-chrome assets replaced in place (icons, brand marks, OG cards, documents) get a
-one-hour `must-revalidate` cache, which the zone honors because its Browser
-Cache TTL respects origin headers. HTML is revalidated on every request and
-never edge-cached. Those asset routes and the global `/*` rule also strip any
+The cache rules per path are in [Architecture](./Architecture.md#cache-behavior).
+The asset rules and the global `/*` rule also strip any
 `Access-Control-Allow-Origin` an upstream layer might add, so responses carry
-no CORS headers (the site has no public cross-origin asset use).
-
-The Worker's preview URLs (`<alias or version>-jseverino.<account>.workers.dev`)
-carry `X-Robots-Tag: noindex`, set in [`public/_headers`](../public/_headers)
-under the `https://:label.:subdomain.workers.dev/*` rule. The custom domain is
-unaffected.
+no CORS headers (the site has no public cross-origin asset use). Preview URLs
+carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
 
 ### Preview review route
 
@@ -298,8 +277,7 @@ identical to one stored in the last hour is skipped, and each IP gets at most
 enforced policy on every page except the contact form. It blocks DOM-XSS sinks (`innerHTML`, `outerHTML`,
 `insertAdjacentHTML`, `document.write`, script text and URLs) unless the value
 goes through a `TrustedTypePolicy`. The site's scripts touch only `classList`,
-`dataset`, `style`, and text, and the report log has shown no first-party
-violation since 2026-09-19.
+`dataset`, `style`, and text.
 `/contact/` stays on a `Content-Security-Policy-Report-Only` header carrying the
 same directive: Turnstile's `api.js` assigns to `innerHTML`, script text, and
 script URLs without a policy, and that third-party script cannot be patched
@@ -356,9 +334,8 @@ difference with a separate write token. What it declares, briefly:
   production hosts.
 - **Rate limit:** 15 `/api/*` requests per 10 seconds per IP, then a 10-second block.
 - **workers.dev is outside the zone.** The Worker has no workers.dev
-  production alias (`workers_dev: false` in `wrangler.jsonc`), and its preview
-  URLs sit behind a Cloudflare Access application that admits only service
-  tokens.
+  production alias, and its preview URLs admit only service tokens
+  ([Preview access](./Cloudflare.md#preview-access)).
 - **Nothing rewrites HTML.** Rocket Loader, Email Obfuscation, Server-Side
   Excludes, and Automatic HTTPS Rewrites must stay off, because each would
   inject markup the build-time hashes do not cover.
@@ -378,7 +355,7 @@ Independent scanners verify the HTTP and DNS controls. Current snapshot:
 | Scanner | Result | Notes |
 | --- | --- | --- |
 | [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com) | A+, 145 / 100, 12 / 12 tests passed (2026-10-03) | Bonus points come from `default-src 'none'` with no `'unsafe-*'`, Subresource Integrity on all scripts, `Referrer-Policy`, `X-Frame-Options` via CSP `frame-ancestors`, and `Cross-Origin-Resource-Policy`. The outstanding recommendation is HSTS preload, deferred: preload is effectively irreversible across every current and future subdomain. |
-| Google PageSpeed Insights | 100 / 100 / 100 / 100 on mobile and desktop (2026-05-27, 9:14 PM CDT) | Lighthouse 13.3.0 passed the Best Practices trust-and-safety checks for effective CSP, strong HSTS, and Trusted Types mitigation while preserving 100 Performance, Accessibility, Best Practices, and SEO scores. |
+| Google PageSpeed Insights | Homepage 100 / 100 / 100 / 100 on desktop and 99 / 100 / 100 / 100 on mobile, for Performance, Accessibility, Best Practices, and SEO (2026-09-05) | Best Practices includes Lighthouse's trust-and-safety checks for an effective CSP, strong HSTS, and Trusted Types mitigation. The weekly [`lighthouse`](../.github/workflows/lighthouse.yml) run fails below 95 on accessibility. |
 | [Pentest-Tools Light Website Scanner](https://pentest-tools.com/website-vulnerability-scanning/website-scanner) | Low, 0 critical / 0 high / 0 medium / 3 low (2026-05-27, 40 tests) | The three low findings were reviewed and dismissed as not applicable to this site's threat model; see below. |
 
 The Pentest-Tools low findings, accepted:
@@ -438,8 +415,11 @@ ships to visitors:
   mise's `[deps.npm]` provider), then runs the gate audits and the publish gate on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
   Each release carries the attested SBOM.
-- **Preview guard** runs `mise run checks:preview` before release to prove that
-  feature branches receive the review wrapper and `main` remains unmodified.
+- **Preview wrap** is unit-tested in `mise run checks:unit`
+  ([`tests/unit/wrap-preview.test.ts`](../tests/unit/wrap-preview.test.ts)):
+  a feature branch receives the review wrapper with the CSP filled again,
+  `main`'s build is left as the adapter wrote it, and a deploy config the
+  adapter would not write is refused.
 - **Workflow lint** runs jactionlint's correctness profile (actionlint's
   checks, with shellcheck on every `run:` script) in `mise run fast`
   (`checks:actionlint`).
@@ -501,9 +481,9 @@ ships to visitors:
 - **Escaped structured data.** JSON-LD injected into `<head>` has `<`
   characters escaped so a string value can never break out into live markup. See [`src/components/SeoHead.astro`](../src/components/SeoHead.astro).
 - **Analytics is cookieless.** The only analytics is Cloudflare Web Analytics,
-  a small beacon the Cloudflare proxy injects (or the layout emits, when
-  `WEB_ANALYTICS.emitBeacon` in `src/lib/site-config.ts` is on). It sets no
-  cookies or cross-site identifiers and needs no consent banner.
+  a small beacon the zone injects into each page
+  ([Web Analytics](./Cloudflare.md#web-analytics)). It sets no cookies or
+  cross-site identifiers and needs no consent banner.
 
 ## security.txt and the disclosure key
 
