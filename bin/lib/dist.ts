@@ -27,9 +27,6 @@ export interface Published {
   commit: string;
 }
 
-// The file a route is served from: /about/ is about/index.html.
-export const routeFile = (pathname: string): string => `${pathname.replace(/^\//, '')}${pathname.endsWith('/') ? 'index.html' : ''}`;
-
 const BOT = { name: 'github-actions[bot]', email: '41898282+github-actions[bot]@users.noreply.github.com' };
 
 export async function publishDist({ repo, dir, sha, push = false, token, repository, fetch }: PublishOptions): Promise<Published> {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { publishDist, routeFile } from '../../bin/lib/dist.ts';
+import { publishDist } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
 import { DIST_BRANCH } from '../../src/lib/site-config.ts';
@@ -61,13 +61,6 @@ beforeEach(() => {
 });
 
 afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
-
-test('a route maps to the file it is served from', () => {
-  assert.equal(routeFile('/'), 'index.html');
-  assert.equal(routeFile('/about/'), 'about/index.html');
-  assert.equal(routeFile('/portfolio/building-a-homelab/'), 'portfolio/building-a-homelab/index.html');
-  assert.equal(routeFile('/resume.pdf'), 'resume.pdf');
-});
 
 describe('publishDist', () => {
   test('creates the branch from the directory alone', async () => {

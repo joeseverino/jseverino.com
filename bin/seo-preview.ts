@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { styleText } from 'node:util';
 import { cli } from './lib/args.ts';
+import { routeFile } from './lib/routes.ts';
 import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
 import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
 import { buildOutDir } from '../src/lib/build-output.ts';
@@ -43,12 +44,6 @@ function normalizePath(input: string): string {
   if (snapshotWriteups().some((writeup) => writeup.slug === raw)) return writeupPath(raw);
 
   return `/${raw.replace(/^\/+|\/+$/g, '')}/`;
-}
-
-function htmlPath(urlPath: string): string {
-  if (urlPath === '/') return path.join(distRoot, 'index.html');
-  if (urlPath.endsWith('.html')) return path.join(distRoot, urlPath);
-  return path.join(distRoot, urlPath, 'index.html');
 }
 
 function textWidth(value: string): number {
@@ -94,7 +89,7 @@ if (!input) {
 }
 
 const urlPath = normalizePath(input);
-const file = htmlPath(urlPath);
+const file = path.join(distRoot, routeFile(urlPath));
 
 if (!fs.existsSync(file)) {
   console.error(`Missing built HTML for ${urlPath}`);

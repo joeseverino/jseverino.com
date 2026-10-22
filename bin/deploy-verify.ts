@@ -26,7 +26,7 @@ import {
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
 import { cli as parseCli, flag } from './lib/args.ts';
-import { routeFile } from './lib/dist.ts';
+import { routeFile } from './lib/routes.ts';
 import { git } from './lib/git.ts';
 import { mapLimit } from './lib/map-limit.ts';
 import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
