@@ -42,6 +42,7 @@ postinstall = { task = "deps" }
 [env]
 _.path = ["node_modules/.bin"]
 ASTRO_TELEMETRY_DISABLED = "1"
+ASTRO_CACHE_DIR = "{{ xdg_cache_home }}/astro/jseverino.com"
 WRANGLER_SEND_METRICS = "false"
 
 [vars]

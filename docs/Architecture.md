@@ -256,10 +256,11 @@ settings (AVIF quality 60, WebP 82) live in the image service config in
 asset audit fails on any shipped image over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
-Encodes are cached in `node_modules/.astro`, which Cloudflare Pages keeps
-between builds (Settings, Build, Build cache) and CI restores with
-`actions/cache` (the `astro-cache` input of the setup action), so a build
-re-encodes only new or changed images. See the
+Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` sets, under the
+user cache directory, so every checkout and worktree shares one cache and
+`npm ci` leaves it alone. CI restores it with `actions/cache` (the
+`astro-cache` input of the setup action). A build re-encodes only new or
+changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
 ## 9. SEO And Metadata
