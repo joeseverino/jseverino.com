@@ -6,4 +6,4 @@ set -eu
 astro sync --silent
 tsc -p .
 wrangler types src/generated/worker-configuration.d.ts --check
-tsc -p tsconfig.worker.json
+tsc -p src/tsconfig.worker.json

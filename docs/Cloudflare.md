@@ -304,7 +304,7 @@ reads no other variable and no GitHub token.
 
 `wrangler types` writes [`src/generated/worker-configuration.d.ts`](../src/generated/worker-configuration.d.ts),
 the `Env` interface and the Workers runtime types for that compatibility date.
-[`tsconfig.worker.json`](../tsconfig.worker.json) compiles the on-demand routes
+[`tsconfig.worker.json`](../src/tsconfig.worker.json) compiles the on-demand routes
 under them, apart from the Node and DOM program, and `mise run checks:types`
 runs `wrangler types --check`, so the file follows every config or `workerd`
 change.

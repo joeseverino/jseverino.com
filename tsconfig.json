@@ -21,7 +21,7 @@
       "@styles/*": ["./src/styles/*"]
     }
   },
-  // The Worker's entry points and its runtime types compile in tsconfig.worker.json.
+  // The Worker's entry points and its runtime types compile in src/tsconfig.worker.json.
   "exclude": [
     "dist",
     "node_modules",

@@ -130,7 +130,7 @@ description = "`astro check` reports no errors or warnings in the .astro files, 
 # astro sync and astro check both rewrite .astro/; never at once.
 wait_for = ["checks:types"]
 env = { NODE_OPTIONS = "--max-old-space-size=4096" }
-run = "astro check --silent --minimumSeverity warning --tsconfig tsconfig.astro.json"
+run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
 
 [tasks."checks:d1"]
 description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
