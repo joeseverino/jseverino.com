@@ -2,13 +2,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { load } from 'js-yaml';
-import type { HastNode } from 'satteri';
 import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
 import { parseHtml } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
-import { finish } from './lib.ts';
+import { elementsNamed, finish, rawText } from './lib.ts';
 
 const failures: string[] = [];
 
@@ -113,15 +112,10 @@ if (javascript.length > 0) {
 // its frontmatter and its <script> elements.
 const SUPPRESSION = /@ts-(?:ignore|nocheck)\b|@ts-expect-error(?!\s+\S)/;
 
-const scriptBodies = (node: HastNode): string[] =>
-  node.type === 'element' && node.tagName === 'script'
-    ? node.children.flatMap((child) => (child.type === 'text' ? [child.value] : []))
-    : 'children' in node ? node.children.flatMap(scriptBodies) : [];
-
 function scripts(file: string, source: string): string[] {
   if (!file.endsWith('.astro')) return [source];
   const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
-  return [frontmatter, ...scriptBodies(parseHtml(source))];
+  return [frontmatter, ...elementsNamed(parseHtml(source), 'script').map(rawText)];
 }
 
 function typeEscapes(script: string): { any: boolean; suppressed: boolean } {

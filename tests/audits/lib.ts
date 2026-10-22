@@ -2,6 +2,7 @@
 // builtPages() fails an empty or stale outDir as a broken build.
 import fs from 'node:fs';
 import path from 'node:path';
+import type { HastNode } from 'satteri';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
@@ -46,3 +47,15 @@ export function builtPages(auditName: string): { distDir: string; pages: BuiltPa
   if (pages.length === 0) abort(auditName, `no HTML pages found in ${path.relative(siteRoot, distDir)}. Run the build first.`);
   return { distDir, pages };
 }
+
+type Element = Extract<HastNode, { type: 'element' }>;
+
+// Every element with this tag name, in document order, from a parseHtml() tree.
+export const elementsNamed = (node: HastNode, tagName: string): Element[] => [
+  ...(node.type === 'element' && node.tagName === tagName ? [node] : []),
+  ...('children' in node ? node.children.flatMap((child) => elementsNamed(child, tagName)) : []),
+];
+
+// The raw text of an element whose content is text only, such as <script>.
+export const rawText = (element: Element): string =>
+  element.children.map((child) => (child.type === 'text' ? child.value : '')).join('');

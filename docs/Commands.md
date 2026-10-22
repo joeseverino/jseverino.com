@@ -246,7 +246,7 @@ Only the Function routes invoke Functions, and the built _headers has no placeho
 
 - **Usage:** `built:seo`
 
-Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD
+Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD
 
 ## `built:weight`
 

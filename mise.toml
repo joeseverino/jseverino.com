@@ -187,7 +187,7 @@ description = "Only the Function routes invoke Functions, and the built _headers
 run = "node tests/audits/check-routes.ts"
 
 [tasks."built:seo"]
-description = "Every built page has a title, canonical link, og:title, og:image, and only valid JSON-LD"
+description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
 run = "node tests/audits/check-seo.ts"
 
 # ----------------------------------------------------------------- browser
