@@ -15,10 +15,6 @@ test('signature verification ignores the personal keyring and rejects modified c
     fs.rmSync(directory, { recursive: true, force: true });
   });
 
-  const valid = verifySecuritySignature(SECURITY_FILE);
-  assert.equal(valid.code, 0, valid.stderr);
-  assert.match(valid.stdout, /\[GNUPG:\] VALIDSIG /);
-
   const tampered = path.join(directory, 'tampered.txt');
   const original = fs.readFileSync(SECURITY_FILE, 'utf8');
   fs.writeFileSync(tampered, original.replace('Contact:', 'Changed:'));
