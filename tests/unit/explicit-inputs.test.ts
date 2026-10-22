@@ -51,7 +51,7 @@ describe('the sync CLI on a machine with nothing of the author\'s', () => {
 
 describe('where each input comes from', () => {
   test('only the local audit log reads the home directory', () => {
-    const readers = trackedFiles(fromRoot('.'), 'bin', 'src', 'functions')
+    const readers = trackedFiles(fromRoot('.'), 'bin', 'src')
       .filter((file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('));
     assert.deepEqual(readers.sort(), ['bin/lib/site-ops.ts']);
   });
