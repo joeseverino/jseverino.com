@@ -3,9 +3,10 @@
 
 // Build-time marker on a tag the site itself emits: it says "hash me". It is
 // spelled as a nonce attribute because the preview wrapper (sitedrift) can only
-// write that attribute; bin/build-csp.ts strips it from the output.
+// write that attribute. It stays in the output: the policy lists hashes and no
+// nonce, so browsers ignore it, a later scan of the same build still finds it, and
+// the preview proxy swaps it for its per-request nonce on framed pages.
 export const CSP_INLINE_MARKER = '__CSP_INLINE__';
-const MARKER_ATTRIBUTE = new RegExp(`\\s+nonce="${CSP_INLINE_MARKER}"`, 'g');
 
 // Script hosts: Turnstile on the contact page, the Cloudflare Web Analytics beacon.
 const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'] as const;
@@ -59,7 +60,6 @@ export async function hashSource(text: string): Promise<string> {
 const toBase64 = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes));
 
 export interface InlineScan {
-  html: string;
   scriptHashes: string[];
   styleHashes: string[];
   problems: string[];
@@ -106,7 +106,7 @@ export async function scanInline(html: string): Promise<InlineScan> {
     }
   }
 
-  return { html: html.replace(MARKER_ATTRIBUTE, ''), scriptHashes: [...scriptHashes], styleHashes: [...styleHashes], problems };
+  return { scriptHashes: [...scriptHashes], styleHashes: [...styleHashes], problems };
 }
 
 // The same scan for markup fetched at request time, where nothing is marked.

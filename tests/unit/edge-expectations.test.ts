@@ -81,11 +81,11 @@ describe('inlineHashFindings', () => {
     assert.match(findings[0] ?? '', /does not carry the hash of an inline tag/);
   });
 
-  test('flags a page with no inline script or style, a missing policy, a marker, and a nonce attribute', async () => {
+  test('flags a page with no inline script or style, a missing policy, and a nonce other than the build marker', async () => {
     assert.equal((await inlineHashFindings('<html><body></body></html>', await policyFor(true))).length, 2);
     assert.ok((await inlineHashFindings(page, undefined)).length >= 2);
-    assert.ok((await inlineHashFindings(`${page}<!-- ${CSP_INLINE_MARKER} -->`, await policyFor(true))).some((finding) => /marker reached the response/.test(finding)));
-    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce attribute/.test(finding)));
+    assert.deepEqual(await inlineHashFindings(page.replace('<script>', `<script nonce="${CSP_INLINE_MARKER}">`), await policyFor(true)), []);
+    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)));
   });
 });
 

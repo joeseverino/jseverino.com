@@ -21,13 +21,13 @@ function dist(pages: Record<string, string>): string {
 }
 
 // Beside the served tree, where the build keeps it.
-const record = (dir: string) => path.join(dir, '..', 'csp.json');
-const run = (dir: string) => buildCsp(dir, record(dir));
+const template = (dir: string) => path.join(dir, '..', '_headers.template');
+const run = (dir: string) => buildCsp(dir, template(dir));
 // What the sitedrift wrap does to a page: a new document with its own marked inline tags.
 const viewer = `<html><head><style nonce="${CSP_INLINE_MARKER}">.viewer{}</style></head><body><script type="application/json">{}</script></body></html>`;
 
 describe('buildCsp', () => {
-  test('hashes the shared inline tags once, strips the marker, and fills every placeholder', async () => {
+  test('hashes the shared inline tags once, leaves the pages as built, and fills every placeholder', async () => {
     const dir = dist({ 'index.html': page(), 'about/index.html': page(), '404.html': page() });
     const result = await run(dir);
     assert.equal(result.pages, 3);
@@ -37,7 +37,7 @@ describe('buildCsp', () => {
     const built = fs.readFileSync(path.join(dir, '_headers'), 'utf8');
     for (const placeholder of PLACEHOLDERS) assert.ok(!built.includes(placeholder), placeholder);
     assert.ok(built.includes(`'${await hashSource('theme()')}'`));
-    assert.ok(!fs.readFileSync(path.join(dir, 'index.html'), 'utf8').includes(CSP_INLINE_MARKER));
+    assert.equal(fs.readFileSync(path.join(dir, 'index.html'), 'utf8'), page());
   });
 
   test('the contact policy differs only in Trusted Types, which it reports instead', async () => {
@@ -85,7 +85,7 @@ describe('buildCsp', () => {
     assert.ok(read(built, '_headers').includes(`'${await hashSource('.viewer{}')}'`));
   });
 
-  test('a page changed after the build is scanned again, so an unmarked script added to it still fails', async () => {
+  test('a second run scans every page again, so an unmarked script added after the build still fails', async () => {
     const dir = dist({ 'index.html': page(), '404.html': page() });
     await run(dir);
     write(path.join(dir, '404.html'), page('<script>steal()</script>'));

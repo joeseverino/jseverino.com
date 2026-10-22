@@ -3,7 +3,7 @@
 // a preview deploy wraps it afterwards (bin/wrap-preview.ts). The output dir comes from
 // src/lib/build-output.ts (shared with astro.config.ts).
 import path from 'node:path';
-import { buildOutDir, cspRecord } from '../src/lib/build-output.ts';
+import { buildOutDir, headersTemplate } from '../src/lib/build-output.ts';
 import { permittedContentRoot } from '../src/lib/content-root.ts';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { buildCsp } from './build-csp.ts';
@@ -34,4 +34,4 @@ run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // nothing to say, and Astro prints a fatal error and its stack at any level.
 const logs = jsonLogs() ? ['--json'] : values.timings ? [] : ['--silent'];
 run(astro, ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
-await buildCsp(fromRoot(buildOutDir), fromRoot(cspRecord));
+await buildCsp(fromRoot(buildOutDir), fromRoot(headersTemplate));

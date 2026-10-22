@@ -4,7 +4,7 @@
 // other than main, so the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH on this step alone,
 // and the build itself never wraps.
 import { installCloudflarePreview } from 'sitedrift';
-import { buildOutDir, cspRecord, workerConfig } from '../src/lib/build-output.ts';
+import { buildOutDir, headersTemplate, workerConfig } from '../src/lib/build-output.ts';
 import { CSP_INLINE_MARKER } from '../src/lib/csp.ts';
 import { readJson } from '../src/lib/json.ts';
 import { DEFAULT_BRANCH, SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
@@ -35,5 +35,5 @@ if (!wrap.installed) {
   console.error(`wrap-preview: nothing wrapped (${wrap.reason})\nfix: set WORKERS_CI=1 and WORKERS_CI_BRANCH to a branch other than ${DEFAULT_BRANCH}`);
   process.exit(1);
 }
-const { scriptHashes, styleHashes } = await buildCsp(dir, fromRoot(cspRecord));
+const { scriptHashes, styleHashes } = await buildCsp(dir, fromRoot(headersTemplate));
 console.log(`wrap-preview: ${wrap.files} pages wrapped for ${wrap.branch}; the CSP covers ${scriptHashes.length} inline script and ${styleHashes.length} inline style hash(es)`);

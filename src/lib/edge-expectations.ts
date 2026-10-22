@@ -99,8 +99,9 @@ export async function inlineHashFindings(html: string, csp: string | null | unde
   for (const hash of [...scriptHashes, ...styleHashes]) {
     if (!(csp ?? '').includes(`'${hash}'`)) findings.push(`content-security-policy does not carry the hash of an inline tag (${hash})`);
   }
-  if (html.includes(CSP_INLINE_MARKER)) findings.push(`the build-time ${CSP_INLINE_MARKER} marker reached the response`);
-  if (/<(?:script|style)\b[^>]*\snonce=/i.test(html)) findings.push('a script or style tag still carries a nonce attribute');
+  // The build marker is the only nonce a static page carries; any other was minted where nothing issues one.
+  const nonces = [...html.matchAll(/<(?:script|style)\b[^>]*\snonce="([^"]*)"/gi)].map((match) => match[1]);
+  if (nonces.some((nonce) => nonce !== CSP_INLINE_MARKER)) findings.push(`a script or style tag carries a nonce other than ${CSP_INLINE_MARKER}`);
   return findings;
 }
 
