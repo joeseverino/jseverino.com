@@ -8,8 +8,12 @@
 // the preview proxy swaps it for its per-request nonce on framed pages.
 export const CSP_INLINE_MARKER = '__CSP_INLINE__';
 
-// Script hosts: Turnstile on the contact page, the Cloudflare Web Analytics beacon.
-const SCRIPT_HOSTS = ['https://challenges.cloudflare.com', 'https://static.cloudflareinsights.com'] as const;
+// Cloudflare's origins: Turnstile serves the contact widget and its siteverify API; the zone
+// injects the Web Analytics beacon from the script origin, and it reports to the other.
+export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
+export const INSIGHTS_SCRIPT_ORIGIN = 'https://static.cloudflareinsights.com';
+const INSIGHTS_REPORT_ORIGIN = 'https://cloudflareinsights.com';
+const SCRIPT_HOSTS = [TURNSTILE_ORIGIN, INSIGHTS_SCRIPT_ORIGIN] as const;
 
 export interface PolicyInput {
   scriptHashes: readonly string[];
@@ -33,8 +37,8 @@ export function htmlPolicy({ scriptHashes, styleHashes, reportUri, trustedTypes,
     ['style-src', "'self'", ...sources(styleHashes)].join(' '),
     "img-src 'self' data:",
     "font-src 'self'",
-    "connect-src 'self' https://cloudflareinsights.com https://challenges.cloudflare.com",
-    "frame-src 'self' https://challenges.cloudflare.com",
+    `connect-src 'self' ${INSIGHTS_REPORT_ORIGIN} ${TURNSTILE_ORIGIN}`,
+    `frame-src 'self' ${TURNSTILE_ORIGIN}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

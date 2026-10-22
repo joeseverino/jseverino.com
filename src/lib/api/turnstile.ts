@@ -1,6 +1,11 @@
 // Which Turnstile siteverify answers the contact function accepts.
+import { TURNSTILE_ORIGIN } from '../csp.ts';
 import { SITE } from '../site-config.ts';
 import { CONTACT_RUNTIME } from './contact-contract.ts';
+
+// The widget script the contact page loads, and the API that checks the token it yields.
+export const TURNSTILE_SCRIPT_URL = `${TURNSTILE_ORIGIN}/turnstile/v0/api.js`;
+export const SITEVERIFY_URL = `${TURNSTILE_ORIGIN}/turnstile/v0/siteverify`;
 
 export type Siteverify = { success?: boolean; hostname?: string; action?: string };
 

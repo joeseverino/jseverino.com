@@ -5,7 +5,7 @@ import { SITE_ORIGIN } from '../site-config.ts';
 import type { D1Database } from './d1.ts';
 import { ownPageUrl, requestMeta } from './request-meta.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
-import { siteverifyAccepts, type Siteverify } from './turnstile.ts';
+import { SITEVERIFY_URL, siteverifyAccepts, type Siteverify } from './turnstile.ts';
 
 export interface ContactEnv {
   DB: D1Database;
@@ -42,7 +42,7 @@ async function verifyTurnstile(token: string, ip: string, secret: string): Promi
   body.append('idempotency_key', crypto.randomUUID());
 
   try {
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    const res = await fetch(SITEVERIFY_URL, {
       method: 'POST',
       body,
       signal: AbortSignal.timeout(CONTACT_RUNTIME.turnstileTimeoutMs),

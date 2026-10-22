@@ -6,7 +6,7 @@ import Footer from '@components/Footer.astro';
 import SocialIconsDefs from '@components/SocialIconsDefs.astro';
 import { SURFACE } from '@lib/brand.ts';
 import { site } from '@lib/site.ts';
-import { CSP_INLINE_MARKER } from '../lib/csp.ts';
+import { CSP_INLINE_MARKER, INSIGHTS_SCRIPT_ORIGIN } from '@lib/csp.ts';
 import '@styles/base.css';
 
 type Props = {
@@ -17,8 +17,8 @@ type Props = {
 
 const { seo = {}, preconnect = [] } = Astro.props;
 
-// The zone injects the Web Analytics beacon from static.cloudflareinsights.com; preconnect warms DNS and TLS for it.
-const preconnectOrigins = ['https://static.cloudflareinsights.com', ...preconnect];
+// The zone injects the Web Analytics beacon; preconnect warms DNS and TLS for its origin.
+const preconnectOrigins = [INSIGHTS_SCRIPT_ORIGIN, ...preconnect];
 ---
 
 <!doctype html>

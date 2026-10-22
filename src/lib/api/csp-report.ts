@@ -2,6 +2,7 @@
 // one batch per request, identical reports within the hour skipped, a fixed hourly cap per IP.
 
 import { SITE_ORIGIN } from '../site-config.ts';
+import { CONTACT_RUNTIME } from './contact-contract.ts';
 import type { D1Database } from './d1.ts';
 import { asString, requestMeta } from './request-meta.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
@@ -34,7 +35,6 @@ const MAX_BODY_BYTES = 16_384;
 const MAX_REPORTS_PER_REQUEST = 10;
 const MAX_FIELD_LENGTH = 2_048;
 const MAX_DIRECTIVE_LENGTH = 256;
-const MAX_USER_AGENT_LENGTH = 512;
 const MAX_STORED_PER_IP_PER_HOUR = 30;
 const RETENTION_DAYS = 60;
 // Reports whose blocked URI or source file is a browser extension's own.
@@ -137,7 +137,7 @@ export async function storeCspReports(request: Request, db: D1Database): Promise
   const reports = parsed.filter((report) => !isIgnoredReport(report));
   if (reports.length === 0) return noContent();
 
-  const { ip, userAgent, country } = requestMeta(request, MAX_USER_AGENT_LENGTH);
+  const { ip, userAgent, country } = requestMeta(request, CONTACT_RUNTIME.maxUserAgentLength);
   const insert = db.prepare(
     `INSERT INTO csp_reports
        (document_uri, blocked_uri, effective_directive, violated_directive,
