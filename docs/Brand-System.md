@@ -56,7 +56,7 @@ The result is one engine with several consumers:
 ```mermaid
 flowchart TB
     BE["branding-engine (public: npm + GitHub)"]
-    JS["jseverino.com (npm optionalDep)"] --> BE
+    JS["jseverino.com (devDependency)"] --> BE
     SB["severino-brand (npm dependency)"] --> BE
     TB["tools/brand (local checkout)"] --> BE
 ```
@@ -170,11 +170,10 @@ unreadable on a dark page; `onDark.primary` is the readable counterpart, and
 `onDark.primaryDeep` is *lighter* than it, because "deep" means more emphasis and
 emphasis moves toward the far end of the page's contrast range in either theme.
 
-The engine is an `optionalDependency`, pinned to a published, provenance-attested
-`branding-engine` npm version (`^0.7.0`).
-Because the rendered assets are committed, the deploy never needs the engine: if
-CI cannot fetch it, the install skips it (non-fatal) and the static build runs
-unchanged. The engine is only ever invoked locally, on demand, to regenerate.
+The engine is a devDependency, installed from its v0.9.1 GitHub release tarball
+until 0.9.1 or later is on npm. `mise run checks:contracts` runs
+`make:icons --check`, which renders the vector marks with it, so every install
+needs it. The production build never runs it: the rendered assets are committed.
 
 ## Embedding The Styles Elsewhere: Load Both
 

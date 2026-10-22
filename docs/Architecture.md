@@ -459,7 +459,7 @@ An asset specific to one page or writeup belongs in the vault. A site-wide asset
 
 Favicons, social cards, and HD brand marks are all generated from one place:
 
-- `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, an `optionalDependency` pinned to a published, provenance-attested npm version.
+- `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, a devDependency installed from its GitHub release tarball until the version the site needs is on npm.
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
 - `mise run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`. `mise run checks:contracts` runs `make:icons --check`, which fails when the committed vector marks (`favicon.svg`, `mark.svg`, `wordmark-caps.svg`) differ from what the engine renders.
 
