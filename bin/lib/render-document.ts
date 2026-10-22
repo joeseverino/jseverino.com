@@ -22,8 +22,11 @@ export interface DocumentInput {
 }
 
 export async function renderDocument(input: DocumentInput): Promise<string> {
-  // The Vite root is where Astro looks for the tsconfig and its path aliases.
-  const config = await getViteConfig({ root: ROOT }, { root: ROOT, logLevel: 'silent' })({ command: 'serve', mode: 'development' });
+  // The Vite root is where Astro looks for the tsconfig and its path aliases. The site config is
+  // left unloaded: its Cloudflare adapter makes the SSR environment workerd, which Node cannot run.
+  // The toolbar off keeps dev-only source annotations out of the markup.
+  const astro = { root: ROOT, configFile: false, logLevel: 'silent', devToolbar: { enabled: false } } as const;
+  const config = await getViteConfig({ root: ROOT }, astro)({ command: 'serve', mode: 'development' });
   const server = await createServer({
     ...config,
     configFile: false,
