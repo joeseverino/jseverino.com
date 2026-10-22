@@ -27,23 +27,16 @@ if (!fs.existsSync(chromePath)) {
   process.exit(1);
 }
 interface LighthouseConfig {
-  collect: { url: string[]; settings?: { preset?: string; chromeFlags?: string } };
-  upload?: { outputDir?: string };
-  assert: { assertions: Record<string, [level: string, options: { minScore: number }]> };
+  urls: string[];
+  preset: string;
+  chromeFlags: string;
+  thresholds: Record<string, { level: 'error' | 'warn'; minScore: number }>;
 }
 type Score = number | null;
 
-const config = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
-
-const urls = config.collect.url;
-const preset = config.collect.settings?.preset ?? 'desktop';
-const chromeFlags = config.collect.settings?.chromeFlags ?? '--headless';
-const outDir = path.join(root, config.upload?.outputDir ?? 'lighthouse-reports');
-const assertions = Object.entries(config.assert.assertions).map(([key, [level, { minScore }]]) => ({
-  category: key.replace(/^categories:/, ''),
-  level,
-  minScore,
-}));
+const { urls, preset, chromeFlags, thresholds: byCategory } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
+const outDir = path.join(root, 'lighthouse-reports');
+const assertions = Object.entries(byCategory).map(([category, threshold]) => ({ category, ...threshold }));
 const columns = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 fs.mkdirSync(outDir, { recursive: true });
