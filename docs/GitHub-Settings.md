@@ -4,7 +4,9 @@ The repository's merge rules, security features, Actions permissions, and the
 `main` ruleset are declared in [`.github/repo.json`](../.github/repo.json) and
 checked against the live repository by `bin/github.ts`. The file is validated by
 [`.github/repo.schema.json`](../.github/repo.schema.json) and holds no tokens; the
-only id in it is the public app id of the Cloudflare Pages status check. The
+only id in it is GitHub Actions' public app id (`15368`), which pins the required
+`deploy` check to the check-run the `deploy` workflow opens, so no other app can
+satisfy it. The
 Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 
 ## What is declared

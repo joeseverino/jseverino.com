@@ -13,7 +13,7 @@ codebase must change. Two kinds exist:
 
 | File | Holds | Consumers |
 | --- | --- | --- |
-| [`src/lib/site-config.ts`](../src/lib/site-config.ts) | `domain`, `owner`, `github`, `d1`, `pagesProject`, `focus` | Site chrome and feeds, GitHub loading and snapshots, `astro.config.ts`, `bin/*`, audits, the Worker's CSP and report endpoint |
+| [`src/lib/site-config.ts`](../src/lib/site-config.ts) | `domain`, `owner`, `github`, `d1`, `worker`, `focus`, and `PREVIEW_HOST_SUFFIX` (the Worker's preview hosts on the account's workers.dev subdomain) | Site chrome and feeds, GitHub loading and snapshots, `astro.config.ts`, `bin/*`, audits, the Worker's CSP and report endpoint |
 | Lockfile-pinned `severino-brand` contract | Brand tokens and glyph geometry | `sync:tokens` emits [`src/lib/brand.ts`](../src/lib/brand.ts), [`src/styles/brand.css`](../src/styles/brand.css), and the generated block in [`tokens.css`](../src/styles/tokens.css) |
 | [`src/lib/site.ts`](../src/lib/site.ts) | editorial chrome: `jobTitle`, `summary`, `skills`, `socialLinks`, `navItems` | `Header`, `Footer`, `SeoHead` |
 | [`src/lib/build-output.ts`](../src/lib/build-output.ts) | the build outDir decision (write side) and built-dir resolution (read side) | `astro.config.ts`, `bin/build-static.ts`, `bin/seo-preview.ts`, `bin/diff-build.ts`, post-build audits via [`tests/audits/lib.ts`](../tests/audits/lib.ts) |
@@ -51,7 +51,10 @@ with contrast, page weight, responsive layouts, and interaction regressions.
 The Worker's routes (contact form and CSP reporting) and its middleware import
 `site-config.ts` directly, so the domain is declared once.
 [`wrangler.jsonc`](../wrangler.jsonc) names the Worker (`name`) and the D1
-database (`database_name`); change both for a new instance.
+database (`database_name`), and cannot import; change both for a new instance,
+to the same values as `SITE.worker` and `SITE.d1`. The preview deploy refuses a
+Worker name other than `SITE.worker`, and `mise run checks:d1` a database other
+than `SITE.d1`.
 
 ### Signed / generated artifacts
 - [`public/.well-known/security.txt`](../public/.well-known/security.txt): all URLs,
@@ -67,18 +70,20 @@ database (`database_name`); change both for a new instance.
 ### CI / external config
 - [`tests/lighthouse.json`](../tests/lighthouse.json): audited URLs.
 - [`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml): `--base-url`.
+- [`.github/repo.json`](../.github/repo.json): the public `PUBLIC_TURNSTILE_SITE_KEY` the build embeds, and the repository settings.
 
 ### Cloudflare zone and account
 - [`cloudflare/zone.json`](../cloudflare/zone.json): the zone name, the owner tag on
-  rules, the production hosts in the WAF expressions, the `pages.dev` redirect source
-  and target, the Pages project name, and the Turnstile hostnames. Check and apply
+  rules, the production hosts in the WAF expressions, and the Turnstile hostnames.
+  Check and apply
   with `mise run cloudflare check` / `apply` ([docs/Cloudflare.md](./Cloudflare.md)).
 
 ### Cloudflare dashboard (not in the repo)
-- Pages project, the `DB` D1 binding pointing at the `d1` database from `site-config.ts`,
-  Turnstile keys, and any environment variables. The repo has no `wrangler.toml`
-  by design; bindings live in the dashboard.
-- Apply the D1 schema (tables and indexes): `npx wrangler d1 execute <d1> --remote --file=./cloudflare/d1.sql`.
+- The D1 database named by `d1` in `site-config.ts` (`npx wrangler d1 create <d1>`),
+  then its schema: `mise run site d1-apply --confirm`.
+- The Turnstile widget and its two keys, the deploy credentials, the Worker's first
+  deploy with its secret, the preview Access application, and the custom domain:
+  [Standing up the Worker](./Cloudflare.md#standing-up-the-worker).
 
 ### Content
 - Replace `src/content/pages/` and `src/content/writeups/` (synced from the vault,

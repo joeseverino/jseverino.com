@@ -89,13 +89,14 @@ Vault writeups carry a `cover_alt` frontmatter field that describes the *actual*
 
 ## Preview deployments
 
-Cloudflare Pages assigns a `*.pages.dev` URL to every branch and version
-preview. Indexed, those URLs would split ranking signal away from the canonical
-domain. [`public/_headers`](../public/_headers) adds `X-Robots-Tag: noindex` to
-every response from `https://:project.pages.dev/*` and
-`https://:version.:project.pages.dev/*`. `https://jseverino.com/` is unaffected.
+Every preview is a Worker version with a workers.dev preview URL, one per
+version and one per branch alias. Indexed, those URLs would split ranking signal
+away from the canonical domain. [`public/_headers`](../public/_headers) adds
+`X-Robots-Tag: noindex` to every response from
+`https://:label.:subdomain.workers.dev/*`, and Access keeps crawlers out in the
+first place. `https://jseverino.com/` is unaffected.
 
-Preview deployments (any branch but `main`) are wrapped by
+Previews (any branch but `main`) are wrapped by
 [sitedrift](https://github.com/joeseverino/sitedrift). Its per-side SEO panel
 renders DEV and LIVE search snippets together, highlights title, description,
 and canonical differences, and checks H1 count, viewport, language, Open Graph,
@@ -134,7 +135,7 @@ Then inspect generated HTML for:
 - `dist/sitemap-0.xml` URLs each carry a `<lastmod>`;
 - `ProjectCard` and article hero `<img alt>` describes the image, not the writeup title.
 
-For a non-production Pages deployment, also open sitedrift's SEO panel and
+For a pull request's preview, also open sitedrift's SEO panel and
 confirm DEV/LIVE differences are intentional. Its checks are a quick
 browser-level signal; generated-HTML inspection, structured-data validation,
 Search Console, and Lighthouse still apply.

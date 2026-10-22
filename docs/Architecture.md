@@ -273,9 +273,8 @@ JPEG from `getImage()`, which reports the card's size without a read.
 
 Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` derives from the
 repository's cache root (`SITE_CACHE_DIR`), so every checkout and worktree
-shares one cache. CI restores it with `actions/cache` (the `astro-cache`
-input of the setup action), except in the release job, which encodes every
-image itself so no cache another workflow wrote reaches a release. A build re-encodes only new or
+shares one cache. CI's `build` job, whose output ships, and the browser legs restore it with
+`actions/cache` (the `astro-cache` input of the setup action). A build re-encodes only new or
 changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
@@ -490,7 +489,7 @@ Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/Web
 
 ## 13. Runtime Configuration
 
-The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. The two Turnstile keys are set outside the repo. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
+The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. The Turnstile secret is a Worker secret, and the public site key a repository variable. Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`; see [Cloudflare](./Cloudflare.md).
 
 ### D1 binding
 
@@ -529,9 +528,9 @@ The secret half of the Turnstile keypair. It never appears in the repo, the buil
 |---|---|---|
 | `PUBLIC_TURNSTILE_SITE_KEY` | Build (Vite `import.meta.env`) | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
 
-`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable, embedded into the contact form at build. For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
+`PUBLIC_TURNSTILE_SITE_KEY` is the public half of the Turnstile keypair, safe to ship in HTML. It is a build environment variable, embedded into the contact form at build. CI's `build` job reads it from the repository variable declared in [`.github/repo.json`](../.github/repo.json). For local `astro dev`, copy [`.env.example`](../.env.example) to `.env`.
 
-The build reads no GitHub token: the Software list comes from the committed snapshot. Removing a leftover `GITHUB_TOKEN` build variable is in the [Release Checklist](./Release-Checklist.md).
+The build reads no GitHub token: the Software list comes from the committed snapshot.
 
 ### Local preview against the real edge runtime
 
@@ -645,7 +644,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Its tool and package caches are ones the lockfiles verify (mise's downloads against `mise.lock`'s checksums, npm's against `package-lock.json`'s integrity hashes), so a cache another workflow wrote cannot change what a job installs; the release job also skips the Astro image cache, the one cache nothing verifies.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Its tool and package caches are ones the lockfiles verify (mise's downloads against `mise.lock`'s checksums, npm's against `package-lock.json`'s integrity hashes), so a cache another workflow wrote cannot change what a job installs. The Astro image cache is the one cache nothing verifies, and the `build` job that produces the shipped artifact restores it.
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

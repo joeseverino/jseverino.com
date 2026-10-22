@@ -69,8 +69,8 @@ configured by the author.
 
 ```mermaid
 flowchart TB
-    A["Source change"] --> B["mise run fast: checks:*"] --> C["mise run check: checks:*, the build, built:*"] --> D["Push the branch, open a PR"]
-    G["mise run browser: browser:*"] -.-> C
+    A["Source change"] --> B["mise run fast (checks:*)"] --> C["mise run check (checks:*, the build, built:*)"] --> D["Push the branch, open a PR"]
+    G["mise run browser (browser:*)"] -.-> C
     D --> CI
     CI -- "site artifact" --> P["deploy: preview version, wrapped and verified"]
     P --> M["Merge: site land"]

@@ -129,7 +129,7 @@ this route's guards:
 ```mermaid
 flowchart TB
     PR["Pull request: ci passes"] --> Art["The site artifact ci gated"]
-    Art --> Wrap["mise run preview:wrap: sitedrift viewer, CSP filled again"]
+    Art --> Wrap["mise run preview:wrap (sitedrift viewer, CSP filled again)"]
     Wrap --> Up["wrangler versions upload, with the branch alias"]
     Up --> Verify["deploy-verify --origin --preview"]
     Verify ==> Shell["Review shell at / on the preview URL, behind Access"]

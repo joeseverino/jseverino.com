@@ -76,13 +76,15 @@ expired, or WKD-mismatched `security.txt` fails before the build runs.
 
 Push the branch and open a pull request against `main`. The ruleset's
 required checks (`build`, `e2e`, `visual`, `edge`, `dependency-review`,
-and `Cloudflare Pages`)
+and `deploy`)
 must pass before a merge, and its code scanning rule holds the merge while
 CodeQL reports a high-severity alert or an error. Content changes go through `site publish` and
 `site land` ([Site CLI](./Site-CLI.md)), and `site land` reads the same list
 from the ruleset.
 
-Review the immutable Cloudflare deployment before merging, through the
+Once `ci` passes, the `deploy` workflow uploads the pull request's build as a
+preview version, verifies it, and reports on the `deploy` check, whose summary
+names the version URL. Review that version before merging, through the
 tailnet proxy ([preview access](./Cloudflare.md#preview-access)):
 
 1. Confirm compact DEV Solo view loads.
@@ -98,19 +100,19 @@ See [Deployment Preview Review](./Deployment-Preview-Review.md).
 
 Commit source, content snapshot, generated manifest, docs, and public assets
 that are part of the release. Do not commit local caches, build output,
-`.env*`, `.dev.vars*`, or editor folders.
+`.env*`, or editor folders.
 
-The `deploy` workflow verifies every deployment on its `*.pages.dev` URL when
-the `Cloudflare Pages` check completes. After the merge, verify production from
-a clean, current `main`:
+After the merge, `ci` runs on `main`, and the `deploy` workflow uploads its
+build as a version, verifies it at the version's preview URL, and only then
+sends all traffic to it. Verify production from a clean, current `main`:
 
 ```sh
 git switch main && git pull --ff-only
 mise run deploy:verify
 ```
 
-It waits for the required checks on that commit, then verifies security
-headers, the production sitedrift `404`, every live
+It waits for the required checks on that commit, `deploy` included, then
+verifies security headers, the production sitedrift `404`, every live
 sitemap URL, and zero open CodeQL alerts.
 
 Scheduled checks measure external freshness, which no single deployment
@@ -136,10 +138,12 @@ git push origin v<version>
 
 `<version>` is the `version` in `package.json`. The local verification must show
 a good signature. The push runs
-[`release.yml`](../.github/workflows/release.yml): it builds the tagged commit,
-packages the build output and a CycloneDX SBOM, attests both through Sigstore
-(build provenance and an SBOM attestation), and attaches all four files to the
-GitHub release. To check a release:
+[`release.yml`](../.github/workflows/release.yml), which rebuilds nothing: it
+fetches the `release-<sha>` artifact the `deploy` workflow kept when it shipped
+that commit (the archive production served, its CycloneDX SBOM, and their
+Sigstore provenance and SBOM attestations) and attaches all four files to the
+GitHub release. Tag a commit `main` deployed in the last 90 days, while that
+artifact exists. To check a release:
 
 ```sh
 gh release download v<version> -R joeseverino/jseverino.com -p '*.tar.gz'
@@ -148,7 +152,7 @@ gh attestation verify jseverino.com-v<version>.tar.gz -R joeseverino/jseverino.c
 
 ## 5. Cloudflare Deploy Verification
 
-After Cloudflare Pages deploys `main`, verify the live site from a clean browser
+After the `deploy` workflow ships `main`, verify the live site from a clean browser
 profile or with extensions disabled:
 
 ```sh
@@ -162,7 +166,7 @@ Confirm:
 - The HTML CSP does not include `script-src 'unsafe-inline'`.
 - `reporting-endpoints` is present on HTML responses and points to `/api/csp-report`.
 - The HTML CSP includes `report-to csp-endpoint` and the `report-uri https://jseverino.com/api/csp-report` fallback.
-- No `__CSP_INLINE__` marker survives in the HTML, and the hash of every inline script and style appears in the header (`deploy:verify`'s `inline` check).
+- The hash of every inline script and style appears in the header (`deploy:verify`'s `inline` check).
 - The enforced CSP carries `script-src 'self' 'sha256-…'` plus the Turnstile and Web Analytics hosts, and `require-trusted-types-for 'script'`, with no `Content-Security-Policy-Report-Only` header. `/contact/` is the exception: no enforced Trusted Types, and a report-only header carrying it.
 - `strict-transport-security` includes `includeSubDomains`.
 - `x-content-type-options: nosniff` is present.
@@ -297,7 +301,7 @@ Recommended evidence to record:
 - final commit SHA;
 - `mise run ci` closing lines;
 - signed tag verification result;
-- Cloudflare deploy URL or timestamp;
+- the Worker version id the `deploy` check names;
 - live header check summary;
 - D1 schema/reporting check summary when applicable;
 - Search Console and Rich Results outcomes;

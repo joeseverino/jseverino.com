@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report security issues in this site privately, not in a public issue. That
-covers the build output, the contact and CSP-report functions, the response
+covers the build output, the contact and CSP-report API routes, the response
 headers, and anything else in this repository.
 
 - Use GitHub's

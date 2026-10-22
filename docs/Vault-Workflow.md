@@ -2,7 +2,7 @@
 
 The private Obsidian vault is the editorial system. This repository is the public build source. The sync step is the only bridge between them. Background: [WordPress to Astro](./WordPress-To-Astro-Migration.md#operational-shift).
 
-![Published writeups and pages pass through the content sync into src/content and the generated schema before Cloudflare Pages builds them](./diagrams/vault-workflow.png)
+![Published writeups and pages pass through the content sync into src/content and the generated schema before CI builds them and deploys the Worker](./diagrams/vault-workflow.png)
 
 <sup>Diagram source: [`docs/diagrams/vault-workflow.fig`](./diagrams/vault-workflow.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
@@ -132,9 +132,9 @@ RESUME_ENGINE_DIR = "/path/to/resume-engine"
 
 `Career/resume.md` in the Life vault is the resume's canonical file. Obsidian or any other client may edit it; the grammar that renders it lives in resume-engine, so every client validates and previews through that grammar.
 
-## Cloudflare Build Boundary
+## Build Boundary
 
-Cloudflare Pages builds from the committed repository. It does not read the private vault and does not run `sync:content`.
+CI builds from the committed repository and deploys that build to Cloudflare. It does not read the private vault and does not run `sync:content`.
 
 Published content changes must be synced and committed before deploy. `site publish` does that on a fresh branch and opens the pull request; see [`Site-CLI.md`](./Site-CLI.md).
 

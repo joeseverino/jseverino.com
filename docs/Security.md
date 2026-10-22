@@ -46,8 +46,9 @@ See the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 
 ### The build needs no secrets and no private access
 
-Cloudflare Pages clones this repository, runs `npm run build`, and
-uploads `dist/`. The build:
+GitHub Actions checks out this repository, runs `mise run build` inside
+`mise run check`, and keeps the gated `dist/` as the artifact the `deploy`
+workflow uploads with wrangler. The build:
 
 - never touches the private vault: it builds from the committed snapshot
   alone;
@@ -55,7 +56,8 @@ uploads `dist/`. The build:
   site key), and the GitHub data comes from a committed snapshot;
 - is reproducible: dependencies install from the committed
   [`package-lock.json`](../package-lock.json) via `npm ci`, and the Node
-  version is pinned in [`.nvmrc`](../.nvmrc).
+  version is pinned in [`mise.toml`](../mise.toml) with its checksums in
+  [`mise.lock`](../mise.lock).
 
 The one server-side secret (the Turnstile secret key) lives only in the
 Worker's runtime environment (`wrangler.jsonc` lists it under
@@ -72,7 +74,7 @@ single-purpose and layered:
 | Control | What it does |
 |---|---|
 | **Edge rules** | WAF custom rules refuse anything but `POST` and a JSON content type before the Worker runs, and a zone rate limit blocks an IP sending more than 15 `/api/*` requests in 10 seconds. See [Cloudflare edge posture](#cloudflare-edge-posture). |
-| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the function runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero function compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `mise run cloudflare check` reports when the live zone differs. |
+| **Edge schema validation** | Cloudflare API Shield validates the JSON request body against [`contracts/contact.openapi.json`](../contracts/contact.openapi.json) before the Worker runs. The action is Block, the only one offered (there is no log-only mode), so a non-compliant payload is rejected at the edge with zero Worker compute. Declared in [`cloudflare/zone.json`](../cloudflare/zone.json); `mise run cloudflare check` reports when the live zone differs. |
 | **Cloudflare Turnstile** | Every submission carries a Turnstile token, verified server-side against Cloudflare's `siteverify` API (with an idempotency key) before anything is stored. The response must name this site's hostname and the contact widget's action, so a token solved on another site or widget is refused. A missing or failed token is rejected. |
 | **Honeypot field** | A hidden `company` field is invisible to humans. If a bot fills it, the request returns a fake success and stores nothing. |
 | **Per-IP rate limit** | A maximum of 5 submissions per IP per hour, checked by a `COUNT(*)` inside the `INSERT` itself, so concurrent requests cannot race past it. Excess returns HTTP 429. |
@@ -192,10 +194,10 @@ never edge-cached. Those asset routes and the global `/*` rule also strip any
 `Access-Control-Allow-Origin` an upstream layer might add, so responses carry
 no CORS headers (the site has no public cross-origin asset use).
 
-Preview deployments at `*.pages.dev` carry `X-Robots-Tag: noindex`, set in
-[`public/_headers`](../public/_headers) under the
-`https://:project.pages.dev/*` and `https://:version.:project.pages.dev/*`
-rules. The custom domain is unaffected.
+The Worker's preview URLs (`<alias or version>-jseverino.<account>.workers.dev`)
+carry `X-Robots-Tag: noindex`, set in [`public/_headers`](../public/_headers)
+under the `https://:label.:subdomain.workers.dev/*` rule. The custom domain is
+unaffected.
 
 ### Preview review route
 
@@ -225,15 +227,15 @@ broad `https:`. `style-src` is `'self'` plus the hash of the
 one inlined stylesheet (identical on every page, so one hash), and no
 `style="..."` attributes are emitted in production HTML.
 
-After the build and the preview wrap, [`bin/build-csp.ts`](../bin/build-csp.ts) scans every built HTML page,
+After the build, and again after a preview's sitedrift wrap, [`bin/build-csp.ts`](../bin/build-csp.ts) scans every built HTML page,
 hashes the inline script and stylesheet with SHA-256, and writes the policy into
-`dist/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`,
+`dist/client/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`,
 `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders in
 `public/_headers`. The theme-bootstrap script is the only inline executable
 script: an `is:inline` script in
 [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) marked at
-build time with a `nonce="__CSP_INLINE__"` attribute that `build-csp` strips
-from the output. The build fails on any inline script or style the site did not
+build time with a `nonce="__CSP_INLINE__"` attribute. The marker stays in the
+page and grants nothing, since the policy names no nonce. The build fails on any inline script or style the site did not
 emit, and on any external script outside same-origin,
 `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`.
 It also fails if more than 4 inline script hashes or 4 style hashes exist, or
@@ -303,7 +305,7 @@ same directive: Turnstile's `api.js` assigns to `innerHTML`, script text, and
 script URLs without a policy, and that third-party script cannot be patched
 here. Violations land in the same `/api/csp-report` D1 sink with
 `disposition="report"`; reassess when Turnstile ships a compliant build.
-`public/_headers` gives `/contact/*` its own rule. Pages merges the headers of
+`public/_headers` gives `/contact/*` its own rule. The assets layer merges the headers of
 every matching rule, so the exception is a detach plus a new line: the rule
 removes the global policy (`! Content-Security-Policy`), sets one without
 Trusted Types, and adds
@@ -353,9 +355,10 @@ difference with a separate write token. What it declares, briefly:
   the right content type per endpoint, and the preview proxy blocked on the
   production hosts.
 - **Rate limit:** 15 `/api/*` requests per 10 seconds per IP, then a 10-second block.
-- **`*.pages.dev` is outside the zone.** The production alias
-  `jseverino.pages.dev` 301s to `https://jseverino.com` through a Bulk
-  Redirect, and preview deployments sit behind Cloudflare Access.
+- **workers.dev is outside the zone.** The Worker has no workers.dev
+  production alias (`workers_dev: false` in `wrangler.jsonc`), and its preview
+  URLs sit behind a Cloudflare Access application that admits only service
+  tokens.
 - **Nothing rewrites HTML.** Rocket Loader, Email Obfuscation, Server-Side
   Excludes, and Automatic HTTPS Rewrites must stay off, because each would
   inject markup the build-time hashes do not cover.
@@ -460,16 +463,22 @@ ships to visitors:
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
   Elevated scopes (notably `security-events: write` for the SARIF upload in
-  `scorecard.yml`) are granted per job, never per workflow. The deploy verification job holds the Access
-  service token, so it runs the default branch's verifier and takes only the
-  deployment URL from the triggering event.
+  `scorecard.yml`) are granted per job, never per workflow. The `deploy`
+  workflow holds the Cloudflare token (in the `production` environment) and the
+  Access service token, so it runs only the default branch's code and never
+  checks out a pull request. A pull request's build does reach wrangler, so
+  `bin/wrap-preview.ts` first refuses a deploy config with any key the adapter
+  does not write (wrangler would run a `build.command` on the runner), another
+  Worker's name, or a script or asset directory outside the build.
 - **Code-scanning dashboard.** CodeQL findings are fixed at the source and
   `mise run deploy:verify` fails while one is open. Scorecard findings that do
   not apply to a solo personal repo are dismissed with a documented reason;
   its Vulnerabilities finding stays open while an accepted advisory is in the
   lockfile.
-- **Attested releases.** A signed version tag runs `release.yml`, which builds
-  the tagged commit and attests the build output and its SBOM through Sigstore
+- **Attested releases.** Every production deploy packages the exact
+  `dist/client/` it shipped with an SBOM and attests both through Sigstore. A
+  signed version tag runs `release.yml`, which publishes those files for the
+  tagged commit without rebuilding
   ([`.github/workflows/release.yml`](../.github/workflows/release.yml)); `gh
   attestation verify` checks a release against this repository's workflow.
 - **Pinned tooling.** GitHub Actions are pinned to immutable commit SHAs,
