@@ -1,7 +1,7 @@
 // Build-time values shared by every browser-test entry point, so Playwright's
 // own build and the PREBUILT one (`mise run browser`, CI) serve the same artifact.
 import os from 'node:os';
-import type { ReporterDescription } from '@playwright/test';
+import type { PlaywrightTestConfig, ReporterDescription } from '@playwright/test';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 
 export const browserTestEnv = Object.freeze({
@@ -33,8 +33,27 @@ export function suiteArtifacts(suite: string): { outputDir: string; reporter: Re
   };
 }
 
-// The local Worker runtime the edge suite serves the build through.
-export const edgeRuntime = Object.freeze({ port: 8788 });
+// The production build, served by `astro preview` through the Cloudflare adapter's local Worker
+// runtime. It builds first unless PREBUILT is set, as `mise run browser` and CI do after their
+// one build.
+export function previewServer({ port, timeout }: { port: number; timeout: number }): NonNullable<PlaywrightTestConfig['webServer']> {
+  return {
+    cwd: webServerCwd,
+    command: [
+      process.env.PREBUILT ? null : 'node bin/build-static.ts',
+      // --ignore-lock keeps the server in the foreground Playwright owns (Astro
+      // detaches it when it detects an agent) and beside a running visual preview.
+      `astro preview --host 127.0.0.1 --port ${port} --ignore-lock`,
+    ].filter(Boolean).join(' && '),
+    url: `http://127.0.0.1:${port}`,
+    // A prebuilt artifact is served fresh, never by whatever holds the port.
+    reuseExistingServer: !process.env.CI && !process.env.PREBUILT,
+    timeout,
+    stdout: 'ignore',
+    stderr: 'pipe',
+    env: browserTestEnv,
+  };
+}
 
 // `node tests/browser-test-env.ts build` builds the artifact the browser and
 // edge suites serve, with the same values as their webServer builds. CI runs it

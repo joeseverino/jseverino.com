@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { browserTestEnv, suiteArtifacts, webServerCwd, workers } from './browser-test-env.ts';
+import { previewServer, suiteArtifacts, workers } from './browser-test-env.ts';
 
 const PORT = 4321;
 const mobile = /\.mobile\.spec\.ts$/;
@@ -52,21 +52,5 @@ export default defineConfig({
       testMatch: mobile,
     },
   ],
-  webServer: {
-    cwd: webServerCwd,
-    // PREBUILT is set by `mise run browser` after its one build, and by CI, which builds while system deps install.
-    command: [
-      process.env.PREBUILT ? null : 'node bin/build-static.ts',
-      // --ignore-lock keeps the server in the foreground Playwright owns (Astro
-      // detaches it when it detects an agent) and beside a running visual preview.
-      `npx astro preview --host 127.0.0.1 --port ${PORT} --ignore-lock`,
-    ].filter(Boolean).join(' && '),
-    url: `http://localhost:${PORT}`,
-    // A prebuilt artifact is served fresh, never by whatever holds the port.
-    reuseExistingServer: !process.env.CI && !process.env.PREBUILT,
-    timeout: 120_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-    env: browserTestEnv,
-  },
+  webServer: previewServer({ port: PORT, timeout: 120_000 }),
 });
