@@ -25,7 +25,6 @@ export interface Call {
   path: string;
   body?: unknown;
   saveAs?: Record<string, string>;
-  awaitBulk?: boolean;
 }
 
 export type Step = Call | { use: Record<string, string> };

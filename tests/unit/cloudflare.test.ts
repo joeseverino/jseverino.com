@@ -5,23 +5,31 @@ import path from 'node:path';
 import { main } from '../../bin/cloudflare.ts';
 import { loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib/cloudflare.ts';
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
+import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
+import { fromRoot, siteRoot } from '../../src/lib/site-root.ts';
 import { createCloudflareFake, type FakeState } from './helpers/cloudflare-fake.ts';
-import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
 
 const TOKEN = 'fixture-token-never-printed';
-const seed = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');
+const PREVIEW_HOSTS = `*${PREVIEW_HOST_SUFFIX}`;
+const fixture = read<FakeState>('tests/fixtures/cloudflare/live-drifted.json');
+// The fixture's preview app, pointed at the Worker's real preview wildcard.
+const previewApp = { ...fixture.accessApps[0], domain: PREVIEW_HOSTS };
+const seed: FakeState = { ...fixture, accessApps: [previewApp] };
 const schema = read<JsonSchema>('cloudflare/zone.schema.json');
 const desired = read<DesiredState>('cloudflare/zone.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
   $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, botManagement: true, firewall: true,
-  rateLimit: true, pagesDevRedirect: true, pages: true, schemaValidation: true, turnstile: true,
+  rateLimit: true, preview: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch, wait: async () => {} }));
+const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch }));
+const previewItem = async (accessApps: FakeState['accessApps']) => {
+  const { report } = await checkJson(createCloudflareFake({ ...seed, accessApps }, TOKEN));
+  return report.items.find((entry: { area: string; name: string }) => entry.area === 'preview' && entry.name === 'access policy');
+};
 
 describe('cloudflare/zone.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
@@ -36,12 +44,6 @@ describe('cloudflare/zone.json', () => {
   test('carries no account or zone id', () => {
     const text = fs.readFileSync(path.join(siteRoot, 'cloudflare/zone.json'), 'utf8');
     assert.doesNotMatch(text, /\b[0-9a-f]{32}\b/);
-  });
-
-  test('closes jseverino.pages.dev without touching preview subdomains', () => {
-    assert.equal(desired.pagesDevRedirect.include_subdomains, false);
-    assert.equal(desired.pagesDevRedirect.subpath_matching, true);
-    assert.equal(desired.pagesDevRedirect.preserve_query_string, true);
   });
 });
 
@@ -63,10 +65,8 @@ describe('check', () => {
     assert.equal(status('rule budget'), 'ok');
     assert.equal(status('jseverino-com-retired'), 'drift');
     assert.equal(status('jseverino-com-api-rate'), 'drift');
-    assert.equal(status('compatibility_date'), 'drift');
-    assert.equal(status('preview access'), 'ok');
-    assert.equal(status('preview branches'), 'drift');
-    assert.equal(status('preview access policy'), 'manual');
+    assert.equal(status('access policy'), 'manual');
+    assert.equal(status('domains'), 'drift');
     assert.equal(fake.writes().length, 0, 'check is read-only');
   });
 
@@ -81,25 +81,23 @@ describe('check', () => {
     assert.match(budget.note, /4 dashboard rules plus 2 in zone\.json/);
   });
 
-  test('a preview deployment without an Access app is a manual item', async () => {
-    const fake = createCloudflareFake({ ...seed, accessApps: [] }, TOKEN);
-    const { report } = await checkJson(fake);
-    const access = report.items.find((entry: { name: string }) => entry.name === 'preview access');
-    assert.equal(access.status, 'manual');
-    assert.match(access.note, /Enable access policy/);
+  test('previews without an Access app on their wildcard are a manual item', async () => {
+    for (const accessApps of [[], [{ ...previewApp, domain: '*.example.workers.dev' }]]) {
+      const access = await previewItem(accessApps);
+      assert.equal(access.status, 'manual');
+      assert.equal(access.have, 'absent');
+      assert.ok(access.note.includes(PREVIEW_HOSTS), 'the note names the wildcard to protect');
+    }
   });
 
   test('the preview Access app takes Service Auth policies only; apply never touches Access', async () => {
-    const policyItem = async (policies: AccessPolicy[]) => {
-      const accessApps = [{ ...seed.accessApps[0], policies }];
-      const fake = createCloudflareFake({ ...seed, accessApps }, TOKEN);
-      const { report } = await checkJson(fake);
-      return report.items.find((entry: { name: string }) => entry.name === 'preview access policy');
-    };
+    const policyItem = (policies: AccessPolicy[]) => previewItem([{ ...previewApp, policies }]);
     const ci = { name: 'ci', decision: 'non_identity', include: [{ service_token: { token_id: 'token-ci' } }] };
     const proxy = { name: 'proxy', decision: 'non_identity', include: [{ service_token: { token_id: 'token-proxy' } }] };
     assert.equal((await policyItem([ci, proxy])).status, 'ok');
     assert.equal((await policyItem([{ ...ci, include: [{ any_valid_service_token: {} }] }])).status, 'ok');
+    const { domain: _, ...byDestination } = previewApp;
+    assert.equal((await previewItem([{ ...byDestination, destinations: [{ uri: PREVIEW_HOSTS }], policies: [ci] }])).status, 'ok', 'an app naming the wildcard as a destination covers it');
 
     const human = await policyItem([ci, { name: 'me', decision: 'allow', include: [{ email: { email: 'me@example.com' } }] }]);
     assert.equal(human.status, 'manual');
@@ -129,8 +127,6 @@ describe('plan', () => {
     assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-api-method'));
     assert.ok(lines.includes('DELETE /zones/:zone/rulesets/ruleset-fw/rules/rule-retired'));
     assert.ok(lines.includes('PUT /zones/:zone/rulesets/phases/http_ratelimit/entrypoint'));
-    assert.ok(lines.includes('POST /accounts/:account/rules/lists'));
-    assert.ok(lines.includes('PUT /accounts/:account/rulesets/phases/http_request_redirect/entrypoint'));
     assert.ok(lines.includes('PUT /zones/:zone/schema_validation/settings/operations/:operation'));
     assert.ok(lines.includes('PUT /accounts/:account/challenges/widgets/:sitekey'));
     assert.equal(lines.filter((line: string) => line.includes('rule-incident')).length, 0, 'the unowned rule is never in a plan');
@@ -153,7 +149,7 @@ describe('apply --yes', () => {
 
     // Access is check-only, so its policy is the one item left, for a person.
     assert.equal(first.code, 1);
-    assert.deepEqual(first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')), ['still    pages preview access policy']);
+    assert.deepEqual(first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')), ['still    preview access policy']);
 
     const firewall = fake.state.rulesets['zones/http_request_firewall_custom']?.rules ?? [];
     assert.deepEqual(firewall.find((rule) => rule.ref === incident?.ref), incident);
@@ -162,7 +158,6 @@ describe('apply --yes', () => {
       ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`),
     ].sort());
     assert.equal(fake.state.settings.browser_cache_ttl?.value, 0);
-    assert.deepEqual(fake.state.project.source?.config, { owner: 'fixture', repo_name: 'site', production_branch: 'main', preview_deployment_setting: 'custom', preview_branch_includes: ['*'], preview_branch_excludes: ['dist'] }, 'the repository link survives the branch change');
     assert.deepEqual(
       Object.fromEntries(Object.entries(fake.state.botManagement).filter(([key]) => key in desired.botManagement || key.endsWith('_protection'))),
       { ...desired.botManagement, ai_bots_protection: 'block', content_bots_protection: 'block', crawler_protection: 'disabled' },
@@ -174,15 +169,6 @@ describe('apply --yes', () => {
     assert.equal(fake.state.operationSettings['op-contact']?.mitigation_action, 'block');
     assert.deepEqual(fake.state.widgets[0]?.domains, ['jseverino.com']);
     assert.equal(fake.state.widgets[0]?.mode, 'managed');
-    assert.deepEqual(fake.state.lists[0]?.items.map((entry) => entry.redirect), [{
-      source_url: 'jseverino.pages.dev/',
-      target_url: 'https://jseverino.com',
-      status_code: 301,
-      preserve_query_string: true,
-      subpath_matching: true,
-      preserve_path_suffix: true,
-      include_subdomains: false,
-    }]);
     assert.deepEqual(fake.state.schemas.map((entry) => [entry.name, entry.source]), [
       ['jseverino-com-contact', fs.readFileSync(path.join(siteRoot, desired.schemaValidation.file), 'utf8')],
     ]);

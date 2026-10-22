@@ -55,21 +55,8 @@
     "requests_per_period": 15,
     "mitigation_timeout": 10
   },
-  "pagesDevRedirect": {
-    "list": "jseverino_pages_dev",
-    "source_url": "jseverino.pages.dev/",
-    "target_url": "https://jseverino.com",
-    "status_code": 301,
-    "preserve_query_string": true,
-    "subpath_matching": true,
-    "preserve_path_suffix": true,
-    "include_subdomains": false
-  },
-  "pages": {
-    "project": "jseverino",
-    "previewAccess": true,
-    "previewPolicy": "service-auth-only",
-    "previewBranches": { "include": ["*"], "exclude": ["dist"] }
+  "preview": {
+    "accessPolicy": "service-auth-only"
   },
   "schemaValidation": {
     "name": "jseverino-com-contact",
