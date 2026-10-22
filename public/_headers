@@ -51,9 +51,6 @@
   Content-Type: application/octet-stream
   Cache-Control: public, max-age=300, must-revalidate
 
-/*.html
-  Cache-Control: public, max-age=300, must-revalidate
-
 # Keep the Worker's preview URLs (<alias or version>-<worker>.<account>.workers.dev)
 # out of search indexes; a host placeholder matches one label. The canonical
 # custom domain still indexes normally.
