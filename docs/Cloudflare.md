@@ -252,23 +252,19 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
    `mise exec -- wrangler secret put TURNSTILE_SECRET_KEY --name jseverino`,
    which deploys a new version carrying it.
 5. **The custom domain.** A Worker custom domain cannot be attached while the
-   hostname has another DNS record. While `jseverino.com` still points at the
-   Cloudflare Pages project, delete that record first (DNS → Records). Then
-   attach `jseverino.com` to the `jseverino` Worker (Workers & Pages →
-   `jseverino` → Settings → Domains & Routes → Add → Custom domain).
+   hostname has another DNS record, so delete any record for `jseverino.com`
+   first (DNS → Records). Then attach `jseverino.com` to the `jseverino`
+   Worker (Workers & Pages → `jseverino` → Settings → Domains & Routes → Add →
+   Custom domain).
 6. **The preview Access application.** Before CI's first preview, add the
    self-hosted Access application on `*-jseverino.severino.workers.dev` with a
-   Service Auth policy for each token ([Preview access](#preview-access)).
+   Service Auth policy for each token ([Preview access](#preview-access)). Its
+   only destination is that public hostname: with an empty private IP row in
+   the form, the dashboard refuses to save it.
 7. **The zone.** Run `mise run cloudflare apply --yes`, then
    `mise run cloudflare check` until it exits 0, its `preview` and `turnstile`
    rows included ([Running check, plan, and apply](#running-check-plan-and-apply)).
 8. **Verify.** Run `mise run deploy:verify` against production.
-
-Once production verifies on the Worker, delete what Pages left behind: the
-Pages project itself, the Access application that guarded its previews, and the
-`jseverino_pages_dev` Bulk Redirect list and the rule that used it. `mise run
-cloudflare check` passing afterwards confirms nothing it manages depended on
-them.
 
 ## Worker configuration
 
