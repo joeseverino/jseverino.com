@@ -16,7 +16,7 @@ function build(branch: string): string {
   runSync(
     process.execPath,
     [cli, 'cloudflare', '--dir', dir, '--live', SITE_ORIGIN, '--brand', SITE.owner],
-    { cwd: siteRoot, env: { CF_PAGES: '1', CF_PAGES_BRANCH: branch } },
+    { cwd: siteRoot, env: { WORKERS_CI: '1', WORKERS_CI_BRANCH: branch } },
   );
   return dir;
 }
@@ -36,7 +36,7 @@ try {
   console.log('ok       preview wrapped; main unchanged');
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error('fix: the sitedrift wrapper belongs on preview branches and never on main; check the sitedrift step in bin/build-static.ts');
+  console.error('fix: the sitedrift wrapper belongs on preview branches and never on main; check the sitedrift step in bin/wrap-preview.ts, and that the build itself never wraps');
   process.exitCode = 1;
 } finally {
   fs.rmSync(preview, { recursive: true, force: true });

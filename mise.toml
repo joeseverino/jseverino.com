@@ -188,7 +188,7 @@ run = "git diff --check"
 # ------------------------------------------------------------------- build
 
 [tasks.build]
-description = "The production build: astro build, the sitedrift wrap, the CSP hashes"
+description = "The build every deploy ships: astro build, then the CSP hashes"
 timeout = "10m"
 run = "node bin/build-static.ts"
 
@@ -313,6 +313,10 @@ raw_args = true
 quiet = true
 output = "interleave"
 run = "node bin/github.ts"
+
+[tasks."preview:wrap"]
+description = "Turn the finished build into a branch preview: the sitedrift review viewer over every page, then the CSP filled again to cover it (the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH)"
+run = "node bin/wrap-preview.ts"
 
 [tasks.preview]
 description = "Serve the build through the local Worker runtime: _headers, redirects, the 404 page and the API routes, as production serves them"

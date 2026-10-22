@@ -8,6 +8,9 @@ export const astroOutDir = 'dist';
 export const buildOutDir = `${astroOutDir}/client`;
 // The deploy config the adapter writes, which `wrangler dev` and `wrangler deploy` read.
 export const workerConfig = `${astroOutDir}/server/wrangler.json`;
+// What bin/build-csp.ts filled in: the _headers template and each page's hashes. Outside the
+// served tree, so it is never deployed, and a later run on the same build (the preview wrap) starts from it.
+export const cspRecord = `${astroOutDir}/csp.json`;
 
 // The most recent build output, or null when nothing has been built.
 export function resolveBuiltDir(siteRoot: string): string | null {

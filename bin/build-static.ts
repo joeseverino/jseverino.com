@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// `astro build`, then wrap the output with sitedrift. The output dir comes from
+// `astro build`, then the CSP hashes. The build is the same for production and a preview:
+// a preview deploy wraps it afterwards (bin/wrap-preview.ts). The output dir comes from
 // src/lib/build-output.ts (shared with astro.config.ts).
 import path from 'node:path';
-import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
-import { buildOutDir } from '../src/lib/build-output.ts';
+import { buildOutDir, cspRecord } from '../src/lib/build-output.ts';
 import { permittedContentRoot } from '../src/lib/content-root.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
-import { CSP_INLINE_MARKER } from '../src/lib/csp.ts';
+import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
+import { buildCsp } from './build-csp.ts';
 import { jsonLogs, spawnResult } from './lib/run.ts';
 import { cli, flag } from './lib/args.ts';
 
@@ -21,11 +21,9 @@ if (contentOverride !== undefined && !permittedContentRoot(contentOverride, site
   process.exit(2);
 }
 const astro = path.join(siteRoot, 'node_modules/.bin/astro');
-const sitedrift = path.join(siteRoot, 'node_modules/sitedrift/sitedrift.mjs');
 
-// Cloudflare Pages builds without mise, so the build sets the variable mise's [env] sets everywhere else.
 function run(command: string, args: readonly string[]): void {
-  const { code } = spawnResult(command, args, { cwd: siteRoot, stdio: 'inherit', env: { ASTRO_TELEMETRY_DISABLED: '1' } });
+  const { code } = spawnResult(command, args, { cwd: siteRoot, stdio: 'inherit' });
   if (code !== 0) process.exit(code);
 }
 
@@ -36,14 +34,4 @@ run(process.execPath, [path.join(siteRoot, 'bin/make-content-index.ts')]);
 // nothing to say, and Astro prints a fatal error and its stack at any level.
 const logs = jsonLogs() ? ['--json'] : values.timings ? [] : ['--silent'];
 run(astro, ['build', ...logs, ...(values.timings ? ['--timings'] : [])]);
-run(process.execPath, [
-  sitedrift,
-  'cloudflare',
-  '--dir', buildOutDir,
-  '--live', SITE_ORIGIN,
-  '--brand', SITE.owner,
-  // Every inline tag the viewer writes carries the marker build-csp hashes.
-  '--nonce', CSP_INLINE_MARKER,
-]);
-// After the wrap, so the CSP hashes the pages as served.
-run(process.execPath, [path.join(siteRoot, 'bin/build-csp.ts')]);
+await buildCsp(fromRoot(buildOutDir), fromRoot(cspRecord));

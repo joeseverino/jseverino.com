@@ -1,15 +1,11 @@
-#!/usr/bin/env node
 // Hash each page's inline script and stylesheet, fail on any the policy would not
-// cover, and write the CSP into the built _headers. Runs after the sitedrift wrap.
-//
-//   node bin/build-csp.ts [dist-dir]
+// cover, and write the CSP into the built _headers. The build runs it once; a preview
+// deploy runs it again on the same build after the sitedrift wrap.
 import fs from 'node:fs';
 import path from 'node:path';
 import { cspReportUri } from '../src/lib/site-config.ts';
-import { htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../src/lib/csp.ts';
-import { buildOutDir } from '../src/lib/build-output.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
-import { cli } from './lib/args.ts';
+import { hashSource, htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../src/lib/csp.ts';
+import { readJson } from '../src/lib/json.ts';
 
 // Cloudflare ignores a _headers line past this length.
 const MAX_HEADER_LINE = 2000;
@@ -17,22 +13,50 @@ const MAX_HASHES = 4;
 
 export const PLACEHOLDERS = ['__CSP__', '__CSP_CONTACT__', '__TT_REPORT_ONLY__', '__REPORTING_ENDPOINTS__'] as const;
 
-export async function buildCsp(distDir: string): Promise<{ pages: number; scriptHashes: string[]; styleHashes: string[] }> {
-  const files = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' })
-    .filter((file) => file.endsWith('.html'))
-    .map((file) => path.join(distDir, file));
-  const scans = await Promise.all(files.map(async (file) => ({ file, scan: await scanInline(fs.readFileSync(file, 'utf8')) })));
+interface PageRecord {
+  // The page as this run wrote it.
+  digest: string;
+  scriptHashes: string[];
+  styleHashes: string[];
+}
 
-  const problems = scans.flatMap(({ file, scan }) => scan.problems.map((problem) => `${path.relative(distDir, file)}: ${problem}`));
+// What a run filled in, so a later run on the same build starts from the same template and pages.
+interface CspRecord {
+  headers: string;
+  pages: Record<string, PageRecord>;
+}
+
+export async function buildCsp(distDir: string, recordFile: string): Promise<{ pages: number; scriptHashes: string[]; styleHashes: string[] }> {
+  const headersFile = path.join(distDir, '_headers');
+  const current = fs.readFileSync(headersFile, 'utf8');
+  // A _headers that still has a placeholder is fresh from the build; a filled one was filled from the record.
+  const previous = PLACEHOLDERS.some((placeholder) => current.includes(placeholder)) || !fs.existsSync(recordFile)
+    ? undefined
+    : readJson<CspRecord>(recordFile);
+
+  const files = fs.readdirSync(distDir, { recursive: true, encoding: 'utf8' }).filter((file) => file.endsWith('.html'));
+  const scans = await Promise.all(files.map(async (file) => {
+    const source = fs.readFileSync(path.join(distDir, file), 'utf8');
+    // A page the last run wrote, unchanged since, has lost the marker a new scan would look for,
+    // so it keeps the hashes found in it then.
+    const kept = previous?.pages[file];
+    const scan = kept?.digest === await hashSource(source)
+      ? { html: source, scriptHashes: kept.scriptHashes, styleHashes: kept.styleHashes, problems: [] }
+      : await scanInline(source);
+    return { file, scan, digest: await hashSource(scan.html) };
+  }));
+
+  const problems = scans.flatMap(({ file, scan }) => scan.problems.map((problem) => `${file}: ${problem}`));
   if (problems.length > 0) {
     throw new Error(`markup the Content Security Policy would block:\n  ${problems.join('\n  ')}`);
   }
+
   const scriptHashes = [...new Set(scans.flatMap(({ scan }) => scan.scriptHashes))];
   const styleHashes = [...new Set(scans.flatMap(({ scan }) => scan.styleHashes))];
   if (scriptHashes.length > MAX_HASHES || styleHashes.length > MAX_HASHES) {
     throw new Error(`${scriptHashes.length} inline script and ${styleHashes.length} inline style hashes; expected at most ${MAX_HASHES} of each`);
   }
-  for (const { file, scan } of scans) fs.writeFileSync(file, scan.html);
+  for (const { file, scan } of scans) fs.writeFileSync(path.join(distDir, file), scan.html);
 
   const input = { scriptHashes, styleHashes, reportUri: cspReportUri };
   const values: Record<(typeof PLACEHOLDERS)[number], string> = {
@@ -42,8 +66,8 @@ export async function buildCsp(distDir: string): Promise<{ pages: number; script
     __REPORTING_ENDPOINTS__: reportingEndpoints(cspReportUri),
   };
 
-  const headersFile = path.join(distDir, '_headers');
-  let headers = fs.readFileSync(headersFile, 'utf8');
+  const template = previous?.headers ?? current;
+  let headers = template;
   for (const placeholder of PLACEHOLDERS) {
     if (!headers.includes(placeholder)) throw new Error(`_headers has no ${placeholder} placeholder`);
     headers = headers.replaceAll(placeholder, values[placeholder]);
@@ -52,11 +76,9 @@ export async function buildCsp(distDir: string): Promise<{ pages: number; script
   if (long) throw new Error(`a _headers line is ${long.length} characters; Cloudflare reads at most ${MAX_HEADER_LINE}`);
   fs.writeFileSync(headersFile, headers);
 
-  return { pages: files.length, scriptHashes, styleHashes };
-}
+  const pages = Object.fromEntries(scans.map(({ file, scan, digest }) =>
+    [file, { digest, scriptHashes: scan.scriptHashes, styleHashes: scan.styleHashes }]));
+  fs.writeFileSync(recordFile, JSON.stringify({ headers: template, pages } satisfies CspRecord));
 
-if (import.meta.main) {
-  const { positionals } = cli({ usage: 'usage: node bin/build-csp.ts [dist-dir]', allowPositionals: true });
-  const { pages, scriptHashes, styleHashes } = await buildCsp(path.resolve(siteRoot, positionals[0] ?? buildOutDir));
-  console.log(`csp: ${pages} pages, ${scriptHashes.length} inline script and ${styleHashes.length} inline style hash(es) written to _headers`);
+  return { pages: files.length, scriptHashes, styleHashes };
 }
