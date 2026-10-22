@@ -85,6 +85,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
 | Logic | [CSP policy](#the-unit-layer) | `tests/unit/csp.test.ts` | The policy module builds the build-time hash policy (no nonce, `'unsafe-inline'`, or `'unsafe-eval'`, `report-to` plus the `report-uri` fallback Firefox needs, enforced Trusted Types except on `/contact/`) and the preview proxy's request-time policy (a nonce for the injected bridge script plus a hash per inline script and style). |
 | Logic | [content sync](#the-unit-layer) | `tests/unit/content-sync.test.ts` | Reference collection (titles, angle brackets, link definitions, raw `src=`), the path-traversal guard, the writeup chrome strip, image masters (width cap, no metadata, cached), the writer's declared outputs and prune, the document rows, the education join, and a whole sync and `--check` (MDX compile issues included) against a temp vault. |
+| Logic | [content contract](#the-unit-layer) | `tests/unit/content-contract.test.ts` | [`contracts/content.v1.json`](../contracts/content.v1.json) drives every consumer: the public projection emits exactly its public fields, the writeup store accepts exactly its editable ones, and `site manage` lists the rest as the contract marks them. |
 | Logic | [publish/land orchestration](#the-unit-layer) | `tests/unit/site-orchestration.test.ts` | `site publish` and `site land` against a bare git remote and a stubbed `gh`: a stale checkout is irrelevant, nothing-changed stops, gh failures are fatal, `--dry-run` leaves no branch, and only declared outputs are committed. |
 | Logic | [manage TUI](#the-unit-layer) | `tests/unit/site-manage.test.ts` | `site manage` refuses to start without a terminal, and its frames render the featured order, drafts, and gate issues. |
 | Logic | [process harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
@@ -122,13 +123,6 @@ Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`
 ### `check-contrast.ts`
 Expands the ordered [`src/styles/base.css`](../src/styles/base.css) entrypoint, reads its `--color-*` declarations, computes relative luminance for the primary text/background pairings, and asserts each ratio meets WCAG 2.1 AA normal text (>= 4.5:1). New intentional pairs are registered in the `pairs` array.
 
-### `check-contract-parity.ts`
-Asserts that [`contracts/content.v1.json`](../contracts/content.v1.json) is the
-one content-field definition and that its generated Astro schema, the public
-projection, the writeup store's editable fields, and the `site manage` TUI agree
-on the same fingerprint. Any stale projection or reintroduced hardcoded field
-table fails the gate.
-
 ### `check-no-drafts.ts`
 No document under `src/content` carries `published: false`. The committed snapshot is what deploys; `site dev --drafts` writes drafts to the gitignored `.cache/drafts` overlay instead.
 
@@ -142,7 +136,7 @@ Tokenizes every tracked `.ts` file with the TypeScript scanner (so formatting an
 
 ### `check-functions-parity.ts`
 
-The deploy-side sibling of the content parity check. It verifies that
+It verifies that
 [`contracts/contact.v1.json`](../contracts/contact.v1.json) exactly projects to
 [`contracts/contact.openapi.json`](../contracts/contact.openapi.json), that the Pages Function
 consumes the contract instead of restating its fields and limits, and that

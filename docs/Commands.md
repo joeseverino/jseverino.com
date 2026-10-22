@@ -339,12 +339,6 @@ No run of 30+ identical tokens over 3+ lines appears twice in the tracked TypeSc
 
 The contact contract projects exactly to the API Shield schema, the handler consumes the contract, and every INSERT names only columns cloudflare/d1.sql defines
 
-## `checks:parity`
-
-- **Usage:** `checks:parity`
-
-The Astro writeup schema, the public projection, the writeup store, and the `site manage` TUI all read their fields from the content contract
-
 ## `checks:patch`
 
 - **Usage:** `checks:patch`

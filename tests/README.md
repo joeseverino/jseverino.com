@@ -44,8 +44,8 @@ failing gate prints its own fix.
 ## The layers
 
 **[`tests/audits/`](./audits/)**: Node checks with no browser. Before the build
-they cover the signed `security.txt`, color contrast, contract parity on both
-boundaries (vault/Zod/MCP and handler/OpenAPI/D1), strict types, duplicated
+they cover the signed `security.txt`, color contrast, the contact
+contract's handler/OpenAPI/D1 parity, strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page weight, structural HTML
 (including unprocessed directives), Functions routing, and SEO metadata.
