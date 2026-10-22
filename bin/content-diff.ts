@@ -1,9 +1,5 @@
-#!/usr/bin/env node
 // Classify a content change by slug: writeups published, edited, or removed, pages
 // touched, generated files riding along. Shared by publish and land.
-//
-//   node bin/content-diff.ts [--range <a..b> | --cached] [--json]
-import { cli, flag } from './lib/args.ts';
 import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
@@ -26,17 +22,16 @@ export interface ContentDiff {
 
 export interface DiffOptions {
   cwd?: string;
-  range?: string | undefined;
-  cached?: boolean | undefined;
+  range?: string;
 }
 
-const STATUS: Record<string, FileStatus> = { A: 'A', D: 'D', '?': 'A' };
+const STATUS: Record<string, FileStatus> = { A: 'A', D: 'D' };
 
-// [{ status: 'A'|'M'|'D', path }] for a range (`a..b`, `a...b`), the index
-// (cached), or the working tree against HEAD including untracked files.
-function changedFiles({ cwd = siteRoot, range, cached = false }: DiffOptions = {}): ChangedFile[] {
-  if (range || cached) {
-    const out = runSync('git', ['diff', '--name-status', '--no-renames', '-z', ...(cached || !range ? ['--cached'] : [range]), '--', ...CONTENT_PATHS], { cwd, raw: true });
+// The files a range (`a..b`, `a...b`) changes, or without one, the working
+// tree against HEAD including untracked files.
+function changedFiles({ cwd = siteRoot, range }: DiffOptions = {}): ChangedFile[] {
+  if (range) {
+    const out = runSync('git', ['diff', '--name-status', '--no-renames', '-z', range, '--', ...CONTENT_PATHS], { cwd, raw: true });
     const fields = out.split('\0').filter(Boolean);
     const files: ChangedFile[] = [];
     for (let i = 0; i + 1 < fields.length; i += 2) files.push({ status: STATUS[fields[i]?.[0] ?? ''] ?? 'M', path: fields[i + 1] ?? '' });
@@ -116,18 +111,4 @@ export function commitMessage(diff: ContentDiff): string {
   const subject = `content: ${groups.map(([, label, , slugs]) => `${label} ${slugs.length}`).join(', ')}`;
   const body = groups.map(([, , heading, slugs]) => `${heading}:\n${slugs.map((slug) => `  - ${slug}`).join('\n')}`).join('\n\n');
   return `${subject}\n\n${body}`;
-}
-
-if (import.meta.main) {
-  const { values } = cli({
-    usage: 'usage: node bin/content-diff.ts [--range <a..b> | --cached] [--json]',
-    options: {
-      range: { type: 'string' },
-      cached: flag,
-      json: flag,
-    },
-  });
-  const diff = contentDiff({ range: values.range, cached: values.cached });
-  if (values.json) console.log(JSON.stringify(diff, null, 2));
-  else console.log(`${describeDiff(diff)}\n\n${commitMessage(diff)}`);
 }

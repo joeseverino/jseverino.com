@@ -429,12 +429,6 @@ Start the local dev server
 
 Build HEAD and the working tree; show what changed in the shipped site
 
-## `diff:content`
-
-- **Usage:** `diff:content`
-
-What a content change means by slug: published, edited, removed, pages, generated (`--json`)
-
 ## `github`
 
 - **Usage:** `github`

@@ -277,13 +277,6 @@ description = "Build HEAD and the working tree; show what changed in the shipped
 raw_args = true
 run = "node bin/diff-build.ts"
 
-[tasks."diff:content"]
-description = "What a content change means by slug: published, edited, removed, pages, generated (`--json`)"
-raw_args = true
-quiet = true
-output = "interleave"
-run = "node bin/content-diff.ts"
-
 [tasks."deploy:verify"]
 description = "After the merge deploys, from a residential IP: verify remote CI and the live production deploy"
 raw_args = true
