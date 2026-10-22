@@ -66,9 +66,7 @@ async function draftFor(slug: string): Promise<Draft> {
   if (!cover) return { slug, error: 'cover_image not set' };
   if (fm.cover_alt) return { slug, skipped: 'cover_alt already set' };
 
-  const imagePath = cover.startsWith('./')
-    ? path.join(writeupsRoot, slug, cover.slice(2))
-    : path.join(writeupsRoot, slug, cover);
+  const imagePath = path.join(writeupsRoot, slug, cover);
   if (!fs.existsSync(imagePath)) {
     return { slug, error: `cover image not found: ${imagePath}` };
   }

@@ -1,7 +1,7 @@
-// JSON with object keys sorted at every depth, so equal data always serializes identically.
+// A fingerprint of JSON data, serialized with object keys sorted at every depth so equal data always hashes identically.
 import crypto from 'node:crypto';
 
-export function canonicalJson(value: unknown): string {
+function canonicalJson(value: unknown): string {
   const sort = (item: unknown): unknown => {
     if (Array.isArray(item)) return item.map(sort);
     if (item && typeof item === 'object') {
