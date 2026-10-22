@@ -1,44 +1,52 @@
+// The wrap the preview deploy runs (bin/wrap-preview.ts) puts the sitedrift viewer on a preview
+// branch's build and fills its CSP again, and leaves main's build as it was.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { runSync } from '../../bin/lib/run.ts';
-import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
+import { wrapPreview } from '../../bin/wrap-preview.ts';
+import { buildOutDir, workerConfig } from '../../src/lib/build-output.ts';
+import { CSP_INLINE_MARKER } from '../../src/lib/csp.ts';
+import { SITE } from '../../src/lib/site-config.ts';
 
-const cli = path.join(siteRoot, 'node_modules/sitedrift/sitedrift.mjs');
-const original = '<!doctype html><html><head><title>Preview guard</title></head><body><h1>Original Astro output</h1></body></html>';
+const original = `<!doctype html><html><head><title>Preview guard</title><script nonce="${CSP_INLINE_MARKER}">theme()</script></head><body><h1>Original Astro output</h1></body></html>`;
+const template = '/*\n  Content-Security-Policy: __CSP__\n  Reporting-Endpoints: __REPORTING_ENDPOINTS__\n\n/contact/*\n  Content-Security-Policy: __CSP_CONTACT__\n  Content-Security-Policy-Report-Only: __TT_REPORT_ONLY__\n';
 
-function build(branch: string): string {
+async function build(branch: string): Promise<{ root: string; installed: boolean }> {
   const label = branch.replace(/[^a-z0-9-]+/gi, '-');
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `jseverino-sitedrift-${label}-`));
-  fs.writeFileSync(path.join(dir, 'index.html'), original);
-  runSync(
-    process.execPath,
-    [cli, 'cloudflare', '--dir', dir, '--live', SITE_ORIGIN, '--brand', SITE.owner],
-    { cwd: siteRoot, env: { WORKERS_CI: '1', WORKERS_CI_BRANCH: branch } },
-  );
-  return dir;
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), `jseverino-sitedrift-${label}-`));
+  const client = path.join(root, buildOutDir);
+  fs.mkdirSync(client, { recursive: true });
+  fs.writeFileSync(path.join(client, 'index.html'), original);
+  fs.writeFileSync(path.join(client, '_headers'), template);
+  fs.mkdirSync(path.dirname(path.join(root, workerConfig)), { recursive: true });
+  fs.writeFileSync(path.join(root, workerConfig), JSON.stringify({ name: SITE.worker, main: 'entry.mjs', assets: { directory: '../client' } }));
+  const { installed } = await wrapPreview(root, { WORKERS_CI: '1', WORKERS_CI_BRANCH: branch });
+  return { root, installed };
 }
 
-const preview = build('preview/sitedrift-guard');
-const production = build('main');
+const preview = await build('preview/sitedrift-guard');
+const production = await build('main');
+const client = (root: string, ...file: string[]) => path.join(root, buildOutDir, ...file);
 
 try {
-  assert.equal(fs.existsSync(path.join(preview, '__sitedrift', 'config.json')), true);
-  assert.equal(fs.existsSync(path.join(preview, '__sitedrift_source', 'index.html.txt')), true);
-  assert.match(fs.readFileSync(path.join(preview, 'index.html'), 'utf8'), /"hosted":true/);
+  assert.equal(preview.installed, true);
+  assert.equal(fs.existsSync(client(preview.root, '__sitedrift', 'config.json')), true);
+  assert.equal(fs.existsSync(client(preview.root, '__sitedrift_source', 'index.html.txt')), true);
+  assert.match(fs.readFileSync(client(preview.root, 'index.html'), 'utf8'), /"hosted":true/);
+  assert.doesNotMatch(fs.readFileSync(client(preview.root, '_headers'), 'utf8'), /__CSP__/);
 
-  assert.equal(fs.existsSync(path.join(production, '__sitedrift')), false);
-  assert.equal(fs.existsSync(path.join(production, '__sitedrift_source')), false);
-  assert.equal(fs.readFileSync(path.join(production, 'index.html'), 'utf8'), original);
+  assert.equal(production.installed, false);
+  assert.equal(fs.existsSync(client(production.root, '__sitedrift')), false);
+  assert.equal(fs.existsSync(client(production.root, '__sitedrift_source')), false);
+  assert.equal(fs.readFileSync(client(production.root, 'index.html'), 'utf8'), original);
 
-  console.log('ok       preview wrapped; main unchanged');
+  console.log('ok       the deploy\'s wrap covers preview branches and leaves main unchanged');
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
-  console.error('fix: the sitedrift wrapper belongs on preview branches and never on main; check the sitedrift step in bin/wrap-preview.ts, and that the build itself never wraps');
+  console.error('fix: the sitedrift wrap belongs on preview branches and never on main; check bin/wrap-preview.ts, and that the build itself never wraps');
   process.exitCode = 1;
 } finally {
-  fs.rmSync(preview, { recursive: true, force: true });
-  fs.rmSync(production, { recursive: true, force: true });
+  fs.rmSync(preview.root, { recursive: true, force: true });
+  fs.rmSync(production.root, { recursive: true, force: true });
 }
