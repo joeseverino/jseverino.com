@@ -7,8 +7,7 @@ How the repository is built, checked, and shipped. Every script is in
 ## Setup
 
 [mise](https://mise.jdx.dev) installs the toolchain: Node, pinned in
-[`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock),
-and the same version in [`.nvmrc`](../.nvmrc), which Cloudflare Pages reads.
+[`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock).
 npm comes from `package.json`'s `packageManager`. `mise install` installs the
 tools. The npm packages come from mise's `[deps.npm]` provider: before any
 `mise run` or `mise exec`, it runs `npm ci` from the lockfile whenever
@@ -68,10 +67,21 @@ keyring containing only the committed WKD public keys. Unit-test Git
 repositories disable signing locally; production commit signing remains
 configured by the author.
 
-![Validation flow: local gates, the pull request with CI and preview verification, the merge, the production deploy and dist publish, and production verification](./diagrams/validation-flow.png)
+```mermaid
+flowchart TB
+    A["Source change"] --> B["mise run fast: checks:*"] --> C["mise run check: checks:*, the build, built:*"] --> D["Push the branch, open a PR"]
+    G["mise run browser: browser:*"] -.-> C
+    D --> CI
+    CI -- "site artifact" --> P["deploy: preview version, wrapped and verified"]
+    P --> M["Merge: site land"]
+    M --> MCI["ci on main's tip"] --> V["deploy: upload a version, verify it at its preview URL"]
+    V --> L["versions deploy @100%, attest, dist"] --> F["mise run deploy:verify"]
 
-<sup>Diagram source: [`docs/diagrams/validation-flow.mmd`](./diagrams/validation-flow.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+    subgraph CI ["ci on the PR, independent jobs"]
+        direction LR
+        CB["build"] ~~~ CE["e2e"] ~~~ CV["visual"] ~~~ CG["edge"]
+    end
+```
 
 ## Test policy
 
@@ -95,10 +105,9 @@ steps.
 | Workflow | Trigger | Does | Verified result |
 | --- | --- | --- | --- |
 | [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | Four independent jobs, no job waiting on another, so a failure always reports on its own required check. `build` runs `mise run check`: the static gates (workflow lint and audit included), then the gates on the same artifact `build-static` ships. The `playwright` matrix runs each `browser:*` task in its own leg: `e2e` (cross-browser, three workers), `visual` (macOS Chromium baselines of the synthetic content in `tests/fixtures/content`, so a publish never moves one), and `edge`, which serves the build through the Cloudflare runtime with `astro preview` and asserts what only that runtime produces: the hash CSP covering every inline script and style, one identical policy on every request, the `_headers` security and cache rules, a real 404, the contact handler's refusals, and byte-exact `security.txt`, all before anything deploys. The Linux legs install browser system packages while the site builds, then serve that build. | Green checks on the committed tree and a summary on every browser leg. |
-| [`deploy`](../.github/workflows/deploy.yml) | Cloudflare Pages check-run completed; `ci` completed | `verify` runs the default branch's `deploy-verify --origin` against the deployment's own `*.pages.dev` URL (headers, inline-code hash coverage, cache rules, every sitemap route, 404, contact refusal, `security.txt`) with the Access service token and no branch code; `record` logs each verified deployment as a GitHub `production` or `preview` deployment; `report` keeps one pull-request comment current with the CI summaries and the deployment result, whichever finishes first. | One updating PR comment; a verification summary for every deployment. |
-| [`dist`](../.github/workflows/deploy.yml) | push to `main` | Builds the site and commits the output to the `dist` branch ([Dist Branch](./Dist-Branch.md)); the only job with `contents: write`. | A `deploy: <sha>` commit on `dist`, or none when the output is unchanged. |
+| [`deploy`](../.github/workflows/deploy.yml) | `ci` completed successfully | Ships `ci`'s `site` artifact with the default branch's code. A pull request's build is wrapped in sitedrift and uploaded as an Access-protected preview version; `main`'s tip is uploaded as a version, verified at its preview URL by `deploy-verify --origin` (headers, inline-code hash coverage, cache rules, every sitemap route, 404, contact refusal, `security.txt`), then deployed to all traffic, attested, and committed to the [`dist` branch](./Dist-Branch.md). `report` keeps one pull-request comment current. [Architecture](./Architecture.md#14-release-gate) has each job. | A `deploy` check on every shipped commit; the `release-<sha>` artifact for each production deploy. |
 | [`dependency review`](../.github/workflows/dependency-review.yml) | pull request | Audits manifest package updates for high-severity advisories, passing at once when no manifest changed; comments only when it blocks. | Pull request status validation. |
-| [`release`](../.github/workflows/release.yml) | `v*` tag | Builds the tagged commit (the tag is signed by convention; the trigger does not verify it), packages the build output and a CycloneDX SBOM, and attests both through Sigstore. | A GitHub release whose files verify with `gh attestation verify`. |
+| [`release`](../.github/workflows/release.yml) | `v*` tag | Publishes the tagged commit's production deploy: the `release-<sha>` artifact the `deploy` workflow attested (the archive production served, its CycloneDX SBOM, and both Sigstore bundles). Nothing is rebuilt, so a tag on a commit `main` never deployed fails. The tag is signed by convention; the trigger does not verify it. | A GitHub release whose files verify with `gh attestation verify`. |
 | [`scorecard`](../.github/workflows/scorecard.yml) | weekly, branch-protection change | OpenSSF Scorecard supply-chain posture, uploaded as SARIF to code scanning. | A code scanning alert per check with findings. |
 | [`link check`](../.github/workflows/link-check.yml) | docs changes, weekly | Lychee audits repository documentation links and public content links separately (self-domain links excluded; 403/429/999 accepted as answered), writes both reports into the job summary, and uploads them. | Connectivity report artifacts. |
 | [`lighthouse`](../.github/workflows/lighthouse.yml) | weekly | `bin/lighthouse-check.ts` runs the lockfile's Lighthouse (the same generation PageSpeed Insights scores with) against the live URLs in `tests/lighthouse.json`. | Fails below accessibility 95 or SEO 90; warns below performance 85 or best practices 70. Scores in the job summary, reports as artifacts. Best practices reads in the 70s from any client Cloudflare distrusts, because Bot Fight Mode's injected detection script uses deprecated browser APIs; PageSpeed Insights is not served that script and reports 100. |
@@ -117,6 +126,6 @@ checkouts) is in [Security](./Security.md#supply-chain-and-ci).
 Docs change in the same commit as the code they describe. `mise run checks:doc-links`
 (lychee, offline) fails when a relative link, anchor, or image points at
 nothing, and `mise run checks:docs` when a `mise run` reference or a
-backticked repo path does, or a doc runs an npm script other than the build. Both read only tracked files. The task list in
+backticked repo path does, or a doc runs an npm script. Both read only tracked files. The task list in
 `docs/Commands.md` is generated:
 `mise generate task-docs --inject --output docs/Commands.md`.

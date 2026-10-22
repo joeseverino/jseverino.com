@@ -8,16 +8,16 @@ Mac [dashed] {
 
 GitHub [dashed] {
   Repository [icon: code, note: public snapshot]
+  Actions [icon: cpu, note: gates · deploy]
   dist branch [icon: file, note: built site]
 }
 
 Cloudflare [dashed] {
-  Pages build [icon: cpu, note: Astro · AVIF]
-  Edge [icon: globe, anchor, note: CSP · Functions]
+  Worker [icon: globe, anchor, note: assets · API]
 }
 
 Obsidian vault > Content sync
 Content sync > Repository: pull request
-Repository > Pages build
-Repository > dist branch
-Pages build > Edge
+Repository > Actions
+Actions > Worker
+Actions > dist branch

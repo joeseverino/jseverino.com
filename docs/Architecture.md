@@ -4,19 +4,33 @@ How `jseverino.com` is built: where data enters, what the build transforms, and 
 
 ## 1. System Shape
 
-The site is one Astro program on the Cloudflare Workers adapter: every page is prerendered into a static asset, and a few on-demand routes run in the same Worker.
+The site is one Astro program on the Cloudflare Workers adapter: every page is prerendered into a static asset, and a few on-demand routes run in the same Worker. GitHub Actions builds it once, gates that build, and deploys it as the `jseverino` Worker ([§14](#14-release-gate)).
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. Cloudflare builds and serves it at the edge, and GitHub Actions publishes the built site to the dist branch](./diagrams/system-shape.png)
+![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. GitHub Actions builds and gates it, deploys it as a Cloudflare Worker, and commits the shipped site to the dist branch](./diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
 
 The request-time execution and data boundary is at the edge:
 
-![Pages are served from static assets; API requests pass the WAF, rate limit, and schema checks at the edge before the Worker writes to D1](./diagrams/edge-request-flow.png)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Browser
+    participant Edge as Cloudflare edge
+    participant Assets as Static assets
+    participant Worker as jseverino Worker
+    participant D1
 
-<sup>Diagram source: [`docs/diagrams/edge-request-flow.mmd`](./diagrams/edge-request-flow.mmd),
-pre-rendered with [`diagram`](https://github.com/joeseverino/tools/blob/main/bin/diagram).</sup>
+    Client->>Edge: GET a page
+    Edge->>Assets: Every path but /api/* and /__sitedrift/*
+    Assets-->>Client: HTML under the _headers hash CSP, the Worker never starts
+    Client->>Edge: POST /api/contact or /api/csp-report
+    Note over Edge: WAF, rate limit, schema validation
+    Edge->>Worker: run_worker_first
+    Worker->>D1: Parameterized SQL write
+    Worker-->>Client: JSON with the security headers
+```
 
 The public serving layer is static. Every HTML page is a prerendered asset the assets layer serves without starting the Worker. [`wrangler.jsonc`](../wrangler.jsonc) sets `run_worker_first` to `/api/*` and `/__sitedrift/*`, so the only request-time code is the on-demand Astro routes under those paths:
 
@@ -286,10 +300,10 @@ The homepage canonical must be `/`, not `/home/`. The page loader preserves expl
 
 [`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without the Worker. The assets layer applies `_headers` to static assets only; [`src/middleware.ts`](../src/middleware.ts) gives the responses the Worker renders the `/*` rule's security headers, with a policy that has no hashes.
 
-[`bin/build-csp.ts`](../bin/build-csp.ts) runs from [`bin/build-static.ts`](../bin/build-static.ts) after the sitedrift preview wrap:
+[`bin/build-csp.ts`](../bin/build-csp.ts) runs from [`bin/build-static.ts`](../bin/build-static.ts) after `astro build`, and again from [`bin/wrap-preview.ts`](../bin/wrap-preview.ts) after a preview's sitedrift wrap. It keeps the unfilled `_headers` as `dist/_headers.template`, outside the served tree, so the second run fills the same template:
 
 1. Scans every built HTML page for inline scripts and styles.
-2. SHA-256 hashes the one inline theme-bootstrap script (an `is:inline` script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro), marked at build time with `nonce="__CSP_INLINE__"`, a marker `build-csp` strips from the output) and the one inlined stylesheet, which is identical on every page and so yields one hash. The stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request.
+2. SHA-256 hashes the one inline theme-bootstrap script (an `is:inline` script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro), marked with `nonce="__CSP_INLINE__"`, which stays in the page and grants nothing, since the policy names no nonce) and the one inlined stylesheet, which is identical on every page and so yields one hash. The stylesheet is inlined at build time (`build.inlineStylesheets: 'always'`), so first paint never waits on a stylesheet request.
 3. **Fails the build** on any inline script or style the site did not emit, on any external script outside same-origin, `https://challenges.cloudflare.com`, and `https://static.cloudflareinsights.com`, on more than 4 inline script hashes or 4 style hashes, and on any `_headers` line over 2000 characters.
 4. Writes the finished policy into `dist/client/_headers` in place of the `__CSP__`, `__CSP_CONTACT__`, `__TT_REPORT_ONLY__`, and `__REPORTING_ENDPOINTS__` placeholders.
 
@@ -353,15 +367,15 @@ The action is **Block**, the only one offered: non-compliant payloads are reject
 
 ## 11. Build Output
 
-`npm run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
+`mise run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
 
-[`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs `astro build`, then `sitedrift cloudflare`. On
-non-production branches, sitedrift preserves the generated pages and
-installs its DEV-versus-LIVE review shell, and the build marks the inline
-script on the viewer it wrote for hashing. On `main`, it exits without changing
-Astro's output. See [Deployment Preview Review](./Deployment-Preview-Review.md).
+[`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs
+`astro build`, then fills the CSP. The build is the same for production and a
+preview: the deploy wraps a preview afterwards (`mise run preview:wrap`), and
+production ships the build unchanged. See
+[Deployment Preview Review](./Deployment-Preview-Review.md).
 `astro build` runs with `--silent`, so a passing build prints only the content
-index, sitedrift and CSP lines, while a failing one still prints Astro's error
+index and CSP lines, while a failing one still prints Astro's error
 and stack; `--timings` keeps Astro's log for its summary. Under `site --json`
 (`SITE_JSON=1`), `astro build` uses Astro's JSON logger;
 [Site CLI](./Site-CLI.md) has the detail.
@@ -391,6 +405,7 @@ dist/client/                     # the static site the assets layer serves
 └── sitemap-index.xml           # @astrojs/sitemap output
 
 dist/server/                    # the Worker and its deploy config, wrangler.json
+dist/_headers.template          # the unfilled _headers, for the preview wrap's second CSP run
 ```
 
 **Fingerprinting.** Astro hashes every artifact under `_astro/` by content,
@@ -445,7 +460,7 @@ Favicons, social cards, and HD brand marks are all generated from one place:
 
 - `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, an `optionalDependency` pinned to a published, provenance-attested npm version.
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
-- `mise run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`.
+- `mise run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`. `mise run checks:contracts` runs `make:icons --check`, which fails when the committed vector marks (`favicon.svg`, `mark.svg`, `wordmark-caps.svg`) differ from what the engine renders.
 
 The design tokens follow the same model. `severino-brand/brand/tokens.json` is the sole editable source; the versioned package validates and derives its semantic web contract once. `mise run sync:tokens` serializes that contract into [`src/styles/tokens.css`](../src/styles/tokens.css) and `src/lib/brand.ts`; `mise run sync:tokens --check` is the non-mutating drift gate `mise run checks:contracts` runs. [`src/styles/base.css`](../src/styles/base.css) remains the single ordered stylesheet entrypoint, and deployment uses committed projections rather than an external checkout.
 
@@ -545,12 +560,13 @@ mise runs the gates of a phase side by side, prints each one's output whole unde
 
 [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) is the post-deploy production
 gate. It requires a clean `main` checkout whose HEAD matches `origin/main`,
-waits for the exact commit's GitHub and Cloudflare checks, validates
-live security headers and the production sitedrift
+waits for the exact commit's required checks, the `deploy` check included,
+validates live security headers and the production sitedrift
 guard, checks every live sitemap URL, and requires zero open CodeQL
-alerts. `--origin <url>` verifies a single Cloudflare Pages deployment instead
-(the served responses only; HSTS is set at the zone and absent on
-`*.pages.dev`), and `--slug <writeup>` verifies one writeup after a publish.
+alerts. `--origin <url>` verifies one Worker version at its preview URL instead
+(the served responses only; HSTS is set at the zone, and workers.dev is
+outside it), `--preview` marks a branch preview, and `--slug <writeup>`
+verifies one writeup after a publish.
 
 GitHub Actions provide the remote quality gate:
 
@@ -558,8 +574,9 @@ GitHub Actions provide the remote quality gate:
   another, so a failure always reports as a failure on its own required check
   (a job skipped because an upstream job failed would report as passing).
   `build` runs `mise run check`: the static gates, then the gates on the
-  artifact `bin/build-static.ts` produces, the same one Cloudflare ships, so
-  the committed tree must pass everything the local gate passes. The `playwright` matrix: `e2e` serves the build with `astro preview`
+  artifact `bin/build-static.ts` produces, then uploads that artifact as
+  `site` for the `deploy` workflow, so what ships is the build that passed
+  every gate. The `playwright` matrix: `e2e` serves the build with `astro preview`
   and runs functional checks across Chromium, Firefox, and WebKit on three
   workers; `visual` builds the synthetic content in `tests/fixtures/content`
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
@@ -574,24 +591,40 @@ GitHub Actions provide the remote quality gate:
   cache. Each suite writes its own `test-results/<suite>/` and
   `playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
-- [`deploy`](../.github/workflows/deploy.yml) starts when Cloudflare Pages
-  reports its `Cloudflare Pages` check-run complete; nothing polls, so a
-  queued Cloudflare build cannot turn a job red. With that check
-  required in the ruleset ([Release Checklist](./Release-Checklist.md)), a
-  pull request cannot merge before its preview deploys. `verify` reads the per-deployment URL
-  (`https://<hash>.<project>.pages.dev`) from the check-run and runs
-  `deploy-verify --origin` against it. The job holds the Access service token
-  (`CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET`), so it runs the verifier
-  from the default branch and takes only the deployment URL from the event;
-  the token is sent only to the project's `pages.dev` host. That host is
-  outside the zone, so zone-level bot challenges do not apply. `record` runs
-  after a passing `verify` and declares the `production` or `preview`
-  environment, which is what makes GitHub list the deployment; it is a record,
-  not a gate, and the environments have no required reviewers. `report` keeps one comment per pull
-  request current: the completed `ci` run replaces its section and the
-  deployment replaces its own, in whichever order they finish. The release
-  confirmation against the production hostname stays `mise run deploy:verify`
-  from a residential IP.
+- [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run
+  completes successfully and ships that run's `site` artifact; it runs the
+  default branch's code and never checks out a pull request. Each job opens a
+  `deploy` check-run on the commit it ships
+  ([`.github/actions/deploy-check`](../.github/actions/deploy-check/action.yml))
+  and closes it with the outcome, and the ruleset requires that check, so a
+  pull request cannot merge before its preview is verified.
+  - `preview` (pull requests): `mise run preview:wrap` refuses a deploy
+    config the adapter would not write, wraps the build in the sitedrift
+    viewer and fills the CSP again; `wrangler versions upload` uploads it as a
+    version with the branch's alias, and `deploy-verify --origin --preview`
+    checks it at its preview URL. A version takes no production traffic.
+  - `tip` (pushes to `main`): `ci` runs can finish out of order, so only
+    `main`'s current tip deploys. A superseded commit's `deploy` check passes
+    at once and names the commit that carries it live.
+  - `production`: uploads the build as a version, runs
+    `deploy-verify --origin` at that version's preview URL, then
+    `wrangler versions deploy <version>@100%`. A version that fails
+    verification never takes traffic.
+  - `attest`: packages `dist/client/` deterministically with an SBOM and
+    issues Sigstore provenance and SBOM attestations, kept as the
+    `release-<sha>` artifact that [`release`](../.github/workflows/release.yml)
+    publishes for a tag.
+  - `dist`: commits the attested archive to the [`dist` branch](./Dist-Branch.md).
+  - `report`: keeps one comment per pull request current with `ci`'s job
+    summaries and the preview's.
+
+  The Cloudflare token (`CLOUDFLARE_API_TOKEN`) lives in the `production`
+  environment, and the Access service token
+  (`CF_ACCESS_CLIENT_ID`/`CF_ACCESS_CLIENT_SECRET`) goes only to hosts on the
+  Worker's preview suffix (`PREVIEW_HOST_SUFFIX`). Preview URLs are outside the
+  zone, so zone-level bot challenges do not apply. The release confirmation
+  against the production hostname stays `mise run deploy:verify` from a
+  residential IP.
 
 The remaining workflows, with what each verifies, are in the
 [continuous integration table](./Development.md#continuous-integration).
@@ -603,8 +636,7 @@ Dependency updates come from Renovate, which runs outside this repository;
 [`renovate.json`](../renovate.json) carries only this repository's rules. Every pin short of a major (npm, GitHub Actions digests,
 the mise tools) moves in one weekly pull request after a 7-day
 release age; Astro and its integrations, `sitedrift` (bundled into the
-production edge functions), Node (one update across `mise.toml`, `mise.lock`
-and `.nvmrc`), and each major come on their own, and the held majors in
+Worker), and each major come on their own, and the held majors in
 [Dependencies](./Dependencies.md#deliberate-holds) are disabled. Renovate reads
 GitHub's vulnerability alerts and OSV and opens a fix at once, outside the
 schedule and the release-age hold. Its commits go through GitHub's API, so

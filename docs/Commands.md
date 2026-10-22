@@ -7,9 +7,7 @@ name go to its script unchanged: `mise run site validate`,
 first; the [full list](#every-task) at the end is generated from each task's
 `description` in `mise.toml` by
 `mise generate task-docs --inject --output docs/Commands.md`, and the
-`checks:docs-sync` gate refuses a stale copy. The one npm script left is
-`npm run build`, the build command Cloudflare Pages runs with only Node and
-npm.
+`checks:docs-sync` gate refuses a stale copy.
 
 ## Gates
 
@@ -99,7 +97,7 @@ script.
 **`mise run deploy:verify`**: run after a production deploy, from a residential IP;
 Cloudflare Bot Fight Mode challenges GitHub-hosted runners, so CI does not run
 it. Confirms the local HEAD matches origin, waits for every required check
-(build, e2e, visual, edge, Cloudflare Pages) to pass,
+(build, e2e, visual, edge, deploy) to pass,
 then probes the live site: security headers on `/` and a deep writeup page
 picked from the live sitemap, every sitemap URL returns 200, the preview proxy
 is absent in production, the live home page's inline script and stylesheet are covered by the
@@ -107,14 +105,16 @@ CSP's hashes (`inline`), an unknown route returns a real 404, `POST
 /api/contact` without a Turnstile token is refused, the contact form carries a
 Turnstile site key, the live `security.txt`
 matches the committed file, and zero open CodeQL alerts. Every check
-runs even after an earlier one fails. `--origin <url>` verifies one
-Cloudflare Pages deployment instead (what `deploy.yml` runs), `--preview`
-marks a branch preview, and `--slug <writeup>` checks one writeup.
+runs even after an earlier one fails. `--origin <url>` verifies one Worker
+version at its preview URL instead (what `deploy.yml` runs before a version
+takes traffic), `--preview` marks a branch preview, and `--slug <writeup>`
+checks one writeup.
 
-**`mise run build`**: the production build alone (`bin/build-static.ts`):
-`astro build`, the sitedrift wrap, then the CSP hashes. Cloudflare Pages runs
-the same file as `npm run build`, with only Node and npm, so it needs nothing
-mise installs; `npm run build -- --timings` profiles the Astro build.
+**`mise run build`**: the build every deploy ships (`bin/build-static.ts`):
+`astro build`, then the CSP hashes. CI builds once and the `deploy` workflow
+ships that artifact, so production and a preview start from the same bytes;
+a preview is wrapped afterwards by `mise run preview:wrap`.
+`mise run build --timings` profiles the Astro build.
 
 ## Occasional, in detail
 
