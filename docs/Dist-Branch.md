@@ -1,9 +1,9 @@
 # Dist Branch
 
 The `dist` branch holds the HTML, CSS, scripts, and images production serves, one
-commit per deploy that changed them. It makes the served site readable in the
-repository: `git log -p dist` shows what each deploy changed in the rendered pages.
-The branch is generated; nothing is edited on it.
+commit per deploy that changed them, so anyone can browse the site's served
+source on GitHub without building it. `git log -p dist` shows what each deploy
+changed in the rendered pages. The branch is generated; nothing is edited on it.
 
 ## How it is published
 
