@@ -280,7 +280,7 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 - **Usage:** `checks:contracts`
 
-Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS) matches what its script derives from the canonical source
+Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source
 
 ## `checks:css-lint`
 
@@ -310,7 +310,7 @@ Every relative link, image, and #anchor (GitHub heading slugs) in the engineerin
 
 - **Usage:** `checks:docs`
 
-Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script other than `npm run build`
+Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script
 
 ## `checks:docs-sync`
 
