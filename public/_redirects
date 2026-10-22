@@ -1,9 +1,8 @@
-# Cloudflare Pages redirects: https://developers.cloudflare.com/pages/configuration/redirects/
+# Static-asset redirects: https://developers.cloudflare.com/workers/static-assets/redirects/
 # Format:  <source>  <destination>  [<status>]
 #
-# Note: Pages only supports 3xx (redirect) and 200 (rewrite) statuses here.
-# To make a path return 404, leave it unmatched and rely on the
-# `404.html` file at the site root, which Pages auto-serves with status 404.
+# To make a path return 404, leave it unmatched: wrangler.jsonc's
+# `not_found_handling: "404-page"` serves the root 404.html with status 404.
 
 # The old /category/portfolio/ archive is /portfolio/.
 /category/portfolio/   /portfolio/                       301

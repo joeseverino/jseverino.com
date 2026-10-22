@@ -6,8 +6,11 @@
   "name": "jseverino",
   // The edge suite, `astro dev` and production all run this date.
   "compatibility_date": "2026-05-19",
-  // Served only on the custom domain, never on a workers.dev alias.
+  // Production is served only on the custom domain, never on a workers.dev alias.
   "workers_dev": false,
+  // Each uploaded version and each pull request's alias gets a workers.dev preview URL,
+  // behind Access (src/lib/site-config.ts names the host).
+  "preview_urls": true,
   "observability": { "enabled": true },
   "assets": {
     // The preview proxy reads the build through this binding.
