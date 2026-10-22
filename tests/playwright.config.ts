@@ -7,6 +7,11 @@ const single = /\.single\.spec\.ts$/;
 // The visual suite renders fixture content; tests/playwright.visual.config.ts owns it.
 const visualSpec = /visual\.spec\.ts$/;
 
+// The preview serves production's headers. Cross-Origin-Opener-Policy moves Firefox's first
+// navigation into a new browsing context group, which drops Playwright's emulated color scheme,
+// so the page never sees dark mode; tests/edge asserts the header itself.
+const firefox = { launchOptions: { firefoxUserPrefs: { 'browser.tabs.remote.useCrossOriginOpenerPolicy': false } } };
+
 export default defineConfig({
   testDir: './playwright',
   fullyParallel: true,
@@ -33,12 +38,12 @@ export default defineConfig({
     },
     {
       name: 'firefox-desktop',
-      use: { ...devices['Desktop Firefox'] },
+      use: { ...devices['Desktop Firefox'], ...firefox },
       testIgnore: [mobile, single, visualSpec],
     },
     {
       name: 'firefox-mobile',
-      use: { ...devices['Desktop Firefox'], viewport: { width: 393, height: 851 } },
+      use: { ...devices['Desktop Firefox'], ...firefox, viewport: { width: 393, height: 851 } },
       testMatch: mobile,
     },
     {
