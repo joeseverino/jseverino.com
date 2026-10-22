@@ -257,6 +257,9 @@ jobs:
   # four files.
   attest:
     needs: production
+    # Only a head in this repository: production's tip check already implies it, and CodeQL
+    # reads this comparison as the guard on checking out a workflow_run's commit.
+    if: github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -324,6 +327,9 @@ jobs:
   # the repository. No Cloudflare secret; the one write is the commit.
   dist:
     needs: attest
+    # Only a head in this repository: production's tip check already implies it, and CodeQL
+    # reads this comparison as the guard on checking out a workflow_run's commit.
+    if: github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
