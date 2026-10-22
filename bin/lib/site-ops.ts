@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DetailedError } from './detailed-error.ts';
+import { INSTALL_PACKAGES } from './preflight.ts';
 import { spawnResult, type SpawnResult } from './run.ts';
 import { cspReportUri } from '../../src/lib/edge-expectations.ts';
 import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
@@ -55,7 +56,7 @@ const sqlString = (value: string): string => `'${value.replaceAll("'", "''")}'`;
 // Run the repo's own wrangler, failing clearly when it is not installed.
 function runWrangler(config: SiteOpsConfig, args: string[], timeout: number): SpawnResult {
   const bin = path.join(config.siteRepo, 'node_modules', '.bin', 'wrangler');
-  if (!fs.existsSync(bin)) throw new SiteOpsError(`wrangler not installed in ${config.siteRepo}; run npm ci there`);
+  if (!fs.existsSync(bin)) throw new SiteOpsError(`wrangler not installed in ${config.siteRepo}; run ${INSTALL_PACKAGES} there`);
   return config.run(bin, args, { cwd: config.siteRepo, timeout });
 }
 

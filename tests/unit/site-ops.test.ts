@@ -6,6 +6,7 @@ import {
   SiteOpsError, abbreviateName, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, preview,
   redactEmail, type Runner, type SiteOpsConfig,
 } from '../../bin/lib/site-ops.ts';
+import { INSTALL_PACKAGES } from '../../bin/lib/preflight.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('site-ops-');
@@ -91,7 +92,7 @@ describe('contact submissions', () => {
   test('a missing wrangler names the fix', () => {
     const cfg = config();
     fs.rmSync(path.join(cfg.siteRepo, 'node_modules'), { recursive: true });
-    assert.throws(() => contactSubmissions(cfg), /npm ci/);
+    assert.throws(() => contactSubmissions(cfg), (error: Error) => error.message.includes(INSTALL_PACKAGES));
   });
 });
 

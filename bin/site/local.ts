@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { draftsOverlay } from '../lib/cache.ts';
-import { lockfileDrift, preflight } from '../lib/preflight.ts';
+import { INSTALL_PACKAGES, lockfileDrift, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run } from '../lib/run.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { buildOutDir, resolveBuiltDir } from '../../src/lib/build-output.ts';
@@ -71,7 +71,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
   out.step('repo', `${root} on ${result.branch ?? 'detached HEAD'}${dirty ? `, ${dirty} uncommitted` : ', clean'}`);
   const upstream = `origin/${DEFAULT_BRANCH}`;
   out.step(DEFAULT_BRANCH, ahead === null ? `${upstream} unknown (fetch first)` : `${ahead} ahead, ${behind} behind ${upstream} (as of the last fetch)`);
-  (result.deps.ok ? out.step : out.warn)('deps', result.deps.ok ? 'match package-lock.json' : `stale: run npm ci (${drift.length} differences)`);
+  (result.deps.ok ? out.step : out.warn)('deps', result.deps.ok ? 'match package-lock.json' : `stale: run ${INSTALL_PACKAGES} (${drift.length} differences)`);
   (result.vault.ok ? out.step : out.warn)('vault', result.vault.ok ? vault : `not found at ${vault}`);
   out.step('build', result.built ? `${buildOutDir}/ present` : 'not built');
   if (result.contentPrs === null) out.warn('prs', 'gh unavailable; open content PRs unknown');
@@ -79,7 +79,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
   else for (const pr of result.contentPrs) out.step('pr', `#${pr.number} ${pr.title} ${pr.url}`);
   return {
     ...result,
-    next: !result.deps.ok ? 'npm ci' : result.contentPrs?.[0] ? `site land ${result.contentPrs[0].number}` : null,
+    next: !result.deps.ok ? INSTALL_PACKAGES : result.contentPrs?.[0] ? `site land ${result.contentPrs[0].number}` : null,
   };
 }
 

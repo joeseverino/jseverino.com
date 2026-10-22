@@ -1,0 +1,14 @@
+#!/bin/sh
+#MISE description="The task list in docs/Commands.md matches these tasks (fix: `mise generate task-docs --inject --output docs/Commands.md`, then commit it)"
+set -eu
+
+mise generate task-docs --inject --output docs/Commands.md
+
+# git diff exits 1 for a difference and above 1 when it cannot run; only a
+# difference earns the fix.
+status=0
+git diff --exit-code -- docs/Commands.md || status=$?
+if [ "$status" -eq 1 ]; then
+  echo 'fix: the task list in docs/Commands.md was stale and is now regenerated; review and commit it' >&2
+fi
+exit "$status"

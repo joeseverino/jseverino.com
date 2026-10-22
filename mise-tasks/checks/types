@@ -1,0 +1,8 @@
+#!/bin/sh
+#MISE description="Every TypeScript file compiles under one strict program, and functions/ again under the Workers lib"
+set -eu
+
+# astro sync writes the generated types under .astro/ that tsc reads.
+astro sync --silent
+tsc -p .
+tsc -p functions

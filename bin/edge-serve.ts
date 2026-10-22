@@ -10,6 +10,7 @@ import { buildOutDir } from '../src/lib/build-output.ts';
 import { edgeRuntime } from '../tests/browser-test-env.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
+import { INSTALL_PACKAGES } from './lib/preflight.ts';
 
 cli({ usage: 'usage: node bin/edge-serve.ts\n\nServes the build with wrangler pages dev on the browser-test port.' });
 
@@ -32,7 +33,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.on(signal, () => child.kill(signal));
 }
 child.on('error', (error) => {
-  console.error(`edge-serve: cannot start wrangler (${error.message}); run npm ci`);
+  console.error(`edge-serve: cannot start wrangler (${error.message}); run ${INSTALL_PACKAGES}`);
   process.exit(2);
 });
 child.on('exit', (code, signal) => process.exit(code ?? (signal ? 1 : 0)));

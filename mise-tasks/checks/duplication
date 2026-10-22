@@ -1,0 +1,32 @@
+#!/bin/sh
+#MISE description="jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere"
+set -eu
+
+# jscpd takes one threshold per run: the code bar, then the looser bar specs
+# get for their repeated setup. Generated projections, fixture content, and
+# import lines repeat by design.
+ignore='**/src/generated/**,**/functions/generated/**,tests/fixtures/content/**,**/*.d.ts'
+imports='(?m)^import\s[^;]*;,(?m)^export\s+(?:type\s+)?(?:\*|\{[^}]*\})\s+from\s[^;]*;'
+
+reports=$(mktemp -d)
+trap 'rm -rf "$reports"' EXIT
+
+# jscpd exits 1 for a clone and for a scan it could not run alike, so it runs
+# without --exit-code: a failed scan stops here with jscpd's own error, and only
+# the clone count in its JSON report earns the fix.
+clones=0
+scan() {
+  jscpd --format typescript --no-tips --fail-on-empty --ignore-pattern "$imports" \
+    --reporters console,json --output "$reports/$1" \
+    --min-tokens "$1" --min-lines "$2" --ignore "$ignore$3" .
+  found=$(node -p 'require(process.argv[1]).statistics.total.clones' "$reports/$1/jscpd-report.json")
+  clones=$((clones + found))
+}
+
+scan 30 3 ',tests/unit/**,tests/playwright/**,tests/edge/**'
+scan 40 4 ''
+
+if [ "$clones" -gt 0 ]; then
+  echo 'fix: extract one shared primitive beside the copies (bin/lib, src/lib, functions/lib, or a test helper) and import it from each' >&2
+  exit 1
+fi

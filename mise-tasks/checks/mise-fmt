@@ -1,0 +1,20 @@
+#!/bin/sh
+#MISE description="Every tracked mise config is as `mise fmt` writes it"
+set -eu
+
+# `mise fmt --check` also judges the untracked mise.local.toml, so each tracked
+# config goes through `mise fmt --stdin` instead.
+formatted=$(mktemp)
+trap 'rm -f "$formatted"' EXIT
+
+status=0
+for file in $(git ls-files -- 'mise.toml' 'mise.*.toml' '.mise.toml' '.mise.*.toml'); do
+  mise fmt --stdin <"$file" >"$formatted"
+  # diff exits 1 for a difference and 2 when it cannot compare.
+  diff -u --label "$file" --label "$file (formatted)" "$file" "$formatted" || status=$?
+  if [ "$status" -gt 1 ]; then exit "$status"; fi
+done
+if [ "$status" -eq 1 ]; then
+  echo 'fix: mise fmt, then commit the result' >&2
+fi
+exit "$status"

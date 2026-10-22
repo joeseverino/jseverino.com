@@ -4,8 +4,9 @@ import {
 } from '../lib/site-ops.ts';
 import { EXIT, SiteError, translate, type Output } from './cli.ts';
 import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
+import { INSTALL_PACKAGES } from '../lib/preflight.ts';
 
-const CLOUDFLARE_FIX = 'needs CLOUDFLARE_API_TOKEN in the environment (op run) and npm ci in the site repo';
+const CLOUDFLARE_FIX = `needs CLOUDFLARE_API_TOKEN in the environment (op run) and ${INSTALL_PACKAGES} in the site repo`;
 
 // fix names the remedy for a failure; usage, for a refused or malformed request.
 const guard = <T>(work: () => T | Promise<T>, { fix, usage }: { fix: string; usage?: string }): Promise<T> =>

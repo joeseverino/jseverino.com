@@ -14,8 +14,9 @@ npm.
 ## Gates
 
 `mise install` installs the pinned toolchain (`mise.toml`, checksums in
-`mise.lock`), then the npm packages from the lockfile (`mise run deps`, which
-skips itself while `node_modules` matches the lockfile). A gate is a task
+`mise.lock`). Every `mise run` first installs the npm packages from the
+lockfile when `package.json` or `package-lock.json` changed (`[deps.npm]`;
+the `--no-deps` flag skips it). A gate is a task
 named `<job>:<gate>`: `checks:*` before a build, `built:*` against the build
 in `dist/`, `browser:*` in a browser. Each aggregate runs its job collect-all
 and names every gate that failed; a failing gate prints its own fix. CI runs
@@ -184,8 +185,6 @@ reports direct dependency freshness locally. The publishing workflow
 <!-- mise-tasks -->
 ## `browser`
 
-- Depends: deps
-
 - **Usage:** `browser`
 
 Every browser gate, one at a time: one build with the test site key, then each suite
@@ -209,8 +208,6 @@ Served through `wrangler pages dev`: the CSP and its inline-tag hashes, the _hea
 Screenshots of the fixture build match the committed macOS Chromium baselines
 
 ## `build`
-
-- Depends: deps
 
 - **Usage:** `build`
 
@@ -265,8 +262,6 @@ Per-page HTML (150 KB), CSS (75 KB), and total JS (25 KB) stay within budget
 Does my change work: every static gate, the production build, then every gate on what it built (CI job build)
 
 ## `checks`
-
-- Depends: deps
 
 - **Usage:** `checks`
 - **Aliases:** `fast`
@@ -339,6 +334,12 @@ jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript
 
 The contact handler consumes the contact contract, and every INSERT names only columns cloudflare/d1.sql defines
 
+## `checks:mise-fmt`
+
+- **Usage:** `checks:mise-fmt`
+
+Every tracked mise config is as `mise fmt` writes it
+
 ## `checks:patch`
 
 - **Usage:** `checks:patch`
@@ -362,6 +363,12 @@ Node and npm pins agree; no secrets or build output tracked; component styles li
 - **Usage:** `checks:security-txt`
 
 security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key
+
+## `checks:tasks`
+
+- **Usage:** `checks:tasks`
+
+`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task
 
 ## `checks:types`
 
@@ -405,15 +412,7 @@ Remove build output (`dist/`) and the Astro and Vite caches; synced content is l
 
 After the merge deploys, from a residential IP: verify remote CI and the live production deploy
 
-## `deps`
-
-- **Usage:** `deps`
-
-Install the npm packages from package-lock.json; skipped while node_modules matches the lockfile
-
 ## `dev`
-
-- Depends: deps
 
 - **Usage:** `dev`
 
@@ -503,8 +502,6 @@ Serve the build through `wrangler pages dev` for by-hand checks (headers and fun
 Re-sign `public/.well-known/security.txt`
 
 ## `site`
-
-- Depends: deps
 
 - **Usage:** `site`
 

@@ -17,6 +17,11 @@ interface LockEntry {
 const lockPackages = (file: string): Record<string, LockEntry> =>
   readJson<{ packages?: Record<string, LockEntry> }>(file).packages ?? {};
 
+// The clean install from the lockfile (mise.toml [deps.npm]). --force because
+// the provider judges freshness by the lockfile's hash, while lockfileDrift
+// compares every installed package, so it can find drift the provider calls fresh.
+export const INSTALL_PACKAGES = 'mise deps install npm --force';
+
 // Installed packages that differ from the lockfile. npm's hidden lockfile
 // (node_modules/.package-lock.json) records what is installed; optional
 // packages for another platform are legitimately absent.
@@ -58,7 +63,7 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
     const drift = lockfileDrift(root);
     return drift.length === 0
       ? { ok: true, detail: 'node_modules matches package-lock.json' }
-      : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && npm ci` };
+      : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && ${INSTALL_PACKAGES}` };
   },
   async fetch({ root }) {
     const result = await run('git', ['fetch', '--quiet', 'origin', DEFAULT_BRANCH], { cwd: root, timeout: 60_000 });

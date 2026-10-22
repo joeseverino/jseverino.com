@@ -40,16 +40,11 @@ async function step(label: string, cmd: string, args: string[], options: RunOpti
   return result;
 }
 
-// The worktree shares the checkout's install when the lockfiles match.
-async function linkDependencies(root: string, worktree: string, out: Output): Promise<void> {
-  const lock = (dir: string): string => fs.readFileSync(path.join(dir, 'package-lock.json'), 'utf8');
-  if (lock(root) === lock(worktree) && fs.existsSync(path.join(root, 'node_modules'))) {
-    fs.symlinkSync(path.join(root, 'node_modules'), path.join(worktree, 'node_modules'), 'dir');
-    return;
-  }
-  out.step('deps', 'the branch has a different lockfile; installing in the worktree');
-  await step('npm ci', 'npm', ['ci', '--no-audit', '--no-fund'], { cwd: worktree, timeout: BUILD_TIMEOUT_MS });
-}
+// The worktree is this repository's own fresh checkout, so its mise.toml is
+// trusted for the run. Each stage runs through mise, so the first one installs
+// the worktree's own packages from its lockfile ([deps.npm]), and every stage
+// gets the branch's [env], the shared cache root included.
+const inWorktree = (worktree: string): RunOptions => ({ cwd: worktree, env: { MISE_TRUSTED_CONFIG_PATHS: worktree } });
 
 interface StageContext {
   root: string;
@@ -59,23 +54,18 @@ interface StageContext {
 }
 
 // The worktree's own sync (the branch's code), reporting the files it owns.
-async function syncInWorktree({ root, worktree, scratch }: StageContext): Promise<SyncReport> {
+async function syncInWorktree({ worktree, scratch }: StageContext): Promise<SyncReport> {
   const reportFile = path.join(scratch, 'sync-report.json');
-  await step('content sync', process.execPath, ['bin/sync-content.ts', '--report', reportFile], {
-    cwd: worktree,
-    env: { SITE_CACHE_DIR: path.join(root, '.cache') },
-    timeout: SYNC_TIMEOUT_MS,
-  });
+  await step('content sync', 'mise', ['run', 'sync:content', '--report', reportFile], { ...inWorktree(worktree), timeout: SYNC_TIMEOUT_MS });
   return readJson<SyncReport>(reportFile);
 }
 
 export type GateContext = Pick<StageContext, 'root' | 'worktree' | 'out'> & { full: boolean };
 
 // CI runs the full build and browser suites on the PR, so locally the static gates are enough;
-// --full also builds and runs the gates on the build (`mise run check`). The worktree is
-// this repository's own fresh checkout, so its mise.toml is trusted for the run.
+// --full also builds and runs the gates on the build (`mise run check`).
 async function gateInWorktree({ worktree, full, out }: GateContext): Promise<void> {
-  const options = { cwd: worktree, env: { MISE_TRUSTED_CONFIG_PATHS: worktree } };
+  const options = inWorktree(worktree);
   if (full) {
     await step('check', 'mise', ['run', 'check'], { ...options, timeout: GATE_TIMEOUT_MS });
     out.ok('gate', 'mise run check passed (--full)');
@@ -208,7 +198,6 @@ interface PublishRun {
 async function publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate }: PublishRun): Promise<PublishResult> {
   git(root, 'worktree', 'add', '--quiet', '--no-track', '-b', branch, worktree, start);
   out.step('branch', `${branch} from ${start} (temporary worktree)`);
-  await linkDependencies(root, worktree, out);
 
   const report = await sync({ root, worktree, scratch, out });
   const declared = new Set([...report.written, ...report.removed]);

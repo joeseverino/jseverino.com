@@ -40,7 +40,7 @@ export default defineConfig({
   trailingSlash: 'always',
   outDir,
   // Encoded images are cached by source and options, so one cache serves every
-  // checkout and survives npm ci; mise's [env] sets it.
+  // checkout and worktree; mise's [env] sets it under the repository's cache root.
   ...(process.env.ASTRO_CACHE_DIR && { cacheDir: process.env.ASTRO_CACHE_DIR }),
   devToolbar: {
     enabled: false,
