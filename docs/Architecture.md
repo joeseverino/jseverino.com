@@ -543,19 +543,19 @@ GitHub Actions provide the remote quality gate:
   `build` runs `mise run check`: the static gates, then the gates on the
   artifact `bin/build-static.ts` produces, then uploads that artifact as
   `site` for the `deploy` workflow, so what ships is the build that passed
-  every gate. The `playwright` matrix: `e2e` serves the build with `astro preview`
-  and runs functional checks across Chromium, Firefox, and WebKit on three
-  workers; `visual` builds the synthetic content in `tests/fixtures/content`
+  every gate. `e2e` serves the build with `astro preview` and runs functional
+  checks across Chromium, Firefox, and WebKit on three workers, inside
+  Playwright's image for the locked release, which carries the browsers and
+  their system packages, so the job installs none. The `playwright` matrix:
+  `visual` builds the synthetic content in `tests/fixtures/content`
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
   publish never moves a baseline; and `edge` serves the build through the
   Cloudflare runtime with `astro preview` and asserts what only that
   runtime produces: the build-time CSP (hash coverage of every inline script and style, the same policy on every request, the `/contact/` exemption), the
   `public/_headers` security and cache rules, a real 404, the contact
-  handler's refusals, and byte-exact `security.txt`. On Linux the browser
-  system packages install in the background while the site builds, and the
-  suite serves that build. Browser binaries are cached by Playwright version
-  rather than lockfile hash, so a dependency update's lockfile rewrite still hits the
-  cache. Each suite writes its own `test-results/<suite>/` and
+  handler's refusals, and byte-exact `security.txt`. Each suite serves a build
+  made in its own job with the test site key; `visual` downloads Chromium
+  while its build runs. Each suite writes its own `test-results/<suite>/` and
   `playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
 - [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run

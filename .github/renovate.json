@@ -44,6 +44,11 @@
       "groupName": "astro"
     },
     {
+      "description": "The e2e job runs in Playwright's image, whose browsers serve only the @playwright/test release of the same version, so the two move in one pull request, majors included.",
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "groupName": "playwright"
+    },
+    {
       "description": "sitedrift is bundled into the production edge functions, so it comes alone and is merged by hand.",
       "matchPackageNames": ["sitedrift"],
       "groupName": "sitedrift",

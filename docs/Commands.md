@@ -490,7 +490,7 @@ Commit a build directory to the `dist` branch (CI publishes it on every push to 
 
 - **Usage:** `setup:browsers`
 
-Install Playwright's browsers (BROWSERS, space-separated; CACHE_HIT=true installs only their system packages) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT
+Install Playwright's browsers and their system packages (BROWSERS, space-separated) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT
 
 ## `sign:security`
 

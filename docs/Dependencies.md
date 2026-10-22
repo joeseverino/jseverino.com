@@ -16,7 +16,9 @@ this repository's rules, each with a `description`:
   (the preset's own npm rule holds only three), then lands in one weekly pull
   request.
 - Astro and its `@astrojs/*` integrations move in a pull request of their own,
-  and so does `sitedrift`, which is bundled into the Worker.
+  and so does `sitedrift`, which is bundled into the Worker. `@playwright/test`
+  and the Playwright image the `e2e` job runs in move together, majors included,
+  since the image's browsers serve only the release of the same version.
 - Each major comes on its own, except the holds below, which are disabled.
 - Renovate's mise manager moves each mise tool, Node included, across
   `mise.toml` and `mise.lock` together.

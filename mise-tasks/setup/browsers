@@ -1,19 +1,14 @@
 #!/bin/sh
-#MISE description="Install Playwright's browsers (BROWSERS, space-separated; CACHE_HIT=true installs only their system packages) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT"
+#MISE description="Install Playwright's browsers and their system packages (BROWSERS, space-separated) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT"
 #MISE timeout="20m"
 set -eu
 
-# The install, mostly apt on Linux, runs in the background so the build does
-# not wait on it. Its output streams, so a stalled apt shows where it stopped.
+# The install runs in the background so the build does not wait on it. Its
+# output streams, so a stalled install shows where it stopped.
 pid=''
 if [ -n "${BROWSERS:-}" ]; then
-  if [ "${CACHE_HIT:-}" = true ]; then
-    set -- install-deps
-  else
-    set -- install --with-deps
-  fi
   # shellcheck disable=SC2086 # the browser list is space-separated
-  playwright "$@" $BROWSERS &
+  playwright install --with-deps $BROWSERS &
   pid=$!
 fi
 if [ "${PREBUILD:-}" = true ]; then
