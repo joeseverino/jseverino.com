@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      MISE_ENABLE_TOOLS: node
     outputs:
       url: ${{ steps.deployment.outputs.url }}
       environment: ${{ steps.deployment.outputs.environment }}

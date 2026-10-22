@@ -44,6 +44,9 @@ jobs:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+    # Node alone: the suites run Playwright and wrangler from the lockfile.
+    env:
+      MISE_ENABLE_TOOLS: node
     strategy:
       fail-fast: false
       matrix:

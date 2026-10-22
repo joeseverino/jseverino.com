@@ -14,6 +14,8 @@ jobs:
   check-expires:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    env:
+      MISE_ENABLE_TOOLS: node
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -23,5 +25,6 @@ jobs:
         with:
           install: 'false'
 
+      # The check imports no package, so nothing is installed for it.
       - name: Check security.txt Expires
-        run: mise run checks:security-txt
+        run: mise run --no-deps checks:security-txt

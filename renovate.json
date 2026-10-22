@@ -61,16 +61,6 @@
   ],
   "customManagers": [
     {
-      "description": "The mise release CI installs, which min_version decides; mise's own manager reads only the tools.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^mise\\.toml$/"],
-      "matchStrings": ["min_version = \"(?<currentValue>[^\"]+)\""],
-      "depNameTemplate": "jdx/mise",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver",
-      "extractVersionTemplate": "^v(?<version>.+)$"
-    },
-    {
       "description": "The Python packages the font task runs through uvx, pinned in the task itself.",
       "customType": "regex",
       "managerFilePatterns": ["/^mise-tasks/make/font$/"],
