@@ -38,7 +38,8 @@ export function createClient({ token, fetch }: ClientOptions) {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
+        // The version where code scanning default setup reports javascript-typescript alone, as its PATCH takes it.
+        'X-GitHub-Api-Version': '2026-03-10',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
       signal: AbortSignal.timeout(TIMEOUT_MS),

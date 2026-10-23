@@ -33,7 +33,7 @@ export function createGithubFake(seed: FakeState, token: string) {
     return empty();
   };
 
-  const routes: [string, RegExp, (id: string, body: Fields) => Response][] = [
+  const routes: [string, RegExp, (id: string, body: Fields, version: string) => Response][] = [
     ['GET', /^$/, () => json(state.repo)],
     ['PATCH', /^$/, (_id, body) => {
       const { security_and_analysis: analysis, ...fields } = body;
@@ -48,7 +48,12 @@ export function createGithubFake(seed: FakeState, token: string) {
     ['GET', /^\/private-vulnerability-reporting$/, () => json({ enabled: state.privateReporting })],
     ['PUT', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', true)],
     ['DELETE', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', false)],
-    ['GET', /^\/code-scanning\/default-setup$/, () => json(state.codeScanning)],
+    // API versions before 2026-03-10 also list javascript-typescript as its single-language aliases.
+    ['GET', /^\/code-scanning\/default-setup$/, (_id, _body, version) => {
+      const languages = (state.codeScanning.languages as string[]).flatMap((language) =>
+        language === 'javascript-typescript' && version < '2026-03-10' ? ['javascript', language, 'typescript'] : [language]);
+      return json({ ...state.codeScanning, languages });
+    }],
     // Enabling queues a first analysis: 202 with the run.
     ['PATCH', /^\/code-scanning\/default-setup$/, (_id, body) => (Object.assign(state.codeScanning, body), json({ run_id: 42, run_url: `${API_BASE}${REPO}/actions/runs/42` }, 202))],
     ['GET', /^\/actions\/permissions$/, () => json(state.permissions)],
@@ -85,7 +90,7 @@ export function createGithubFake(seed: FakeState, token: string) {
     const rest = path.slice(REPO.length);
     for (const [verb, pattern, handle] of routes) {
       const match = verb === method ? rest.match(pattern) : null;
-      if (match) return handle(match[1] ?? '', (body ?? {}) as Fields);
+      if (match) return handle(match[1] ?? '', (body ?? {}) as Fields, new Headers(init.headers).get('X-GitHub-Api-Version') ?? '');
     }
     throw new Error(`the fake has no route for ${method} ${path}`);
   }
