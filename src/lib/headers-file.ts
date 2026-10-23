@@ -29,7 +29,6 @@ export function workerHeaders(text: string): Headers {
   };
   const headers = new Headers();
   for (const line of parseHeaders(text).get('/*') ?? []) {
-    if (line.startsWith('!')) continue;
     const colon = line.indexOf(':');
     const value = line.slice(colon + 1).trim();
     headers.set(line.slice(0, colon).trim(), values[value] ?? value);

@@ -26,8 +26,8 @@ describe('the headers the Worker gives its own responses', () => {
     assert.match(headers['reporting-endpoints'] ?? '', /csp-endpoint=/);
   });
 
-  test('take only the /* rule, never a path rule or a detach', () => {
-    const only = headersToRecord(workerHeaders('/assets/*\n  Cache-Control: immutable\n/*\n  ! Access-Control-Allow-Origin\n  X-Test: 1\n'));
+  test('take only the /* rule, never a path rule', () => {
+    const only = headersToRecord(workerHeaders('/assets/*\n  Cache-Control: immutable\n/*\n  X-Test: 1\n'));
     assert.deepEqual(only, { 'x-test': '1' });
   });
 });

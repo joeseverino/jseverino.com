@@ -173,10 +173,9 @@ on every request.
 | `Permissions-Policy` | the deny list in [`public/_headers`](../public/_headers) | Denies every permission-gated browser feature the site does not use. |
 
 The cache rules per path are in [Architecture](./Architecture.md#cache-behavior).
-The asset rules and the global `/*` rule also strip any
-`Access-Control-Allow-Origin` an upstream layer might add, so responses carry
-no CORS headers (the site has no public cross-origin asset use). Preview URLs
-carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
+No response carries `Access-Control-Allow-Origin`, since nothing on the site is
+for another origin to read; the edge suite and `deploy:verify` fail on one.
+Preview URLs carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
 
 ### Preview review route
 

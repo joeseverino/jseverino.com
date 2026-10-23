@@ -94,7 +94,7 @@ test.describe('static serving', () => {
     const icon = await request.get(pathname);
     expect(icon.status()).toBe(200);
     expect(cacheRuleFindings(icon.headers(), pathname)).toEqual([]);
-    expect(staticHeaderFindings(icon.headers()).filter((finding) => !finding.startsWith('access-control'))).toEqual([]);
+    expect(staticHeaderFindings(icon.headers())).toEqual([]);
   });
 
   for (const prefix of ['assets', '_astro', '.well-known']) {

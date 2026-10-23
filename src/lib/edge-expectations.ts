@@ -60,11 +60,6 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   return findings;
 }
 
-interface FileHeaders {
-  set: Map<string, string>;
-  detached: Set<string>;
-}
-
 const headersFile = parseHeaders(fs.readFileSync(fromRoot('public/_headers'), 'utf8'));
 // bin/build-csp.ts fills these at build time; cspFindings checks what they become.
 const PLACEHOLDER = /^__[A-Z_]+__$/;
@@ -78,40 +73,34 @@ const rulePattern = (rule: string): RegExp =>
       .join('.*')}$`,
   );
 
-// Rules' lines merged as Cloudflare merges them: a repeated header joins with a comma, a detach drops it.
-function merged(rules: readonly (readonly string[])[]): FileHeaders {
+// Rules' lines merged as Cloudflare merges them: a repeated header joins with a comma. The one
+// detach, /contact/*'s policy, is cspFindings' to check, so a `!` line is skipped here.
+function merged(rules: readonly (readonly string[])[]): Map<string, string> {
   const set = new Map<string, string>();
-  const detached = new Set<string>();
-  for (const lines of rules) {
-    for (const line of lines) {
-      if (line.startsWith('!')) {
-        detached.add(line.slice(1).trim().toLowerCase());
-        continue;
-      }
-      const colon = line.indexOf(':');
-      const name = line.slice(0, colon).trim().toLowerCase();
-      const value = line.slice(colon + 1).trim();
-      set.set(name, set.has(name) ? `${set.get(name)}, ${value}` : value);
-    }
+  for (const line of rules.flat()) {
+    if (line.startsWith('!')) continue;
+    const colon = line.indexOf(':');
+    const name = line.slice(0, colon).trim().toLowerCase();
+    const value = line.slice(colon + 1).trim();
+    set.set(name, set.has(name) ? `${set.get(name)}, ${value}` : value);
   }
-  for (const name of detached) set.delete(name);
-  return { set, detached };
+  return set;
 }
 
 // What public/_headers gives the static asset at a path.
-export const fileHeaders = (pathname: string): FileHeaders =>
+export const fileHeaders = (pathname: string): Map<string, string> =>
   merged([...headersFile].filter(([rule]) => !rule.includes('://') && rulePattern(rule).test(pathname)).map(([, lines]) => lines));
 
-function headerFindings(headers: HeaderRecord, expected: FileHeaders, names: Iterable<string>): string[] {
+// The site serves nothing for another origin to read, so no response may grant one CORS access.
+function headerFindings(headers: HeaderRecord, expected: Map<string, string>, names: Iterable<string>): string[] {
   const findings: string[] = [];
   for (const name of names) {
-    const value = expected.set.get(name) ?? '';
+    const value = expected.get(name) ?? '';
     const received = headers[name];
     if ((received ?? '').toLowerCase() !== value.toLowerCase()) findings.push(`${name} is ${received ?? '<missing>'}, expected ${value}`);
   }
-  for (const name of expected.detached) {
-    if (headers[name] !== undefined) findings.push(`${name} leaks onto a response public/_headers detaches it from`);
-  }
+  const cors = headers['access-control-allow-origin'];
+  if (cors !== undefined) findings.push(`access-control-allow-origin is ${cors}, expected none`);
   return findings;
 }
 
@@ -119,7 +108,7 @@ function headerFindings(headers: HeaderRecord, expected: FileHeaders, names: Ite
 const everyRoute = merged([headersFile.get('/*') ?? []]);
 
 export function staticHeaderFindings(headers: HeaderRecord): string[] {
-  const names = [...everyRoute.set].filter(([, value]) => !PLACEHOLDER.test(value)).map(([name]) => name);
+  const names = [...everyRoute].filter(([, value]) => !PLACEHOLDER.test(value)).map(([name]) => name);
   return headerFindings(headers, everyRoute, names);
 }
 
@@ -145,10 +134,10 @@ export async function inlineHashFindings(html: string, csp: string | null | unde
   return findings;
 }
 
-// The Cache-Control public/_headers gives the asset at `pathname`, and none of the headers it detaches.
+// The Cache-Control public/_headers gives the asset at `pathname`.
 export function cacheRuleFindings(headers: HeaderRecord, pathname: string): string[] {
   const expected = fileHeaders(pathname);
-  if (!expected.set.has('cache-control')) return [`public/_headers gives ${pathname} no Cache-Control`];
+  if (!expected.has('cache-control')) return [`public/_headers gives ${pathname} no Cache-Control`];
   return headerFindings(headers, expected, ['cache-control']);
 }
 

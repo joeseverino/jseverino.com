@@ -94,12 +94,12 @@ describe('inlineHashFindings', () => {
 });
 
 describe('header and cache predicates', () => {
-  test('staticHeaderFindings names each missing or wrong header and a leaked CORS header', () => {
+  test('staticHeaderFindings names each missing or wrong header and any CORS grant', () => {
     const findings = staticHeaderFindings({ 'x-content-type-options': 'sniff', 'access-control-allow-origin': '*' }).join(' | ');
     assert.match(findings, /x-content-type-options is sniff, expected nosniff/);
     assert.match(findings, /referrer-policy is <missing>/);
     assert.match(findings, /permissions-policy is <missing>/);
-    assert.match(findings, /access-control-allow-origin leaks/);
+    assert.match(findings, /access-control-allow-origin is \*, expected none/);
   });
 
   test('hstsFindings wants includeSubDomains', () => {
@@ -108,23 +108,21 @@ describe('header and cache predicates', () => {
   });
 
   test('cacheRuleFindings holds an asset to the rule public/_headers gives its path', () => {
-    const immutable = fileHeaders('/_astro/a.js').set.get('cache-control') ?? '';
-    const revalidating = fileHeaders('/assets/icons/favicon.svg').set.get('cache-control') ?? '';
+    const immutable = fileHeaders('/_astro/a.js').get('cache-control') ?? '';
+    const revalidating = fileHeaders('/assets/icons/favicon.svg').get('cache-control') ?? '';
     assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable }, '/_astro/a.js'), []);
     assert.deepEqual(cacheRuleFindings({ 'cache-control': revalidating }, '/assets/icons/favicon.svg'), []);
     assert.ok(cacheRuleFindings({ 'cache-control': immutable }, '/assets/icons/favicon.svg').some((finding) => /cache-control is/.test(finding)));
-    assert.ok(
-      cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js').some((finding) =>
-        /access-control-allow-origin leaks/.test(finding),
-      ),
-    );
+    assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js'), [
+      'access-control-allow-origin is *, expected none',
+    ]);
     assert.equal(cacheRuleFindings({}, '/about/').length, 1);
   });
 
   // Cloudflare merges every rule matching a path, so a broad immutable rule would pin the in-place chrome for a year.
   test('public/_headers pins only write-once paths immutable', () => {
     for (const pathname of ['/_astro/a.js', '/assets/fonts/inter/inter-variable-latin.woff2']) {
-      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
+      assert.match(fileHeaders(pathname).get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
     }
     for (const pathname of [
       '/favicon.ico',
@@ -133,7 +131,7 @@ describe('header and cache predicates', () => {
       '/assets/og/og-default.jpg',
       '/assets/docs/joseph-severino-resume.pdf',
     ]) {
-      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
+      assert.match(fileHeaders(pathname).get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
     }
   });
 
