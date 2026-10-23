@@ -153,20 +153,16 @@ run = "node tests/audits/check-docs.ts {{vars.docs}}"
 description = "Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves"
 run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
 
-[tasks."checks:css-lint"]
-description = "Stylelint passes over src/styles"
-run = "stylelint 'src/styles/**/*.css'"
-
 [tasks."checks:lint"]
-description = "Biome finds no formatting difference or lint error in the TypeScript, JSON and CSS biome.jsonc covers"
-run = "biome ci"
+description = "Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers"
+run = "biome ci --error-on-warnings || { status=$?; echo 'fix: mise run fix:lint, fix what it reports it cannot, then commit the result' >&2; exit $status; }"
 
 [tasks."checks:css-vars"]
 description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
 run = "node tests/audits/check-css.ts"
 
 [tasks."checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed"
+description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; runners fixed, every job time-boxed"
 run = "node tests/audits/check-repository-policy.ts"
 
 [tasks."checks:workflows"]
@@ -315,6 +311,10 @@ depends = ["sync:worker-types"]
 raw_args = true
 interactive = true
 run = "astro dev"
+
+[tasks."fix:lint"]
+description = "Apply Biome's safe fixes and formatting to the files biome.jsonc covers, and report what it cannot fix"
+run = "biome check --write"
 
 [tasks."sync:content"]
 description = "Pull published content from the vault into the repo"

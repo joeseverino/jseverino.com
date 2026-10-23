@@ -273,12 +273,6 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source
 
-## `checks:css-lint`
-
-- **Usage:** `checks:css-lint`
-
-Stylelint passes over src/styles
-
 ## `checks:css-vars`
 
 - **Usage:** `checks:css-vars`
@@ -325,7 +319,7 @@ jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript
 
 - **Usage:** `checks:lint`
 
-Biome finds no formatting difference or lint error in the TypeScript, JSON and CSS biome.jsonc covers
+Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers
 
 ## `checks:mise-fmt`
 
@@ -349,7 +343,7 @@ Renovate's own validator finds no error, warning or needed migration in .github/
 
 - **Usage:** `checks:repo-policy`
 
-Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed
+Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; runners fixed, every job time-boxed
 
 ## `checks:security-txt`
 
@@ -426,6 +420,12 @@ Start the local dev server
 - **Usage:** `diff:build`
 
 Build HEAD and the working tree; show what changed in the shipped site
+
+## `fix:lint`
+
+- **Usage:** `fix:lint`
+
+Apply Biome's safe fixes and formatting to the files biome.jsonc covers, and report what it cannot fix
 
 ## `github`
 

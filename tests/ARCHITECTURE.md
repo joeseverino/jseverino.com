@@ -150,10 +150,9 @@ Structural health:
 - **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
 - **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
 - **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
-- **No explicit `any`**: an `any` type anywhere in the TypeScript syntax tree of a `.ts` file, or of an `.astro` file's frontmatter and `<script>` elements, fails; `unknown` and narrowing say what the code knows.
-- **No unexplained suppressions**: no `@ts-ignore` or `@ts-nocheck` comment in those same sources; `@ts-expect-error` must carry a reason.
+- **No unexplained suppressions**: no `@ts-nocheck` in a `.ts` or `.astro` file, and every `@ts-expect-error` comment carries a reason.
 
-What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; stylelint (`checks:css-lint`) refuses a literal color (`color-no-hex`, `color-named`, and `rgb`/`hsl` in `function-disallowed-list`) everywhere except the generated token blocks, which `mise run sync:tokens` fences with `stylelint-disable` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with each finding it accepts marked by a `# zizmor: ignore[<audit>]` comment and its reason where it is found.
+What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; Biome (`checks:lint`) refuses an explicit `any` and a `@ts-ignore` (`noExplicitAny`, `noTsIgnore`) in TypeScript and in an `.astro` file's frontmatter and `<script>` elements, and a literal color in a stylesheet (`noHexColors`, and the named and `rgb()`/`hsl()` spellings through the plugin [`literal-colors.grit`](./literal-colors.grit), whose node patterns [`unit/literal-colors.test.ts`](./unit/literal-colors.test.ts) holds to Biome's CSS grammar) everywhere except the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with each finding it accepts marked by a `# zizmor: ignore[<audit>]` comment and its reason where it is found.
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.

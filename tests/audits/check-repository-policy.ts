@@ -2,11 +2,9 @@ import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { load } from 'js-yaml';
-import ts from 'typescript';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
 import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
-import { elementsNamed, parseHtml, textContent } from '../../src/lib/html.ts';
 import { siteRoot as root } from '../../src/lib/site-root.ts';
 import { abort, finish } from './lib.ts';
 
@@ -126,43 +124,17 @@ if (javascript.length > 0) {
   failures.push(`JavaScript files are tracked; convert them to TypeScript: ${javascript.join(', ')}`);
 }
 
-// Type errors get fixed: no explicit `any`, and @ts-expect-error with a reason is the
-// one escape hatch (it fails once the error is gone). An .astro file's TypeScript is
-// its frontmatter and its <script> elements.
-const SUPPRESSION = /@ts-(?:ignore|nocheck)\b|@ts-expect-error(?!\s+\S)/;
-
-function scripts(file: string, source: string): string[] {
-  if (!file.endsWith('.astro')) return [source];
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source)?.[1] ?? '';
-  return [frontmatter, ...elementsNamed(parseHtml(source), 'script').map(textContent)];
-}
-
-function typeEscapes(script: string): { any: boolean; suppressed: boolean } {
-  const sourceFile = ts.createSourceFile('script.ts', script, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const comments = new Map<number, string>();
-  let any = false;
-  const visit = (node: ts.Node): void => {
-    if (node.kind === ts.SyntaxKind.AnyKeyword) any = true;
-    for (const range of [...(ts.getLeadingCommentRanges(script, node.pos) ?? []), ...(ts.getTrailingCommentRanges(script, node.end) ?? [])]) {
-      comments.set(range.pos, script.slice(range.pos, range.end));
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(sourceFile);
-  visit(sourceFile.endOfFileToken);
-  return { any, suppressed: [...comments.values()].some((comment) => SUPPRESSION.test(comment)) };
-}
+// Type errors get fixed. Biome refuses an explicit `any` and `@ts-ignore` (noExplicitAny,
+// noTsIgnore), .astro files included, and has no rule for the other two escapes: `@ts-nocheck`,
+// and `@ts-expect-error` without a reason, the one escape kept since it fails once the error is
+// gone. A directive is a comment that opens with it, as TypeScript reads one.
+const SUPPRESSION = /(?:\/\/|\/\*|^[ \t]*\*)[/*\s]*@ts-(?:nocheck\b|expect-error\b(?![ \t]+(?!\*\/)\S))/m;
 
 // src/generated/ is written by tools (wrangler types among them) and checked against them, not by hand.
-const escapes = existingTracked
-  .filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && !file.startsWith('src/generated/'))
-  .map((file) => ({ file, found: scripts(file, read(file)).map(typeEscapes) }));
-const anyTyped = escapes.filter(({ found }) => found.some(({ any }) => any)).map(({ file }) => file);
-const suppressed = escapes.filter(({ found }) => found.some(({ suppressed }) => suppressed)).map(({ file }) => file);
+const suppressed = existingTracked.filter((file) => /\.(?:astro|[cm]?tsx?)$/.test(file) && !file.startsWith('src/generated/') && SUPPRESSION.test(read(file)));
 if (suppressed.length > 0) {
   failures.push(`type-check suppressions without a reason (use @ts-expect-error <reason>): ${suppressed.join(', ')}`);
 }
-if (anyTyped.length > 0) failures.push(`explicit any (use unknown and narrow): ${anyTyped.join(', ')}`);
 
 interface Job {
   'runs-on'?: string | string[];
@@ -188,10 +160,10 @@ for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$
 
 finish(
   failures,
-  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no explicit any or unexplained suppressions; runners fixed; every job time-boxed`,
+  `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no unexplained type-check suppressions; runners fixed; every job time-boxed`,
   {
     heading: 'repository policy failed:',
     bullet: '- ',
-    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or explicit any, or a workflow (fixed runner, timeout-minutes)',
+    fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or a type-check suppression, or a workflow (fixed runner, timeout-minutes)',
   },
 );

@@ -3,7 +3,7 @@
   "files": {
     "includes": [
       "**",
-      // Synced from the vault; a sync on Joe's checkout is their only writer.
+      // Synced by `mise run sync:content`; never edited by hand.
       "!src/content",
       "!public/assets",
       // Generated: each generator owns its output's form, and checks:contracts
@@ -13,12 +13,6 @@
       "!src/data/package-registry.json",
       "!contracts/contact.openapi.json",
       "!public/embed/bundle.css",
-      "!src/styles/tokens.css",
-      "!src/styles/brand.css",
-      // Biome's Astro support is experimental, and linting .astro files without
-      // it reports false positives on frontmatter bindings the template uses.
-      // `astro check` (checks:astro) covers them.
-      "!**/*.astro",
       // Prose: the docs keep their hand-set tables, and mise writes the task list
       // in docs/Commands.md (checks:docs-sync).
       "!**/*.md"
@@ -28,10 +22,12 @@
   "javascript": { "formatter": { "quoteStyle": "single" } },
   "yaml": { "formatter": { "quoteStyle": "single" } },
   "css": {
-    "formatter": { "quoteStyle": "single" },
-    // Stylelint (checks:css-lint) owns CSS linting.
-    "linter": { "enabled": false }
+    "formatter": { "quoteStyle": "single" }
   },
+  // Biome reads an .astro file's frontmatter and its <script> elements only with
+  // full HTML support; the override below narrows what it does with them.
+  "html": { "experimentalFullSupportEnabled": true },
+  "plugins": [{ "path": "./tests/literal-colors.grit", "includes": ["src/styles/**"] }],
   "linter": {
     "rules": {
       "suspicious": {
@@ -45,6 +41,40 @@
     }
   },
   "overrides": [
+    {
+      // sync:tokens writes their generated blocks in the generator's own form;
+      // the linter still holds the hand-managed rules around them.
+      "includes": ["src/styles/tokens.css", "src/styles/brand.css"],
+      "formatter": { "enabled": false }
+    },
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "style": {
+            // A stylesheet names a color through a token; tests/literal-colors.grit
+            // refuses the named and functional spellings.
+            "noHexColors": "error",
+            // Native nesting puts a nested rule's specificity out of source order,
+            // so the rule reports orderings the cascade resolves as written.
+            "noDescendingSpecificity": "off"
+          },
+          // A repeated selector splits one rule's declarations across the file,
+          // and an empty stylesheet is a module with no job.
+          "suspicious": { "noDuplicateSelectors": "error", "noEmptySource": "error" }
+        }
+      }
+    },
+    {
+      // An .astro file's template uses its frontmatter bindings, which Biome's
+      // experimental Astro support reports as unused, and `astro check`
+      // (checks:astro) owns its types and markup. Biome holds its TypeScript to
+      // the two type-escape rules alone.
+      "includes": ["**/*.astro"],
+      "formatter": { "enabled": false },
+      "assist": { "enabled": false },
+      "linter": { "rules": { "preset": "none", "suspicious": { "noExplicitAny": "error", "noTsIgnore": "error" } } }
+    },
     {
       // Playwright's expect does not narrow a type, so a spec checks for null
       // with expect and then asserts the value present.
