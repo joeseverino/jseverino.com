@@ -1,7 +1,7 @@
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
 import { rgb } from './helpers/colors.ts';
 import { expect, type Page, settle, test } from './helpers/test.ts';
-import { tableWriteup } from './helpers/writeups.ts';
+import { anyWriteup, tableWriteup } from './helpers/writeups.ts';
 
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
@@ -23,6 +23,20 @@ for (const path of ['/', '/contact/', '/portfolio/', '/resume/', '/education/'])
     expect(first).toEqual(['tokens', 'base', 'components', 'pages']);
   });
 }
+
+test('a #fragment target lands below the sticky header', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(anyWriteup());
+  const id = await page.locator('.prose :is(h2, h3)[id]').first().getAttribute('id');
+  expect(id).not.toBeNull();
+  await page.goto(`${anyWriteup()}#${id}`);
+
+  const header = await page.locator('.site-header').boundingBox();
+  const target = await page.locator(`[id="${id}"]`).boundingBox();
+  expect(header).not.toBeNull();
+  expect(target).not.toBeNull();
+  expect(target!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+});
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');

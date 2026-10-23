@@ -7,8 +7,10 @@
     box-sizing: border-box;
   }
 
+  /* Fragment targets and the skip link land below the sticky header, at its tallest. */
   html {
     scroll-behavior: smooth;
+    scroll-padding-block-start: calc(var(--menu-offset) + var(--space-10));
   }
 
   body {

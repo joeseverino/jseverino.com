@@ -259,7 +259,7 @@ The mobile navigation is a `popover="auto"` element. The toggle button uses `pop
 
 ### Header height
 
-`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `tokens.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
+`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `tokens.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. The same value, plus a small gap, is the root's `scroll-padding-block-start`, so a `#fragment` target or the skip link's `#main` lands below the sticky header. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
 
 ### Responsive behavior
 
