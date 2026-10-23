@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import { main } from '../../bin/cloudflare.ts';
-import { type AccessPolicy, createClient, type DesiredState, loadDesired } from '../../bin/lib/cloudflare.ts';
+import { type AccessPolicy, type DesiredState, loadDesired } from '../../bin/lib/cloudflare.ts';
 import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import { fromRoot, siteRoot } from '../../src/lib/site-root.ts';
@@ -145,10 +145,16 @@ describe('check', () => {
   });
 
   // Token IP filters list IPv4 addresses; the zone tool and the D1 reads share this client.
-  test('the client resolves IPv4 addresses first', () => {
-    dns.setDefaultResultOrder('verbatim');
-    createClient({ token: TOKEN, fetch: createCloudflareFake(seed, TOKEN).fetch });
-    assert.equal(dns.getDefaultResultOrder(), 'ipv4first');
+  test('loading the client resolves IPv4 addresses first', async () => {
+    const original = dns.getDefaultResultOrder();
+    try {
+      dns.setDefaultResultOrder('verbatim');
+      // A query makes a fresh module instance, so its top level runs again.
+      await import(new URL('../../bin/lib/cloudflare.ts?fresh', import.meta.url).href);
+      assert.equal(dns.getDefaultResultOrder(), 'ipv4first');
+    } finally {
+      dns.setDefaultResultOrder(original);
+    }
   });
 
   test('a missing token stops before any request', () => shared.missingTokenStops(createCloudflareFake(seed, TOKEN), /CLOUDFLARE_API_TOKEN/));

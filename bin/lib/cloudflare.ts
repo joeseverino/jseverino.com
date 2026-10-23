@@ -28,6 +28,10 @@ import { applySteps, type Call, changedKeys, type Fetch, fields, type Item, item
 
 export type * from './cloudflare-types.ts';
 
+// A token's client IP filter lists IPv4 addresses, and Node's fetch tries the first address
+// dns.lookup returns, which is IPv6 on a dual-stack network unless this order says otherwise.
+dns.setDefaultResultOrder('ipv4first');
+
 export const API_BASE = 'https://api.cloudflare.com/client/v4';
 
 const FIREWALL_PHASE = 'http_request_firewall_custom';
@@ -58,9 +62,6 @@ export type Client = ReturnType<typeof createClient>;
 // formats a request's headers into output.
 export function createClient({ token, fetch = globalThis.fetch }: ClientOptions) {
   if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
-  // A token's client IP filter lists IPv4 addresses, and Node's fetch tries the first address
-  // dns.lookup returns, which is IPv6 on a dual-stack network unless this order says otherwise.
-  dns.setDefaultResultOrder('ipv4first');
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
     template.replace(/:([a-z]+)/g, (_, name: string) => {
