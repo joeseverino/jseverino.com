@@ -145,9 +145,7 @@ jobs:
       - name: Install browsers
         if: matrix.browsers
         timeout-minutes: 12
-        run: mise run setup:browsers
-        env:
-          BROWSERS: ${{ matrix.browsers }}
+        run: mise run setup:browsers ${{ matrix.browsers }}
 
       # The suite then serves this build (PREBUILT).
       - name: Build with the test site key

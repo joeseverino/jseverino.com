@@ -87,8 +87,8 @@ score line per page, writes the table to the job summary in CI, and exits
 non-zero on an audit execution failure or an `error`-level threshold. Uses the
 lockfile's Playwright Chromium (`mise exec -- playwright install chromium`),
 with `CHROME_PATH` available for an explicit browser override. CI installs
-Chromium and its system packages with `mise run setup:browsers`
-(`BROWSERS=chromium`) before the audit. Per-page logs accompany the reports,
+Chromium and its system packages with `mise run setup:browsers chromium`
+before the audit. Per-page logs accompany the reports,
 including when Chrome fails to launch.
 
 **`mise run deploy:verify`**: run after a production deploy, from a residential IP
@@ -518,9 +518,15 @@ Commit a build directory to the `dist` branch (CI publishes it on every push to 
 
 ## `setup:browsers`
 
-- **Usage:** `setup:browsers`
+Install the named Playwright browsers and their system packages
 
-Install Playwright's browsers (BROWSERS, space-separated) and their system packages
+
+- **Usage:** `setup:browsers <browser>…`
+
+### Arguments
+- **`<browser>…`** — A browser to install
+
+  **Choices:** `chromium`, `firefox`, `webkit`
 
 ## `sign:security`
 
