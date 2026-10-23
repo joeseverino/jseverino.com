@@ -3,8 +3,10 @@ name: link check
 on:
   pull_request:
     branches: [main]
+    # Every doc in mise.toml's vars.docs, held to it by tests/unit/link-check-workflow.test.ts.
     paths:
       - 'README.md'
+      - 'AGENTS.md'
       - '.github/SECURITY.md'
       - '.github/CONTRIBUTING.md'
       - 'docs/**/*.md'
