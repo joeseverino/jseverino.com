@@ -148,8 +148,8 @@ The one interactive command; it refuses to start without a terminal. A full-scre
 (or Tab) switch between them. Nothing on the Writeups tab is written until
 `s` is pressed: changes are staged locally and then applied through the vault
 MCP, so the TUI cannot produce a frontmatter state the publish gate would
-not. The terminal window title tracks where you are and restores the shell's
-title on exit.
+not. The terminal window title names the open tab, writeup or running command,
+and the shell's title returns on exit.
 
 ### Writeups tab
 
