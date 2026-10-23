@@ -49,6 +49,9 @@ function seconds(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+// A count that fails the run stands out in its table cell.
+const strong = (count: number): string => (count === 0 ? '0' : `**${count}**`);
+
 function display(file: string): string {
   const relative = path.relative(root, file);
   return relative.startsWith('..') ? file : relative;
@@ -79,7 +82,7 @@ const byProject = new Map(
 
 const rows = [...byProject.entries()]
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([project, row]) => [project, row.passed, row.failed === 0 ? '0' : `**${row.failed}**`, row.flaky, row.skipped, seconds(row.duration)]);
+  .map(([project, row]) => [project, row.passed, strong(row.failed), strong(row.flaky), row.skipped, seconds(row.duration)]);
 
 const stats: Partial<JSONReport['stats']> = report.stats ?? {};
 const failed = tests.filter((test) => test.status === 'unexpected');
@@ -89,28 +92,28 @@ for (const [project, row] of byProject) {
   status(project, `${row.passed} passed, ${row.failed} failed, ${row.flaky} flaky, ${row.skipped} skipped in ${seconds(row.duration)}`);
 }
 
+// A flaky test passed only on retry, which fails the run (failOnFlakyTests), so the headline
+// never calls it passed, and a skipped test is never counted as one that passed.
 const projects = `${byProject.size} ${byProject.size === 1 ? 'project' : 'projects'}`;
+const total = tally(tests);
 const headline =
-  failed.length === 0
-    ? `${tests.length} tests across ${projects} passed in ${seconds(stats.duration ?? 0)}.`
-    : `${failed.length} of ${tests.length} tests failed across ${projects}.`;
+  failed.length + flaky.length === 0
+    ? `${total.passed} tests passed and ${total.skipped} skipped across ${projects} in ${seconds(stats.duration ?? 0)}.`
+    : `${failed.length} failed and ${flaky.length} flaky of ${tests.length} tests across ${projects}; either fails the run.`;
 
 const sections = [`## ${cell(title)}`, '', headline, '', table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows)];
 
-if (failed.length > 0) {
-  sections.push('', '### Failed', '');
-  for (const test of failed.slice(0, 20)) {
+function list(heading: string, runs: TestRow[], verdict: string): void {
+  if (runs.length === 0) return;
+  sections.push('', `### ${heading}`, '');
+  for (const test of runs.slice(0, 20)) {
     sections.push(`- \`${cell(test.file)}\` › ${cell(test.title)} (${cell(test.project)})`);
-    annotate('error', `playwright: ${test.project}`, `${test.file} › ${test.title}`);
+    annotate('error', `playwright: ${test.project}`, `${verdict}: ${test.file} › ${test.title}`);
   }
-  if (failed.length > 20) sections.push(`- and ${failed.length - 20} more`);
+  if (runs.length > 20) sections.push(`- and ${runs.length - 20} more`);
 }
 
-if (flaky.length > 0) {
-  sections.push('', '### Passed on retry', '');
-  for (const test of flaky.slice(0, 20)) {
-    sections.push(`- \`${cell(test.file)}\` › ${cell(test.title)} (${cell(test.project)})`);
-  }
-}
+list('Failed', failed, 'failed');
+list('Flaky: passed only on retry', flaky, 'flaky');
 
 appendSummary(sections.join('\n'));
