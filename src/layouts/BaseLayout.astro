@@ -39,7 +39,6 @@ const preconnectOrigins = [INSIGHTS_SCRIPT_ORIGIN, ...preconnect];
         const root = document.documentElement;
         root.dataset.themeMode = mode;
         if (mode === 'auto') return;
-        root.style.colorScheme = mode;
         for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
           meta.media = meta.dataset.scheme === mode ? 'all' : 'not all';
         }

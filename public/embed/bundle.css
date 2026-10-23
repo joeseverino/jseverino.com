@@ -109,6 +109,12 @@
     --font-ui: 0.875rem;
     --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
   }
+  :root[data-theme-mode=light] {
+    color-scheme: light;
+  }
+  :root[data-theme-mode=dark] {
+    color-scheme: dark;
+  }
 }
 
 /* src/styles/brand.css */

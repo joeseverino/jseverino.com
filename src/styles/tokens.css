@@ -109,4 +109,13 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
 }
 
+/* An explicit theme choice (BaseLayout's boot script, the footer control) pins the scheme every light-dark() token resolves against. */
+:root[data-theme-mode='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme-mode='dark'] {
+  color-scheme: dark;
+}
+
 }

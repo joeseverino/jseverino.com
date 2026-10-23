@@ -65,7 +65,7 @@ Auto is the default and needs no JavaScript: with `color-scheme: light dark` set
 The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, not a light/dark pair, so an explicit choice can be released back to the OS. Details:
 
 - The control is a `role="group"` of three buttons, each carrying `aria-label` and `aria-pressed`. Segments are 28x24 CSS px, above the WCAG 2.2 target-size minimum (2.5.8).
-- An explicit choice sets `color-scheme` on `<html>` and persists to `localStorage`; auto clears both.
+- An explicit choice sets `data-theme-mode` on `<html>`, whose `light` and `dark` values pin `color-scheme` in `tokens.css`, and persists to `localStorage`; auto clears the stored choice.
 - A blocking inline script in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro) applies a stored choice before first paint, so an overridden theme never flashes the OS theme first. It also stamps `data-theme-mode` on `<html>`, which is what reveals the control.
 - `<meta name="color-scheme" content="light dark">` sits in the head alongside that script. It duplicates the `color-scheme` in `base.css` deliberately: until the stylesheet loads the document scheme is `normal`, which paints a white canvas with light scrollbars and form controls on a dark-mode OS. The meta is parsed first, so the first frame is already dark.
 - With JavaScript off, the control does not render at all, because it could not do anything. Auto is unaffected.
