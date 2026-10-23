@@ -5,7 +5,10 @@ import { abort, finish } from './lib.ts';
 
 const srcDir = path.join(siteRoot, 'src');
 const listFiles = (dir: string, pattern: RegExp): string[] =>
-  fs.readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((file) => pattern.test(file)).map((file) => path.join(dir, file));
+  fs
+    .readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((file) => pattern.test(file))
+    .map((file) => path.join(dir, file));
 
 // Definitions come from the stylesheets; usages can live anywhere in src/:
 // a var(--x) in an .astro template or a JS string still justifies the token.
@@ -33,9 +36,7 @@ for (const file of [...cssFiles, ...codeFiles]) {
   for (const [, property = ''] of source.matchAll(/var\(\s*(--[\w-]+)/g)) usages.add(property);
 }
 
-const unused = [...definitions]
-  .filter(([property]) => !usages.has(property))
-  .sort(([left], [right]) => left.localeCompare(right));
+const unused = [...definitions].filter(([property]) => !usages.has(property)).sort(([left], [right]) => left.localeCompare(right));
 
 finish(
   unused.map(([property, locations]) => `${property} (${locations.join(', ')})`),

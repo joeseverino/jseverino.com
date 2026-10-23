@@ -41,7 +41,8 @@ describe('cspFindings', () => {
   test('flags every escape hatch', async () => {
     const policy = (await policyFor(true)).replace("script-src 'self'", "script-src 'self' 'unsafe-inline' 'strict-dynamic' blob: 'nonce-abc'");
     const findings = cspFindings(withPolicy(policy), '/').join(' | ');
-    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-']) assert.match(findings, new RegExp(`script-src carries ${RegExp.escape(banned)}`));
+    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-'])
+      assert.match(findings, new RegExp(`script-src carries ${RegExp.escape(banned)}`));
   });
 
   test('flags a leftover build placeholder and a policy with no hash', async () => {
@@ -86,7 +87,9 @@ describe('inlineHashFindings', () => {
     assert.equal((await inlineHashFindings('<html><body></body></html>', await policyFor(true))).length, 2);
     assert.ok((await inlineHashFindings(page, undefined)).length >= 2);
     assert.deepEqual(await inlineHashFindings(page.replace('<script>', `<script nonce="${CSP_INLINE_MARKER}">`), await policyFor(true)), []);
-    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)));
+    assert.ok(
+      (await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)),
+    );
   });
 });
 
@@ -110,7 +113,11 @@ describe('header and cache predicates', () => {
     assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable }, '/_astro/a.js'), []);
     assert.deepEqual(cacheRuleFindings({ 'cache-control': revalidating }, '/assets/icons/favicon.svg'), []);
     assert.ok(cacheRuleFindings({ 'cache-control': immutable }, '/assets/icons/favicon.svg').some((finding) => /cache-control is/.test(finding)));
-    assert.ok(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js').some((finding) => /access-control-allow-origin leaks/.test(finding)));
+    assert.ok(
+      cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js').some((finding) =>
+        /access-control-allow-origin leaks/.test(finding),
+      ),
+    );
     assert.equal(cacheRuleFindings({}, '/about/').length, 1);
   });
 
@@ -119,7 +126,13 @@ describe('header and cache predicates', () => {
     for (const pathname of ['/_astro/a.js', '/assets/fonts/inter/inter-variable-latin.woff2']) {
       assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
     }
-    for (const pathname of ['/favicon.ico', '/assets/icons/favicon.svg', '/assets/brand/mark.svg', '/assets/og/og-default.jpg', '/assets/docs/joseph-severino-resume.pdf']) {
+    for (const pathname of [
+      '/favicon.ico',
+      '/assets/icons/favicon.svg',
+      '/assets/brand/mark.svg',
+      '/assets/og/og-default.jpg',
+      '/assets/docs/joseph-severino-resume.pdf',
+    ]) {
       assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
     }
   });

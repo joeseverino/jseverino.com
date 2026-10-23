@@ -43,9 +43,9 @@ async function main(): Promise<number> {
         for (const issue of doc.issues) console.log(`  - ${issue}`);
       }
       const failing = result.documents.filter((doc) => doc.issues.length > 0).length;
-      console.log(failing === 0
-        ? `ok       ${result.documents.length} documents resolve`
-        : `failed: ${failing} of ${result.documents.length} documents have issues`);
+      console.log(
+        failing === 0 ? `ok       ${result.documents.length} documents resolve` : `failed: ${failing} of ${result.documents.length} documents have issues`,
+      );
     }
     return result.ok ? 0 : 1;
   }

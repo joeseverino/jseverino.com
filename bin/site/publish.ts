@@ -23,7 +23,9 @@ const branchName = (now: Date): string =>
 function freshBranch(root: string, now: Date): string {
   const base = branchName(now);
   const remote = new Set(
-    git(root, 'ls-remote', '--heads', 'origin', `${base}*`).split('\n').filter(Boolean)
+    git(root, 'ls-remote', '--heads', 'origin', `${base}*`)
+      .split('\n')
+      .filter(Boolean)
       .map((line) => (line.split('\t')[1] ?? '').replace('refs/heads/', '')),
   );
   for (let n = 1; ; n += 1) {
@@ -90,12 +92,14 @@ function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string {
     if (slug === 'technology-groups') return '- `technology-groups` (the technology catalog)';
     return `- [\`${slug}\`](${origin}${slug === 'home' ? '/' : `/${slug}/`})`;
   };
-  const sections = ([
-    ['Published', diff.published.map(writeup)],
-    ['Edited', diff.edited.map(writeup)],
-    ['Removed (these URLs will return 404)', diff.removed.map((slug) => `- \`${slug}\`: ${writeupUrl(slug, origin)}`)],
-    ['Pages', diff.pages.map(page)],
-  ] satisfies [string, string[]][]).filter(([, lines]) => lines.length > 0);
+  const sections = (
+    [
+      ['Published', diff.published.map(writeup)],
+      ['Edited', diff.edited.map(writeup)],
+      ['Removed (these URLs will return 404)', diff.removed.map((slug) => `- \`${slug}\`: ${writeupUrl(slug, origin)}`)],
+      ['Pages', diff.pages.map(page)],
+    ] satisfies [string, string[]][]
+  ).filter(([, lines]) => lines.length > 0);
 
   const byFolder = new Map<string, number>();
   for (const file of diff.generated.paths) {
@@ -164,8 +168,10 @@ export async function publish({
     using scratchDir = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'site-publish-'));
     const scratch = fs.realpathSync(scratchDir.path);
     const worktree = path.join(scratch, 'worktree');
-    outcome = await publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate })
-      .then((result) => ({ result }), (error: unknown) => ({ error }));
+    outcome = await publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate }).then(
+      (result) => ({ result }),
+      (error: unknown) => ({ error }),
+    );
     attempt('removing the worktree', 'run: git worktree prune', () => {
       if (fs.existsSync(worktree)) git(root, 'worktree', 'remove', '--force', worktree);
     });

@@ -4,9 +4,7 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import {
-  anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint,
-} from './tui.ts';
+import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
@@ -14,8 +12,20 @@ import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
 import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
 import {
-  FIELDS, OUTCOME, SITE, SITE_ACTIONS, TABS, createWriteup, describeActions, diff, load, loadSiteStatus, reload,
-  type CommandSummaries, type Model, type SiteAction,
+  FIELDS,
+  OUTCOME,
+  SITE,
+  SITE_ACTIONS,
+  TABS,
+  createWriteup,
+  describeActions,
+  diff,
+  load,
+  loadSiteStatus,
+  reload,
+  type CommandSummaries,
+  type Model,
+  type SiteAction,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
 import { miseTasks, type MiseTask } from '../lib/mise.ts';
@@ -76,7 +86,7 @@ async function runCommandInline(command: Exclude<SiteAction['command'], 'dev-ser
   await lendTerminal(`site manage: ${title}`, async () => {
     process.stdout.write(`\n=== ${tint('strong', title)} ===\n\n`);
     const child = spawn(bin, args, { cwd: siteRoot, stdio: 'inherit' });
-    const [code, signal] = await once(child, 'close') as [number | null, NodeJS.Signals | null];
+    const [code, signal] = (await once(child, 'close')) as [number | null, NodeJS.Signals | null];
     process.stdout.write(`\n${rule(terminalColumns())}\n`);
     process.stdout.write(`Finished with exit code ${code ?? signal}. Press any key to return...`);
     await anyKey();
@@ -102,11 +112,7 @@ function openInObsidian(model: Model): void {
   const item = model.items[model.cursor];
   if (!item) return;
   const vaultName = path.basename(vaultRoot());
-  const uri =
-    'obsidian://open?vault=' +
-    encodeURIComponent(vaultName) +
-    '&file=' +
-    encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`);
+  const uri = 'obsidian://open?vault=' + encodeURIComponent(vaultName) + '&file=' + encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`);
   spawn('open', [uri], { stdio: 'ignore' }).once('error', (error) => {
     model.flash = { tone: 'error', text: `could not open Obsidian: ${error.message}` };
     draw(model);
@@ -210,9 +216,12 @@ function finish(code: number, message: string | null, runApply = false): void {
 // Keys apply in order: one that starts async work (a scaffold, a reload) holds the next until it settles.
 let pending: Promise<void> = Promise.resolve();
 const enqueue = (work: () => void | Promise<void>): void => {
-  pending = pending.then(work).catch((error: unknown) => {
-    model.flash = { tone: 'error', text: errorMessage(error) };
-  }).then(() => draw(model));
+  pending = pending
+    .then(work)
+    .catch((error: unknown) => {
+      model.flash = { tone: 'error', text: errorMessage(error) };
+    })
+    .then(() => draw(model));
 };
 
 function handleKey(key: string): void {
@@ -224,10 +233,18 @@ function handleKey(key: string): void {
 
 async function execute(effect: ManageEffect): Promise<void> {
   switch (effect.type) {
-    case 'exit': finish(0, effect.message, effect.save); return;
-    case 'reload': await reload(model); return;
-    case 'open': openInObsidian(model); return;
-    case 'action': await runAction(model, effect.key); return;
+    case 'exit':
+      finish(0, effect.message, effect.save);
+      return;
+    case 'reload':
+      await reload(model);
+      return;
+    case 'open':
+      openInObsidian(model);
+      return;
+    case 'action':
+      await runAction(model, effect.key);
+      return;
     case 'refresh': {
       const seconds = await gatherSiteStatus(model);
       if (effect.announce) model.flash = { tone: 'ok', text: `status refreshed in ${seconds}s` };

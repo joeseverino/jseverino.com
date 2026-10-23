@@ -21,6 +21,12 @@ test('vault source: iCloud conflict copies never become slugs', async () => {
     fs.writeFileSync(path.join(vaultRoot, dir, 'index.md'), '---\npublished: true\n---\nBody\n');
   }
   const source = createVaultSource({ vaultRoot });
-  assert.deepEqual((await source.writeups()).map((entry) => entry.slug), ['foo']);
-  assert.deepEqual((await source.pages()).map((entry) => entry.slug), ['home']);
+  assert.deepEqual(
+    (await source.writeups()).map((entry) => entry.slug),
+    ['foo'],
+  );
+  assert.deepEqual(
+    (await source.pages()).map((entry) => entry.slug),
+    ['home'],
+  );
 });

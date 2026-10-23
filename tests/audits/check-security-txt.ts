@@ -15,9 +15,7 @@ import { SITE } from '../../src/lib/site-config.ts';
 import { finish } from './lib.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
-const wkdEncryptionRe = new RegExp(
-  `^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`,
-);
+const wkdEncryptionRe = new RegExp(`^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`);
 
 // Each step needs the one before it, so the first problem ends the check.
 function fail(message: string): never {

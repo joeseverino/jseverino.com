@@ -9,16 +9,24 @@ const ajv = new Ajv2020({ allErrors: true, addUsedSchema: false });
 
 // Problems name the property or the allowed values; the rest keep Ajv's message.
 const problem = ({ keyword, params, message }: ErrorObject): string | undefined =>
-  keyword === 'required' ? `missing ${params.missingProperty}`
-    : keyword === 'additionalProperties' ? `unexpected property ${params.additionalProperty}`
-      : keyword === 'enum' ? `must be one of ${params.allowedValues.map((value: unknown) => JSON.stringify(value)).join(', ')}`
+  keyword === 'required'
+    ? `missing ${params.missingProperty}`
+    : keyword === 'additionalProperties'
+      ? `unexpected property ${params.additionalProperty}`
+      : keyword === 'enum'
+        ? `must be one of ${params.allowedValues.map((value: unknown) => JSON.stringify(value)).join(', ')}`
         : message;
 
 // Ajv's JSON Pointer /rules/0/action as $.rules[0].action.
-const path = (pointer: string): string => `$${pointer.split('/').slice(1).map((token) => {
-  const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
-  return /^\d+$/.test(key) ? `[${key}]` : `.${key}`;
-}).join('')}`;
+const path = (pointer: string): string =>
+  `$${pointer
+    .split('/')
+    .slice(1)
+    .map((token) => {
+      const key = token.replaceAll('~1', '/').replaceAll('~0', '~');
+      return /^\d+$/.test(key) ? `[${key}]` : `.${key}`;
+    })
+    .join('')}`;
 
 const describe = (error: ErrorObject): string => `${path(error.instancePath)}: ${problem(error)}`;
 

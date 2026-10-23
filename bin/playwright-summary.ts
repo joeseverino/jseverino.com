@@ -69,18 +69,15 @@ function tally(runs: TestRow[]) {
   return { passed, failed, flaky, skipped: runs.length - passed - failed - flaky, duration };
 }
 
-const byProject = new Map(Map.groupBy(tests, (test) => test.project).entries().map(([project, runs]) => [project, tally(runs)]));
+const byProject = new Map(
+  Map.groupBy(tests, (test) => test.project)
+    .entries()
+    .map(([project, runs]) => [project, tally(runs)]),
+);
 
 const rows = [...byProject.entries()]
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([project, row]) => [
-    project,
-    row.passed,
-    row.failed === 0 ? '0' : `**${row.failed}**`,
-    row.flaky,
-    row.skipped,
-    seconds(row.duration),
-  ]);
+  .map(([project, row]) => [project, row.passed, row.failed === 0 ? '0' : `**${row.failed}**`, row.flaky, row.skipped, seconds(row.duration)]);
 
 const stats: Partial<JSONReport['stats']> = report.stats ?? {};
 const failed = tests.filter((test) => test.status === 'unexpected');
@@ -91,17 +88,12 @@ for (const [project, row] of byProject) {
 }
 
 const projects = `${byProject.size} ${byProject.size === 1 ? 'project' : 'projects'}`;
-const headline = failed.length === 0
-  ? `${tests.length} tests across ${projects} passed in ${seconds(stats.duration ?? 0)}.`
-  : `${failed.length} of ${tests.length} tests failed across ${projects}.`;
+const headline =
+  failed.length === 0
+    ? `${tests.length} tests across ${projects} passed in ${seconds(stats.duration ?? 0)}.`
+    : `${failed.length} of ${tests.length} tests failed across ${projects}.`;
 
-const sections = [
-  `## ${cell(title)}`,
-  '',
-  headline,
-  '',
-  table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows),
-];
+const sections = [`## ${cell(title)}`, '', headline, '', table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows)];
 
 if (failed.length > 0) {
   sections.push('', '### Failed', '');

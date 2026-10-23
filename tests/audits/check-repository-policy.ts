@@ -67,7 +67,9 @@ const trailDays = (Date.parse(supportedDate) - Date.parse(compatibilityDate)) / 
 if (Number.isNaN(trailDays)) {
   failures.push(`wrangler.jsonc compatibility_date "${compatibilityDate}" or workerd's "${supportedDate}" is not a YYYY-MM-DD date`);
 } else if (trailDays > maxTrailDays) {
-  failures.push(`wrangler.jsonc compatibility_date ${compatibilityDate} trails the installed workerd's ${supportedDate} by ${trailDays} days (at most ${maxTrailDays})`);
+  failures.push(
+    `wrangler.jsonc compatibility_date ${compatibilityDate} trails the installed workerd's ${supportedDate} by ${trailDays} days (at most ${maxTrailDays})`,
+  );
 } else if (trailDays < 0) {
   failures.push(`wrangler.jsonc compatibility_date ${compatibilityDate} is past the installed workerd's ${supportedDate}`);
 }
@@ -75,19 +77,14 @@ if (Number.isNaN(trailDays)) {
 const tracked = trackedFiles(root);
 const existingTracked = tracked.filter((file) => fs.existsSync(path.join(root, file)));
 const forbiddenTracked = tracked.filter(
-  (file) =>
-    /(^|\/)\.env(?:\.|$)/.test(file) ||
-    /(^|\/)\.dev\.vars(?:\.|$)/.test(file) ||
-    /(^|\/)(?:dist|\.cache)(?:\/|$)/.test(file),
+  (file) => /(^|\/)\.env(?:\.|$)/.test(file) || /(^|\/)\.dev\.vars(?:\.|$)/.test(file) || /(^|\/)(?:dist|\.cache)(?:\/|$)/.test(file),
 );
 if (forbiddenTracked.length > 0) {
   failures.push(`forbidden generated or secret files are tracked: ${forbiddenTracked.join(', ')}`);
 }
 
 // One stylesheet entry plus concern-based modules; component-scoped styles would fragment the cascade.
-const componentStyles = existingTracked.filter(
-  (file) => file.startsWith('src/') && file.endsWith('.astro') && /<style(?:\s|>)/.test(read(file)),
-);
+const componentStyles = existingTracked.filter((file) => file.startsWith('src/') && file.endsWith('.astro') && /<style(?:\s|>)/.test(read(file)));
 if (componentStyles.length > 0) {
   failures.push(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
 }
@@ -103,17 +100,14 @@ if (transitionHooks.length > 0) {
 // Client-side HTML parsing is an injection sink and blocks an enforced Trusted Types policy;
 // scripts clone existing nodes or assign text instead.
 const clientHtmlSinks = existingTracked.filter(
-  (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) &&
-    /\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(read(file)),
+  (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) && /\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(read(file)),
 );
 if (clientHtmlSinks.length > 0) {
   failures.push(`client-side HTML assignment is forbidden: ${clientHtmlSinks.join(', ')}`);
 }
 
 // Deprecated private-link markers and internal service URLs must not enter the public snapshot.
-const publicSources = existingTracked.filter(
-  (file) => file.startsWith('src/content/') || file.startsWith('src/pages/') || file.startsWith('src/components/'),
-);
+const publicSources = existingTracked.filter((file) => file.startsWith('src/content/') || file.startsWith('src/pages/') || file.startsWith('src/components/'));
 const sensitivePatterns = [
   { pattern: /title=["']private:/i, label: 'private-link title marker' },
   { pattern: /data-private-tooltip/i, label: 'private tooltip attribute' },
@@ -149,7 +143,7 @@ function typeEscapes(script: string): { any: boolean; suppressed: boolean } {
   let any = false;
   const visit = (node: ts.Node): void => {
     if (node.kind === ts.SyntaxKind.AnyKeyword) any = true;
-    for (const range of [...ts.getLeadingCommentRanges(script, node.pos) ?? [], ...ts.getTrailingCommentRanges(script, node.end) ?? []]) {
+    for (const range of [...(ts.getLeadingCommentRanges(script, node.pos) ?? []), ...(ts.getTrailingCommentRanges(script, node.end) ?? [])]) {
       comments.set(range.pos, script.slice(range.pos, range.end));
     }
     ts.forEachChild(node, visit);

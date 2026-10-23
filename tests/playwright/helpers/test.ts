@@ -12,16 +12,19 @@ export const test = base.extend({
   context: async ({ context, browserName, baseURL }, use) => {
     if (browserName === 'webkit' && baseURL) {
       const origin = new URL(baseURL).origin;
-      await context.route((url) => url.origin === origin, async (route) => {
-        if (route.request().resourceType() !== 'document') return route.fallback();
-        // Fetched with its redirects followed: Playwright cannot fulfill a redirect, and
-        // WebKit keeps upgrading an origin once any of its documents asked it to.
-        const response = await route.fetch();
-        const headers = response.headers();
-        const policy = headers['content-security-policy'];
-        if (policy) headers['content-security-policy'] = policy.replace(upgrade, '');
-        return route.fulfill({ response, headers });
-      });
+      await context.route(
+        (url) => url.origin === origin,
+        async (route) => {
+          if (route.request().resourceType() !== 'document') return route.fallback();
+          // Fetched with its redirects followed: Playwright cannot fulfill a redirect, and
+          // WebKit keeps upgrading an origin once any of its documents asked it to.
+          const response = await route.fetch();
+          const headers = response.headers();
+          const policy = headers['content-security-policy'];
+          if (policy) headers['content-security-policy'] = policy.replace(upgrade, '');
+          return route.fulfill({ response, headers });
+        },
+      );
     }
     await use(context);
   },
@@ -30,9 +33,7 @@ export const test = base.extend({
 // Readiness: fonts resolved and eager images decoded, instead of networkidle.
 export async function settle(page: Page): Promise<void> {
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  await expect
-    .poll(() => page.evaluate(() => [...document.images].filter((img) => img.loading !== 'lazy').every((img) => img.complete)))
-    .toBe(true);
+  await expect.poll(() => page.evaluate(() => [...document.images].filter((img) => img.loading !== 'lazy').every((img) => img.complete))).toBe(true);
 }
 
 // Any route turns on Playwright's WebKit interception for every request, and that fails
@@ -40,8 +41,10 @@ export async function settle(page: Page): Promise<void> {
 // macOS WebKit reports the cause and Linux WebKit only that the load failed.
 export function isWebKitInterceptionBlobError(message: ConsoleMessage): boolean {
   const text = message.text();
-  return message.type() === 'error'
-    && message.page()?.context().browser()?.browserType().name() === 'webkit'
-    && message.location().url.startsWith('blob:https://challenges.cloudflare.com/')
-    && (text.includes('WebKitBlobResource error 1.') || text === 'Failed to load resource');
+  return (
+    message.type() === 'error' &&
+    message.page()?.context().browser()?.browserType().name() === 'webkit' &&
+    message.location().url.startsWith('blob:https://challenges.cloudflare.com/') &&
+    (text.includes('WebKitBlobResource error 1.') || text === 'Failed to load resource')
+  );
 }

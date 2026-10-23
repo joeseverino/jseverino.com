@@ -27,13 +27,7 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   const findings: string[] = [];
   const csp = headers['content-security-policy'] ?? '';
   const directive = (name: string): string => new RegExp(`(?:^|;\\s*)${name}\\s([^;]*)`).exec(csp)?.[1] ?? '';
-  for (const clause of [
-    "default-src 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "frame-ancestors 'self'",
-    'report-to csp-endpoint',
-  ]) {
+  for (const clause of ["default-src 'none'", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'self'", 'report-to csp-endpoint']) {
     if (!csp.includes(clause)) findings.push(`content-security-policy lacks ${clause}`);
   }
   // report-uri is the fallback for browsers that ignore report-to (Firefox).
@@ -77,7 +71,12 @@ const PLACEHOLDER = /^__[A-Z_]+__$/;
 
 // A path rule as a pattern: `*` is a splat, `:name` one segment. Host rules never match a pathname.
 const rulePattern = (rule: string): RegExp =>
-  new RegExp(`^${rule.split('*').map((part) => part.split(/:\w+/).map(RegExp.escape).join('[^/]+')).join('.*')}$`);
+  new RegExp(
+    `^${rule
+      .split('*')
+      .map((part) => part.split(/:\w+/).map(RegExp.escape).join('[^/]+'))
+      .join('.*')}$`,
+  );
 
 // Rules' lines merged as Cloudflare merges them: a repeated header joins with a comma, a detach drops it.
 function merged(rules: readonly (readonly string[])[]): FileHeaders {

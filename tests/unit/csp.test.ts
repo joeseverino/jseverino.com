@@ -32,7 +32,10 @@ describe('htmlPolicy', () => {
   });
 
   test('takes extra script sources for the preview proxy', () => {
-    assert.match(htmlPolicy({ scriptHashes: [], styleHashes: [], reportUri, trustedTypes: false, scriptExtras: ["'nonce-xyz'"] }), /script-src 'self' 'nonce-xyz' https:/);
+    assert.match(
+      htmlPolicy({ scriptHashes: [], styleHashes: [], reportUri, trustedTypes: false, scriptExtras: ["'nonce-xyz'"] }),
+      /script-src 'self' 'nonce-xyz' https:/,
+    );
   });
 });
 
@@ -86,7 +89,10 @@ describe('inlineHashes', () => {
 
 describe('withPreviewPolicy', () => {
   const html = (init: ResponseInit = {}) =>
-    new Response('<head><script>bridge()</script><style>a{}</style></head>', { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': '99' }, ...init });
+    new Response('<head><script>bridge()</script><style>a{}</style></head>', {
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': '99' },
+      ...init,
+    });
 
   test('gives HTML its own policy: the bridge nonce plus a hash per inline tag', async () => {
     const response = await withPreviewPolicy(html(), 'abc123', reportUri);

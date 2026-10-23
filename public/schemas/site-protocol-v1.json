@@ -49,13 +49,7 @@
     },
     "exitCode": {
       "description": "0 ok, 1 failed, 2 usage, 3 preflight, 4 timeout.",
-      "enum": [
-        0,
-        1,
-        2,
-        3,
-        4
-      ]
+      "enum": [0, 1, 2, 3, 4]
     },
     "next": {
       "description": "The suggested next command, or null when the workflow is done.",
@@ -70,12 +64,7 @@
     },
     "success": {
       "type": "object",
-      "required": [
-        "protocolVersion",
-        "ok",
-        "command",
-        "status"
-      ],
+      "required": ["protocolVersion", "ok", "command", "status"],
       "properties": {
         "protocolVersion": {
           "$ref": "#/$defs/protocolVersion"
@@ -100,16 +89,10 @@
           "if": {
             "properties": {
               "command": {
-                "enum": [
-                  "apply-plan",
-                  "set",
-                  "link"
-                ]
+                "enum": ["apply-plan", "set", "link"]
               }
             },
-            "required": [
-              "command"
-            ]
+            "required": ["command"]
           },
           "then": {
             "properties": {
@@ -126,14 +109,10 @@
                 "const": "link"
               }
             },
-            "required": [
-              "command"
-            ]
+            "required": ["command"]
           },
           "then": {
-            "required": [
-              "receipt"
-            ]
+            "required": ["receipt"]
           }
         }
       ]
@@ -141,15 +120,7 @@
     "receipt": {
       "description": "A completed write, shaped as bin/lib/writeups/receipt.ts defines MutationReceipt. Evidence only, never a second source of truth.",
       "type": "object",
-      "required": [
-        "receipt_version",
-        "operation",
-        "entity",
-        "changed_fields",
-        "affected_projections",
-        "idempotency_key",
-        "metadata"
-      ],
+      "required": ["receipt_version", "operation", "entity", "changed_fields", "affected_projections", "idempotency_key", "metadata"],
       "properties": {
         "receipt_version": {
           "const": 1
@@ -160,10 +131,7 @@
         },
         "entity": {
           "type": "object",
-          "required": [
-            "type",
-            "id"
-          ],
+          "required": ["type", "id"],
           "properties": {
             "type": {
               "type": "string"
@@ -205,18 +173,7 @@
     "help": {
       "description": "`--help --json`: the usage as data.",
       "type": "object",
-      "required": [
-        "protocolVersion",
-        "ok",
-        "command",
-        "status",
-        "usage",
-        "summary",
-        "options",
-        "positionals",
-        "exitCodes",
-        "next"
-      ],
+      "required": ["protocolVersion", "ok", "command", "status", "usage", "summary", "options", "positionals", "exitCodes", "next"],
       "properties": {
         "protocolVersion": {
           "$ref": "#/$defs/protocolVersion"
@@ -268,20 +225,14 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "name",
-              "type"
-            ],
+            "required": ["name", "type"],
             "properties": {
               "name": {
                 "type": "string",
                 "minLength": 1
               },
               "type": {
-                "enum": [
-                  "string",
-                  "boolean"
-                ]
+                "enum": ["string", "boolean"]
               }
             }
           }
@@ -299,12 +250,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "name",
-              "summary",
-              "usage",
-              "interactive"
-            ],
+            "required": ["name", "summary", "usage", "interactive"],
             "properties": {
               "name": {
                 "$ref": "#/$defs/command"
@@ -332,12 +278,7 @@
     "failure": {
       "description": "A command that did not finish. The process exit code equals error.code. Any partial result the failing step attached (preflight checks, failing documents) rides along as extra fields.",
       "type": "object",
-      "required": [
-        "protocolVersion",
-        "ok",
-        "status",
-        "error"
-      ],
+      "required": ["protocolVersion", "ok", "status", "error"],
       "properties": {
         "protocolVersion": {
           "$ref": "#/$defs/protocolVersion"
@@ -353,11 +294,7 @@
         },
         "error": {
           "type": "object",
-          "required": [
-            "message",
-            "code",
-            "fix"
-          ],
+          "required": ["message", "code", "fix"],
           "properties": {
             "message": {
               "type": "string",
@@ -388,9 +325,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "slug"
-            ],
+            "required": ["slug"],
             "properties": {
               "slug": {
                 "type": "string",

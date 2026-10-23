@@ -23,7 +23,7 @@ describe('gitAsync', () => {
     assert.equal(await gitAsync(root, 'rev-parse', '--show-toplevel'), root);
   });
 
-  test('rejects with git\'s own stderr', async () => {
+  test("rejects with git's own stderr", async () => {
     await assert.rejects(gitAsync(checkout(), 'rev-parse', '--verify', 'no-such-ref'), /Needed a single revision/);
   });
 });

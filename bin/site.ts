@@ -12,8 +12,7 @@ import { PROTOCOL_VERSION, type CommandName, type CommandResults, type SiteFailu
 import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 
-type Values<O extends ParseArgsOptionsConfig> =
-  ReturnType<typeof parseArgs<{ options: O; allowPositionals: true; strict: true }>>['values'];
+type Values<O extends ParseArgsOptionsConfig> = ReturnType<typeof parseArgs<{ options: O; allowPositionals: true; strict: true }>>['values'];
 
 interface RunContext<V> {
   values: V;
@@ -92,7 +91,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ values, out }) => (await local()).dev({ drafts: values.drafts, host: values.host, port: values.port, out }),
   }),
   publish: define({
-    summary: 'Open a pull request with the vault\'s current public content',
+    summary: "Open a pull request with the vault's current public content",
     usage: 'site publish [--dry-run] [--full] [--from <ref>]',
     help: [
       `Preflight, then a fresh content/<date> branch from origin/${DEFAULT_BRANCH} in a temporary worktree (the`,
@@ -108,26 +107,33 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
       full: flag,
       from: { type: 'string' },
     },
-    run: async ({ values, out }) => (await import('./site/publish.ts')).publish({
-      dryRun: values['dry-run'], full: values.full, from: values.from, out,
-    }),
+    run: async ({ values, out }) =>
+      (await import('./site/publish.ts')).publish({
+        dryRun: values['dry-run'],
+        full: values.full,
+        from: values.from,
+        out,
+      }),
   }),
   land: define({
     summary: 'Merge a content PR once its checks pass, wait for the deploy, verify it live',
     usage: 'site land [<pr>] [--timeout <minutes>]',
     help: [
-      'Defaults to your most recent content PR. Reads the required checks from main\'s ruleset and waits',
+      "Defaults to your most recent content PR. Reads the required checks from main's ruleset and waits",
       'until each has reported and passed on the PR head, squash-merges, waits for',
-      'the merge commit\'s production deploy, verifies each published or edited writeup on',
+      "the merge commit's production deploy, verifies each published or edited writeup on",
       'production (and that removed ones return 404), then runs hq sync if the hq CLI exists.',
       'Only a content/* PR into main is landed. An already-merged PR skips straight to the deploy wait.',
       '--timeout bounds the waits for checks and deploy, in minutes (default 30).',
     ].join('\n'),
     options: { timeout: { type: 'string', default: '30' } },
     positionals: [0, 1],
-    run: async ({ values, positionals: [pr], out }) => (await import('./site/land.ts')).land({
-      pr, timeoutMs: minutes(values.timeout, 'timeout'), out,
-    }),
+    run: async ({ values, positionals: [pr], out }) =>
+      (await import('./site/land.ts')).land({
+        pr,
+        timeoutMs: minutes(values.timeout, 'timeout'),
+        out,
+      }),
   }),
   verify: define({
     summary: 'Verify one writeup on production (or a deployment with --origin)',
@@ -145,7 +151,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   featured: define({
     summary: 'Show the home-page featured order, or move one writeup (renumbers 1..N)',
     usage: 'site featured [<slug> <slot|up|down|top|bottom|off>]',
-    help: 'Rewrites the featured writeups\' frontmatter in one transaction. The new order ships on the next site publish.',
+    help: "Rewrites the featured writeups' frontmatter in one transaction. The new order ships on the next site publish.",
     positionals: [0, 2],
     run: async ({ positionals: [slug, target], out }) => (await authoring()).featured({ slug, target, out }),
   }),
@@ -156,7 +162,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ positionals: [query], out }) => (await authoring()).tech({ query, out }),
   }),
   seo: define({
-    summary: 'Preview a built page\'s search snippet and metadata',
+    summary: "Preview a built page's search snippet and metadata",
     usage: 'site seo <page> [--result]',
     help: 'Page: a URL, path, page slug, or writeup slug. Reads the last build (mise run build).',
     options: { result: flag },
@@ -164,7 +170,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ values, positionals: [page], out }) => (await local()).seo({ page, result: values.result, out }),
   }),
   'draft-alt': define({
-    summary: 'Draft a writeup\'s cover_alt from its cover image (Claude API)',
+    summary: "Draft a writeup's cover_alt from its cover image (Claude API)",
     usage: 'site draft-alt <slug>|--all [--apply]',
     help: 'Needs ANTHROPIC_API_KEY. --all drafts for every published writeup missing cover_alt. --apply writes each draft to its cover_alt.',
     options: { all: flag, apply: flag },
@@ -172,7 +178,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ values, positionals: [slug], out }) => (await local()).draftAlt({ slug, all: values.all, apply: values.apply, out }),
   }),
   writeups: define({
-    summary: 'List the vault\'s writeups with publish and featured state',
+    summary: "List the vault's writeups with publish and featured state",
     usage: 'site writeups [--filter all|published|draft|featured]',
     help: 'featured sorts by featured_order, the order the home page renders.',
     options: { filter: { type: 'string', default: 'all' } },
@@ -205,7 +211,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: [
       'Reads the plan from --file or stdin:',
       '  { "updates": [{ "slug": "...", "<field>": value }], "featured_order": ["slug", ...], "source_fingerprint": "..." }',
-      'Fields are the contract\'s editable ones (site contract). Every file is staged first; any failure rolls back.',
+      "Fields are the contract's editable ones (site contract). Every file is staged first; any failure rolls back.",
     ].join('\n'),
     options: { file: { type: 'string' } },
     run: async ({ values, out }) => (await writeupOps()).applyWriteupPlan({ file: values.file, out }),
@@ -216,9 +222,13 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     help: 'Rewrites only the changed lines; every other byte of the file is kept. Featured order is site featured.',
     options: SET_OPTIONS,
     positionals: [1, 1],
-    run: async ({ values, positionals: [slug], out }) => (await writeupOps()).set({
-      slug, fields: setFields(values), touchLastReviewed: values['touch-last-reviewed'], out,
-    }),
+    run: async ({ values, positionals: [slug], out }) =>
+      (await writeupOps()).set({
+        slug,
+        fields: setFields(values),
+        touchLastReviewed: values['touch-last-reviewed'],
+        out,
+      }),
   }),
   link: define({
     summary: 'Replace one exact Markdown link in a writeup body',
@@ -303,23 +313,42 @@ const commandHelp = (command: Command): string =>
   [`usage: ${command.usage} [--json]`, '', command.summary, ...(command.help ? ['', command.help] : []), '', EXIT_HELP].join('\n');
 
 const helpOptions = (command: Command): SiteHelp['options'] =>
-  Object.entries({ json: flag, ...command.options })
-    .map(([name, option]) => ({ name, type: option.type, ...('default' in option ? { default: option.default } : {}) }));
+  Object.entries({ json: flag, ...command.options }).map(([name, option]) => ({
+    name,
+    type: option.type,
+    ...('default' in option ? { default: option.default } : {}),
+  }));
 
 function helpDocument(name: CommandName | undefined): SiteHelp {
   const tail = { exitCodes: EXIT, next: null };
   if (name) {
     const command: Command = COMMANDS[name];
     return {
-      ok: true, command: name, status: 'help', usage: command.usage, summary: command.summary, help: command.help ?? null,
-      options: helpOptions(command), positionals: command.positionals ?? [0, 0], ...tail,
+      ok: true,
+      command: name,
+      status: 'help',
+      usage: command.usage,
+      summary: command.summary,
+      help: command.help ?? null,
+      options: helpOptions(command),
+      positionals: command.positionals ?? [0, 0],
+      ...tail,
     };
   }
   return {
-    ok: true, command: 'help', status: 'help', usage: 'site <command> [options] [--json]', summary: 'The writeup publishing workflow',
-    help: null, options: [{ name: 'json', type: 'boolean', default: false }], positionals: [0, 1],
+    ok: true,
+    command: 'help',
+    status: 'help',
+    usage: 'site <command> [options] [--json]',
+    summary: 'The writeup publishing workflow',
+    help: null,
+    options: [{ name: 'json', type: 'boolean', default: false }],
+    positionals: [0, 1],
     commands: Object.entries(COMMANDS).map(([command, spec]) => ({
-      name: command as CommandName, summary: spec.summary, usage: spec.usage, interactive: spec.interactive === true,
+      name: command as CommandName,
+      summary: spec.summary,
+      usage: spec.usage,
+      interactive: spec.interactive === true,
     })),
     ...tail,
   };
@@ -333,11 +362,13 @@ export function successDocument<C extends CommandName>(command: C, result: Comma
 
 export function failureDocument(command: string | undefined, error: unknown): SiteFailure {
   const known = error instanceof SiteError;
-  const message = known ? error.message : error instanceof Error ? error.stack ?? error.message : String(error);
+  const message = known ? error.message : error instanceof Error ? (error.stack ?? error.message) : String(error);
   return {
     ...(known ? error.result : {}),
-    ok: false, command, status: 'failed',
-    error: { message, code: known ? error.code : EXIT.failed, fix: known ? error.fix ?? null : null },
+    ok: false,
+    command,
+    status: 'failed',
+    error: { message, code: known ? error.code : EXIT.failed, fix: known ? (error.fix ?? null) : null },
   };
 }
 

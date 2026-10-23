@@ -17,8 +17,7 @@ function call(cmd: string, args: string[], spawn: () => string): string {
 export const git = (root: string, ...args: string[]): string => call('git', args, () => gitQuery(root, ...args));
 
 // gitInput and ghInput feed stdin: a pathspec list, a commit message, a PR body.
-export const gitInput = (root: string, input: string, ...args: string[]): string =>
-  call('git', args, () => runSync('git', args, { cwd: root, input }));
+export const gitInput = (root: string, input: string, ...args: string[]): string => call('git', args, () => runSync('git', args, { cwd: root, input }));
 
 // Every pr subcommand names the repo, so a fork or another remote is never the target.
 const ghArgs = (args: string[]): string[] => (args[0] === 'pr' ? [...args, '-R', SITE_REPOSITORY] : args);

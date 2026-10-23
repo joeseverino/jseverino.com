@@ -7,7 +7,7 @@ import { PREVIEW_HOST_SUFFIX, SITE } from '../../src/lib/site-config.ts';
 
 const env = { CF_ACCESS_CLIENT_ID: 'id', CF_ACCESS_CLIENT_SECRET: 'secret' };
 
-test('access headers go only to the Worker\'s preview URLs, and only with both values', () => {
+test("access headers go only to the Worker's preview URLs, and only with both values", () => {
   assert.deepEqual(accessHeaders(`https://0b43cfea${PREVIEW_HOST_SUFFIX}/`, env), {
     'CF-Access-Client-Id': 'id',
     'CF-Access-Client-Secret': 'secret',

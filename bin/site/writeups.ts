@@ -2,21 +2,36 @@
 // formats; the store reads and writes.
 import fs from 'node:fs';
 import {
-  WRITEUP_FILTERS, WriteupError, applyPlan, dashboard, listWriteups, prepare, tagUsage, updateFrontmatter, updateLink,
-  writeupContract, writeupStore, type WriteupFilter, type WriteupPlan,
+  WRITEUP_FILTERS,
+  WriteupError,
+  applyPlan,
+  dashboard,
+  listWriteups,
+  prepare,
+  tagUsage,
+  updateFrontmatter,
+  updateLink,
+  writeupContract,
+  writeupStore,
+  type WriteupFilter,
+  type WriteupPlan,
 } from '../lib/writeups/store.ts';
 import { EXIT, SiteError, assertSlug, translate, type Output } from './cli.ts';
-import type {
-  ApplyPlanResult, ContractResult, DashboardResult, LinkCommandResult, PrepareResult, SetResult, TagResult, WriteupsResult,
-} from './types.ts';
+import type { ApplyPlanResult, ContractResult, DashboardResult, LinkCommandResult, PrepareResult, SetResult, TagResult, WriteupsResult } from './types.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 // Store failures as CLI failures: a usage problem exits 2, the rest 1.
-export const guard = <T>(work: () => T | Promise<T>): Promise<T> => translate(work, WriteupError, (error) => new SiteError(error.message, {
-  code: error.code === 'invalid' ? EXIT.usage : EXIT.failed,
-  result: { reason: error.code, ...error.details },
-  fix: error.code === 'stale_plan' ? 'reload the dashboard and rebuild the plan' : undefined,
-}));
+export const guard = <T>(work: () => T | Promise<T>): Promise<T> =>
+  translate(
+    work,
+    WriteupError,
+    (error) =>
+      new SiteError(error.message, {
+        code: error.code === 'invalid' ? EXIT.usage : EXIT.failed,
+        result: { reason: error.code, ...error.details },
+        fix: error.code === 'stale_plan' ? 'reload the dashboard and rebuild the plan' : undefined,
+      }),
+  );
 
 export async function writeups({ filter, out }: { filter: string; out: Output }): Promise<WriteupsResult> {
   if (!(WRITEUP_FILTERS as readonly string[]).includes(filter)) {
@@ -48,14 +63,23 @@ export async function tag({ slug: requested, out }: { slug: string | undefined; 
   return { ...usage, next: null };
 }
 
-export async function prepareWriteup({ slug: requested, tagUsage: withTags, out }: { slug: string | undefined; tagUsage: boolean; out: Output }): Promise<PrepareResult> {
+export async function prepareWriteup({
+  slug: requested,
+  tagUsage: withTags,
+  out,
+}: {
+  slug: string | undefined;
+  tagUsage: boolean;
+  out: Output;
+}): Promise<PrepareResult> {
   const slug = assertSlug(requested);
   const readiness = await guard(() => prepare(writeupStore(), slug, { includeTagUsage: withTags }));
   for (const issue of readiness.validation.issues) out.text(`  - ${issue}`);
   const place = readiness.featuredSet.position === null ? 'not featured' : `featured slot ${readiness.featuredSet.position}`;
   if (!readiness.ok) {
     throw new SiteError(`${slug} is not ready: ${readiness.validation.issues.length} gate issues`, {
-      result: readiness, fix: 'fix each listed issue in the vault, then rerun site prepare',
+      result: readiness,
+      fix: 'fix each listed issue in the vault, then rerun site prepare',
     });
   }
   out.ok('ready', `${slug} passes the gate (${place})`);
@@ -81,8 +105,16 @@ export async function applyWriteupPlan({ file, out }: { file: string | undefined
 }
 
 export async function set({
-  slug: requested, fields, touchLastReviewed, out,
-}: { slug: string | undefined; fields: Record<string, unknown>; touchLastReviewed: boolean; out: Output }): Promise<SetResult> {
+  slug: requested,
+  fields,
+  touchLastReviewed,
+  out,
+}: {
+  slug: string | undefined;
+  fields: Record<string, unknown>;
+  touchLastReviewed: boolean;
+  out: Output;
+}): Promise<SetResult> {
   const slug = assertSlug(requested);
   if (Object.keys(fields).length === 0 && !touchLastReviewed) {
     throw new SiteError('nothing to set', { code: EXIT.usage, fix: 'site set --help lists the editable fields' });
@@ -94,8 +126,18 @@ export async function set({
 }
 
 export async function link({
-  slug: requested, label, from, to, out,
-}: { slug: string | undefined; label: string | undefined; from: string | undefined; to: string | undefined; out: Output }): Promise<LinkCommandResult> {
+  slug: requested,
+  label,
+  from,
+  to,
+  out,
+}: {
+  slug: string | undefined;
+  label: string | undefined;
+  from: string | undefined;
+  to: string | undefined;
+  out: Output;
+}): Promise<LinkCommandResult> {
   const slug = assertSlug(requested);
   if (!label || !from || !to) throw new SiteError('--label, --from, and --to are required', { code: EXIT.usage, fix: 'site link --help' });
   const result = await guard(() => updateLink(writeupStore(), slug, label, from, to));

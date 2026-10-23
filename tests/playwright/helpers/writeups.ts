@@ -17,8 +17,7 @@ function writeupWhere(predicate: (body: string) => boolean, description: string)
 
 export const anyWriteup = () => writeupWhere(() => true, 'exists');
 
-export const tableWriteup = () =>
-  writeupWhere((text) => /^:::table|^\|.+\|$/m.test(text), 'with a table block');
+export const tableWriteup = () => writeupWhere((text) => /^:::table|^\|.+\|$/m.test(text), 'with a table block');
 
 export const imageHeavyWriteup = () => {
   const counted = writeups

@@ -61,8 +61,7 @@ export function brandCardColors(): typeof CARD_COLORS {
 // `deep` is darker on light and lighter on dark. No light-dark() in the properties:
 // Safari can keep the light arm in a separately loaded stylesheet, so emit selectors.
 export function brandVarsCss(themes: typeof PRIMARY_BY_THEME = PRIMARY_BY_THEME): string {
-  const declarations = (primary: string, deep: string) =>
-    `--color-primary:${primary};--color-primary-deep:${deep}`;
+  const declarations = (primary: string, deep: string) => `--color-primary:${primary};--color-primary-deep:${deep}`;
   const light = declarations(themes.light.primary, themes.light.deep);
   const dark = declarations(themes.dark.primary, themes.dark.deep);
 

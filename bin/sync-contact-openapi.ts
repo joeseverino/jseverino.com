@@ -47,11 +47,15 @@ const document = {
     schemas: {
       ContactSubmission: contract.request,
       ContactSuccess: {
-        type: 'object', additionalProperties: false, required: ['ok'],
+        type: 'object',
+        additionalProperties: false,
+        required: ['ok'],
         properties: { ok: { type: 'boolean', enum: [true] } },
       },
       ContactError: {
-        type: 'object', additionalProperties: false, required: ['ok', 'error'],
+        type: 'object',
+        additionalProperties: false,
+        required: ['ok', 'error'],
         properties: { ok: { type: 'boolean', enum: [false] }, error: { type: 'string' } },
       },
     },

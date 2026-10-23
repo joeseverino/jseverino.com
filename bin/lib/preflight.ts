@@ -14,8 +14,7 @@ interface LockEntry {
   devOptional?: boolean;
 }
 
-const lockPackages = (file: string): Record<string, LockEntry> =>
-  readJson<{ packages?: Record<string, LockEntry> }>(file).packages ?? {};
+const lockPackages = (file: string): Record<string, LockEntry> => readJson<{ packages?: Record<string, LockEntry> }>(file).packages ?? {};
 
 // The clean install from the lockfile (mise.toml [deps.npm]). --force because
 // the provider judges freshness by the lockfile's hash, while lockfileDrift
@@ -63,7 +62,11 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
     const drift = lockfileDrift(root);
     return drift.length === 0
       ? { ok: true, detail: 'node_modules matches package-lock.json' }
-      : { ok: false, detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`, fix: `cd ${root} && ${INSTALL_PACKAGES}` };
+      : {
+          ok: false,
+          detail: `node_modules differs from package-lock.json (${drift.length}: ${drift.slice(0, 3).join('; ')})`,
+          fix: `cd ${root} && ${INSTALL_PACKAGES}`,
+        };
   },
   async fetch({ root }) {
     const args = ['fetch', '--quiet', 'origin', DEFAULT_BRANCH];
@@ -88,16 +91,28 @@ const CHECKS: Record<CheckName, (context: { root: string }) => Promise<CheckOutc
     const missing = [WRITEUPS_FOLDER, PAGES_FOLDER].filter((folder) => !fs.existsSync(path.join(root, folder)));
     return missing.length === 0
       ? { ok: true, detail: `vault at ${root}` }
-      : { ok: false, detail: `vault not reachable: ${missing.map((folder) => path.join(root, folder)).join(', ')} missing`, fix: 'set VAULT_DIR to the vault root' };
+      : {
+          ok: false,
+          detail: `vault not reachable: ${missing.map((folder) => path.join(root, folder)).join(', ')} missing`,
+          fix: 'set VAULT_DIR to the vault root',
+        };
   },
   async clean({ root }) {
     const args = ['status', '--porcelain=v1', '--untracked-files=no'];
     const result = await run('git', args, { cwd: root });
-    if (result.code !== 0) return { ok: false, detail: `git status failed: ${failureDetail('git', args, result)}`, fix: `check that ${root} is a git checkout, then retry` };
+    if (result.code !== 0)
+      return { ok: false, detail: `git status failed: ${failureDetail('git', args, result)}`, fix: `check that ${root} is a git checkout, then retry` };
     const dirty = result.stdout.split('\n').filter(Boolean);
     return dirty.length === 0
       ? { ok: true, detail: 'no uncommitted tracked changes' }
-      : { ok: false, detail: `${dirty.length} uncommitted tracked change(s): ${dirty.slice(0, 3).map((line) => line.slice(3)).join(', ')}`, fix: 'commit or stash them, then retry' };
+      : {
+          ok: false,
+          detail: `${dirty.length} uncommitted tracked change(s): ${dirty
+            .slice(0, 3)
+            .map((line) => line.slice(3))
+            .join(', ')}`,
+          fix: 'commit or stash them, then retry',
+        };
   },
 };
 

@@ -16,7 +16,8 @@ const content = path.resolve(siteRoot, contentRoot);
 
 function documentSlugs(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true })
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, DOCUMENT_FILE)))
     .map((entry) => entry.name)
     .sort();

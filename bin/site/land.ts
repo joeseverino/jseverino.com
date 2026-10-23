@@ -24,8 +24,21 @@ interface PullRequest extends PullRequestRef {
 
 // The most recently created content/* PR by the authenticated user.
 function latestContentPr(root: string): PullRequest {
-  const prs = ghJson<(PullRequest & { createdAt: string })[]>(root, 'pr', 'list', '--author', '@me', '--state', 'all', '--limit', '30',
-    '--search', 'head:content/', '--json', `${PR_FIELDS},createdAt`)
+  const prs = ghJson<(PullRequest & { createdAt: string })[]>(
+    root,
+    'pr',
+    'list',
+    '--author',
+    '@me',
+    '--state',
+    'all',
+    '--limit',
+    '30',
+    '--search',
+    'head:content/',
+    '--json',
+    `${PR_FIELDS},createdAt`,
+  )
     .filter((pr) => pr.headRefName.startsWith(CONTENT_BRANCH_PREFIX))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const [latest] = prs;
@@ -45,7 +58,7 @@ function timedOut(what: string, result: object): never {
 async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: number, out: Output): Promise<void> {
   const required = await requiredContexts(SITE_REPOSITORY, DEFAULT_BRANCH);
   if (required.length === 0) {
-    throw new SiteError('main\'s ruleset requires no status checks, so land cannot tell when the PR is ready', {
+    throw new SiteError("main's ruleset requires no status checks, so land cannot tell when the PR is ready", {
       result: { pr: pr.url },
       fix: 'add the required status checks to the main ruleset (docs/Release-Checklist.md)',
     });
@@ -131,7 +144,9 @@ export async function land({
   out.step('pr', `#${pr.number} ${pr.title} (${pr.state.toLowerCase()})`);
   if (pr.baseRefName !== DEFAULT_BRANCH) {
     throw new SiteError(`#${pr.number} targets ${pr.baseRefName}; site land waits on ${DEFAULT_BRANCH}'s checks and merges only into it`, {
-      code: EXIT.usage, result: { pr: pr.url }, fix: `retarget the PR to ${DEFAULT_BRANCH}`,
+      code: EXIT.usage,
+      result: { pr: pr.url },
+      fix: `retarget the PR to ${DEFAULT_BRANCH}`,
     });
   }
 

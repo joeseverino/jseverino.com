@@ -5,13 +5,7 @@
   "title": "Cordon checks verdict (schema_version 1)",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "ok",
-    "schema_version",
-    "failed",
-    "report",
-    "checks"
-  ],
+  "required": ["ok", "schema_version", "failed", "report", "checks"],
   "properties": {
     "ok": {
       "type": "boolean",

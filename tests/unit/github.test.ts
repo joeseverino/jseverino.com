@@ -14,7 +14,16 @@ const schema = read<JsonSchema>('.github/repo.schema.json');
 const desired = read<DesiredState>('.github/repo.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
-const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, topics: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
+const DESIRED_FIELDS = {
+  $schema: true,
+  repository: true,
+  settings: true,
+  topics: true,
+  security: true,
+  actions: true,
+  variables: true,
+  ruleset: true,
+} satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
@@ -121,7 +130,11 @@ describe('apply --yes', () => {
     assert.equal(fake.state.permissions.sha_pinning_required, true);
     assert.equal(fake.state.codeScanning.state, 'configured');
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);
-    assert.deepEqual(fake.state.variables.map((entry) => entry.name).sort(), ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'], 'variables not in repo.json are left alone');
+    assert.deepEqual(
+      fake.state.variables.map((entry) => entry.name).sort(),
+      ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'],
+      'variables not in repo.json are left alone',
+    );
 
     await shared.reapplyIsNoOp(fake);
   });
@@ -132,7 +145,9 @@ describe('apply --yes', () => {
     assert.ok(live);
     const rules = live.rules as { type: string; parameters?: { required_status_checks?: { context: string; integration_id?: number }[] } }[];
     live.rules = rules.filter((rule) => rule.type !== 'code_scanning');
-    rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks?.push({ context: 'analyze typescript', integration_id: 15368 });
+    rules
+      .find((rule) => rule.type === 'required_status_checks')
+      ?.parameters?.required_status_checks?.push({ context: 'analyze typescript', integration_id: 15368 });
     const fake = createGithubFake(before, TOKEN);
     const { code, output } = await run(fake, 'apply', '--yes');
     assert.equal(code, 0, output);
@@ -157,7 +172,9 @@ describe('the GitHub client', () => {
     const seen: { url: string; signal: AbortSignal | null | undefined }[] = [];
     const fetch = async (url: string, init: RequestInit) => {
       seen.push({ url, signal: init.signal });
-      const next = url.endsWith('page=2') ? {} : { link: `<${API_BASE}/users/example/repos?page=2>; rel="next", <${API_BASE}/users/example/repos?page=2>; rel="last"` };
+      const next = url.endsWith('page=2')
+        ? {}
+        : { link: `<${API_BASE}/users/example/repos?page=2>; rel="next", <${API_BASE}/users/example/repos?page=2>; rel="last"` };
       return new Response(JSON.stringify([url.endsWith('page=2') ? 'b' : 'a']), { headers: next });
     };
     const items = await createClient({ token: TOKEN, fetch }).list<string>('/users/example/repos');

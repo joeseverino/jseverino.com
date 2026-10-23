@@ -52,7 +52,11 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
   // gh is a network round trip, so the git probes run beside it.
   const [{ branch, changes: dirty, ahead, behind }, prs] = await Promise.all([
     repoState(root),
-    run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY], { cwd: root, timeout: 30_000 }),
+    run(
+      'gh',
+      ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY],
+      { cwd: root, timeout: 30_000 },
+    ),
   ]);
   const drift = lockfileDrift(root);
   const vault = vaultRoot();
@@ -101,7 +105,17 @@ export async function seo({ page, result: resultOnly, out }: { page: string | un
   return { page, ...result, next: null };
 }
 
-export async function draftAlt({ slug: requested, all, apply, out }: { slug: string | undefined; all: boolean; apply: boolean; out: Output }): Promise<DraftAltResult> {
+export async function draftAlt({
+  slug: requested,
+  all,
+  apply,
+  out,
+}: {
+  slug: string | undefined;
+  all: boolean;
+  apply: boolean;
+  out: Output;
+}): Promise<DraftAltResult> {
   if (all === (requested !== undefined)) throw new SiteError('pass one writeup slug or --all', { code: EXIT.usage, fix: 'site draft-alt --help' });
   const slug = all ? null : assertSlug(requested);
   const result = await front('bin/draft-cover-alt.ts', [slug ?? '--all', ...(apply ? ['--apply'] : [])], { out, what: 'cover_alt draft' });

@@ -16,16 +16,16 @@ function* elements(node: HastNode): Generator<Element> {
   if ('children' in node) for (const child of node.children) yield* elements(child);
 }
 
-const find = (doc: HastNode, test: (element: Element) => boolean): Element | undefined =>
-  elements(doc).find(test);
+const find = (doc: HastNode, test: (element: Element) => boolean): Element | undefined => elements(doc).find(test);
 
 // Every element with this tag name, in document order.
 export const elementsNamed = (doc: HastNode, tagName: string): Element[] =>
-  elements(doc).filter((el) => el.tagName === tagName).toArray();
+  elements(doc)
+    .filter((el) => el.tagName === tagName)
+    .toArray();
 
 // The text of a node and everything under it, as the DOM's textContent.
-export const textContent = (node: HastNode): string =>
-  node.type === 'text' ? node.value : 'children' in node ? node.children.map(textContent).join('') : '';
+export const textContent = (node: HastNode): string => (node.type === 'text' ? node.value : 'children' in node ? node.children.map(textContent).join('') : '');
 
 // A `<meta>` keyed by `name` (description, robots) or `property` (og:*).
 export function metaContent(doc: HastNode, key: string): string | undefined {

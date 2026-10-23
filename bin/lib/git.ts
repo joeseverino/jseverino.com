@@ -12,7 +12,9 @@ export async function gitAsync(root: string, ...args: string[]): Promise<string>
 
 // Tracked files, repo-relative, optionally narrowed by pathspecs.
 export const trackedFiles = (root: string, ...pathspecs: string[]): string[] =>
-  runSync('git', ['ls-files', '-z', '--', ...pathspecs], { cwd: root, raw: true }).split('\0').filter(Boolean);
+  runSync('git', ['ls-files', '-z', '--', ...pathspecs], { cwd: root, raw: true })
+    .split('\0')
+    .filter(Boolean);
 
 // Porcelain v1 status entries ("XY path"), untracked files included, renames
 // as delete plus add, optionally narrowed by pathspecs.

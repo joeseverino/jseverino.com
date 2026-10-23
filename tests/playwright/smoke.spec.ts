@@ -1,23 +1,16 @@
 import { test, expect, isWebKitInterceptionBlobError, type ConsoleMessage } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
-const turnstileFeaturePolicyWarnings = new Set([
-  'autoplay',
-  'cross-origin-isolated',
-  'keyboard-map',
-  'xr-spatial-tracking',
-]);
+const turnstileFeaturePolicyWarnings = new Set(['autoplay', 'cross-origin-isolated', 'keyboard-map', 'xr-spatial-tracking']);
 
 function isKnownTurnstileWarning(message: ConsoleMessage): boolean {
   const text = message.text();
   const match = text.match(/Feature Policy: Skipping unsupported feature name [“"]([^"”]+)[”"]\./);
   const sourceUrl = message.location().url;
-  const isTurnstileSource = sourceUrl.startsWith('https://challenges.cloudflare.com/turnstile/')
-    || /^\[JavaScript Warning: ".+" \{file: "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js" line: \d+\}\]$/.test(text);
-  return message.type() === 'warning'
-    && isTurnstileSource
-    && match !== null
-    && turnstileFeaturePolicyWarnings.has(match[1] ?? '');
+  const isTurnstileSource =
+    sourceUrl.startsWith('https://challenges.cloudflare.com/turnstile/') ||
+    /^\[JavaScript Warning: ".+" \{file: "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js" line: \d+\}\]$/.test(text);
+  return message.type() === 'warning' && isTurnstileSource && match !== null && turnstileFeaturePolicyWarnings.has(match[1] ?? '');
 }
 
 test('home page loads with hero heading', async ({ page }) => {
@@ -30,7 +23,10 @@ test('home page loads with hero heading', async ({ page }) => {
 
 test('primary navigation links resolve', async ({ page }) => {
   await page.goto('/');
-  const portfolioLink = page.locator('.primary-nav').getByRole('link', { name: /portfolio/i }).first();
+  const portfolioLink = page
+    .locator('.primary-nav')
+    .getByRole('link', { name: /portfolio/i })
+    .first();
   await portfolioLink.click();
   await expect(page).toHaveURL(/\/portfolio\/$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText(/portfolio/i);
@@ -48,10 +44,10 @@ test('representative routes emit no browser warnings or errors', async ({ page }
   page.on('pageerror', (err) => diagnostics.push(`pageerror: ${err.message}`));
   page.on('console', (msg) => {
     if (
-      ['warning', 'error'].includes(msg.type())
-      && !msg.text().startsWith('Failed to preconnect to ')
-      && !isKnownTurnstileWarning(msg)
-      && !isWebKitInterceptionBlobError(msg)
+      ['warning', 'error'].includes(msg.type()) &&
+      !msg.text().startsWith('Failed to preconnect to ') &&
+      !isKnownTurnstileWarning(msg) &&
+      !isWebKitInterceptionBlobError(msg)
     ) {
       diagnostics.push(`${msg.type()}: ${msg.text()}`);
     }
@@ -68,7 +64,5 @@ test('sticky header gains a shadow after scrolling', async ({ page }) => {
   await page.goto('/portfolio/');
   await page.evaluate(() => window.scrollTo(0, 200));
 
-  await expect
-    .poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').boxShadow))
-    .not.toBe('none');
+  await expect.poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').boxShadow)).not.toBe('none');
 });

@@ -13,17 +13,35 @@
       "description": "Repository fields (PATCH /repos/:repository). Squash is the only merge method: rebase merging strips SSH commit signatures, and the ruleset below refuses the rest.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["allow_squash_merge", "allow_merge_commit", "allow_rebase_merge", "allow_auto_merge", "delete_branch_on_merge", "squash_merge_commit_title", "squash_merge_commit_message", "has_wiki", "description", "homepage"],
+      "required": [
+        "allow_squash_merge",
+        "allow_merge_commit",
+        "allow_rebase_merge",
+        "allow_auto_merge",
+        "delete_branch_on_merge",
+        "squash_merge_commit_title",
+        "squash_merge_commit_message",
+        "has_wiki",
+        "description",
+        "homepage"
+      ],
       "properties": {
         "allow_squash_merge": { "type": "boolean" },
         "allow_merge_commit": { "type": "boolean" },
         "allow_rebase_merge": { "type": "boolean" },
-        "allow_auto_merge": { "description": "Off: nothing here enables auto-merge, so every pull request, Renovate's included, is merged deliberately.", "type": "boolean" },
+        "allow_auto_merge": {
+          "description": "Off: nothing here enables auto-merge, so every pull request, Renovate's included, is merged deliberately.",
+          "type": "boolean"
+        },
         "delete_branch_on_merge": { "type": "boolean" },
         "squash_merge_commit_title": { "enum": ["PR_TITLE", "COMMIT_OR_PR_TITLE"] },
         "squash_merge_commit_message": { "enum": ["PR_BODY", "COMMIT_MESSAGES", "BLANK"] },
         "has_wiki": { "type": "boolean" },
-        "description": { "description": "The About text. It makes claims about the site, so it is checked like the docs are.", "type": "string", "minLength": 1 },
+        "description": {
+          "description": "The About text. It makes claims about the site, so it is checked like the docs are.",
+          "type": "string",
+          "minLength": 1
+        },
         "homepage": { "type": "string", "pattern": "^https://" }
       }
     },
@@ -36,12 +54,22 @@
       "description": "Repository security features.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["secret_scanning", "secret_scanning_push_protection", "dependabot_security_updates", "vulnerability_alerts", "private_vulnerability_reporting", "code_scanning"],
+      "required": [
+        "secret_scanning",
+        "secret_scanning_push_protection",
+        "dependabot_security_updates",
+        "vulnerability_alerts",
+        "private_vulnerability_reporting",
+        "code_scanning"
+      ],
       "properties": {
         "secret_scanning": { "$ref": "#/$defs/status" },
         "secret_scanning_push_protection": { "$ref": "#/$defs/status" },
         "dependabot_security_updates": { "description": "Off: Renovate opens the security fixes, from the alerts below.", "$ref": "#/$defs/status" },
-        "vulnerability_alerts": { "description": "GitHub's vulnerability alerts, which Renovate reads to open a fix at once; an accepted advisory is an alert dismissed with a reason.", "type": "boolean" },
+        "vulnerability_alerts": {
+          "description": "GitHub's vulnerability alerts, which Renovate reads to open a fix at once; an accepted advisory is an alert dismissed with a reason.",
+          "type": "boolean"
+        },
         "private_vulnerability_reporting": { "type": "boolean" },
         "code_scanning": {
           "description": "CodeQL default setup (PATCH /repos/:repository/code-scanning/default-setup). The ruleset's code_scanning rule requires its results, so both change in one apply.",
@@ -65,7 +93,10 @@
       "required": ["allowed_actions", "sha_pinning_required", "default_workflow_permissions", "can_approve_pull_request_reviews"],
       "properties": {
         "allowed_actions": { "enum": ["all", "local_only", "selected"] },
-        "sha_pinning_required": { "description": "Every `uses:` reference must be a full commit SHA, which zizmor (checks:workflows) also enforces.", "type": "boolean" },
+        "sha_pinning_required": {
+          "description": "Every `uses:` reference must be a full commit SHA, which zizmor (checks:workflows) also enforces.",
+          "type": "boolean"
+        },
         "default_workflow_permissions": { "enum": ["read", "write"] },
         "can_approve_pull_request_reviews": { "type": "boolean" }
       }

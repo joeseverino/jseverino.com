@@ -19,9 +19,13 @@ after(scratch.cleanup);
 
 // The sync CLI with only the environment given: no PATH tools, no shell profile, an empty home.
 const sync = (env: Record<string, string>) =>
-  spawnSync(process.execPath, [fromRoot('bin/sync-content.ts'), '--check', '--json'], { cwd: fromRoot('.'), encoding: 'utf8', env: { PATH: process.env.PATH ?? '', HOME: home, ...env } });
+  spawnSync(process.execPath, [fromRoot('bin/sync-content.ts'), '--check', '--json'], {
+    cwd: fromRoot('.'),
+    encoding: 'utf8',
+    env: { PATH: process.env.PATH ?? '', HOME: home, ...env },
+  });
 
-describe('the sync CLI on a machine with nothing of the author\'s', () => {
+describe("the sync CLI on a machine with nothing of the author's", () => {
   test('checks the vault it is pointed at', () => {
     const vault = path.join(root, 'vault');
     fs.mkdirSync(path.join(vault, '05 Writeups'), { recursive: true });
@@ -51,8 +55,9 @@ describe('the sync CLI on a machine with nothing of the author\'s', () => {
 
 describe('where each input comes from', () => {
   test('only the local audit log reads the home directory', () => {
-    const readers = trackedFiles(fromRoot('.'), 'bin', 'src')
-      .filter((file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('));
+    const readers = trackedFiles(fromRoot('.'), 'bin', 'src').filter(
+      (file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('),
+    );
     assert.deepEqual(readers.sort(), ['bin/lib/site-ops.ts']);
   });
 });

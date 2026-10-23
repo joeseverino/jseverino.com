@@ -7,9 +7,5 @@ export const interFontFace = (fontUrl: string): string =>
   `@font-face{font-family:Inter;font-weight:400 700;font-style:normal;font-display:swap;src:url(${fontUrl}) format('woff2')}`;
 
 export function previewStyles({ baseCss, fontUrl }: { baseCss: string; fontUrl: string }): string {
-  return [
-    `<style>${brandVarsCss()}</style>`,
-    `<style>${baseCss}</style>`,
-    `<style>${interFontFace(fontUrl)}</style>`,
-  ].join('\n');
+  return [`<style>${brandVarsCss()}</style>`, `<style>${baseCss}</style>`, `<style>${interFontFace(fontUrl)}</style>`].join('\n');
 }

@@ -4,13 +4,7 @@ import { test, expect } from '@playwright/test';
 import { buildOutDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { SITE_ORIGIN, writeupPath } from '../../src/lib/site-config.ts';
-import {
-  cacheRuleFindings,
-  contactRefusalFindings,
-  cspFindings,
-  inlineHashFindings,
-  staticHeaderFindings,
-} from '../../src/lib/edge-expectations.ts';
+import { cacheRuleFindings, contactRefusalFindings, cspFindings, inlineHashFindings, staticHeaderFindings } from '../../src/lib/edge-expectations.ts';
 
 // Every assertion here is against the Cloudflare runtime serving the built
 // output (see tests/playwright.edge.config.ts). The expectations are the functions

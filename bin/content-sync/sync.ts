@@ -234,14 +234,10 @@ export interface CheckOptions {
 // writeups and tolerates the publish-only rules.
 export async function checkContent({ vaultRoot, slug, draft = false }: CheckOptions): Promise<{ ok: boolean; documents: CheckedDocument[] }> {
   const vault = createVaultSource({ vaultRoot, includeDrafts: true });
-  const catalog = new Set(
-    readTechnologyGroups(vault.technologyGroups)
-      .flatMap((group) => group.tags.map((tag) => tag.slug)),
-  );
+  const catalog = new Set(readTechnologyGroups(vault.technologyGroups).flatMap((group) => group.tags.map((tag) => tag.slug)));
   const documents: CheckedDocument[] = [];
 
-  const writeups = (await vault.writeups()).filter((entry) =>
-    slug ? entry.slug === slug : draft || entry.parsed.data.published === true);
+  const writeups = (await vault.writeups()).filter((entry) => (slug ? entry.slug === slug : draft || entry.parsed.data.published === true));
   if (slug && writeups.length === 0) {
     documents.push({ collection: 'writeups', slug, published: false, issues: [`writeup not found: ${path.join(vault.writeupsRoot, slug)}`] });
   }
@@ -267,11 +263,7 @@ export async function checkContent({ vaultRoot, slug, draft = false }: CheckOpti
         collection: 'pages',
         slug: name,
         published: parsed.data.published === true,
-        issues: [
-          ...frontmatterIssues('pages', parsed.data),
-          ...(await referenceIssues(parsed.content, sourceDir)),
-          ...compileIssues(parsed.content, 'pages'),
-        ],
+        issues: [...frontmatterIssues('pages', parsed.data), ...(await referenceIssues(parsed.content, sourceDir)), ...compileIssues(parsed.content, 'pages')],
       });
     }
   }

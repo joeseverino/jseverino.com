@@ -157,17 +157,18 @@ export interface Model {
 }
 
 export const FIELDS: readonly Field[] = Object.entries(collectionFields('writeups'))
-  .filter(([name, spec]) =>
-    name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
-  .map(([name, spec]): Field => ({
-    key: camelKey(name),
-    label: name,
-    flag: spec.cli_flag,
-    editable: spec.editable === true,
-    note: spec.editable === true ? undefined : 'edit in Obsidian',
-    type: spec.type,
-    default: spec.default,
-  }));
+  .filter(([name, spec]) => name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
+  .map(
+    ([name, spec]): Field => ({
+      key: camelKey(name),
+      label: name,
+      flag: spec.cli_flag,
+      editable: spec.editable === true,
+      note: spec.editable === true ? undefined : 'edit in Obsidian',
+      type: spec.type,
+      default: spec.default,
+    }),
+  );
 
 function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: Record<string, FieldSpec>): Item {
   const source: Record<string, unknown> = w;
@@ -237,9 +238,7 @@ export async function load(): Promise<Model> {
   const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
   const featured = summaries.filter((w) => w.featured).toSorted(byFeaturedOrder);
-  const rest = summaries
-    .filter((w) => !w.featured)
-    .sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
+  const rest = summaries.filter((w) => !w.featured).sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
   const items = [...featured, ...rest].map((writeup) => toItem(writeup, contractFields));
 
   const gate = await gateIssues();

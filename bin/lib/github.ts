@@ -63,9 +63,9 @@ export function createClient({ token, fetch }: ClientOptions) {
     // Every page of a list, following the Link header's next page.
     list: async <T>(path: string): Promise<T[]> => {
       const items: T[] = [];
-      for (let url: string | undefined = `${API_BASE}${path}`; url;) {
+      for (let url: string | undefined = `${API_BASE}${path}`; url; ) {
         const response = await send('GET', url);
-        items.push(...(await response.json() as T[]));
+        items.push(...((await response.json()) as T[]));
         url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
       }
       return items;
@@ -116,10 +116,12 @@ interface BranchRule {
 
 // The status-check contexts the rulesets applying to a branch require.
 export const requiredContexts = async (repository: string, branch: string, client = github()): Promise<string[]> => [
-  ...new Set((await client.get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
-    .filter((rule) => rule.type === 'required_status_checks')
-    .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
-    .map((check) => check.context)),
+  ...new Set(
+    (await client.get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
+      .filter((rule) => rule.type === 'required_status_checks')
+      .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
+      .map((check) => check.context),
+  ),
 ];
 
 // GitHub's verdict on a commit's signature.

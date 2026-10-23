@@ -49,10 +49,7 @@ function mediaTypeFor(filename: string): string {
   return 'application/octet-stream';
 }
 
-export type Draft =
-  | { slug: string; error: string }
-  | { slug: string; skipped: string }
-  | { slug: string; draft: string };
+export type Draft = { slug: string; error: string } | { slug: string; skipped: string } | { slug: string; draft: string };
 
 async function draftFor(slug: string): Promise<Draft> {
   const indexFile = path.join(writeupsRoot, slug, 'index.md');

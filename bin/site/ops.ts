@@ -1,7 +1,5 @@
 // `site` commands over the live-site operations (bin/lib/site-ops.ts).
-import {
-  SiteOpsError, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, siteOpsConfig,
-} from '../lib/site-ops.ts';
+import { SiteOpsError, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, siteOpsConfig } from '../lib/site-ops.ts';
 import { EXIT, SiteError, translate, type Output } from './cli.ts';
 import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
 import { INSTALL_PACKAGES } from '../lib/preflight.ts';
@@ -29,14 +27,25 @@ const limit = (value: string | undefined): number | undefined => {
 
 export async function contact({ limit: max, pii, out }: { limit: string | undefined; pii: boolean; out: Output }): Promise<ContactResult> {
   const result = await guard(() => contactSubmissions(siteOpsConfig(), { limit: limit(max), includePii: pii }), { fix: D1_READ_FIX });
-  for (const row of result.results) out.text(`  ${String(row.created_at)}  ${String(row.name)}  ${String(row.email)}  ${String(row.message_preview ?? row.message ?? '')}`);
+  for (const row of result.results)
+    out.text(`  ${String(row.created_at)}  ${String(row.name)}  ${String(row.email)}  ${String(row.message_preview ?? row.message ?? '')}`);
   if (result.advisory) out.step('redacted', result.advisory);
   return { ...result, next: null };
 }
 
 export async function csp({
-  count, limit: max, directive, pii, out,
-}: { count: boolean; limit: string | undefined; directive: string | undefined; pii: boolean; out: Output }): Promise<CspResult> {
+  count,
+  limit: max,
+  directive,
+  pii,
+  out,
+}: {
+  count: boolean;
+  limit: string | undefined;
+  directive: string | undefined;
+  pii: boolean;
+  out: Output;
+}): Promise<CspResult> {
   if (count) {
     const counts = await guard(() => cspCounts(siteOpsConfig()), { fix: D1_READ_FIX });
     out.text(`  total ${counts.total}`);

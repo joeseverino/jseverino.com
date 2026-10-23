@@ -33,7 +33,10 @@ const rasters: Record<string, Buffer> = {
   'public/assets/brand/mark-1024-transparent.png': marks.markTransparent,
 };
 
-writeOrCheck(Object.entries(vectors).map(([file, content]) => ({ file: fromRoot(file), content })), { check });
+writeOrCheck(
+  Object.entries(vectors).map(([file, content]) => ({ file: fromRoot(file), content })),
+  { check },
+);
 if (check) {
   console.log(`ok       ${Object.keys(vectors).join(', ')} match the mark renderer`);
 } else {

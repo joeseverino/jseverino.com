@@ -11,14 +11,21 @@ const site = (...args: string[]) => {
 };
 
 test('<command> --help --json prints the usage as one JSON document', () => {
-  for (const args of [['publish', '--help', '--json'], ['publish', '--json', '--help'], ['help', 'publish', '--json']]) {
+  for (const args of [
+    ['publish', '--help', '--json'],
+    ['publish', '--json', '--help'],
+    ['help', 'publish', '--json'],
+  ]) {
     const result = site(...args);
     assert.equal(result.status, 0, result.stderr);
     const doc = JSON.parse(result.stdout) as SiteHelp;
     assert.equal(doc.command, 'publish');
     assert.equal(doc.status, 'help');
     assert.match(doc.usage, /^site publish/);
-    assert.ok(doc.options.some((option) => option.name === 'dry-run' && option.type === 'boolean'), args.join(' '));
+    assert.ok(
+      doc.options.some((option) => option.name === 'dry-run' && option.type === 'boolean'),
+      args.join(' '),
+    );
     assert.deepEqual(doc.exitCodes, { ok: 0, failed: 1, usage: 2, preflight: 3, timeout: 4 });
   }
 });
@@ -61,7 +68,10 @@ test('human-readable stdout and JSON progress neutralize untrusted terminal cont
   for (const json of [false, true]) {
     const chunks: string[] = [];
     const stream = json ? process.stderr : process.stdout;
-    const writer = t.mock.method(stream, 'write', (chunk: string) => { chunks.push(chunk); return true; });
+    const writer = t.mock.method(stream, 'write', (chunk: string) => {
+      chunks.push(chunk);
+      return true;
+    });
     const out = createOutput({ json });
     out.text(payload);
     out.warn(payload, payload);

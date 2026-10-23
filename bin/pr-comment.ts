@@ -44,24 +44,24 @@ export function commentBody({ run, preview, summaries, required, checks }: Comme
   const status = required
     .map((name) => {
       const check = checks.find((candidate) => candidate.name === name);
-      return `\`${name}\` ${check ? check.conclusion ?? check.status : 'pending'}`;
+      return `\`${name}\` ${check ? (check.conclusion ?? check.status) : 'pending'}`;
     })
     .join(' · ');
-  const ci = [
-    `### ci: ${run.conclusion} · [run](${run.html_url})`,
-    ...CI_SUMMARIES.flatMap((name) => nested(summaries[name]) ?? []),
-  ].join('\n\n');
-  const deploy = preview === 'skipped'
-    ? `### Deploy\n\nNothing deployed: ci ${run.conclusion}.`
-    : nested(summaries.deploy) ?? `### Deploy\n\n${preview}: no summary was produced.`;
+  const ci = [`### ci: ${run.conclusion} · [run](${run.html_url})`, ...CI_SUMMARIES.flatMap((name) => nested(summaries[name]) ?? [])].join('\n\n');
+  const deploy =
+    preview === 'skipped'
+      ? `### Deploy\n\nNothing deployed: ci ${run.conclusion}.`
+      : (nested(summaries.deploy) ?? `### Deploy\n\n${preview}: no summary was produced.`);
   return [MARKER, `## CI for \`${run.head_sha.slice(0, 12)}\``, '', status, '', ci, '', deploy, ''].join('\n');
 }
 
 const readSummaries = (dir: string): Partial<Record<string, string>> =>
-  Object.fromEntries([...CI_SUMMARIES, 'deploy'].flatMap((name) => {
-    const file = path.join(dir, `summary-${name}.md`);
-    return fs.existsSync(file) ? [[name, fs.readFileSync(file, 'utf8')]] : [];
-  }));
+  Object.fromEntries(
+    [...CI_SUMMARIES, 'deploy'].flatMap((name) => {
+      const file = path.join(dir, `summary-${name}.md`);
+      return fs.existsSync(file) ? [[name, fs.readFileSync(file, 'utf8')]] : [];
+    }),
+  );
 
 interface Pull {
   number: number;
@@ -95,8 +95,9 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
   const sha = run.head_sha;
 
   // Only the open pull request whose head is this commit, from this repository.
-  const pull = (await github.list<Pull>(`/repos/${repository}/commits/${sha}/pulls?per_page=100`))
-    .find((candidate) => candidate.state === 'open' && candidate.head.sha === sha && candidate.head.repo?.full_name === repository);
+  const pull = (await github.list<Pull>(`/repos/${repository}/commits/${sha}/pulls?per_page=100`)).find(
+    (candidate) => candidate.state === 'open' && candidate.head.sha === sha && candidate.head.repo?.full_name === repository,
+  );
   if (!pull) {
     log(`No open pull request has ${sha} as its head; nothing to comment on.`);
     return 0;
@@ -109,8 +110,9 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
     required: await requiredContexts(repository, defaultBranch, github),
     checks: await checkRuns(repository, sha, github),
   });
-  const existing = (await github.list<Comment>(`/repos/${repository}/issues/${pull.number}/comments?per_page=100`))
-    .find((comment) => comment.body?.includes(MARKER));
+  const existing = (await github.list<Comment>(`/repos/${repository}/issues/${pull.number}/comments?per_page=100`)).find((comment) =>
+    comment.body?.includes(MARKER),
+  );
   if (existing) await github.request('PATCH', `/repos/${repository}/issues/comments/${existing.id}`, { body });
   else await github.request('POST', `/repos/${repository}/issues/${pull.number}/comments`, { body });
   log(`${existing ? 'Updated' : 'Posted'} the ci comment on #${pull.number}.`);

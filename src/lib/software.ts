@@ -5,14 +5,7 @@ import { getGithubRepos } from './github.ts';
 import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
 import registry from '../data/package-registry.json' with { type: 'json' };
-import {
-  FEATURED,
-  PACKAGES,
-  SELF_HOSTED,
-  SKIP,
-  WRITEUPS,
-  type PackageConfig,
-} from './software.config.ts';
+import { FEATURED, PACKAGES, SELF_HOSTED, SKIP, WRITEUPS, type PackageConfig } from './software.config.ts';
 
 export type SoftwarePackage = PackageConfig & {
   version?: string | undefined;
@@ -35,7 +28,10 @@ export type SoftwareEntry = {
 };
 
 function slugify(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 // From the committed snapshot (`mise run snapshot:software`), so a build never calls PyPI or npm.
@@ -94,9 +90,7 @@ const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: '
 
 function formatUpdated(ym?: string): string {
   const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
-  return year && month && Number(month) >= 1 && Number(month) <= 12
-    ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1))
-    : '';
+  return year && month && Number(month) >= 1 && Number(month) <= 12 ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1)) : '';
 }
 
 export function metaLine(entry: SoftwareEntry): string {

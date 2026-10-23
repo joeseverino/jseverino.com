@@ -74,8 +74,7 @@ const drifted = (items: Item[]): Item[] => items.filter((entry) => entry.status 
 
 const isCall = (step: Step): step is Call => 'method' in step;
 
-const plannedCalls = (items: Item[]): Call[] =>
-  items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
+const plannedCalls = (items: Item[]): Call[] => items.filter((entry) => entry.status === 'drift').flatMap((entry) => entry.steps.filter(isCall));
 
 // Makes the drifted items' calls in order, logging each as `METHOD path`. `use` steps bind an existing id
 // and make no call.
@@ -100,7 +99,11 @@ function render(items: Item[], write: (line: string) => void): void {
   const headers = ['status', 'area', 'item', 'want', 'have', 'note'];
   const clip = (text: string): string => (text.length > 60 ? `${text.slice(0, 57)}...` : text);
   const widths = headers.map((header, column) => Math.max(header.length, ...rows.map((row) => clip(row[column] ?? '').length)));
-  const line = (row: string[]) => row.map((value, column) => clip(value).padEnd(widths[column] ?? 0)).join('  ').trimEnd();
+  const line = (row: string[]) =>
+    row
+      .map((value, column) => clip(value).padEnd(widths[column] ?? 0))
+      .join('  ')
+      .trimEnd();
   write(line(headers));
   for (const row of rows) write(line(row));
 }
@@ -183,5 +186,7 @@ async function runTool({ usage, command: invocation, argv = process.argv.slice(2
 
 // A tool's main(): the command flow over the Run its setup builds from the
 // options. Tests pass the environment, fetch, and output through the options.
-export const toolMain = <O extends ToolOptions>({ usage, command, setup }: { usage: string; command: string; setup: (options: O) => Run }) =>
-  (options: O): Promise<number> => runTool({ ...options, usage, command, setup: () => setup(options) });
+export const toolMain =
+  <O extends ToolOptions>({ usage, command, setup }: { usage: string; command: string; setup: (options: O) => Run }) =>
+  (options: O): Promise<number> =>
+    runTool({ ...options, usage, command, setup: () => setup(options) });

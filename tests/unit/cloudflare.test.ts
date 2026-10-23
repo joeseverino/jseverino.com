@@ -22,11 +22,24 @@ const desired = read<DesiredState>('cloudflare/zone.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
-  $schema: true, zone: true, owner: true, settings: true, hsts: true, dnssec: true, botManagement: true, firewall: true,
-  rateLimit: true, preview: true, schemaValidation: true, turnstile: true,
+  $schema: true,
+  zone: true,
+  owner: true,
+  settings: true,
+  hsts: true,
+  dnssec: true,
+  botManagement: true,
+  firewall: true,
+  rateLimit: true,
+  preview: true,
+  schemaValidation: true,
+  turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch }));
+const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({
+  env: { CLOUDFLARE_API_TOKEN: TOKEN },
+  fetch: fake.fetch,
+}));
 const previewItem = async (accessApps: FakeState['accessApps']) => {
   const { report } = await checkJson(createCloudflareFake({ ...seed, accessApps }, TOKEN));
   return report.items.find((entry: { area: string; name: string }) => entry.area === 'preview' && entry.name === 'access policy');
@@ -75,7 +88,15 @@ describe('check', () => {
     const crowded = structuredClone(seed);
     const phase = crowded.rulesets['zones/http_request_firewall_custom'];
     assert.ok(phase);
-    for (const n of [1, 2, 3]) phase.rules.push({ id: `rule-dashboard-${n}`, ref: `dashboard-${n}`, description: 'Made in the dashboard', expression: '(ip.src eq 192.0.2.2)', action: 'block', enabled: true });
+    for (const n of [1, 2, 3])
+      phase.rules.push({
+        id: `rule-dashboard-${n}`,
+        ref: `dashboard-${n}`,
+        description: 'Made in the dashboard',
+        expression: '(ip.src eq 192.0.2.2)',
+        action: 'block',
+        enabled: true,
+      });
     const { report } = await checkJson(createCloudflareFake(crowded, TOKEN));
     const budget = report.items.find((entry: { name: string }) => entry.name === 'rule budget');
     assert.equal(budget.status, 'manual');
@@ -98,7 +119,11 @@ describe('check', () => {
     assert.equal((await policyItem([ci, proxy])).status, 'ok');
     assert.equal((await policyItem([{ ...ci, include: [{ any_valid_service_token: {} }] }])).status, 'ok');
     const { domain: _, ...byDestination } = previewApp;
-    assert.equal((await previewItem([{ ...byDestination, destinations: [{ uri: PREVIEW_HOSTS }], policies: [ci] }])).status, 'ok', 'an app naming the wildcard as a destination covers it');
+    assert.equal(
+      (await previewItem([{ ...byDestination, destinations: [{ uri: PREVIEW_HOSTS }], policies: [ci] }])).status,
+      'ok',
+      'an app naming the wildcard as a destination covers it',
+    );
 
     const human = await policyItem([ci, { name: 'me', decision: 'allow', include: [{ email: { email: 'me@example.com' } }] }]);
     assert.equal(human.status, 'manual');
@@ -108,7 +133,10 @@ describe('check', () => {
 
     const fake = createCloudflareFake(seed, TOKEN);
     await run(fake, 'apply', '--yes');
-    assert.ok(fake.writes().every((call) => !call.path.includes('/access/')), 'apply makes no Access call');
+    assert.ok(
+      fake.writes().every((call) => !call.path.includes('/access/')),
+      'apply makes no Access call',
+    );
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
@@ -157,14 +185,17 @@ describe('apply --yes', () => {
 
     // Access is check-only, so its policy is the one item left, for a person.
     assert.equal(first.code, 1);
-    assert.deepEqual(first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')), ['still    preview access policy']);
+    assert.deepEqual(
+      first.output.match(/^still +.*$/gm)?.map((line) => line.replace(/:.*/, '')),
+      ['still    preview access policy'],
+    );
 
     const firewall = fake.state.rulesets['zones/http_request_firewall_custom']?.rules ?? [];
-    assert.deepEqual(firewall.find((rule) => rule.ref === incident?.ref), incident);
-    assert.deepEqual(firewall.map((rule) => rule.ref).sort(), [
-      'incident-2026-09',
-      ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`),
-    ].sort());
+    assert.deepEqual(
+      firewall.find((rule) => rule.ref === incident?.ref),
+      incident,
+    );
+    assert.deepEqual(firewall.map((rule) => rule.ref).sort(), ['incident-2026-09', ...desired.firewall.map((rule) => `jseverino-com-${rule.id}`)].sort());
     assert.equal(fake.state.settings.browser_cache_ttl?.value, 0);
     assert.deepEqual(
       Object.fromEntries(Object.entries(fake.state.botManagement).filter(([key]) => key in desired.botManagement || key.endsWith('_protection'))),
@@ -173,13 +204,14 @@ describe('apply --yes', () => {
     );
     const header = fake.state.settings.security_header?.value as { strict_transport_security: { nosniff: boolean } };
     assert.equal(header.strict_transport_security.nosniff, false, 'HSTS keeps fields zone.json does not own');
-    assert.equal(fake.state.validationSettings.validation_default_mitigation_action, 'none', 'the zone default is not this file\'s');
+    assert.equal(fake.state.validationSettings.validation_default_mitigation_action, 'none', "the zone default is not this file's");
     assert.equal(fake.state.operationSettings['op-contact']?.mitigation_action, 'block');
     assert.deepEqual(fake.state.widgets[0]?.domains, ['jseverino.com']);
     assert.equal(fake.state.widgets[0]?.mode, 'managed');
-    assert.deepEqual(fake.state.schemas.map((entry) => [entry.name, entry.source]), [
-      ['jseverino-com-contact', fs.readFileSync(path.join(siteRoot, desired.schemaValidation.file), 'utf8')],
-    ]);
+    assert.deepEqual(
+      fake.state.schemas.map((entry) => [entry.name, entry.source]),
+      [['jseverino-com-contact', fs.readFileSync(path.join(siteRoot, desired.schemaValidation.file), 'utf8')]],
+    );
 
     await shared.reapplyIsNoOp(fake);
   });

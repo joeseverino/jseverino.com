@@ -61,8 +61,10 @@ export function runGpg(args: readonly string[], options: Pick<SpawnOptions, 'inp
 export function verifySecuritySignature(file: string, keyDirectory = WKD_DIR): SpawnResult {
   using directory = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'site-signature-'));
   const options = ['--no-options', '--homedir', directory.path, '--batch', '--no-autostart', '--no-auto-key-retrieve'];
-  const keys = fs.readdirSync(keyDirectory, { withFileTypes: true })
-    .filter((entry) => entry.isFile()).map((entry) => path.join(keyDirectory, entry.name));
+  const keys = fs
+    .readdirSync(keyDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(keyDirectory, entry.name));
   if (!keys.length) throw new Error('No committed WKD public keys available for signature verification.');
   const imported = runGpg([...options, '--import', ...keys]);
   if (imported.code !== 0) return imported;

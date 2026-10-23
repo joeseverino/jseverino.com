@@ -3,8 +3,19 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  WriteupError, applyPlan, featuredOrder, listWriteups, loadWriteups, prepare, reorderFeatured, snapshot, tagUsage,
-  technologyCatalog, updateFrontmatter, updateLink, type WriteupStore,
+  WriteupError,
+  applyPlan,
+  featuredOrder,
+  listWriteups,
+  loadWriteups,
+  prepare,
+  reorderFeatured,
+  snapshot,
+  tagUsage,
+  technologyCatalog,
+  updateFrontmatter,
+  updateLink,
+  type WriteupStore,
 } from '../../bin/lib/writeups/store.ts';
 import { renderScalar, replaceScalar, yamlEscape } from '../../bin/lib/writeups/scalar.ts';
 import { transactionalReplace } from '../../bin/lib/writeups/transaction.ts';
@@ -164,7 +175,10 @@ describe('scalar writes', () => {
 describe('reads', () => {
   test('skip folders without frontmatter and coerce typed fields', () => {
     const writeups = loadWriteups(store);
-    assert.deepEqual(writeups.map((w) => w.slug), ['draft-piece', 'lead-piece', 'ready-piece']);
+    assert.deepEqual(
+      writeups.map((w) => w.slug),
+      ['draft-piece', 'lead-piece', 'ready-piece'],
+    );
     const ready = writeups.find((w) => w.slug === 'ready-piece');
     assert.equal(ready?.published_at, '2026-05-29');
     assert.equal(ready?.featured_order, 2);
@@ -173,13 +187,28 @@ describe('reads', () => {
   });
 
   test('the featured order is published and featured, slotted 1..N', () => {
-    assert.deepEqual(featuredOrder(loadWriteups(store)).map((e) => [e.slot, e.slug]), [[1, 'lead-piece'], [2, 'ready-piece']]);
+    assert.deepEqual(
+      featuredOrder(loadWriteups(store)).map((e) => [e.slot, e.slug]),
+      [
+        [1, 'lead-piece'],
+        [2, 'ready-piece'],
+      ],
+    );
   });
 
   test('filters select and sort', () => {
-    assert.deepEqual(listWriteups(store, 'draft').writeups.map((w) => w.slug), ['draft-piece']);
-    assert.deepEqual(listWriteups(store, 'featured').order.map((e) => e.slug), ['lead-piece', 'ready-piece']);
-    assert.throws(() => listWriteups(store, 'bogus' as never), (error) => error instanceof WriteupError && error.code === 'invalid');
+    assert.deepEqual(
+      listWriteups(store, 'draft').writeups.map((w) => w.slug),
+      ['draft-piece'],
+    );
+    assert.deepEqual(
+      listWriteups(store, 'featured').order.map((e) => e.slug),
+      ['lead-piece', 'ready-piece'],
+    );
+    assert.throws(
+      () => listWriteups(store, 'bogus' as never),
+      (error) => error instanceof WriteupError && error.code === 'invalid',
+    );
   });
 
   test('catalog and tag usage', () => {
@@ -242,8 +271,11 @@ describe('frontmatter writes', () => {
     assert.equal(loadWriteups(store).find((w) => w.slug === 'draft-piece')?.description, tricky);
   });
 
-  test('fields outside the contract\'s editable set are refused', () => {
-    assert.throws(() => updateFrontmatter(store, 'draft-piece', { featured_order: 4 }), (error) => error instanceof WriteupError && error.code === 'invalid');
+  test("fields outside the contract's editable set are refused", () => {
+    assert.throws(
+      () => updateFrontmatter(store, 'draft-piece', { featured_order: 4 }),
+      (error) => error instanceof WriteupError && error.code === 'invalid',
+    );
   });
 });
 
@@ -276,7 +308,10 @@ describe('featured order and plans', () => {
   });
 
   test('out-of-range positions are refused', () => {
-    assert.throws(() => reorderFeatured(store, 'draft-piece', 9), (error) => error instanceof WriteupError && error.code === 'invalid');
+    assert.throws(
+      () => reorderFeatured(store, 'draft-piece', 9),
+      (error) => error instanceof WriteupError && error.code === 'invalid',
+    );
   });
 
   test('a plan sets fields and the complete order together', () => {
@@ -313,12 +348,25 @@ describe('featured order and plans', () => {
       fs.renameSync(from, to);
     };
     assert.throws(
-      () => applyPlan(store, { updates: [{ slug: 'lead-piece', title: 'L' }, { slug: 'ready-piece', title: 'R' }] }, { rename }),
+      () =>
+        applyPlan(
+          store,
+          {
+            updates: [
+              { slug: 'lead-piece', title: 'L' },
+              { slug: 'ready-piece', title: 'R' },
+            ],
+          },
+          { rename },
+        ),
       (error) => error instanceof WriteupError && error.code === 'transaction_failed' && error.details.rolled_back === true,
     );
     assert.equal(read('lead-piece'), originals.lead);
     assert.equal(read('ready-piece'), originals.ready);
-    assert.deepEqual(fs.readdirSync(path.join(store.writeupsDir, 'lead-piece')).filter((name) => name.startsWith('.')), []);
+    assert.deepEqual(
+      fs.readdirSync(path.join(store.writeupsDir, 'lead-piece')).filter((name) => name.startsWith('.')),
+      [],
+    );
   });
 
   test('an edit made after the caller read the file fails the transaction and survives', () => {

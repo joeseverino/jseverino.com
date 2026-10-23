@@ -8,7 +8,9 @@ test.describe('portfolio software tab', () => {
     await page.goto('/portfolio/?source=review');
     await page.getByRole('tab', { name: 'Software' }).click();
     await expect(page).toHaveURL(/\?source=review#software$/);
-    await page.evaluate(() => { window.location.hash = ''; });
+    await page.evaluate(() => {
+      window.location.hash = '';
+    });
     await expect(page.getByRole('tab', { name: 'Writeups' })).toHaveAttribute('aria-selected', 'true');
     await page.goBack();
     await expect(page.getByRole('tab', { name: 'Software' })).toHaveAttribute('aria-selected', 'true');
@@ -62,10 +64,7 @@ test.describe('portfolio software tab', () => {
     await page.goto('/portfolio/');
     await expect(page.locator('[data-panel="writeups"]')).toBeVisible();
     await expect(page.locator('[data-panel="software"]')).toBeHidden();
-    await expect(page.getByRole('tab', { name: 'Writeups' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    await expect(page.getByRole('tab', { name: 'Writeups' })).toHaveAttribute('aria-selected', 'true');
   });
 
   test('clicking Software swaps panels and updates the hash', async ({ page }) => {
@@ -74,10 +73,7 @@ test.describe('portfolio software tab', () => {
 
     await expect(page.locator('[data-panel="software"]')).toBeVisible();
     await expect(page.locator('[data-panel="writeups"]')).toBeHidden();
-    await expect(page.getByRole('tab', { name: 'Software' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    await expect(page.getByRole('tab', { name: 'Software' })).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(/#software$/);
   });
 
@@ -87,9 +83,7 @@ test.describe('portfolio software tab', () => {
     await expect(page.locator('[data-panel="writeups"]')).toBeHidden();
   });
 
-  test('a published package renders a registry badge, install line, and copy button', async ({
-    page,
-  }) => {
+  test('a published package renders a registry badge, install line, and copy button', async ({ page }) => {
     await page.goto('/portfolio/#software');
     const panel = page.locator('[data-panel="software"]');
 

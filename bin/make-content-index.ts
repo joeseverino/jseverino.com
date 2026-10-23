@@ -19,19 +19,20 @@ interface ContentIndexItem {
 }
 
 // The frontmatter parser yields a Date for a bare YAML date and a string for a quoted one.
-const isoDate = (value: unknown): string | null =>
-  value instanceof Date ? value.toISOString() : value ? new Date(String(value)).toISOString() : null;
+const isoDate = (value: unknown): string | null => (value instanceof Date ? value.toISOString() : value ? new Date(String(value)).toISOString() : null);
 
 const items = snapshotWriteups()
   .filter(({ data }) => data.published === true)
-  .map(({ slug, data }): ContentIndexItem => ({
-    slug,
-    title: String(data.title ?? ''),
-    description: String(data.description ?? '').trim(),
-    published_at: isoDate(data.published_at),
-    technologies: Array.isArray(data.technologies) ? data.technologies.map(String).sort() : [],
-    url: writeupUrl(slug),
-  }))
+  .map(
+    ({ slug, data }): ContentIndexItem => ({
+      slug,
+      title: String(data.title ?? ''),
+      description: String(data.description ?? '').trim(),
+      published_at: isoDate(data.published_at),
+      technologies: Array.isArray(data.technologies) ? data.technologies.map(String).sort() : [],
+      url: writeupUrl(slug),
+    }),
+  )
   // Newest first, then by slug.
   .sort((a, b) => (b.published_at ?? '').localeCompare(a.published_at ?? '') || a.slug.localeCompare(b.slug));
 

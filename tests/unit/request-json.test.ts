@@ -6,14 +6,19 @@ import { streamRequest } from './helpers/requests.ts';
 function streamedRequest(chunks: Uint8Array[], headers: Record<string, string> = {}) {
   let reads = 0;
   let cancelled = false;
-  const body = new ReadableStream<Uint8Array>({
-    pull(controller) {
-      const chunk = chunks[reads++];
-      if (chunk) controller.enqueue(chunk);
-      else controller.close();
+  const body = new ReadableStream<Uint8Array>(
+    {
+      pull(controller) {
+        const chunk = chunks[reads++];
+        if (chunk) controller.enqueue(chunk);
+        else controller.close();
+      },
+      cancel() {
+        cancelled = true;
+      },
     },
-    cancel() { cancelled = true; },
-  }, { highWaterMark: 0 });
+    { highWaterMark: 0 },
+  );
   return {
     request: streamRequest(body, headers),
     stats: () => ({ reads, cancelled, locked: body.locked }),
@@ -46,8 +51,12 @@ test('rejects an oversized declared length without reading the body', async () =
 
 test('does not wait on a cancelled sender to finish rejecting an oversized stream', async () => {
   const body = new ReadableStream({
-    start(controller) { controller.enqueue(encode('too big')); },
-    cancel() { return new Promise(() => {}); },
+    start(controller) {
+      controller.enqueue(encode('too big'));
+    },
+    cancel() {
+      return new Promise(() => {});
+    },
   });
   const request = streamRequest(body);
   assert.deepEqual(await readRequestJson(request, 2), { ok: false, status: 413 });
@@ -64,7 +73,11 @@ test('rejects malformed JSON, malformed UTF-8, and missing bodies', async () => 
 });
 
 test('turns a failed upload stream into a controlled client error', async () => {
-  const body = new ReadableStream({ start(controller) { controller.error(new Error('upload interrupted')); } });
+  const body = new ReadableStream({
+    start(controller) {
+      controller.error(new Error('upload interrupted'));
+    },
+  });
   const request = streamRequest(body);
   assert.deepEqual(await readRequestJson(request, 10), { ok: false, status: 400 });
   assert.equal(body.locked, false);

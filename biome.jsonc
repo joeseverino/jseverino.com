@@ -1,0 +1,37 @@
+{
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "**",
+      // Synced from the vault; a sync on Joe's checkout is their only writer.
+      "!src/content",
+      "!public/assets",
+      // Generated: each generator owns its output's form, and checks:contracts
+      // or the snapshot task that wrote it holds the file to that output.
+      "!src/generated",
+      "!src/data/github-repos.json",
+      "!src/data/package-registry.json",
+      "!contracts/contact.openapi.json",
+      "!public/embed/bundle.css",
+      "!src/styles/tokens.css",
+      "!src/styles/brand.css",
+      // Biome's Astro support is experimental, and linting .astro files without
+      // it reports false positives on frontmatter bindings the template uses.
+      // `astro check` (checks:astro) covers them.
+      "!**/*.astro",
+      // Prose: the docs keep their hand-set tables, and mise writes the task list
+      // in docs/Commands.md (checks:docs-sync).
+      "!**/*.md"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 160 },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "yaml": { "formatter": { "quoteStyle": "single" } },
+  "css": {
+    "formatter": { "quoteStyle": "single" },
+    // Stylelint (checks:css-lint) owns CSS linting.
+    "linter": { "enabled": false }
+  },
+  "linter": { "enabled": false },
+  "assist": { "enabled": false }
+}

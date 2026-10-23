@@ -74,7 +74,11 @@ export const STRAY_REFERENCE = 'relative reference outside images/ will not reso
 export const strayReferences = (markdown: string): Reference[] => collectReferences(markdown).filter(({ ref }) => !isAssetRef(ref));
 
 export function collectAssetRefs(markdown: string): Set<string> {
-  return new Set(collectReferences(markdown).map(({ ref }) => ref).filter(isAssetRef));
+  return new Set(
+    collectReferences(markdown)
+      .map(({ ref }) => ref)
+      .filter(isAssetRef),
+  );
 }
 
 // The absolute source path for a ref, refusing anything that escapes the
@@ -121,8 +125,7 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
 
 // Encodes in flight: one per core, within half of memory (an encode peaks near 120 MB).
 const IMAGE_JOB_BYTES = 256 * 2 ** 20;
-export const defaultConcurrency = (): number =>
-  Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / 2 / IMAGE_JOB_BYTES)));
+export const defaultConcurrency = (): number => Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / 2 / IMAGE_JOB_BYTES)));
 
 // Masters committed beside each document: at most MASTER_WIDTH wide, sRGB, all metadata (EXIF, XMP, ICC)
 // dropped so nothing the camera or screenshot tool wrote reaches the public repo.

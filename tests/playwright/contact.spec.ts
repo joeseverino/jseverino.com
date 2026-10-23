@@ -25,7 +25,9 @@ test.describe('Contact Form Interactive Verification', () => {
   test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
     let requests = 0;
     let finish!: () => void;
-    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
     await page.route('/api/contact', async (route) => {
       requests++;
       await pending;

@@ -3,8 +3,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-  SiteOpsError, abbreviateName, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, preview,
-  redactEmail, type Runner, type SiteOpsConfig,
+  SiteOpsError,
+  abbreviateName,
+  applyD1Schema,
+  checkSecurityHeaders,
+  contactSubmissions,
+  cspCounts,
+  cspReports,
+  preview,
+  redactEmail,
+  type Runner,
+  type SiteOpsConfig,
 } from '../../bin/lib/site-ops.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
@@ -20,13 +29,22 @@ function config(overrides: Partial<SiteOpsConfig> = {}): SiteOpsConfig {
     return { code, stdout, stderr, error: undefined };
   };
   return {
-    d1Database: 'jseverino-contact', siteRepo: root, siteOrigin: 'https://jseverino.com',
-    auditLog: path.join(root, 'state', 'audit.log'), token: undefined, accountId: undefined, run, fetch: globalThis.fetch, ...overrides,
+    d1Database: 'jseverino-contact',
+    siteRepo: root,
+    siteOrigin: 'https://jseverino.com',
+    auditLog: path.join(root, 'state', 'audit.log'),
+    token: undefined,
+    accountId: undefined,
+    run,
+    fetch: globalThis.fetch,
+    ...overrides,
   };
 }
 
-
-beforeEach(() => { calls = []; reply = () => ({ code: 0, stdout: '[]' }); });
+beforeEach(() => {
+  calls = [];
+  reply = () => ({ code: 0, stdout: '[]' });
+});
 after(scratch.cleanup);
 
 describe('redaction helpers', () => {
@@ -40,7 +58,12 @@ describe('redaction helpers', () => {
   });
 });
 
-interface Sent { method: string; url: string; auth: string | null; body: { sql: string; params: unknown[] } | undefined }
+interface Sent {
+  method: string;
+  url: string;
+  auth: string | null;
+  body: { sql: string; params: unknown[] } | undefined;
+}
 let sent: Sent[] = [];
 let queryReply: (body: { sql: string; params: unknown[] }) => object[] = () => [];
 
@@ -55,10 +78,21 @@ const d1Fetch = (async (url: string | URL | Request, init?: RequestInit) => {
 
 const reader = (overrides: Partial<SiteOpsConfig> = {}) => config({ token: 'tok', accountId: 'acct', fetch: d1Fetch, ...overrides });
 const last = (): Sent => sent.at(-1) as Sent;
-beforeEach(() => { sent = []; queryReply = () => []; });
+beforeEach(() => {
+  sent = [];
+  queryReply = () => [];
+});
 
 describe('contact submissions', () => {
-  const row = { id: 1, created_at: '2026-10-01', name: 'Jane Doe', email: 'jane@acme.com', message: 'Hello there', ip_address: '203.0.113.9', user_agent: 'UA' };
+  const row = {
+    id: 1,
+    created_at: '2026-10-01',
+    name: 'Jane Doe',
+    email: 'jane@acme.com',
+    message: 'Hello there',
+    ip_address: '203.0.113.9',
+    user_agent: 'UA',
+  };
 
   test('finds the database by name, then queries it with the limit as a bound parameter', async () => {
     queryReply = () => [row];
@@ -78,8 +112,17 @@ describe('contact submissions', () => {
     const result = await contactSubmissions(cfg);
     assert.equal(result.piiReleased, false);
     assert.deepEqual(result.results[0], {
-      id: 1, created_at: '2026-10-01', name: 'Jane D.', email: 'j***@acme.com', message_preview: 'Hello there', message_chars: 11,
-      status: undefined, browser: undefined, device: undefined, country: undefined, source_url: undefined,
+      id: 1,
+      created_at: '2026-10-01',
+      name: 'Jane D.',
+      email: 'j***@acme.com',
+      message_preview: 'Hello there',
+      message_chars: 11,
+      status: undefined,
+      browser: undefined,
+      device: undefined,
+      country: undefined,
+      source_url: undefined,
     });
     assert.equal(fs.existsSync(cfg.auditLog), false);
   });
@@ -103,16 +146,26 @@ describe('contact submissions', () => {
   });
 
   test('an API failure surfaces as an error', async () => {
-    const failing = (async () => new Response(JSON.stringify({ success: false, errors: [{ code: 10000, message: 'Authentication error' }] }), { status: 403 })) as typeof fetch;
-    await assert.rejects(contactSubmissions(reader({ fetch: failing })), (error) => error instanceof SiteOpsError && /Authentication error/.test(error.message));
+    const failing = (async () =>
+      new Response(JSON.stringify({ success: false, errors: [{ code: 10000, message: 'Authentication error' }] }), { status: 403 })) as typeof fetch;
+    await assert.rejects(
+      contactSubmissions(reader({ fetch: failing })),
+      (error) => error instanceof SiteOpsError && /Authentication error/.test(error.message),
+    );
   });
 });
 
 describe('missing credentials', () => {
   test('each read stops on one line naming the variable and the scope, before any request', async () => {
     for (const read of [contactSubmissions, cspReports, cspCounts]) {
-      await assert.rejects(read(reader({ token: undefined })), (error) => error instanceof SiteOpsError && /^CLOUDFLARE_API_TOKEN is not set.*Account · D1 · Read$/.test(error.message));
-      await assert.rejects(read(reader({ accountId: undefined })), (error) => error instanceof SiteOpsError && /^CLOUDFLARE_ACCOUNT_ID is not set/.test(error.message));
+      await assert.rejects(
+        read(reader({ token: undefined })),
+        (error) => error instanceof SiteOpsError && /^CLOUDFLARE_API_TOKEN is not set.*Account · D1 · Read$/.test(error.message),
+      );
+      await assert.rejects(
+        read(reader({ accountId: undefined })),
+        (error) => error instanceof SiteOpsError && /^CLOUDFLARE_ACCOUNT_ID is not set/.test(error.message),
+      );
     }
     assert.equal(sent.length, 0);
   });
@@ -131,18 +184,28 @@ describe('CSP reports', () => {
   });
 
   test('counts total and by directive', async () => {
-    queryReply = (body) => (body.sql.startsWith('SELECT COUNT(*) AS total')
-      ? [{ total: 7 }]
-      : [{ effective_directive: 'script-src', count: 5 }, { effective_directive: '(unknown)', count: 2 }]);
+    queryReply = (body) =>
+      body.sql.startsWith('SELECT COUNT(*) AS total')
+        ? [{ total: 7 }]
+        : [
+            { effective_directive: 'script-src', count: 5 },
+            { effective_directive: '(unknown)', count: 2 },
+          ];
     const counts = await cspCounts(reader());
     assert.equal(counts.total, 7);
-    assert.deepEqual(counts.byDirective.map((row) => row.count), [5, 2]);
+    assert.deepEqual(
+      counts.byDirective.map((row) => row.count),
+      [5, 2],
+    );
   });
 });
 
 describe('D1 schema apply', () => {
   test('refuses without confirm and runs nothing', () => {
-    assert.throws(() => applyD1Schema(config()), (error) => error instanceof SiteOpsError && error.details.refused === true);
+    assert.throws(
+      () => applyD1Schema(config()),
+      (error) => error instanceof SiteOpsError && error.details.refused === true,
+    );
     assert.equal(calls.length, 0);
   });
 

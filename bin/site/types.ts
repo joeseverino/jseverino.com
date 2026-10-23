@@ -5,7 +5,14 @@ import type { PreflightCheck } from '../lib/preflight.ts';
 import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
 import type { CspCounts, HeaderCheck, PiiRows, SchemaApply } from '../lib/site-ops.ts';
 import type {
-  FrontmatterResult, LinkResult, PlanResult, PublishReadiness, TagUsage, WriteupDashboard, WriteupListing, writeupContract,
+  FrontmatterResult,
+  LinkResult,
+  PlanResult,
+  PublishReadiness,
+  TagUsage,
+  WriteupDashboard,
+  WriteupListing,
+  writeupContract,
 } from '../lib/writeups/store.ts';
 
 // The version of the --json documents, described by public/schemas/site-protocol-v1.json.
@@ -62,10 +69,10 @@ export interface PublishCommitted {
 // cleanup: what removing the temporary worktree and branch left behind, each
 // with the command that removes it. Absent when cleanup finished.
 export type PublishResult = Step & { ok: true; cleanup?: string[] } & (
-  | { status: 'nothing-to-publish'; changed: false; diff: ContentDiff; next: null }
-  | (PublishCommitted & { status: 'dry-run'; dryRun: true; next: string })
-  | (PublishCommitted & { status: 'pr-opened'; pr: string; next: string })
-);
+    | { status: 'nothing-to-publish'; changed: false; diff: ContentDiff; next: null }
+    | (PublishCommitted & { status: 'dry-run'; dryRun: true; next: string })
+    | (PublishCommitted & { status: 'pr-opened'; pr: string; next: string })
+  );
 
 export interface Verified {
   slug: string;

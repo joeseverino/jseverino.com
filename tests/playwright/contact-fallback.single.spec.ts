@@ -20,7 +20,9 @@ test('a blocked submission script preserves the contact fallback', async ({ page
 
 test('the fallback stays hidden while the form module loads', async ({ page }) => {
   let release!: () => void;
-  const loading = new Promise<void>((resolve) => { release = resolve; });
+  const loading = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   await page.route('**/_astro/*.js', async (route) => {
     await loading;
     await route.continue();

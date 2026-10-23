@@ -29,6 +29,6 @@ if (import.meta.main) {
 
   finish(problems, `${pages.length} pages: no unprocessed directives`, {
     heading: 'check-html: directives leaked into the built HTML:',
-    fix: 'fix: correct the directive in the content at the reported page; a leaked directive is a typo or one the page\'s renderer does not support',
+    fix: "fix: correct the directive in the content at the reported page; a leaked directive is a typo or one the page's renderer does not support",
   });
 }

@@ -93,7 +93,11 @@ type EducationExport = (EducationDataset & { ok: true }) | { ok: false; errors: 
 // Held to public/schemas/education-export-v1.json, whichever way it arrives.
 function parseExport(text: string, label: string): EducationDataset {
   let data: unknown;
-  try { data = JSON.parse(text); } catch { throw new Error(`${label} is not JSON`); }
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`${label} is not JSON`);
+  }
   assertMatches<EducationExport>(readJson<JsonSchema>(path.join(siteRoot, 'public/schemas/education-export-v1.json')), data, label);
   if (!data.ok) throw new Error(`${label} reports:\n  ${data.errors.join('\n  ')}`);
   return data;

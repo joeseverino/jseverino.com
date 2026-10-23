@@ -53,7 +53,10 @@ function textWidth(value: string): number {
 function truncate(value: string, max: number): string {
   const chars = [...value];
   if (chars.length <= max) return value;
-  return `${chars.slice(0, Math.max(0, max - 1)).join('').trimEnd()}…`;
+  return `${chars
+    .slice(0, Math.max(0, max - 1))
+    .join('')
+    .trimEnd()}…`;
 }
 
 function crumb(url: string): string {

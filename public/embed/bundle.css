@@ -336,8 +336,8 @@
     min-block-size: 34px;
     color: var(--color-text);
     transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-    border-color var(--motion-duration-fast) var(--motion-ease-standard),
-    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+      border-color var(--motion-duration-fast) var(--motion-ease-standard),
+      background-color var(--motion-duration-fast) var(--motion-ease-standard);
     align-items: center;
     font-size: .875rem;
     font-weight: 600;
@@ -508,11 +508,8 @@
     &:before {
       content: "";
       z-index: -1;
-      background: color-mix(in oklch,
-      var(--color-bg) calc(70% + (15% * var(--header-scroll))),
-      transparent);
-      box-shadow: 0 4px 10px
-      color-mix(in oklch, var(--shadow-color-chrome) calc(var(--header-scroll) * 100%), transparent);
+      background: color-mix(in oklch, var(--color-bg) calc(70% + (15% * var(--header-scroll))), transparent);
+      box-shadow: 0 4px 10px color-mix(in oklch, var(--shadow-color-chrome) calc(var(--header-scroll) * 100%), transparent);
       backdrop-filter: blur(var(--blur-chrome));
       transition: --header-scroll var(--motion-duration-standard) var(--motion-ease-standard);
       position: absolute;
@@ -625,7 +622,7 @@
     inline-size: 2.5rem;
     color: var(--color-text);
     transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-    scale var(--motion-duration-instant) var(--motion-ease-standard);
+      scale var(--motion-duration-instant) var(--motion-ease-standard);
     background: none;
     border: 0;
     flex-direction: column;
@@ -650,8 +647,8 @@
     block-size: 2px;
     inline-size: 1.5rem;
     transition: translate var(--motion-duration-standard) var(--motion-ease-standard),
-    rotate var(--motion-duration-standard) var(--motion-ease-standard),
-    opacity var(--motion-duration-standard) var(--motion-ease-standard);
+      rotate var(--motion-duration-standard) var(--motion-ease-standard),
+      opacity var(--motion-duration-standard) var(--motion-ease-standard);
     background: currentColor;
     border-radius: 2px;
     display: block;
@@ -791,7 +788,7 @@
       background: var(--term-dot-red);
       inline-size: .65rem;
       box-shadow: 1rem 0 0 var(--term-dot-amber),
-      2rem 0 0 var(--term-dot-green);
+        2rem 0 0 var(--term-dot-green);
       border-radius: 50%;
       position: absolute;
       inset: 0 auto 0 0;
@@ -914,7 +911,7 @@
     font-size: var(--font-sm);
     text-align: center;
     transition: translate var(--motion-duration-standard) var(--motion-ease-standard),
-    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+      background-color var(--motion-duration-fast) var(--motion-ease-standard);
     justify-content: center;
     align-items: center;
     font-weight: 500;
@@ -1001,7 +998,7 @@
     background: var(--color-surface);
     min-inline-size: 0;
     transition: translate var(--motion-duration-fast) var(--motion-ease-standard),
-    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+      border-color var(--motion-duration-fast) var(--motion-ease-standard);
     flex-direction: column;
     flex: 1;
     display: flex;
@@ -1143,8 +1140,8 @@
     color: var(--color-text);
     font-size: var(--font-2xs);
     transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    border-color var(--motion-duration-fast) var(--motion-ease-standard),
-    color var(--motion-duration-fast) var(--motion-ease-standard);
+      border-color var(--motion-duration-fast) var(--motion-ease-standard),
+      color var(--motion-duration-fast) var(--motion-ease-standard);
     padding-block: 6px;
     padding-inline: 10px;
     display: inline-block;
@@ -1417,7 +1414,7 @@
       inline-size: 100%;
       color: var(--color-text);
       transition: border-color var(--motion-duration-fast) var(--motion-ease-standard),
-      box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+        box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
       padding-block: .85rem;
       padding-inline: 1rem;
       font-size: .95rem;
@@ -1545,8 +1542,8 @@
     color: var(--color-muted);
     cursor: pointer;
     transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-    background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    scale var(--motion-duration-instant) var(--motion-ease-standard);
+      background-color var(--motion-duration-fast) var(--motion-ease-standard),
+      scale var(--motion-duration-instant) var(--motion-ease-standard);
     background: none;
     border: 0;
     justify-content: center;
@@ -1768,7 +1765,7 @@
     font-family: var(--font-mono);
     cursor: pointer;
     transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    color var(--motion-duration-fast) var(--motion-ease-standard);
+      color var(--motion-duration-fast) var(--motion-ease-standard);
     flex: none;
     padding-block: 3px;
     padding-inline: 9px;
@@ -1951,7 +1948,7 @@
   .nav-js-ready .mobile-nav:popover-open .mobile-nav-list li {
     opacity: 1;
     transition: opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    translate var(--motion-duration-deliberate) var(--motion-ease-standard);
+      translate var(--motion-duration-deliberate) var(--motion-ease-standard);
     translate: 0;
 
     @starting-style {
@@ -2014,8 +2011,8 @@
   .mobile-nav, .lightbox {
     opacity: 0;
     transition: opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
+      display var(--motion-duration-deliberate) allow-discrete,
+      overlay var(--motion-duration-deliberate) allow-discrete;
   }
 
   .mobile-nav::backdrop, .lightbox::backdrop {
@@ -2023,8 +2020,8 @@
     backdrop-filter: blur(var(--blur-chrome));
     opacity: 0;
     transition: opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
+      display var(--motion-duration-deliberate) allow-discrete,
+      overlay var(--motion-duration-deliberate) allow-discrete;
   }
 
   .mobile-nav:popover-open, .lightbox[open], .mobile-nav:popover-open::backdrop, .lightbox[open]::backdrop {

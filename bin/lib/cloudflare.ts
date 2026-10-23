@@ -2,8 +2,23 @@
 // Paths are templates (`:zone`, `:account`, mid-apply ids) so output never prints an id. Rules this repo
 // owns carry a ref starting with `<owner>-`; every other rule is read and never written.
 import type {
-  AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
-  Operation, OwnedRule, Rule, Ruleset, Setting, ValidationSettings, Widget, Zone,
+  AccessApp,
+  AccessPolicy,
+  ApiErrorEntry,
+  ApiPayload,
+  ApiSchema,
+  DesiredState,
+  FirewallRuleSpec,
+  LiveRule,
+  LiveState,
+  Operation,
+  OwnedRule,
+  Rule,
+  Ruleset,
+  Setting,
+  ValidationSettings,
+  Widget,
+  Zone,
 } from './cloudflare-types.ts';
 import dns from 'node:dns';
 import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
@@ -108,9 +123,7 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
   }
 
   const sv = desired.schemaValidation;
-  const operations = await client.list<Operation>(
-    `/zones/:zone/api_gateway/operations?host=${q(sv.host)}&method=${q(sv.method)}&endpoint=${q(sv.endpoint)}`,
-  );
+  const operations = await client.list<Operation>(`/zones/:zone/api_gateway/operations?host=${q(sv.host)}&method=${q(sv.method)}&endpoint=${q(sv.endpoint)}`);
   const operation = operations.find((op) => op.host === sv.host && op.method === sv.method && op.endpoint === sv.endpoint) ?? null;
 
   return {
@@ -131,7 +144,8 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
 }
 
 const ownedRef = (desired: DesiredState, id: string): string => `${desired.owner}-${id}`;
-const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule => typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);
+const isOwned = <R extends Rule>(desired: DesiredState, rule: R): rule is R & OwnedRule =>
+  typeof rule.ref === 'string' && rule.ref.startsWith(`${desired.owner}-`);
 const describe = (desired: DesiredState, text: string): string => `[${desired.owner}] ${text}`;
 
 function firewallRule(desired: DesiredState, rule: FirewallRuleSpec): OwnedRule {
@@ -161,9 +175,10 @@ function rateLimitRule(desired: DesiredState): OwnedRule {
 const RULE_FIELDS = ['description', 'expression', 'action', 'enabled', 'ratelimit'] as const;
 const ruleView = (rule: Rule): Record<string, unknown> =>
   Object.fromEntries(
-    RULE_FIELDS
-      .filter((key) => rule[key] !== undefined)
-      .map((key) => [key, key === 'ratelimit' ? pick(rule.ratelimit, ['characteristics', 'period', 'requests_per_period', 'mitigation_timeout']) : rule[key]]),
+    RULE_FIELDS.filter((key) => rule[key] !== undefined).map((key) => [
+      key,
+      key === 'ratelimit' ? pick(rule.ratelimit, ['characteristics', 'period', 'requests_per_period', 'mitigation_timeout']) : rule[key],
+    ]),
   );
 
 // One phase entrypoint: create, update, or delete the owned rules; leave the
@@ -173,23 +188,44 @@ function rulesetItems(desired: DesiredState, area: string, phase: string, live: 
   const base = '/zones/:zone/rulesets';
   if (!live) {
     return wanted.map((rule, index) =>
-      item(area, rule.ref, 'present', null, 'drift', index === 0
-        ? [{ method: 'PUT', path: `${base}/phases/${phase}/entrypoint`, body: { rules: wanted } }]
-        : [], index === 0 ? '' : 'created with the entrypoint'));
+      item(
+        area,
+        rule.ref,
+        'present',
+        null,
+        'drift',
+        index === 0 ? [{ method: 'PUT', path: `${base}/phases/${phase}/entrypoint`, body: { rules: wanted } }] : [],
+        index === 0 ? '' : 'created with the entrypoint',
+      ),
+    );
   }
   const rules = live.rules ?? [];
   const items: Item[] = [];
   // Deletes come first so a plan at the phase's rule limit frees a slot before it needs one.
   const wantedRefs = new Set(wanted.map((rule) => rule.ref));
   for (const rule of rules.filter((entry): entry is LiveRule & OwnedRule => isOwned(desired, entry) && !wantedRefs.has(entry.ref))) {
-    items.push(item(area, rule.ref, null, 'present', 'drift', [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }], 'owned rule no longer in zone.json'));
+    items.push(
+      item(
+        area,
+        rule.ref,
+        null,
+        'present',
+        'drift',
+        [{ method: 'DELETE', path: `${base}/${q(live.id)}/rules/${q(rule.id)}` }],
+        'owned rule no longer in zone.json',
+      ),
+    );
   }
   for (const rule of wanted) {
     const current = rules.find((entry) => entry.ref === rule.ref);
     if (!current) {
       items.push(item(area, rule.ref, 'present', null, 'drift', [{ method: 'POST', path: `${base}/${q(live.id)}/rules`, body: rule }]));
     } else if (!same(ruleView(current), ruleView(rule))) {
-      items.push(item(area, rule.ref, 'as in zone.json', `differs: ${changedKeys(ruleView(rule), ruleView(current)).join(', ')}`, 'drift', [{ method: 'PATCH', path: `${base}/${q(live.id)}/rules/${q(current.id)}`, body: rule }]));
+      items.push(
+        item(area, rule.ref, 'as in zone.json', `differs: ${changedKeys(ruleView(rule), ruleView(current)).join(', ')}`, 'drift', [
+          { method: 'PATCH', path: `${base}/${q(live.id)}/rules/${q(current.id)}`, body: rule },
+        ]),
+      );
     } else {
       items.push(item(area, rule.ref, 'present', 'present', 'ok'));
     }
@@ -217,14 +253,21 @@ function settingsItems(desired: DesiredState, live: LiveState): Item[] {
   const header = fields(fields(fields(live.settings.security_header).value).strict_transport_security);
   const want = desired.hsts;
   const have = pick(header, Object.keys(want));
-  const hsts = (value: Record<string, unknown>) => Object.entries(value).map(([key, setting]) => (setting === true ? key : setting === false ? `no ${key}` : `${key} ${setting}`)).join(', ') || null;
-  items.push(same(have, want)
-    ? item('setting', 'hsts', hsts(want), hsts(have), 'ok')
-    : item('setting', 'hsts', hsts(want), hsts(have), 'drift', [{
-        method: 'PATCH',
-        path: '/zones/:zone/settings/security_header',
-        body: { value: { strict_transport_security: { ...header, ...want } } },
-      }]));
+  const hsts = (value: Record<string, unknown>) =>
+    Object.entries(value)
+      .map(([key, setting]) => (setting === true ? key : setting === false ? `no ${key}` : `${key} ${setting}`))
+      .join(', ') || null;
+  items.push(
+    same(have, want)
+      ? item('setting', 'hsts', hsts(want), hsts(have), 'ok')
+      : item('setting', 'hsts', hsts(want), hsts(have), 'drift', [
+          {
+            method: 'PATCH',
+            path: '/zones/:zone/settings/security_header',
+            body: { value: { strict_transport_security: { ...header, ...want } } },
+          },
+        ]),
+  );
   return items;
 }
 
@@ -238,39 +281,62 @@ function botManagementItem(desired: DesiredState, live: LiveState): Item {
   const have = pick(live.botManagement, Object.keys(want));
   if (same(have, want)) return item('bot-management', 'bot_management', want, have, 'ok');
   const body = { ...pick(live.botManagement, BOT_MANAGEMENT_KEPT), ...want };
-  return item('bot-management', 'bot_management', want, have, 'drift', [{ method: 'PUT', path: '/zones/:zone/bot_management', body }],
-    `differs: ${changedKeys(want, have).join(', ')}`);
+  return item(
+    'bot-management',
+    'bot_management',
+    want,
+    have,
+    'drift',
+    [{ method: 'PUT', path: '/zones/:zone/bot_management', body }],
+    `differs: ${changedKeys(want, have).join(', ')}`,
+  );
 }
 
 // Dashboard rules count against the limit, so the total is checked, not just this file's share.
 function firewallBudgetItem(desired: DesiredState, live: LiveState): Item {
   const others = (live.firewall?.rules ?? []).filter((rule) => !isOwned(desired, rule)).length;
   const total = others + desired.firewall.length;
-  return item('waf', 'rule budget', `at most ${FIREWALL_LIMIT}`, `${total} after apply`, total > FIREWALL_LIMIT ? 'manual' : 'ok', [],
-    total > FIREWALL_LIMIT ? `${others} dashboard rules plus ${desired.firewall.length} in zone.json; remove one` : '');
+  return item(
+    'waf',
+    'rule budget',
+    `at most ${FIREWALL_LIMIT}`,
+    `${total} after apply`,
+    total > FIREWALL_LIMIT ? 'manual' : 'ok',
+    [],
+    total > FIREWALL_LIMIT ? `${others} dashboard rules plus ${desired.firewall.length} in zone.json; remove one` : '',
+  );
 }
 
 function dnssecItem(desired: DesiredState, live: LiveState): Item {
   const have = live.dnssec?.status;
   if (have === desired.dnssec) return item('dnssec', 'status', desired.dnssec, have, 'ok');
   if (have === 'pending') return item('dnssec', 'status', desired.dnssec, have, 'manual', [], 'waiting for the DS record at the registrar');
-  return item('dnssec', 'status', desired.dnssec, have, 'drift', [{ method: 'PATCH', path: '/zones/:zone/dnssec', body: { status: desired.dnssec } }],
-    desired.dnssec === 'active' ? 'then publish the DS record at the registrar unless it is Cloudflare' : '');
+  return item(
+    'dnssec',
+    'status',
+    desired.dnssec,
+    have,
+    'drift',
+    [{ method: 'PATCH', path: '/zones/:zone/dnssec', body: { status: desired.dnssec } }],
+    desired.dnssec === 'active' ? 'then publish the DS record at the registrar unless it is Cloudflare' : '',
+  );
 }
 
 const SERVICE_TOKEN_RULES = new Set(['service_token', 'any_valid_service_token']);
 
 // A policy that admits only service tokens: Service Auth, every include rule a token.
 const isServiceAuthOnly = (policy: AccessPolicy): boolean =>
-  policy.decision === 'non_identity' && (policy.include ?? []).length > 0
-  && (policy.include ?? []).every((rule) => Object.keys(rule).length > 0 && Object.keys(rule).every((key) => SERVICE_TOKEN_RULES.has(key)));
+  policy.decision === 'non_identity' &&
+  (policy.include ?? []).length > 0 &&
+  (policy.include ?? []).every((rule) => Object.keys(rule).length > 0 && Object.keys(rule).every((key) => SERVICE_TOKEN_RULES.has(key)));
 
 // Every Worker preview answers on <label><PREVIEW_HOST_SUFFIX>, so one Access
 // application on the wildcard covers them all.
 const PREVIEW_HOSTS = `*${PREVIEW_HOST_SUFFIX}`;
-const coversPreviews = (app: AccessApp): boolean => app.domain === PREVIEW_HOSTS
-  || (app.self_hosted_domains ?? []).includes(PREVIEW_HOSTS)
-  || (app.destinations ?? []).some((destination) => destination.uri === PREVIEW_HOSTS);
+const coversPreviews = (app: AccessApp): boolean =>
+  app.domain === PREVIEW_HOSTS ||
+  (app.self_hosted_domains ?? []).includes(PREVIEW_HOSTS) ||
+  (app.destinations ?? []).some((destination) => destination.uri === PREVIEW_HOSTS);
 
 // Previews are reached only by CI's service token and the tailnet proxy's.
 // A missing application, or any other policy (an email, a group, everyone),
@@ -279,15 +345,29 @@ function previewAccessItem(desired: DesiredState, live: LiveState): Item {
   const want = desired.preview.accessPolicy;
   const apps = live.accessApps.filter(coversPreviews);
   if (apps.length === 0) {
-    return item('preview', 'access policy', want, null, 'manual', [],
-      `Zero Trust → Access → Applications: add a self-hosted application for ${PREVIEW_HOSTS} with a Service Auth policy`);
+    return item(
+      'preview',
+      'access policy',
+      want,
+      null,
+      'manual',
+      [],
+      `Zero Trust → Access → Applications: add a self-hosted application for ${PREVIEW_HOSTS} with a Service Auth policy`,
+    );
   }
   const policies = apps.flatMap((app) => app.policies ?? []);
   const human = policies.filter((policy) => !isServiceAuthOnly(policy));
   const describePolicy = (policy: AccessPolicy) => `${policy.name ?? 'unnamed'} (${policy.decision ?? 'no decision'})`;
   if (policies.length > 0 && human.length === 0) return item('preview', 'access policy', want, 'service-auth-only', 'ok');
-  return item('preview', 'access policy', want, policies.length ? human.map(describePolicy).join(', ') : 'no policies', 'manual', [],
-    `Zero Trust → Access → Applications → ${PREVIEW_HOSTS}: keep only Service Auth policies that include the CI and proxy service tokens`);
+  return item(
+    'preview',
+    'access policy',
+    want,
+    policies.length ? human.map(describePolicy).join(', ') : 'no policies',
+    'manual',
+    [],
+    `Zero Trust → Access → Applications → ${PREVIEW_HOSTS}: keep only Service Auth policies that include the CI and proxy service tokens`,
+  );
 }
 
 function schemaValidationItems(desired: DesiredState, live: LiveState, openapi: string): Item[] {
@@ -297,44 +377,84 @@ function schemaValidationItems(desired: DesiredState, live: LiveState, openapi: 
   const wanted = canonicalJsonText(openapi);
   const current = named.find((schema) => canonicalJsonText(schema.source) === wanted);
   if (!current) {
-    items.push(item('api-shield', `schema ${sv.name}`, sv.file, named.length ? 'stale source' : null, 'drift', [
-      { method: 'POST', path: '/zones/:zone/schema_validation/schemas', body: { kind: 'openapi_v3', name: sv.name, source: openapi, validation_enabled: true } },
-      ...named.map((schema): Call => ({ method: 'DELETE', path: `/zones/:zone/schema_validation/schemas/${q(schema.schema_id)}` })),
-    ]));
+    items.push(
+      item('api-shield', `schema ${sv.name}`, sv.file, named.length ? 'stale source' : null, 'drift', [
+        {
+          method: 'POST',
+          path: '/zones/:zone/schema_validation/schemas',
+          body: { kind: 'openapi_v3', name: sv.name, source: openapi, validation_enabled: true },
+        },
+        ...named.map((schema): Call => ({ method: 'DELETE', path: `/zones/:zone/schema_validation/schemas/${q(schema.schema_id)}` })),
+      ]),
+    );
   } else if (!current.validation_enabled) {
-    items.push(item('api-shield', `schema ${sv.name}`, 'enabled', 'disabled', 'drift', [
-      { method: 'PATCH', path: `/zones/:zone/schema_validation/schemas/${q(current.schema_id)}`, body: { validation_enabled: true } },
-    ]));
+    items.push(
+      item('api-shield', `schema ${sv.name}`, 'enabled', 'disabled', 'drift', [
+        { method: 'PATCH', path: `/zones/:zone/schema_validation/schemas/${q(current.schema_id)}`, body: { validation_enabled: true } },
+      ]),
+    );
   } else {
     const extra = named.filter((schema) => schema !== current);
-    items.push(extra.length
-      ? item('api-shield', `schema ${sv.name}`, 'one copy', `${named.length} copies`, 'drift',
-          extra.map((schema): Call => ({ method: 'DELETE', path: `/zones/:zone/schema_validation/schemas/${q(schema.schema_id)}` })))
-      : item('api-shield', `schema ${sv.name}`, sv.file, sv.file, 'ok'));
+    items.push(
+      extra.length
+        ? item(
+            'api-shield',
+            `schema ${sv.name}`,
+            'one copy',
+            `${named.length} copies`,
+            'drift',
+            extra.map((schema): Call => ({ method: 'DELETE', path: `/zones/:zone/schema_validation/schemas/${q(schema.schema_id)}` })),
+          )
+        : item('api-shield', `schema ${sv.name}`, sv.file, sv.file, 'ok'),
+    );
   }
 
   const name = `${sv.method} ${sv.host}${sv.endpoint}`;
   const setAction: Call = { method: 'PUT', path: '/zones/:zone/schema_validation/settings/operations/:operation', body: { mitigation_action: sv.action } };
   if (!live.operation) {
-    items.push(item('api-shield', name, sv.action, null, 'drift', [
-      { method: 'POST', path: '/zones/:zone/api_gateway/operations/item', body: { method: sv.method, host: sv.host, endpoint: sv.endpoint }, saveAs: { operation: 'operation_id' } },
-      setAction,
-    ]));
+    items.push(
+      item('api-shield', name, sv.action, null, 'drift', [
+        {
+          method: 'POST',
+          path: '/zones/:zone/api_gateway/operations/item',
+          body: { method: sv.method, host: sv.host, endpoint: sv.endpoint },
+          saveAs: { operation: 'operation_id' },
+        },
+        setAction,
+      ]),
+    );
   } else {
     const have = live.operationSettings?.mitigation_action ?? null;
-    items.push(have === sv.action
-      ? item('api-shield', name, sv.action, have, 'ok')
-      : item('api-shield', name, sv.action, have, 'drift', [{ use: { operation: live.operation.operation_id } }, setAction]));
+    items.push(
+      have === sv.action
+        ? item('api-shield', name, sv.action, have, 'ok')
+        : item('api-shield', name, sv.action, have, 'drift', [{ use: { operation: live.operation.operation_id } }, setAction]),
+    );
   }
 
   const override = live.validationSettings?.validation_override_mitigation_action ?? null;
-  items.push(override === 'none'
-    ? item('api-shield', 'zone override', 'unset', override, 'drift', [{
-        method: 'PUT',
-        path: '/zones/:zone/schema_validation/settings',
-        body: { validation_default_mitigation_action: live.validationSettings?.validation_default_mitigation_action, validation_override_mitigation_action: null },
-      }], 'an override of none switches every operation off')
-    : item('api-shield', 'zone override', 'unset', override ?? 'unset', 'ok'));
+  items.push(
+    override === 'none'
+      ? item(
+          'api-shield',
+          'zone override',
+          'unset',
+          override,
+          'drift',
+          [
+            {
+              method: 'PUT',
+              path: '/zones/:zone/schema_validation/settings',
+              body: {
+                validation_default_mitigation_action: live.validationSettings?.validation_default_mitigation_action,
+                validation_override_mitigation_action: null,
+              },
+            },
+          ],
+          'an override of none switches every operation off',
+        )
+      : item('api-shield', 'zone override', 'unset', override ?? 'unset', 'ok'),
+  );
   return items;
 }
 
@@ -343,8 +463,15 @@ function turnstileItem(desired: DesiredState, live: LiveState): Item {
   const widgets = live.widgets.filter((widget) => (widget.domains ?? []).some((domain) => want.includes(domain)));
   const [widget] = widgets;
   if (!widget || widgets.length !== 1) {
-    return item('turnstile', 'widget', want, widgets.length ? `${widgets.length} widgets` : null, 'manual', [],
-      widgets.length ? 'more than one widget names these hostnames' : 'no widget names these hostnames');
+    return item(
+      'turnstile',
+      'widget',
+      want,
+      widgets.length ? `${widgets.length} widgets` : null,
+      'manual',
+      [],
+      widgets.length ? 'more than one widget names these hostnames' : 'no widget names these hostnames',
+    );
   }
   const have = [...(widget.domains ?? [])].sort();
   if (same(have, want.toSorted())) return item('turnstile', 'domains', want, have, 'ok');
@@ -360,7 +487,13 @@ function diff(desired: DesiredState, live: LiveState, openapi: string): Item[] {
     ...settingsItems(desired, live),
     botManagementItem(desired, live),
     dnssecItem(desired, live),
-    ...rulesetItems(desired, 'waf', FIREWALL_PHASE, live.firewall, desired.firewall.map((rule) => firewallRule(desired, rule))),
+    ...rulesetItems(
+      desired,
+      'waf',
+      FIREWALL_PHASE,
+      live.firewall,
+      desired.firewall.map((rule) => firewallRule(desired, rule)),
+    ),
     firewallBudgetItem(desired, live),
     ...rulesetItems(desired, 'ratelimit', RATELIMIT_PHASE, live.ratelimit, [rateLimitRule(desired)]),
     previewAccessItem(desired, live),
@@ -380,12 +513,13 @@ export const createRun = (desired: DesiredState, client: Client, openapi: string
   target: desired.zone,
   source: 'cloudflare/zone.json',
   survey: async () => diff(desired, await readLive(client, desired), openapi),
-  apply: (items, log) => applySteps(items, {
-    use: (ids) => Object.assign(client.ids, ids),
-    log,
-    async call(step) {
-      const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
-      for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = required(result, field, step);
-    },
-  }),
+  apply: (items, log) =>
+    applySteps(items, {
+      use: (ids) => Object.assign(client.ids, ids),
+      log,
+      async call(step) {
+        const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
+        for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = required(result, field, step);
+      },
+    }),
 });

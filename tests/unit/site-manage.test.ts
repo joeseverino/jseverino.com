@@ -15,18 +15,22 @@ function makeVault(): string {
   const vault = path.join(scratch.make(), 'vault');
   write(path.join(vault, '00 Templates/Writeup.md'), '---\ntitle: {{title}}\npublished: false\n---\nBody\n');
   write(path.join(vault, '06 Pages/_technology-groups.md'), '## Tools\n\n| Slug | Label | Featured |\n| --- | --- | --- |\n| astro | Astro | |\n');
-  write(path.join(vault, '05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: true\npublished_at: 2026-01-01\nfeatured: true\nfeatured_order: 1\ntechnologies: [astro]\n---\nBody\n');
+  write(
+    path.join(vault, '05 Writeups/alpha/index.md'),
+    '---\ntitle: Alpha\npublished: true\npublished_at: 2026-01-01\nfeatured: true\nfeatured_order: 1\ntechnologies: [astro]\n---\nBody\n',
+  );
   write(path.join(vault, '05 Writeups/beta/index.md'), '---\ntitle: Beta\npublished: false\ntechnologies: [unknown]\n---\nBody\n');
   return vault;
 }
 
 // An undefined value unsets the variable for the child.
-const manage = (vault: string, env: Record<string, string | undefined>) => spawnSync(process.execPath, ['bin/site.ts', 'manage'], {
-  cwd: siteRoot,
-  encoding: 'utf8',
-  stdio: ['ignore', 'pipe', 'pipe'],
-  env: { ...process.env, VAULT_DIR: vault, MANAGE_TUI_COLUMNS: '100', ...env },
-});
+const manage = (vault: string, env: Record<string, string | undefined>) =>
+  spawnSync(process.execPath, ['bin/site.ts', 'manage'], {
+    cwd: siteRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, VAULT_DIR: vault, MANAGE_TUI_COLUMNS: '100', ...env },
+  });
 
 test('refuses to start without a terminal, naming the non-interactive commands', () => {
   const result = manage(makeVault(), {});

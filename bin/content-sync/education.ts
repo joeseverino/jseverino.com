@@ -79,10 +79,9 @@ function courseRow(course: Course): string {
 function courseProgress(courses: readonly Course[]): string {
   const completed = courses.filter((course) => course.status === 'completed').length;
   const active = courses.filter((course) => course.status === 'active').length;
-  return [
-    completed > 0 ? `${completed} course${completed === 1 ? '' : 's'} completed` : '',
-    active > 0 ? `${active} in progress` : '',
-  ].filter(Boolean).join(' · ');
+  return [completed > 0 ? `${completed} course${completed === 1 ? '' : 's'} completed` : '', active > 0 ? `${active} in progress` : '']
+    .filter(Boolean)
+    .join(' · ');
 }
 
 // Pure: the education pages as { page, content } (page relative to the pages
@@ -119,17 +118,11 @@ export function buildEducation({ grammar, shell, resume, dataset, projectPage }:
     links.set(org.name, href);
 
     const progress = courseProgress(courses);
-    rows.push(
-      orgRow(org, { href }),
-      ...(org.degree ? [roleRow(org.degree)] : []),
-      ...(progress ? [`- ${progress}`] : []),
-    );
+    rows.push(orgRow(org, { href }), ...(org.degree ? [roleRow(org.degree)] : []), ...(progress ? [`- ${progress}`] : []));
   }
 
   if (vaultInstitutions.size > 0) {
-    throw new Error(
-      `Education vault institution(s) missing from the resume canonical's EDUCATION section: ${[...vaultInstitutions.keys()].join(', ')}`,
-    );
+    throw new Error(`Education vault institution(s) missing from the resume canonical's EDUCATION section: ${[...vaultInstitutions.keys()].join(', ')}`);
   }
 
   pages.push({ page: `education/${DOCUMENT_FILE}`, content: stringifyFrontmatter(rows.join('\n\n'), projectPage(shell.data)) });

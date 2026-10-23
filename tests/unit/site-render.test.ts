@@ -55,7 +55,8 @@ describe('site render', () => {
   });
 
   test('--document is a self-contained page in the site article layout', async () => {
-    const md = '---\ntitle: Demo Title\npublished_at: 2026-03-15\ntechnologies: [wireshark]\ncover_image: ./images/cover.png\ncover_alt: A cover\n---\nRun **this** first.\n';
+    const md =
+      '---\ntitle: Demo Title\npublished_at: 2026-03-15\ntechnologies: [wireshark]\ncover_image: ./images/cover.png\ncover_alt: A cover\n---\nRun **this** first.\n';
     const result = await render({ slug: '-', document: true, out, stdin: () => md });
     const doc = result.document ?? '';
     assert.match(doc, /^<!doctype html>/i);

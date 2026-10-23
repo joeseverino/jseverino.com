@@ -26,8 +26,6 @@ await renderBrandCard({
   outPath: render,
 });
 
-await sharp(render)
-  .jpeg({ quality: 85, mozjpeg: true, chromaSubsampling: '4:4:4' })
-  .toFile(fromRoot('public/assets/og/og-default.jpg'));
+await sharp(render).jpeg({ quality: 85, mozjpeg: true, chromaSubsampling: '4:4:4' }).toFile(fromRoot('public/assets/og/og-default.jpg'));
 
 console.log('Wrote public/assets/og/og-default.jpg (1200x630)');

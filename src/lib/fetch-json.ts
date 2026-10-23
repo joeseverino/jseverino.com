@@ -1,8 +1,4 @@
-export async function fetchJson<T>(
-  url: string,
-  init: RequestInit = {},
-  timeoutMs = 5_000,
-): Promise<T> {
+export async function fetchJson<T>(url: string, init: RequestInit = {}, timeoutMs = 5_000): Promise<T> {
   const timeout = AbortSignal.timeout(timeoutMs);
   const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   const response = await fetch(url, { ...init, signal });

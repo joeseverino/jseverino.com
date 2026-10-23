@@ -20,8 +20,7 @@ export function renderScalar(value: unknown): string {
   return text === '' ? '' : yamlEscape(text);
 }
 
-const quoted = (event: ScalarEvent): number =>
-  Number(event.style === SCALAR_STYLE.DOUBLE_QUOTED || event.style === SCALAR_STYLE.SINGLE_QUOTED);
+const quoted = (event: ScalarEvent): number => Number(event.style === SCALAR_STYLE.DOUBLE_QUOTED || event.style === SCALAR_STYLE.SINGLE_QUOTED);
 
 // Matches only root keys, so a nested or quoted key is never mistaken for another.
 function rootField(yaml: string, key: string): { key: ScalarEvent; value: ScalarEvent } | undefined {

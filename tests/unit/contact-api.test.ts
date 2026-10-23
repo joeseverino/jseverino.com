@@ -175,16 +175,22 @@ describe('turnstile verification', () => {
     globalThis.fetch = async (_input, init) => {
       const signal = init?.signal;
       assert.ok(signal);
-      return new Response(new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('{"success":'));
-          signal.addEventListener('abort', () => {
-            cancelled = true;
-            controller.error(signal.reason);
-          }, { once: true });
-          queueMicrotask(() => abort.abort(new DOMException('Timeout', 'TimeoutError')));
-        },
-      }));
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"success":'));
+            signal.addEventListener(
+              'abort',
+              () => {
+                cancelled = true;
+                controller.error(signal.reason);
+              },
+              { once: true },
+            );
+            queueMicrotask(() => abort.abort(new DOMException('Timeout', 'TimeoutError')));
+          },
+        }),
+      );
     };
     const db = createD1Stub();
     const response = await call(contactRequest(validPayload), db);
@@ -221,7 +227,7 @@ describe('turnstile verification', () => {
     assert.equal(response.status, 400);
   });
 
-  test('Turnstile\'s test secret accepts siteverify\'s test hostname and action; production does not', () => {
+  test("Turnstile's test secret accepts siteverify's test hostname and action; production does not", () => {
     const test = { success: true, hostname: 'localhost', action: 'test' };
     const [passing] = TURNSTILE_TEST_SECRETS;
     assert.equal(siteverifyAccepts(test, passing ?? ''), true);

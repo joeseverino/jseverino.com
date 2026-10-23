@@ -4,7 +4,8 @@ import path from 'node:path';
 
 // Deepest first, so a directory holding only empty directories empties too.
 function removeEmptyDirs(root: string): void {
-  const dirs = fs.readdirSync(root, { recursive: true, withFileTypes: true })
+  const dirs = fs
+    .readdirSync(root, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => path.join(entry.parentPath, entry.name))
     .toSorted((a, b) => b.length - a.length);
@@ -15,7 +16,8 @@ export function pruneOrphans(roots: readonly string[], keep: ReadonlySet<string>
   const removed: string[] = [];
   for (const root of roots) {
     if (!fs.existsSync(root)) continue;
-    const files = fs.readdirSync(root, { recursive: true, withFileTypes: true })
+    const files = fs
+      .readdirSync(root, { recursive: true, withFileTypes: true })
       .filter((entry) => entry.isFile())
       .map((entry) => path.join(entry.parentPath, entry.name));
     for (const file of files) {

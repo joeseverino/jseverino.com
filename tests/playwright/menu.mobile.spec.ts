@@ -24,10 +24,7 @@ test('touch targets suppress title-only tap highlights', async ({ page, browserN
   const cardLinks = page.locator('.project-card a');
 
   await expect(brand).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
-  await expect(cardLinks.first()).toHaveCSS(
-    '-webkit-tap-highlight-color',
-    'rgba(0, 0, 0, 0)',
-  );
+  await expect(cardLinks.first()).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
 });
 
 test('mobile menu opens via hamburger and closes on Escape', async ({ page }) => {
@@ -59,7 +56,10 @@ test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {
   const { popover } = await openMenu(page);
 
-  await popover.getByRole('link', { name: /portfolio/i }).first().click();
+  await popover
+    .getByRole('link', { name: /portfolio/i })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/portfolio\/$/);
   await expect(popover).toBeHidden();
 });

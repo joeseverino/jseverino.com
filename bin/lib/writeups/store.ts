@@ -130,12 +130,20 @@ export function loadWriteups(store: WriteupStore): Writeup[] {
 export const byFeaturedOrder = (a: WriteupSummary, b: WriteupSummary): number =>
   (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || a.slug.localeCompare(b.slug);
 
-const entry = (writeup: Writeup, slot: number | null): OrderEntry =>
-  ({ slot, slug: writeup.slug, title: writeup.title, published: writeup.published, featured: writeup.featured });
+const entry = (writeup: Writeup, slot: number | null): OrderEntry => ({
+  slot,
+  slug: writeup.slug,
+  title: writeup.title,
+  published: writeup.published,
+  featured: writeup.featured,
+});
 
 // What the home page renders: published and featured, slotted 1..N.
 export function featuredOrder(writeups: readonly Writeup[]): OrderEntry[] {
-  return writeups.filter((w) => w.published && w.featured).toSorted(byFeaturedOrder).map((w, index) => entry(w, index + 1));
+  return writeups
+    .filter((w) => w.published && w.featured)
+    .toSorted(byFeaturedOrder)
+    .map((w, index) => entry(w, index + 1));
 }
 
 export const WRITEUP_FILTERS = ['all', 'published', 'draft', 'featured'] as const;
@@ -258,10 +266,12 @@ export async function prepare(store: WriteupStore, slug: string, { includeTagUsa
     },
   };
   if (includeTagUsage) {
-    result.tagUsage = Object.fromEntries(writeup.technologies.map((tag) => {
-      const usage = tagUsage(store, tag, writeups);
-      return [tag, { totalWriteups: usage.totalMatches, publishedWriteups: usage.publishedMatches }];
-    }));
+    result.tagUsage = Object.fromEntries(
+      writeup.technologies.map((tag) => {
+        const usage = tagUsage(store, tag, writeups);
+        return [tag, { totalWriteups: usage.totalMatches, publishedWriteups: usage.publishedMatches }];
+      }),
+    );
   }
   return result;
 }
@@ -298,7 +308,9 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
     const current = fingerprint(writeups.map(summary));
     if (current !== plan.source_fingerprint) {
       throw new WriteupError('stale_plan', 'writeup source changed after this dashboard was loaded; reload and review the plan again', {
-        expected_fingerprint: plan.source_fingerprint, current_fingerprint: current, retryable: true,
+        expected_fingerprint: plan.source_fingerprint,
+        current_fingerprint: current,
+        retryable: true,
       });
     }
   }
@@ -308,7 +320,9 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
     if (!item || typeof item !== 'object') throw new WriteupError('invalid', 'every update must be an object');
     const slug = String(item.slug ?? '').trim();
     if (!bySlug.has(slug)) throw new WriteupError('not_found', `unknown writeup slug: '${slug}'`);
-    const unknown = Object.keys(item).filter((key) => key !== 'slug' && !EDITABLE_FIELDS.includes(key)).sort();
+    const unknown = Object.keys(item)
+      .filter((key) => key !== 'slug' && !EDITABLE_FIELDS.includes(key))
+      .sort();
     if (unknown.length) throw new WriteupError('invalid', `unsupported fields for ${slug}: ${unknown.join(', ')}`);
     const { slug: _slug, ...fields } = item;
     updates.set(slug, { ...updates.get(slug), ...fields });
@@ -375,7 +389,11 @@ export function reorderFeatured(store: WriteupStore, slug: string, position: num
   if (!Number.isInteger(position) || position < 0) throw new WriteupError('invalid', 'position must be an integer >= 0');
   const writeups = loadWriteups(store);
   findWriteup(writeups, slug);
-  const others = writeups.filter((w) => w.featured).toSorted(byFeaturedOrder).map((w) => w.slug).filter((s) => s !== slug);
+  const others = writeups
+    .filter((w) => w.featured)
+    .toSorted(byFeaturedOrder)
+    .map((w) => w.slug)
+    .filter((s) => s !== slug);
   if (position > others.length + 1) throw new WriteupError('invalid', `position ${position} out of range (max ${others.length + 1})`);
   const order = position === 0 ? others : [...others.slice(0, position - 1), slug, ...others.slice(position - 1)];
   return { slug, position: position === 0 ? null : position, ...applyPlan(store, { featured_order: order }, options) };
@@ -396,10 +414,13 @@ export function updateFrontmatter(
   fields: Record<string, unknown>,
   { touchLastReviewed = false, today = isoDate(new Date()) }: { touchLastReviewed?: boolean; today?: string } = {},
 ): FrontmatterResult {
-  const unknown = Object.keys(fields).filter((key) => !EDITABLE_FIELDS.includes(key)).sort();
+  const unknown = Object.keys(fields)
+    .filter((key) => !EDITABLE_FIELDS.includes(key))
+    .sort();
   if (unknown.length) throw new WriteupError('invalid', `unsupported fields: ${unknown.join(', ')}; editable: ${EDITABLE_FIELDS.join(', ')}`);
-  const updates = Object.fromEntries(Object.entries({ ...fields, ...(touchLastReviewed ? { last_reviewed: today } : {}) })
-    .filter(([, value]) => value !== undefined));
+  const updates = Object.fromEntries(
+    Object.entries({ ...fields, ...(touchLastReviewed ? { last_reviewed: today } : {}) }).filter(([, value]) => value !== undefined),
+  );
   const writeup = findWriteup(loadWriteups(store), slug);
   const source = fs.readFileSync(writeup.path, 'utf8');
   const { text, changed } = applyScalars(source, updates);
@@ -446,7 +467,10 @@ const isHttpUrl = (href: string): boolean => {
 export function updateLink(store: WriteupStore, slug: string, label: string, expectedHref: string, replacementHref: string): LinkResult {
   const writeup = findWriteup(loadWriteups(store), slug);
   if (!label.trim()) throw new WriteupError('invalid', 'link label required');
-  for (const [name, href] of [['expected', expectedHref], ['replacement', replacementHref]] as const) {
+  for (const [name, href] of [
+    ['expected', expectedHref],
+    ['replacement', replacementHref],
+  ] as const) {
     if (!isHttpUrl(href)) throw new WriteupError('invalid', `${name} href must be an absolute HTTP(S) URL`);
   }
   const text = fs.readFileSync(writeup.path, 'utf8');
@@ -456,14 +480,25 @@ export function updateLink(store: WriteupStore, slug: string, label: string, exp
   const next = text.replace(pattern, (_match, title: string | undefined) => `[${label}](${replacementHref}${title ?? ''})`);
   commit(new Map([[writeup.path, { before: text, after: next }]]));
   return {
-    slug, label, oldHref: expectedHref, newHref: replacementHref,
+    slug,
+    label,
+    oldHref: expectedHref,
+    newHref: replacementHref,
     receipt: receipt({
-      operation: 'writeup.link.update', entityType: 'writeup', entityId: slug, changedFields: ['body.link'],
-      after: { slug, href: replacementHref }, affectedProjections: ['site', 'writeup_dashboard'], metadata: { label },
+      operation: 'writeup.link.update',
+      entityType: 'writeup',
+      entityId: slug,
+      changedFields: ['body.link'],
+      after: { slug, href: replacementHref },
+      affectedProjections: ['site', 'writeup_dashboard'],
+      metadata: { label },
     }),
   };
 }
 
 // The site-owned writeup contract an editor or client builds from.
-export const writeupContract = () =>
-  ({ source: 'jseverino.com/contracts/content.v1.json', fingerprint: contentContractFingerprint(), contract: contentContract });
+export const writeupContract = () => ({
+  source: 'jseverino.com/contracts/content.v1.json',
+  fingerprint: contentContractFingerprint(),
+  contract: contentContract,
+});

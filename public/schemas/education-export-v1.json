@@ -3,10 +3,7 @@
   "$id": "https://jseverino.com/schemas/education-export-v1.json",
   "title": "Education export, version 1",
   "description": "Coursework by institution, as `severino-vault-mcp export education` prints it and as the site reads it from EDUCATION_EXPORT_FILE. The /education/ pages join it with the resume's institutions. Fields the site does not read may be present.",
-  "oneOf": [
-    { "$ref": "#/$defs/export" },
-    { "$ref": "#/$defs/failure" }
-  ],
+  "oneOf": [{ "$ref": "#/$defs/export" }, { "$ref": "#/$defs/failure" }],
   "$defs": {
     "export": {
       "type": "object",

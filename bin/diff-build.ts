@@ -33,9 +33,7 @@ const HASHED_NAMES = HASHES.map((hash) => new RegExp(`${hash}$`));
 function normalize(text: string): string {
   return HASHED_REFS.reduce(
     (normalized, ref) => normalized.replace(ref, '$1.HASH.$2'),
-    text
-      .replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>')
-      .replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"'),
+    text.replace(/<lastmod>[^<]*<\/lastmod>/g, '<lastmod>NORMALIZED</lastmod>').replace(/(data-sitekey=)"[^"]*"/g, '$1"NORMALIZED"'),
   );
 }
 
@@ -43,7 +41,8 @@ const normalizeName = (name: string): string => HASHED_NAMES.reduce((normalized,
 
 function collect(dir: string): Map<string, string> {
   return new Map(
-    fs.readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    fs
+      .readdirSync(dir, { recursive: true, encoding: 'utf8' })
       .filter((file) => TEXT_EXT.test(file))
       .map((file) => [normalizeName(file), normalize(fs.readFileSync(path.join(dir, file), 'utf8'))]),
   );

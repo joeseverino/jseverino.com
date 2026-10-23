@@ -10,7 +10,8 @@ import { devLock, headStatus, servingDevServer } from '../../bin/site/dev-server
 import { scratchDirs } from './helpers/fs.ts';
 
 const server = http.createServer((request, response) =>
-  (request.url === '/moved' ? response.writeHead(301, { location: '/' }) : response.writeHead(204)).end());
+  (request.url === '/moved' ? response.writeHead(301, { location: '/' }) : response.writeHead(204)).end(),
+);
 await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
 const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
 const dirs = scratchDirs('dev-server-');

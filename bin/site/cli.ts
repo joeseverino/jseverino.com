@@ -65,8 +65,10 @@ export interface Output {
 }
 
 export function terminalText(value: string): string {
-  return stripVTControlCharacters(value).replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/gu,
-    (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return stripVTControlCharacters(value).replace(
+    /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/gu,
+    (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
 }
 
 export function createOutput({ json = false, quiet = false } = {}): Output {
@@ -81,7 +83,9 @@ export function createOutput({ json = false, quiet = false } = {}): Output {
     ok: (label, detail) => write('green', label, detail),
     warn: (label, detail) => write('yellow', label, detail),
     fail: (label, detail) => write('red', label, detail),
-    text: (text) => { if (!quiet) stream.write(`${terminalText(text)}\n`); },
+    text: (text) => {
+      if (!quiet) stream.write(`${terminalText(text)}\n`);
+    },
   };
 }
 

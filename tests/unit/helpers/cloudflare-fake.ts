@@ -3,7 +3,13 @@
 
 import {
   API_BASE,
-  type AccessApp, type ApiSchema, type LiveRule, type Operation, type Rule, type ValidationSettings, type Widget,
+  type AccessApp,
+  type ApiSchema,
+  type LiveRule,
+  type Operation,
+  type Rule,
+  type ValidationSettings,
+  type Widget,
 } from '../../../bin/lib/cloudflare.ts';
 import { callRecorder } from './desired-state.ts';
 
@@ -28,8 +34,11 @@ type Groups = [string, string];
 type Handler = (groups: Groups, url: URL, body: unknown) => Response;
 
 // The fake trusts each route's request body to have the shape the client sends.
-const route = <B = unknown>(method: string, pattern: RegExp, handle: (groups: Groups, url: URL, body: B) => Response): [string, RegExp, Handler] =>
-  [method, pattern, (groups, url, body) => handle(groups, url, body as B)];
+const route = <B = unknown>(method: string, pattern: RegExp, handle: (groups: Groups, url: URL, body: B) => Response): [string, RegExp, Handler] => [
+  method,
+  pattern,
+  (groups, url, body) => handle(groups, url, body as B),
+];
 
 export function createCloudflareFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);
@@ -54,7 +63,7 @@ export function createCloudflareFake(seed: FakeState, token: string) {
   const routes: [string, RegExp, Handler][] = [
     route('GET', /^\/zones$/, (_g, url) => ok(url.searchParams.get('name') === state.zone.name ? [state.zone] : [])),
     route('GET', /^\/zones\/zone-0001\/settings$/, () => ok(Object.keys(state.settings).map(setting))),
-    route('GET', /^\/zones\/zone-0001\/settings\/([^/]+)$/, ([id]) => setting(id) ? ok(setting(id)) : fail(404, 'Invalid setting')),
+    route('GET', /^\/zones\/zone-0001\/settings\/([^/]+)$/, ([id]) => (setting(id) ? ok(setting(id)) : fail(404, 'Invalid setting'))),
     route<{ value: unknown }>('PATCH', /^\/zones\/zone-0001\/settings\/([^/]+)$/, ([id], _u, body) => {
       const current = state.settings[id];
       if (!current) return fail(404, 'Invalid setting');
@@ -64,13 +73,23 @@ export function createCloudflareFake(seed: FakeState, token: string) {
     route('GET', /^\/zones\/zone-0001\/bot_management$/, () => ok(state.botManagement)),
     // The real endpoint resets every field a PUT leaves out.
     route<Fields>('PUT', /^\/zones\/zone-0001\/bot_management$/, (_g, _u, body) => {
-      state.botManagement = { using_latest_model: state.botManagement.using_latest_model, ai_bots_protection: 'disabled', content_bots_protection: 'disabled', crawler_protection: 'disabled', ai_training: 'disabled', ai_search: 'disabled', ai_user: 'disabled', ...body };
+      state.botManagement = {
+        using_latest_model: state.botManagement.using_latest_model,
+        ai_bots_protection: 'disabled',
+        content_bots_protection: 'disabled',
+        crawler_protection: 'disabled',
+        ai_training: 'disabled',
+        ai_search: 'disabled',
+        ai_user: 'disabled',
+        ...body,
+      };
       return ok(state.botManagement);
     }),
     route('GET', /^\/zones\/zone-0001\/dnssec$/, () => ok(state.dnssec)),
     route<Fields>('PATCH', /^\/zones\/zone-0001\/dnssec$/, (_g, _u, body) => ok(Object.assign(state.dnssec, body))),
     route('GET', /^\/zones\/zone-0001\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([phase]) =>
-      ruleset(phase) ? ok(ruleset(phase)) : fail(404, 'could not find entrypoint ruleset')),
+      ruleset(phase) ? ok(ruleset(phase)) : fail(404, 'could not find entrypoint ruleset'),
+    ),
     route<{ rules: Rule[] }>('PUT', /^\/zones\/zone-0001\/rulesets\/phases\/([^/]+)\/entrypoint$/, ([phase], _u, body) => {
       const created = { id: newId('ruleset'), phase, rules: body.rules.map((rule) => ({ id: newId('rule'), ...rule })) };
       state.rulesets[`zones/${phase}`] = created;
@@ -113,7 +132,8 @@ export function createCloudflareFake(seed: FakeState, token: string) {
     route('GET', /^\/zones\/zone-0001\/schema_validation\/settings$/, () => ok(state.validationSettings)),
     route<ValidationSettings>('PUT', /^\/zones\/zone-0001\/schema_validation\/settings$/, (_g, _u, body) => ok(Object.assign(state.validationSettings, body))),
     route('GET', /^\/zones\/zone-0001\/schema_validation\/settings\/operations\/([^/]+)$/, ([id]) =>
-      state.operationSettings[id] ? ok({ operation_id: id, ...state.operationSettings[id] }) : fail(404, 'no operation settings')),
+      state.operationSettings[id] ? ok({ operation_id: id, ...state.operationSettings[id] }) : fail(404, 'no operation settings'),
+    ),
     route<Fields>('PUT', /^\/zones\/zone-0001\/schema_validation\/settings\/operations\/([^/]+)$/, ([id], _u, body) => {
       state.operationSettings[id] = body;
       return ok({ operation_id: id, ...body });

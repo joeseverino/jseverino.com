@@ -30,4 +30,5 @@ export function existingDir(label: string, dir: string, variable: string): strin
   return dir;
 }
 
-export const educationExportFile = (env: Env = process.env): string | undefined => (env.EDUCATION_EXPORT_FILE ? path.resolve(env.EDUCATION_EXPORT_FILE) : undefined);
+export const educationExportFile = (env: Env = process.env): string | undefined =>
+  env.EDUCATION_EXPORT_FILE ? path.resolve(env.EDUCATION_EXPORT_FILE) : undefined;

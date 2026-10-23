@@ -25,7 +25,10 @@ const COLUMNS = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 // The first line of a failed run's log that reads as the reason, for its table row.
 function firstFailureLine(log: string): string {
-  const lines = log.split('\n').map((line) => line.trim()).filter(Boolean);
+  const lines = log
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
   return lines.find((line) => /^(error|failed|fail|✖|✗|-\s)/i.test(line)) ?? lines.at(-1) ?? 'failed';
 }
 
@@ -116,15 +119,17 @@ export async function main(): Promise<number> {
     .map((assertion) => `${assertion.category} ${assertion.level === 'error' ? 'fails' : 'warns'} below ${percent(assertion.minScore)}`)
     .join(', ');
 
-  appendSummary([
-    `## Lighthouse${version ? ` ${version}` : ''}`,
-    '',
-    errors === 0 && auditFailures === 0
-      ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
-      : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
-    '',
-    table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
-  ].join('\n'));
+  appendSummary(
+    [
+      `## Lighthouse${version ? ` ${version}` : ''}`,
+      '',
+      errors === 0 && auditFailures === 0
+        ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
+        : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
+      '',
+      table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
+    ].join('\n'),
+  );
 
   if (errors > 0 || auditFailures > 0) {
     console.error(`\nfailed: ${auditFailures} Lighthouse audit execution failure(s), ${errors} threshold(s)`);

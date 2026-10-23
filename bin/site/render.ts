@@ -15,7 +15,12 @@ const text = (value: unknown): string => optionalString(value) ?? '';
 // slug names a writeup in the vault. The body is what the sync ships (the
 // title, hero line, and repeated description stripped). `document` adds the
 // full styled preview page, which costs a Vite start (about a second).
-export async function render({ slug, document = false, out, stdin = () => fs.readFileSync(0, 'utf8') }: {
+export async function render({
+  slug,
+  document = false,
+  out,
+  stdin = () => fs.readFileSync(0, 'utf8'),
+}: {
   slug: string | undefined;
   document?: boolean;
   out: Output;

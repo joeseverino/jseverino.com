@@ -49,7 +49,13 @@ export async function publishDist({ repo, dir, sha, push = false, token, reposit
 
   // Through the environment, not argv, so the header never shows in a process listing.
   const auth = token
-    ? { env: { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader', GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}` } }
+    ? {
+        env: {
+          GIT_CONFIG_COUNT: '1',
+          GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader',
+          GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${token}`).toString('base64')}`,
+        },
+      }
     : {};
   if (!token || !repository) {
     git(['push', '--quiet', 'origin', `${commit}:refs/heads/${DIST_BRANCH}`], auth);

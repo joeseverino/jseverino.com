@@ -1,8 +1,21 @@
 // site manage's key bindings: each mode's keys, what they do, and the hint the footer shows for them.
 import { keyOf, nextBoundary, previousBoundary, type Key } from './tui.ts';
 import {
-  FIELDS, OUTCOME, SITE_ACTIONS, TABS, current, currentField, fieldValue, hasStaged, moveCursor, moveItem,
-  toggleFeatured, togglePublished, type Mode, type Model, type Tab,
+  FIELDS,
+  OUTCOME,
+  SITE_ACTIONS,
+  TABS,
+  current,
+  currentField,
+  fieldValue,
+  hasStaged,
+  moveCursor,
+  moveItem,
+  toggleFeatured,
+  togglePublished,
+  type Mode,
+  type Model,
+  type Tab,
 } from './manage-model.ts';
 
 export type ManageEffect =
@@ -42,7 +55,13 @@ function beginNew(model: Model): void {
 }
 
 // Back to the writeup list.
-const toList = (keys: readonly Key[], hint: string): Binding => ({ keys, hint, run: (model) => { model.mode = 'list'; } });
+const toList = (keys: readonly Key[], hint: string): Binding => ({
+  keys,
+  hint,
+  run: (model) => {
+    model.mode = 'list';
+  },
+});
 
 // Quitting with staged edits asks first, on the Writeups tab where they show.
 const quit = (message: string): Binding => ({
@@ -62,8 +81,10 @@ const tabKeys: readonly Binding[] = TABS.map(({ name }, index) => ({
 }));
 
 // Shown only on a writeup row, not on the trailing "new writeup…" row.
-const onWriteup = (hint: string) => (model: Model): string | undefined =>
-  model.cursor < model.items.length ? hint : undefined;
+const onWriteup =
+  (hint: string) =>
+  (model: Model): string | undefined =>
+    model.cursor < model.items.length ? hint : undefined;
 
 const list: readonly Binding[] = [
   { keys: ['up', 'k'], hint: 'select', run: (model) => moveCursor(model, -1) },
@@ -73,10 +94,19 @@ const list: readonly Binding[] = [
     hint: (model) => (model.cursor === model.items.length ? 'create a new writeup' : 'open'),
     run: (model) => {
       if (model.cursor === model.items.length) beginNew(model);
-      else { model.mode = 'detail'; model.field = 0; }
+      else {
+        model.mode = 'detail';
+        model.field = 0;
+      }
     },
   },
-  { keys: ['space', 'm'], hint: onWriteup('move'), run: (model) => { if (model.cursor < model.items.length) model.mode = 'move'; } },
+  {
+    keys: ['space', 'm'],
+    hint: onWriteup('move'),
+    run: (model) => {
+      if (model.cursor < model.items.length) model.mode = 'move';
+    },
+  },
   { keys: ['f'], hint: onWriteup('feature/unfeature'), run: toggleFeatured },
   { keys: ['p'], hint: onWriteup('publish/unpublish'), run: togglePublished },
   { keys: ['n'], hint: onWriteup('new writeup'), run: beginNew },
@@ -96,8 +126,20 @@ const move: readonly Binding[] = [
 ];
 
 const detail: readonly Binding[] = [
-  { keys: ['up', 'k'], hint: 'field', run: (model) => { model.field = Math.max(0, model.field - 1); } },
-  { keys: ['down', 'j'], hint: 'field', run: (model) => { model.field = Math.min(FIELDS.length - 1, model.field + 1); } },
+  {
+    keys: ['up', 'k'],
+    hint: 'field',
+    run: (model) => {
+      model.field = Math.max(0, model.field - 1);
+    },
+  },
+  {
+    keys: ['down', 'j'],
+    hint: 'field',
+    run: (model) => {
+      model.field = Math.min(FIELDS.length - 1, model.field + 1);
+    },
+  },
   {
     keys: ['enter'],
     hint: 'edit',
@@ -142,10 +184,32 @@ const detail: readonly Binding[] = [
 
 // The line editor's own keys, shared by the edit and new-writeup modes.
 const lineEditing: readonly Binding[] = [
-  { keys: ['left'], hint: 'move', run: (model) => { model.inputCursor = previousBoundary(model.input, model.inputCursor); } },
-  { keys: ['right'], hint: 'move', run: (model) => { model.inputCursor = nextBoundary(model.input, model.inputCursor); } },
-  { keys: ['home'], run: (model) => { model.inputCursor = 0; } },
-  { keys: ['end'], run: (model) => { model.inputCursor = model.input.length; } },
+  {
+    keys: ['left'],
+    hint: 'move',
+    run: (model) => {
+      model.inputCursor = previousBoundary(model.input, model.inputCursor);
+    },
+  },
+  {
+    keys: ['right'],
+    hint: 'move',
+    run: (model) => {
+      model.inputCursor = nextBoundary(model.input, model.inputCursor);
+    },
+  },
+  {
+    keys: ['home'],
+    run: (model) => {
+      model.inputCursor = 0;
+    },
+  },
+  {
+    keys: ['end'],
+    run: (model) => {
+      model.inputCursor = model.input.length;
+    },
+  },
   {
     keys: ['backspace'],
     run: (model) => {
@@ -162,7 +226,14 @@ const lineEditing: readonly Binding[] = [
       model.input = model.input.slice(0, model.inputCursor) + model.input.slice(nextBoundary(model.input, model.inputCursor));
     },
   },
-  { keys: ['ctrl-u'], hint: 'clear', run: (model) => { model.input = ''; model.inputCursor = 0; } },
+  {
+    keys: ['ctrl-u'],
+    hint: 'clear',
+    run: (model) => {
+      model.input = '';
+      model.inputCursor = 0;
+    },
+  },
   {
     keys: ['ctrl-w'],
     hint: 'delete word',
@@ -188,7 +259,13 @@ const edit: readonly Binding[] = [
       model.mode = 'detail';
     },
   },
-  { keys: ['esc'], hint: 'cancel', run: (model) => { model.mode = 'detail'; } },
+  {
+    keys: ['esc'],
+    hint: 'cancel',
+    run: (model) => {
+      model.mode = 'detail';
+    },
+  },
   ...lineEditing,
 ];
 
@@ -205,14 +282,33 @@ const confirmQuit: readonly Binding[] = [
 ];
 
 const confirmReload: readonly Binding[] = [
-  { keys: ['y', 'r', 'ctrl-r'], hint: 'reload', run: (model) => { model.mode = 'list'; return { type: 'reload' }; } },
+  {
+    keys: ['y', 'r', 'ctrl-r'],
+    hint: 'reload',
+    run: (model) => {
+      model.mode = 'list';
+      return { type: 'reload' };
+    },
+  },
   toList(['esc', 'n', 'q'], 'keep working'),
   { keys: ['ctrl-c'], run: cancel },
 ];
 
 const site: readonly Binding[] = [
-  { keys: ['up', 'k'], hint: 'select', run: (model) => { model.actionCursor = Math.max(0, model.actionCursor - 1); } },
-  { keys: ['down', 'j'], hint: 'select', run: (model) => { model.actionCursor = Math.min(SITE_ACTIONS.length - 1, model.actionCursor + 1); } },
+  {
+    keys: ['up', 'k'],
+    hint: 'select',
+    run: (model) => {
+      model.actionCursor = Math.max(0, model.actionCursor - 1);
+    },
+  },
+  {
+    keys: ['down', 'j'],
+    hint: 'select',
+    run: (model) => {
+      model.actionCursor = Math.min(SITE_ACTIONS.length - 1, model.actionCursor + 1);
+    },
+  },
   { keys: ['enter'], hint: 'run', run: (model) => ({ type: 'action', key: SITE_ACTIONS[model.actionCursor]?.key ?? '' }) },
   ...SITE_ACTIONS.map(({ key }): Binding => ({ keys: [key], run: () => ({ type: 'action', key }) })),
   { keys: ['left', 'tab'], hint: 'writeups tab', run: (model) => switchTab(model, 'writeups') },
@@ -223,11 +319,17 @@ const site: readonly Binding[] = [
 
 // The Site tab has one mode; the Writeups tab's mode picks its bindings.
 export const BINDINGS = {
-  list, move, detail, edit, new: newWriteup, 'confirm-quit': confirmQuit, 'confirm-reload': confirmReload, site,
+  list,
+  move,
+  detail,
+  edit,
+  new: newWriteup,
+  'confirm-quit': confirmQuit,
+  'confirm-reload': confirmReload,
+  site,
 } satisfies Record<Mode | 'site', readonly Binding[]>;
 
-export const activeBindings = (model: Model): readonly Binding[] =>
-  BINDINGS[model.tab === 'site' ? 'site' : model.mode];
+export const activeBindings = (model: Model): readonly Binding[] => BINDINGS[model.tab === 'site' ? 'site' : model.mode];
 
 function insertText(model: Model, text: string): void {
   const clean = text.replace(/[\p{Cc}\p{Cf}]/gu, '');

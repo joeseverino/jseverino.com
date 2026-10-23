@@ -3,9 +3,7 @@ import { keyLabel, lineEditor, terminalColumns, tint, truncate, type Frame, type
 import { SITE_ORIGIN, writeupUrl } from '../../src/lib/site-config.ts';
 import { SLUG_RULE } from './cli.ts';
 import { activeBindings, SAVE_KEY, type Binding } from './manage-input.ts';
-import {
-  FIELDS, SITE_ACTIONS, TABS, current, diff, fieldValue, type Item, type Model, type SiteAction, type SiteStatus,
-} from './manage-model.ts';
+import { FIELDS, SITE_ACTIONS, TABS, current, diff, fieldValue, type Item, type Model, type SiteAction, type SiteStatus } from './manage-model.ts';
 
 // Every mark a frame draws, with the tone it draws in unless a row says otherwise.
 export const GLYPH = {
@@ -47,8 +45,7 @@ function drawTabBar(model: Model): string {
 }
 
 // Every frame opens with a blank line, the tab bar, a rule, and its title.
-const frameHead = (model: Model, cols: number, title: string): string[] =>
-  ['', drawTabBar(model), `  ${rule(cols)}`, title, ''];
+const frameHead = (model: Model, cols: number, title: string): string[] => ['', drawTabBar(model), `  ${rule(cols)}`, title, ''];
 
 // The key hints for the active bindings, wrapped to the width.
 export function keyHints(model: Model, bindings: readonly Binding[] = activeBindings(model)): string[] {
@@ -89,12 +86,13 @@ function frameFoot(model: Model, cols: number, above: string[], hints: string[])
 // The divider between the featured list and the writeups that are not featured.
 const notFeaturedDivider = (cols: number): string => `  ${tint('muted', `──── not featured ${'─'.repeat(Math.max(4, cols - 22))}`)}`;
 
-const legend = (): string => [
-  `${mark(GLYPH.filled)}${tint('muted', ` ${PUBLISH_STATE.published.words}`)}`,
-  `${mark(GLYPH.hollow)}${tint('muted', ` ${PUBLISH_STATE.draft.words}`)}`,
-  `${mark(GLYPH.issue)}${tint('muted', ' gate issues')}`,
-  tint('muted', 'edits stay staged until you save'),
-].join(tint('muted', ' · '));
+const legend = (): string =>
+  [
+    `${mark(GLYPH.filled)}${tint('muted', ` ${PUBLISH_STATE.published.words}`)}`,
+    `${mark(GLYPH.hollow)}${tint('muted', ` ${PUBLISH_STATE.draft.words}`)}`,
+    `${mark(GLYPH.issue)}${tint('muted', ' gate issues')}`,
+    tint('muted', 'edits stay staged until you save'),
+  ].join(tint('muted', ' · '));
 
 function listFooter(model: Model, cols: number): string[] {
   if (model.mode === 'move') {
@@ -132,7 +130,9 @@ export function listFrame(model: Model): Frame {
     const edited = Object.keys(item.edits).length ? mark(GLYPH.edited) : ' ';
     const slugTone: Tone = selected ? (model.mode === 'move' ? 'grabbed' : 'strong') : 'plain';
     const title = tint('muted', truncate(item.title, cols - slugWidth - tag.length - 15));
-    body.push(`  ${pointer} ${slot} ${mark(state.glyph)} ${gateMark}${edited}${tint(slugTone, item.slug.padEnd(slugWidth))}${tint(state.glyph.tone, tag)}${title}`);
+    body.push(
+      `  ${pointer} ${slot} ${mark(state.glyph)} ${gateMark}${edited}${tint(slugTone, item.slug.padEnd(slugWidth))}${tint(state.glyph.tone, tag)}${title}`,
+    );
   });
   if (model.divider === model.items.length) body.push(notFeaturedDivider(cols));
   const onNew = model.cursor === model.items.length;
@@ -176,26 +176,30 @@ export function detailFrame(model: Model): Frame {
   const issues = model.issues.get(item.slug) ?? [];
   if (issues.length) body.push('', ...issues.slice(0, 6).map((issue) => `    ${mark(GLYPH.issue)} ${issue}`));
 
-  const hints = model.mode === 'edit'
-    ? wrapHints('type to edit', keyHints(model), cols)
-    : wrapHints('', [...keyHints(model), `changes save with ${SAVE_KEY} on the list screen`], cols);
+  const hints =
+    model.mode === 'edit'
+      ? wrapHints('type to edit', keyHints(model), cols)
+      : wrapHints('', [...keyHints(model), `changes save with ${SAVE_KEY} on the list screen`], cols);
   return { head, body, focus: model.field, foot: frameFoot(model, cols, [], hints) };
 }
 
-const actionLabel = (action: SiteAction, status: SiteStatus): string =>
-  typeof action.label === 'function' ? action.label(status) : action.label;
+const actionLabel = (action: SiteAction, status: SiteStatus): string => (typeof action.label === 'function' ? action.label(status) : action.label);
 
 const row = (label: string, value: string): string => `    ${label.padEnd(21)}${value}`;
 
 function statusRows(status: SiteStatus, cols: number): string[] {
   const rows = [
-    row('Astro Dev Server', status.devServer
-      ? `${mark(GLYPH.filled)} ${tint('ok', 'Running')} on ${status.devServer.url}`
-      : `${mark(GLYPH.hollow, 'muted')} ${tint('muted', 'Offline')}`),
+    row(
+      'Astro Dev Server',
+      status.devServer
+        ? `${mark(GLYPH.filled)} ${tint('ok', 'Running')} on ${status.devServer.url}`
+        : `${mark(GLYPH.hollow, 'muted')} ${tint('muted', 'Offline')}`,
+    ),
     '',
-    row('Git Working Tree', status.gitChanges > 0
-      ? tint('warn', `${GLYPH.filled.char} ${status.gitChanges} uncommitted changes`)
-      : tint('ok', `${GLYPH.filled.char} clean`)),
+    row(
+      'Git Working Tree',
+      status.gitChanges > 0 ? tint('warn', `${GLYPH.filled.char} ${status.gitChanges} uncommitted changes`) : tint('ok', `${GLYPH.filled.char} clean`),
+    ),
     row('Git Branch', `${status.gitBranch} ${tint('muted', `(${status.gitAheadBehind})`)}`),
   ];
   if (status.commitHash) {
@@ -205,9 +209,12 @@ function statusRows(status: SiteStatus, cols: number): string[] {
   rows.push(
     row('Astro Build (dist)', tint(status.build.tone, `${GLYPH.filled.char} ${status.build.text}`)),
     row('Security Signature', tint(status.security.tone, `${GLYPH.filled.char} ${status.security.text}`)),
-    row('Live Site', status.live.code === null
-      ? tint('muted', `${GLYPH.hollow.char} unreachable`)
-      : `${tint(status.live.tone, `${GLYPH.filled.char} HTTP ${status.live.code}`)} ${tint('muted', SITE_ORIGIN)}`),
+    row(
+      'Live Site',
+      status.live.code === null
+        ? tint('muted', `${GLYPH.hollow.char} unreachable`)
+        : `${tint(status.live.tone, `${GLYPH.filled.char} HTTP ${status.live.code}`)} ${tint('muted', SITE_ORIGIN)}`,
+    ),
   );
   return rows;
 }
@@ -254,7 +261,9 @@ export function siteFrame(model: Model): Frame {
     const selected = i === model.actionCursor;
     const label = actionLabel(action, status).padEnd(20);
     const desc = truncate(model.descriptions.get(action.key) ?? '', Math.max(10, cols - 34));
-    body.push(`  ${selected ? mark(GLYPH.pointer) : ' '} ${tint('accent', `[${action.key}]`)} ${tint(selected ? 'strong' : 'plain', label)} ${tint('muted', desc)}`);
+    body.push(
+      `  ${selected ? mark(GLYPH.pointer) : ' '} ${tint('accent', `[${action.key}]`)} ${tint(selected ? 'strong' : 'plain', label)} ${tint('muted', desc)}`,
+    );
   });
 
   return { head, body, focus, foot: frameFoot(model, cols, [], wrapHints('', keyHints(model), cols)) };

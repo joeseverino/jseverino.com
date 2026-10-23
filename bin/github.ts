@@ -31,8 +31,7 @@ export const main = toolMain<MainOptions>({
   usage: USAGE,
   command: 'node bin/github.ts',
   // Tests pass the token in env; the command line resolves it below.
-  setup: ({ env = process.env, fetch }) =>
-    createRun(loadDesired(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN, fetch })),
+  setup: ({ env = process.env, fetch }) => createRun(loadDesired(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN, fetch })),
 });
 
 if (import.meta.main) {

@@ -32,13 +32,15 @@ export async function snapshotPackages(
   { getJson = fetchJson, today = new Date() }: { getJson?: GetJson; today?: Date } = {},
 ): Promise<{ ok: true; snapshot: RegistrySnapshot } | { ok: false; failures: string[] }> {
   const outcomes = await Promise.all(
-    packages.toSorted((a, b) => a.name.localeCompare(b.name)).map(async (pkg) => {
-      try {
-        return { pkg, entry: await lookup(pkg, getJson) };
-      } catch (error) {
-        return { pkg, failure: errorMessage(error) };
-      }
-    }),
+    packages
+      .toSorted((a, b) => a.name.localeCompare(b.name))
+      .map(async (pkg) => {
+        try {
+          return { pkg, entry: await lookup(pkg, getJson) };
+        } catch (error) {
+          return { pkg, failure: errorMessage(error) };
+        }
+      }),
   );
   const failures = outcomes.flatMap((outcome) => ('failure' in outcome ? [`${packageKey(outcome.pkg)}: ${outcome.failure}`] : []));
   if (failures.length > 0) return { ok: false, failures };

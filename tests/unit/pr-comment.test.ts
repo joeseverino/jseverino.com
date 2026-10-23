@@ -13,8 +13,7 @@ const run: WorkflowRun = {
   conclusion: 'success',
   html_url: 'https://github.example/runs/1',
 };
-const input = (fields: Partial<CommentInput> = {}): CommentInput =>
-  ({ run, preview: 'success', summaries: {}, required: [], checks: [], ...fields });
+const input = (fields: Partial<CommentInput> = {}): CommentInput => ({ run, preview: 'success', summaries: {}, required: [], checks: [], ...fields });
 
 describe('commentBody', () => {
   test('opens with the marker and the commit', () => {
@@ -24,23 +23,25 @@ describe('commentBody', () => {
   });
 
   test('gives each required check its conclusion, its status while running, or pending before it starts', () => {
-    const body = commentBody(input({
-      required: ['build', 'e2e', 'deploy'],
-      checks: [
-        { name: 'build', status: 'completed', conclusion: 'failure' },
-        { name: 'e2e', status: 'in_progress', conclusion: null },
-      ],
-    }));
+    const body = commentBody(
+      input({
+        required: ['build', 'e2e', 'deploy'],
+        checks: [
+          { name: 'build', status: 'completed', conclusion: 'failure' },
+          { name: 'e2e', status: 'in_progress', conclusion: null },
+        ],
+      }),
+    );
     assert.match(body, /^`build` failure · `e2e` in_progress · `deploy` pending$/m);
   });
 
-  test('nests ci\'s summaries under its run in a fixed order, leaving out the missing', () => {
+  test("nests ci's summaries under its run in a fixed order, leaving out the missing", () => {
     const body = commentBody(input({ summaries: { edge: '## Edge runtime\n\nok\n', e2e: '## Cross-browser suite\n\nok' } }));
     const ci = '### ci: success · [run](https://github.example/runs/1)\n\n### Cross-browser suite\n\nok\n\n### Edge runtime\n\nok';
     assert.ok(body.includes(ci), body);
   });
 
-  test('the deploy section is the preview\'s summary, a reason when the preview never ran, or the result when it wrote none', () => {
+  test("the deploy section is the preview's summary, a reason when the preview never ran, or the result when it wrote none", () => {
     assert.match(commentBody(input({ summaries: { deploy: '## Deploy\n\nat https://preview.example' } })), /### Deploy\n\nat https:\/\/preview\.example\n$/);
     assert.match(commentBody(input({ preview: 'skipped', run: { ...run, conclusion: 'failure' } })), /### Deploy\n\nNothing deployed: ci failure\.\n$/);
     assert.match(commentBody(input({ preview: 'failure' })), /### Deploy\n\nfailure: no summary was produced\.\n$/);
@@ -48,7 +49,11 @@ describe('commentBody', () => {
 });
 
 describe('main', () => {
-  interface Pull { number: number; state: string; head: { sha: string; repo: { full_name: string } | null } }
+  interface Pull {
+    number: number;
+    state: string;
+    head: { sha: string; repo: { full_name: string } | null };
+  }
   const scratch = scratchDirs('pr-comment-');
   after(scratch.cleanup);
   const ours: Pull = { number: 7, state: 'open', head: { sha: SHA, repo: { full_name: REPO } } };
@@ -79,12 +84,13 @@ describe('main', () => {
       return new Response(JSON.stringify(routes[pathname]), { status: 200 });
     };
     const lines: string[] = [];
-    const go = () => main({
-      env: { GITHUB_REPOSITORY: REPO, GITHUB_EVENT_PATH: eventPath, GITHUB_TOKEN: 'token', PREVIEW: 'skipped' },
-      fetch,
-      dir,
-      log: (line) => lines.push(line),
-    });
+    const go = () =>
+      main({
+        env: { GITHUB_REPOSITORY: REPO, GITHUB_EVENT_PATH: eventPath, GITHUB_TOKEN: 'token', PREVIEW: 'skipped' },
+        fetch,
+        dir,
+        log: (line) => lines.push(line),
+      });
     return { go, writes, lines, eventPath };
   }
 
@@ -105,17 +111,29 @@ describe('main', () => {
   });
 
   test('updates its own comment in place', async () => {
-    const { go, writes } = setup([ours], [{ id: 1, body: 'a review' }, { id: 2, body: `${MARKER}\nold` }]);
+    const { go, writes } = setup(
+      [ours],
+      [
+        { id: 1, body: 'a review' },
+        { id: 2, body: `${MARKER}\nold` },
+      ],
+    );
     await go();
-    assert.deepEqual(writes.map(({ method, path }) => `${method} ${path}`), [`PATCH /repos/${REPO}/issues/comments/2`]);
+    assert.deepEqual(
+      writes.map(({ method, path }) => `${method} ${path}`),
+      [`PATCH /repos/${REPO}/issues/comments/2`],
+    );
   });
 
   test('writes nothing unless an open pull request from this repository has the commit as its head', async () => {
-    const { go, writes, lines } = setup([
-      { ...ours, state: 'closed' },
-      { ...ours, head: { sha: 'f'.repeat(40), repo: { full_name: REPO } } },
-      { ...ours, head: { sha: SHA, repo: { full_name: 'fork/site' } } },
-    ], []);
+    const { go, writes, lines } = setup(
+      [
+        { ...ours, state: 'closed' },
+        { ...ours, head: { sha: 'f'.repeat(40), repo: { full_name: REPO } } },
+        { ...ours, head: { sha: SHA, repo: { full_name: 'fork/site' } } },
+      ],
+      [],
+    );
     assert.equal(await go(), 0);
     assert.deepEqual(writes, []);
     assert.match(lines.join('\n'), /nothing to comment on/);

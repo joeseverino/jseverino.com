@@ -16,6 +16,8 @@ test('a name no task carries, or a glob that matches none, names nothing', () =>
 // `mise tasks` and the generated list in docs/Commands.md are the command reference, so a task
 // without a description is a command nobody can find.
 test('every visible task carries a description', () => {
-  const undescribed = miseTasks().filter((task) => !task.description.trim()).map((task) => task.name);
+  const undescribed = miseTasks()
+    .filter((task) => !task.description.trim())
+    .map((task) => task.name);
   assert.deepEqual(undescribed, []);
 });

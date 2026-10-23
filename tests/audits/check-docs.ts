@@ -21,7 +21,10 @@ const PLACEHOLDER = /[*<>{}$[\]()|"'`?]/;
 
 // The repo path a backticked token names, or null when it names none.
 export function repoPath(token: string, topLevel: ReadonlySet<string>): string | null {
-  let candidate = token.slice(token.lastIndexOf('=') + 1).replace(/[#?].*$/, '').replace(/:\d+(?:-\d+)?$/, '');
+  let candidate = token
+    .slice(token.lastIndexOf('=') + 1)
+    .replace(/[#?].*$/, '')
+    .replace(/:\d+(?:-\d+)?$/, '');
   const wild = candidate.search(PLACEHOLDER);
   if (wild === 0) return null;
   if (wild > 0) {
@@ -56,17 +59,14 @@ export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathR
 
 // The npm scripts a line of a doc runs (`npm run <name>`).
 export function npmScriptRuns(line: string): string[] {
-  return [...line.matchAll(/npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g)]
-    .map(([, name = '']) => name)
-    .filter((name) => !name.startsWith('-'));
+  return [...line.matchAll(/npm run\s+(?:-s\s+|--silent\s+)?([\w:.-]+)/g)].map(([, name = '']) => name).filter((name) => !name.startsWith('-'));
 }
 
 // The tasks a line of a doc runs: `mise run [-c] [-j N] <task>`, the task bare or quoted as a
 // glob. A name ends on a word character or `*`, so the punctuation after it is prose; a name
 // running on into a `<placeholder>` is an example, not a reference.
 export function miseTaskRuns(line: string): string[] {
-  return [...line.matchAll(/mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]*[\w*])(?![:.-]*[\w*<])/g)]
-    .map(([, name = '']) => name);
+  return [...line.matchAll(/mise run\s+(?:-[a-zA-Z]\s+(?:\d+\s+)?)*'?([\w:.*-]*[\w*])(?![:.-]*[\w*<])/g)].map(([, name = '']) => name);
 }
 
 export interface RepoIndex {
@@ -87,7 +87,9 @@ export function repoIndex(root: string): RepoIndex {
     return new Set(stdout.split('\n').filter(Boolean));
   };
   // Ignored names count even before they exist (dist/ before a build).
-  const gitignored = fs.readFileSync(path.join(root, '.gitignore'), 'utf8').split('\n')
+  const gitignored = fs
+    .readFileSync(path.join(root, '.gitignore'), 'utf8')
+    .split('\n')
     .map((line) => line.trim().replace(/^\//, '').replace(/\/$/, ''))
     .filter((name) => /^[\w.-]+$/.test(name));
   const rootEntries = [...new Set([...fs.readdirSync(root), ...gitignored])].filter((name) => name !== '.git');

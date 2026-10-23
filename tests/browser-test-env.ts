@@ -45,7 +45,9 @@ export function previewServer({ port, timeout }: { port: number; timeout: number
       // --ignore-lock keeps the server in the foreground Playwright owns (Astro
       // detaches it when it detects an agent) and beside a running visual preview.
       `astro preview --host 127.0.0.1 --port ${port} --ignore-lock`,
-    ].filter(Boolean).join(' && '),
+    ]
+      .filter(Boolean)
+      .join(' && '),
     url: `http://127.0.0.1:${port}`,
     // A prebuilt artifact is served fresh, never by whatever holds the port.
     reuseExistingServer: !process.env.CI && !process.env.PREBUILT,

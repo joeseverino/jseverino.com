@@ -1,12 +1,12 @@
 @layer tokens, base, components;
 
-@import url("./tokens.css");
-@import url("./brand.css");
-@import url("./foundation.css");
-@import url("./layout.css");
-@import url("./content.css");
-@import url("./forms.css");
-@import url("./footer.css");
-@import url("./software.css");
-@import url("./overlays.css");
-@import url("./accessibility.css");
+@import url('./tokens.css');
+@import url('./brand.css');
+@import url('./foundation.css');
+@import url('./layout.css');
+@import url('./content.css');
+@import url('./forms.css');
+@import url('./footer.css');
+@import url('./software.css');
+@import url('./overlays.css');
+@import url('./accessibility.css');
