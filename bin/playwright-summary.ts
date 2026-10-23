@@ -2,7 +2,7 @@
 // Turn Playwright's JSON report into a per-project job-summary table. Runs with
 // `if: always()` and exits zero: the test step decides the job's outcome.
 //
-//   node bin/playwright-summary.ts "Cross-browser suite" [test-results/results.json]
+//   node bin/playwright-summary.ts "Cross-browser suite" .cache/test-results/e2e.json
 import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -11,12 +11,11 @@ import { annotate, appendSummary, cell, status, table } from './lib/step-summary
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 
-const [title = 'Playwright', reportFile = 'test-results/results.json', ...extra] = cli({
-  usage: 'usage: node bin/playwright-summary.ts [title] [report.json]',
-  allowPositionals: true,
-}).positionals;
-if (extra.length) {
-  console.error('usage: node bin/playwright-summary.ts [title] [report.json]');
+// Each suite writes its own report (tests/browser-test-env.ts), so the caller names it.
+const usage = 'usage: node bin/playwright-summary.ts <title> <report.json>';
+const [title, reportFile, ...extra] = cli({ usage, allowPositionals: true }).positionals;
+if (!title || !reportFile || extra.length) {
+  console.error(usage);
   process.exit(2);
 }
 const input = path.resolve(root, reportFile);

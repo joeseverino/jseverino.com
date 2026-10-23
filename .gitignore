@@ -8,14 +8,13 @@ node_modules
 
 # Build output
 /dist/
-/dist-visual/
 
-# The drafts preview overlay (bin/lib/cache.ts); caches live under SITE_CACHE_DIR
+# This checkout's own output (src/lib/site-root.ts, fromCheckoutCache): test and
+# audit results, the visual fixture build, the drafts overlay. Shared caches live
+# under SITE_CACHE_DIR.
 /.cache/
 
-# Playwright artifacts
-/playwright-report/
-/test-results/
+# The Playwright MCP tool's output
 .playwright-mcp/
 
 # Environment and local machine files
@@ -38,6 +37,4 @@ mise.local.toml
 # Generated at build from src/content/writeups (see bin/make-content-index.ts)
 public/content-index.json
 
-# Lighthouse output from bin/lighthouse-check.ts
-lighthouse-reports/
 CLAUDE.local.md

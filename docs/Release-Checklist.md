@@ -46,7 +46,7 @@ mise run browser:visual
 
 The visual suite renders the fixture content in `tests/fixtures/content`, not
 the synced writeups, so a content publish never needs a baseline update. If it
-fails, inspect the expected, actual, and diff images in `test-results/visual/`.
+fails, inspect the expected, actual, and diff images in `.cache/test-results/visual/`.
 For an intentional design change only, update and review the baselines:
 
 ```sh
@@ -118,7 +118,7 @@ Scheduled checks measure external freshness, which no single deployment
 decides, so they run on their own:
 
 - `link check` writes each check's Markdown report to the job summary.
-- `lighthouse` uploads `lighthouse-reports`.
+- `lighthouse` uploads its per-page reports as the `lighthouse-reports` artifact.
 - `scorecard` sends its SARIF to code scanning.
 
 Dependency freshness arrives as Renovate pull requests

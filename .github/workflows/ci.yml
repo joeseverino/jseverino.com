@@ -87,7 +87,7 @@ jobs:
 
       - name: Summarize results
         if: always()
-        run: node bin/playwright-summary.ts 'Cross-browser suite' test-results/e2e.json
+        run: node bin/playwright-summary.ts 'Cross-browser suite' .cache/test-results/e2e.json
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-e2e.md
 
@@ -96,8 +96,8 @@ jobs:
         with:
           name: playwright-e2e-report
           path: |
-            playwright-report/e2e/
-            test-results/e2e/
+            .cache/playwright-report/e2e/
+            .cache/test-results/e2e/
           retention-days: 7
           if-no-files-found: ignore
 
@@ -162,7 +162,7 @@ jobs:
 
       - name: Summarize results
         if: always()
-        run: node bin/playwright-summary.ts "$TITLE" "test-results/$SUITE.json"
+        run: node bin/playwright-summary.ts "$TITLE" ".cache/test-results/$SUITE.json"
         env:
           TITLE: ${{ matrix.title }}
           SUITE: ${{ matrix.suite }}
@@ -173,8 +173,8 @@ jobs:
         with:
           name: playwright-${{ matrix.suite }}-report
           path: |
-            playwright-report/${{ matrix.suite }}/
-            test-results/${{ matrix.suite }}/
+            .cache/playwright-report/${{ matrix.suite }}/
+            .cache/test-results/${{ matrix.suite }}/
           retention-days: 7
           if-no-files-found: ignore
 

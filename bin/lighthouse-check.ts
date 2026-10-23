@@ -10,7 +10,7 @@ import { chromium } from '@playwright/test';
 import { cli, exitWith } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 import { annotate, appendSummary, status, table } from './lib/step-summary.ts';
-import { siteRoot as root } from '../src/lib/site-root.ts';
+import { fromCheckoutCache, siteRoot as root } from '../src/lib/site-root.ts';
 import { readJson } from '../src/lib/json.ts';
 
 interface LighthouseConfig {
@@ -42,7 +42,7 @@ export async function main(): Promise<number> {
   }
 
   const { urls, preset, chromeFlags, thresholds: byCategory } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
-  const outDir = path.join(root, 'lighthouse-reports');
+  const outDir = fromCheckoutCache('lighthouse');
   const assertions = Object.entries(byCategory).map(([category, threshold]) => ({ category, ...threshold }));
 
   fs.mkdirSync(outDir, { recursive: true });

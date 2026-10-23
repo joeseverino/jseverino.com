@@ -5,6 +5,7 @@
 import path from 'node:path';
 import type { AstroUserConfig } from 'astro';
 import base from '../../astro.config.ts';
+import { fromCheckoutCache } from '../../src/lib/site-root.ts';
 
 const fixtureRoot = path.resolve(import.meta.dirname, 'content');
 if (path.resolve(process.env.SITE_CONTENT_ROOT ?? '') !== fixtureRoot) {
@@ -13,6 +14,6 @@ if (path.resolve(process.env.SITE_CONTENT_ROOT ?? '') !== fixtureRoot) {
 
 export default {
   ...base,
-  outDir: './dist-visual',
+  outDir: fromCheckoutCache('dist-visual'),
   cacheDir: './node_modules/.astro-visual',
 } satisfies AstroUserConfig;

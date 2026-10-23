@@ -555,8 +555,8 @@ GitHub Actions provide the remote quality gate:
   `public/_headers` security and cache rules, a real 404, the contact
   handler's refusals, and byte-exact `security.txt`. Each suite serves a build
   made in its own job with the test site key; `visual` downloads Chromium
-  while its build runs. Each suite writes its own `test-results/<suite>/` and
-  `playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
+  while its build runs. Each suite writes its own `.cache/test-results/<suite>/` and
+  `.cache/playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
 - [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run
   completes successfully and ships that run's `site` artifact; it runs the

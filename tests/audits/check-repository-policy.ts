@@ -78,7 +78,7 @@ const forbiddenTracked = tracked.filter(
   (file) =>
     /(^|\/)\.env(?:\.|$)/.test(file) ||
     /(^|\/)\.dev\.vars(?:\.|$)/.test(file) ||
-    /(^|\/)(?:dist|playwright-report|test-results)(?:\/|$)/.test(file),
+    /(^|\/)(?:dist|\.cache)(?:\/|$)/.test(file),
 );
 if (forbiddenTracked.length > 0) {
   failures.push(`forbidden generated or secret files are tracked: ${forbiddenTracked.join(', ')}`);
