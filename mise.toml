@@ -29,7 +29,7 @@
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.10.17"
+min_version = "2026.10.18"
 
 [settings]
 # For [deps], mise's package installer.
@@ -94,6 +94,8 @@ hint = "Run `mise exec -- sh -c 'mkdir -p \"$SITE_CACHE_DIR\"'`; the first build
 description = "Playwright's Chromium, Firefox and WebKit are installed, for the browser suites"
 run = "node -e 'const fs = require(\"node:fs\"); const playwright = require(\"@playwright/test\"); process.exit([\"chromium\", \"firefox\", \"webkit\"].every((name) => fs.existsSync(playwright[name].executablePath())) ? 0 : 1)'"
 hint = "Run `mise exec -- playwright install chromium firefox webkit`."
+# It loads @playwright/test from node_modules.
+depends = ["packages"]
 
 [tools]
 node = "24.22.1"
