@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Emit the one embeddable stylesheet (the "load BOTH" contract in src/lib/web-styles.ts):
+// Emit the one embeddable stylesheet:
 //
 //   public/embed/bundle.css  =  base.css (which imports the brand vars) + @font-face (base64 Inter)
 //

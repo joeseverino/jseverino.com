@@ -199,14 +199,11 @@ The assembly is owned once so an embedder does not re-derive it:
   `:root` brand-vars string. `sync:tokens` writes exactly this into
   `src/styles/brand.css`, so the site and any embedder share one definition.
 - [`src/lib/web-styles.ts`](../src/lib/web-styles.ts) exports
-  **`previewStyles({ baseCss, fontUrl })`**: the expanded CSS entrypoint, the
-  brand vars, and a resolvable Inter `@font-face`, as one `<style>` blob. `baseCss`
-  and `fontUrl` are passed in because each embedder obtains them its own way (esbuild text/dataurl import,
-  a fetch, a file read); only the assembly is shared.
-
-The `severino-obsidian` plugin's preview pane is the first consumer: it imports
-`previewStyles` (via an esbuild `@site/web-styles` alias) and hands it the
-esbuild-inlined `base.css` and Inter woff2.
+  **`interFontFace(fontUrl)`**, the Inter `@font-face` that `base.css` expects.
+  [`bin/make-embed-bundle.ts`](../bin/make-embed-bundle.ts) builds
+  `public/embed/bundle.css` with it, and the document renderer
+  ([`bin/lib/render-document.ts`](../bin/lib/render-document.ts)) styles a
+  rendered writeup with the brand vars, `base.css` and the same rule.
 
 ## Related Docs
 
