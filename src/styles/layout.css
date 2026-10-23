@@ -348,15 +348,17 @@
     line-height: 1.6;
     letter-spacing: 0.03em;
 
+    /* The underline grows by scale from the start edge, so the animation never runs layout. */
     &::after {
       content: '';
       position: absolute;
-      inset-inline-start: 0;
+      inset-inline: 0;
       inset-block-end: -3px;
-      inline-size: 0;
       block-size: 1.5px;
       background: var(--color-primary);
-      transition: inline-size var(--motion-duration-standard) var(--motion-ease-standard);
+      scale: 0 1;
+      transform-origin: left;
+      transition: scale var(--motion-duration-standard) var(--motion-ease-standard);
     }
 
     &:hover,
@@ -366,7 +368,7 @@
       text-decoration: none;
 
       &::after {
-        inline-size: 100%;
+        scale: 1;
       }
     }
 

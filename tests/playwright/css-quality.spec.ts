@@ -38,6 +38,27 @@ test('a #fragment target lands below the sticky header', async ({ page }) => {
   expect(target!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
 });
 
+test('the nav underline animates without layout', async ({ page }) => {
+  await page.goto('/resume/');
+  const underline = (selector: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((link) => {
+        const style = getComputedStyle(link, '::after');
+        return {
+          property: style.transitionProperty,
+          width: link.getBoundingClientRect().width,
+          drawn: Number.parseFloat(style.width) * Number(style.scale.split(' ')[0] ?? 1),
+        };
+      });
+  const current = await underline('.nav-link[aria-current="page"]');
+  expect(current.property).toBe('scale');
+  expect(current.drawn).toBeCloseTo(current.width, 0);
+  const other = await underline('.nav-link:not([aria-current])');
+  expect(other.drawn).toBe(0);
+});
+
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
 
