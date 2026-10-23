@@ -16,7 +16,7 @@ const desired = read<DesiredState>('.github/repo.json');
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, topics: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
+const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
@@ -76,15 +76,15 @@ describe('check', () => {
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
-    await bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
+    await shared.bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
   });
 
-  test('a missing token stops before any request', () => missingTokenStops(createGithubFake(seed, TOKEN), /GITHUB_TOKEN/));
+  test('a missing token stops before any request', () => shared.missingTokenStops(createGithubFake(seed, TOKEN), /GITHUB_TOKEN/));
 });
 
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
-    const lines = await planLines(createGithubFake(seed, TOKEN));
+    const lines = await shared.planLines(createGithubFake(seed, TOKEN));
     const repo = '/repos/joeseverino/jseverino.com';
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
@@ -98,7 +98,7 @@ describe('plan', () => {
     ]);
   });
 
-  test('apply without --yes is a plan', () => applyWithoutYesIsAPlan(createGithubFake(seed, TOKEN)));
+  test('apply without --yes is a plan', () => shared.applyWithoutYesIsAPlan(createGithubFake(seed, TOKEN)));
 });
 
 describe('apply --yes', () => {
@@ -123,7 +123,7 @@ describe('apply --yes', () => {
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);
     assert.deepEqual(fake.state.variables.map((entry) => entry.name).sort(), ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'], 'variables not in repo.json are left alone');
 
-    await reapplyIsNoOp(fake);
+    await shared.reapplyIsNoOp(fake);
   });
 
   test('one apply turns CodeQL default setup on before the ruleset that requires its results', async () => {

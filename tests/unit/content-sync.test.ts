@@ -228,6 +228,9 @@ async function fixtureVault() {
 }
 
 // A sync of the fixture vault into `root`, with no resume engine and no education export.
+// What checkContent reports against the fixture's live writeup.
+const liveIssues = async (vault: string) => (await checkContent({ vaultRoot: vault })).documents.find((doc) => doc.slug === 'live')?.issues ?? [];
+
 const syncOptions = (vault: string, root: string) => ({
   layout: committedLayout(root),
   vaultRoot: vault,
@@ -285,9 +288,8 @@ describe('syncContent and checkContent against a temp vault', () => {
     ].join('\n'));
     const root = scratch.make();
     await assert.rejects(syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
-    const checked = await checkContent({ vaultRoot: vault });
-    const live = checked.documents.find((doc) => doc.slug === 'live');
-    assert.ok(live?.issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(live?.issues));
+    const issues = await liveIssues(vault);
+    assert.ok(issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(issues));
   });
 
   test('checkContent reports per document without writing; --draft adds drafts', async () => {
@@ -337,9 +339,8 @@ describe('MDX compile issues', () => {
       '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
       'cover_image: ./images/cover.png', 'technologies:', '  - astro', '---', '', 'Costs {price} today.', '',
     ].join('\n'));
-    const checked = await checkContent({ vaultRoot: vault });
-    const live = checked.documents.find((doc) => doc.slug === 'live');
-    assert.ok(live?.issues.some((issue) => /\{price\} is an expression/.test(issue)), JSON.stringify(live?.issues));
+    const issues = await liveIssues(vault);
+    assert.ok(issues.some((issue) => /\{price\} is an expression/.test(issue)), JSON.stringify(issues));
   });
 });
 

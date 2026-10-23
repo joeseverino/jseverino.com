@@ -26,7 +26,7 @@ const DESIRED_FIELDS = {
   rateLimit: true, preview: true, schemaValidation: true, turnstile: true,
 } satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch }));
+const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createCloudflareFake>) => ({ env: { CLOUDFLARE_API_TOKEN: TOKEN }, fetch: fake.fetch }));
 const previewItem = async (accessApps: FakeState['accessApps']) => {
   const { report } = await checkJson(createCloudflareFake({ ...seed, accessApps }, TOKEN));
   return report.items.find((entry: { area: string; name: string }) => entry.area === 'preview' && entry.name === 'access policy');
@@ -112,7 +112,7 @@ describe('check', () => {
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
-    const output = await bearerOnly(createCloudflareFake(seed, TOKEN), TOKEN);
+    const output = await shared.bearerOnly(createCloudflareFake(seed, TOKEN), TOKEN);
     assert.ok(!output.includes('zone-0001') && !output.includes('account-0001'), 'no zone or account id in output');
   });
 
@@ -123,12 +123,12 @@ describe('check', () => {
     assert.equal(dns.getDefaultResultOrder(), 'ipv4first');
   });
 
-  test('a missing token stops before any request', () => missingTokenStops(createCloudflareFake(seed, TOKEN), /CLOUDFLARE_API_TOKEN/));
+  test('a missing token stops before any request', () => shared.missingTokenStops(createCloudflareFake(seed, TOKEN), /CLOUDFLARE_API_TOKEN/));
 });
 
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
-    const lines = await planLines(createCloudflareFake(seed, TOKEN));
+    const lines = await shared.planLines(createCloudflareFake(seed, TOKEN));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/automatic_https_rewrites'));
     assert.ok(lines.includes('PUT /zones/:zone/bot_management'));
     assert.ok(lines.includes('PATCH /zones/:zone/settings/browser_cache_ttl'));
@@ -143,7 +143,7 @@ describe('plan', () => {
     assert.ok(!lines.some((line: string) => line.includes('settings/tls_1_3')), 'settings already right are left alone');
   });
 
-  test('apply without --yes is a plan', () => applyWithoutYesIsAPlan(createCloudflareFake(seed, TOKEN)));
+  test('apply without --yes is a plan', () => shared.applyWithoutYesIsAPlan(createCloudflareFake(seed, TOKEN)));
 });
 
 describe('apply --yes', () => {
@@ -181,7 +181,7 @@ describe('apply --yes', () => {
       ['jseverino-com-contact', fs.readFileSync(path.join(siteRoot, desired.schemaValidation.file), 'utf8')],
     ]);
 
-    await reapplyIsNoOp(fake);
+    await shared.reapplyIsNoOp(fake);
   });
 
   test('creates a missing firewall entrypoint whole', async () => {
