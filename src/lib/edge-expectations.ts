@@ -5,7 +5,7 @@
 // something other than the file; the CSP clauses below are a policy of their own.
 import fs from 'node:fs';
 import { CSP_INLINE_MARKER, inlineHashes, TRUSTED_TYPES } from './csp.ts';
-import { parseHeaders } from './headers-file.ts';
+import { applyRules, parseHeaders } from './headers-file.ts';
 import { cspReportPath, cspReportUri } from './site-config.ts';
 import { fromRoot } from './site-root.ts';
 
@@ -73,23 +73,9 @@ const rulePattern = (rule: string): RegExp =>
       .join('.*')}$`,
   );
 
-// Rules' lines merged as Cloudflare merges them: a repeated header joins with a comma. The one
-// detach, /contact/*'s policy, is cspFindings' to check, so a `!` line is skipped here.
-function merged(rules: readonly (readonly string[])[]): Map<string, string> {
-  const set = new Map<string, string>();
-  for (const line of rules.flat()) {
-    if (line.startsWith('!')) continue;
-    const colon = line.indexOf(':');
-    const name = line.slice(0, colon).trim().toLowerCase();
-    const value = line.slice(colon + 1).trim();
-    set.set(name, set.has(name) ? `${set.get(name)}, ${value}` : value);
-  }
-  return set;
-}
-
 // What public/_headers gives the static asset at a path.
 export const fileHeaders = (pathname: string): Map<string, string> =>
-  merged([...headersFile].filter(([rule]) => !rule.includes('://') && rulePattern(rule).test(pathname)).map(([, lines]) => lines));
+  applyRules([...headersFile].filter(([rule]) => !rule.includes('://') && rulePattern(rule).test(pathname)).map(([, lines]) => lines));
 
 // The site serves nothing for another origin to read, so no response may grant one CORS access.
 function headerFindings(headers: HeaderRecord, expected: Map<string, string>, names: Iterable<string>): string[] {
@@ -105,7 +91,7 @@ function headerFindings(headers: HeaderRecord, expected: Map<string, string>, na
 }
 
 // The headers the `/*` rule gives every route, less the policy placeholders.
-const everyRoute = merged([headersFile.get('/*') ?? []]);
+const everyRoute = applyRules([headersFile.get('/*') ?? []]);
 
 export function staticHeaderFindings(headers: HeaderRecord): string[] {
   const names = [...everyRoute].filter(([, value]) => !PLACEHOLDER.test(value)).map(([name]) => name);

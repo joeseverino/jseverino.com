@@ -135,6 +135,13 @@ describe('header and cache predicates', () => {
     }
   });
 
+  test('fileHeaders gives the contact page its own policy, the global one detached', () => {
+    const contact = fileHeaders('/contact/');
+    assert.equal(contact.get('content-security-policy'), '__CSP_CONTACT__');
+    assert.equal(contact.get('content-security-policy-report-only'), '__TT_REPORT_ONLY__');
+    assert.equal(fileHeaders('/').get('content-security-policy'), '__CSP__');
+  });
+
   test('contactRefusalFindings accepts only the 400 verification refusal', () => {
     assert.deepEqual(contactRefusalFindings(400, { ok: false, error: 'Verification failed.' }), []);
     assert.equal(contactRefusalFindings(200, { ok: true }).length, 3);
