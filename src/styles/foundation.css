@@ -140,7 +140,7 @@
     background: var(--code-bg);
     color: var(--code-fg);
     font-family: var(--font-mono);
-    font-size: 0.92rem;
+    font-size: var(--font-ui);
     line-height: 1.65;
     overflow-x: auto;
   }

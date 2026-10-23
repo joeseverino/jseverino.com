@@ -92,6 +92,9 @@
     --weight-label: 700;
     --header-height: 3.6rem;
     --menu-offset: 3.8rem;
+    --font-3xs: .6875rem;
+    --font-ui: .875rem;
+    --font-lede: clamp(1rem, .9rem + .6vw, 1.25rem);
     --color-primary: #1e3a8a;
     --color-primary-deep: #14245c;
   }
@@ -232,9 +235,9 @@
     background: var(--code-bg);
     color: var(--code-fg);
     font-family: var(--font-mono);
+    font-size: var(--font-ui);
     margin: 0;
     padding: 1rem;
-    font-size: .92rem;
     line-height: 1.65;
     overflow-x: auto;
   }
@@ -316,9 +319,9 @@
   .page-intro {
     max-inline-size: 650px;
     color: var(--color-muted);
+    font-size: var(--font-sm);
     text-wrap: balance;
     margin-inline: auto;
-    font-size: clamp(1rem, .95rem + .18vw, 1.08rem);
     line-height: 1.65;
   }
 
@@ -335,11 +338,11 @@
     background: var(--color-surface);
     min-block-size: 34px;
     color: var(--color-text);
+    font-size: var(--font-ui);
     transition: color var(--motion-duration-fast) var(--motion-ease-standard),
       border-color var(--motion-duration-fast) var(--motion-ease-standard),
       background-color var(--motion-duration-fast) var(--motion-ease-standard);
     align-items: center;
-    font-size: .875rem;
     font-weight: 600;
     line-height: 1.2;
     text-decoration: none;
@@ -408,7 +411,7 @@
 
       & span:last-child {
         color: var(--color-muted);
-        font-size: .875rem;
+        font-size: var(--font-ui);
       }
 
       &:hover, &:focus-visible {
@@ -765,6 +768,7 @@
     background: var(--term-bar-bg);
     border-block-end: 1px solid var(--term-border);
     font-family: var(--font-mono);
+    font-size: var(--font-3xs);
     letter-spacing: .18em;
     text-transform: uppercase;
     color: var(--term-bar-fg);
@@ -772,7 +776,6 @@
     gap: .75rem;
     padding-block: .6rem;
     padding-inline: 1rem;
-    font-size: .7rem;
     display: flex;
   }
 
@@ -827,9 +830,9 @@
     }
 
     & > p:not([class]) {
+      font-size: var(--font-lede);
       text-wrap: balance;
       margin-block-start: var(--space-20);
-      font-size: clamp(1rem, .9rem + .6vw, 1.25rem);
       line-height: 1.55;
     }
 
@@ -845,12 +848,12 @@
       border: 1px solid var(--color-border-faint);
       border-radius: var(--radius-pill);
       background: var(--color-soft);
+      font-size: var(--font-ui);
       align-items: center;
       gap: .4em;
       margin-block-start: 0;
       padding-block: 6px;
       padding-inline: 10px;
-      font-size: .875rem;
       font-weight: 600;
       line-height: 1;
       display: inline-flex;
@@ -1030,12 +1033,12 @@
   }
 
   .project-card-title {
+    font-size: var(--font-sm);
     overflow-wrap: normal;
     text-wrap: wrap;
     align-items: flex-start;
     padding-block-start: var(--space-15);
     padding-inline: 14px;
-    font-size: 1.0625rem;
     font-weight: 600;
     line-height: 1.3;
     display: flex;
@@ -1059,8 +1062,8 @@
     -webkit-line-clamp: 4;
     line-clamp: 4;
     color: var(--color-muted);
+    font-size: var(--font-ui);
     -webkit-box-orient: vertical;
-    font-size: .875rem;
     display: -webkit-box;
     overflow: hidden;
   }
@@ -1114,17 +1117,17 @@
 
     & figcaption {
       color: var(--color-muted);
+      font-size: var(--font-ui);
       text-align: center;
       margin-block-start: .5rem;
-      font-size: .9rem;
     }
   }
 
   .home-content p:has(img) + p, .prose p:has(img) + p {
     color: var(--color-muted);
+    font-size: var(--font-ui);
     text-align: center;
     margin-block-start: .5rem;
-    font-size: .9rem;
   }
 
   .tag-list {
@@ -1182,9 +1185,9 @@
 
   .article-date {
     color: var(--color-muted);
+    font-size: var(--font-2xs);
     text-transform: uppercase;
     margin-block-end: 18px;
-    font-size: .8125rem;
   }
 
   .article-hero {
@@ -1263,17 +1266,17 @@
     }
 
     & h2 {
+      font-size: var(--font-ui);
       text-transform: uppercase;
       letter-spacing: .08em;
       color: var(--color-primary-deep);
       border-block-end: 1px solid color-mix(in oklch, var(--color-primary) 35%, var(--color-border));
       margin-block-start: var(--space-40);
       padding-block-end: 8px;
-      font-size: .95rem;
     }
 
     & h3 {
-      font-size: 1.1rem;
+      font-size: var(--font-sm);
     }
 
     & ul {
@@ -1319,8 +1322,8 @@
 
       & a {
         font-family: var(--font-mono);
+        font-size: var(--font-2xs);
         color: var(--color-text-alt);
-        font-size: .8rem;
       }
     }
   }
@@ -1352,8 +1355,8 @@
   }
 
   .resume-loc, .resume-issuer {
+    font-size: var(--font-ui);
     color: var(--color-muted);
-    font-size: .85rem;
     font-weight: 400;
   }
 
@@ -1363,9 +1366,9 @@
 
   .resume-dates {
     font-family: var(--font-mono);
+    font-size: var(--font-2xs);
     color: var(--color-muted);
     white-space: nowrap;
-    font-size: .78rem;
   }
 
   .contact-intake {
@@ -1402,7 +1405,7 @@
 
     & label {
       color: var(--color-text);
-      font-size: .9rem;
+      font-size: var(--font-ui);
       font-weight: 600;
       line-height: 1.3;
     }
@@ -1413,11 +1416,11 @@
       background: var(--color-surface);
       inline-size: 100%;
       color: var(--color-text);
+      font-size: var(--font-sm);
       transition: border-color var(--motion-duration-fast) var(--motion-ease-standard),
         box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
       padding-block: .85rem;
       padding-inline: 1rem;
-      font-size: .95rem;
       line-height: 1.5;
 
       &:focus {
@@ -1459,7 +1462,7 @@
 
   .contact-privacy {
     color: var(--color-muted);
-    font-size: .85rem;
+    font-size: var(--font-ui);
     line-height: 1.5;
 
     & .privacy-link {
@@ -1469,9 +1472,9 @@
 
   .contact-status {
     border-radius: var(--radius-sm);
+    font-size: var(--font-ui);
     padding-block: .75rem;
     padding-inline: 1rem;
-    font-size: .9rem;
     line-height: 1.45;
 
     &:empty {
@@ -1504,10 +1507,10 @@
 
   .source-link {
     block-size: 24px;
+    font-size: var(--font-ui);
     color: var(--color-primary);
     letter-spacing: .04em;
     align-items: center;
-    font-size: .85rem;
     font-weight: 700;
     text-decoration: none;
     display: flex;
@@ -1620,13 +1623,13 @@
   .portfolio-tab {
     border-radius: var(--radius-pill);
     color: var(--color-muted);
+    font-size: var(--font-ui);
     cursor: pointer;
     transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
     background: none;
     border: 0;
     padding-block: .5rem;
     padding-inline: 1.1rem;
-    font-size: .875rem;
     font-weight: 600;
     line-height: 1;
 
@@ -1679,7 +1682,7 @@
 
   .software-card-title {
     font-family: var(--font-mono);
-    font-size: 1.0625rem;
+    font-size: var(--font-sm);
     font-weight: 600;
     line-height: 1.3;
 
@@ -1698,12 +1701,12 @@
   .badge {
     border-radius: var(--radius-pill);
     font-family: var(--font-mono);
+    font-size: var(--font-3xs);
     letter-spacing: .02em;
     white-space: nowrap;
     align-items: center;
     padding-block: 3px;
     padding-inline: 8px;
-    font-size: .6875rem;
     font-weight: 600;
     display: inline-flex;
   }
@@ -1750,10 +1753,10 @@
     min-inline-size: 0;
     color: var(--term-cmd);
     font-family: var(--font-mono);
+    font-size: var(--font-2xs);
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     flex: 1;
-    font-size: 12.5px;
     line-height: 1.5;
   }
 
@@ -1763,13 +1766,13 @@
     background: color-mix(in oklch, var(--term-cmd) 6%, transparent);
     color: var(--term-bar-fg);
     font-family: var(--font-mono);
+    font-size: var(--font-3xs);
     cursor: pointer;
     transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
       color var(--motion-duration-fast) var(--motion-ease-standard);
     flex: none;
     padding-block: 3px;
     padding-inline: 9px;
-    font-size: .6875rem;
 
     &:hover, &:focus-visible {
       background: color-mix(in oklch, var(--term-cmd) 12%, transparent);
@@ -1792,9 +1795,9 @@
   .software-links {
     align-items: center;
     gap: var(--space-20);
+    font-size: var(--font-ui);
     flex-wrap: wrap;
     padding-block-start: var(--space-10);
-    font-size: .8125rem;
     font-weight: 600;
     display: flex;
 
@@ -1826,8 +1829,8 @@
     align-items: baseline;
     gap: var(--space-10);
     font-family: var(--font-mono);
+    font-size: var(--font-sm);
     letter-spacing: 0;
-    font-size: .9375rem;
     font-weight: 600;
     display: flex;
 
@@ -1840,17 +1843,17 @@
   .sli-flag {
     color: var(--color-muted);
     font-family: var(--font-sans);
+    font-size: var(--font-3xs);
     letter-spacing: .04em;
     text-transform: uppercase;
-    font-size: .625rem;
     font-weight: 600;
   }
 
   .sli-desc {
     color: var(--color-muted);
+    font-size: var(--font-ui);
     text-wrap: pretty;
     margin-block-start: 4px;
-    font-size: 13.5px;
     line-height: 1.5;
   }
 
@@ -1872,8 +1875,8 @@
 
   .sli-links {
     gap: var(--space-15);
+    font-size: var(--font-ui);
     white-space: nowrap;
-    font-size: .8125rem;
     font-weight: 600;
     display: flex;
 
@@ -1970,11 +1973,11 @@
   }
 
   .mobile-nav-link {
-    letter-spacing: -.01em;
     inline-size: 100%;
+    font-size: var(--font-xl);
+    letter-spacing: -.01em;
     color: var(--color-text);
     padding-block: 1rem;
-    font-size: 1.45rem;
     font-weight: 500;
     line-height: 1.3;
     text-decoration: none;

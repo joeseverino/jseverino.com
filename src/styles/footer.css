@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     block-size: 24px;
-    font-size: 0.85rem;
+    font-size: var(--font-ui);
     font-weight: 700;
     color: var(--color-primary);
     text-decoration: none;

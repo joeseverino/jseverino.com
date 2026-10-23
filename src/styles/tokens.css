@@ -101,6 +101,12 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 :root {
   --radius-md: clamp(10px, 6px + 0.6vw, 12px);
   --menu-offset: 3.8rem;
+
+  /* Site steps on the brand type scale: fixed UI sizes that hold while body
+     text is fluid, and the home hero's lede. */
+  --font-3xs: 0.6875rem;
+  --font-ui: 0.875rem;
+  --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
 }
 
 }
