@@ -11,6 +11,19 @@ async function expectBrandVars(page: Page, primary: string, deep: string): Promi
   expect(await declared('--color-primary-deep')).toBe(deep.toLowerCase());
 }
 
+// Astro merges a page's own sheet into its <style> in an order of its choosing, so the
+// cascade rests on the layer order every sheet declares first, never on source order.
+for (const path of ['/', '/contact/', '/portfolio/', '/resume/', '/education/']) {
+  test(`${path} opens its stylesheet with the layer order`, async ({ page }) => {
+    await page.goto(path);
+    const first = await page.evaluate(() => {
+      const rule = document.styleSheets[0]?.cssRules[0];
+      return rule instanceof CSSLayerStatementRule ? [...rule.nameList] : null;
+    });
+    expect(first).toEqual(['tokens', 'base', 'components', 'pages']);
+  });
+}
+
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
 

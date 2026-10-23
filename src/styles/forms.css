@@ -1,4 +1,8 @@
-@layer components {
+/* Contact form, imported by src/pages/contact.astro. Astro may merge it
+   ahead of base.css, so it restates the layer order before any rule. */
+@layer tokens, base, components, pages;
+
+@layer pages {
   .contact-intake {
     max-inline-size: 720px;
     margin-block-start: var(--space-30);
@@ -66,6 +70,12 @@
       min-block-size: 180px;
       max-block-size: 60dvh;
       resize: vertical;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .contact-field :is(input, textarea):focus {
+      box-shadow: none;
     }
   }
 

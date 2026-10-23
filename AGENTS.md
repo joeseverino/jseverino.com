@@ -59,9 +59,12 @@ A single gate (`mise run built:weight`) is for iterating on a failure.
 
 ## Styling and client code
 
-- `src/styles/base.css` is the only stylesheet entry point and declares the
-  layer order (`@layer tokens, base, components`). Modules under `src/styles/`
-  are imported from it exactly once; no component-scoped `<style>` blocks.
+- `src/styles/base.css` is the global stylesheet and declares the layer order
+  (`@layer tokens, base, components, pages`). Every module under `src/styles/`
+  is imported once: from `base.css` when any page may need it, or from the
+  page that alone renders it (`forms.css`, `software.css`, `documents.css`),
+  which restates the layer order first and keeps its rules in `pages`. No
+  component-scoped `<style>` blocks.
 - Every color is a named token. No literal colors in rules.
 - Client JavaScript is a bundled component `<script>`, never `is:inline`,
   so Astro emits an external, minified module. One delegated listener

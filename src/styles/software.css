@@ -1,4 +1,8 @@
-@layer components {
+/* Portfolio tabs and the software list, imported by src/pages/portfolio/index.astro. Astro may merge it
+   ahead of base.css, so it restates the layer order before any rule. */
+@layer tokens, base, components, pages;
+
+@layer pages {
   .tabs-wrap {
     text-align: center;
   }

@@ -2,6 +2,7 @@
 import ContentPage from '@layouts/ContentPage.astro';
 import { getPage } from '@lib/content.ts';
 import { TURNSTILE_ORIGIN } from '@lib/csp.ts';
+import '@styles/forms.css';
 
 const page = await getPage('contact');
 ---

@@ -24,9 +24,9 @@ carries the human copy (bio, skills, nav, social).
 
 ### CSS and interaction contract
 
-[`base.css`](../src/styles/base.css) is the only stylesheet entry point. Each
-focused module is imported once into the declared `tokens`, `base`, and
-`components` layers. Extend a shared component rule before adding a variant;
+[`base.css`](../src/styles/base.css) is the global stylesheet. Each focused
+module is imported once into the declared `tokens`, `base`, `components`, and
+`pages` layers, from `base.css` or from the page that alone renders it. Extend a shared component rule before adding a variant;
 variants own only their differences. Keep design values in named tokens and
 logical properties, with the site-local font choice next to its font asset.
 

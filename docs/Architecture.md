@@ -217,9 +217,22 @@ Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and
 
 Biome lints the stylesheets from its recommended CSS rules, configured in [`biome.jsonc`](../biome.jsonc), and refuses a literal color: a rule names a custom property or mixes one with `color-mix()`. Its exceptions: `noDescendingSpecificity` reports false ordering positives under native nesting, and the forced-colors focus ring and the reduced-motion override use `!important` to outrank every component, each marked where it stands. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 
-[`base.css`](../src/styles/base.css) imports each focused stylesheet once.
-Contact controls live in `forms.css`; footer, theme controls, and social links
-live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
+[`base.css`](../src/styles/base.css) imports each stylesheet every page may need
+once; footer, theme controls, and social links live in `footer.css`; skip-link
+and assistive rules live in `accessibility.css`. A sheet only one page renders
+is imported by that page, so no other page carries it: `forms.css` by the
+contact page, `software.css` by the portfolio index, and `documents.css` by the
+resume and education pages. Astro merges a page's sheets into one inline
+`<style>` in an order of its own (the page's sheet can come first), so each
+split sheet opens with the full `@layer tokens, base, components, pages`
+statement and keeps its rules in `pages`, which outranks the shared components
+without relying on source order; its forced-colors overrides sit beside its
+rules for the same reason. `tests/playwright/css-quality.spec.ts` checks that
+every page's stylesheet opens with that statement. Every distinct merged sheet
+is one CSP hash, and `bin/build-csp.ts` allows four. Markdown output (tables, terminal
+blocks) stays global, since any content page can render it. The embed bundle
+stays `base.css` alone: the split sheets style site components no vault note
+emits.
 
 ### Sticky-header shadow
 
