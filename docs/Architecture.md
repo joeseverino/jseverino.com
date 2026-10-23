@@ -553,9 +553,10 @@ GitHub Actions provide the remote quality gate:
   Cloudflare runtime with `astro preview` and asserts what only that
   runtime produces: the build-time CSP (hash coverage of every inline script and style, the same policy on every request, the `/contact/` exemption), the
   `public/_headers` security and cache rules, a real 404, the contact
-  handler's refusals, and byte-exact `security.txt`. Each suite serves a build
-  made in its own job with the test site key; `visual` downloads Chromium
-  while its build runs. Each suite writes its own `.cache/test-results/<suite>/` and
+  handler's refusals, and byte-exact `security.txt`. `e2e` and `edge` each
+  serve a build made in their own job with the test site key
+  (`mise run build:browser`); `visual` installs Chromium, then its suite
+  builds the fixtures it serves. Each suite writes its own `.cache/test-results/<suite>/` and
   `.cache/playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
 - [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run
