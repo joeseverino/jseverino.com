@@ -157,6 +157,10 @@ run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_r
 description = "Stylelint passes over src/styles"
 run = "stylelint 'src/styles/**/*.css'"
 
+[tasks."checks:lint"]
+description = "Biome finds no formatting difference or lint error in the TypeScript, JSON and CSS biome.jsonc covers"
+run = "biome ci"
+
 [tasks."checks:css-vars"]
 description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
 run = "node tests/audits/check-css.ts"

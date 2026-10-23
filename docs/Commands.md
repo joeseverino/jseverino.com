@@ -321,6 +321,12 @@ No document under src/content is `published: false`
 
 jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere
 
+## `checks:lint`
+
+- **Usage:** `checks:lint`
+
+Biome finds no formatting difference or lint error in the TypeScript, JSON and CSS biome.jsonc covers
+
 ## `checks:mise-fmt`
 
 - **Usage:** `checks:mise-fmt`
