@@ -27,7 +27,10 @@
   // Biome reads an .astro file's frontmatter and its <script> elements only with
   // full HTML support; the override below narrows what it does with them.
   "html": { "experimentalFullSupportEnabled": true },
-  "plugins": [{ "path": "./tests/literal-colors.grit", "includes": ["src/styles/**"] }],
+  "plugins": [
+    { "path": "./tests/literal-colors.grit", "includes": ["src/styles/**"] },
+    { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] }
+  ],
   "linter": {
     "rules": {
       "suspicious": {

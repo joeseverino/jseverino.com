@@ -162,6 +162,7 @@
     border-radius: var(--radius-sm);
     background: var(--color-code-bg);
     color: var(--color-code-text);
+    /* biome-ignore lint/plugin/literal-font-sizes: inline code scales with the text around it, at any step of the scale. */
     font-size: 0.9em;
     font-weight: 600;
     line-height: 1.35;

@@ -1,0 +1,12 @@
+// A stylesheet sizes text from the type scale's --font-* tokens; the generated token
+// blocks are the one home of literal sizes. This refuses a rem, px or em length in a
+// font-size or font declaration. A custom property is not a declaration of either, so
+// the token definitions pass. In a font shorthand it refuses a literal line-height
+// length too, which belongs unitless.
+language css
+
+CssRegularDimension() as $size where {
+  $size <: r"(?i)[\d.]+(?:rem|px|em)",
+  $size <: within CssGenericProperty(name=$property) where { $property <: r"(?i)font(?:-size)?" },
+  register_diagnostic(span=$size, message="Literal font size: use a --font-* token from the type scale.")
+}

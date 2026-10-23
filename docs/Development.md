@@ -74,9 +74,11 @@ gate fails on duplicated code.
 Biome, pinned in `mise.toml`, is the one formatter and linter. It formats the
 TypeScript, JSON, CSS and YAML and lints them from its recommended rules, holds
 an `.astro` file's frontmatter and scripts to no explicit `any` and no
-`@ts-ignore`, and refuses a literal color in a stylesheet (`noHexColors`, and
-the named and `rgb()`/`hsl()` spellings through the plugin
-`tests/literal-colors.grit`); `biome.jsonc` names what it leaves out and why.
+`@ts-ignore`, and refuses a literal color or font size in a stylesheet
+(`noHexColors`, the named and `rgb()`/`hsl()` spellings through the plugin
+`tests/literal-colors.grit`, and a rem, px or em `font-size` through
+`tests/literal-font-sizes.grit`); `biome.jsonc` names what it leaves out and
+why.
 `mise run checks:lint` fails on any difference or any finding at warning or
 above, and `mise run fix:lint` applies the fixes Biome can make.
 
