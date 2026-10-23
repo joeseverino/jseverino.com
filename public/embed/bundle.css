@@ -143,6 +143,7 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-block-start: calc(var(--menu-offset) + var(--space-10));
+    scrollbar-gutter: stable;
   }
   body {
     margin: 0;
