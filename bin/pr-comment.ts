@@ -25,7 +25,6 @@ export interface WorkflowRun {
   head_sha: string;
   conclusion: string | null;
   html_url: string;
-  repository: { default_branch: string };
 }
 
 export interface CommentInput {
@@ -85,7 +84,13 @@ export interface MainOptions {
 export async function main({ env = process.env, fetch, dir = 'summaries', log = console.log }: MainOptions = {}): Promise<number> {
   const { GITHUB_REPOSITORY: repository, GITHUB_EVENT_PATH: eventPath, PREVIEW: preview } = env;
   if (!repository || !eventPath || !preview) throw new Error('GITHUB_REPOSITORY, GITHUB_EVENT_PATH and PREVIEW must be set');
-  const { workflow_run: run } = JSON.parse(fs.readFileSync(eventPath, 'utf8')) as { workflow_run: WorkflowRun };
+  // The default branch is on the event's own repository; workflow_run.repository is the minimal form without it.
+  const { workflow_run: run, repository: eventRepository } = JSON.parse(fs.readFileSync(eventPath, 'utf8')) as {
+    workflow_run: WorkflowRun;
+    repository?: { default_branch?: string };
+  };
+  const defaultBranch = eventRepository?.default_branch;
+  if (!defaultBranch) throw new Error('the event has no repository.default_branch');
   const github = createClient({ token: env.GITHUB_TOKEN, fetch });
   const sha = run.head_sha;
 
@@ -101,7 +106,7 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
     run,
     preview,
     summaries: readSummaries(dir),
-    required: await requiredContexts(repository, run.repository.default_branch, github),
+    required: await requiredContexts(repository, defaultBranch, github),
     checks: await checkRuns(repository, sha, github),
   });
   const existing = (await github.list<Comment>(`/repos/${repository}/issues/${pull.number}/comments?per_page=100`))

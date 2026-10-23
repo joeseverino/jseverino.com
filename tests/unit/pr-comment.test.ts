@@ -12,7 +12,6 @@ const run: WorkflowRun = {
   head_sha: SHA,
   conclusion: 'success',
   html_url: 'https://github.example/runs/1',
-  repository: { default_branch: 'main' },
 };
 const input = (fields: Partial<CommentInput> = {}): CommentInput =>
   ({ run, preview: 'success', summaries: {}, required: [], checks: [], ...fields });
@@ -54,10 +53,13 @@ describe('main', () => {
   after(scratch.cleanup);
   const ours: Pull = { number: 7, state: 'open', head: { sha: SHA, repo: { full_name: REPO } } };
 
+  // workflow_run.repository is the minimal repository; default_branch is only on the top-level one.
+  const event = { workflow_run: { ...run, repository: { full_name: REPO } }, repository: { full_name: REPO, default_branch: 'main' } };
+
   function setup(pulls: Pull[], comments: { id: number; body: string }[]) {
     const dir = scratch.make();
     const eventPath = path.join(dir, 'event.json');
-    fs.writeFileSync(eventPath, JSON.stringify({ workflow_run: run }));
+    fs.writeFileSync(eventPath, JSON.stringify(event));
     fs.writeFileSync(path.join(dir, 'summary-e2e.md'), '## Cross-browser suite\n\nok');
     const writes: { method: string; path: string; body: { body: string } }[] = [];
     const routes: Record<string, unknown> = {
@@ -83,7 +85,7 @@ describe('main', () => {
       dir,
       log: (line) => lines.push(line),
     });
-    return { go, writes, lines };
+    return { go, writes, lines, eventPath };
   }
 
   test('posts the comment when the pull request has none', async () => {
@@ -94,6 +96,12 @@ describe('main', () => {
     assert.equal(writes[0]?.path, `/repos/${REPO}/issues/7/comments`);
     assert.ok(writes[0]?.body.body.includes('`build` success'));
     assert.ok(writes[0]?.body.body.includes('### Cross-browser suite'));
+  });
+
+  test('fails naming the field when the event carries no default branch', async () => {
+    const { go, eventPath } = setup([ours], []);
+    fs.writeFileSync(eventPath, JSON.stringify({ ...event, repository: { full_name: REPO } }));
+    await assert.rejects(go(), /repository\.default_branch/);
   });
 
   test('updates its own comment in place', async () => {
