@@ -337,7 +337,7 @@ Every tracked mise config is as `mise fmt` writes it
 
 - **Usage:** `checks:patch`
 
-No whitespace error in what the branch changes, committed or not, and no conflict marker in any tracked file
+No whitespace error or conflict marker in any tracked file outside the synced content
 
 ## `checks:renovate`
 
