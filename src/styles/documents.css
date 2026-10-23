@@ -14,7 +14,7 @@
       letter-spacing: 0.08em;
       color: var(--color-primary-deep);
       border-block-end: 1px solid color-mix(in oklch, var(--color-primary) 35%, var(--color-border));
-      padding-block-end: 8px;
+      padding-block-end: var(--space-10);
       margin-block-start: var(--space-40);
     }
 
@@ -23,11 +23,11 @@
     }
 
     & ul {
-      margin-block-start: 8px;
+      margin-block-start: var(--space-10);
     }
 
     & li + li {
-      margin-block-start: 4px;
+      margin-block-start: var(--space-5);
     }
 
     & li::marker {
@@ -61,7 +61,7 @@
     }
 
     & .resume-projmeta {
-      margin-block-start: 4px;
+      margin-block-start: var(--space-5);
 
       & a {
         font-family: var(--font-mono);

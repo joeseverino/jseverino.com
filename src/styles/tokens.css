@@ -107,6 +107,11 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   --font-3xs: 0.6875rem;
   --font-ui: 0.875rem;
   --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
+
+  /* Site steps between the brand spacing steps: the inset of a card's text and a pill's
+     label from their border, and the block padding of an archive row. */
+  --space-inset: 0.875rem;
+  --space-row: 1.125rem;
 }
 
 /* An explicit theme choice (BaseLayout's boot script, the footer control) pins the scheme every light-dark() token resolves against. */

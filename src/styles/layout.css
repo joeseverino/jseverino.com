@@ -90,7 +90,7 @@
   }
 
   .page-actions a {
-    padding-inline: 14px;
+    padding-inline: var(--space-inset);
   }
 
   .archive-tag {
@@ -139,8 +139,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding-block: 18px;
+      gap: var(--space-20);
+      padding-block: var(--space-row);
       border-block: 1px solid var(--color-border);
       color: var(--color-text);
       cursor: pointer;
@@ -188,7 +188,7 @@
     grid-template-columns: minmax(145px, 0.24fr) 1fr;
     gap: var(--space-15) var(--space-25);
     align-items: start;
-    padding-block: 18px;
+    padding-block: var(--space-row);
     border-block-start: 1px solid var(--color-border);
 
     &:first-child {

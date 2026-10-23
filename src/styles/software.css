@@ -252,7 +252,7 @@
   }
 
   .sli-desc {
-    margin-block-start: 4px;
+    margin-block-start: var(--space-5);
     color: var(--color-muted);
     font-size: var(--font-ui);
     line-height: 1.5;
