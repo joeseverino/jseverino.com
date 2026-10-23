@@ -7,7 +7,7 @@
       "!src/content",
       "!public/assets",
       // Generated: each generator owns its output's form, and checks:contracts
-      // or the snapshot task that wrote it holds the file to that output.
+      // holds the projections to theirs.
       "!src/generated",
       "!src/data/github-repos.json",
       "!src/data/package-registry.json",
@@ -32,5 +32,30 @@
     // Stylelint (checks:css-lint) owns CSS linting.
     "linter": { "enabled": false }
   },
-  "linter": { "enabled": false }
+  "linter": {
+    "rules": {
+      "suspicious": {
+        // The terminal UI, the Markdown guard and their tests match control
+        // characters on purpose, to strip ANSI escapes and refuse bidi controls.
+        "noControlCharactersInRegex": "off",
+        // TypeScript types an unannotated let from its assignments, and
+        // checks:types (strict, noImplicitAny) refuses one it cannot type.
+        "noImplicitAnyLet": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      // Playwright's expect does not narrow a type, so a spec checks for null
+      // with expect and then asserts the value present.
+      "includes": ["tests/playwright/**", "tests/edge/**"],
+      "linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
+    },
+    {
+      // Playwright's rules belong to its specs; elsewhere `describe` is a
+      // local function, not a test block.
+      "includes": ["bin/**", "src/**"],
+      "linter": { "rules": { "correctness": { "usePlaywrightValidDescribeCallback": "off" } } }
+    }
+  ]
 }

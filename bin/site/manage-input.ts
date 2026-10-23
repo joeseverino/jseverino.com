@@ -26,12 +26,16 @@ export type ManageEffect =
   | { type: 'create'; slug: string }
   | { type: 'action'; key: string };
 
+// What a key handler returns: an effect, or nothing when it only edits the model.
+// biome-ignore lint/suspicious/noConfusingVoidType: void lets a plain model-editing function serve as a handler.
+type Handled = ManageEffect | void;
+
 // The keys that trigger a binding; the footer shows the first. Consecutive bindings with the same
 // hint share it ("↑/↓ select"), and a binding without one stays out of the footer.
 export interface Binding {
   keys: readonly Key[];
   hint?: string | ((model: Model) => string | undefined);
-  run: (model: Model, today: string) => ManageEffect | void;
+  run: (model: Model, today: string) => Handled;
 }
 
 export const SAVE_KEY = 's';
@@ -39,12 +43,12 @@ export const SAVE_KEY = 's';
 const exit = (message: string | null, save = false): ManageEffect => ({ type: 'exit', message, save });
 const cancel = (): ManageEffect => exit(OUTCOME.cancelled);
 
-function switchTab(model: Model, tab: Tab): ManageEffect | void {
+function switchTab(model: Model, tab: Tab): ManageEffect | undefined {
   model.tab = tab;
   if (tab === 'site' && !model.siteStatus) return { type: 'refresh', announce: false };
 }
 
-function requestReload(model: Model): ManageEffect | void {
+function requestReload(model: Model): ManageEffect | undefined {
   if (hasStaged(model)) model.mode = 'confirm-reload';
   else return { type: 'reload' };
 }
@@ -344,7 +348,7 @@ export function pasteManageInput(model: Model, text: string): void {
   model.flash = null;
 }
 
-export function handleManageKey(model: Model, sequence: string, today: string): ManageEffect | void {
+export function handleManageKey(model: Model, sequence: string, today: string): Handled {
   model.flash = null;
   const key = keyOf(sequence);
   const binding = activeBindings(model).find((candidate) => candidate.keys.includes(key));

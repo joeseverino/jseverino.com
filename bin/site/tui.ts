@@ -163,7 +163,7 @@ export function truncate(text: unknown, width: number): string {
   if (width <= 0) return '';
   if (displayWidth(s) <= width) return s;
   if (width === 1) return '…';
-  return clipAnsi(s, width - 1) + '…';
+  return `${clipAnsi(s, width - 1)}…`;
 }
 
 // The TUI hides the terminal's cursor, so the editor draws its own in inverse video even under

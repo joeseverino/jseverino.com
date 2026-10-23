@@ -221,7 +221,7 @@ describe('apply --yes', () => {
     await run(fake, 'apply', '--yes');
     const puts = fake.writes().filter((call) => call.path.endsWith('/phases/http_request_firewall_custom/entrypoint'));
     assert.equal(puts.length, 1);
-    assert.equal((puts[0]?.body as { rules: unknown[] }).rules.length, desired.firewall.length);
+    assert.equal((puts[0]?.body as { rules: unknown[] } | undefined)?.rules.length, desired.firewall.length);
   });
 
   test('a token without edit rights fails loudly without printing it', async () => {

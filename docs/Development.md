@@ -71,6 +71,11 @@ check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, or a test helper, and the
 gate fails on duplicated code.
 
+Biome, pinned in `mise.toml`, formats the TypeScript, JSON, CSS and YAML and
+lints the TypeScript and JSON from its recommended rules; `biome.jsonc` names
+what it leaves out and why. `mise run checks:lint` fails on any difference, and
+`biome check --write` applies the fixes.
+
 ## Gates
 
 ```sh

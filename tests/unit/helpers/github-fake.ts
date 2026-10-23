@@ -45,7 +45,14 @@ export function createGithubFake(seed: FakeState, token: string) {
         return json(state.repo);
       },
     ],
-    ['PUT', /^\/topics$/, (_id, body) => ((state.repo.topics = body.names), json({ names: body.names }))],
+    [
+      'PUT',
+      /^\/topics$/,
+      (_id, body) => {
+        state.repo.topics = body.names;
+        return json({ names: body.names });
+      },
+    ],
     ['GET', /^\/vulnerability-alerts$/, () => (state.vulnerabilityAlerts ? empty() : notFound())],
     ['PUT', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', true)],
     ['DELETE', /^\/vulnerability-alerts$/, () => toggle('vulnerabilityAlerts', false)],
@@ -67,14 +74,38 @@ export function createGithubFake(seed: FakeState, token: string) {
     [
       'PATCH',
       /^\/code-scanning\/default-setup$/,
-      (_id, body) => (Object.assign(state.codeScanning, body), json({ run_id: 42, run_url: `${API_BASE}${REPO}/actions/runs/42` }, 202)),
+      (_id, body) => {
+        Object.assign(state.codeScanning, body);
+        return json({ run_id: 42, run_url: `${API_BASE}${REPO}/actions/runs/42` }, 202);
+      },
     ],
     ['GET', /^\/actions\/permissions$/, () => json(state.permissions)],
-    ['PUT', /^\/actions\/permissions$/, (_id, body) => (Object.assign(state.permissions, body), empty())],
+    [
+      'PUT',
+      /^\/actions\/permissions$/,
+      (_id, body) => {
+        Object.assign(state.permissions, body);
+        return empty();
+      },
+    ],
     ['GET', /^\/actions\/permissions\/workflow$/, () => json(state.workflow)],
-    ['PUT', /^\/actions\/permissions\/workflow$/, (_id, body) => (Object.assign(state.workflow, body), empty())],
+    [
+      'PUT',
+      /^\/actions\/permissions\/workflow$/,
+      (_id, body) => {
+        Object.assign(state.workflow, body);
+        return empty();
+      },
+    ],
     ['GET', /^\/actions\/variables$/, () => json({ total_count: state.variables.length, variables: state.variables })],
-    ['POST', /^\/actions\/variables$/, (_id, body) => (state.variables.push(body as { name: string; value: string }), empty(201))],
+    [
+      'POST',
+      /^\/actions\/variables$/,
+      (_id, body) => {
+        state.variables.push(body as { name: string; value: string });
+        return empty(201);
+      },
+    ],
     [
       'PATCH',
       /^\/actions\/variables\/([A-Z_]+)$/,

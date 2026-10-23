@@ -66,7 +66,8 @@ export const markup = defineHastPlugin({
     if (!chain.some((parent) => parent.tagName === 'td' || parent.tagName === 'th')) return;
     if (chain.some((parent) => parent.tagName === 'code')) return;
     const parts = node.value.split(SEPARATOR);
-    if (opens) parts.splice(0, 1, parts[0]!.slice(0, 1), parts[0]!.slice(1));
+    const [head = ''] = parts;
+    if (opens) parts.splice(0, 1, head.slice(0, 1), head.slice(1));
     ctx.replaceNode(
       node,
       parts.flatMap((part, index) => (index ? [el('wbr', undefined, []), text(part)] : [text(part)])),

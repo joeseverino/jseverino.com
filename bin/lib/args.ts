@@ -14,7 +14,7 @@ export interface ParseConfig<O extends ParseArgsOptionsConfig, P extends boolean
 }
 
 // Throws on an unknown flag, a missing option value, or an unexpected positional.
-export function parse<const O extends ParseArgsOptionsConfig = {}, const P extends boolean = false>({
+export function parse<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
   options,
   allowPositionals,
   args = process.argv.slice(2),
@@ -28,7 +28,7 @@ export function parse<const O extends ParseArgsOptionsConfig = {}, const P exten
 }
 
 // parse() for an entry point: usage on --help, usage and exit 2 on bad input.
-export function cli<const O extends ParseArgsOptionsConfig = {}, const P extends boolean = false>({
+export function cli<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
   usage,
   ...config
 }: ParseConfig<O, P> & { usage?: string } = {}) {

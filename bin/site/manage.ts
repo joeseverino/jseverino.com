@@ -112,7 +112,7 @@ function openInObsidian(model: Model): void {
   const item = model.items[model.cursor];
   if (!item) return;
   const vaultName = path.basename(vaultRoot());
-  const uri = 'obsidian://open?vault=' + encodeURIComponent(vaultName) + '&file=' + encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`);
+  const uri = `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`)}`;
   spawn('open', [uri], { stdio: 'ignore' }).once('error', (error) => {
     model.flash = { tone: 'error', text: `could not open Obsidian: ${error.message}` };
     draw(model);
@@ -205,7 +205,7 @@ function finish(code: number, message: string | null, runApply = false): void {
   if (done) return;
   done = true;
   restore();
-  if (message) process.stdout.write(message + '\n');
+  if (message) process.stdout.write(`${message}\n`);
   if (runApply) code = apply(model);
   if (!runApply && model.created.length) {
     process.stdout.write(`${tint('muted', `note: scaffolded this session (already on disk): ${model.created.join(', ')}`)}\n`);
@@ -291,13 +291,13 @@ export async function manage(commands: CommandSummaries): Promise<never> {
     if (smoke === 'detail') {
       model.cursor = model.items.length - 1;
       model.mode = 'detail';
-      process.stdout.write(frameLines(detailFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(detailFrame(model)).join('\n')}\n`);
     } else if (smoke === 'site') {
       model.tab = 'site';
       model.siteStatus = await loadSiteStatus();
-      process.stdout.write(frameLines(siteFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(siteFrame(model)).join('\n')}\n`);
     } else {
-      process.stdout.write(frameLines(listFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(listFrame(model)).join('\n')}\n`);
     }
     process.exit(0);
   }
@@ -313,7 +313,7 @@ export async function manage(commands: CommandSummaries): Promise<never> {
       else for (const character of t) handleKey(character);
     }
     await pending;
-    process.stdout.write(fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n') + '\n');
+    process.stdout.write(`${fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n')}\n`);
     process.exit(0);
   }
 

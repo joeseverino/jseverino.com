@@ -44,7 +44,7 @@ export function stripRepeatedDescription(markdown: string, description: unknown)
     }
     const start = index;
     const candidate: string[] = [];
-    for (let line; (line = lines[index]) !== undefined && line.trim() !== ''; index += 1) candidate.push(line);
+    for (let line = lines[index]; line?.trim(); line = lines[++index]) candidate.push(line);
     const text = normalizeDescription(candidate.join(' ').replace(/^>\s?/gm, ''));
     if (text === expected) {
       while (lines[index]?.trim() === '') index += 1;

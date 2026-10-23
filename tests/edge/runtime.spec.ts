@@ -109,7 +109,7 @@ test.describe('static serving', () => {
 test('a page path without its slash redirects to the slashed page', async ({ request }) => {
   const response = await request.get('/about', { maxRedirects: 0 });
   expect(response.status()).toBe(307);
-  expect(response.headers()['location']).toBe('/about/');
+  expect(response.headers().location).toBe('/about/');
 });
 
 test('the preview review proxy is absent from a production build', async ({ request }) => {

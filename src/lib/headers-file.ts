@@ -11,7 +11,10 @@ export function parseHeaders(text: string): Map<string, string[]> {
   for (const line of text.split('\n')) {
     if (!line.trim() || line.trimStart().startsWith('#')) continue;
     if (/^\s/.test(line)) current?.push(line.trim());
-    else rules.set(line.trim(), (current = rules.get(line.trim()) ?? []));
+    else {
+      current = rules.get(line.trim()) ?? [];
+      rules.set(line.trim(), current);
+    }
   }
   return rules;
 }

@@ -59,13 +59,15 @@ function classify(files: readonly ChangedFile[]): ContentDiff {
   const generated: string[] = [];
   for (const { status, path: file } of files) {
     if (GENERATED.test(file)) generated.push(file);
-    let slug: string | undefined;
-    if ((slug = WRITEUP_INDEX.exec(file)?.[1])) {
-      writeups.set(slug, status === 'A' ? 'published' : status === 'D' ? 'removed' : (writeups.get(slug) ?? 'edited'));
-    } else if ((slug = WRITEUP_FILE.exec(file)?.[1])) {
-      if (!writeups.has(slug)) writeups.set(slug, 'edited');
-    } else if ((slug = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1])) {
-      pages.add(slug);
+    const index = WRITEUP_INDEX.exec(file)?.[1];
+    const writeupFile = WRITEUP_FILE.exec(file)?.[1];
+    const page = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1];
+    if (index) {
+      writeups.set(index, status === 'A' ? 'published' : status === 'D' ? 'removed' : (writeups.get(index) ?? 'edited'));
+    } else if (writeupFile) {
+      if (!writeups.has(writeupFile)) writeups.set(writeupFile, 'edited');
+    } else if (page) {
+      pages.add(page);
     }
   }
   const of = (kind: WriteupChange): string[] =>

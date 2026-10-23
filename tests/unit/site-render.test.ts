@@ -64,7 +64,7 @@ describe('site render', () => {
     }
     assert.match(doc, /<h1 class="article-title">Demo Title<\/h1>/);
     assert.match(doc, /<img src="\.\/images\/cover\.png" alt="A cover">/);
-    assert.match(doc, /<style>[^]*\.prose[^]*<\/style>/);
+    assert.match(doc, /<style>.*\.prose.*<\/style>/s);
     assert.match(doc, /font\/woff2;base64,/);
     assert.doesNotMatch(doc, /<link rel="stylesheet"|<script/);
     assert.ok(doc.includes(result.html.trim()));

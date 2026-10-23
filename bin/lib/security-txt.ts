@@ -29,14 +29,14 @@ export function expiryProblem(expires: string, now = Date.now()): string | undef
 
 export function stripSignature(text: string): string {
   const begin = text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----');
-  if (begin === -1) return text.trim() + '\n';
+  if (begin === -1) return `${text.trim()}\n`;
 
   const headerEnd = text.indexOf('\n\n', begin);
   if (headerEnd === -1) throw new Error('malformed PGP signed message: no body separator');
   const sigStart = text.indexOf('-----BEGIN PGP SIGNATURE-----', headerEnd);
   if (sigStart === -1) throw new Error('malformed PGP signed message: no signature block');
 
-  return text.slice(headerEnd + 2, sigStart).replace(/\s+$/, '') + '\n';
+  return `${text.slice(headerEnd + 2, sigStart).replace(/\s+$/, '')}\n`;
 }
 
 export function parseFields(body: string): Record<string, string> {
