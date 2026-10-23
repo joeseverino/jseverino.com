@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // The one ci comment on a pull request, created or updated in place: the required checks'
 // states, ci's job summaries and the preview's, for the workflow_run event the deploy
 // workflow's report job runs on. See .github/workflows/deploy.yml.
@@ -7,6 +8,7 @@
 //
 // GitHub Actions supplies the event (GITHUB_EVENT_PATH), GITHUB_REPOSITORY and the token
 // (GITHUB_TOKEN); PREVIEW is the preview job's result.
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { cli, exitWith } from './lib/args.ts';

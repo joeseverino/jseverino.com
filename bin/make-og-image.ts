@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+
 // Generates the 1200x630 Open Graph card at public/assets/og/og-default.jpg
 // (PNG render re-encoded as JPEG, about 100 KB vs 850 KB).
+
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-import type { GithubRepo } from '../src/lib/github.ts';
-import { writeJson } from '../src/lib/json.ts';
-import { SITE } from '../src/lib/site-config.ts';
-import { fromRoot } from '../src/lib/site-root.ts';
+
 // Refresh src/data/github-repos.json, the only source src/lib/github.ts reads
 // (builds never call GitHub). Commit the result.
 //
 //   mise run snapshot:github
 //
 // The token comes from GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`.
+
+import type { GithubRepo } from '../src/lib/github.ts';
+import { writeJson } from '../src/lib/json.ts';
+import { SITE } from '../src/lib/site-config.ts';
+import { fromRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
 import { createClient, resolveToken } from './lib/github.ts';
 

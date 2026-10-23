@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Emit the one embeddable stylesheet (the "load BOTH" contract in src/lib/web-styles.ts):
 //
 //   public/embed/bundle.css  =  base.css (which imports the brand vars) + @font-face (base64 Inter)
@@ -7,6 +8,7 @@
 //
 //   node bin/make-embed-bundle.ts           # (re)write public/embed/bundle.css
 //   node bin/make-embed-bundle.ts --check   # fail if the committed copy is stale
+
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { interFontFace } from '../src/lib/web-styles.ts';

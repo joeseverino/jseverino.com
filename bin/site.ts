@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+
 // site: the writeup publishing workflow, vault to repo to PR to live. Every command
 // answers --help, rejects unknown flags, never prompts, and with --json prints one
 // JSON document on stdout ({ ok, command, status, ..., next, error? }), progress on
 // stderr. `manage` is the one interactive command.
+
 import type { ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import { errorMessage } from '../src/lib/error-message.ts';

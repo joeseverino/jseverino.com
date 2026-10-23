@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Sync the public pages and writeups from the vault into the repo snapshot:
 // src/content/<collection>/<slug>/index.mdx with its image masters beside it.
 //
@@ -7,6 +8,7 @@
 //   node bin/sync-content.ts --drafts         # drafts included, into the gitignored overlay
 //   node bin/sync-content.ts --check [--slug <s>] [--draft] [--json]
 //                                              # resolve references and the contract; write nothing
+
 import path from 'node:path';
 import { writeJson } from '../src/lib/json.ts';
 import { siteRoot } from '../src/lib/site-root.ts';

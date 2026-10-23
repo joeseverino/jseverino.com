@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Post-merge production verification, run from a clean main checkout. Expectations
 // come from src/lib/edge-expectations.ts, shared with tests/edge.
 //
@@ -10,6 +11,7 @@
 // the zone, behind Access): served responses only, no git/check-run preconditions, no
 // HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
 // verifies one writeup after a publish.
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';

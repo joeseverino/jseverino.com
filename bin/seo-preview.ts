@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+
 // Prints the Google-style result, metadata, and SEO checks for one built page.
 //
 //   node bin/seo-preview.ts [--result] <url|path|slug>
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { styleText } from 'node:util';

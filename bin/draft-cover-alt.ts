@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Draft a one-sentence cover_alt for a writeup's cover image with Claude's API.
 //
 // Usage:

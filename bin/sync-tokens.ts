@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+
 // Derive the vendored brand/design tokens from the lockfile-pinned severino-brand
 // contract. Run `mise run sync:tokens`, review, commit; CI runs it with `--check`.
 // Each target is rewritten between markers; the rest is hand-managed.
+
 import path from 'node:path';
 import { syncTargets, toJs, webContract } from 'severino-brand';
 import { brandVarsCss } from '../src/lib/brand.ts';

@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+
 // The Cloudflare zone and account posture in cloudflare/zone.json, checked
 // against the live API and applied on request. See docs/Cloudflare.md.
 //
 //   node bin/cloudflare.ts check [--json]    # read-only; exit 1 on drift
 //   node bin/cloudflare.ts plan [--json]     # the calls an apply would make
 //   node bin/cloudflare.ts apply [--yes]     # plan, or with --yes, execute
+
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';

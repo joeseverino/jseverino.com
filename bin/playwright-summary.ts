@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-import fs from 'node:fs';
-import path from 'node:path';
+
 // Turn Playwright's JSON report into a per-project job-summary table. Runs with
 // `if: always()` and exits zero: the test step decides the job's outcome.
 //
 //   node bin/playwright-summary.ts "Cross-browser suite" .cache/test-results/e2e.json
+
+import fs from 'node:fs';
+import path from 'node:path';
 import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import { readJson } from '../src/lib/json.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';

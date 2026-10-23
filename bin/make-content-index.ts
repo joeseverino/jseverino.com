@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+
+// Emit public/content-index.json for Severino HQ to pull (gated by a Cloudflare
+// Access service token). Gitignored build output; sorted with stable keys.
+
 import { writeJson } from '../src/lib/json.ts';
 import { writeupUrl } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { snapshotWriteups } from '../src/lib/snapshot.ts';
-// Emit public/content-index.json for Severino HQ to pull (gated by a Cloudflare
-// Access service token). Gitignored build output; sorted with stable keys.
 import { cli } from './lib/args.ts';
 
 cli({ usage: 'usage: node bin/make-content-index.ts' });

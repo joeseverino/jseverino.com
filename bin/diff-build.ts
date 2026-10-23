@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+
 // Build a baseline ref (in a detached worktree, no stash) and the working tree, then
 // report which built files differ. Known varying tokens are normalized.
 //
 // Usage:
 //   node bin/diff-build.ts [baseline-ref]   # default baseline: HEAD
+
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

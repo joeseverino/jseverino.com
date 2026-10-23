@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-import { fromRoot } from '../src/lib/site-root.ts';
-import { exitWith } from './lib/args.ts';
-import { type ToolOptions, toolMain } from './lib/drift.ts';
-import { type ClientOptions, createClient, resolveToken } from './lib/github.ts';
+
 // The GitHub repository posture in .github/repo.json, checked against the live
 // repository and applied on request. See docs/GitHub-Settings.md.
 //
 //   node bin/github.ts check [--json]    # read-only; exit 1 on drift
 //   node bin/github.ts plan [--json]     # the calls an apply would make
 //   node bin/github.ts apply [--yes]     # plan, or with --yes, execute
+
+import { fromRoot } from '../src/lib/site-root.ts';
+import { exitWith } from './lib/args.ts';
+import { type ToolOptions, toolMain } from './lib/drift.ts';
+import { type ClientOptions, createClient, resolveToken } from './lib/github.ts';
 import { createRun, loadDesired } from './lib/github-settings.ts';
 
 export const USAGE = `usage: node bin/github.ts <check|plan|apply> [--json] [--yes]

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Generates the favicon set and brand marks from the shared mark renderer into
 // public/favicon.ico, public/assets/icons/*, and public/assets/brand/*.
 //
@@ -6,6 +7,7 @@
 //   node bin/make-icons.ts --check   # fail if a committed SVG differs from the renderer's
 //
 // --check compares the vector marks alone: the rasters differ by machine.
+
 import fs from 'node:fs';
 import { renderMarkSet, wordmarkSvg } from 'branding-engine';
 import { BRAND } from '../src/lib/brand.ts';

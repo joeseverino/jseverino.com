@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+
 // Lighthouse against the live site, configured by tests/lighthouse.json. Exists
 // because @lhci/cli pins an older Lighthouse than PageSpeed Insights uses, which
 // shows up as phantom deductions.
 //
 //   node bin/lighthouse-check.ts
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
