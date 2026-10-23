@@ -255,7 +255,7 @@ Both paths set one registered custom property, `--header-scroll` (a `<number>`, 
 
 ### Mobile menu
 
-The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape, light-dismiss, and the expanded state are native; the script only closes the menu when a link inside it is followed. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
+The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape, light-dismiss, and the expanded state are native; the script only closes the menu when a link inside it is followed or its empty panel is clicked, since the panel fills the screen below the header and leaves light dismiss nothing outside it to catch. The item stagger is CSS alone (`@starting-style`), so it plays with JavaScript off too. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
 
 ### Header height
 

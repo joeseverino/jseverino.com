@@ -1317,7 +1317,7 @@
       border-block-end: 1px solid var(--color-border-faint);
     }
   }
-  .nav-js-ready .mobile-nav:popover-open .mobile-nav-list li {
+  .mobile-nav:popover-open .mobile-nav-list li {
     opacity: 1;
     translate: 0 0;
     transition: opacity var(--motion-duration-deliberate) var(--motion-ease-standard), translate var(--motion-duration-deliberate) var(--motion-ease-standard);

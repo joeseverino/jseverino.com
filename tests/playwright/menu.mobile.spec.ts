@@ -63,3 +63,15 @@ test('mobile menu closes after navigating via a menu link', async ({ page }) => 
   await expect(page).toHaveURL(/\/portfolio\/$/);
   await expect(popover).toBeHidden();
 });
+
+test.describe('without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('the menu opens natively and staggers its items in', async ({ page }) => {
+    const { toggle, popover } = await menu(page);
+    await toggle.click();
+    await expect(popover).toBeVisible();
+    const delays = await popover.locator('.mobile-nav-list li').evaluateAll((items) => items.map((item) => getComputedStyle(item).transitionDelay));
+    expect(new Set(delays).size).toBe(delays.length);
+  });
+});
