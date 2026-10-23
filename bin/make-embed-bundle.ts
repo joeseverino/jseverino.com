@@ -10,14 +10,26 @@
 //   node bin/make-embed-bundle.ts --check   # fail if the committed copy is stale
 
 import fs from 'node:fs';
-import { fromRoot } from '../src/lib/site-root.ts';
+import { buildSync } from 'esbuild';
+import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { interFontFace } from '../src/lib/web-styles.ts';
 import { checkMode } from './lib/args.ts';
-import { readCssEntry } from './lib/css-entry.ts';
 import { writeOrCheck } from './lib/projection.ts';
 
 const check = checkMode('usage: node bin/make-embed-bundle.ts [--check]');
-const baseCss = readCssEntry(fromRoot('src/styles/base.css'));
+
+// base.css with its @imports inlined in cascade order and every value left as written: no
+// minify and no target, so nesting and longhands such as animation-timeline pass through.
+// The site's own /assets/ URLs stay URLs. absWorkingDir keeps the per-file path comments
+// independent of where the script runs.
+const { outputFiles } = buildSync({
+  entryPoints: [fromRoot('src/styles/base.css')],
+  bundle: true,
+  write: false,
+  external: ['/assets/*'],
+  absWorkingDir: siteRoot,
+});
+const baseCss = outputFiles[0]?.text ?? '';
 const font = fs.readFileSync(fromRoot('public/assets/fonts/inter/inter-variable-latin.woff2'));
 
 const bundle = [
