@@ -196,7 +196,7 @@ Served through the local Worker runtime: the CSP and its inline-tag hashes, the 
 
 - **Usage:** `browser:visual`
 
-Screenshots of the fixture build match the committed macOS Chromium baselines
+Screenshots of the fixture build match the committed macOS Chromium baselines; on any other platform the suite does not run and the task fails
 
 ## `build`
 

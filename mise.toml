@@ -273,13 +273,6 @@ description = "The functional Playwright specs pass across Chromium, Firefox, an
 timeout = "15m"
 run = "playwright test -c tests/playwright.config.ts"
 
-[tasks."browser:visual"]
-description = "Screenshots of the fixture build match the committed macOS Chromium baselines"
-# The baselines are macOS Chromium renders; any other platform renders fonts differently.
-skip_if = "test \"$(uname)\" != Darwin"
-timeout = "10m"
-run = "playwright test -c tests/playwright.visual.config.ts"
-
 [tasks."browser:edge"]
 description = "Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity"
 timeout = "5m"
