@@ -30,6 +30,7 @@
     "fast-check": "^4.10.2",
     "html-validate": "^11.17.0",
     "jscpd": "^5.4.2",
+    "jsonc-parser": "^3.3.1",
     "lighthouse": "^13.5.0",
     "severino-brand": "https://github.com/joeseverino/severino-brand/releases/download/v2.0.0/severino-brand-2.0.0.tgz",
     "sharp": "^0.35.4",

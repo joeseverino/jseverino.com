@@ -55,7 +55,7 @@ disables the package's major updates, and the `wrangler` hold disables all of it
 
 | Package | Held at | Why | Revisit when |
 | :--- | :--- | :--- | :--- |
-| `typescript` | 6.x | The audits read `wrangler.jsonc` through the TypeScript compiler API's JSONC parser (`bin/lib/wrangler-config.ts`), and Astro's language tools load it. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's tooling and the compiler API used by `bin/lib/wrangler-config.ts` support 7.x. |
+| `typescript` | 6.x | `astro check` runs Astro's language tools, which load the TypeScript compiler API. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's language tools support 7.x. |
 | `@types/node` | 24.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 24 does not have. | `mise.toml` moves to a newer Node major. |
 | `wrangler` | 4.151.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler`; this pin moves to the same release. |
 | `npm` (`packageManager`) | 11.x | The pin names the npm release the pinned Node bundles. | `mise.toml` moves to a Node major that bundles a newer npm. |

@@ -1,12 +1,9 @@
 // wrangler.jsonc, the Worker's declared config, for the scripts that hold other facts to it.
-// TypeScript's parser for its own JSONC config files reads it; Node has no JSONC parser, and
-// loading wrangler to read it takes seconds. TypeScript loads on the first read, so importing
-// this module costs nothing.
+// Read with jsonc-parser and the options wrangler's own parseJSONC passes, so a file wrangler
+// accepts parses here the same way, without loading wrangler.
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
+import { type ParseError, parse, printParseErrorCode } from 'jsonc-parser';
 import { fromRoot } from '../../src/lib/site-root.ts';
-
-const require = createRequire(import.meta.url);
 
 export interface WranglerConfig {
   name: string;
@@ -15,8 +12,9 @@ export interface WranglerConfig {
 }
 
 export function wranglerConfig(file = fromRoot('wrangler.jsonc')): WranglerConfig {
-  const ts: typeof import('typescript') = require('typescript');
-  const { config, error } = ts.parseConfigFileTextToJson(file, fs.readFileSync(file, 'utf8'));
-  if (error) throw new Error(`${file}: ${ts.flattenDiagnosticMessageText(error.messageText, '\n')}`);
+  const errors: ParseError[] = [];
+  const config = parse(fs.readFileSync(file, 'utf8'), errors, { allowTrailingComma: true });
+  const [error] = errors;
+  if (error) throw new Error(`${file}: ${printParseErrorCode(error.error)} at offset ${error.offset}`);
   return config;
 }

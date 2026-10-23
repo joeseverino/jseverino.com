@@ -55,7 +55,7 @@
       "enabled": false
     },
     {
-      "description": "Held at TypeScript 6: the audits and Astro's language tools call the compiler API that TypeScript 7 does not ship (docs/Dependencies.md).",
+      "description": "Held at TypeScript 6: Astro's language tools (astro check) call the compiler API that TypeScript 7 does not ship (docs/Dependencies.md).",
       "matchPackageNames": ["typescript"],
       "matchUpdateTypes": ["major"],
       "enabled": false
