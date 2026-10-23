@@ -59,8 +59,8 @@ export function previewServer({ port, timeout }: { port: number; timeout: number
 }
 
 // `node tests/browser-test-env.ts build` builds the artifact the browser and
-// edge suites serve, with the same values as their webServer builds. CI runs it
-// through `mise run setup:browsers`, then sets PREBUILT.
+// edge suites serve, with the same values as their webServer builds.
+// `mise run build:browser` runs it, and the runs that follow set PREBUILT.
 if (import.meta.main && process.argv[2] === 'build') {
   const { spawnSync } = await import('node:child_process');
   const { status } = spawnSync(process.execPath, ['bin/build-static.ts'], {

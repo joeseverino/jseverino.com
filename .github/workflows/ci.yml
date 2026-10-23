@@ -74,10 +74,8 @@ jobs:
           astro-cache: 'true'
 
       # The suite then serves this build (PREBUILT).
-      - name: Build
-        run: mise run setup:browsers
-        env:
-          PREBUILD: 'true'
+      - name: Build with the test site key
+        run: mise run build:browser
 
       - name: Cross-browser suite
         run: mise run browser:e2e
@@ -143,15 +141,18 @@ jobs:
         with:
           astro-cache: ${{ matrix.prebuild }}
 
-      # The suite then serves this build (PREBUILT).
-      # The build takes under a minute with the image cache, about eight when it is cold; a
-      # stalled browser download fails here instead of holding the job to its timeout.
-      - name: Install browsers and build
+      # A stalled browser download fails here instead of holding the job to its timeout.
+      - name: Install browsers
+        if: matrix.browsers
         timeout-minutes: 12
         run: mise run setup:browsers
         env:
           BROWSERS: ${{ matrix.browsers }}
-          PREBUILD: ${{ matrix.prebuild }}
+
+      # The suite then serves this build (PREBUILT).
+      - name: Build with the test site key
+        if: matrix.prebuild
+        run: mise run build:browser
 
       - name: ${{ matrix.title }}
         run: mise run "browser:$SUITE"

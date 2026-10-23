@@ -204,6 +204,12 @@ Screenshots of the fixture build match the committed macOS Chromium baselines
 
 The build every deploy ships: astro build, then the CSP hashes
 
+## `build:browser`
+
+- **Usage:** `build:browser`
+
+The build the browser suites serve under PREBUILT: the deploy build, with the test site key
+
 ## `built`
 
 - **Usage:** `built`
@@ -514,7 +520,7 @@ Commit a build directory to the `dist` branch (CI publishes it on every push to 
 
 - **Usage:** `setup:browsers`
 
-Install Playwright's browsers and their system packages (BROWSERS, space-separated) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT
+Install Playwright's browsers (BROWSERS, space-separated) and their system packages
 
 ## `sign:security`
 

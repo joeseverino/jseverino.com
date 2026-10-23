@@ -205,6 +205,11 @@ description = "The build every deploy ships: astro build, then the CSP hashes"
 timeout = "10m"
 run = "node bin/build-static.ts"
 
+[tasks."build:browser"]
+description = "The build the browser suites serve under PREBUILT: the deploy build, with the test site key"
+timeout = "10m"
+run = "node tests/browser-test-env.ts build"
+
 # ------------------------------------------------------------------- built
 
 [tasks.built]
@@ -250,7 +255,12 @@ run = "node tests/audits/check-seo.ts"
 description = "Every browser gate, one at a time: one build with the test site key, then each suite"
 timeout = "45m"
 env = { PREBUILT = "1" }
-run = ["node tests/browser-test-env.ts build", "mise run -c -j 1 'browser:*'"]
+run = ["mise run build:browser", "mise run -c -j 1 'browser:*'"]
+
+[tasks."setup:browsers"]
+description = "Install Playwright's browsers (BROWSERS, space-separated) and their system packages"
+timeout = "20m"
+run = "playwright install --with-deps $BROWSERS"
 
 [tasks.ci]
 description = "Every gate the pipeline runs: check, then the browser suites"
