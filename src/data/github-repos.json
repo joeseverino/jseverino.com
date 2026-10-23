@@ -91,7 +91,7 @@
   },
   {
     "archived": false,
-    "description": "Personal site and writeups, published from a private Obsidian vault with Astro on Cloudflare Pages. Hash-based CSP, edge-tested, and released with signed provenance.",
+    "description": "Personal site and writeups, published from a private Obsidian vault with Astro on Cloudflare Workers. Hash-based CSP, edge-tested, and released with signed provenance.",
     "fork": false,
     "language": "TypeScript",
     "name": "jseverino.com",
