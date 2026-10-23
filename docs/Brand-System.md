@@ -170,8 +170,7 @@ unreadable on a dark page; `onDark.primary` is the readable counterpart, and
 `onDark.primaryDeep` is *lighter* than it, because "deep" means more emphasis and
 emphasis moves toward the far end of the page's contrast range in either theme.
 
-The engine is a devDependency, installed from its v0.9.1 GitHub release tarball
-until 0.9.1 or later is on npm. `mise run checks:contracts` runs
+The engine is a devDependency from npm. `mise run checks:contracts` runs
 `make:icons --check`, which renders the vector marks with it, so every install
 needs it. The production build never runs it: the rendered assets are committed.
 
