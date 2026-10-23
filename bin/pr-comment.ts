@@ -105,13 +105,8 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
     return 0;
   }
 
-  const body = commentBody({
-    run,
-    preview,
-    summaries: readSummaries(dir),
-    required: await requiredContexts(repository, defaultBranch, github),
-    checks: await checkRuns(repository, sha, github),
-  });
+  const [required, checks] = await Promise.all([requiredContexts(repository, defaultBranch, github), checkRuns(repository, sha, github)]);
+  const body = commentBody({ run, preview, summaries: readSummaries(dir), required, checks });
   const existing = (await github.list<Comment>(`/repos/${repository}/issues/${pull.number}/comments?per_page=100`)).find((comment) =>
     comment.body?.includes(MARKER),
   );
