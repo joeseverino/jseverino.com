@@ -8,11 +8,11 @@
 //   node bin/make-embed-bundle.ts           # (re)write public/embed/bundle.css
 //   node bin/make-embed-bundle.ts --check   # fail if the committed copy is stale
 import fs from 'node:fs';
+import { fromRoot } from '../src/lib/site-root.ts';
+import { interFontFace } from '../src/lib/web-styles.ts';
 import { checkMode } from './lib/args.ts';
 import { readCssEntry } from './lib/css-entry.ts';
 import { writeOrCheck } from './lib/projection.ts';
-import { fromRoot } from '../src/lib/site-root.ts';
-import { interFontFace } from '../src/lib/web-styles.ts';
 
 const check = checkMode('usage: node bin/make-embed-bundle.ts [--check]');
 const baseCss = readCssEntry(fromRoot('src/styles/base.css'));

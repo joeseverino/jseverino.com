@@ -2,16 +2,16 @@
 // takes its paths in a WriteupStore, so the CLI, the manage TUI, and HQ share them.
 import fs from 'node:fs';
 import path from 'node:path';
-import { DetailedError } from '../detailed-error.ts';
-import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from '../local-paths.ts';
-import { checkContent, type CheckedDocument } from '../../content-sync/sync.ts';
 import { collectionFields, contentContract, contentContractFingerprint } from '../../../src/lib/content-contract.ts';
+import { isoDate } from '../../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
-import { isoDate } from '../../../src/lib/dates.ts';
+import { type CheckedDocument, checkContent } from '../../content-sync/sync.ts';
+import { DetailedError } from '../detailed-error.ts';
+import { PAGES_FOLDER, vaultRoot, WRITEUPS_FOLDER } from '../local-paths.ts';
+import { fingerprint, type MutationReceipt, receipt } from './receipt.ts';
 import { applyScalars } from './scalar.ts';
-import { transactionalReplace, type Replacement, type TransactionOptions } from './transaction.ts';
-import { fingerprint, receipt, type MutationReceipt } from './receipt.ts';
+import { type Replacement, type TransactionOptions, transactionalReplace } from './transaction.ts';
 
 export interface WriteupStore {
   vaultRoot: string;

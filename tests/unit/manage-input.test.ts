@@ -1,11 +1,11 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
+import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { handleManageKey, pasteManageInput } from '../../bin/site/manage-input.ts';
-import { frameLines, listenForKeys } from '../../bin/site/tui.ts';
 import { FIELDS, hasStaged, type Model } from '../../bin/site/manage-model.ts';
 import { siteFrame } from '../../bin/site/manage-render.ts';
+import { frameLines, listenForKeys } from '../../bin/site/tui.ts';
 
 const today = '2026-10-14';
 const press = (model: Model, key: string) => handleManageKey(model, key, today);

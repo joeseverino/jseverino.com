@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { after, describe, test } from 'node:test';
 import { API_BASE } from '../../bin/lib/github.ts';
-import { MARKER, commentBody, main, type CommentInput, type WorkflowRun } from '../../bin/pr-comment.ts';
+import { type CommentInput, commentBody, MARKER, main, type WorkflowRun } from '../../bin/pr-comment.ts';
 import { scratchDirs } from './helpers/fs.ts';
 
 const REPO = 'example/site';

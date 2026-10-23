@@ -1,20 +1,20 @@
-import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, describe, test } from 'node:test';
+import { type HastNode, mdxToHast } from 'satteri';
 import sharp from 'sharp';
-import { mdxToHast, type HastNode } from 'satteri';
 
 import { collectAssetRefs, collectReferences, createMasterEncoder, MASTER_WIDTH, referenceIssues, resolveAssetSource } from '../../bin/content-sync/assets.ts';
-import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
-import { createWriter } from '../../bin/content-sync/writer.ts';
 import { compileIssues } from '../../bin/content-sync/compile.ts';
-import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
+import { type Grammar, orgRow, renderDocumentRows, roleRow } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
-import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { scratchDirs, write } from './helpers/fs.ts';
+import { createWriter } from '../../bin/content-sync/writer.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
+import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
+import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
+import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('content-sync-');
 after(scratch.cleanup);

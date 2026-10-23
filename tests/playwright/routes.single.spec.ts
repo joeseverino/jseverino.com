@@ -1,5 +1,5 @@
-import { test, expect } from './helpers/test.ts';
 import { sitemapUrls } from '../../src/lib/sitemap.ts';
+import { expect, test } from './helpers/test.ts';
 
 // Route-level responses: every sitemap page, plus the endpoint and error routes
 // the sitemap cannot reach. Named *.single so the config runs them only on

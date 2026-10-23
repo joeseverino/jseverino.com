@@ -1,9 +1,9 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { validate, type JsonSchema } from '../../../bin/lib/json-schema.ts';
+import { test } from 'node:test';
 import type { ToolOptions } from '../../../bin/lib/drift.ts';
-import { fromRoot } from '../../../src/lib/site-root.ts';
+import { type JsonSchema, validate } from '../../../bin/lib/json-schema.ts';
 import { readJson } from '../../../src/lib/json.ts';
+import { fromRoot } from '../../../src/lib/site-root.ts';
 
 export const read = <T>(file: string): T => readJson<T>(fromRoot(file));
 

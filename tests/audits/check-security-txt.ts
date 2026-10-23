@@ -2,18 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   EXPECTED_CANONICAL,
-  REQUIRED_FIELDS,
-  SECURITY_FILE,
-  WKD_DIR,
   expiryProblem,
   parseFields,
-  verifySecuritySignature,
+  REQUIRED_FIELDS,
+  SECURITY_FILE,
   stripSignature,
+  verifySecuritySignature,
+  WKD_DIR,
 } from '../../bin/lib/security-txt.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import { SITE } from '../../src/lib/site-config.ts';
-import { finish } from './lib.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { SITE } from '../../src/lib/site-config.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { finish } from './lib.ts';
 
 const wkdEncryptionRe = new RegExp(`^https://${RegExp.escape(SITE.domain)}/\\.well-known/openpgpkey/hu/([a-z0-9]+)$`);
 

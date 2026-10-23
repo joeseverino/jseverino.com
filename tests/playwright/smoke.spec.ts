@@ -1,4 +1,4 @@
-import { test, expect, isWebKitInterceptionBlobError, type ConsoleMessage } from './helpers/test.ts';
+import { type ConsoleMessage, expect, isWebKitInterceptionBlobError, test } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
 const turnstileFeaturePolicyWarnings = new Set(['autoplay', 'cross-origin-isolated', 'keyboard-map', 'xr-spatial-tracking']);

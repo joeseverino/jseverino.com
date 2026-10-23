@@ -4,33 +4,33 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
-import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
-import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import { type MiseTask, miseTasks } from '../lib/mise.ts';
+import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';
+import { EXIT, SiteError } from './cli.ts';
 import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
+import { handleManageKey, type ManageEffect, pasteManageInput } from './manage-input.ts';
 import {
-  FIELDS,
-  OUTCOME,
-  SITE,
-  SITE_ACTIONS,
-  TABS,
+  type CommandSummaries,
   createWriteup,
   describeActions,
   diff,
+  FIELDS,
   load,
   loadSiteStatus,
-  reload,
-  type CommandSummaries,
   type Model,
+  OUTCOME,
+  reload,
+  SITE,
+  SITE_ACTIONS,
   type SiteAction,
+  TABS,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
-import { miseTasks, type MiseTask } from '../lib/mise.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
-import { handleManageKey, pasteManageInput, type ManageEffect } from './manage-input.ts';
+import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {

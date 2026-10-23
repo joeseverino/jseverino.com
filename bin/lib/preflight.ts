@@ -1,11 +1,11 @@
 // Checks a command runs first so it fails fast with the fix: deps, fetch, gh, vault, clean.
 import fs from 'node:fs';
 import path from 'node:path';
-import { PAGES_FOLDER, WRITEUPS_FOLDER, vaultRoot } from './local-paths.ts';
-import { failureDetail, run } from './run.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { DEFAULT_BRANCH } from '../../src/lib/site-config.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
+import { PAGES_FOLDER, vaultRoot, WRITEUPS_FOLDER } from './local-paths.ts';
+import { failureDetail, run } from './run.ts';
 
 interface LockEntry {
   version?: string;

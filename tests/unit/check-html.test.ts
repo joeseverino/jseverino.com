@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { directiveLeaks } from '../audits/check-html.ts';
 
 test('a directive left in page text is a leak', () => {

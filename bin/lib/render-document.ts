@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createLogger, createServer } from 'vite';
 import { getViteConfig } from 'astro/config';
+import { createLogger, createServer } from 'vite';
 import { brandVarsCss } from '../../src/lib/brand.ts';
 import { interFontFace } from '../../src/lib/web-styles.ts';
 

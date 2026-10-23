@@ -11,18 +11,8 @@
 // HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
 // verifies one writeup after a publish.
 import fs from 'node:fs';
-import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import {
-  DEFAULT_BRANCH,
-  DEPLOY_CHECK,
-  DIST_BRANCH,
-  SITE,
-  SITE_ORIGIN as siteOrigin,
-  SITE_REPOSITORY as repository,
-  writeupPath,
-} from '../src/lib/site-config.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
+import { setTimeout as sleep } from 'node:timers/promises';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
@@ -32,16 +22,26 @@ import {
   inlineHashFindings,
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
-import { cli, exitWith, flag } from './lib/args.ts';
-import { routeFile } from './lib/routes.ts';
-import { git } from './lib/git.ts';
-import { mapLimit } from './lib/map-limit.ts';
-import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
-import { spawnResult } from './lib/run.ts';
-import { annotate, createReport, endGroup, group, status } from './lib/step-summary.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
+import {
+  DEFAULT_BRANCH,
+  DEPLOY_CHECK,
+  DIST_BRANCH,
+  SITE_REPOSITORY as repository,
+  SITE,
+  SITE_ORIGIN as siteOrigin,
+  writeupPath,
+} from '../src/lib/site-config.ts';
+import { siteRoot } from '../src/lib/site-root.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
-import { errorMessage } from '../src/lib/error-message.ts';
+import { cli, exitWith, flag } from './lib/args.ts';
+import { git } from './lib/git.ts';
+import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
+import { mapLimit } from './lib/map-limit.ts';
+import { routeFile } from './lib/routes.ts';
+import { spawnResult } from './lib/run.ts';
+import { annotate, createReport, endGroup, group, status } from './lib/step-summary.ts';
 
 // What one run verifies: the origin it fetches from, and which checks apply there.
 interface Target {

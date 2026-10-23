@@ -1,10 +1,10 @@
 // Engine shared by the desired-state tools (bin/cloudflare.ts, bin/github.ts): diff item shapes and the
 // check / plan / apply flow. A tool supplies the live read, the diff, and the executor.
 import { isDeepStrictEqual } from 'node:util';
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { readJson } from '../../src/lib/json.ts';
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
-import { readJson } from '../../src/lib/json.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 // What the client needs from fetch: a URL string and an init.
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;

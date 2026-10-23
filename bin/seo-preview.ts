@@ -5,13 +5,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { styleText } from 'node:util';
+import { buildOutDir } from '../src/lib/build-output.ts';
+import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
+import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
+import { siteRoot } from '../src/lib/site-root.ts';
+import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
 import { cli } from './lib/args.ts';
 import { routeFile } from './lib/routes.ts';
-import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
-import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
-import { buildOutDir } from '../src/lib/build-output.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
-import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;

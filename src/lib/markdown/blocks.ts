@@ -1,6 +1,7 @@
 // Container directives (`:::figure`) render to site markup, leaf directives to page components; nothing else is a directive.
-import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
+
 import type { ListItem, Paragraph, PhrasingContent, RootContent } from 'mdast';
+import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
 
 type ContainerDirective = Extract<MdastNode, { type: 'containerDirective' }>;
 

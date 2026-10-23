@@ -1,14 +1,15 @@
 // site land: merge one content PR and see it live. Waits for main's required checks on the PR head,
 // squash-merges, waits for the merge commit's deploy, then verifies each changed writeup on production.
 // Every wait polls real state against one deadline.
-import { contentDiff } from '../content-diff.ts';
-import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
-import { preflight, type CheckName } from '../lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
+
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, DEPLOY_CHECK, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { EXIT, SiteError, requireReady, runScript, type Output } from './cli.ts';
-import { git, gh, ghJson } from './git.ts';
+import { contentDiff } from '../content-diff.ts';
+import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
+import { type CheckName, preflight } from '../lib/preflight.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
+import { EXIT, type Output, requireReady, runScript, SiteError } from './cli.ts';
+import { gh, ghJson, git } from './git.ts';
 import type { HqSync, LandResult, PullRequestRef, ScriptRun, Verified } from './types.ts';
 
 const PR_FIELDS = 'number,url,title,state,baseRefName,headRefName,headRefOid,mergeCommit,isDraft';

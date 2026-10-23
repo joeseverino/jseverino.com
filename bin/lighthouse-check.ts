@@ -7,11 +7,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
+import { readJson } from '../src/lib/json.ts';
+import { fromCheckoutCache, siteRoot as root } from '../src/lib/site-root.ts';
 import { cli, exitWith } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 import { annotate, appendSummary, status, table } from './lib/step-summary.ts';
-import { fromCheckoutCache, siteRoot as root } from '../src/lib/site-root.ts';
-import { readJson } from '../src/lib/json.ts';
 
 interface LighthouseConfig {
   urls: string[];

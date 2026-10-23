@@ -1,9 +1,9 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { collectionFields, contentContractFingerprint, frontmatterIssues, projectFrontmatter } from '../../src/lib/content-contract.ts';
+import { describe, test } from 'node:test';
 import { createPublicProjection, reviewedDate } from '../../bin/content-sync/public-projection.ts';
-import { WriteupError, updateFrontmatter } from '../../bin/lib/writeups/store.ts';
+import { updateFrontmatter, WriteupError } from '../../bin/lib/writeups/store.ts';
 import { FIELDS } from '../../bin/site/manage-model.ts';
+import { collectionFields, contentContractFingerprint, frontmatterIssues, projectFrontmatter } from '../../src/lib/content-contract.ts';
 import { stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 
 describe('canonical content contract', () => {

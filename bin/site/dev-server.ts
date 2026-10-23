@@ -3,7 +3,7 @@
 // (.astro/dev.json) names its pid and url.
 import path from 'node:path';
 import { readJson } from '../../src/lib/json.ts';
-import { run, type RunResult } from '../lib/run.ts';
+import { type RunResult, run } from '../lib/run.ts';
 
 export interface DevLock {
   pid: number;

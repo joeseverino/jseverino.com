@@ -1,8 +1,8 @@
 // The process harness failure modes a green run never hits: non-zero exit, missing binary, timeout.
 // All must resolve as failed results, never hang or reject.
 
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { run, runSync } from '../../bin/lib/run.ts';
 
 describe('run()', () => {

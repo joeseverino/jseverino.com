@@ -1,11 +1,11 @@
-import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
+import { after, describe, test } from 'node:test';
+import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
+import { SiteError } from '../../bin/site/cli.ts';
 import { EXIT, PROTOCOL_VERSION } from '../../bin/site/types.ts';
 import { failureDocument, successDocument } from '../../bin/site.ts';
-import { SiteError } from '../../bin/site/cli.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read } from './helpers/desired-state.ts';
 import { scratchDirs, write } from './helpers/fs.ts';

@@ -1,8 +1,8 @@
-import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { after, test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 

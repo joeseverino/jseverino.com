@@ -1,6 +1,6 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lookup, snapshotPackages, type GetJson } from '../../bin/lib/package-registry.ts';
+import { describe, test } from 'node:test';
+import { type GetJson, lookup, snapshotPackages } from '../../bin/lib/package-registry.ts';
 
 const registries = (overrides: Record<string, unknown> = {}): GetJson =>
   (async (url: string) => {

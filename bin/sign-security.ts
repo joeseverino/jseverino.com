@@ -4,9 +4,9 @@
 //   node bin/sign-security.ts
 import fs from 'node:fs';
 import path from 'node:path';
-import { cli, exitWith } from './lib/args.ts';
-import { SECURITY_FILE, SIGNING_EMAIL, runGpg, stripSignature } from './lib/security-txt.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
+import { cli, exitWith } from './lib/args.ts';
+import { runGpg, SECURITY_FILE, SIGNING_EMAIL, stripSignature } from './lib/security-txt.ts';
 
 cli({ usage: 'usage: node bin/sign-security.ts' });
 

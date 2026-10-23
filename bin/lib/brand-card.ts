@@ -1,5 +1,5 @@
 // Every brand card carries the home portrait in the brand card colors; the caller gives its size, wording and target.
-import { launchBrowser, renderCard, type CardOptions } from 'branding-engine';
+import { type CardOptions, launchBrowser, renderCard } from 'branding-engine';
 import { brandCardColors } from '../../src/lib/brand.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 

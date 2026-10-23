@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertMatches, validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
+import { test } from 'node:test';
+import { assertMatches, type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 
 const a: JsonSchema = { type: 'object', required: ['kind', 'a'], properties: { kind: { const: 'a' } } };
 const b: JsonSchema = { type: 'object', required: ['kind', 'b'], properties: { kind: { const: 'b' } } };

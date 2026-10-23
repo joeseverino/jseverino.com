@@ -1,5 +1,5 @@
 // The `test` every browser spec imports in place of Playwright's own.
-import { test as base, expect, type ConsoleMessage, type Page } from '@playwright/test';
+import { test as base, type ConsoleMessage, expect, type Page } from '@playwright/test';
 
 export * from '@playwright/test';
 

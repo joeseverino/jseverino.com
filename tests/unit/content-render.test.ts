@@ -1,7 +1,7 @@
 // Guard cases compile as MDX, the format content ships in, and expect a refusal.
 
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { compile, html, render } from './helpers/render.ts';
 
 describe('```terminal', () => {

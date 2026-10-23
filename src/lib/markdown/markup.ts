@@ -3,8 +3,9 @@
 // block, and every table sits in a scrollable figure. Wrapping is its own
 // pass, after the cell edits, because a pass cannot move a node it also
 // edited inside.
-import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
+
 import type { Element, ElementContent, Text } from 'hast';
+import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
 
 const el = (tagName: string, className: string[] | undefined, children: ElementContent[], properties: Element['properties'] = {}): Element => ({
   type: 'element',

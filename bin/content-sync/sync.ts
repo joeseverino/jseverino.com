@@ -1,12 +1,13 @@
 // Vault to repo projection. checkContent resolves the same references and contract as syncContent without writing.
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
+import { isoDate } from '../../src/lib/dates.ts';
+import { type FrontmatterData, type ParsedFrontmatter, parseFrontmatter, stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
+import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
-import { createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
-import { createPublicProjection } from './public-projection.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
+import { mapLimit } from '../lib/map-limit.ts';
 import {
   collectAssetRefs,
   createMasterEncoder,
@@ -17,13 +18,12 @@ import {
   STRAY_REFERENCE,
   strayReferences,
 } from './assets.ts';
-import { mapLimit } from '../lib/map-limit.ts';
 import { compileIssues } from './compile.ts';
-import { loadGrammar, renderDocumentRows, type Grammar } from './documents.ts';
+import { type Grammar, loadGrammar, renderDocumentRows } from './documents.ts';
 import { buildEducation } from './education.ts';
+import { createPublicProjection } from './public-projection.ts';
+import { createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
 import { createWriter, type SyncReport } from './writer.ts';
-import { isoDate } from '../../src/lib/dates.ts';
-import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 
 export interface Layout {
   root: string;

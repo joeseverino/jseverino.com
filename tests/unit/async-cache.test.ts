@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { asyncCache } from '../../src/lib/async-cache.ts';
 
 test('concurrent callers share one load and its successful result', async () => {

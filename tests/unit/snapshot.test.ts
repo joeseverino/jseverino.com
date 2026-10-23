@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { fromRoot } from '../../src/lib/site-root.ts';
 

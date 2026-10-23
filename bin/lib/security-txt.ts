@@ -1,9 +1,9 @@
-import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
 import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { spawnResult, type SpawnOptions, type SpawnResult } from './run.ts';
+import { type SpawnOptions, type SpawnResult, spawnResult } from './run.ts';
 
 // Shared by the security.txt signer (bin/sign-security.ts) and verifier (tests/audits/check-security-txt.ts).
 

@@ -1,22 +1,23 @@
 // site manage's key bindings: each mode's keys, what they do, and the hint the footer shows for them.
-import { keyOf, nextBoundary, previousBoundary, type Key } from './tui.ts';
+
 import {
+  current,
+  currentField,
   FIELDS,
+  fieldValue,
+  hasStaged,
+  type Mode,
+  type Model,
+  moveCursor,
+  moveItem,
   OUTCOME,
   SITE_ACTIONS,
   TABS,
-  current,
-  currentField,
-  fieldValue,
-  hasStaged,
-  moveCursor,
-  moveItem,
+  type Tab,
   toggleFeatured,
   togglePublished,
-  type Mode,
-  type Model,
-  type Tab,
 } from './manage-model.ts';
+import { type Key, keyOf, nextBoundary, previousBoundary } from './tui.ts';
 
 export type ManageEffect =
   | { type: 'exit'; message: string | null; save: boolean }

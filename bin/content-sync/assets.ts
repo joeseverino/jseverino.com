@@ -3,13 +3,13 @@
 // Astro's image pipeline encodes the variants.
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import os from 'node:os';
-import { defineMdastPlugin, htmlToHast, markdownToHtml, type HastNode } from 'satteri';
+import path from 'node:path';
+import { defineMdastPlugin, type HastNode, htmlToHast, markdownToHtml } from 'satteri';
 import sharp from 'sharp';
+import { errorMessage } from '../../src/lib/error-message.ts';
 import { features } from '../../src/lib/markdown/index.ts';
 import { isExternal } from '../../src/lib/refs.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 // The folder-relative path (`images/...`) a destination names, or undefined
 // when it is external, an anchor, or a site-absolute path.

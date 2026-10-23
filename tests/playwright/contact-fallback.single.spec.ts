@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/test.ts';
+import { expect, test } from './helpers/test.ts';
 
 test.describe('without JavaScript', () => {
   test.use({ javaScriptEnabled: false });

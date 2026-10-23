@@ -1,8 +1,9 @@
 // The `site` CLI's machine contract: every command under --json prints one SiteResult on stdout.
+
+import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
 import type { ContentDiff } from '../content-diff.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import type { PreflightCheck } from '../lib/preflight.ts';
-import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
 import type { CspCounts, HeaderCheck, PiiRows, SchemaApply } from '../lib/site-ops.ts';
 import type {
   FrontmatterResult,

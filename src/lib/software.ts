@@ -1,11 +1,11 @@
 // The Software tab list, from GitHub (github.ts), the curation config, and the
 // package-registry.json snapshot (PyPI/npm versions and downloads).
 
-import { getGithubRepos } from './github.ts';
+import registry from '../data/package-registry.json' with { type: 'json' };
 import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
-import registry from '../data/package-registry.json' with { type: 'json' };
-import { FEATURED, PACKAGES, SELF_HOSTED, SKIP, WRITEUPS, type PackageConfig } from './software.config.ts';
+import { getGithubRepos } from './github.ts';
+import { FEATURED, PACKAGES, type PackageConfig, SELF_HOSTED, SKIP, WRITEUPS } from './software.config.ts';
 
 export type SoftwarePackage = PackageConfig & {
   version?: string | undefined;

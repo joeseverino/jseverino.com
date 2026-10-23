@@ -4,9 +4,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { builtPages, finish } from './lib.ts';
-import { parseHeaders } from '../../src/lib/headers-file.ts';
 import { PLACEHOLDERS } from '../../bin/build-csp.ts';
+import { parseHeaders } from '../../src/lib/headers-file.ts';
+import { builtPages, finish } from './lib.ts';
 
 const { distDir } = builtPages('check-headers');
 const headersFile = path.join(distDir, '_headers');

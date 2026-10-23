@@ -1,7 +1,7 @@
-import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, test } from 'node:test';
 import { jsonText, readJson, writeJson } from '../../src/lib/json.ts';
 import { scratchDirs } from './helpers/fs.ts';
 

@@ -5,9 +5,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
 import { SITE } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
 import { finish } from './lib.ts';
 
 const read = (file: string): string => fs.readFileSync(path.join(siteRoot, file), 'utf8');

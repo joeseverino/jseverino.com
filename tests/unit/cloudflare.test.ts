@@ -1,11 +1,11 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import dns from 'node:dns';
 import fs from 'node:fs';
 import path from 'node:path';
+import { describe, test } from 'node:test';
 import { main } from '../../bin/cloudflare.ts';
-import { createClient, loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib/cloudflare.ts';
-import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
+import { type AccessPolicy, createClient, type DesiredState, loadDesired } from '../../bin/lib/cloudflare.ts';
+import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import { fromRoot, siteRoot } from '../../src/lib/site-root.ts';
 import { createCloudflareFake, type FakeState } from './helpers/cloudflare-fake.ts';

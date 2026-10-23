@@ -4,10 +4,10 @@
 // Each target is rewritten between markers; the rest is hand-managed.
 import path from 'node:path';
 import { syncTargets, toJs, webContract } from 'severino-brand';
-import { checkMode } from './lib/args.ts';
-import { regenerateCommand } from './lib/projection.ts';
 import { brandVarsCss } from '../src/lib/brand.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
+import { checkMode } from './lib/args.ts';
+import { regenerateCommand } from './lib/projection.ts';
 
 const check = checkMode('usage: node bin/sync-tokens.ts [--check]');
 

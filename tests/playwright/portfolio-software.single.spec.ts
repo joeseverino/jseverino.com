@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/test.ts';
+import { expect, test } from './helpers/test.ts';
 
 // The tab toggle is plain DOM plus a small script, so this runs chromium-only (.single).
 // Asserts structure, not specific version numbers.

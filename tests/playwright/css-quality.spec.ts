@@ -1,7 +1,7 @@
-import { test, expect, settle, type Page } from './helpers/test.ts';
-import { tableWriteup } from './helpers/writeups.ts';
-import { rgb } from './helpers/colors.ts';
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
+import { rgb } from './helpers/colors.ts';
+import { expect, type Page, settle, test } from './helpers/test.ts';
+import { tableWriteup } from './helpers/writeups.ts';
 
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {

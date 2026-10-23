@@ -4,9 +4,9 @@
 // The header and cache values expected are public/_headers' own, so a finding means the edge served
 // something other than the file; the CSP clauses below are a policy of their own.
 import fs from 'node:fs';
-import { cspReportPath, cspReportUri } from './site-config.ts';
-import { CSP_INLINE_MARKER, TRUSTED_TYPES, inlineHashes } from './csp.ts';
+import { CSP_INLINE_MARKER, inlineHashes, TRUSTED_TYPES } from './csp.ts';
 import { parseHeaders } from './headers-file.ts';
+import { cspReportPath, cspReportUri } from './site-config.ts';
 import { fromRoot } from './site-root.ts';
 
 export type HeaderRecord = Record<string, string>;

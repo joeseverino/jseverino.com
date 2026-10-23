@@ -1,6 +1,10 @@
 // Cloudflare desired state (cloudflare/zone.json) against the live zone and account. bin/cloudflare.ts is the CLI.
 // Paths are templates (`:zone`, `:account`, mid-apply ids) so output never prints an id. Rules this repo
 // owns carry a ref starting with `<owner>-`; every other rule is read and never written.
+
+import dns from 'node:dns';
+import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
+import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import type {
   AccessApp,
   AccessPolicy,
@@ -20,10 +24,7 @@ import type {
   Widget,
   Zone,
 } from './cloudflare-types.ts';
-import dns from 'node:dns';
-import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
-import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run } from './drift.ts';
+import { applySteps, type Call, changedKeys, type Fetch, fields, type Item, item, loadDesired as load, type Method, pick, type Run, same } from './drift.ts';
 
 export type * from './cloudflare-types.ts';
 

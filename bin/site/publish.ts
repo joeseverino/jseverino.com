@@ -3,17 +3,17 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { commitMessage, contentDiff, describeDiff, isEmpty, type ContentDiff } from '../content-diff.ts';
-import { preflight, type CheckName } from '../lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from '../lib/run.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { readJson } from '../../src/lib/json.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { EXIT, SiteError, requireReady, type Output } from './cli.ts';
-import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
+import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from '../content-diff.ts';
 import type { SyncReport } from '../content-sync/writer.ts';
+import { type CheckName, preflight } from '../lib/preflight.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, type RunOptions, type RunResult, run, SYNC_TIMEOUT_MS } from '../lib/run.ts';
+import { EXIT, type Output, requireReady, SiteError } from './cli.ts';
+import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
 import type { PublishCommitted, PublishResult } from './types.ts';
-import { readJson } from '../../src/lib/json.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 const branchName = (now: Date): string =>

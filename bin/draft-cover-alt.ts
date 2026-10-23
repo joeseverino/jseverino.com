@@ -10,9 +10,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { WRITEUPS_FOLDER, vaultRoot as vaultRootFor } from './lib/local-paths.ts';
 import { parseFrontmatter } from '../src/lib/frontmatter.ts';
 import { cli, flag } from './lib/args.ts';
+import { vaultRoot as vaultRootFor, WRITEUPS_FOLDER } from './lib/local-paths.ts';
 import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
 
 const vaultRoot = vaultRootFor();

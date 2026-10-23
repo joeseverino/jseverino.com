@@ -1,8 +1,8 @@
+import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { parseFrontmatter, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
+import { type ParsedFrontmatter, parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { assertMatches, type JsonSchema } from '../lib/json-schema.ts';

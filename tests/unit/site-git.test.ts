@@ -1,7 +1,8 @@
 // repoState reads a real checkout: the state site status and site manage show.
-import { after, describe, test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { after, describe, test } from 'node:test';
 import { git, gitAsync } from '../../bin/lib/git.ts';
 import { repoState } from '../../bin/site/git.ts';
 import { scratchDirs, write } from './helpers/fs.ts';

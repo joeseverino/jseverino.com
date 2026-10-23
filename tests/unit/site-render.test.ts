@@ -1,11 +1,10 @@
-import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { render } from '../../bin/site/render.ts';
+import { after, before, describe, test } from 'node:test';
 import { renderMarkdown } from '../../bin/lib/render.ts';
-import { SiteError, createOutput } from '../../bin/site/cli.ts';
+import { createOutput, SiteError } from '../../bin/site/cli.ts';
+import { render } from '../../bin/site/render.ts';
 import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });

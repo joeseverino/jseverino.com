@@ -3,10 +3,10 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { DIST_BRANCH } from '../../src/lib/site-config.ts';
 import type { Fetch } from './drift.ts';
 import { createClient } from './github.ts';
 import { runSync } from './run.ts';
-import { DIST_BRANCH } from '../../src/lib/site-config.ts';
 
 export interface PublishOptions {
   // The repository checkout whose history the commit joins.

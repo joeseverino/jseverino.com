@@ -1,10 +1,11 @@
 // git and gh for publish/land, where every failure is fatal and carries the
 // command's stderr, and the working-tree state site status and site manage show.
+
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { gitAsync, git as gitQuery, statusEntries } from '../lib/git.ts';
 import { runSync } from '../lib/run.ts';
-import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { SiteError } from './cli.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 function call(cmd: string, args: string[], spawn: () => string): string {
   try {

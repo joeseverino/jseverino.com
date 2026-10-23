@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { miseTasks, namesTask, type MiseTask } from '../../bin/lib/mise.ts';
+import { test } from 'node:test';
+import { type MiseTask, miseTasks, namesTask } from '../../bin/lib/mise.ts';
 
 const task = (name: string, aliases: string[] = []): MiseTask => ({ name, aliases, description: '', hide: false });
 const tasks = [task('checks', ['fast']), task('checks:types'), task('browser:e2e')];

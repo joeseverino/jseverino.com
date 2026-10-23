@@ -2,8 +2,8 @@
 // call is recorded; an unknown route fails the test.
 
 import {
-  API_BASE,
   type AccessApp,
+  API_BASE,
   type ApiSchema,
   type LiveRule,
   type Operation,

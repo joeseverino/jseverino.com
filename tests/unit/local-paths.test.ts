@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
 import { educationExportFile, existingDir, lifeVaultRoot, resumeEngineRoot, vaultRoot } from '../../bin/lib/local-paths.ts';
 

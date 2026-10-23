@@ -3,12 +3,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DetailedError } from './detailed-error.ts';
-import { createClient } from './cloudflare.ts';
-import { spawnResult, type SpawnResult } from './run.ts';
-import { SITE, SITE_ORIGIN, cspReportUri } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { cspReportUri, SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { createClient } from './cloudflare.ts';
+import { DetailedError } from './detailed-error.ts';
+import { type SpawnResult, spawnResult } from './run.ts';
 
 export type Runner = (cmd: string, args: readonly string[], options: { cwd: string; timeout: number }) => SpawnResult;
 

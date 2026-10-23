@@ -1,17 +1,17 @@
 // site publish and site land against a real git remote (bare repo in a temp dir), a stubbed gh, and
 // a stand-in for GitHub's REST API. Both log to one file, so call order is checked across them.
 // The sync and gate are injected; git is real.
-import { after, before, beforeEach, describe, test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { publish } from '../../bin/site/publish.ts';
-import { land } from '../../bin/site/land.ts';
-import { SiteError, createOutput } from '../../bin/site/cli.ts';
+import { after, before, beforeEach, describe, test } from 'node:test';
 import { git } from '../../bin/lib/git.ts';
-import { tempDir, write } from './helpers/fs.ts';
+import { createOutput, SiteError } from '../../bin/site/cli.ts';
+import { land } from '../../bin/site/land.ts';
+import { publish } from '../../bin/site/publish.ts';
 import { DEPLOY_CHECK } from '../../src/lib/site-config.ts';
+import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });
 const NOW = new Date(2026, 9, 2, 14, 5);

@@ -1,9 +1,8 @@
-import { after, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, beforeEach, describe, test } from 'node:test';
 import {
-  SiteOpsError,
   abbreviateName,
   applyD1Schema,
   checkSecurityHeaders,
@@ -11,9 +10,10 @@ import {
   cspCounts,
   cspReports,
   preview,
-  redactEmail,
   type Runner,
+  redactEmail,
   type SiteOpsConfig,
+  SiteOpsError,
 } from '../../bin/lib/site-ops.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 

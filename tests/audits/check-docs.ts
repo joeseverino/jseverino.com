@@ -6,11 +6,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { trackedFiles } from '../../bin/lib/git.ts';
+import { miseTasks, namesTask } from '../../bin/lib/mise.ts';
+import { spawnResult } from '../../bin/lib/run.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { abort, finish } from './lib.ts';
-import { trackedFiles } from '../../bin/lib/git.ts';
-import { spawnResult } from '../../bin/lib/run.ts';
-import { miseTasks, namesTask } from '../../bin/lib/mise.ts';
 
 export interface PathRef {
   line: number;

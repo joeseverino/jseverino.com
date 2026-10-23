@@ -4,8 +4,8 @@
 import { SITE_ORIGIN } from '../site-config.ts';
 import { CONTACT_RUNTIME } from './contact-contract.ts';
 import type { D1Database } from './d1.ts';
-import { asString, requestMeta } from './request-meta.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
+import { asString, requestMeta } from './request-meta.ts';
 
 type LegacyCspReport = {
   'csp-report'?: Record<string, unknown>;

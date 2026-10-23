@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, test } from 'node:test';
 import { publishDist } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';

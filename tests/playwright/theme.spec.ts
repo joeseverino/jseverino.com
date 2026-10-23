@@ -1,6 +1,6 @@
-import { test, expect, type Page } from './helpers/test.ts';
-import { rgb } from './helpers/colors.ts';
 import { SURFACE } from '../../src/lib/brand.ts';
+import { rgb } from './helpers/colors.ts';
+import { expect, type Page, test } from './helpers/test.ts';
 
 // Neutral tokens use light-dark(); brand tokens use deterministic selectors from
 // the shared brand emitter. Asserts the resolved paint: auto tracks the OS with no JS,

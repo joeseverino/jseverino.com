@@ -3,14 +3,14 @@
 // answers --help, rejects unknown flags, never prompts, and with --json prints one
 // JSON document on stdout ({ ok, command, status, ..., next, error? }), progress on
 // stderr. `manage` is the one interactive command.
-import type { parseArgs, ParseArgsOptionsConfig } from 'node:util';
-import { parse, flag } from './lib/args.ts';
-import { JSON_LOGS_ENV } from './lib/run.ts';
-import { EXIT, SiteError, createOutput, terminalText, type Output } from './site/cli.ts';
+import type { ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { collectionFields } from '../src/lib/content-contract.ts';
-import { PROTOCOL_VERSION, type CommandName, type CommandResults, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
-import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
+import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
+import { flag, parse } from './lib/args.ts';
+import { JSON_LOGS_ENV } from './lib/run.ts';
+import { createOutput, EXIT, type Output, SiteError, terminalText } from './site/cli.ts';
+import { type CommandName, type CommandResults, PROTOCOL_VERSION, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
 
 type Values<O extends ParseArgsOptionsConfig> = ReturnType<typeof parseArgs<{ options: O; allowPositionals: true; strict: true }>>['values'];
 

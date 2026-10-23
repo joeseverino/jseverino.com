@@ -1,15 +1,15 @@
 // Vault-side commands: scaffold, validate, order the featured list, browse technologies.
 import fs from 'node:fs';
 import path from 'node:path';
-import { checkContent } from '../content-sync/sync.ts';
-import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
+import { isoDate } from '../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
-import { EXIT, SiteError, assertSlug, type Output } from './cli.ts';
+import { checkContent } from '../content-sync/sync.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
+import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
 import { guard } from './writeups.ts';
-import { isoDate } from '../../src/lib/dates.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {
   const slug = assertSlug(requested);

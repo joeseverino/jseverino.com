@@ -1,7 +1,8 @@
 // public/_headers, read as data: the audits check the built file with it, and the Worker gives its
 // own responses the headers the assets layer adds to every static one.
-import { cspReportUri } from './site-config.ts';
+
 import { htmlPolicy, reportingEndpoints } from './csp.ts';
+import { cspReportUri } from './site-config.ts';
 
 // Path rules to header lines, in file order. A `!` line (a detach) is kept as written.
 export function parseHeaders(text: string): Map<string, string[]> {

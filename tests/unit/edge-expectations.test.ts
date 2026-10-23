@@ -1,7 +1,6 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../src/lib/csp.ts';
-import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
@@ -12,6 +11,7 @@ import {
   staticHeaderFindings,
   trustedTypesExempt,
 } from '../../src/lib/edge-expectations.ts';
+import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 
 const script = 'theme()';
 const style = 'body{}';

@@ -1,9 +1,9 @@
 // Property tests for the renderer: fast-check generates inputs and shrinks counterexamples.
 
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import fc from 'fast-check';
-import { htmlToHast, type HastNode } from 'satteri';
+import { type HastNode, htmlToHast } from 'satteri';
 import { isSafeUrl, RAW_HTML_TAGS } from '../../src/lib/markdown/guard.ts';
 import { compile, html } from './helpers/render.ts';
 

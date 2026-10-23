@@ -1,8 +1,9 @@
 // Classify a content change by slug: writeups published, edited, or removed, pages
 // touched, generated files riding along. Shared by publish and land.
+
+import { siteRoot } from '../src/lib/site-root.ts';
 import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
 
 export const CONTENT_PATHS = ['src/content'];
 

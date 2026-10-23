@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { contentRoot } from './content-root.ts';
-import { parseFrontmatter, type ParsedFrontmatter } from './frontmatter.ts';
+import { type ParsedFrontmatter, parseFrontmatter } from './frontmatter.ts';
 import { siteRoot } from './site-root.ts';
 
 export interface SnapshotWriteup extends ParsedFrontmatter {

@@ -1,12 +1,12 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { main } from '../../bin/github.ts';
-import { loadDesired, type DesiredState } from '../../bin/lib/github-settings.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
+import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
-import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
+import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
 
 const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');

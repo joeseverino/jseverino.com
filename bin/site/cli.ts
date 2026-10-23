@@ -1,8 +1,8 @@
 // Shared `site` plumbing. Under --json progress goes to stderr and stdout holds only the final JSON document.
 import { stripVTControlCharacters, styleText } from 'node:util';
+import { siteRoot } from '../../src/lib/site-root.ts';
 import type { Preflight } from '../lib/preflight.ts';
 import { run } from '../lib/run.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { EXIT, type ExitCode, type ScriptRun } from './types.ts';
 
 export { EXIT };

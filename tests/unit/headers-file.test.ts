@@ -1,8 +1,8 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseHeaders, workerHeaders } from '../../src/lib/headers-file.ts';
+import { describe, test } from 'node:test';
 import { headersToRecord, staticHeaderFindings } from '../../src/lib/edge-expectations.ts';
+import { parseHeaders, workerHeaders } from '../../src/lib/headers-file.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 
 describe('_headers parsing', () => {

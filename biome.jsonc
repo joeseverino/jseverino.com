@@ -32,6 +32,5 @@
     // Stylelint (checks:css-lint) owns CSS linting.
     "linter": { "enabled": false }
   },
-  "linter": { "enabled": false },
-  "assist": { "enabled": false }
+  "linter": { "enabled": false }
 }

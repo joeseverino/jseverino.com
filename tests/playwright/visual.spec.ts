@@ -1,4 +1,4 @@
-import { test, expect, settle, type Page } from './helpers/test.ts';
+import { expect, type Page, settle, test } from './helpers/test.ts';
 
 // Runs against the fixture build (tests/fixtures/content), never real content.
 // After an intended change, re-baseline with `mise run browser:visual --update-snapshots`.

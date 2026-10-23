@@ -1,9 +1,9 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import type { SiteFailure, SiteHelp } from '../../bin/site/types.ts';
+import { test } from 'node:test';
 import { createOutput, terminalText } from '../../bin/site/cli.ts';
+import type { SiteFailure, SiteHelp } from '../../bin/site/types.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
 
 const site = (...args: string[]) => {
   const result = spawnSync(process.execPath, ['bin/site.ts', ...args], { cwd: siteRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });

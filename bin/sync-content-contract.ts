@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { contentContract, contentContractFingerprint, type FieldSpec } from '../src/lib/content-contract.ts';
 // Project contracts/content.v1.json into the typed Astro schemas.
 //
 //   node bin/sync-content-contract.ts           # write the projection
@@ -6,7 +7,6 @@
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
 import { writeOrCheck } from './lib/projection.ts';
-import { contentContract, contentContractFingerprint, type FieldSpec } from '../src/lib/content-contract.ts';
 
 const check = checkMode('usage: node bin/sync-content-contract.ts [--check]');
 const schemaTarget = fromRoot('src/generated/content-schema.ts');

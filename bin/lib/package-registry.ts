@@ -1,6 +1,7 @@
 // PyPI and npm lookups for the Software tab, apart from bin/snapshot-software.ts so the all-or-nothing rule is testable offline.
-import { fetchJson } from '../../src/lib/fetch-json.ts';
+
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { fetchJson } from '../../src/lib/fetch-json.ts';
 
 export type RegistryPackage = { registry: 'pypi' | 'npm'; name: string };
 export type RegistryEntry = { version: string; downloadsPerMonth?: number };

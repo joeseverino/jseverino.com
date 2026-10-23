@@ -1,9 +1,10 @@
 // site manage's frames: pure functions of the model. Tones become styling here and nowhere else.
-import { keyLabel, lineEditor, terminalColumns, tint, truncate, type Frame, type Tone } from './tui.ts';
+
 import { SITE_ORIGIN, writeupUrl } from '../../src/lib/site-config.ts';
 import { SLUG_RULE } from './cli.ts';
-import { activeBindings, SAVE_KEY, type Binding } from './manage-input.ts';
-import { FIELDS, SITE_ACTIONS, TABS, current, diff, fieldValue, type Item, type Model, type SiteAction, type SiteStatus } from './manage-model.ts';
+import { activeBindings, type Binding, SAVE_KEY } from './manage-input.ts';
+import { current, diff, FIELDS, fieldValue, type Item, type Model, SITE_ACTIONS, type SiteAction, type SiteStatus, TABS } from './manage-model.ts';
+import { type Frame, keyLabel, lineEditor, type Tone, terminalColumns, tint, truncate } from './tui.ts';
 
 // Every mark a frame draws, with the tone it draws in unless a row says otherwise.
 export const GLYPH = {

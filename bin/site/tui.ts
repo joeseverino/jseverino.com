@@ -1,7 +1,7 @@
 // Terminal primitives behind `site manage`.
 import { once } from 'node:events';
 import os from 'node:os';
-import { emitKeypressEvents as nodeEmitKeypressEvents, type Key as Keypress } from 'node:readline';
+import { type Key as Keypress, emitKeypressEvents as nodeEmitKeypressEvents } from 'node:readline';
 import { stripVTControlCharacters, styleText } from 'node:util';
 
 // What a piece of text means; tint() turns it into styling only when a frame is drawn.

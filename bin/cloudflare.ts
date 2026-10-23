@@ -6,10 +6,10 @@
 //   node bin/cloudflare.ts plan [--json]     # the calls an apply would make
 //   node bin/cloudflare.ts apply [--yes]     # plan, or with --yes, execute
 import fs from 'node:fs';
-import { createClient, createRun, loadDesired, type ClientOptions } from './lib/cloudflare.ts';
-import { exitWith } from './lib/args.ts';
-import { toolMain, type ToolOptions } from './lib/drift.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
+import { exitWith } from './lib/args.ts';
+import { type ClientOptions, createClient, createRun, loadDesired } from './lib/cloudflare.ts';
+import { type ToolOptions, toolMain } from './lib/drift.ts';
 
 export const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 

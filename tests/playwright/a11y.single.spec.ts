@@ -1,5 +1,5 @@
-import { test, expect, type Page } from './helpers/test.ts';
 import { AxeBuilder } from '@axe-core/playwright';
+import { expect, type Page, test } from './helpers/test.ts';
 import { anyWriteup, imageHeavyWriteup } from './helpers/writeups.ts';
 
 const scan = (page: Page) => new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();

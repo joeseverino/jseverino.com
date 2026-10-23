@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { createServer } from 'node:http';
+import { test } from 'node:test';
 import { fetchJson } from '../../src/lib/fetch-json.ts';
 
 test('JSON requests handle errors and time out stalled headers and bodies', async () => {

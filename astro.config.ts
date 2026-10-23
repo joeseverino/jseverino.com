@@ -1,16 +1,16 @@
-import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
-import mdx from '@astrojs/mdx';
 import { satteri } from '@astrojs/markdown-satteri';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
-import { snapshotWriteups } from './src/lib/snapshot.ts';
-import { astroOutDir } from './src/lib/build-output.ts';
-import { sitemapLastmods } from './src/lib/sitemap.ts';
+import { defineConfig } from 'astro/config';
 import { contentOverlay } from './src/integrations/content-overlay.ts';
 import { sitedriftPreview } from './src/integrations/sitedrift-preview.ts';
-import { processorOptions } from './src/lib/markdown/index.ts';
+import { astroOutDir } from './src/lib/build-output.ts';
 import { IMAGE_WIDTHS } from './src/lib/images.ts';
+import { processorOptions } from './src/lib/markdown/index.ts';
+import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
+import { sitemapLastmods } from './src/lib/sitemap.ts';
+import { snapshotWriteups } from './src/lib/snapshot.ts';
 
 // Dev server settings from the [env] of the gitignored mise.local.toml, which mise exports to every task.
 const { DEV_ALLOWED_HOSTS, DEV_HOST, DEV_PORT } = process.env;

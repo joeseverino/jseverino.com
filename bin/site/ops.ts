@@ -1,8 +1,9 @@
 // `site` commands over the live-site operations (bin/lib/site-ops.ts).
-import { SiteOpsError, applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, siteOpsConfig } from '../lib/site-ops.ts';
-import { EXIT, SiteError, translate, type Output } from './cli.ts';
-import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
+
 import { INSTALL_PACKAGES } from '../lib/preflight.ts';
+import { applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from '../lib/site-ops.ts';
+import { EXIT, type Output, SiteError, translate } from './cli.ts';
+import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
 
 const CLOUDFLARE_FIX = `needs CLOUDFLARE_API_TOKEN in the environment (op run) and ${INSTALL_PACKAGES} in the site repo`;
 const D1_READ_FIX = 'set CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID through op run';

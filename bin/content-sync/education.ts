@@ -3,7 +3,7 @@
 // completed and has `## Site` bullets; the page marked `education_index: true` is the shell and gates the tree.
 import { stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
-import { orgRow, renderDocumentRows, roleRow, type Grammar, type Org, type Role } from './documents.ts';
+import { type Grammar, type Org, orgRow, type Role, renderDocumentRows, roleRow } from './documents.ts';
 
 // `severino-vault-mcp export education`: the fields this join reads.
 interface Course {

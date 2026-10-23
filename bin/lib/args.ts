@@ -1,5 +1,5 @@
 // The argv parser for bin/ scripts: util.parseArgs in strict mode, so an unknown flag stops the script. Every script answers --help.
-import { parseArgs, type ParseArgsOptionsConfig } from 'node:util';
+import { type ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 const help = { help: { type: 'boolean', short: 'h' } } as const;

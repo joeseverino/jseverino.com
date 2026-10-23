@@ -1,8 +1,8 @@
-import { after, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, beforeEach, describe, test } from 'node:test';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { scratchDirs } from './helpers/fs.ts';

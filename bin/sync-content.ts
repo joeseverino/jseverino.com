@@ -8,14 +8,14 @@
 //   node bin/sync-content.ts --check [--slug <s>] [--draft] [--json]
 //                                              # resolve references and the contract; write nothing
 import path from 'node:path';
-import { cli, exitWith, flag } from './lib/args.ts';
-import { cacheDir, draftsOverlay } from './lib/cache.ts';
-import { educationExportFile, existingDir, lifeVaultRoot, resumeEngineRoot, vaultRoot } from './lib/local-paths.ts';
+import { writeJson } from '../src/lib/json.ts';
+import { siteRoot } from '../src/lib/site-root.ts';
 import { createEducationSource } from './content-sync/source-adapters.ts';
 import { checkContent, committedLayout, overlayLayout, syncContent } from './content-sync/sync.ts';
 import type { SyncReport } from './content-sync/writer.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
-import { writeJson } from '../src/lib/json.ts';
+import { cli, exitWith, flag } from './lib/args.ts';
+import { cacheDir, draftsOverlay } from './lib/cache.ts';
+import { educationExportFile, existingDir, lifeVaultRoot, resumeEngineRoot, vaultRoot } from './lib/local-paths.ts';
 
 const usage = `usage: node bin/sync-content.ts [--drafts] [--report <file>]
        node bin/sync-content.ts --check [--slug <slug>] [--draft] [--json]`;

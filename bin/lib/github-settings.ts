@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Item, type Run } from './drift.ts';
+import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, same } from './drift.ts';
 import type { Client } from './github.ts';
 
 interface RulesetSpec {

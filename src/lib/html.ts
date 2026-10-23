@@ -1,4 +1,4 @@
-import { htmlToHast, type HastNode } from 'satteri';
+import { type HastNode, htmlToHast } from 'satteri';
 
 // Text placed in HTML markup, as element content or a quoted attribute value.
 const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };

@@ -1,9 +1,10 @@
 // Drives site manage via MANAGE_TUI_SMOKE / MANAGE_TUI_KEYS against a temp vault, one per test.
-import { after, test } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { after, test } from 'node:test';
 import { stripVTControlCharacters } from 'node:util';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
