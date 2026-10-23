@@ -1,9 +1,10 @@
 import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import dns from 'node:dns';
 import fs from 'node:fs';
 import path from 'node:path';
 import { main } from '../../bin/cloudflare.ts';
-import { loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib/cloudflare.ts';
+import { createClient, loadDesired, type AccessPolicy, type DesiredState } from '../../bin/lib/cloudflare.ts';
 import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import { fromRoot, siteRoot } from '../../src/lib/site-root.ts';
@@ -113,6 +114,13 @@ describe('check', () => {
   test('sends the token only as a bearer header and never prints it', async () => {
     const output = await bearerOnly(createCloudflareFake(seed, TOKEN), TOKEN);
     assert.ok(!output.includes('zone-0001') && !output.includes('account-0001'), 'no zone or account id in output');
+  });
+
+  // Token IP filters list IPv4 addresses; the zone tool and the D1 reads share this client.
+  test('the client resolves IPv4 addresses first', () => {
+    dns.setDefaultResultOrder('verbatim');
+    createClient({ token: TOKEN, fetch: createCloudflareFake(seed, TOKEN).fetch });
+    assert.equal(dns.getDefaultResultOrder(), 'ipv4first');
   });
 
   test('a missing token stops before any request', () => missingTokenStops(createCloudflareFake(seed, TOKEN), /CLOUDFLARE_API_TOKEN/));

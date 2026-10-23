@@ -5,6 +5,7 @@ import type {
   AccessApp, AccessPolicy, ApiErrorEntry, ApiPayload, ApiSchema, DesiredState, FirewallRuleSpec, LiveRule, LiveState,
   Operation, OwnedRule, Rule, Ruleset, Setting, ValidationSettings, Widget, Zone,
 } from './cloudflare-types.ts';
+import dns from 'node:dns';
 import { canonicalJsonText } from '../../src/lib/canonical-json.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Call, type Fetch, type Item, type Method, type Run } from './drift.ts';
@@ -41,6 +42,9 @@ export type Client = ReturnType<typeof createClient>;
 // formats a request's headers into output.
 export function createClient({ token, fetch = globalThis.fetch }: ClientOptions) {
   if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
+  // A token's client IP filter lists IPv4 addresses, and Node's fetch tries the first address
+  // dns.lookup returns, which is IPv6 on a dual-stack network unless this order says otherwise.
+  dns.setDefaultResultOrder('ipv4first');
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
     template.replace(/:([a-z]+)/g, (_, name: string) => {
