@@ -1,4 +1,4 @@
-# Branding-Engine And Sitedrift Case Study
+# Branding-Engine and Sitedrift case study
 
 These images document a temporary red-brand experiment. `branding-engine`
 generated the coordinated brand change from one source-of-truth edit, while
@@ -8,7 +8,7 @@ production site.
 The full explanation appears in
 [Deployment Preview Review](../../Deployment-Preview-Review.md).
 
-## What Each Capture Shows
+## What each capture shows
 
 - `github-brand-token-og-diff.png`: the palette changes once in
   `src/lib/brand.ts`, and branding-engine regenerates the Open Graph card.
