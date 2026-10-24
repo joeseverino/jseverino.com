@@ -1,13 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
-import {
-  educationExportFile,
-  existingDir,
-  lifeVaultRoot,
-  resumeEngineRoot,
-  vaultRoot,
-} from '../../bin/lib/local-paths.ts';
+import { educationExportFile, existingDir, lifeVaultRoot, resumeEngineRoot, vaultRoot } from '../../bin/lib/local-paths.ts';
 
 test('vault root: VAULT_DIR, then NOTES_HOME', () => {
   assert.equal(vaultRoot({ VAULT_DIR: '/v', NOTES_HOME: '/n' }), '/v');

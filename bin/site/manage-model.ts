@@ -1,23 +1,23 @@
 // site manage's state: writeup rows, staged edits, and Site tab status. Nothing here draws or reads keys.
 import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import type { Note, Tone } from './tui.ts';
-import { headStatus, servingDevServer, type DevLock } from './dev-server.ts';
-import { repoState } from './git.ts';
-import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { SECURITY_FILE, expiryProblem, parseFields, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
-import { WriteupError, byFeaturedOrder, snapshot, writeupStore, type WriteupDashboard, type WriteupSummary } from '../lib/writeups/store.ts';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
-import { DEFAULT_BRANCH, SITE_ORIGIN } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import { SLUG, SiteError, createOutput, slugMessage } from './cli.ts';
-import type { CommandName } from './types.ts';
-import type { MiseTask } from '../lib/mise.ts';
-import { checkContent } from '../content-sync/sync.ts';
-import { newWriteup } from './authoring.ts';
 import { collectionFields, type FieldSpec, type FieldType } from '../../src/lib/content-contract.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { DEFAULT_BRANCH, SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { checkContent } from '../content-sync/sync.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import type { MiseTask } from '../lib/mise.ts';
+import { expiryProblem, parseFields, SECURITY_FILE, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
 import { fingerprint } from '../lib/writeups/receipt.ts';
+import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from '../lib/writeups/store.ts';
+import { newWriteup } from './authoring.ts';
+import { createOutput, SiteError, SLUG, slugMessage } from './cli.ts';
+import { type DevLock, headStatus, servingDevServer } from './dev-server.ts';
+import { repoState } from './git.ts';
+import type { Note, Tone } from './tui.ts';
+import type { CommandName } from './types.ts';
 
 export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
 
@@ -157,17 +157,18 @@ export interface Model {
 }
 
 export const FIELDS: readonly Field[] = Object.entries(collectionFields('writeups'))
-  .filter(([name, spec]) =>
-    name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
-  .map(([name, spec]): Field => ({
-    key: camelKey(name),
-    label: name,
-    flag: spec.cli_flag,
-    editable: spec.editable === true,
-    note: spec.editable === true ? undefined : 'edit in Obsidian',
-    type: spec.type,
-    default: spec.default,
-  }));
+  .filter(([name, spec]) => name !== 'doc_id' && !['publish-state', 'featured-order'].includes(spec.ownership ?? ''))
+  .map(
+    ([name, spec]): Field => ({
+      key: camelKey(name),
+      label: name,
+      flag: spec.cli_flag,
+      editable: spec.editable === true,
+      note: spec.editable === true ? undefined : 'edit in Obsidian',
+      type: spec.type,
+      default: spec.default,
+    }),
+  );
 
 function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: Record<string, FieldSpec>): Item {
   const source: Record<string, unknown> = w;
@@ -237,9 +238,7 @@ export async function load(): Promise<Model> {
   const contractFields = collectionFields('writeups');
   const summaries = loaded.writeups;
   const featured = summaries.filter((w) => w.featured).toSorted(byFeaturedOrder);
-  const rest = summaries
-    .filter((w) => !w.featured)
-    .sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
+  const rest = summaries.filter((w) => !w.featured).sort((a, b) => Number(b.published) - Number(a.published) || a.slug.localeCompare(b.slug));
   const items = [...featured, ...rest].map((writeup) => toItem(writeup, contractFields));
 
   const gate = await gateIssues();

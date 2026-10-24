@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, test } from 'node:test';
 import { publishDist } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
@@ -37,8 +37,7 @@ const fakeApi = async (url: string, init: RequestInit) => {
   git(origin, 'update-ref', body.ref ?? route.replace('/git/refs/', 'refs/'), body.sha);
   return new Response('{}', { status: 200 });
 };
-const publishSigned = () =>
-  publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
+const publishSigned = () => publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
 
 beforeEach(() => {
   apiCalls.length = 0;
@@ -108,7 +107,10 @@ describe('publishDist through the API', () => {
     assert.equal(git(origin, 'log', '-1', '--format=%an', DIST_BRANCH), 'api', 'made by the API, not by a local identity');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');
-    assert.deepEqual(apiCalls.map((call) => `${call.method} ${call.route}`), ['POST /git/commits', 'POST /git/refs']);
+    assert.deepEqual(
+      apiCalls.map((call) => `${call.method} ${call.route}`),
+      ['POST /git/commits', 'POST /git/refs'],
+    );
   });
 
   test('a later publish names the branch tip as its parent and moves the ref', async () => {
@@ -117,7 +119,10 @@ describe('publishDist through the API', () => {
     apiCalls.length = 0;
     const second = await publishSigned();
     assert.equal(git(origin, 'rev-parse', `${second.commit}^`), first.commit);
-    assert.deepEqual(apiCalls.map((call) => `${call.method} ${call.route}`), ['POST /git/commits', `PATCH /git/refs/heads/${DIST_BRANCH}`]);
+    assert.deepEqual(
+      apiCalls.map((call) => `${call.method} ${call.route}`),
+      ['POST /git/commits', `PATCH /git/refs/heads/${DIST_BRANCH}`],
+    );
   });
 
   test('an unchanged build makes no API call', async () => {

@@ -48,7 +48,6 @@ const CHOICES = [
 
   function apply(mode: Mode) {
     root.dataset.themeMode = mode;
-    root.style.colorScheme = mode === 'auto' ? '' : mode;
 
     // Auto defers theme-color to the media queries; an explicit choice pins one meta.
     metas.forEach((meta) => {

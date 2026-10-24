@@ -1,5 +1,5 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { sitemapLastmods } from '../../src/lib/sitemap.ts';
 
 const origin = 'https://example.test';

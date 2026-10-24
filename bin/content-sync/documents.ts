@@ -7,8 +7,7 @@ import { escapeHtml } from '../../src/lib/html.ts';
 
 // Rows land in an MDX body, where a brace opens an expression; MDX decodes the
 // character reference back to the brace.
-const escapeText = (text: string): string =>
-  escapeHtml(text).replace(/[{}]/g, (brace) => `&#${brace.codePointAt(0)};`);
+const escapeText = (text: string): string => escapeHtml(text).replace(/[{}]/g, (brace) => `&#${brace.codePointAt(0)};`);
 
 export interface Org {
   name: string;

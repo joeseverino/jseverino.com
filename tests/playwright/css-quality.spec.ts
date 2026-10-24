@@ -1,18 +1,63 @@
-import { test, expect, settle, type Page } from './helpers/test.ts';
-import { tableWriteup } from './helpers/writeups.ts';
-import { rgb } from './helpers/colors.ts';
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
+import { rgb } from './helpers/colors.ts';
+import { expect, type Page, settle, test } from './helpers/test.ts';
+import { anyWriteup, tableWriteup } from './helpers/writeups.ts';
 
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
   const declared = (property: string) =>
-    page.locator('html').evaluate(
-      (element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(),
-      property,
-    );
+    page.locator('html').evaluate((element, name) => getComputedStyle(element).getPropertyValue(name).trim().toLowerCase(), property);
   expect(await declared('--color-primary')).toBe(primary.toLowerCase());
   expect(await declared('--color-primary-deep')).toBe(deep.toLowerCase());
 }
+
+// Astro merges a page's own sheet into its <style> in an order of its choosing, so the
+// cascade rests on the layer order every sheet declares first, never on source order.
+for (const path of ['/', '/contact/', '/portfolio/', '/resume/', '/education/']) {
+  test(`${path} opens its stylesheet with the layer order`, async ({ page }) => {
+    await page.goto(path);
+    const first = await page.evaluate(() => {
+      const rule = document.styleSheets[0]?.cssRules[0];
+      return rule instanceof CSSLayerStatementRule ? [...rule.nameList] : null;
+    });
+    expect(first).toEqual(['tokens', 'base', 'components', 'pages']);
+  });
+}
+
+test('a #fragment target lands below the sticky header', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(anyWriteup());
+  const id = await page.locator('.prose :is(h2, h3)[id]').first().getAttribute('id');
+  expect(id).not.toBeNull();
+  await page.goto(`${anyWriteup()}#${id}`);
+
+  const header = await page.locator('.site-header').boundingBox();
+  const target = await page.locator(`[id="${id}"]`).boundingBox();
+  expect(header).not.toBeNull();
+  expect(target).not.toBeNull();
+  expect(target!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+});
+
+test('the nav underline animates without layout', async ({ page }) => {
+  await page.goto('/resume/');
+  const underline = (selector: string) =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate((link) => {
+        const style = getComputedStyle(link, '::after');
+        return {
+          property: style.transitionProperty,
+          width: link.getBoundingClientRect().width,
+          drawn: Number.parseFloat(style.width) * Number(style.scale.split(' ')[0] ?? 1),
+        };
+      });
+  const current = await underline('.nav-link[aria-current="page"]');
+  expect(current.property).toBe('scale');
+  expect(current.drawn).toBeCloseTo(current.width, 0);
+  const other = await underline('.nav-link:not([aria-current])');
+  expect(other.drawn).toBe(0);
+});
 
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
@@ -72,9 +117,7 @@ test('motion tokens drive stable pressed feedback', async ({ page }) => {
 
   const root = page.locator('html');
   const standardDurationMs = await root.evaluate((element) => {
-    const value = getComputedStyle(element)
-      .getPropertyValue('--motion-duration-standard')
-      .trim();
+    const value = getComputedStyle(element).getPropertyValue('--motion-duration-standard').trim();
     return value.endsWith('ms') ? Number.parseFloat(value) : Number.parseFloat(value) * 1000;
   });
   expect(standardDurationMs).toBe(200);
@@ -102,10 +145,7 @@ test('buttons and cards keep a stable click target through press and release', a
   const button = page.getByRole('link', { name: 'View Portfolio' });
   const buttonBox = await button.boundingBox();
   expect(buttonBox).not.toBeNull();
-  await page.mouse.move(
-    buttonBox!.x + buttonBox!.width / 2,
-    buttonBox!.y + buttonBox!.height / 2,
-  );
+  await page.mouse.move(buttonBox!.x + buttonBox!.width / 2, buttonBox!.y + buttonBox!.height / 2);
   await expect(button).toHaveCSS('translate', '0px -1px');
   const raisedButtonBox = await button.boundingBox();
   expect(raisedButtonBox).not.toBeNull();
@@ -120,10 +160,7 @@ test('buttons and cards keep a stable click target through press and release', a
   const cardBox = await cardLink.boundingBox();
   expect(href).not.toBeNull();
   expect(cardBox).not.toBeNull();
-  await page.mouse.move(
-    cardBox!.x + cardBox!.width / 2,
-    cardBox!.y + cardBox!.height / 2,
-  );
+  await page.mouse.move(cardBox!.x + cardBox!.width / 2, cardBox!.y + cardBox!.height / 2);
   await expect(page.locator('.card-surface').first()).toHaveCSS('translate', '0px -2px');
   const raisedCardBox = await cardLink.boundingBox();
   expect(raisedCardBox).not.toBeNull();
@@ -193,32 +230,38 @@ test('reduced motion disables smooth scrolling and transitions', async ({ page }
   await page.goto('/');
 
   await expect(page.locator('html')).toHaveCSS('scroll-behavior', 'auto');
-  const duration = await page.locator('.button').first().evaluate((element) => {
-    const value = getComputedStyle(element).transitionDuration;
-    return Math.max(...value.split(',').map((item) => Number.parseFloat(item) || 0));
-  });
+  const duration = await page
+    .locator('.button')
+    .first()
+    .evaluate((element) => {
+      const value = getComputedStyle(element).transitionDuration;
+      return Math.max(...value.split(',').map((item) => Number.parseFloat(item) || 0));
+    });
   expect(duration).toBeLessThanOrEqual(0.00001);
 });
 
 test('cover images fill their fixed media boxes', async ({ page }) => {
   await page.goto('/portfolio/');
 
-  const dimensions = await page.locator('.project-card-media').first().evaluate((media) => {
-    const image = media.querySelector('img');
-    const picture = media.querySelector('picture');
-    if (!image || !picture) throw new Error('Expected project picture and image');
+  const dimensions = await page
+    .locator('.project-card-media')
+    .first()
+    .evaluate((media) => {
+      const image = media.querySelector('img');
+      const picture = media.querySelector('picture');
+      if (!image || !picture) throw new Error('Expected project picture and image');
 
-    const mediaRect = media.getBoundingClientRect();
-    const imageRect = image.getBoundingClientRect();
-    return {
-      mediaWidth: mediaRect.width,
-      mediaHeight: mediaRect.height,
-      imageWidth: imageRect.width,
-      imageHeight: imageRect.height,
-      objectFit: getComputedStyle(image).objectFit,
-      pictureDisplay: getComputedStyle(picture).display,
-    };
-  });
+      const mediaRect = media.getBoundingClientRect();
+      const imageRect = image.getBoundingClientRect();
+      return {
+        mediaWidth: mediaRect.width,
+        mediaHeight: mediaRect.height,
+        imageWidth: imageRect.width,
+        imageHeight: imageRect.height,
+        objectFit: getComputedStyle(image).objectFit,
+        pictureDisplay: getComputedStyle(picture).display,
+      };
+    });
 
   expect(dimensions.pictureDisplay).toBe('contents');
   expect(dimensions.objectFit).toBe('cover');

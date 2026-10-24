@@ -1,9 +1,9 @@
-import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import path from 'node:path';
 import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { spawnResult, type SpawnOptions, type SpawnResult } from './run.ts';
+import { type SpawnOptions, type SpawnResult, spawnResult } from './run.ts';
 
 // Shared by the security.txt signer (bin/sign-security.ts) and verifier (tests/audits/check-security-txt.ts).
 
@@ -29,14 +29,14 @@ export function expiryProblem(expires: string, now = Date.now()): string | undef
 
 export function stripSignature(text: string): string {
   const begin = text.indexOf('-----BEGIN PGP SIGNED MESSAGE-----');
-  if (begin === -1) return text.trim() + '\n';
+  if (begin === -1) return `${text.trim()}\n`;
 
   const headerEnd = text.indexOf('\n\n', begin);
   if (headerEnd === -1) throw new Error('malformed PGP signed message: no body separator');
   const sigStart = text.indexOf('-----BEGIN PGP SIGNATURE-----', headerEnd);
   if (sigStart === -1) throw new Error('malformed PGP signed message: no signature block');
 
-  return text.slice(headerEnd + 2, sigStart).replace(/\s+$/, '') + '\n';
+  return `${text.slice(headerEnd + 2, sigStart).replace(/\s+$/, '')}\n`;
 }
 
 export function parseFields(body: string): Record<string, string> {
@@ -61,8 +61,10 @@ export function runGpg(args: readonly string[], options: Pick<SpawnOptions, 'inp
 export function verifySecuritySignature(file: string, keyDirectory = WKD_DIR): SpawnResult {
   using directory = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'site-signature-'));
   const options = ['--no-options', '--homedir', directory.path, '--batch', '--no-autostart', '--no-auto-key-retrieve'];
-  const keys = fs.readdirSync(keyDirectory, { withFileTypes: true })
-    .filter((entry) => entry.isFile()).map((entry) => path.join(keyDirectory, entry.name));
+  const keys = fs
+    .readdirSync(keyDirectory, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(keyDirectory, entry.name));
   if (!keys.length) throw new Error('No committed WKD public keys available for signature verification.');
   const imported = runGpg([...options, '--import', ...keys]);
   if (imported.code !== 0) return imported;

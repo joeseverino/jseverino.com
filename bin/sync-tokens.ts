@@ -1,13 +1,15 @@
 #!/usr/bin/env node
+
 // Derive the vendored brand/design tokens from the lockfile-pinned severino-brand
 // contract. Run `mise run sync:tokens`, review, commit; CI runs it with `--check`.
 // Each target is rewritten between markers; the rest is hand-managed.
+
 import path from 'node:path';
 import { syncTargets, toJs, webContract } from 'severino-brand';
-import { checkMode } from './lib/args.ts';
-import { regenerateCommand } from './lib/projection.ts';
 import { brandVarsCss } from '../src/lib/brand.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
+import { checkMode } from './lib/args.ts';
+import { regenerateCommand } from './lib/projection.ts';
 
 const check = checkMode('usage: node bin/sync-tokens.ts [--check]');
 
@@ -19,23 +21,25 @@ const brandBlock = [
 ].join('\n\n');
 const surfaceBlock = `export const SURFACE = ${toJs(webContract.surfaces)};`;
 
-// A generated CSS block is where the literal colors live, so it switches off exactly the
-// stylelint color rules its values trip, and only between its own markers.
-const literalColors = (css: string, rules: readonly string[]): string =>
-  `/* stylelint-disable ${rules.join(', ')} -- generated literal colors */\n${css}\n/* stylelint-enable ${rules.join(', ')} */`;
+// A generated CSS block is where the literal colors live, so it suppresses exactly the Biome
+// color rules its values trip, and only between its own markers.
+const literalColors = (css: string, rules: readonly string[]): string => {
+  const suppression = `${rules.join(' ')}: generated literal colors */`;
+  return `/* biome-ignore-start ${suppression}\n${css}\n/* biome-ignore-end ${suppression}`;
+};
 
 const targets = [
   {
     file: path.join(siteRoot, 'src/styles/tokens.css'),
     label: '/* tokens',
-    inner: literalColors(webContract.designSystemCss, ['color-no-hex', 'function-disallowed-list']),
+    inner: literalColors(webContract.designSystemCss, ['lint/style/noHexColors', 'lint/plugin/literal-colors']),
   },
   { file: path.join(siteRoot, 'src/lib/brand.ts'), label: '// tokens', inner: brandBlock },
   { file: path.join(siteRoot, 'src/lib/brand.ts'), label: '// surfaces', inner: surfaceBlock },
   {
     file: path.join(siteRoot, 'src/styles/brand.css'),
     label: '/* brand',
-    inner: literalColors(brandVarsCss(webContract.primaryByTheme), ['color-no-hex']),
+    inner: literalColors(brandVarsCss(webContract.primaryByTheme), ['lint/style/noHexColors']),
   },
 ];
 

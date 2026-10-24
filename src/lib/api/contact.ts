@@ -1,10 +1,10 @@
 // POST /api/contact (src/pages/api/contact.ts): verifies the Turnstile token and stores the submission in D1.
 
-import { CONTACT_PROPERTIES, CONTACT_RUNTIME, validateContactPayload } from './contact-contract.ts';
 import { SITE_ORIGIN } from '../site-config.ts';
+import { CONTACT_PROPERTIES, CONTACT_RUNTIME, validateContactPayload } from './contact-contract.ts';
 import type { D1Database } from './d1.ts';
-import { ownPageUrl, requestMeta } from './request-meta.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
+import { ownPageUrl, requestMeta } from './request-meta.ts';
 import { verifyTurnstile } from './turnstile.ts';
 
 export interface ContactEnv {

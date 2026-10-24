@@ -31,10 +31,7 @@ interface Staged {
   swapped: boolean;
 }
 
-export function transactionalReplace(
-  replacements: ReadonlyMap<string, Replacement>,
-  { rename = fs.renameSync }: TransactionOptions = {},
-): TransactionResult {
+export function transactionalReplace(replacements: ReadonlyMap<string, Replacement>, { rename = fs.renameSync }: TransactionOptions = {}): TransactionResult {
   const staged: Staged[] = [];
   try {
     for (const [file, { before, after }] of [...replacements].toSorted(([a], [b]) => a.localeCompare(b))) {

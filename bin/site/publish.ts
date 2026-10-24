@@ -3,17 +3,17 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { commitMessage, contentDiff, describeDiff, isEmpty, type ContentDiff } from '../content-diff.ts';
-import { preflight, type CheckName } from '../lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, SYNC_TIMEOUT_MS, run, type RunOptions, type RunResult } from '../lib/run.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { readJson } from '../../src/lib/json.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { EXIT, SiteError, requireReady, type Output } from './cli.ts';
-import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
+import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from '../content-diff.ts';
 import type { SyncReport } from '../content-sync/writer.ts';
+import { type CheckName, preflight } from '../lib/preflight.ts';
+import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, type RunOptions, type RunResult, run, SYNC_TIMEOUT_MS } from '../lib/run.ts';
+import { EXIT, type Output, requireReady, SiteError } from './cli.ts';
+import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
 import type { PublishCommitted, PublishResult } from './types.ts';
-import { readJson } from '../../src/lib/json.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 const branchName = (now: Date): string =>
@@ -23,7 +23,9 @@ const branchName = (now: Date): string =>
 function freshBranch(root: string, now: Date): string {
   const base = branchName(now);
   const remote = new Set(
-    git(root, 'ls-remote', '--heads', 'origin', `${base}*`).split('\n').filter(Boolean)
+    git(root, 'ls-remote', '--heads', 'origin', `${base}*`)
+      .split('\n')
+      .filter(Boolean)
       .map((line) => (line.split('\t')[1] ?? '').replace('refs/heads/', '')),
   );
   for (let n = 1; ; n += 1) {
@@ -90,12 +92,14 @@ function prBody(diff: ContentDiff, { origin = SITE_ORIGIN } = {}): string {
     if (slug === 'technology-groups') return '- `technology-groups` (the technology catalog)';
     return `- [\`${slug}\`](${origin}${slug === 'home' ? '/' : `/${slug}/`})`;
   };
-  const sections = ([
-    ['Published', diff.published.map(writeup)],
-    ['Edited', diff.edited.map(writeup)],
-    ['Removed (these URLs will return 404)', diff.removed.map((slug) => `- \`${slug}\`: ${writeupUrl(slug, origin)}`)],
-    ['Pages', diff.pages.map(page)],
-  ] satisfies [string, string[]][]).filter(([, lines]) => lines.length > 0);
+  const sections = (
+    [
+      ['Published', diff.published.map(writeup)],
+      ['Edited', diff.edited.map(writeup)],
+      ['Removed (these URLs will return 404)', diff.removed.map((slug) => `- \`${slug}\`: ${writeupUrl(slug, origin)}`)],
+      ['Pages', diff.pages.map(page)],
+    ] satisfies [string, string[]][]
+  ).filter(([, lines]) => lines.length > 0);
 
   const byFolder = new Map<string, number>();
   for (const file of diff.generated.paths) {
@@ -164,8 +168,10 @@ export async function publish({
     using scratchDir = fs.mkdtempDisposableSync(path.join(os.tmpdir(), 'site-publish-'));
     const scratch = fs.realpathSync(scratchDir.path);
     const worktree = path.join(scratch, 'worktree');
-    outcome = await publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate })
-      .then((result) => ({ result }), (error: unknown) => ({ error }));
+    outcome = await publishInWorktree({ root, start, branch, worktree, scratch, dryRun, full, out, sync, gate }).then(
+      (result) => ({ result }),
+      (error: unknown) => ({ error }),
+    );
     attempt('removing the worktree', 'run: git worktree prune', () => {
       if (fs.existsSync(worktree)) git(root, 'worktree', 'remove', '--force', worktree);
     });

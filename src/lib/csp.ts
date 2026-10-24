@@ -51,8 +51,7 @@ export function htmlPolicy({ scriptHashes, styleHashes, reportUri, trustedTypes,
   ].join('; ');
 }
 
-export const trustedTypesReportOnly = (reportUri: string): string =>
-  [TRUSTED_TYPES, 'report-to csp-endpoint', `report-uri ${reportUri}`].join('; ');
+export const trustedTypesReportOnly = (reportUri: string): string => [TRUSTED_TYPES, 'report-to csp-endpoint', `report-uri ${reportUri}`].join('; ');
 
 export const reportingEndpoints = (reportUri: string): string => `csp-endpoint="${reportUri}"`;
 
@@ -76,7 +75,10 @@ const EXECUTABLE_TYPES = new Set(['', 'module', 'text/javascript', 'application/
 const SAME_ORIGIN = /^\/(?!\/)/;
 
 const attribute = (attributes: string, name: string): string | undefined =>
-  new RegExp(`\\s${name}=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i').exec(` ${attributes}`)?.slice(1).find((value) => value !== undefined);
+  new RegExp(`\\s${name}=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i')
+    .exec(` ${attributes}`)
+    ?.slice(1)
+    .find((value) => value !== undefined);
 
 // Hash the marked inline scripts and styles and report anything the policy would block.
 // Unmarked content (raw HTML in a writeup, an injected tag) fails the build.

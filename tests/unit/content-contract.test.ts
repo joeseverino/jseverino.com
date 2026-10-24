@@ -1,29 +1,27 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  collectionFields,
-  contentContractFingerprint,
-  frontmatterIssues,
-  projectFrontmatter,
-} from '../../src/lib/content-contract.ts';
+import { describe, test } from 'node:test';
 import { createPublicProjection, reviewedDate } from '../../bin/content-sync/public-projection.ts';
-import { WriteupError, updateFrontmatter } from '../../bin/lib/writeups/store.ts';
+import { updateFrontmatter, WriteupError } from '../../bin/lib/writeups/store.ts';
 import { FIELDS } from '../../bin/site/manage-model.ts';
+import { collectionFields, contentContractFingerprint, frontmatterIssues, projectFrontmatter } from '../../src/lib/content-contract.ts';
 import { stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 
 describe('canonical content contract', () => {
   test('projects only public fields and applies contract defaults', () => {
-    assert.deepEqual(projectFrontmatter('writeups', {
-      doc_id: 'private-id',
-      title: 'Contract-driven content',
-      technologies: ['astro'],
-      related_projects: ['private-relation'],
-    }), {
-      title: 'Contract-driven content',
-      published: false,
-      technologies: ['astro'],
-      featured: false,
-    });
+    assert.deepEqual(
+      projectFrontmatter('writeups', {
+        doc_id: 'private-id',
+        title: 'Contract-driven content',
+        technologies: ['astro'],
+        related_projects: ['private-relation'],
+      }),
+      {
+        title: 'Contract-driven content',
+        published: false,
+        technologies: ['astro'],
+        featured: false,
+      },
+    );
   });
 
   test('fingerprint is a stable sha256 identifier', () => {
@@ -65,10 +63,7 @@ describe('canonical content contract', () => {
 
   test('removes a repeated public description without changing the body', () => {
     const markdown = '# Heading\n\n> A concise description.\n\nBody stays here.\n';
-    assert.equal(
-      stripRepeatedDescription(markdown, 'A concise description.'),
-      '# Heading\n\nBody stays here.\n',
-    );
+    assert.equal(stripRepeatedDescription(markdown, 'A concise description.'), '# Heading\n\nBody stays here.\n');
   });
 });
 
@@ -76,8 +71,7 @@ describe('canonical content contract', () => {
 // added there reaches the public projection, the store, and `site manage` at once.
 describe('consumers of the writeup contract', () => {
   const fields = Object.entries(collectionFields('writeups'));
-  const names = (keep: (spec: (typeof fields)[number][1]) => boolean): string[] =>
-    fields.filter(([, spec]) => keep(spec)).map(([name]) => name);
+  const names = (keep: (spec: (typeof fields)[number][1]) => boolean): string[] => fields.filter(([, spec]) => keep(spec)).map(([name]) => name);
   const filled = Object.fromEntries(fields.map(([name]) => [name, `${name} value`]));
 
   test('the public projection emits exactly the public fields', () => {
@@ -97,11 +91,17 @@ describe('consumers of the writeup contract', () => {
       }
       return false;
     };
-    assert.deepEqual(fields.map(([name]) => name).filter((name) => !refused(name)), names((spec) => spec.editable === true));
+    assert.deepEqual(
+      fields.map(([name]) => name).filter((name) => !refused(name)),
+      names((spec) => spec.editable === true),
+    );
   });
 
   test('site manage lists every field but the id and the ones it toggles, editable as the contract says', () => {
     const listed = fields.filter(([name, spec]) => name !== 'doc_id' && spec.ownership !== 'publish-state' && spec.ownership !== 'featured-order');
-    assert.deepEqual(FIELDS.map(({ label, editable }) => [label, editable]), listed.map(([name, spec]) => [name, spec.editable === true]));
+    assert.deepEqual(
+      FIELDS.map(({ label, editable }) => [label, editable]),
+      listed.map(([name, spec]) => [name, spec.editable === true]),
+    );
   });
 });

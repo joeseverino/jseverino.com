@@ -173,10 +173,9 @@ on every request.
 | `Permissions-Policy` | the deny list in [`public/_headers`](../public/_headers) | Denies every permission-gated browser feature the site does not use. |
 
 The cache rules per path are in [Architecture](./Architecture.md#cache-behavior).
-The asset rules and the global `/*` rule also strip any
-`Access-Control-Allow-Origin` an upstream layer might add, so responses carry
-no CORS headers (the site has no public cross-origin asset use). Preview URLs
-carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
+No response carries `Access-Control-Allow-Origin`, since nothing on the site is
+for another origin to read; the edge suite and `deploy:verify` fail on one.
+Preview URLs carry `X-Robots-Tag: noindex` ([Preview access](./Cloudflare.md#preview-access)).
 
 ### Preview review route
 
@@ -192,7 +191,7 @@ only content-negotiation headers to LIVE, never cookies or authorization.
 Hosted notes stay in browser `localStorage`. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
 
-### Content Security Policy
+### Content security policy
 
 The policy starts from `default-src 'none'`, so every fetch type needs its own
 directive and any new resource category fails closed. It allowlists what
@@ -429,7 +428,7 @@ ships to visitors:
   triggers. Each accepted finding carries a `# zizmor: ignore[<audit>]`
   comment and its reason on the line it is found.
 - **Link checks** run lychee against repository documentation and public
-  Markdown content separately, with reports uploaded as workflow artifacts
+  Markdown content separately, with reports in the job summary
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).
 - **Lighthouse** checks selected live URLs on a weekly/manual schedule with the
   lockfile's Lighthouse (`bin/lighthouse-check.ts`) and uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](../.github/workflows/lighthouse.yml)).

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from './helpers/test.ts';
+import { expect, type Page, test } from './helpers/test.ts';
 import { imageHeavyWriteup } from './helpers/writeups.ts';
 
 const WRITEUP = imageHeavyWriteup();

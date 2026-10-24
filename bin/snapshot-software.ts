@@ -1,11 +1,13 @@
 #!/usr/bin/env node
+
 // Refresh src/data/package-registry.json, the only source src/lib/software.ts reads
 // (builds never call PyPI or npm). Fails without writing if any lookup fails.
 //
 //   mise run snapshot:software
-import { PACKAGES } from '../src/lib/software.config.ts';
+
 import { writeJson } from '../src/lib/json.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
+import { PACKAGES } from '../src/lib/software.config.ts';
 import { cli } from './lib/args.ts';
 import { snapshotPackages } from './lib/package-registry.ts';
 

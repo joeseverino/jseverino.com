@@ -3,7 +3,7 @@
 // (.astro/dev.json) names its pid and url.
 import path from 'node:path';
 import { readJson } from '../../src/lib/json.ts';
-import { run, type RunResult } from '../lib/run.ts';
+import { type RunResult, run } from '../lib/run.ts';
 
 export interface DevLock {
   pid: number;
@@ -51,8 +51,6 @@ export async function servingDevServer(root: string): Promise<DevLock | null> {
 
 // Astro's own subcommands: `astro` resolves from node_modules/.bin, which mise puts on PATH. The port is
 // astro.config.ts's (DEV_PORT, else Astro's default), and the lock reports the url it took.
-export const startDevServer = (root: string): Promise<RunResult> =>
-  run('astro', ['dev', '--background'], { cwd: root, timeout: 60_000 });
+export const startDevServer = (root: string): Promise<RunResult> => run('astro', ['dev', '--background'], { cwd: root, timeout: 60_000 });
 
-export const stopDevServer = (root: string): Promise<RunResult> =>
-  run('astro', ['dev', 'stop'], { cwd: root, timeout: 30_000 });
+export const stopDevServer = (root: string): Promise<RunResult> => run('astro', ['dev', 'stop'], { cwd: root, timeout: 30_000 });

@@ -14,7 +14,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
 }
 
 /* tokens:start: generated from the lockfile-pinned severino-brand contract by `mise run sync:tokens`. Edit tokens upstream, not here. */
-/* stylelint-disable color-no-hex, function-disallowed-list -- generated literal colors */
+/* biome-ignore-start lint/style/noHexColors lint/plugin/literal-colors: generated literal colors */
 :root {
   color-scheme: light dark;
   --color-bg: light-dark(#ffffff, #131826);
@@ -93,14 +93,34 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   --weight-label: 700;
   --header-height: 3.6rem;
 }
-/* stylelint-enable color-no-hex, function-disallowed-list */
+/* biome-ignore-end lint/style/noHexColors lint/plugin/literal-colors: generated literal colors */
 /* tokens:end */
 
 /* Overrides the generated 12px radius. --menu-offset is the header height once the 2.5rem menu button sizes it. */
-/* stylelint-disable-next-line no-duplicate-selectors -- the generated block owns the first :root. */
+/* biome-ignore lint/suspicious/noDuplicateSelectors: the generated block owns the first :root. */
 :root {
   --radius-md: clamp(10px, 6px + 0.6vw, 12px);
   --menu-offset: 3.8rem;
+
+  /* Site steps on the brand type scale: fixed UI sizes that hold while body
+     text is fluid, and the home hero's lede. */
+  --font-3xs: 0.6875rem;
+  --font-ui: 0.875rem;
+  --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
+
+  /* Site steps between the brand spacing steps: the inset of a card's text and a pill's
+     label from their border, and the block padding of an archive row. */
+  --space-inset: 0.875rem;
+  --space-row: 1.125rem;
+}
+
+/* An explicit theme choice (BaseLayout's boot script, the footer control) pins the scheme every light-dark() token resolves against. */
+:root[data-theme-mode='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme-mode='dark'] {
+  color-scheme: dark;
 }
 
 }

@@ -2,7 +2,7 @@
 // own build and the PREBUILT one (`mise run browser`, CI) serve the same artifact.
 import os from 'node:os';
 import type { PlaywrightTestConfig, ReporterDescription } from '@playwright/test';
-import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
+import { fromCheckoutCache, siteRoot } from '../src/lib/site-root.ts';
 
 export const browserTestEnv = Object.freeze({
   PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
@@ -18,16 +18,17 @@ export function workers(ci?: number): { workers?: number } {
 // The configs live in tests/; servers and artifacts run from the repo root.
 export const webServerCwd = siteRoot;
 
-// Per-suite artifact paths, so suites running at once never empty each other's output.
-// PLAYWRIGHT_REPORT adds the HTML report and the JSON bin/playwright-summary.ts renders.
+// Per-suite artifact paths in the checkout's cache, so suites running at once never empty
+// each other's output. PLAYWRIGHT_REPORT adds the HTML report and the JSON
+// bin/playwright-summary.ts renders.
 export function suiteArtifacts(suite: string): { outputDir: string; reporter: ReporterDescription[] } {
   return {
-    outputDir: fromRoot('test-results', suite),
+    outputDir: fromCheckoutCache('test-results', suite),
     reporter: process.env.PLAYWRIGHT_REPORT
       ? [
           ['list'],
-          ['html', { open: 'never', outputFolder: fromRoot('playwright-report', suite) }],
-          ['json', { outputFile: fromRoot('test-results', `${suite}.json`) }],
+          ['html', { open: 'never', outputFolder: fromCheckoutCache('playwright-report', suite) }],
+          ['json', { outputFile: fromCheckoutCache('test-results', `${suite}.json`) }],
         ]
       : [['list']],
   };
@@ -44,7 +45,9 @@ export function previewServer({ port, timeout }: { port: number; timeout: number
       // --ignore-lock keeps the server in the foreground Playwright owns (Astro
       // detaches it when it detects an agent) and beside a running visual preview.
       `astro preview --host 127.0.0.1 --port ${port} --ignore-lock`,
-    ].filter(Boolean).join(' && '),
+    ]
+      .filter(Boolean)
+      .join(' && '),
     url: `http://127.0.0.1:${port}`,
     // A prebuilt artifact is served fresh, never by whatever holds the port.
     reuseExistingServer: !process.env.CI && !process.env.PREBUILT,
@@ -56,8 +59,8 @@ export function previewServer({ port, timeout }: { port: number; timeout: number
 }
 
 // `node tests/browser-test-env.ts build` builds the artifact the browser and
-// edge suites serve, with the same values as their webServer builds. CI runs it
-// while browser system packages install, then sets PREBUILT.
+// edge suites serve, with the same values as their webServer builds.
+// `mise run build:browser` runs it, and the runs that follow set PREBUILT.
 if (import.meta.main && process.argv[2] === 'build') {
   const { spawnSync } = await import('node:child_process');
   const { status } = spawnSync(process.execPath, ['bin/build-static.ts'], {

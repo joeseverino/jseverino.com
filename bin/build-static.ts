@@ -1,14 +1,16 @@
 #!/usr/bin/env node
+
 // `astro build`, then the CSP hashes. The build is the same for production and a preview:
 // a preview deploy wraps it afterwards (bin/wrap-preview.ts). The output dir comes from
 // src/lib/build-output.ts (shared with astro.config.ts).
+
 import path from 'node:path';
 import { buildOutDir, headersTemplate } from '../src/lib/build-output.ts';
 import { permittedContentRoot } from '../src/lib/content-root.ts';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { buildCsp } from './build-csp.ts';
-import { jsonLogs, spawnResult } from './lib/run.ts';
 import { cli, flag } from './lib/args.ts';
+import { jsonLogs, spawnResult } from './lib/run.ts';
 
 const { values } = cli({
   usage: 'usage: node bin/build-static.ts [--timings]',

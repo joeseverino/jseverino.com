@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { fromRoot } from '../../src/lib/site-root.ts';
 
@@ -19,7 +19,10 @@ function snapshotIn(contentRoot: string): { writeups: string[]; pages: string[] 
 }
 
 const documents = (dir: string): string[] =>
-  fs.readdirSync(fromRoot(dir)).filter((name) => fs.existsSync(fromRoot(dir, name, 'index.mdx'))).sort();
+  fs
+    .readdirSync(fromRoot(dir))
+    .filter((name) => fs.existsSync(fromRoot(dir, name, 'index.mdx')))
+    .sort();
 
 test('the snapshot reads the content root the build reads, from any working directory', () => {
   assert.deepEqual(snapshotIn('tests/fixtures/content'), {

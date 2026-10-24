@@ -1,6 +1,7 @@
 ---
 import ContentPage from '@layouts/ContentPage.astro';
 import { getEducationInstitutions } from '@lib/content.ts';
+import '@styles/documents.css';
 
 export async function getStaticPaths() {
   return (await getEducationInstitutions()).map((page) => ({

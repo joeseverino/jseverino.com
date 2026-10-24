@@ -1,167 +1,179 @@
 @layer base {
+  /* Reset + element defaults */
 
-/* Reset + element defaults */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+  /* Fragment targets and the skip link land below the sticky header, at its tallest. */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-block-start: calc(var(--menu-offset) + var(--space-10));
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--font-base);
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: var(--font-base);
-  font-weight: 400;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-bg);
+  }
 
-::selection {
-  background: var(--color-primary);
-  color: var(--color-bg);
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+    text-underline-offset: 0.25ch;
+    transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-  text-underline-offset: 0.25ch;
-  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
-}
+  a:hover,
+  a:focus-visible {
+    text-decoration: underline;
+    text-decoration-style: dashed;
+  }
 
-a:hover,
-a:focus-visible {
-  text-decoration: underline;
-  text-decoration-style: dashed;
-}
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
+  img {
+    max-inline-size: 100%;
+    block-size: auto;
+    vertical-align: bottom;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
 
-img {
-  max-inline-size: 100%;
-  block-size: auto;
-  vertical-align: bottom;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
+  picture {
+    display: contents;
+  }
 
-picture {
-  display: contents;
-}
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  margin: 0;
-  overflow-wrap: break-word;
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-weight: 600;
+    line-height: 1.15;
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  font-weight: 600;
-  line-height: 1.15;
-}
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
 
-h1,
-h2,
-h3 {
-  letter-spacing: -0.02em;
-}
+  h1 {
+    font-size: var(--font-xxl);
+  }
 
-h1 { font-size: var(--font-xxl); }
-h2 { font-size: var(--font-xl); }
-h3 { font-size: var(--font-lg); }
-h4 { font-size: var(--font-prose-md); }
+  h2 {
+    font-size: var(--font-xl);
+  }
 
-h5,
-.prose h3 {
-  font-size: var(--font-prose-sm);
-  font-weight: 500;
-  line-height: 1.6;
-  text-transform: uppercase;
-}
+  h3 {
+    font-size: var(--font-lg);
+  }
 
-h6,
-.prose h4 {
-  font-size: var(--font-base);
-  font-weight: 400;
-  line-height: 1.6;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
+  h4 {
+    font-size: var(--font-prose-md);
+  }
 
-p {
-  margin: 0;
-}
+  h5,
+  .prose h3 {
+    font-size: var(--font-prose-sm);
+    font-weight: 500;
+    line-height: 1.6;
+    text-transform: uppercase;
+  }
 
-ul,
-ol {
-  margin: 0;
-  padding-inline-start: 1.4rem;
-}
+  h6,
+  .prose h4 {
+    font-size: var(--font-base);
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
 
-table {
-  border-collapse: collapse;
-}
+  p {
+    margin: 0;
+  }
 
-pre {
-  margin: 0;
-  padding: 1rem;
-  border-radius: var(--radius-sm);
-  background: var(--code-bg);
-  color: var(--code-fg);
-  font-family: var(--font-mono);
-  font-size: 0.92rem;
-  line-height: 1.65;
-  overflow-x: auto;
-}
+  ul,
+  ol {
+    margin: 0;
+    padding-inline-start: 1.4rem;
+  }
 
-code {
-  font-family: var(--font-mono);
-}
+  table {
+    border-collapse: collapse;
+  }
 
-p > code,
-li > code,
-figcaption > code,
-h1 > code,
-h2 > code,
-h3 > code,
-h4 > code {
-  padding-block: 0.1em;
-  padding-inline: 0.42em;
-  border: 1px solid var(--color-code-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-code-bg);
-  color: var(--color-code-text);
-  font-size: 0.9em;
-  font-weight: 600;
-  line-height: 1.35;
-  white-space: nowrap;
-}
+  pre {
+    margin: 0;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--code-bg);
+    color: var(--code-fg);
+    font-family: var(--font-mono);
+    font-size: var(--font-ui);
+    line-height: 1.65;
+    overflow-x: auto;
+  }
 
-hr {
-  margin-block: var(--space-40);
-  border: 0;
-  border-block-start: 1px solid var(--color-border);
-}
+  code {
+    font-family: var(--font-mono);
+  }
 
+  p > code,
+  li > code,
+  figcaption > code,
+  h1 > code,
+  h2 > code,
+  h3 > code,
+  h4 > code {
+    padding-block: 0.1em;
+    padding-inline: 0.42em;
+    border: 1px solid var(--color-code-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-code-bg);
+    color: var(--color-code-text);
+    /* biome-ignore lint/plugin/literal-font-sizes: inline code scales with the text around it, at any step of the scale. */
+    font-size: 0.9em;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  hr {
+    margin-block: var(--space-40);
+    border: 0;
+    border-block-start: 1px solid var(--color-border);
+  }
 }

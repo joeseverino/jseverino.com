@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, item, loadDesired as load, pick, same, type Item, type Run } from './drift.ts';
+import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, same } from './drift.ts';
 import type { Client } from './github.ts';
 
 interface RulesetSpec {
@@ -72,12 +72,20 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
     codeScanning: await client.get<Record<string, unknown>>(`${base}/code-scanning/default-setup`),
     permissions: await client.get<Record<string, unknown>>(`${base}/actions/permissions`),
     workflow: await client.get<Record<string, unknown>>(`${base}/actions/permissions/workflow`),
-    variables: Object.fromEntries((await client.get<{ variables: { name: string; value: string }[] }>(`${base}/actions/variables?per_page=100`)).variables.map(({ name, value }) => [name, value])),
+    variables: Object.fromEntries(
+      (await client.get<{ variables: { name: string; value: string }[] }>(`${base}/actions/variables?per_page=100`)).variables.map(({ name, value }) => [
+        name,
+        value,
+      ]),
+    ),
     ruleset: found ? await client.get<Record<string, unknown> & { id: number }>(`${base}/rulesets/${found.id}`) : null,
   };
 }
 
-const byKey = (key: string) => (a: unknown, b: unknown): number => String(fields(a)[key]).localeCompare(String(fields(b)[key]));
+const byKey =
+  (key: string) =>
+  (a: unknown, b: unknown): number =>
+    String(fields(a)[key]).localeCompare(String(fields(b)[key]));
 
 // A ruleset as compared: the fields the file sets, rules and status checks in
 // a fixed order, nothing the API adds (ids, source, timestamps).
@@ -103,26 +111,30 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
 
   for (const [key, want] of Object.entries(desired.settings)) {
     const have = live.repo[key];
-    items.push(same(have, want)
-      ? item('repo', key, want, have, 'ok')
-      : item('repo', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { [key]: want } }]));
+    items.push(
+      same(have, want) ? item('repo', key, want, have, 'ok') : item('repo', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { [key]: want } }]),
+    );
   }
 
   const topics = [...desired.topics].sort();
   const topicsNow = (Array.isArray(live.repo.topics) ? live.repo.topics.map(String) : []).sort();
-  items.push(same(topics, topicsNow)
-    ? item('repo', 'topics', topics, topicsNow, 'ok')
-    : item('repo', 'topics', topics, topicsNow, 'drift', [{ method: 'PUT', path: `${base}/topics`, body: { names: topics } }]));
+  items.push(
+    same(topics, topicsNow)
+      ? item('repo', 'topics', topics, topicsNow, 'ok')
+      : item('repo', 'topics', topics, topicsNow, 'drift', [{ method: 'PUT', path: `${base}/topics`, body: { names: topics } }]),
+  );
 
   const analysis = fields(live.repo.security_and_analysis);
   for (const key of ['secret_scanning', 'secret_scanning_push_protection', 'dependabot_security_updates'] as const) {
     const want = desired.security[key];
     const have = fields(analysis[key]).status;
-    items.push(have === undefined
-      ? item('security', key, want, null, 'unavailable', [], 'not exposed for this repository')
-      : have === want
-        ? item('security', key, want, have, 'ok')
-        : item('security', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { security_and_analysis: { [key]: { status: want } } } }]));
+    items.push(
+      have === undefined
+        ? item('security', key, want, null, 'unavailable', [], 'not exposed for this repository')
+        : have === want
+          ? item('security', key, want, have, 'ok')
+          : item('security', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { security_and_analysis: { [key]: { status: want } } } }]),
+    );
   }
   for (const [key, have, path] of [
     ['vulnerability_alerts', live.vulnerabilityAlerts, `${base}/vulnerability-alerts`],
@@ -135,32 +147,70 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
   // CodeQL default setup, ahead of the ruleset: its code_scanning rule waits on
   // CodeQL results, so the analysis is on before the rule is.
   const scanning = { state: desired.security.code_scanning.state, languages: desired.security.code_scanning.languages.toSorted() };
-  const scanningNow = { state: live.codeScanning.state, languages: (Array.isArray(live.codeScanning.languages) ? live.codeScanning.languages.map(String) : []).sort() };
-  items.push(same(scanning, scanningNow)
-    ? item('security', 'code_scanning', scanning, scanningNow, 'ok')
-    : item('security', 'code_scanning', scanning, scanningNow, 'drift',
-        [{ method: 'PATCH', path: `${base}/code-scanning/default-setup`, body: scanning }], `differs: ${changedKeys(scanning, scanningNow).join(', ')}`));
+  const scanningNow = {
+    state: live.codeScanning.state,
+    languages: (Array.isArray(live.codeScanning.languages) ? live.codeScanning.languages.map(String) : []).sort(),
+  };
+  items.push(
+    same(scanning, scanningNow)
+      ? item('security', 'code_scanning', scanning, scanningNow, 'ok')
+      : item(
+          'security',
+          'code_scanning',
+          scanning,
+          scanningNow,
+          'drift',
+          [{ method: 'PATCH', path: `${base}/code-scanning/default-setup`, body: scanning }],
+          `differs: ${changedKeys(scanning, scanningNow).join(', ')}`,
+        ),
+  );
 
   const permissions = { allowed_actions: desired.actions.allowed_actions, sha_pinning_required: desired.actions.sha_pinning_required };
   const permissionsNow = pick(live.permissions, Object.keys(permissions));
-  items.push(same(permissionsNow, permissions)
-    ? item('actions', 'permissions', permissions, permissionsNow, 'ok')
-    : item('actions', 'permissions', permissions, permissionsNow, 'drift',
-        [{ method: 'PUT', path: `${base}/actions/permissions`, body: { enabled: true, ...permissions } }], `differs: ${changedKeys(permissions, permissionsNow).join(', ')}`));
+  items.push(
+    same(permissionsNow, permissions)
+      ? item('actions', 'permissions', permissions, permissionsNow, 'ok')
+      : item(
+          'actions',
+          'permissions',
+          permissions,
+          permissionsNow,
+          'drift',
+          [{ method: 'PUT', path: `${base}/actions/permissions`, body: { enabled: true, ...permissions } }],
+          `differs: ${changedKeys(permissions, permissionsNow).join(', ')}`,
+        ),
+  );
 
-  const workflow = { default_workflow_permissions: desired.actions.default_workflow_permissions, can_approve_pull_request_reviews: desired.actions.can_approve_pull_request_reviews };
+  const workflow = {
+    default_workflow_permissions: desired.actions.default_workflow_permissions,
+    can_approve_pull_request_reviews: desired.actions.can_approve_pull_request_reviews,
+  };
   const workflowNow = pick(live.workflow, Object.keys(workflow));
-  items.push(same(workflowNow, workflow)
-    ? item('actions', 'workflow token', workflow, workflowNow, 'ok')
-    : item('actions', 'workflow token', workflow, workflowNow, 'drift',
-        [{ method: 'PUT', path: `${base}/actions/permissions/workflow`, body: workflow }], `differs: ${changedKeys(workflow, workflowNow).join(', ')}`));
+  items.push(
+    same(workflowNow, workflow)
+      ? item('actions', 'workflow token', workflow, workflowNow, 'ok')
+      : item(
+          'actions',
+          'workflow token',
+          workflow,
+          workflowNow,
+          'drift',
+          [{ method: 'PUT', path: `${base}/actions/permissions/workflow`, body: workflow }],
+          `differs: ${changedKeys(workflow, workflowNow).join(', ')}`,
+        ),
+  );
 
   for (const [name, value] of Object.entries(desired.variables)) {
     const have = live.variables[name];
-    items.push(have === value
-      ? item('variables', name, value, have, 'ok')
-      : item('variables', name, value, have, 'drift',
-          [have === undefined ? { method: 'POST', path: `${base}/actions/variables`, body: { name, value } } : { method: 'PATCH', path: `${base}/actions/variables/${name}`, body: { name, value } }]));
+    items.push(
+      have === value
+        ? item('variables', name, value, have, 'ok')
+        : item('variables', name, value, have, 'drift', [
+            have === undefined
+              ? { method: 'POST', path: `${base}/actions/variables`, body: { name, value } }
+              : { method: 'PATCH', path: `${base}/actions/variables/${name}`, body: { name, value } },
+          ]),
+    );
   }
 
   const name = `ruleset ${desired.ruleset.name}`;
@@ -169,10 +219,13 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
   } else {
     const want = canonicalRuleset({ ...desired.ruleset });
     const have = canonicalRuleset(live.ruleset);
-    items.push(same(want, have)
-      ? item('ruleset', name, 'as in repo.json', 'as in repo.json', 'ok')
-      : item('ruleset', name, 'as in repo.json', `differs: ${changedKeys(fields(want), fields(have)).join(', ')}`, 'drift',
-          [{ method: 'PUT', path: `${base}/rulesets/${live.ruleset.id}`, body: desired.ruleset }]));
+    items.push(
+      same(want, have)
+        ? item('ruleset', name, 'as in repo.json', 'as in repo.json', 'ok')
+        : item('ruleset', name, 'as in repo.json', `differs: ${changedKeys(fields(want), fields(have)).join(', ')}`, 'drift', [
+            { method: 'PUT', path: `${base}/rulesets/${live.ruleset.id}`, body: desired.ruleset },
+          ]),
+    );
   }
   return items;
 }

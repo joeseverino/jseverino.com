@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { asyncCache } from '../../src/lib/async-cache.ts';
 
 test('concurrent callers share one load and its successful result', async () => {
@@ -7,7 +7,9 @@ test('concurrent callers share one load and its successful result', async () => 
   let finish!: (value: string) => void;
   const cached = asyncCache(() => {
     loads++;
-    return new Promise<string>((resolve) => { finish = resolve; });
+    return new Promise<string>((resolve) => {
+      finish = resolve;
+    });
   });
   const first = cached();
   const second = cached();
@@ -28,6 +30,8 @@ test('failed loads can be retried, including synchronous throws', async () => {
   await assert.rejects(cached(), /temporary/);
   assert.equal(await cached(), 'recovered');
   assert.equal(loads, 2);
-  const throws = asyncCache<string>(() => { throw new Error('sync'); });
+  const throws = asyncCache<string>(() => {
+    throw new Error('sync');
+  });
   await assert.rejects(throws(), /sync/);
 });

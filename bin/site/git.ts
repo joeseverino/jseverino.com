@@ -1,10 +1,11 @@
 // git and gh for publish/land, where every failure is fatal and carries the
 // command's stderr, and the working-tree state site status and site manage show.
+
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { gitAsync, git as gitQuery, statusEntries } from '../lib/git.ts';
 import { runSync } from '../lib/run.ts';
-import { DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { SiteError } from './cli.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 function call(cmd: string, args: string[], spawn: () => string): string {
   try {
@@ -17,8 +18,7 @@ function call(cmd: string, args: string[], spawn: () => string): string {
 export const git = (root: string, ...args: string[]): string => call('git', args, () => gitQuery(root, ...args));
 
 // gitInput and ghInput feed stdin: a pathspec list, a commit message, a PR body.
-export const gitInput = (root: string, input: string, ...args: string[]): string =>
-  call('git', args, () => runSync('git', args, { cwd: root, input }));
+export const gitInput = (root: string, input: string, ...args: string[]): string => call('git', args, () => runSync('git', args, { cwd: root, input }));
 
 // Every pr subcommand names the repo, so a fork or another remote is never the target.
 const ghArgs = (args: string[]): string[] => (args[0] === 'pr' ? [...args, '-R', SITE_REPOSITORY] : args);

@@ -1,5 +1,5 @@
 // The argv parser for bin/ scripts: util.parseArgs in strict mode, so an unknown flag stops the script. Every script answers --help.
-import { parseArgs, type ParseArgsOptionsConfig } from 'node:util';
+import { type ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { errorMessage } from '../../src/lib/error-message.ts';
 
 const help = { help: { type: 'boolean', short: 'h' } } as const;
@@ -14,9 +14,11 @@ export interface ParseConfig<O extends ParseArgsOptionsConfig, P extends boolean
 }
 
 // Throws on an unknown flag, a missing option value, or an unexpected positional.
-export function parse<const O extends ParseArgsOptionsConfig = {}, const P extends boolean = false>(
-  { options, allowPositionals, args = process.argv.slice(2) }: ParseConfig<O, P> = {},
-) {
+export function parse<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
+  options,
+  allowPositionals,
+  args = process.argv.slice(2),
+}: ParseConfig<O, P> = {}) {
   return parseArgs({
     args,
     options: { ...help, ...options } as typeof help & O,
@@ -26,9 +28,10 @@ export function parse<const O extends ParseArgsOptionsConfig = {}, const P exten
 }
 
 // parse() for an entry point: usage on --help, usage and exit 2 on bad input.
-export function cli<const O extends ParseArgsOptionsConfig = {}, const P extends boolean = false>(
-  { usage, ...config }: ParseConfig<O, P> & { usage?: string } = {},
-) {
+export function cli<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
+  usage,
+  ...config
+}: ParseConfig<O, P> & { usage?: string } = {}) {
   let parsed: ReturnType<typeof parse<O, P>>;
   try {
     parsed = parse(config);
@@ -44,8 +47,7 @@ export function cli<const O extends ParseArgsOptionsConfig = {}, const P extends
 }
 
 // The write-or-verify scripts take one flag.
-export const checkMode = (usage: string): boolean =>
-  cli({ usage, options: { check: flag } }).values.check;
+export const checkMode = (usage: string): boolean => cli({ usage, options: { check: flag } }).values.check;
 
 // A tool's entry point: its exit code, or 2 with the error on stderr.
 export async function exitWith(name: string, run: () => Promise<number>): Promise<void> {

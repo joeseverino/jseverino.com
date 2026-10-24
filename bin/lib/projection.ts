@@ -19,9 +19,7 @@ export const regenerateCommand = (): string => {
 // targets: [{ file, content }] with absolute paths. Writes the files whose
 // content changed, or with check exits 1 naming them and how to regenerate them.
 export function writeOrCheck(targets: readonly ProjectionTarget[], { check }: { check: boolean }): void {
-  const stale = targets.filter(
-    ({ file, content }) => !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== content,
-  );
+  const stale = targets.filter(({ file, content }) => !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== content);
   if (check) {
     if (stale.length === 0) return;
     console.error(`stale: ${stale.map(({ file }) => display(file)).join(', ')}\nrun: ${regenerateCommand()}`);

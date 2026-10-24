@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Post-merge production verification, run from a clean main checkout. Expectations
 // come from src/lib/edge-expectations.ts, shared with tests/edge.
 //
@@ -10,11 +11,10 @@
 // the zone, behind Access): served responses only, no git/check-run preconditions, no
 // HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
 // verifies one writeup after a publish.
+
 import fs from 'node:fs';
-import { setTimeout as sleep } from 'node:timers/promises';
 import path from 'node:path';
-import { DEFAULT_BRANCH, DEPLOY_CHECK, DIST_BRANCH, SITE, SITE_ORIGIN as siteOrigin, SITE_REPOSITORY as repository, writeupPath } from '../src/lib/site-config.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
+import { setTimeout as sleep } from 'node:timers/promises';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
@@ -24,16 +24,26 @@ import {
   inlineHashFindings,
   staticHeaderFindings,
 } from '../src/lib/edge-expectations.ts';
-import { cli, exitWith, flag } from './lib/args.ts';
-import { routeFile } from './lib/routes.ts';
-import { git } from './lib/git.ts';
-import { mapLimit } from './lib/map-limit.ts';
-import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
-import { spawnResult } from './lib/run.ts';
-import { annotate, createReport, endGroup, group, status } from './lib/step-summary.ts';
+import { errorMessage } from '../src/lib/error-message.ts';
+import {
+  DEFAULT_BRANCH,
+  DEPLOY_CHECK,
+  DIST_BRANCH,
+  SITE_REPOSITORY as repository,
+  SITE,
+  SITE_ORIGIN as siteOrigin,
+  writeupPath,
+} from '../src/lib/site-config.ts';
+import { siteRoot } from '../src/lib/site-root.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
 import { ACCESS_ID_ENV, ACCESS_SECRET_ENV, accessHeaders, isAccessChallenge } from './lib/access.ts';
-import { errorMessage } from '../src/lib/error-message.ts';
+import { cli, exitWith, flag } from './lib/args.ts';
+import { git } from './lib/git.ts';
+import { awaitChecks, commitVerification, openCodeScanningAlerts, passed, requiredContexts } from './lib/github.ts';
+import { mapLimit } from './lib/map-limit.ts';
+import { routeFile } from './lib/routes.ts';
+import { spawnResult } from './lib/run.ts';
+import { annotate, createReport, endGroup, group, status } from './lib/step-summary.ts';
 
 // What one run verifies: the origin it fetches from, and which checks apply there.
 interface Target {
@@ -55,8 +65,7 @@ const onTarget = ({ origin }: Target, url: string): string => {
 // The main ruleset's required checks, less the ones that only run on pull
 // requests. The deploy check is one of them, so main's commit is waited on until it is live.
 const PULL_REQUEST_ONLY = new Set(['dependency-review']);
-const requiredChecks = async (): Promise<string[]> =>
-  (await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name));
+const requiredChecks = async (): Promise<string[]> => (await requiredContexts(repository, DEFAULT_BRANCH)).filter((name) => !PULL_REQUEST_ONLY.has(name));
 
 async function fetchChecked(url: string, options: RequestInit = {}): Promise<Response> {
   const response = await fetch(url, {
@@ -97,9 +106,8 @@ async function pollChecks(sha: string, deadline: number, started: number, report
   const names = await requiredChecks();
   const checks = await awaitChecks(repository, sha, names, {
     deadline,
-    onPending: ({ missing, pending }) => report(
-      `waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`,
-    ),
+    onPending: ({ missing, pending }) =>
+      report(`waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`),
   });
   if (!checks) throw new Error('timed out waiting for the required checks');
   const failed = checks.filter((check) => check.status === 'completed' && !passed(check));
@@ -204,7 +212,7 @@ async function verifyDist(target: Target, urls: string[]): Promise<string> {
     for (const url of urls) {
       const { pathname } = new URL(url);
       const published = spawnResult('git', ['show', `FETCH_HEAD:${routeFile(pathname)}`], { cwd: siteRoot });
-      if (published.code !== 0 || published.stdout !== await (await fetchChecked(onTarget(target, url))).text()) stale.push(pathname);
+      if (published.code !== 0 || published.stdout !== (await (await fetchChecked(onTarget(target, url))).text())) stale.push(pathname);
     }
     if (stale.length === 0) {
       const { verified, reason } = await commitVerification(repository, DIST_BRANCH);
@@ -231,7 +239,7 @@ async function verifyContactGate({ origin, deployment }: Target): Promise<string
         ...extra,
       }),
     });
-    return { status: response.status, payload: await response.json().catch(() => ({})) as unknown };
+    return { status: response.status, payload: (await response.json().catch(() => ({}))) as unknown };
   };
 
   const tokenless = await submit({});
@@ -239,7 +247,8 @@ async function verifyContactGate({ origin, deployment }: Target): Promise<string
     assertClean(contactRefusalFindings(tokenless.status, tokenless.payload), 'POST /api/contact without a Turnstile token');
     return 'POST without a Turnstile token is refused with 400';
   }
-  if (tokenless.status !== 403) throw new Error(`POST /api/contact without a Turnstile token: status ${tokenless.status}, expected API Shield to refuse it with 403`);
+  if (tokenless.status !== 403)
+    throw new Error(`POST /api/contact without a Turnstile token: status ${tokenless.status}, expected API Shield to refuse it with 403`);
   const invalid = await submit({ turnstileToken: 'deploy-verify' });
   assertClean(contactRefusalFindings(invalid.status, invalid.payload), 'POST /api/contact with an invalid Turnstile token');
   return 'API Shield refuses a body without a token (403); the function refuses an invalid one (400)';
@@ -372,7 +381,7 @@ export async function main(): Promise<number> {
   const report = createReport('Deploy verification', 'Check');
   const run = (name: string, verify: (target: Target) => string | Promise<string>) => check(report, name, () => verify(target));
 
-  const sha = production ? releaseCandidate() : process.env.DEPLOY_SHA ?? 'deployment';
+  const sha = production ? releaseCandidate() : (process.env.DEPLOY_SHA ?? 'deployment');
   status('target', `${origin}${preview ? ' (preview)' : ''}`);
 
   const deployed = production ? await run('remote', () => waitForChecks(sha)) : true;
@@ -391,7 +400,12 @@ export async function main(): Promise<number> {
     await fromSitemap('headers', () => verifyPageHeaders(target, urls));
     await fromSitemap('routes', () => verifyLiveRoutes(target, urls));
     if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(target, urls));
-    const served = [['production', verifyProductionGuard], ['inline', verifyInlineHashes], ['cache', verifyCacheRules], ['turnstile', verifyTurnstileKey]] as const;
+    const served = [
+      ['production', verifyProductionGuard],
+      ['inline', verifyInlineHashes],
+      ['cache', verifyCacheRules],
+      ['turnstile', verifyTurnstileKey],
+    ] as const;
     for (const [name, verify] of served) {
       if (preview) skip(report, name, 'branch previews serve HTML through the sitedrift viewer');
       else await run(name, verify);
@@ -404,9 +418,9 @@ export async function main(): Promise<number> {
 
   const against = `for \`${sha.slice(0, 12)}\` against ${origin}`;
   const failed = report.failed();
-  report.write(failed.length === 0
-    ? `All ${report.rows.length} checks passed ${against}.`
-    : `${failed.length} of ${report.rows.length} checks failed ${against}.`);
+  report.write(
+    failed.length === 0 ? `All ${report.rows.length} checks passed ${against}.` : `${failed.length} of ${report.rows.length} checks failed ${against}.`,
+  );
   if (failed.length > 0) {
     const stalled = deployed ? '' : ' (deployment never reached a verified state)';
     console.error(`\nfailed: ${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);

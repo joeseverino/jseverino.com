@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from './helpers/test.ts';
+import { expect, type Locator, type Page, test } from './helpers/test.ts';
 
 async function fillContact(page: Page, name: string, email: string, message: string): Promise<void> {
   await page.locator('#contact-name').fill(name);
@@ -25,7 +25,9 @@ test.describe('Contact Form Interactive Verification', () => {
   test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
     let requests = 0;
     let finish!: () => void;
-    const pending = new Promise<void>((resolve) => { finish = resolve; });
+    const pending = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
     await page.route('/api/contact', async (route) => {
       requests++;
       await pending;

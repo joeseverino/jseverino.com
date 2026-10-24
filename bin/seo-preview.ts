@@ -1,17 +1,19 @@
 #!/usr/bin/env node
+
 // Prints the Google-style result, metadata, and SEO checks for one built page.
 //
 //   node bin/seo-preview.ts [--result] <url|path|slug>
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { styleText } from 'node:util';
+import { buildOutDir } from '../src/lib/build-output.ts';
+import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
+import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
+import { siteRoot } from '../src/lib/site-root.ts';
+import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
 import { cli } from './lib/args.ts';
 import { routeFile } from './lib/routes.ts';
-import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
-import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
-import { buildOutDir } from '../src/lib/build-output.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
-import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;
@@ -53,7 +55,10 @@ function textWidth(value: string): number {
 function truncate(value: string, max: number): string {
   const chars = [...value];
   if (chars.length <= max) return value;
-  return `${chars.slice(0, Math.max(0, max - 1)).join('').trimEnd()}…`;
+  return `${chars
+    .slice(0, Math.max(0, max - 1))
+    .join('')
+    .trimEnd()}…`;
 }
 
 function crumb(url: string): string {

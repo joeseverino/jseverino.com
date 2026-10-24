@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { createServer } from 'node:http';
+import { test } from 'node:test';
 import { fetchJson } from '../../src/lib/fetch-json.ts';
 
 test('JSON requests handle errors and time out stalled headers and bodies', async () => {
@@ -24,8 +24,7 @@ test('JSON requests handle errors and time out stalled headers and bodies', asyn
     assert.deepEqual(await fetchJson(base), { ok: true });
     await assert.rejects(fetchJson(`${base}/error`), /HTTP 503/);
     for (const route of ['/headers', '/body']) {
-      await assert.rejects(fetchJson(`${base}${route}`, {}, 50), (error: Error) =>
-        ['TimeoutError', 'AbortError'].includes(error.name));
+      await assert.rejects(fetchJson(`${base}${route}`, {}, 50), (error: Error) => ['TimeoutError', 'AbortError'].includes(error.name));
     }
     const controller = new AbortController();
     controller.abort();

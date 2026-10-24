@@ -1,8 +1,8 @@
 import rss from '@astrojs/rss';
-import type { APIRoute } from 'astro';
 import { getWriteups } from '@lib/content.ts';
 import { site } from '@lib/site.ts';
 import { writeupPath } from '@lib/site-config.ts';
+import type { APIRoute } from 'astro';
 
 export const GET: APIRoute = async () =>
   rss({

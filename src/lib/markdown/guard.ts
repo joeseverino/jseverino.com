@@ -12,8 +12,10 @@ const ALLOWED = new Map<string, ReadonlySet<string>>(
     td: ['colspan', 'rowspan'],
     th: ['colspan', 'rowspan', 'scope'],
     ...Object.fromEntries(
-      ('abbr b blockquote br caption code dd del div dl dt em figcaption figure h1 h2 h3 h4 h5 h6 ' +
-        'header hr i kbd li mark p pre s small span strong sub sup table tbody tfoot thead tr u ul wbr')
+      (
+        'abbr b blockquote br caption code dd del div dl dt em figcaption figure h1 h2 h3 h4 h5 h6 ' +
+        'header hr i kbd li mark p pre s small span strong sub sup table tbody tfoot thead tr u ul wbr'
+      )
         .split(' ')
         .map((tag) => [tag, []]),
     ),
@@ -31,8 +33,7 @@ export function isSafeUrl(value: string): boolean {
 }
 
 type Positioned = { position?: { start: { line: number; column: number } } | undefined };
-const at = (node: Positioned): string =>
-  node.position ? ` (line ${node.position.start.line}, column ${node.position.start.column})` : '';
+const at = (node: Positioned): string => (node.position ? ` (line ${node.position.start.line}, column ${node.position.start.column})` : '');
 
 function fail(message: string, node: Positioned): never {
   throw new Error(`${message}${at(node)}`);

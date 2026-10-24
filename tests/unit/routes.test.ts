@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { routeFile } from '../../bin/lib/routes.ts';
 
 test('a route maps to the file it is served from', () => {

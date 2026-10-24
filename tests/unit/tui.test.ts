@@ -1,9 +1,10 @@
 // The terminal layer's measuring, clipping and windowing, and the key table every binding names.
-import { test } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { styleText } from 'node:util';
-import { KEYS, fitFrame, keyOf, keySequence, truncate } from '../../bin/site/tui.ts';
 import { BINDINGS } from '../../bin/site/manage-input.ts';
+import { fitFrame, KEYS, keyOf, keySequence, truncate } from '../../bin/site/tui.ts';
 
 test('a pictograph in text presentation is one cell and an emoji is two', () => {
   for (const text of ['a™b', 'a©b', 'a®b', 'a↔b']) assert.equal(truncate(text, 3), text);

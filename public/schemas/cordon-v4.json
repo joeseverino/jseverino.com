@@ -5,20 +5,7 @@
   "title": "Cordon command-surface contract (schema_version 4)",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "ok",
-    "schema_version",
-    "name",
-    "description",
-    "group",
-    "order",
-    "effect",
-    "global_options",
-    "positionals",
-    "paras",
-    "examples",
-    "commands"
-  ],
+  "required": ["ok", "schema_version", "name", "description", "group", "order", "effect", "global_options", "positionals", "paras", "examples", "commands"],
   "properties": {
     "ok": { "const": true },
     "schema_version": { "const": 4 },
@@ -118,10 +105,7 @@
         "args": {
           "type": "array",
           "items": {
-            "oneOf": [
-              { "$ref": "#/$defs/option" },
-              { "$ref": "#/$defs/positional" }
-            ]
+            "oneOf": [{ "$ref": "#/$defs/option" }, { "$ref": "#/$defs/positional" }]
           }
         },
         "effect": { "$ref": "#/$defs/effect" },

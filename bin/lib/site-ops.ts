@@ -3,12 +3,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DetailedError } from './detailed-error.ts';
-import { createClient } from './cloudflare.ts';
-import { spawnResult, type SpawnResult } from './run.ts';
-import { SITE, SITE_ORIGIN, cspReportUri } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
+import { cspReportUri, SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { createClient } from './cloudflare.ts';
+import { DetailedError } from './detailed-error.ts';
+import { type SpawnResult, spawnResult } from './run.ts';
 
 export type Runner = (cmd: string, args: readonly string[], options: { cwd: string; timeout: number }) => SpawnResult;
 
@@ -71,7 +71,10 @@ async function queryD1(config: SiteOpsConfig, sql: string, params: (string | num
     const database = databases.find((candidate) => candidate.name === config.d1Database);
     if (!database) throw new SiteOpsError(`the token cannot see a D1 database named ${config.d1Database}`);
     client.ids.database = database.uuid;
-    const payload = await client.request<{ results?: Row[]; meta?: Row; success?: boolean }[]>('POST', '/accounts/:account/d1/database/:database/query', { sql, params });
+    const payload = await client.request<{ results?: Row[]; meta?: Row; success?: boolean }[]>('POST', '/accounts/:account/d1/database/:database/query', {
+      sql,
+      params,
+    });
     const first = payload.result?.[0];
     if (first?.success === false) throw new SiteOpsError('D1 reported a failed statement', { result: first });
     return { database: config.d1Database, results: first?.results ?? [], meta: first?.meta ?? {} };
@@ -112,10 +115,17 @@ export const preview = (text: string, limit = 80): string => {
 const redactContact = (row: Row): Row => {
   const message = String(row.message ?? '');
   return {
-    id: row.id, created_at: row.created_at,
-    name: abbreviateName(String(row.name ?? '')), email: redactEmail(String(row.email ?? '')),
-    message_preview: preview(message), message_chars: message.length,
-    status: row.status, browser: row.browser, device: row.device, country: row.country, source_url: row.source_url,
+    id: row.id,
+    created_at: row.created_at,
+    name: abbreviateName(String(row.name ?? '')),
+    email: redactEmail(String(row.email ?? '')),
+    message_preview: preview(message),
+    message_chars: message.length,
+    status: row.status,
+    browser: row.browser,
+    device: row.device,
+    country: row.country,
+    source_url: row.source_url,
   };
 };
 
@@ -126,11 +136,17 @@ export interface PiiRows extends D1Result {
 
 // Recent contact submissions. Redacted by default (abbreviated name, masked
 // email, message preview); includePii releases full rows and is audited.
-export async function contactSubmissions(config: SiteOpsConfig, { limit, includePii = false }: { limit?: number | undefined; includePii?: boolean } = {}): Promise<PiiRows> {
+export async function contactSubmissions(
+  config: SiteOpsConfig,
+  { limit, includePii = false }: { limit?: number | undefined; includePii?: boolean } = {},
+): Promise<PiiRows> {
   const n = bounded(limit, 10);
-  const result = await queryD1(config,
-    'SELECT id, created_at, name, email, message, status, browser, device, country, source_url, ip_address, user_agent, admin_notes '
-    + 'FROM contact_submissions ORDER BY created_at DESC LIMIT ?;', [n]);
+  const result = await queryD1(
+    config,
+    'SELECT id, created_at, name, email, message, status, browser, device, country, source_url, ip_address, user_agent, admin_notes ' +
+      'FROM contact_submissions ORDER BY created_at DESC LIMIT ?;',
+    [n],
+  );
   if (includePii) {
     audit(config, 'contact_pii_access', `rows=${result.results.length}`);
     return { ...result, piiReleased: true };
@@ -151,8 +167,9 @@ export async function cspReports(
   const n = bounded(limit, 20);
   const filter = directive?.trim().slice(0, 128);
   const where = filter ? 'WHERE effective_directive = ? ' : '';
-  const columns = 'id, created_at, effective_directive, blocked_uri, document_uri, source_file, status_code'
-    + (includePii ? ', ip_address, user_agent, country, raw_report' : '');
+  const columns =
+    'id, created_at, effective_directive, blocked_uri, document_uri, source_file, status_code' +
+    (includePii ? ', ip_address, user_agent, country, raw_report' : '');
   const result = await queryD1(config, `SELECT ${columns} FROM csp_reports ${where}ORDER BY created_at DESC LIMIT ?;`, [...(filter ? [filter] : []), n]);
   if (includePii) {
     audit(config, 'csp_pii_access', `rows=${result.results.length}`);
@@ -169,9 +186,11 @@ export interface CspCounts {
 
 export async function cspCounts(config: SiteOpsConfig): Promise<CspCounts> {
   const total = await queryD1(config, 'SELECT COUNT(*) AS total FROM csp_reports;');
-  const grouped = await queryD1(config,
-    "SELECT COALESCE(effective_directive, '(unknown)') AS effective_directive, COUNT(*) AS count FROM csp_reports "
-    + 'GROUP BY effective_directive ORDER BY count DESC, effective_directive ASC;');
+  const grouped = await queryD1(
+    config,
+    "SELECT COALESCE(effective_directive, '(unknown)') AS effective_directive, COUNT(*) AS count FROM csp_reports " +
+      'GROUP BY effective_directive ORDER BY count DESC, effective_directive ASC;',
+  );
   return {
     database: config.d1Database,
     total: Number(total.results[0]?.total ?? 0),

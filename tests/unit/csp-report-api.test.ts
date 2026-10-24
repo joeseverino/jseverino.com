@@ -1,11 +1,11 @@
 // The CSP report endpoint (src/lib/api/csp-report.ts): both report formats, the noise filters, D1 persistence.
 
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { storeCspReports } from '../../src/lib/api/csp-report.ts';
-import { createD1Stub } from './helpers/d1-stub.ts';
-import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import type { CspReportRow } from '../../src/lib/api/d1.ts';
+import { createD1Sqlite } from './helpers/d1-sqlite.ts';
+import { createD1Stub } from './helpers/d1-stub.ts';
 import { postRequest } from './helpers/requests.ts';
 
 const reportRequest = (body: unknown, contentType = 'application/csp-report', headers: Record<string, string> = {}): Request =>
@@ -186,7 +186,10 @@ describe('write bounds', () => {
   test('drops reports older than the retention window in the same batch', async () => {
     const db = createD1Sqlite();
     const seed = (age: string) =>
-      db.prepare(`INSERT INTO csp_reports (blocked_uri, raw_report, created_at) VALUES (?1, '{}', datetime('now', ?2))`).bind(`https://seed.example/${age}`, age).run();
+      db
+        .prepare(`INSERT INTO csp_reports (blocked_uri, raw_report, created_at) VALUES (?1, '{}', datetime('now', ?2))`)
+        .bind(`https://seed.example/${age}`, age)
+        .run();
     await seed('-61 days');
     await seed('-59 days');
     assert.equal(db.count('csp_reports'), 2);
@@ -200,11 +203,14 @@ describe('write bounds', () => {
 
   test('stores the normalized fields and caller metadata', async () => {
     const db = createD1Sqlite();
-    const response = await call(reportRequest(legacyReport, 'application/csp-report', {
-      'CF-Connecting-IP': '203.0.113.7',
-      'CF-IPCountry': 'US',
-      'User-Agent': '  Mozilla/5.0  ',
-    }), db);
+    const response = await call(
+      reportRequest(legacyReport, 'application/csp-report', {
+        'CF-Connecting-IP': '203.0.113.7',
+        'CF-IPCountry': 'US',
+        'User-Agent': '  Mozilla/5.0  ',
+      }),
+      db,
+    );
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
     const row = await db.prepare('SELECT * FROM csp_reports').first<CspReportRow>();

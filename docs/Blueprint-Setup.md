@@ -1,4 +1,4 @@
-# Blueprint Setup
+# Blueprint setup
 
 This repo is the reference implementation behind a future site blueprint. This
 file lists every *instance-specific* value: what a new site built from this
@@ -24,9 +24,9 @@ carries the human copy (bio, skills, nav, social).
 
 ### CSS and interaction contract
 
-[`base.css`](../src/styles/base.css) is the only stylesheet entry point. Each
-focused module is imported once into the declared `tokens`, `base`, and
-`components` layers. Extend a shared component rule before adding a variant;
+[`base.css`](../src/styles/base.css) is the global stylesheet. Each focused
+module is imported once into the declared `tokens`, `base`, `components`, and
+`pages` layers, from `base.css` or from the page that alone renders it. Extend a shared component rule before adding a variant;
 variants own only their differences. Keep design values in named tokens and
 logical properties, with the site-local font choice next to its font asset.
 
@@ -69,7 +69,7 @@ than `SITE.d1`.
 
 ### CI / external config
 - [`tests/lighthouse.json`](../tests/lighthouse.json): audited URLs.
-- [`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml): `--base-url`.
+- [`mise.toml`](../mise.toml): the `links:content` task's `--base-url`.
 - [`.github/repo.json`](../.github/repo.json): the public `PUBLIC_TURNSTILE_SITE_KEY` the build embeds, and the repository settings.
 
 ### Cloudflare zone and account

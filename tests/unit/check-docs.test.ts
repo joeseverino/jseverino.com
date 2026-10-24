@@ -1,7 +1,7 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { miseTaskRuns, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import { test } from 'node:test';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { miseTaskRuns, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
 
@@ -25,7 +25,10 @@ test('paths come from inline code outside fences, every token of a command', () 
     '```',
     'Plain bin/not-code.ts is prose.',
   ].join('\n');
-  assert.deepEqual(pathRefs(markdown, top), [{ line: 1, path: 'bin/site.ts' }, { line: 1, path: 'docs/Site-CLI.md' }]);
+  assert.deepEqual(pathRefs(markdown, top), [
+    { line: 1, path: 'bin/site.ts' },
+    { line: 1, path: 'docs/Site-CLI.md' },
+  ]);
 });
 
 test('a path resolves when tracked, under a tracked directory, or ignored', () => {
@@ -34,7 +37,10 @@ test('a path resolves when tracked, under a tracked directory, or ignored', () =
     ignored: (paths: readonly string[]) => new Set(paths.filter((p) => p.startsWith('dist'))),
   };
   const refs = ['bin/site.ts', 'bin/', 'dist/index.html', 'bin/site.mjs', 'src/lib/content'].map((p) => ({ line: 1, path: p }));
-  assert.deepEqual(missingPaths(refs, index).map((ref) => ref.path), ['bin/site.mjs', 'src/lib/content']);
+  assert.deepEqual(
+    missingPaths(refs, index).map((ref) => ref.path),
+    ['bin/site.mjs', 'src/lib/content'],
+  );
 });
 
 test('the repo index sees tracked files and ignored generated output', () => {

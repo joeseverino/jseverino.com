@@ -39,15 +39,16 @@ an 8 GB laptop never runs two browsers at once. Each suite run alone builds
 what it serves. `mise run ci` is `check` and then `browser`: every gate the
 pipeline runs.
 
-**`mise run browser:edge`**: the edge runtime suite (`tests/edge/`). Serves
-the output through `astro preview`, which runs the built Worker and its static
-assets in the local Cloudflare runtime under `wrangler.jsonc`, and asserts what
-only that runtime produces: the hash CSP covering every inline script and style, one identical
-policy on every request, the `/contact/` Trusted Types exemption, the `public/_headers` security and cache rules, a real 404, the trailing-slash redirect,
-the contact route's refusals and its security headers (no Turnstile token, wrong content type,
-malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
-WKD key's content type. CI's `edge` leg runs it. **`mise run preview`**
-starts the same runtime for by-hand checks.
+**`mise run browser:edge`**: the edge runtime suite (`tests/edge/`). It serves the output through `astro preview`, which runs the built Worker and its static assets in the local Cloudflare runtime under `wrangler.jsonc`. It asserts what only that runtime produces:
+
+- The hash CSP covers every inline script and style, with one identical policy on every request.
+- The `/contact/` Trusted Types exemption.
+- The `public/_headers` security and cache rules.
+- A real 404 and the trailing-slash redirect.
+- The contact route's refusals (no Turnstile token, wrong content type, malformed JSON, fields outside the contract) and its security headers.
+- A byte-exact `security.txt` and the WKD key's content type.
+
+CI's `edge` leg runs it. **`mise run preview`** starts the same runtime for by-hand checks.
 
 ## Daily, in detail
 
@@ -87,24 +88,23 @@ score line per page, writes the table to the job summary in CI, and exits
 non-zero on an audit execution failure or an `error`-level threshold. Uses the
 lockfile's Playwright Chromium (`mise exec -- playwright install chromium`),
 with `CHROME_PATH` available for an explicit browser override. CI installs
-Chromium and its system packages with `mise run setup:browsers`
-(`BROWSERS=chromium`) before the audit. Per-page logs accompany the reports,
+Chromium and its system packages with `mise run setup:browsers chromium`
+before the audit. Per-page logs accompany the reports,
 including when Chrome fails to launch.
 
-**`mise run deploy:verify`**: run after a production deploy, from a residential IP
-and a clean `main` checkout. Confirms the local HEAD matches origin, waits for every required check
-(build, e2e, visual, edge, deploy) to pass,
-then probes the live site: security headers on `/` and a deep writeup page
-picked from the live sitemap, every sitemap URL returns 200, the preview proxy
-is absent in production, the live home page's inline script and stylesheet are covered by the
-CSP's hashes (`inline`), an unknown route returns a real 404, `POST
-/api/contact` without a Turnstile token is refused, the contact form carries a
-Turnstile site key, the live `security.txt`
-matches the committed file, and zero open CodeQL alerts. Every check
-runs even after an earlier one fails. `--origin <url>` verifies one Worker
-version at its preview URL instead (what `deploy.yml` runs before a version
-takes traffic), `--preview` marks a branch preview, and `--slug <writeup>`
-checks one writeup.
+**`mise run deploy:verify`**: run after a production deploy, from a residential IP and a clean `main` checkout. It confirms the local HEAD matches origin and waits for every required check (build, e2e, visual, edge, deploy) to pass. Then it probes the live site:
+
+- Security headers on `/` and on a deep writeup page picked from the live sitemap.
+- Every sitemap URL returns 200.
+- The preview proxy is absent in production.
+- The live home page's inline script and stylesheet are covered by the CSP's hashes (`inline`).
+- An unknown route returns a real 404.
+- `POST /api/contact` without a Turnstile token is refused.
+- The contact form carries a Turnstile site key.
+- The live `security.txt` matches the committed file.
+- No CodeQL alert is open.
+
+Every check runs even after an earlier one fails. `--origin <url>` verifies one Worker version at its preview URL instead (what `deploy.yml` runs before a version takes traffic). `--preview` marks a branch preview, and `--slug <writeup>` checks one writeup.
 
 **`mise run build`**: the build every deploy ships (`bin/build-static.ts`):
 `astro build`, then the CSP hashes. CI builds once and the `deploy` workflow
@@ -190,19 +190,25 @@ The functional Playwright specs pass across Chromium, Firefox, and WebKit
 
 - **Usage:** `browser:edge`
 
-Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity
+The built site served by the local Worker runtime: CSP, headers, 404, contact refusals and security.txt
 
 ## `browser:visual`
 
 - **Usage:** `browser:visual`
 
-Screenshots of the fixture build match the committed macOS Chromium baselines
+Screenshots of the fixture build match the committed macOS Chromium baselines; on any other platform the suite does not run and the task fails
 
 ## `build`
 
 - **Usage:** `build`
 
 The build every deploy ships: astro build, then the CSP hashes
+
+## `build:browser`
+
+- **Usage:** `build:browser`
+
+The build the browser suites serve under PREBUILT: the deploy build, with the test site key
 
 ## `built`
 
@@ -273,12 +279,6 @@ jactionlint finds no syntax, expression, action-input or shellcheck error in the
 
 Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source
 
-## `checks:css-lint`
-
-- **Usage:** `checks:css-lint`
-
-Stylelint passes over src/styles
-
 ## `checks:css-vars`
 
 - **Usage:** `checks:css-vars`
@@ -321,6 +321,12 @@ No document under src/content is `published: false`
 
 jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere
 
+## `checks:lint`
+
+- **Usage:** `checks:lint`
+
+Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers
+
 ## `checks:mise-fmt`
 
 - **Usage:** `checks:mise-fmt`
@@ -331,7 +337,7 @@ Every tracked mise config is as `mise fmt` writes it
 
 - **Usage:** `checks:patch`
 
-No whitespace errors or conflict markers in the working tree
+No whitespace error or conflict marker in any tracked file; synced content may keep trailing spaces and blank last lines
 
 ## `checks:renovate`
 
@@ -343,13 +349,19 @@ Renovate's own validator finds no error, warning or needed migration in .github/
 
 - **Usage:** `checks:repo-policy`
 
-Node and npm pins agree; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no explicit any or unexplained suppressions; runners fixed, every job time-boxed
+Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout
 
 ## `checks:security-txt`
 
 - **Usage:** `checks:security-txt`
 
 security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key
+
+## `checks:shellcheck`
+
+- **Usage:** `checks:shellcheck`
+
+ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names
 
 ## `checks:tasks`
 
@@ -375,7 +387,7 @@ The node:test specs under tests/unit pass
 
 - **Usage:** `checks:workflows`
 
-zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings a `# zizmor: ignore[<audit>]` comment beside them accepts with a reason
+zizmor finds no security issue in the workflows; an accepted finding carries an inline reason
 
 ## `ci`
 
@@ -387,7 +399,7 @@ Every gate the pipeline runs: check, then the browser suites
 
 - **Usage:** `clean:generated`
 
-Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches under SITE_CACHE_DIR and synced content are left alone
+Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and synced content stay
 
 ## `cloudflare`
 
@@ -415,6 +427,12 @@ Start the local dev server
 
 Build HEAD and the working tree; show what changed in the shipped site
 
+## `fix:lint`
+
+- **Usage:** `fix:lint`
+
+Apply Biome's safe fixes and formatting to the files biome.jsonc covers, and report what it cannot fix
+
 ## `github`
 
 - **Usage:** `github`
@@ -426,6 +444,18 @@ Build HEAD and the working tree; show what changed in the shipped site
 - **Usage:** `lighthouse`
 
 Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)
+
+## `links:content`
+
+- **Usage:** `links:content`
+
+Every external link in the published content answers (online); links to jseverino.com itself are built:links' job
+
+## `links:docs`
+
+- **Usage:** `links:docs`
+
+Every external link in the engineering docs answers (online)
 
 ## `make:content-index`
 
@@ -478,7 +508,7 @@ Serve the build through the local Worker runtime: _headers, redirects, the 404 p
 
 - **Usage:** `preview:wrap`
 
-Turn the finished build into a branch preview: the sitedrift review viewer over every page, then the CSP filled again to cover it (the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH)
+Turn the finished build into a branch preview: add the review viewer, then rebuild the CSP to cover it
 
 ## `publish:dist`
 
@@ -488,9 +518,15 @@ Commit a build directory to the `dist` branch (CI publishes it on every push to 
 
 ## `setup:browsers`
 
-- **Usage:** `setup:browsers`
+Install the named Playwright browsers and their system packages
 
-Install Playwright's browsers (BROWSERS, space-separated; CACHE_HIT=true installs only their system packages) while the site builds with the test site key (PREBUILD=true), for a browser suite run with PREBUILT
+
+- **Usage:** `setup:browsers <browser>…`
+
+### Arguments
+- **`<browser>…`** — A browser to install
+
+  **Choices:** `chromium`, `firefox`, `webkit`
 
 ## `sign:security`
 

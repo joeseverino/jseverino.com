@@ -1,17 +1,17 @@
 // site publish and site land against a real git remote (bare repo in a temp dir), a stubbed gh, and
 // a stand-in for GitHub's REST API. Both log to one file, so call order is checked across them.
 // The sync and gate are injected; git is real.
-import { after, before, beforeEach, describe, test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { publish } from '../../bin/site/publish.ts';
-import { land } from '../../bin/site/land.ts';
-import { SiteError, createOutput } from '../../bin/site/cli.ts';
+import { after, before, beforeEach, describe, test } from 'node:test';
 import { git } from '../../bin/lib/git.ts';
-import { tempDir, write } from './helpers/fs.ts';
+import { createOutput, SiteError } from '../../bin/site/cli.ts';
+import { land } from '../../bin/site/land.ts';
+import { publish } from '../../bin/site/publish.ts';
 import { DEPLOY_CHECK } from '../../src/lib/site-config.ts';
+import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });
 const NOW = new Date(2026, 9, 2, 14, 5);
@@ -112,7 +112,8 @@ function assertCheckoutLeftAlone(checkout: string): void {
   assert.equal(git(checkout, 'worktree', 'list').split('\n').length, 1);
 }
 
-const syncWriting = (files: Record<string, string>, extra: Record<string, string> = {}) =>
+const syncWriting =
+  (files: Record<string, string>, extra: Record<string, string> = {}) =>
   async ({ worktree }: { worktree: string }) => {
     for (const [file, content] of Object.entries({ ...files, ...extra })) write(path.join(worktree, file), content);
     return { written: Object.keys(files).sort(), removed: [] };
@@ -128,7 +129,10 @@ const gate = async () => {};
 before(() => {
   tmp = tempDir('site-orchestration-');
   const gitconfig = path.join(tmp, 'gitconfig');
-  write(gitconfig, '[user]\n\tname = Test\n\temail = test@example.com\n[commit]\n\tgpgsign = false\n[tag]\n\tgpgsign = false\n[init]\n\tdefaultBranch = main\n');
+  write(
+    gitconfig,
+    '[user]\n\tname = Test\n\temail = test@example.com\n[commit]\n\tgpgsign = false\n[tag]\n\tgpgsign = false\n[init]\n\tdefaultBranch = main\n',
+  );
   write(path.join(tmp, 'bin/gh'), GH_STUB);
   fs.chmodSync(path.join(tmp, 'bin/gh'), 0o755);
   fs.mkdirSync(path.join(tmp, 'vault/05 Writeups'), { recursive: true });
@@ -190,7 +194,10 @@ describe('site publish', () => {
   test('nothing changed: says so, pushes nothing, opens nothing', async () => {
     const { origin, checkout } = fixture();
     const result = await publish({
-      root: checkout, out, now: NOW, gate,
+      root: checkout,
+      out,
+      now: NOW,
+      gate,
       sync: syncWriting({ 'src/content/writeups/old/index.mdx': '---\ntitle: Old\n---\nNewer body on main\n' }),
     });
     assert.equal(result.status, 'nothing-to-publish');
@@ -202,18 +209,15 @@ describe('site publish', () => {
   test('a gh failure is fatal, carries its stderr, and names the pushed branch', async () => {
     const { origin, checkout } = fixture();
     scenario({ prCreateFail: 'GraphQL: Resource not accessible by integration' });
-    await assert.rejects(
-      publish({ root: checkout, out, now: NOW, sync: syncWriting(NEW_WRITEUP), gate }),
-      (error: SiteError) => {
-        assert.match(error.message, /gh pr create failed/);
-        assert.match(error.message, /Resource not accessible by integration/);
-        assert.match(error.message, /origin\/content\/2026-10-02-1405 was pushed and is still on the remote/);
-        assert.equal(error.code, 1);
-        assert.equal((error.result as { remoteBranch: string }).remoteBranch, BRANCH);
-        assert.match(error.fix ?? '', /git push origin --delete content\/2026-10-02-1405/);
-        return true;
-      },
-    );
+    await assert.rejects(publish({ root: checkout, out, now: NOW, sync: syncWriting(NEW_WRITEUP), gate }), (error: SiteError) => {
+      assert.match(error.message, /gh pr create failed/);
+      assert.match(error.message, /Resource not accessible by integration/);
+      assert.match(error.message, /origin\/content\/2026-10-02-1405 was pushed and is still on the remote/);
+      assert.equal(error.code, 1);
+      assert.equal((error.result as { remoteBranch: string }).remoteBranch, BRANCH);
+      assert.match(error.fix ?? '', /git push origin --delete content\/2026-10-02-1405/);
+      return true;
+    });
     assert.equal(git(checkout, 'branch', '--list', 'content/*'), '');
     assert.notEqual(git(origin, 'branch', '--list', BRANCH), '', 'the pushed branch is what the error names');
   });
@@ -261,7 +265,16 @@ describe('site publish', () => {
     write(path.join(checkout, 'package-lock.json'), '{"packages":{},"dirty":true}\n');
     let synced = false;
     await assert.rejects(
-      publish({ root: checkout, out, now: NOW, gate, sync: async () => { synced = true; return { written: [], removed: [] }; } }),
+      publish({
+        root: checkout,
+        out,
+        now: NOW,
+        gate,
+        sync: async () => {
+          synced = true;
+          return { written: [], removed: [] };
+        },
+      }),
       (error: Error & { code: number }) => error.code === 3 && /preflight failed: clean/.test(error.message),
     );
     assert.equal(synced, false);
@@ -295,8 +308,14 @@ describe('site land', () => {
 
     const verified: string[] = [];
     const result = await land({
-      root: checkout, pr: '7', out, intervalMs: 1,
-      verify: async (slug: string) => { verified.push(slug); return { ok: true }; },
+      root: checkout,
+      pr: '7',
+      out,
+      intervalMs: 1,
+      verify: async (slug: string) => {
+        verified.push(slug);
+        return { ok: true };
+      },
       gone: async () => ({ ok: true, status: 404 }),
       hq: async () => ({ ran: false }),
     });
@@ -304,12 +323,21 @@ describe('site land', () => {
     assert.equal(result.status, 'landed');
     assert.equal(result.sha, mergeSha);
     assert.deepEqual(verified, ['new']);
-    assert.deepEqual(result.verified.map((entry: { slug: string }) => entry.slug), ['new', 'old']);
+    assert.deepEqual(
+      result.verified.map((entry: { slug: string }) => entry.slug),
+      ['new', 'old'],
+    );
     const calls = ghCalls();
     assert.equal(headPolls(), 3, 'polled until both required checks reported and passed');
-    const order = ['api repos/joeseverino/jseverino.com/rules/branches/main', 'pr merge 7 --squash', `api repos/joeseverino/jseverino.com/commits/${mergeSha}`]
-      .map((prefix) => calls.findIndex((call) => call.startsWith(prefix)));
-    assert.ok(order.every((index, i) => index >= 0 && (i === 0 || index > (order[i - 1] ?? -1))), calls.join('\n'));
+    const order = [
+      'api repos/joeseverino/jseverino.com/rules/branches/main',
+      'pr merge 7 --squash',
+      `api repos/joeseverino/jseverino.com/commits/${mergeSha}`,
+    ].map((prefix) => calls.findIndex((call) => call.startsWith(prefix)));
+    assert.ok(
+      order.every((index, i) => index >= 0 && (i === 0 || index > (order[i - 1] ?? -1))),
+      calls.join('\n'),
+    );
     assert.ok(calls.findLastIndex((call) => call.includes('/commits/head/')) < calls.findIndex((call) => call.startsWith('pr merge')));
   });
 

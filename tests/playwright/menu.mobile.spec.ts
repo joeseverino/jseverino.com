@@ -1,4 +1,4 @@
-import { test, expect, type Page } from './helpers/test.ts';
+import { expect, type Page, test } from './helpers/test.ts';
 
 async function menu(page: Page) {
   await page.goto('/');
@@ -24,10 +24,7 @@ test('touch targets suppress title-only tap highlights', async ({ page, browserN
   const cardLinks = page.locator('.project-card a');
 
   await expect(brand).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
-  await expect(cardLinks.first()).toHaveCSS(
-    '-webkit-tap-highlight-color',
-    'rgba(0, 0, 0, 0)',
-  );
+  await expect(cardLinks.first()).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
 });
 
 test('mobile menu opens via hamburger and closes on Escape', async ({ page }) => {
@@ -59,7 +56,22 @@ test('mobile menu closes when the backdrop is clicked', async ({ page }) => {
 test('mobile menu closes after navigating via a menu link', async ({ page }) => {
   const { popover } = await openMenu(page);
 
-  await popover.getByRole('link', { name: /portfolio/i }).first().click();
+  await popover
+    .getByRole('link', { name: /portfolio/i })
+    .first()
+    .click();
   await expect(page).toHaveURL(/\/portfolio\/$/);
   await expect(popover).toBeHidden();
+});
+
+test.describe('without JavaScript', () => {
+  test.use({ javaScriptEnabled: false });
+
+  test('the menu opens natively and staggers its items in', async ({ page }) => {
+    const { toggle, popover } = await menu(page);
+    await toggle.click();
+    await expect(popover).toBeVisible();
+    const delays = await popover.locator('.mobile-nav-list li').evaluateAll((items) => items.map((item) => getComputedStyle(item).transitionDelay));
+    expect(new Set(delays).size).toBe(delays.length);
+  });
 });

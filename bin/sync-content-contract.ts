@@ -1,36 +1,35 @@
 #!/usr/bin/env node
+
 // Project contracts/content.v1.json into the typed Astro schemas.
 //
 //   node bin/sync-content-contract.ts           # write the projection
 //   node bin/sync-content-contract.ts --check   # fail if it is stale
+
+import { contentContract, contentContractFingerprint, type FieldSpec } from '../src/lib/content-contract.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
 import { writeOrCheck } from './lib/projection.ts';
-import {
-  contentContract,
-  contentContractFingerprint,
-  type FieldSpec,
-} from '../src/lib/content-contract.ts';
 
 const check = checkMode('usage: node bin/sync-content-contract.ts [--check]');
 const schemaTarget = fromRoot('src/generated/content-schema.ts');
 
 function zodExpression(spec: FieldSpec): string {
-  const base = ({
-    boolean: 'z.boolean()',
-    date: 'z.coerce.date()',
-    integer: 'z.number().int()',
-    'string[]': 'z.array(z.string())',
-    string: 'z.string()',
-    image: 'image()',
-  } satisfies Record<FieldSpec['type'], string>)[spec.type];
+  const base = (
+    {
+      boolean: 'z.boolean()',
+      date: 'z.coerce.date()',
+      integer: 'z.number().int()',
+      'string[]': 'z.array(z.string())',
+      string: 'z.string()',
+      image: 'image()',
+    } satisfies Record<FieldSpec['type'], string>
+  )[spec.type];
   if (!base) throw new Error(`unsupported content field type: ${spec.type}`);
   if ('default' in spec) return `${base}.default(${JSON.stringify(spec.default)})`;
   return spec.required ? base : `${base}.optional()`;
 }
 
-const typeName = (collection: string): string =>
-  `${collection[0]?.toUpperCase() ?? ''}${collection.slice(1).replace(/s$/, '')}`;
+const typeName = (collection: string): string => `${collection[0]?.toUpperCase() ?? ''}${collection.slice(1).replace(/s$/, '')}`;
 
 // Functions of Astro's schema context so image fields can use image().
 const schemaSource = [

@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 
 import { frontmatterBlock, parseFrontmatter, stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 
@@ -32,7 +32,8 @@ test('stringify: round-trips and omits an empty block', () => {
 });
 
 test('YAML dates, merge keys, folded text and string scalars retain their types', () => {
-  const source = '---\n# metadata\ndefaults: &defaults\n  published: true\n<<: *defaults\npublished_at: 2026-10-15\ntitle: "true"\ndescription: >-\n  First line\n  second line\n---\nBody\n';
+  const source =
+    '---\n# metadata\ndefaults: &defaults\n  published: true\n<<: *defaults\npublished_at: 2026-10-15\ntitle: "true"\ndescription: >-\n  First line\n  second line\n---\nBody\n';
   const { data, content } = parseFrontmatter(source);
   assert.equal(data.published, true);
   assert.deepEqual(data.published_at, new Date('2026-10-15T00:00:00Z'));

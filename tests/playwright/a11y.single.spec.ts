@@ -1,14 +1,12 @@
-import { test, expect, type Page } from './helpers/test.ts';
 import { AxeBuilder } from '@axe-core/playwright';
+import { expect, type Page, test } from './helpers/test.ts';
 import { anyWriteup, imageHeavyWriteup } from './helpers/writeups.ts';
 
-const scan = (page: Page) =>
-  new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+const scan = (page: Page) => new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
 
 const summarize = (results: Awaited<ReturnType<typeof scan>>) =>
   results.violations.map(
-    (violation) =>
-      `${violation.id} (${violation.impact}): ${violation.help}; ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target}`,
+    (violation) => `${violation.id} (${violation.impact}): ${violation.help}; ${violation.nodes.length} node(s), e.g. ${violation.nodes[0]?.target}`,
   );
 
 // axe-core over the key page archetypes, once per color scheme, so its color-contrast
@@ -43,9 +41,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       // The dialog fades in; axe computes contrast through opacity, so a scan
       // mid-fade fails color-contrast on the caption. Scan the settled state.
       await expect.poll(() => dialog.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
-      await page.evaluate(() =>
-        Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))),
-      );
+      await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))));
 
       expect(summarize(await scan(page))).toEqual([]);
     });

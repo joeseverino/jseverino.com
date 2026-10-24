@@ -11,7 +11,7 @@ import { scratchDirs, write } from './helpers/fs.ts';
 const root = '/build';
 const adapter = { name: SITE.worker, main: 'entry.mjs', assets: { directory: '../client' } };
 
-test('the adapter\'s deploy config for this Worker is accepted', () => {
+test("the adapter's deploy config for this Worker is accepted", () => {
   assert.deepEqual(configProblems(adapter, root), []);
 });
 
@@ -28,7 +28,8 @@ describe('the wrap the preview deploy runs', () => {
   after(scratch.cleanup);
 
   const page = `<!doctype html><html><head><title>Preview guard</title><script nonce="${CSP_INLINE_MARKER}">theme()</script></head><body><h1>Original Astro output</h1></body></html>`;
-  const headers = '/*\n  Content-Security-Policy: __CSP__\n  Reporting-Endpoints: __REPORTING_ENDPOINTS__\n\n/contact/*\n  Content-Security-Policy: __CSP_CONTACT__\n  Content-Security-Policy-Report-Only: __TT_REPORT_ONLY__\n';
+  const headers =
+    '/*\n  Content-Security-Policy: __CSP__\n  Reporting-Endpoints: __REPORTING_ENDPOINTS__\n\n/contact/*\n  Content-Security-Policy: __CSP_CONTACT__\n  Content-Security-Policy-Report-Only: __TT_REPORT_ONLY__\n';
 
   // A minimal adapter build, wrapped as Workers CI would for the branch.
   async function wrapBuild(branch: string) {
@@ -50,7 +51,7 @@ describe('the wrap the preview deploy runs', () => {
     assert.doesNotMatch(fs.readFileSync(client('_headers'), 'utf8'), /__CSP__/);
   });
 
-  test('main\'s build is left as the adapter wrote it', async () => {
+  test("main's build is left as the adapter wrote it", async () => {
     const { result, client } = await wrapBuild('main');
     assert.equal(result.installed, false);
     assert.equal(fs.existsSync(client('__sitedrift')), false);

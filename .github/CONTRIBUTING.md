@@ -12,4 +12,5 @@ Screenshots help for layout problems.
 Report security issues privately, as [`SECURITY.md`](./SECURITY.md) describes.
 
 How changes are built and verified is in
-[`docs/Development.md`](../docs/Development.md).
+[`docs/Development.md`](../docs/Development.md), and the rules every change
+follows are in [`AGENTS.md`](../AGENTS.md).

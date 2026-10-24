@@ -1,17 +1,17 @@
 // Repo-side commands: the dev server, status, and thin fronts for existing repo scripts.
 import fs from 'node:fs';
 import path from 'node:path';
-import { draftsOverlay } from '../lib/cache.ts';
-import { INSTALL_PACKAGES, lockfileDrift, preflight } from '../lib/preflight.ts';
-import { BUILD_TIMEOUT_MS, SYNC_TIMEOUT_MS, run } from '../lib/run.ts';
-import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { buildOutDir, resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { EXIT, SiteError, assertSlug, requireReady, runScript, type Output } from './cli.ts';
-import type { DevResult, DraftAltResult, PullRequestRef, ScriptRun, SeoResult, StatusResult, VerifyResult } from './types.ts';
+import { draftsOverlay } from '../lib/cache.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import { INSTALL_PACKAGES, lockfileDrift, preflight } from '../lib/preflight.ts';
+import { BUILD_TIMEOUT_MS, run, SYNC_TIMEOUT_MS } from '../lib/run.ts';
+import { assertSlug, EXIT, type Output, requireReady, runScript, SiteError } from './cli.ts';
 import { servingDevServer } from './dev-server.ts';
 import { repoState } from './git.ts';
+import type { DevResult, DraftAltResult, PullRequestRef, ScriptRun, SeoResult, StatusResult, VerifyResult } from './types.ts';
 
 export interface DevOptions {
   drafts: boolean;
@@ -52,7 +52,11 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
   // gh is a network round trip, so the git probes run beside it.
   const [{ branch, changes: dirty, ahead, behind }, prs] = await Promise.all([
     repoState(root),
-    run('gh', ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY], { cwd: root, timeout: 30_000 }),
+    run(
+      'gh',
+      ['pr', 'list', '--author', '@me', '--state', 'open', '--search', 'head:content/', '--json', 'number,url,title,headRefName', '-R', SITE_REPOSITORY],
+      { cwd: root, timeout: 30_000 },
+    ),
   ]);
   const drift = lockfileDrift(root);
   const vault = vaultRoot();
@@ -101,7 +105,17 @@ export async function seo({ page, result: resultOnly, out }: { page: string | un
   return { page, ...result, next: null };
 }
 
-export async function draftAlt({ slug: requested, all, apply, out }: { slug: string | undefined; all: boolean; apply: boolean; out: Output }): Promise<DraftAltResult> {
+export async function draftAlt({
+  slug: requested,
+  all,
+  apply,
+  out,
+}: {
+  slug: string | undefined;
+  all: boolean;
+  apply: boolean;
+  out: Output;
+}): Promise<DraftAltResult> {
   if (all === (requested !== undefined)) throw new SiteError('pass one writeup slug or --all', { code: EXIT.usage, fix: 'site draft-alt --help' });
   const slug = all ? null : assertSlug(requested);
   const result = await front('bin/draft-cover-alt.ts', [slug ?? '--all', ...(apply ? ['--apply'] : [])], { out, what: 'cover_alt draft' });

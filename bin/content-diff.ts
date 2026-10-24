@@ -1,8 +1,9 @@
 // Classify a content change by slug: writeups published, edited, or removed, pages
 // touched, generated files riding along. Shared by publish and land.
+
+import { siteRoot } from '../src/lib/site-root.ts';
 import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
-import { siteRoot } from '../src/lib/site-root.ts';
 
 export const CONTENT_PATHS = ['src/content'];
 
@@ -58,16 +59,22 @@ function classify(files: readonly ChangedFile[]): ContentDiff {
   const generated: string[] = [];
   for (const { status, path: file } of files) {
     if (GENERATED.test(file)) generated.push(file);
-    let slug: string | undefined;
-    if ((slug = WRITEUP_INDEX.exec(file)?.[1])) {
-      writeups.set(slug, status === 'A' ? 'published' : status === 'D' ? 'removed' : writeups.get(slug) ?? 'edited');
-    } else if ((slug = WRITEUP_FILE.exec(file)?.[1])) {
-      if (!writeups.has(slug)) writeups.set(slug, 'edited');
-    } else if ((slug = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1])) {
-      pages.add(slug);
+    const index = WRITEUP_INDEX.exec(file)?.[1];
+    const writeupFile = WRITEUP_FILE.exec(file)?.[1];
+    const page = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1];
+    if (index) {
+      writeups.set(index, status === 'A' ? 'published' : status === 'D' ? 'removed' : (writeups.get(index) ?? 'edited'));
+    } else if (writeupFile) {
+      if (!writeups.has(writeupFile)) writeups.set(writeupFile, 'edited');
+    } else if (page) {
+      pages.add(page);
     }
   }
-  const of = (kind: WriteupChange): string[] => [...writeups].filter(([, k]) => k === kind).map(([slug]) => slug).sort();
+  const of = (kind: WriteupChange): string[] =>
+    [...writeups]
+      .filter(([, k]) => k === kind)
+      .map(([slug]) => slug)
+      .sort();
   return {
     published: of('published'),
     edited: of('edited'),
@@ -84,12 +91,14 @@ export const isEmpty = (diff: ContentDiff): boolean =>
 
 export function describeDiff(diff: ContentDiff): string {
   if (isEmpty(diff)) return 'no content changes';
-  return ([
-    ['published', diff.published],
-    ['edited', diff.edited],
-    ['removed', diff.removed],
-    ['pages', diff.pages],
-  ] as const)
+  return (
+    [
+      ['published', diff.published],
+      ['edited', diff.edited],
+      ['removed', diff.removed],
+      ['pages', diff.pages],
+    ] as const
+  )
     .filter(([, slugs]) => slugs.length > 0)
     .map(([kind, slugs]) => `${kind} ${slugs.length}: ${slugs.join(', ')}`)
     .concat(diff.generated.count > 0 ? [`${diff.generated.count} generated files`] : [])
@@ -98,12 +107,14 @@ export function describeDiff(diff: ContentDiff): string {
 
 export function commitMessage(diff: ContentDiff): string {
   // [verb for a lone change, count label, body heading, slugs]
-  const groups = ([
-    ['publish', 'publish', 'Published', diff.published],
-    ['edit', 'edit', 'Edited', diff.edited],
-    ['remove', 'remove', 'Removed', diff.removed],
-    ['edit page', 'pages', 'Pages', diff.pages],
-  ] as const).filter(([, , , slugs]) => slugs.length > 0);
+  const groups = (
+    [
+      ['publish', 'publish', 'Published', diff.published],
+      ['edit', 'edit', 'Edited', diff.edited],
+      ['remove', 'remove', 'Removed', diff.removed],
+      ['edit page', 'pages', 'Pages', diff.pages],
+    ] as const
+  ).filter(([, , , slugs]) => slugs.length > 0);
   const total = groups.reduce((sum, [, , , slugs]) => sum + slugs.length, 0);
   if (total === 0) return 'content: refresh generated assets';
   const [lone] = groups;

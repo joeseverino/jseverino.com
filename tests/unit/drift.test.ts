@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { same } from '../../bin/lib/drift.ts';
 
 test('values compare equal whatever order an API returns their keys in', () => {

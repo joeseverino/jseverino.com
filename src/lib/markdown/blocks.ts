@@ -1,6 +1,7 @@
 // Container directives (`:::figure`) render to site markup, leaf directives to page components; nothing else is a directive.
-import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
+
 import type { ListItem, Paragraph, PhrasingContent, RootContent } from 'mdast';
+import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
 
 type ContainerDirective = Extract<MdastNode, { type: 'containerDirective' }>;
 
@@ -32,7 +33,11 @@ function figure(node: ContainerDirective): MdastNode | readonly RootContent[] {
   if (image?.type !== 'image') return node.children;
   const sameParagraph = trailing.filter((child, index) => index > 0 || !(child.type === 'break' || (child.type === 'text' && !child.value.trim())));
   if (sameParagraph[0]?.type === 'text') sameParagraph[0] = { ...sameParagraph[0], value: sameParagraph[0].value.replace(/^\s+/, '') };
-  const captionContent = [...sameParagraph, ...(sameParagraph.length && rest.length ? [{ type: 'text', value: '\n' } as PhrasingContent] : []), ...inline(rest)];
+  const captionContent = [
+    ...sameParagraph,
+    ...(sameParagraph.length && rest.length ? [{ type: 'text', value: '\n' } as PhrasingContent] : []),
+    ...inline(rest),
+  ];
   return element('figure', captionContent.length ? [image, element('figcaption', captionContent)] : [image]);
 }
 
@@ -60,11 +65,17 @@ function buttons(node: ContainerDirective): MdastNode {
     if (!link) throw new Error(`:::buttons items are each one bare link${line(item)}`);
     return link;
   });
-  return element('div', links.flatMap((link, index) => (index ? [{ type: 'text', value: '\n' }, link] : [link])), { className: ['actions'] });
+  return element(
+    'div',
+    links.flatMap((link, index) => (index ? [{ type: 'text', value: '\n' }, link] : [link])),
+    { className: ['actions'] },
+  );
 }
 
 function single(node: ContainerDirective): MdastNode {
-  const sticky = String(node.attributes?.class ?? '').split(/\s+/).includes('sticky');
+  const sticky = String(node.attributes?.class ?? '')
+    .split(/\s+/)
+    .includes('sticky');
   const link = node.children.length === 1 ? button(node.children[0], sticky ? 'button sticky-button' : 'button') : undefined;
   if (!link) throw new Error(`:::button holds one bare link${line(node)}`);
   return element('div', [link], { className: ['actions'] });

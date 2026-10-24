@@ -1,11 +1,10 @@
-import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { render } from '../../bin/site/render.ts';
+import { after, before, describe, test } from 'node:test';
 import { renderMarkdown } from '../../bin/lib/render.ts';
-import { SiteError, createOutput } from '../../bin/site/cli.ts';
+import { createOutput, SiteError } from '../../bin/site/cli.ts';
+import { render } from '../../bin/site/render.ts';
 import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });
@@ -55,7 +54,8 @@ describe('site render', () => {
   });
 
   test('--document is a self-contained page in the site article layout', async () => {
-    const md = '---\ntitle: Demo Title\npublished_at: 2026-03-15\ntechnologies: [wireshark]\ncover_image: ./images/cover.png\ncover_alt: A cover\n---\nRun **this** first.\n';
+    const md =
+      '---\ntitle: Demo Title\npublished_at: 2026-03-15\ntechnologies: [wireshark]\ncover_image: ./images/cover.png\ncover_alt: A cover\n---\nRun **this** first.\n';
     const result = await render({ slug: '-', document: true, out, stdin: () => md });
     const doc = result.document ?? '';
     assert.match(doc, /^<!doctype html>/i);
@@ -64,7 +64,7 @@ describe('site render', () => {
     }
     assert.match(doc, /<h1 class="article-title">Demo Title<\/h1>/);
     assert.match(doc, /<img src="\.\/images\/cover\.png" alt="A cover">/);
-    assert.match(doc, /<style>[^]*\.prose[^]*<\/style>/);
+    assert.match(doc, /<style>.*\.prose.*<\/style>/s);
     assert.match(doc, /font\/woff2;base64,/);
     assert.doesNotMatch(doc, /<link rel="stylesheet"|<script/);
     assert.ok(doc.includes(result.html.trim()));

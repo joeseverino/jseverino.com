@@ -23,7 +23,10 @@ export function parseTechnologyGroups(body: string): TechnologyGroup[] {
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
-        const cells = trimmed.slice(1, -1).split('|').map((cell) => cell.trim());
+        const cells = trimmed
+          .slice(1, -1)
+          .split('|')
+          .map((cell) => cell.trim());
         const [slug, label, featured] = cells;
         if (!slug || !label) continue;
         if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;
@@ -35,5 +38,4 @@ export function parseTechnologyGroups(body: string): TechnologyGroup[] {
     .filter((group) => group.name && group.tags.length > 0);
 }
 
-export const readTechnologyGroups = (file: string): TechnologyGroup[] =>
-  parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
+export const readTechnologyGroups = (file: string): TechnologyGroup[] => parseTechnologyGroups(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');

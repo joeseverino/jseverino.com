@@ -22,14 +22,5 @@
     }
   },
   // The Worker's entry points and its runtime types compile in src/tsconfig.worker.json.
-  "exclude": [
-    "dist",
-    "node_modules",
-    "playwright-report",
-    "test-results",
-    "public",
-    "src/generated/worker-configuration.d.ts",
-    "src/pages/api",
-    "src/integrations/sitedrift-route.ts"
-  ]
+  "exclude": ["dist", "node_modules", "public", "src/generated/worker-configuration.d.ts", "src/pages/api", "src/integrations/sitedrift-route.ts"]
 }

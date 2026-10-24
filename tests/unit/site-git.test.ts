@@ -1,7 +1,8 @@
 // repoState reads a real checkout: the state site status and site manage show.
-import { after, describe, test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { after, describe, test } from 'node:test';
 import { git, gitAsync } from '../../bin/lib/git.ts';
 import { repoState } from '../../bin/site/git.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
@@ -23,7 +24,7 @@ describe('gitAsync', () => {
     assert.equal(await gitAsync(root, 'rev-parse', '--show-toplevel'), root);
   });
 
-  test('rejects with git\'s own stderr', async () => {
+  test("rejects with git's own stderr", async () => {
     await assert.rejects(gitAsync(checkout(), 'rev-parse', '--verify', 'no-such-ref'), /Needed a single revision/);
   });
 });

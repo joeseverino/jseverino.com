@@ -1,12 +1,13 @@
 // Vault to repo projection. checkContent resolves the same references and contract as syncContent without writing.
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseFrontmatter, stringifyFrontmatter, type FrontmatterData, type ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
+import { isoDate } from '../../src/lib/dates.ts';
+import { type FrontmatterData, type ParsedFrontmatter, parseFrontmatter, stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
+import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
-import { createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
-import { createPublicProjection } from './public-projection.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
+import { mapLimit } from '../lib/map-limit.ts';
 import {
   collectAssetRefs,
   createMasterEncoder,
@@ -17,13 +18,12 @@ import {
   STRAY_REFERENCE,
   strayReferences,
 } from './assets.ts';
-import { mapLimit } from '../lib/map-limit.ts';
 import { compileIssues } from './compile.ts';
-import { loadGrammar, renderDocumentRows, type Grammar } from './documents.ts';
+import { type Grammar, loadGrammar, renderDocumentRows } from './documents.ts';
 import { buildEducation } from './education.ts';
+import { createPublicProjection } from './public-projection.ts';
+import { createResumeSource, createVaultSource, type EducationSource } from './source-adapters.ts';
 import { createWriter, type SyncReport } from './writer.ts';
-import { isoDate } from '../../src/lib/dates.ts';
-import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 
 export interface Layout {
   root: string;
@@ -234,14 +234,10 @@ export interface CheckOptions {
 // writeups and tolerates the publish-only rules.
 export async function checkContent({ vaultRoot, slug, draft = false }: CheckOptions): Promise<{ ok: boolean; documents: CheckedDocument[] }> {
   const vault = createVaultSource({ vaultRoot, includeDrafts: true });
-  const catalog = new Set(
-    readTechnologyGroups(vault.technologyGroups)
-      .flatMap((group) => group.tags.map((tag) => tag.slug)),
-  );
+  const catalog = new Set(readTechnologyGroups(vault.technologyGroups).flatMap((group) => group.tags.map((tag) => tag.slug)));
   const documents: CheckedDocument[] = [];
 
-  const writeups = (await vault.writeups()).filter((entry) =>
-    slug ? entry.slug === slug : draft || entry.parsed.data.published === true);
+  const writeups = (await vault.writeups()).filter((entry) => (slug ? entry.slug === slug : draft || entry.parsed.data.published === true));
   if (slug && writeups.length === 0) {
     documents.push({ collection: 'writeups', slug, published: false, issues: [`writeup not found: ${path.join(vault.writeupsRoot, slug)}`] });
   }
@@ -267,11 +263,7 @@ export async function checkContent({ vaultRoot, slug, draft = false }: CheckOpti
         collection: 'pages',
         slug: name,
         published: parsed.data.published === true,
-        issues: [
-          ...frontmatterIssues('pages', parsed.data),
-          ...(await referenceIssues(parsed.content, sourceDir)),
-          ...compileIssues(parsed.content, 'pages'),
-        ],
+        issues: [...frontmatterIssues('pages', parsed.data), ...(await referenceIssues(parsed.content, sourceDir)), ...compileIssues(parsed.content, 'pages')],
       });
     }
   }

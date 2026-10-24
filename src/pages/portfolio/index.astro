@@ -8,6 +8,7 @@ import TagIndex from '@components/TagIndex.astro';
 import { groupedTags } from '@components/tag-groups.ts';
 import { getPage, getWriteups } from '@lib/content.ts';
 import { getFeaturedSoftware, getMoreSoftware, getSoftware } from '@lib/software.ts';
+import '@styles/software.css';
 
 const page = await getPage('portfolio');
 const writeups = await getWriteups();

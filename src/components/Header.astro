@@ -59,9 +59,9 @@ const navigation = navItems.map((item) => ({
 
   const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
 
+  // The panel fills the screen below the header, so light dismiss never sees a click outside it:
+  // a followed link or a click on the empty panel closes it here.
   if (mobileNav) {
-    document.body.classList.add('nav-js-ready');
-
     mobileNav.addEventListener('click', (event) => {
       if (event.target instanceof Element && (event.target === mobileNav || event.target.closest('a'))) {
         mobileNav.hidePopover();

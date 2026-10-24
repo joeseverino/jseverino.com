@@ -38,7 +38,8 @@ export function createClient({ token, fetch }: ClientOptions) {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
+        // The version where code scanning default setup reports javascript-typescript alone, as its PATCH takes it.
+        'X-GitHub-Api-Version': '2026-03-10',
         ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
       },
       signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -62,9 +63,9 @@ export function createClient({ token, fetch }: ClientOptions) {
     // Every page of a list, following the Link header's next page.
     list: async <T>(path: string): Promise<T[]> => {
       const items: T[] = [];
-      for (let url: string | undefined = `${API_BASE}${path}`; url;) {
+      for (let url: string | undefined = `${API_BASE}${path}`; url; ) {
         const response = await send('GET', url);
-        items.push(...(await response.json() as T[]));
+        items.push(...((await response.json()) as T[]));
         url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
       }
       return items;
@@ -99,8 +100,10 @@ export interface CodeScanningAlert {
   html_url: string;
 }
 
-const checkRuns = async (repository: string, sha: string): Promise<CheckRun[]> =>
-  (await github().get<{ check_runs: CheckRun[] }>(`/repos/${repository}/commits/${sha}/check-runs?per_page=100`)).check_runs;
+// A commit's latest run of each check. This read and requiredContexts take the client of a
+// script that holds its own.
+export const checkRuns = async (repository: string, sha: string, client = github()): Promise<CheckRun[]> =>
+  (await client.get<{ check_runs: CheckRun[] }>(`/repos/${repository}/commits/${sha}/check-runs?per_page=100`)).check_runs;
 
 // The conclusions a required check passes with, as branch protection counts them.
 const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
@@ -112,11 +115,13 @@ interface BranchRule {
 }
 
 // The status-check contexts the rulesets applying to a branch require.
-export const requiredContexts = async (repository: string, branch: string): Promise<string[]> => [
-  ...new Set((await github().get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
-    .filter((rule) => rule.type === 'required_status_checks')
-    .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
-    .map((check) => check.context)),
+export const requiredContexts = async (repository: string, branch: string, client = github()): Promise<string[]> => [
+  ...new Set(
+    (await client.get<BranchRule[]>(`/repos/${repository}/rules/branches/${branch}`))
+      .filter((rule) => rule.type === 'required_status_checks')
+      .flatMap((rule) => rule.parameters?.required_status_checks ?? [])
+      .map((check) => check.context),
+  ),
 ];
 
 // GitHub's verdict on a commit's signature.

@@ -157,7 +157,7 @@ hostnames are `turnstile.domains` in `zone.json`, set by apply, and name the
 same host. A token solved anywhere else, a preview deployment included, fails
 verification.
 
-## Web Analytics
+## Web analytics
 
 The zone injects the Web Analytics beacon into each HTML response, and the
 site emits none of its own. The beacon is an external script the CSP allows by
@@ -180,7 +180,8 @@ lists the calls an apply would make. `apply` without `--yes` is the plan; with
 it, apply makes the calls, re-checks, and exits 1 if anything is left, which
 includes items only a person can fix.
 
-Scope both tokens to the one zone and the one account.
+Scope both tokens to the one zone and the one account. A client IP filter on a
+token lists IPv4 addresses: the client connects over IPv4 first.
 
 | Resource | Permission | check / plan | apply |
 |---|---|---|---|

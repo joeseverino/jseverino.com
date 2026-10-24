@@ -3,13 +3,13 @@
 // Astro's image pipeline encodes the variants.
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import os from 'node:os';
-import { defineMdastPlugin, htmlToHast, markdownToHtml, type HastNode } from 'satteri';
+import path from 'node:path';
+import { defineMdastPlugin, type HastNode, htmlToHast, markdownToHtml } from 'satteri';
 import sharp from 'sharp';
+import { errorMessage } from '../../src/lib/error-message.ts';
 import { features } from '../../src/lib/markdown/index.ts';
 import { isExternal } from '../../src/lib/refs.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
 
 // The folder-relative path (`images/...`) a destination names, or undefined
 // when it is external, an anchor, or a site-absolute path.
@@ -74,7 +74,11 @@ export const STRAY_REFERENCE = 'relative reference outside images/ will not reso
 export const strayReferences = (markdown: string): Reference[] => collectReferences(markdown).filter(({ ref }) => !isAssetRef(ref));
 
 export function collectAssetRefs(markdown: string): Set<string> {
-  return new Set(collectReferences(markdown).map(({ ref }) => ref).filter(isAssetRef));
+  return new Set(
+    collectReferences(markdown)
+      .map(({ ref }) => ref)
+      .filter(isAssetRef),
+  );
 }
 
 // The absolute source path for a ref, refusing anything that escapes the
@@ -121,8 +125,7 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
 
 // Encodes in flight: one per core, within half of memory (an encode peaks near 120 MB).
 const IMAGE_JOB_BYTES = 256 * 2 ** 20;
-export const defaultConcurrency = (): number =>
-  Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / 2 / IMAGE_JOB_BYTES)));
+export const defaultConcurrency = (): number => Math.max(1, Math.min(os.availableParallelism(), Math.floor(os.totalmem() / 2 / IMAGE_JOB_BYTES)));
 
 // Masters committed beside each document: at most MASTER_WIDTH wide, sRGB, all metadata (EXIF, XMP, ICC)
 // dropped so nothing the camera or screenshot tool wrote reaches the public repo.

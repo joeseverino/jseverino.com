@@ -1,0 +1,15 @@
+#!/bin/sh
+#MISE description="Screenshots of the fixture build match the committed macOS Chromium baselines; on any other platform the suite does not run and the task fails"
+#MISE timeout="10m"
+# Arguments go to Playwright: `mise run browser:visual --update-snapshots`.
+set -eu
+
+# The baselines are macOS Chromium renders, and any other platform renders fonts
+# differently. A run that compares nothing must not read as a pass to the
+# aggregates (`mise run browser`, `mise run ci`), so it fails.
+if [ "$(uname)" != Darwin ]; then
+  echo "browser:visual: skipped on $(uname), which cannot match the macOS baselines; CI runs it on macOS" >&2
+  exit 1
+fi
+
+exec playwright test -c tests/playwright.visual.config.ts "$@"

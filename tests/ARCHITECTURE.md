@@ -1,4 +1,4 @@
-# Validation Architecture (Full Reference)
+# Validation architecture (full reference)
 
 The complete reference for how `jseverino.com` is verified: the exact assertion
 each check makes, the command that runs it, and how to fix a failure. A short
@@ -87,7 +87,7 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | Logic | [content snapshot](#the-unit-layer) | `tests/unit/snapshot.test.ts` | The snapshot readers list the writeups and pages of the content root the build reads (`SITE_CONTENT_ROOT`), from any working directory. |
 | Logic | [edge expectations](#the-unit-layer) | `tests/unit/edge-expectations.test.ts` | The predicates the edge suite and `deploy:verify` share flag every policy escape hatch, a missing hash, a wrong header or cache rule, and a leaked CORS header; `public/_headers` pins only write-once paths `immutable`. |
 | E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Console stays clean; hero, navigation, and header behave in every engine. |
-| E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape and on link nav. |
+| E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape, on link nav and on its empty panel, and staggers its items in with JavaScript off. |
 | E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
 | E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
 | E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
@@ -143,16 +143,24 @@ Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--
 Structural health:
 - **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
 - **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
-- **Clean tree**: no committed `.env`, no `dist/` or `playwright-report/`.
+- **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
 - **Stylesheets**: component styles live in `src/styles` modules.
 - **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
 - **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
+- **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
 - **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
-- **No explicit `any`**: an `any` type anywhere in the TypeScript syntax tree of a `.ts` file, or of an `.astro` file's frontmatter and `<script>` elements, fails; `unknown` and narrowing say what the code knows.
-- **No unexplained suppressions**: no `@ts-ignore` or `@ts-nocheck` comment in those same sources; `@ts-expect-error` must carry a reason.
+- **No unexplained suppressions**: no `@ts-nocheck` in a `.ts` or `.astro` file, and every `@ts-expect-error` comment carries a reason.
 
-What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; stylelint (`checks:css-lint`) refuses a literal color (`color-no-hex`, `color-named`, and `rgb`/`hsl` in `function-disallowed-list`) everywhere except the generated token blocks, which `mise run sync:tokens` fences with `stylelint-disable` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with each finding it accepts marked by a `# zizmor: ignore[<audit>]` comment and its reason where it is found.
+What a maintained tool checks is left to it:
+
+- `npm ci` refuses a lockfile out of step with `package.json`.
+- Biome (`checks:lint`) refuses an explicit `any` and a `@ts-ignore` (`noExplicitAny`, `noTsIgnore`) in TypeScript and in an `.astro` file's frontmatter and `<script>` elements.
+- Biome's `noHexColors` refuses a hex color in a stylesheet.
+- The plugin [`literal-colors.grit`](./literal-colors.grit) refuses the named and `rgb()`/`hsl()` color spellings.
+- The plugin [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuses a rem, px or em `font-size`. [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds its node patterns to Biome's CSS grammar.
+- The color and font-size rules skip the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip.
+- zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA. Each finding it accepts is marked by a `# zizmor: ignore[<audit>]` comment with its reason where it is found.
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.
@@ -204,7 +212,7 @@ Each case pairs a markdown input with the HTML it must produce, so a processor u
 
 ## 4. `tests/playwright/`: browser specs
 
-The browser suite runs against the build (`dist/client/`) served by `astro preview`, never Astro's dev server. Config lives in [`tests/playwright.config.ts`](./playwright.config.ts); routing is by filename suffix, so every spec's project matrix is set by its name: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` instead of the full matrix (one run, not six).
+The browser suite runs against the build (`dist/client/`) served by `astro preview`, never Astro's dev server. Config lives in [`tests/playwright.config.ts`](./playwright.config.ts); routing is by filename suffix, so every spec's project matrix is set by its name: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` instead of the full matrix (one run, not six). In CI a failed test runs once more, recording a trace, and a test that passes only on that retry still fails the run (`failOnFlakyTests`); the summary lists it as flaky.
 
 Every spec imports `test` and `expect` from [`helpers/test.ts`](./playwright/helpers/test.ts), and `tests/unit/browser-specs.test.ts` holds them to it. On WebKit that module drops `upgrade-insecure-requests` from the preview's document CSP, since WebKit upgrades the plain-http localhost preview and loads nothing; production and `tests/edge/` keep the directive. That route turns on WebKit's interception for every request, which fails Turnstile's `blob:` load, so the module also names that one console error for `smoke.spec.ts` to allow.
 
@@ -298,7 +306,7 @@ Route-level responses, engine-independent so chromium only: every URL in the sit
 Asserts every `target="_blank"` link across the key pages carries `rel="noopener"`, so an opened tab cannot reach back through `window.opener`.
 
 ### `portfolio-software.single.spec.ts`
-Covers the Software tab of `/portfolio`. Asserts the tab toggle behaviour: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
+Covers the Software tab of `/portfolio`. Asserts the tab toggle behavior: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
 
 ### Running the suite
 
@@ -317,7 +325,7 @@ The HTML report after a full run:
 
 ## 5. Visual regression
 
-`visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, baselines are owned by Chromium on macOS. It runs under [`tests/playwright.visual.config.ts`](./playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; committed fixture images) into `dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) not `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `test-results/visual/`; CI uploads them with the HTML report.
+`visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, baselines are owned by Chromium on macOS. It runs under [`tests/playwright.visual.config.ts`](./playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; committed fixture images) into `.cache/dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) not `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `.cache/test-results/visual/`; CI uploads them with the HTML report.
 
 The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/) are review artifacts: check them in the diff before any visual change merges.
 

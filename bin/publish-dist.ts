@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+
 // Commits a built site to the dist branch, one commit per change. See docs/Dist-Branch.md.
 //
 //   node bin/publish-dist.ts [dir] [--push]
+
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { DIST_BRANCH } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';

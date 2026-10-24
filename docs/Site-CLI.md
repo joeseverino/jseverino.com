@@ -148,8 +148,8 @@ The one interactive command; it refuses to start without a terminal. A full-scre
 (or Tab) switch between them. Nothing on the Writeups tab is written until
 `s` is pressed: changes are staged locally and then applied through the vault
 MCP, so the TUI cannot produce a frontmatter state the publish gate would
-not. The terminal window title tracks where you are and restores the shell's
-title on exit.
+not. The terminal window title names the open tab, writeup or running command,
+and the shell's title returns on exit.
 
 ### Writeups tab
 
@@ -281,13 +281,13 @@ for i, raw in enumerate(screens):
 
 Paths resolve through [`bin/lib/local-paths.ts`](../bin/lib/local-paths.ts)
 (`VAULT_DIR`, `LIFE_VAULT_DIR`, `RESUME_ENGINE_DIR`, `EDUCATION_EXPORT_FILE`).
-`SITE_CACHE_DIR`, set in `mise.toml`'s `[env]`, is the cache root every checkout and
-worktree shares: the sync's image masters, and Astro's encodes in `astro/`;
-`SITE_CONTENT_ROOT` points the build or dev server at another content tree
-(`site dev --drafts` sets it to `.cache/drafts` for the dev server only;
-the build refuses anything outside `tests/fixtures`, so drafts never
-reach a build), `SITE_JSON=1` switches Astro
-to JSON logs (set by `--json`). `site contact` and `site csp` also need `CLOUDFLARE_ACCOUNT_ID` and a token scoped
+These environment variables apply:
+
+- `SITE_CACHE_DIR`, set in `mise.toml`'s `[env]`, is the cache root every checkout and worktree shares: the sync's image masters, and Astro's encodes in `astro/`.
+- `SITE_CONTENT_ROOT` points the build or dev server at another content tree. `site dev --drafts` sets it to `.cache/drafts` for the dev server only. The build refuses anything outside `tests/fixtures`, so drafts never reach a build.
+- `SITE_JSON=1` switches Astro to JSON logs. `--json` sets it.
+
+`site contact` and `site csp` also need `CLOUDFLARE_ACCOUNT_ID` and a token scoped
 Account · D1 · Read; without either, they stop on one line naming it, and nothing else in the CLI is affected:
 
 ```sh

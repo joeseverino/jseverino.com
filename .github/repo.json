@@ -13,7 +13,18 @@
     "description": "Personal site and writeups, published from a private Obsidian vault with Astro on Cloudflare Workers. Hash-based CSP, edge-tested, and released with signed provenance.",
     "homepage": "https://jseverino.com"
   },
-  "topics": ["astro", "cloudflare-d1", "cloudflare-turnstile", "cloudflare-workers", "content-security-policy", "obsidian", "personal-website", "playwright", "slsa", "typescript"],
+  "topics": [
+    "astro",
+    "cloudflare-d1",
+    "cloudflare-turnstile",
+    "cloudflare-workers",
+    "content-security-policy",
+    "obsidian",
+    "personal-website",
+    "playwright",
+    "slsa",
+    "typescript"
+  ],
   "security": {
     "secret_scanning": "enabled",
     "secret_scanning_push_protection": "enabled",

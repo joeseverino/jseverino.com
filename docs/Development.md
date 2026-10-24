@@ -6,17 +6,23 @@ How the repository is built, checked, and shipped. Every script is in
 
 ## Setup
 
-[mise](https://mise.jdx.dev) installs the toolchain: Node, pinned in
-[`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock).
-npm comes from `package.json`'s `packageManager`. `mise install` installs the
-tools. The npm packages come from mise's `[deps.npm]` provider: before any
-`mise run` or `mise exec`, it runs `npm ci` from the lockfile whenever
-`package.json` or `package-lock.json` changed since the last install or
-`node_modules` is missing, so a fresh checkout or a pull that moves the
-lockfile is installed by the first task it runs (`mise deps install npm` runs
-it on its own). CI installs packages per job in its setup action instead.
-Machine paths for the content sync go in a gitignored
-`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)).
+[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools.
+
+The npm packages come from mise's `[deps.npm]` provider. Before any `mise run` or `mise exec`, it runs `npm ci` from the lockfile in two cases:
+
+- `package.json` or `package-lock.json` changed since the last install.
+- `node_modules` is missing.
+
+So a fresh checkout, or a pull that moves the lockfile, installs on the first task it runs. `mise deps install npm` runs it on its own. CI installs packages per job in its setup action instead.
+
+Machine paths for the content sync go in the `[env]` of a gitignored `mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)). So do the dev server's settings, which `astro.config.ts` reads from the environment mise exports:
+
+```toml
+[env]
+DEV_ALLOWED_HOSTS = "laptop.example.com"  # comma-separated hostnames the dev server answers to
+DEV_HOST = "true"                         # bind all interfaces
+DEV_PORT = "4322"                         # pin the port
+```
 
 The contact form needs Cloudflare Turnstile keys. For local work, put
 Turnstile's always-passing test keys in a gitignored `.env`:
@@ -61,6 +67,16 @@ names its `.ts` file. `mise run checks:types` is the one strict
 check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, or a test helper, and the
 gate fails on duplicated code.
+
+Biome, pinned in `mise.toml`, is the one formatter and linter. It formats the TypeScript, JSON, CSS and YAML and lints them from its recommended rules. `biome.jsonc` names what it leaves out and why.
+
+Biome also enforces these:
+
+- An `.astro` file's frontmatter and scripts carry no explicit `any` and no `@ts-ignore`.
+- A stylesheet carries no literal color: `noHexColors` covers hex, and the plugin `tests/literal-colors.grit` covers the named and `rgb()`/`hsl()` spellings.
+- A stylesheet carries no rem, px or em `font-size`, through the plugin `tests/literal-font-sizes.grit`.
+
+`mise run checks:lint` fails on any difference or any finding at warning or above, and `mise run fix:lint` applies the fixes Biome can make.
 
 ## Gates
 
@@ -119,12 +135,12 @@ steps.
 
 | Workflow | Trigger | Does | Verified result |
 | --- | --- | --- | --- |
-| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | `build` runs `mise run check` and uploads the build as the `site` artifact; the `playwright` matrix runs `e2e`, `visual`, and `edge`, one `browser:*` task per leg. No job waits on another. [Architecture](./Architecture.md#14-release-gate) has each job. | Green checks on the committed tree and a summary on every browser leg. |
+| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | `build` runs `mise run check` and uploads the build as the `site` artifact; `e2e` runs in Playwright's image and the `playwright` matrix runs `visual` and `edge`, one `browser:*` task per job. No job waits on another. [Architecture](./Architecture.md#14-release-gate) has each job. | Green checks on the committed tree and a summary on every browser leg. |
 | [`deploy`](../.github/workflows/deploy.yml) | `ci` completed successfully | Ships `ci`'s `site` artifact: a pull request's build as an Access-protected preview version, `main`'s tip as a version verified at its preview URL before it takes all traffic, then attested and committed to the [`dist` branch](./Dist-Branch.md). [Architecture](./Architecture.md#14-release-gate) has each job. | A `deploy` check on every shipped commit; the `release-<sha>` artifact for each production deploy. |
 | [`dependency review`](../.github/workflows/dependency-review.yml) | pull request | Audits manifest package updates for high-severity advisories, passing at once when no manifest changed; comments only when it blocks. | Pull request status validation. |
 | [`release`](../.github/workflows/release.yml) | `v*` tag | Publishes the tagged commit's production deploy: the `release-<sha>` artifact the `deploy` workflow attested (the archive production served, its CycloneDX SBOM, and both Sigstore bundles). Nothing is rebuilt, so a tag on a commit `main` never deployed fails. The tag is signed by convention; the trigger does not verify it. | A GitHub release whose files verify with `gh attestation verify`. |
 | [`scorecard`](../.github/workflows/scorecard.yml) | weekly, branch-protection change | OpenSSF Scorecard supply-chain posture, uploaded as SARIF to code scanning. | A code scanning alert per check with findings. |
-| [`link check`](../.github/workflows/link-check.yml) | docs changes, weekly | Lychee audits repository documentation links and public content links separately (self-domain links excluded; 403/429/999 accepted as answered), writes both reports into the job summary, and uploads them. | Connectivity report artifacts. |
+| [`link check`](../.github/workflows/link-check.yml) | docs or `mise.toml` changes, weekly | `mise run links:docs` and `mise run links:content` check every external link online with the pinned lychee (self-domain links excluded; 403/429/999 accepted as answered). | Each check's Markdown report in the job summary, its failures in the log. |
 | [`lighthouse`](../.github/workflows/lighthouse.yml) | weekly | `mise run lighthouse` runs the lockfile's Lighthouse (the same generation PageSpeed Insights scores with) against the live URLs in `tests/lighthouse.json`. | Fails below accessibility 95 or SEO 90; warns below performance 85 or best practices 70. Scores in the job summary, reports as artifacts. |
 | [`security.txt expires`](../.github/workflows/security-txt-expires.yml) | monthly | Runs `mise run checks:security-txt`, which fails from 60 days before `security.txt` expires. | A failed scheduled run, which GitHub emails. |
 

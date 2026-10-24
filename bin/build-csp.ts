@@ -3,8 +3,8 @@
 // deploy runs it again on the same build after the sitedrift wrap.
 import fs from 'node:fs';
 import path from 'node:path';
-import { cspReportUri } from '../src/lib/site-config.ts';
 import { htmlPolicy, reportingEndpoints, scanInline, trustedTypesReportOnly } from '../src/lib/csp.ts';
+import { cspReportUri } from '../src/lib/site-config.ts';
 
 // Cloudflare ignores a _headers line past this length.
 const MAX_HEADER_LINE = 2000;

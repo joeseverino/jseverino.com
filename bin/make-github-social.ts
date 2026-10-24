@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+
 // Generates the 1280x640 GitHub social preview at .github/social-preview.png
 // (uploaded manually in repo settings).
+
 import { SITE, SITE_REPOSITORY } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';

@@ -1,5 +1,5 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { test } from 'node:test';
 import { canonicalJsonText, jsonFingerprint } from '../../src/lib/canonical-json.ts';
 
 test('equal JSON is equal whatever its key order and whitespace', () => {

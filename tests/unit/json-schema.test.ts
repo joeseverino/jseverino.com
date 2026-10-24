@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertMatches, validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
+import { test } from 'node:test';
+import { assertMatches, type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 
 const a: JsonSchema = { type: 'object', required: ['kind', 'a'], properties: { kind: { const: 'a' } } };
 const b: JsonSchema = { type: 'object', required: ['kind', 'b'], properties: { kind: { const: 'b' } } };
@@ -12,10 +12,16 @@ test('oneOf accepts a value that matches exactly one alternative', () => {
   assert.notDeepEqual(validate(schema, 3), []);
 });
 
-test('oneOf reports every alternative\'s problems when none match', () => {
+test("oneOf reports every alternative's problems when none match", () => {
   const problems = validate({ oneOf: [a, b] }, { kind: 'a' });
-  assert.ok(problems.some((problem) => problem.includes('missing a')), problems.join('\n'));
-  assert.ok(problems.some((problem) => problem.includes('missing b')), problems.join('\n'));
+  assert.ok(
+    problems.some((problem) => problem.includes('missing a')),
+    problems.join('\n'),
+  );
+  assert.ok(
+    problems.some((problem) => problem.includes('missing b')),
+    problems.join('\n'),
+  );
 });
 
 test('oneOf refuses a value that matches more than one alternative', () => {
@@ -32,5 +38,8 @@ test('a keyword the validator does not know is an error, not ignored', () => {
 });
 
 test('assertMatches throws with the label and every problem', () => {
-  assert.throws(() => assertMatches({ type: 'object', required: ['a', 'b'] }, {}, 'repo.json'), /^Error: repo\.json does not match its schema:\n {2}\$: missing a\n {2}\$: missing b$/);
+  assert.throws(
+    () => assertMatches({ type: 'object', required: ['a', 'b'] }, {}, 'repo.json'),
+    /^Error: repo\.json does not match its schema:\n {2}\$: missing a\n {2}\$: missing b$/,
+  );
 });

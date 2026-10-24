@@ -1,8 +1,8 @@
-# Technical Architecture
+# Technical architecture
 
 How `jseverino.com` is built: where data enters, what the build transforms, and what runs at Cloudflare's edge.
 
-## 1. System Shape
+## 1. System shape
 
 The site is one Astro program on the Cloudflare Workers adapter: every page is prerendered into a static asset, and a few on-demand routes run in the same Worker. GitHub Actions builds it once, gates that build, and deploys it as the `jseverino` Worker ([§14](#14-release-gate)).
 
@@ -44,7 +44,7 @@ The public serving layer is static: every HTML page is a prerendered asset the a
 
 There is no public admin panel, user account system, comment system, upload endpoint, or origin application server. Measurements are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
-## 2. Source Of Truth
+## 2. Source of truth
 
 The private Obsidian vault is the editorial source of truth. This repository is the sanitized public snapshot and build source.
 
@@ -70,7 +70,7 @@ Worker handler, and generated API Shield OpenAPI document consume or
 derive from that contract. Contract-projection audits fail when any generated
 surface becomes stale.
 
-### Portfolio Software list
+### Portfolio software list
 
 The Software tab of `/portfolio` is not vault-synced. Repo facts (which
 repos, description, primary language, last push) come from the GitHub
@@ -96,7 +96,7 @@ The snapshot scripts' registry requests have a five-second timeout, including
 response-body reads. Content, GitHub, and software loaders share pending work
 through [`async-cache.ts`](../src/lib/async-cache.ts); failed loads can be retried.
 
-## 3. Sync Pipeline
+## 3. Sync pipeline
 
 [`bin/sync-content.ts`](../bin/sync-content.ts) orchestrates the private-to-public sync.
 It delegates source-specific parsing to [`bin/content-sync/source-adapters.ts`](../bin/content-sync/source-adapters.ts)
@@ -120,7 +120,7 @@ Main responsibilities:
 
 The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, image masters, document rows, education, prune, the compile check, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract, and compiles every document with the site's renderer, without writing anything (`site validate`), so an MDX error or a refused block surfaces with its line before a build. Masters are cached by source hash and encoder version under the cache root every checkout and worktree shares (`SITE_CACHE_DIR` in `mise.toml`'s `[env]`); each is written to a temp name and renamed, so an interrupted sync leaves no partial file. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
 
-## 4. Content Collections
+## 4. Content collections
 
 Astro content collections are registered in [`src/content.config.ts`](../src/content.config.ts).
 Their field validators come from the committed generated module
@@ -155,7 +155,7 @@ To add or change a writeup field, edit only the canonical contract and run
 `mise run sync:contract`. Adding a field is one line in
 `contracts/content.v1.json`, beside the fields it resembles.
 
-## 5. Markdown Rendering
+## 5. Markdown rendering
 
 Documents are MDX, rendered by Astro 7's default Markdown processor,
 [Sätteri](https://satteri.bruits.org/): a Rust parser with plugins written in
@@ -189,7 +189,7 @@ component, and each run of prose in the page's wrapper. The syntax is in the
 [Authoring Guide](./Authoring-Guide.md); the plugins' behavior is pinned by
 [`tests/unit/content-render.test.ts`](../tests/unit/content-render.test.ts).
 
-## 6. Site Chrome And Taxonomy
+## 6. Site chrome and taxonomy
 
 Site chrome is repo configuration; the vault holds none of it. It lives in [`src/lib/site.ts`](../src/lib/site.ts), a typed object derived from the identity primitive [`src/lib/site-config.ts`](../src/lib/site-config.ts). `astro check` validates its shape, and the header, footer, and `SeoHead` import it directly with no async content load.
 
@@ -207,7 +207,7 @@ The five instance primitives everything else derives from (`domain`, `owner`, `g
 
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 
-## 7. Client Conventions
+## 7. Client conventions
 
 ### Browser contract
 
@@ -215,11 +215,18 @@ The production target is current evergreen Chromium, Firefox, and Safari/WebKit.
 
 Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
 
-The `stylelint` key in [`package.json`](../package.json) extends the standard modern CSS ruleset and refuses a literal color: a rule names a custom property or mixes one with `color-mix()`. Its exceptions: `no-descending-specificity` reports false ordering positives under native nesting, logical longhands and the WebKit backdrop prefix are intentional, and the style rules it turns off (empty lines, hex length, class-name pattern, keyword case) are conventions this code does not use. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
+Biome lints the stylesheets from its recommended CSS rules, configured in [`biome.jsonc`](../biome.jsonc), and refuses a literal color: a rule names a custom property or mixes one with `color-mix()`. Its exceptions: `noDescendingSpecificity` reports false ordering positives under native nesting, and the forced-colors focus ring and the reduced-motion override use `!important` to outrank every component, each marked where it stands. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 
-[`base.css`](../src/styles/base.css) imports each focused stylesheet once.
-Contact controls live in `forms.css`; footer, theme controls, and social links
-live in `footer.css`; skip-link and assistive rules live in `accessibility.css`.
+[`base.css`](../src/styles/base.css) imports each stylesheet every page may need
+once; footer, theme controls, and social links live in `footer.css`; skip-link
+and assistive rules live in `accessibility.css`. A sheet only one page renders
+is imported by that page, so no other page carries it: `forms.css` by the
+contact page, `software.css` by the portfolio index, and `documents.css` by the
+resume and education pages. Astro merges a page's sheets into one inline `<style>` in an order of its own, and the page's sheet can come first. So each split sheet opens with the full `@layer tokens, base, components, pages` statement and keeps its rules in `pages`. That layer outranks the shared components without relying on source order. Its forced-colors overrides sit beside its rules for the same reason.
+
+`tests/playwright/css-quality.spec.ts` checks that every page's stylesheet opens with that statement. Every distinct merged sheet is one CSP hash, and `bin/build-csp.ts` allows four.
+
+Markdown output (tables, terminal blocks) stays global, since any content page can render it. The embed bundle stays `base.css` alone: the split sheets style site components no vault note emits.
 
 ### Sticky-header shadow
 
@@ -242,11 +249,11 @@ Both paths set one registered custom property, `--header-scroll` (a `<number>`, 
 
 ### Mobile menu
 
-The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape, light-dismiss, and the expanded state are native; the script only closes the menu when a link inside it is followed. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
+The mobile navigation is a `popover="auto"` element. The toggle button uses `popovertarget`; Escape, light-dismiss, and the expanded state are native; the script only closes the menu when a link inside it is followed or its empty panel is clicked, since the panel fills the screen below the header and leaves light dismiss nothing outside it to catch. The item stagger is CSS alone (`@starting-style`), so it plays with JavaScript off too. The `::backdrop` pseudo and `body:has(.mobile-nav:popover-open)` replace any focus-trap, backdrop element, or scroll-lock code.
 
 ### Header height
 
-`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `tokens.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
+`--header-height` is a token (3.6rem, the header's minimum height). `--menu-offset` in `tokens.css` (3.8rem) is where the menu panel starts: the header's height once the menu button sizes it. The same value, plus a small gap, is the root's `scroll-padding-block-start`, so a `#fragment` target or the skip link's `#main` lands below the sticky header. No JS measures or writes either, so the inline `style` attribute on `<html>` stays empty and `style-src-attr` violations stay at zero.
 
 ### Responsive behavior
 
@@ -254,7 +261,7 @@ The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius
 
 A size container is a containing block for fixed-position descendants, so `main` and the content flow must not become containers: the resume page's fixed download button would anchor to them instead of the viewport.
 
-## 8. Image Pipeline
+## 8. Image pipeline
 
 Images are encoded by Astro at build time from the masters the sync commits
 beside each document (at most 1600 pixels wide, sRGB, no metadata).
@@ -280,7 +287,7 @@ shares one cache. CI's `build` job, whose output ships, and the browser legs res
 changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
-## 9. SEO And Metadata
+## 9. SEO and metadata
 
 [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) emits page metadata from route-level props and shared site data.
 
@@ -297,7 +304,7 @@ It handles:
 
 The homepage canonical must be `/`, not `/home/`. The page loader preserves explicit synced paths and falls back to `/` only for the `home` slug.
 
-## 10. Edge Security
+## 10. Edge security
 
 [`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without the Worker. The assets layer applies `_headers` to static assets only; [`src/middleware.ts`](../src/middleware.ts) gives the responses the Worker renders the `/*` rule's security headers, with a policy that has no hashes.
 
@@ -366,7 +373,7 @@ Coverage:
 
 The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Worker compute.
 
-## 11. Build Output
+## 11. Build output
 
 `mise run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
 
@@ -434,7 +441,7 @@ static security headers.
 
 Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src/pages/contact.astro` passes `preconnect={['https://challenges.cloudflare.com']}`. The insights beacon preconnect is always emitted, with per-page entries after it. Browsers may skip resource hints.
 
-## 12. Asset Organization
+## 12. Asset organization
 
 `public/` is the input side of the asset pipeline. Astro copies its contents verbatim into `dist/client/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
 
@@ -459,7 +466,7 @@ An asset specific to one page or writeup belongs in the vault. A site-wide asset
 
 Favicons, social cards, and HD brand marks are all generated from one place:
 
-- `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, an `optionalDependency` pinned to a published, provenance-attested npm version.
+- `src/lib/brand.ts` is a generated projection of the signed, lockfile-pinned `severino-brand` web contract. It carries identity, surface, card, and theme roles plus the upstream token digest. The rendering logic lives in the standalone [`branding-engine`](https://github.com/joeseverino/branding-engine) package, a devDependency.
 - The `branding-engine` package composes the "JS" mark from real Inter (weight 800) outlines and renders the social cards (headless Chromium). The site's generators pass it `BRAND` and write to the site's own paths.
 - `mise run make:icons` writes the favicon set (served) plus HD marks to `public/assets/brand/`; `make:og` and `make:social` build the social cards. All three call into `branding-engine`. `mise run checks:contracts` runs `make:icons --check`, which fails when the committed vector marks (`favicon.svg`, `mark.svg`, `wordmark-caps.svg`) differ from what the engine renders.
 
@@ -496,7 +503,7 @@ The zone's `browser_cache_ttl` is `0`, so these headers decide browser TTLs
 
 Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/WebM downloads or `data/` for JSON exports. Keep existing buckets to their own content; a video does not go under `docs/`.
 
-## 13. Runtime Configuration
+## 13. Runtime configuration
 
 The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. Its bindings, the Turnstile secret, the one build variable, and how the D1 schema is applied are in [Cloudflare, Worker configuration](./Cloudflare.md#worker-configuration). Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`.
 
@@ -515,7 +522,7 @@ mise run preview
 assets layer's `_headers`, redirects and 404 page, and the API routes active,
 using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI` against the preview's address, filtered for `content-security-policy` and `reporting-endpoints`, is the quick by-hand check.
 
-## 14. Release Gate
+## 14. Release gate
 
 Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [task list](./Commands.md#every-task).
 
@@ -543,20 +550,21 @@ GitHub Actions provide the remote quality gate:
   `build` runs `mise run check`: the static gates, then the gates on the
   artifact `bin/build-static.ts` produces, then uploads that artifact as
   `site` for the `deploy` workflow, so what ships is the build that passed
-  every gate. The `playwright` matrix: `e2e` serves the build with `astro preview`
-  and runs functional checks across Chromium, Firefox, and WebKit on three
-  workers; `visual` builds the synthetic content in `tests/fixtures/content`
+  every gate. `e2e` serves the build with `astro preview` and runs functional
+  checks across Chromium, Firefox, and WebKit on three workers, inside
+  Playwright's image for the locked release, which carries the browsers and
+  their system packages, so the job installs none. The `playwright` matrix:
+  `visual` builds the synthetic content in `tests/fixtures/content`
   (`SITE_CONTENT_ROOT`) and diffs macOS Chromium baselines, so a content
   publish never moves a baseline; and `edge` serves the build through the
   Cloudflare runtime with `astro preview` and asserts what only that
   runtime produces: the build-time CSP (hash coverage of every inline script and style, the same policy on every request, the `/contact/` exemption), the
   `public/_headers` security and cache rules, a real 404, the contact
-  handler's refusals, and byte-exact `security.txt`. On Linux the browser
-  system packages install in the background while the site builds, and the
-  suite serves that build. Browser binaries are cached by Playwright version
-  rather than lockfile hash, so a dependency update's lockfile rewrite still hits the
-  cache. Each suite writes its own `test-results/<suite>/` and
-  `playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
+  handler's refusals, and byte-exact `security.txt`. `e2e` and `edge` each
+  serve a build made in their own job with the test site key
+  (`mise run build:browser`); `visual` installs Chromium, then its suite
+  builds the fixtures it serves. Each suite writes its own `.cache/test-results/<suite>/` and
+  `.cache/playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
 - [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run
   completes successfully and ships that run's `site` artifact; it runs the
@@ -582,8 +590,9 @@ GitHub Actions provide the remote quality gate:
     `release-<sha>` artifact that [`release`](../.github/workflows/release.yml)
     publishes for a tag.
   - `dist`: commits the attested archive to the [`dist` branch](./Dist-Branch.md).
-  - `report`: keeps one comment per pull request current with `ci`'s job
-    summaries and the preview's.
+  - `report`: runs [`bin/pr-comment.ts`](../bin/pr-comment.ts) from the default
+    branch's checkout to keep one comment per pull request current with `ci`'s
+    job summaries and the preview's.
 
   The Cloudflare token (`CLOUDFLARE_API_TOKEN`) lives in the `production`
   environment, and the Access service token
@@ -616,7 +625,7 @@ Every workflow declares a top-level `permissions: contents: read`. Any wider sco
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 
-## Related Docs
+## Related docs
 
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)

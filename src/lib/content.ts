@@ -1,13 +1,13 @@
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ImageMetadata } from 'astro';
-import { getCollection } from 'astro:content';
-import type { CollectionEntry } from 'astro:content';
-import { site } from './site.ts';
 import { asyncCache } from './async-cache.ts';
 import { contentRoot } from './content-root.ts';
-import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 import { isoDate } from './dates.ts';
+import { site } from './site.ts';
+import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 
 export type { TechnologyGroup, TechnologyTag } from './technology-groups.ts';
 
@@ -73,9 +73,7 @@ export async function getPage(slug: string): Promise<PageContent> {
 // Institution pages generated under `education/` by sync-content.
 export async function getEducationInstitutions(): Promise<PageContent[]> {
   const pages = await loadPages();
-  return pages
-    .filter((entry) => collectionSlug(entry.id).startsWith('education/'))
-    .map(toPageContent);
+  return pages.filter((entry) => collectionSlug(entry.id).startsWith('education/')).map(toPageContent);
 }
 
 // Cached per file mtime: a build reads the catalog hundreds of times, and a dev edit still shows up.
@@ -105,18 +103,13 @@ function warnOnUnknownTechnologies(writeups: Writeup[]): void {
   }
   if (unknown.size > 0) {
     const list = [...unknown].sort().join(', ');
-    console.warn(
-      `[technology-groups] Writeup frontmatter references tag slugs missing from ${contentRoot}/technology-groups.md: ${list}`,
-    );
+    console.warn(`[technology-groups] Writeup frontmatter references tag slugs missing from ${contentRoot}/technology-groups.md: ${list}`);
   }
 }
 
 export const getWriteups = asyncCache<Writeup[]>(async () => {
   // Drafts render in `site dev --drafts` (a gitignored overlay) but never in a build.
-  const entries = await getCollection(
-    'writeups',
-    (entry) => import.meta.env.DEV || entry.data.published === true,
-  );
+  const entries = await getCollection('writeups', (entry) => import.meta.env.DEV || entry.data.published === true);
 
   const writeups = entries.map((entry) => {
     return {
@@ -157,9 +150,7 @@ export async function getAllTags(): Promise<{ slug: string; label: string; count
     }
   }
 
-  return [...counts.entries()]
-    .map(([slug, count]) => ({ slug, label: titleCase(slug), count }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  return [...counts.entries()].map(([slug, count]) => ({ slug, label: titleCase(slug), count })).sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function titleCase(value: string): string {

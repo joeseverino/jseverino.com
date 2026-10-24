@@ -3,8 +3,9 @@
 // block, and every table sits in a scrollable figure. Wrapping is its own
 // pass, after the cell edits, because a pass cannot move a node it also
 // edited inside.
-import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
+
 import type { Element, ElementContent, Text } from 'hast';
+import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
 
 const el = (tagName: string, className: string[] | undefined, children: ElementContent[], properties: Element['properties'] = {}): Element => ({
   type: 'element',
@@ -20,15 +21,17 @@ function ancestors(node: HastNode, ctx: HastVisitorContext): Element[] {
   return found;
 }
 
-const hasClass = (node: Element, name: string): boolean =>
-  Array.isArray(node.properties?.className) && node.properties.className.includes(name);
+const hasClass = (node: Element, name: string): boolean => Array.isArray(node.properties?.className) && node.properties.className.includes(name);
 
 // A break opportunity after each `.` or `:` between letters or digits, so a
 // narrow column breaks `00:00:00:00:` / `02:1e`, never mid-token.
 const SEPARATOR = /(?<=[\p{L}\p{N}][.:])(?=[\p{L}\p{N}])/u;
 
 function terminal(code: Element): Element {
-  const source = code.children.map((child) => (child.type === 'text' ? child.value : '')).join('').replace(/\r?\n$/, '');
+  const source = code.children
+    .map((child) => (child.type === 'text' ? child.value : ''))
+    .join('')
+    .replace(/\r?\n$/, '');
   const lines = source.split(/\r?\n/).map((line): Element => {
     // Each .line is display:block, so a blank line needs its own span.
     if (line === '') return el('span', ['line'], [text(' ')]);
@@ -37,10 +40,11 @@ function terminal(code: Element): Element {
     return el('span', ['line'], [el('span', ['prompt'], [text('$')]), text(' '), el('span', ['cmd'], [text(line.slice(prompt[0].length))])]);
   });
   const dots = el('span', ['terminal-dots'], [], { ariaHidden: 'true' });
-  return el('div', ['terminal-block'], [
-    el('div', ['terminal-bar'], [dots, el('span', ['terminal-label'], [text('TERMINAL')])]),
-    el('pre', undefined, [el('code', undefined, lines)]),
-  ]);
+  return el(
+    'div',
+    ['terminal-block'],
+    [el('div', ['terminal-bar'], [dots, el('span', ['terminal-label'], [text('TERMINAL')])]), el('pre', undefined, [el('code', undefined, lines)])],
+  );
 }
 
 export const markup = defineHastPlugin({
@@ -62,8 +66,12 @@ export const markup = defineHastPlugin({
     if (!chain.some((parent) => parent.tagName === 'td' || parent.tagName === 'th')) return;
     if (chain.some((parent) => parent.tagName === 'code')) return;
     const parts = node.value.split(SEPARATOR);
-    if (opens) parts.splice(0, 1, parts[0]!.slice(0, 1), parts[0]!.slice(1));
-    ctx.replaceNode(node, parts.flatMap((part, index) => (index ? [el('wbr', undefined, []), text(part)] : [text(part)])));
+    const [head = ''] = parts;
+    if (opens) parts.splice(0, 1, head.slice(0, 1), head.slice(1));
+    ctx.replaceNode(
+      node,
+      parts.flatMap((part, index) => (index ? [el('wbr', undefined, []), text(part)] : [text(part)])),
+    );
   },
 });
 
@@ -82,8 +90,16 @@ const wrapTable = (name: string, wraps: (parent: Element | undefined) => boolean
     },
   });
 
-export const tables = wrapTable('tables', (parent) => !parent || !hasClass(parent, 'table-box'), () => el('figure', ['table-figure'], []));
-export const tableBoxes = wrapTable('table-boxes', (parent) => parent !== undefined && hasClass(parent, 'table-figure'), () => el('div', ['table-box'], []));
+export const tables = wrapTable(
+  'tables',
+  (parent) => !parent || !hasClass(parent, 'table-box'),
+  () => el('figure', ['table-figure'], []),
+);
+export const tableBoxes = wrapTable(
+  'table-boxes',
+  (parent) => parent !== undefined && hasClass(parent, 'table-figure'),
+  () => el('div', ['table-box'], []),
+);
 
 function previousText(node: HastNode, ctx: HastVisitorContext): string {
   const parent = ctx.parent(node);

@@ -30,10 +30,7 @@ export function endGroup(): void {
 // Backslashes first, then pipes, then newlines: a cell must not be able to
 // escape its own table row.
 export function cell(text: unknown): string {
-  return String(text)
-    .replace(/\\/g, '\\\\')
-    .replace(/\|/g, '\\|')
-    .replace(/\r?\n/g, ' ');
+  return String(text).replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
 
 // ok is true, false, or null (skipped).
@@ -78,13 +75,18 @@ export function createReport(title: string, column = 'Step') {
     },
     failed: () => rows.filter((row) => row.ok === false),
     write(intro: string): boolean {
-      return appendSummary([
-        `## ${title}`,
-        '',
-        intro,
-        '',
-        table([column, 'Result', 'Detail'], rows.map((row) => [`\`${row.label}\``, outcome(row.ok), row.detail])),
-      ].join('\n'));
+      return appendSummary(
+        [
+          `## ${title}`,
+          '',
+          intro,
+          '',
+          table(
+            [column, 'Result', 'Detail'],
+            rows.map((row) => [`\`${row.label}\``, outcome(row.ok), row.detail]),
+          ),
+        ].join('\n'),
+      );
     },
   };
 }

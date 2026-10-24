@@ -1,17 +1,19 @@
 #!/usr/bin/env node
+
 // Lighthouse against the live site, configured by tests/lighthouse.json. Exists
 // because @lhci/cli pins an older Lighthouse than PageSpeed Insights uses, which
 // shows up as phantom deductions.
 //
 //   node bin/lighthouse-check.ts
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
+import { readJson } from '../src/lib/json.ts';
+import { fromCheckoutCache, siteRoot as root } from '../src/lib/site-root.ts';
 import { cli, exitWith } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 import { annotate, appendSummary, status, table } from './lib/step-summary.ts';
-import { siteRoot as root } from '../src/lib/site-root.ts';
-import { readJson } from '../src/lib/json.ts';
 
 interface LighthouseConfig {
   urls: string[];
@@ -25,7 +27,10 @@ const COLUMNS = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 // The first line of a failed run's log that reads as the reason, for its table row.
 function firstFailureLine(log: string): string {
-  const lines = log.split('\n').map((line) => line.trim()).filter(Boolean);
+  const lines = log
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
   return lines.find((line) => /^(error|failed|fail|✖|✗|-\s)/i.test(line)) ?? lines.at(-1) ?? 'failed';
 }
 
@@ -42,7 +47,7 @@ export async function main(): Promise<number> {
   }
 
   const { urls, preset, chromeFlags, thresholds: byCategory } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
-  const outDir = path.join(root, 'lighthouse-reports');
+  const outDir = fromCheckoutCache('lighthouse');
   const assertions = Object.entries(byCategory).map(([category, threshold]) => ({ category, ...threshold }));
 
   fs.mkdirSync(outDir, { recursive: true });
@@ -116,15 +121,17 @@ export async function main(): Promise<number> {
     .map((assertion) => `${assertion.category} ${assertion.level === 'error' ? 'fails' : 'warns'} below ${percent(assertion.minScore)}`)
     .join(', ');
 
-  appendSummary([
-    `## Lighthouse${version ? ` ${version}` : ''}`,
-    '',
-    errors === 0 && auditFailures === 0
-      ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
-      : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
-    '',
-    table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
-  ].join('\n'));
+  appendSummary(
+    [
+      `## Lighthouse${version ? ` ${version}` : ''}`,
+      '',
+      errors === 0 && auditFailures === 0
+        ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
+        : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
+      '',
+      table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
+    ].join('\n'),
+  );
 
   if (errors > 0 || auditFailures > 0) {
     console.error(`\nfailed: ${auditFailures} Lighthouse audit execution failure(s), ${errors} threshold(s)`);

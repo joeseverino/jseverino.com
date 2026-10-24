@@ -17,13 +17,7 @@ export const SKIP = new Set<string>([
 ]);
 
 /** Repos rendered as rich featured cards, in this order; the rest sort after, by title. */
-export const FEATURED: readonly string[] = [
-  'severino-vault-mcp',
-  'branding-engine',
-  'sitedrift',
-  'tools',
-  'cordon',
-];
+export const FEATURED: readonly string[] = ['severino-vault-mcp', 'branding-engine', 'sitedrift', 'tools', 'cordon'];
 
 /** repo -> writeup slug for the "Read the writeup" cross-link. */
 export const WRITEUPS: Record<string, string> = {
@@ -50,7 +44,7 @@ export const PACKAGES: Record<string, PackageConfig> = {
     install: 'npm i branding-engine',
     url: 'https://www.npmjs.com/package/branding-engine',
   },
-  'sitedrift': {
+  sitedrift: {
     registry: 'npm',
     name: 'sitedrift',
     install: 'npm i sitedrift',

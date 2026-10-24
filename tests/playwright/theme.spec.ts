@@ -1,6 +1,6 @@
-import { test, expect, type Page } from './helpers/test.ts';
-import { rgb } from './helpers/colors.ts';
 import { SURFACE } from '../../src/lib/brand.ts';
+import { rgb } from './helpers/colors.ts';
+import { expect, type Page, test } from './helpers/test.ts';
 
 // Neutral tokens use light-dark(); brand tokens use deterministic selectors from
 // the shared brand emitter. Asserts the resolved paint: auto tracks the OS with no JS,
@@ -22,10 +22,7 @@ async function homeIn(page: Page, scheme: 'light' | 'dark'): Promise<void> {
 // canvas on a dark OS. The head meta is parsed first and fixes the first frame.
 test('declares the color scheme before any stylesheet loads', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('head meta[name="color-scheme"]')).toHaveAttribute(
-    'content',
-    'light dark',
-  );
+  await expect(page.locator('head meta[name="color-scheme"]')).toHaveAttribute('content', 'light dark');
 });
 
 test.describe('auto (default)', () => {
@@ -85,9 +82,7 @@ test.describe('explicit override', () => {
     await themeChoice(page, 'dark').click();
 
     const active = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')]
-        .filter((meta) => meta.media === 'all')
-        .map((meta) => meta.dataset.scheme),
+      [...document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')].filter((meta) => meta.media === 'all').map((meta) => meta.dataset.scheme),
     );
     expect(active).toEqual(['dark']);
   });

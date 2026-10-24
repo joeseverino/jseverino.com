@@ -32,10 +32,7 @@ for (const { rel } of pages) {
 
 // Astro inlines the site stylesheet into every page, so the CSS budget is the largest <style> block.
 // External .css counts too, except embed/bundle.css (an embeddable artifact no page loads).
-const inlineCss = Math.max(
-  0,
-  ...pages.map(({ html }) => Buffer.byteLength(html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '')),
-);
+const inlineCss = Math.max(0, ...pages.map(({ html }) => Buffer.byteLength(html.match(/<style\b[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '')));
 const totalCss = inlineCss + sum(files.filter((rel) => rel.endsWith('.css') && !rel.startsWith(`embed${path.sep}`)));
 if (totalCss > BUDGET.totalCssBytes) {
   failures.push(`total CSS ${kb(totalCss)} exceeds the ${kb(BUDGET.totalCssBytes)} budget`);

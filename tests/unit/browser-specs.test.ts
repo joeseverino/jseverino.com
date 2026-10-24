@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { test } from 'node:test';
 import { fromRoot } from '../../src/lib/site-root.ts';
 
 test('every browser spec takes its test from the shared harness module', () => {

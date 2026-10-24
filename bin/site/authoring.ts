@@ -1,15 +1,15 @@
 // Vault-side commands: scaffold, validate, order the featured list, browse technologies.
 import fs from 'node:fs';
 import path from 'node:path';
-import { checkContent } from '../content-sync/sync.ts';
-import { WRITEUPS_FOLDER, vaultRoot } from '../lib/local-paths.ts';
-import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
+import { isoDate } from '../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
-import { EXIT, SiteError, assertSlug, type Output } from './cli.ts';
+import { checkContent } from '../content-sync/sync.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
+import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
 import { guard } from './writeups.ts';
-import { isoDate } from '../../src/lib/dates.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {
   const slug = assertSlug(requested);
@@ -19,9 +19,7 @@ export async function newWriteup({ slug: requested, out }: { slug: string | unde
   if (!fs.existsSync(template)) throw new SiteError(`writeup template not found: ${template}`, { fix: 'set VAULT_DIR to the vault root' });
   if (fs.existsSync(target)) throw new SiteError(`writeup already exists: ${target}`, { code: EXIT.usage, fix: `site validate ${slug} --draft` });
 
-  const body = fs.readFileSync(template, 'utf8')
-    .replaceAll('{{date:YYYY-MM-DD}}', isoDate())
-    .replaceAll('{{title}}', slug);
+  const body = fs.readFileSync(template, 'utf8').replaceAll('{{date:YYYY-MM-DD}}', isoDate()).replaceAll('{{title}}', slug);
   if (parseFrontmatter(body).data.published !== false) {
     throw new SiteError(`the template does not start writeups at published: false: ${template}`);
   }
@@ -73,11 +71,16 @@ function resolveSlot(order: readonly FeaturedEntry[], slug: string, target: stri
     throw new SiteError(`${slug} is not featured`, { code: EXIT.usage, fix: `insert it with a slot number, top, or bottom: site featured ${slug} top` });
   };
   switch (target) {
-    case 'top': return 1;
-    case 'bottom': return current === null ? n + 1 : n;
-    case 'up': return current === null ? notFeatured() : Math.max(1, current - 1);
-    case 'down': return current === null ? notFeatured() : Math.min(n, current + 1);
-    case 'off': return 0;
+    case 'top':
+      return 1;
+    case 'bottom':
+      return current === null ? n + 1 : n;
+    case 'up':
+      return current === null ? notFeatured() : Math.max(1, current - 1);
+    case 'down':
+      return current === null ? notFeatured() : Math.min(n, current + 1);
+    case 'off':
+      return 0;
     default:
       if (!/^\d+$/.test(target ?? '')) {
         throw new SiteError(`target must be a slot number, up, down, top, bottom, or off: '${target ?? ''}'`, { code: EXIT.usage });

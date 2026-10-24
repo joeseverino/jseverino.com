@@ -1,7 +1,6 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { CSP_INLINE_MARKER, hashSource, htmlPolicy, trustedTypesReportOnly } from '../../src/lib/csp.ts';
-import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 import {
   cacheRuleFindings,
   contactRefusalFindings,
@@ -12,6 +11,7 @@ import {
   staticHeaderFindings,
   trustedTypesExempt,
 } from '../../src/lib/edge-expectations.ts';
+import { cspReportPath, cspReportUri } from '../../src/lib/site-config.ts';
 
 const script = 'theme()';
 const style = 'body{}';
@@ -41,7 +41,8 @@ describe('cspFindings', () => {
   test('flags every escape hatch', async () => {
     const policy = (await policyFor(true)).replace("script-src 'self'", "script-src 'self' 'unsafe-inline' 'strict-dynamic' blob: 'nonce-abc'");
     const findings = cspFindings(withPolicy(policy), '/').join(' | ');
-    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-']) assert.match(findings, new RegExp(`script-src carries ${RegExp.escape(banned)}`));
+    for (const banned of ["'unsafe-inline'", "'strict-dynamic'", 'blob:', 'nonce-'])
+      assert.match(findings, new RegExp(`script-src carries ${RegExp.escape(banned)}`));
   });
 
   test('flags a leftover build placeholder and a policy with no hash', async () => {
@@ -86,17 +87,19 @@ describe('inlineHashFindings', () => {
     assert.equal((await inlineHashFindings('<html><body></body></html>', await policyFor(true))).length, 2);
     assert.ok((await inlineHashFindings(page, undefined)).length >= 2);
     assert.deepEqual(await inlineHashFindings(page.replace('<script>', `<script nonce="${CSP_INLINE_MARKER}">`), await policyFor(true)), []);
-    assert.ok((await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)));
+    assert.ok(
+      (await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)),
+    );
   });
 });
 
 describe('header and cache predicates', () => {
-  test('staticHeaderFindings names each missing or wrong header and a leaked CORS header', () => {
+  test('staticHeaderFindings names each missing or wrong header and any CORS grant', () => {
     const findings = staticHeaderFindings({ 'x-content-type-options': 'sniff', 'access-control-allow-origin': '*' }).join(' | ');
     assert.match(findings, /x-content-type-options is sniff, expected nosniff/);
     assert.match(findings, /referrer-policy is <missing>/);
     assert.match(findings, /permissions-policy is <missing>/);
-    assert.match(findings, /access-control-allow-origin leaks/);
+    assert.match(findings, /access-control-allow-origin is \*, expected none/);
   });
 
   test('hstsFindings wants includeSubDomains', () => {
@@ -105,23 +108,38 @@ describe('header and cache predicates', () => {
   });
 
   test('cacheRuleFindings holds an asset to the rule public/_headers gives its path', () => {
-    const immutable = fileHeaders('/_astro/a.js').set.get('cache-control') ?? '';
-    const revalidating = fileHeaders('/assets/icons/favicon.svg').set.get('cache-control') ?? '';
+    const immutable = fileHeaders('/_astro/a.js').get('cache-control') ?? '';
+    const revalidating = fileHeaders('/assets/icons/favicon.svg').get('cache-control') ?? '';
     assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable }, '/_astro/a.js'), []);
     assert.deepEqual(cacheRuleFindings({ 'cache-control': revalidating }, '/assets/icons/favicon.svg'), []);
     assert.ok(cacheRuleFindings({ 'cache-control': immutable }, '/assets/icons/favicon.svg').some((finding) => /cache-control is/.test(finding)));
-    assert.ok(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js').some((finding) => /access-control-allow-origin leaks/.test(finding)));
+    assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js'), [
+      'access-control-allow-origin is *, expected none',
+    ]);
     assert.equal(cacheRuleFindings({}, '/about/').length, 1);
   });
 
   // Cloudflare merges every rule matching a path, so a broad immutable rule would pin the in-place chrome for a year.
   test('public/_headers pins only write-once paths immutable', () => {
     for (const pathname of ['/_astro/a.js', '/assets/fonts/inter/inter-variable-latin.woff2']) {
-      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
+      assert.match(fileHeaders(pathname).get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
     }
-    for (const pathname of ['/favicon.ico', '/assets/icons/favicon.svg', '/assets/brand/mark.svg', '/assets/og/og-default.jpg', '/assets/docs/joseph-severino-resume.pdf']) {
-      assert.match(fileHeaders(pathname).set.get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
+    for (const pathname of [
+      '/favicon.ico',
+      '/assets/icons/favicon.svg',
+      '/assets/brand/mark.svg',
+      '/assets/og/og-default.jpg',
+      '/assets/docs/joseph-severino-resume.pdf',
+    ]) {
+      assert.match(fileHeaders(pathname).get('cache-control') ?? '', /^public, max-age=3600, must-revalidate$/, pathname);
     }
+  });
+
+  test('fileHeaders gives the contact page its own policy, the global one detached', () => {
+    const contact = fileHeaders('/contact/');
+    assert.equal(contact.get('content-security-policy'), '__CSP_CONTACT__');
+    assert.equal(contact.get('content-security-policy-report-only'), '__TT_REPORT_ONLY__');
+    assert.equal(fileHeaders('/').get('content-security-policy'), '__CSP__');
   });
 
   test('contactRefusalFindings accepts only the 400 verification refusal', () => {

@@ -1,27 +1,20 @@
-import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, describe, test } from 'node:test';
+import { type HastNode, mdxToHast } from 'satteri';
 import sharp from 'sharp';
-import { mdxToHast, type HastNode } from 'satteri';
 
-import {
-  collectAssetRefs,
-  collectReferences,
-  createMasterEncoder,
-  MASTER_WIDTH,
-  referenceIssues,
-  resolveAssetSource,
-} from '../../bin/content-sync/assets.ts';
-import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
-import { createWriter } from '../../bin/content-sync/writer.ts';
+import { collectAssetRefs, collectReferences, createMasterEncoder, MASTER_WIDTH, referenceIssues, resolveAssetSource } from '../../bin/content-sync/assets.ts';
 import { compileIssues } from '../../bin/content-sync/compile.ts';
-import { orgRow, renderDocumentRows, roleRow, type Grammar } from '../../bin/content-sync/documents.ts';
+import { type Grammar, orgRow, renderDocumentRows, roleRow } from '../../bin/content-sync/documents.ts';
 import { buildEducation } from '../../bin/content-sync/education.ts';
 import { checkContent, committedLayout, syncContent } from '../../bin/content-sync/sync.ts';
-import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { scratchDirs, write } from './helpers/fs.ts';
+import { createWriter } from '../../bin/content-sync/writer.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
+import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
+import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
+import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('content-sync-');
 after(scratch.cleanup);
@@ -42,7 +35,7 @@ describe('asset references', () => {
     '',
     '<figure>',
     '  <img src="images/fig.png">',
-    '  <figcaption><a href=\'images/cap.pdf\'>Caption</a></figcaption>',
+    "  <figcaption><a href='images/cap.pdf'>Caption</a></figcaption>",
     '</figure>',
     '',
     '```md',
@@ -52,8 +45,16 @@ describe('asset references', () => {
 
   test('every relative destination is found once, titles, brackets and HTML aside, code skipped', () => {
     assert.deepEqual([...collectAssetRefs(body)].sort(), [
-      'images/a.png', 'images/b c.png', 'images/cap.pdf', 'images/doc.pdf', 'images/fig.png', 'images/full.png',
-      'images/q r&s.png', 'images/raw.png', 'images/ref.png', 'images/t.png',
+      'images/a.png',
+      'images/b c.png',
+      'images/cap.pdf',
+      'images/doc.pdf',
+      'images/fig.png',
+      'images/full.png',
+      'images/q r&s.png',
+      'images/raw.png',
+      'images/ref.png',
+      'images/t.png',
     ]);
   });
 
@@ -70,11 +71,9 @@ describe('asset references', () => {
   test('reference issues: missing images, refs outside images/, wikilinks, the cover', async () => {
     const dir = scratch.make();
     write(path.join(dir, 'images/here.png'), 'x');
-    const issues = await referenceIssues(
-      '![ok](images/here.png)\n![gone](images/gone.png)\n[notes](./notes.md)\n![[embed.png]]\n',
-      dir,
-      { cover: './images/cover.png' },
-    );
+    const issues = await referenceIssues('![ok](images/here.png)\n![gone](images/gone.png)\n[notes](./notes.md)\n![[embed.png]]\n', dir, {
+      cover: './images/cover.png',
+    });
     assert.deepEqual(issues, [
       'missing image: images/gone.png',
       'relative reference outside images/ will not resolve on the site: ./notes.md',
@@ -136,13 +135,16 @@ describe('document rows', () => {
       '### Acme | Remote\n**Lead** | 2024\n**Engineer** | 2022\n### School | City\n**BS** | 2020',
       new Map([['School', '/education/school/']]),
     );
-    assert.equal(html, [
-      orgRow({ name: 'Acme', location: 'Remote' }, { tenure: '2022 – 2024' }),
-      roleRow({ title: 'Lead', dates: '2024' }),
-      roleRow({ title: 'Engineer', dates: '2022' }),
-      '<h3 class="resume-org"><span><a href="/education/school/">School</a></span><span class="resume-loc">City</span></h3>',
-      roleRow({ title: 'BS', dates: '2020' }),
-    ].join('\n'));
+    assert.equal(
+      html,
+      [
+        orgRow({ name: 'Acme', location: 'Remote' }, { tenure: '2022 – 2024' }),
+        roleRow({ title: 'Lead', dates: '2024' }),
+        roleRow({ title: 'Engineer', dates: '2022' }),
+        '<h3 class="resume-org"><span><a href="/education/school/">School</a></span><span class="resume-loc">City</span></h3>',
+        roleRow({ title: 'BS', dates: '2020' }),
+      ].join('\n'),
+    );
   });
 
   test('vault text is escaped wherever it lands in the markup', () => {
@@ -154,10 +156,7 @@ describe('document rows', () => {
   });
 
   test('a brace in vault text compiles as literal text in the MDX body', () => {
-    const rows = [
-      orgRow({ name: 'Lab {West', location: 'Town }' }, { tenure: '{2024}' }),
-      roleRow({ title: 'Lead {ops}', dates: '2024' }),
-    ].join('\n');
+    const rows = [orgRow({ name: 'Lab {West', location: 'Town }' }, { tenure: '{2024}' }), roleRow({ title: 'Lead {ops}', dates: '2024' })].join('\n');
     assert.deepEqual(compileIssues(rows, 'pages'), []);
     const text = (node: HastNode): string =>
       'value' in node && node.type === 'text' ? node.value : 'children' in node ? node.children.map(text).join('') : '';
@@ -168,16 +167,18 @@ describe('document rows', () => {
 describe('education', () => {
   const resume = { content: '## Experience\n### Acme | Remote\n## Education\n### School | City\n**BS Computing** | 2020\n### Other | Town' };
   const dataset = {
-    institutions: [{
-      institution: 'School',
-      slug: 'school',
-      description: 'A school.',
-      courses: [
-        { code: 'CS101', title: 'Intro', term: 'Fall 2024', status: 'completed', site_bullets: '- Learned things' },
-        { code: 'CS201', title: 'Next', term: 'Spring 2025', status: 'active', site_bullets: '- Learning' },
-        { code: 'CS301', title: 'Later', term: 'Fall 2025', status: 'planned', site_bullets: '- Soon' },
-      ],
-    }],
+    institutions: [
+      {
+        institution: 'School',
+        slug: 'school',
+        description: 'A school.',
+        courses: [
+          { code: 'CS101', title: 'Intro', term: 'Fall 2024', status: 'completed', site_bullets: '- Learned things' },
+          { code: 'CS201', title: 'Next', term: 'Spring 2025', status: 'active', site_bullets: '- Learning' },
+          { code: 'CS301', title: 'Later', term: 'Fall 2025', status: 'planned', site_bullets: '- Soon' },
+        ],
+      },
+    ],
   };
   const shell = { data: { title: 'Education', published: true }, content: 'Intro prose.' };
   const projectPage = (data: Record<string, unknown>) => data;
@@ -185,17 +186,23 @@ describe('education', () => {
   test('joins vault institutions to resume orgs and returns the links explicitly', () => {
     const { pages, links } = buildEducation({ grammar, shell, resume, dataset, projectPage });
     assert.deepEqual([...links], [['School', '/education/school/']]);
-    assert.deepEqual(pages.map((page) => page.page), ['education/school/index.mdx', 'education/index.mdx']);
+    assert.deepEqual(
+      pages.map((page) => page.page),
+      ['education/school/index.mdx', 'education/index.mdx'],
+    );
     const [detailPage, indexPage] = pages;
     assert.ok(detailPage && indexPage);
     const index = parseFrontmatter(indexPage.content);
-    assert.equal(index.content.trim(), [
-      'Intro prose.',
-      '<h2 class="visually-hidden">Institutions</h2>',
-      orgRow({ name: 'School', location: 'City' }, { href: '/education/school/' }),
-      roleRow({ title: 'BS Computing', dates: '2020' }),
-      '- 1 course completed · 1 in progress',
-    ].join('\n\n'));
+    assert.equal(
+      index.content.trim(),
+      [
+        'Intro prose.',
+        '<h2 class="visually-hidden">Institutions</h2>',
+        orgRow({ name: 'School', location: 'City' }, { href: '/education/school/' }),
+        roleRow({ title: 'BS Computing', dates: '2020' }),
+        '- 1 course completed · 1 in progress',
+      ].join('\n\n'),
+    );
     const detail = parseFrontmatter(detailPage.content);
     assert.equal(detail.data.path, '/education/school/');
     assert.match(detail.content, /CS 101 — Intro \(Fall 2024\)/);
@@ -210,24 +217,47 @@ describe('education', () => {
 
 async function fixtureVault() {
   const vault = scratch.make();
-  const png = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#123456' } }).png().toBuffer();
+  const png = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#123456' } })
+    .png()
+    .toBuffer();
   write(path.join(vault, '06 Pages/_technology-groups.md'), '## Tools\n\n| Slug | Label | Featured |\n| --- | --- | --- |\n| astro | Astro | yes |\n');
   write(path.join(vault, '06 Pages/about/index.md'), '---\ntitle: About\npublished: true\n---\n![Me](./images/me.png)\n');
   write(path.join(vault, '06 Pages/about/images/me.png'), png);
-  write(path.join(vault, '05 Writeups/live/index.md'), [
-    '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
-    'cover_image: ./images/cover.png', 'technologies:', '  - astro', 'related_projects:', '  - private', '---',
-    '# Live', '', 'Body with ![Diagram](images/diagram.png "Diagram").', '',
-  ].join('\n'));
+  write(
+    path.join(vault, '05 Writeups/live/index.md'),
+    [
+      '---',
+      'title: Live',
+      'description: A live one.',
+      'published: true',
+      'published_at: 2026-01-02',
+      'cover_image: ./images/cover.png',
+      'technologies:',
+      '  - astro',
+      'related_projects:',
+      '  - private',
+      '---',
+      '# Live',
+      '',
+      'Body with ![Diagram](images/diagram.png "Diagram").',
+      '',
+    ].join('\n'),
+  );
   write(path.join(vault, '05 Writeups/live/images/cover.png'), png);
   write(path.join(vault, '05 Writeups/live/images/diagram.png'), png);
   // An unpublished resume canonical: the resume page is skipped.
   write(path.join(vault, 'life/Career/resume.md'), '---\npublished: false\n---\n');
-  write(path.join(vault, '05 Writeups/draft/index.md'), '---\ntitle: CHANGEME\npublished: false\ntechnologies:\n  - nope\n---\nWork in progress.\n\n![x](images/missing.png)\n');
+  write(
+    path.join(vault, '05 Writeups/draft/index.md'),
+    '---\ntitle: CHANGEME\npublished: false\ntechnologies:\n  - nope\n---\nWork in progress.\n\n![x](images/missing.png)\n',
+  );
   return vault;
 }
 
 // A sync of the fixture vault into `root`, with no resume engine and no education export.
+// What checkContent reports against the fixture's live writeup.
+const liveIssues = async (vault: string) => (await checkContent({ vaultRoot: vault })).documents.find((doc) => doc.slug === 'live')?.issues ?? [];
+
 const syncOptions = (vault: string, root: string) => ({
   layout: committedLayout(root),
   vaultRoot: vault,
@@ -263,15 +293,18 @@ describe('syncContent and checkContent against a temp vault', () => {
   test('a drafts sync previews a draft with a missing image as a warning, not a failure', async () => {
     const vault = await fixtureVault();
     const root = scratch.make();
-    write(path.join(vault, 'resume-engine/lib/grammar.ts'), [
-      'export const linesForSite = (lines) => lines;',
-      'export const matchOrg = () => null;',
-      'export const matchRole = () => null;',
-      'export const matchCert = () => null;',
-      'export const matchProjectMeta = () => null;',
-      'export const orgRoleDates = () => [];',
-      'export const tenureSpan = () => "";',
-    ].join('\n'));
+    write(
+      path.join(vault, 'resume-engine/lib/grammar.ts'),
+      [
+        'export const linesForSite = (lines) => lines;',
+        'export const matchOrg = () => null;',
+        'export const matchRole = () => null;',
+        'export const matchCert = () => null;',
+        'export const matchProjectMeta = () => null;',
+        'export const orgRoleDates = () => [];',
+        'export const tenureSpan = () => "";',
+      ].join('\n'),
+    );
     const result = await syncContent({ ...syncOptions(vault, root), resumeEngineRoot: path.join(vault, 'resume-engine'), includeDrafts: true });
     assert.deepEqual(result.warnings, ['draft writeups/draft: missing image images/missing.png']);
     assert.ok(result.written.includes('src/content/writeups/draft/index.mdx'));
@@ -279,22 +312,39 @@ describe('syncContent and checkContent against a temp vault', () => {
 
   test('a published relative link outside images/ stops the sync with the message validate reports', async () => {
     const vault = await fixtureVault();
-    write(path.join(vault, '05 Writeups/live/index.md'), [
-      '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
-      'technologies:', '  - astro', '---', '', 'See [the notes](notes.md).', '',
-    ].join('\n'));
+    write(
+      path.join(vault, '05 Writeups/live/index.md'),
+      [
+        '---',
+        'title: Live',
+        'description: A live one.',
+        'published: true',
+        'published_at: 2026-01-02',
+        'technologies:',
+        '  - astro',
+        '---',
+        '',
+        'See [the notes](notes.md).',
+        '',
+      ].join('\n'),
+    );
     const root = scratch.make();
-    await assert.rejects(syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }), /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/);
-    const checked = await checkContent({ vaultRoot: vault });
-    const live = checked.documents.find((doc) => doc.slug === 'live');
-    assert.ok(live?.issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(live?.issues));
+    await assert.rejects(
+      syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }),
+      /writeups\/live: relative reference outside images\/ will not resolve on the site: notes\.md/,
+    );
+    const issues = await liveIssues(vault);
+    assert.ok(issues.includes('relative reference outside images/ will not resolve on the site: notes.md'), JSON.stringify(issues));
   });
 
   test('checkContent reports per document without writing; --draft adds drafts', async () => {
     const vault = await fixtureVault();
     const published = await checkContent({ vaultRoot: vault });
     assert.equal(published.ok, true);
-    assert.deepEqual(published.documents.map((doc) => `${doc.collection}/${doc.slug}`), ['writeups/live', 'pages/about']);
+    assert.deepEqual(
+      published.documents.map((doc) => `${doc.collection}/${doc.slug}`),
+      ['writeups/live', 'pages/about'],
+    );
 
     const drafts = await checkContent({ vaultRoot: vault, draft: true });
     const draft = drafts.documents.find((doc) => doc.slug === 'draft');
@@ -316,10 +366,13 @@ describe('image masters', () => {
   test('a master is at most MASTER_WIDTH wide and carries no metadata', async () => {
     const dir = scratch.make();
     const source = path.join(dir, 'wide.jpg');
-    write(source, await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#336699' } })
-      .withExif({ IFD0: { Make: 'Camera', Software: 'Tool' } })
-      .jpeg()
-      .toBuffer());
+    write(
+      source,
+      await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#336699' } })
+        .withExif({ IFD0: { Make: 'Camera', Software: 'Tool' } })
+        .jpeg()
+        .toBuffer(),
+    );
     const master = createMasterEncoder(path.join(dir, 'cache'));
     const meta = await sharp(await master(source)).metadata();
     assert.equal(meta.width, MASTER_WIDTH);
@@ -333,13 +386,28 @@ describe('image masters', () => {
 describe('MDX compile issues', () => {
   test('checkContent reports what the build would refuse, with its line', async () => {
     const vault = await fixtureVault();
-    write(path.join(vault, '05 Writeups/live/index.md'), [
-      '---', 'title: Live', 'description: A live one.', 'published: true', 'published_at: 2026-01-02',
-      'cover_image: ./images/cover.png', 'technologies:', '  - astro', '---', '', 'Costs {price} today.', '',
-    ].join('\n'));
-    const checked = await checkContent({ vaultRoot: vault });
-    const live = checked.documents.find((doc) => doc.slug === 'live');
-    assert.ok(live?.issues.some((issue) => /\{price\} is an expression/.test(issue)), JSON.stringify(live?.issues));
+    write(
+      path.join(vault, '05 Writeups/live/index.md'),
+      [
+        '---',
+        'title: Live',
+        'description: A live one.',
+        'published: true',
+        'published_at: 2026-01-02',
+        'cover_image: ./images/cover.png',
+        'technologies:',
+        '  - astro',
+        '---',
+        '',
+        'Costs {price} today.',
+        '',
+      ].join('\n'),
+    );
+    const issues = await liveIssues(vault);
+    assert.ok(
+      issues.some((issue) => /\{price\} is an expression/.test(issue)),
+      JSON.stringify(issues),
+    );
   });
 });
 

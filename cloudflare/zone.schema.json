@@ -18,20 +18,40 @@
       "description": "Zone settings by API setting id (PATCH /zones/:zone/settings/:id).",
       "type": "object",
       "additionalProperties": false,
-      "required": ["min_tls_version", "tls_1_3", "always_use_https", "http3", "0rtt", "speed_brain", "rocket_loader", "email_obfuscation", "server_side_exclude", "automatic_https_rewrites", "browser_cache_ttl", "brotli"],
+      "required": [
+        "min_tls_version",
+        "tls_1_3",
+        "always_use_https",
+        "http3",
+        "0rtt",
+        "speed_brain",
+        "rocket_loader",
+        "email_obfuscation",
+        "server_side_exclude",
+        "automatic_https_rewrites",
+        "browser_cache_ttl",
+        "brotli"
+      ],
       "properties": {
         "min_tls_version": { "enum": ["1.0", "1.1", "1.2", "1.3"] },
         "tls_1_3": { "enum": ["on", "off", "zrt"] },
         "always_use_https": { "$ref": "#/$defs/toggle" },
         "http3": { "$ref": "#/$defs/toggle" },
         "0rtt": { "$ref": "#/$defs/toggle" },
-        "speed_brain": { "description": "On: prefetches likely next pages through a speculation-rules response header, which adds no markup.", "$ref": "#/$defs/toggle" },
+        "speed_brain": {
+          "description": "On: prefetches likely next pages through a speculation-rules response header, which adds no markup.",
+          "$ref": "#/$defs/toggle"
+        },
         "rocket_loader": { "description": "Off: rewrites script tags, which breaks the hashed inline script.", "$ref": "#/$defs/toggle" },
         "email_obfuscation": { "description": "Off: injects a decoder script into HTML.", "$ref": "#/$defs/toggle" },
         "server_side_exclude": { "description": "Off: rewrites HTML.", "$ref": "#/$defs/toggle" },
         "automatic_https_rewrites": { "description": "Off: rewrites HTML; every URL is already https.", "$ref": "#/$defs/toggle" },
         "hotlink_protection": { "description": "Off: Cross-Origin-Resource-Policy already covers it.", "$ref": "#/$defs/toggle" },
-        "browser_cache_ttl": { "description": "0 respects the origin's Cache-Control, so public/_headers decides browser TTLs.", "type": "integer", "minimum": 0 },
+        "browser_cache_ttl": {
+          "description": "0 respects the origin's Cache-Control, so public/_headers decides browser TTLs.",
+          "type": "integer",
+          "minimum": 0
+        },
         "brotli": { "$ref": "#/$defs/toggle" }
       }
     },

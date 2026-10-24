@@ -1,6 +1,6 @@
 // Compiles content as the build does. `compile` runs the MDX compile, where the guard refuses.
 import { mdxToJs } from 'satteri';
-import { contentFileURL, renderMarkdown, type Collection } from '../../../bin/lib/render.ts';
+import { type Collection, contentFileURL, renderMarkdown } from '../../../bin/lib/render.ts';
 import { processorOptions } from '../../../src/lib/markdown/index.ts';
 
 export type { Collection };

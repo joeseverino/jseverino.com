@@ -1,11 +1,11 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
+import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { handleManageKey, pasteManageInput } from '../../bin/site/manage-input.ts';
-import { frameLines, listenForKeys } from '../../bin/site/tui.ts';
 import { FIELDS, hasStaged, type Model } from '../../bin/site/manage-model.ts';
 import { siteFrame } from '../../bin/site/manage-render.ts';
+import { frameLines, listenForKeys } from '../../bin/site/tui.ts';
 
 const today = '2026-10-14';
 const press = (model: Model, key: string) => handleManageKey(model, key, today);
@@ -16,10 +16,25 @@ function model(): Model {
       { slug: 'alpha', title: 'Alpha', published: true, featured: true, edits: {} },
       { slug: 'beta', title: 'Beta', published: false, featured: false, edits: {} },
     ],
-    divider: 1, cursor: 0, tab: 'writeups', mode: 'list', field: 0,
-    input: '', inputCursor: 0, flash: null, created: [], issues: new Map(),
-    origFeatured: ['alpha'], origPublished: new Map([['alpha', true], ['beta', false]]),
-    siteStatus: null, actionCursor: 0, descriptions: new Map(), sourceFingerprint: 'fixture',
+    divider: 1,
+    cursor: 0,
+    tab: 'writeups',
+    mode: 'list',
+    field: 0,
+    input: '',
+    inputCursor: 0,
+    flash: null,
+    created: [],
+    issues: new Map(),
+    origFeatured: ['alpha'],
+    origPublished: new Map([
+      ['alpha', true],
+      ['beta', false],
+    ]),
+    siteStatus: null,
+    actionCursor: 0,
+    descriptions: new Map(),
+    sourceFingerprint: 'fixture',
   };
 }
 
@@ -33,7 +48,7 @@ function keyStream() {
   return { stream, events, detach };
 }
 
-test('a lone Escape arrives as a key well inside readline\'s 500 ms default', async () => {
+test("a lone Escape arrives as a key well inside readline's 500 ms default", async () => {
   const { stream, events, detach } = keyStream();
   stream.write('\x1b');
   await delay(150);
@@ -65,7 +80,10 @@ test('moving a writeup across the divider stages the new order without requestin
 });
 
 test('quitting with staged edits requires an explicit save or discard', () => {
-  for (const [key, save] of [['s', true], ['d', false]] as const) {
+  for (const [key, save] of [
+    ['s', true],
+    ['d', false],
+  ] as const) {
     const state = model();
     press(state, 'p');
     assert.equal(press(state, 'q'), undefined);

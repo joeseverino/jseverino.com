@@ -105,7 +105,10 @@ export async function run(cmd: string, args: readonly string[], options: RunOpti
     child.stdout ? text(child.stdout) : '',
     child.stderr ? text(child.stderr) : '',
     // A failed spawn emits 'error', which rejects once().
-    once(child, 'close').then(([code]) => ({ code: code as number | null, error: undefined }), (error: Error) => ({ code: null, error })),
+    once(child, 'close').then(
+      ([code]) => ({ code: code as number | null, error: undefined }),
+      (error: Error) => ({ code: null, error }),
+    ),
   ]);
   // Only spawn's timeout kills the child, so a killed child timed out.
   const timedOut = child.killed;
@@ -113,7 +116,9 @@ export async function run(cmd: string, args: readonly string[], options: RunOpti
     stderr,
     timedOut && `[timed out after ${Math.round(timeout / 1000)}s: ${cmd} ${args.join(' ')}]`,
     exit.error && `[failed to start: ${exit.error.message}]`,
-  ].filter(Boolean).join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
   return {
     code: exit.code ?? 1,
     stdout,

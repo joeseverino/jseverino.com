@@ -1,13 +1,13 @@
 // Contact endpoint with D1 and Turnstile stubbed. The Playwright contact spec mocks this API away,
 // so this is the only pre-production run of the validation ladder, honeypot, rate limit and D1 failures.
 
-import { describe, test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { submitContact, type ContactEnv } from '../../src/lib/api/contact.ts';
-import { TURNSTILE_TEST_SECRETS, siteverifyAccepts } from '../../src/lib/api/turnstile.ts';
-import { createD1Stub } from './helpers/d1-stub.ts';
-import { createD1Sqlite } from './helpers/d1-sqlite.ts';
+import { afterEach, beforeEach, describe, test } from 'node:test';
+import { type ContactEnv, submitContact } from '../../src/lib/api/contact.ts';
 import { CONTACT_RUNTIME } from '../../src/lib/api/contact-contract.ts';
+import { siteverifyAccepts, TURNSTILE_TEST_SECRETS } from '../../src/lib/api/turnstile.ts';
+import { createD1Sqlite } from './helpers/d1-sqlite.ts';
+import { createD1Stub } from './helpers/d1-stub.ts';
 import { postRequest } from './helpers/requests.ts';
 
 const realFetch = globalThis.fetch;
@@ -175,16 +175,22 @@ describe('turnstile verification', () => {
     globalThis.fetch = async (_input, init) => {
       const signal = init?.signal;
       assert.ok(signal);
-      return new Response(new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('{"success":'));
-          signal.addEventListener('abort', () => {
-            cancelled = true;
-            controller.error(signal.reason);
-          }, { once: true });
-          queueMicrotask(() => abort.abort(new DOMException('Timeout', 'TimeoutError')));
-        },
-      }));
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('{"success":'));
+            signal.addEventListener(
+              'abort',
+              () => {
+                cancelled = true;
+                controller.error(signal.reason);
+              },
+              { once: true },
+            );
+            queueMicrotask(() => abort.abort(new DOMException('Timeout', 'TimeoutError')));
+          },
+        }),
+      );
     };
     const db = createD1Stub();
     const response = await call(contactRequest(validPayload), db);
@@ -221,7 +227,7 @@ describe('turnstile verification', () => {
     assert.equal(response.status, 400);
   });
 
-  test('Turnstile\'s test secret accepts siteverify\'s test hostname and action; production does not', () => {
+  test("Turnstile's test secret accepts siteverify's test hostname and action; production does not", () => {
     const test = { success: true, hostname: 'localhost', action: 'test' };
     const [passing] = TURNSTILE_TEST_SECRETS;
     assert.equal(siteverifyAccepts(test, passing ?? ''), true);

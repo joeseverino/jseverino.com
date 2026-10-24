@@ -27,7 +27,6 @@ export function siteverifyAccepts(data: Siteverify, secret: string): boolean {
   return data.hostname === SITE.domain && data.action === CONTACT_RUNTIME.turnstileAction;
 }
 
-
 // A token only counts if it was solved on this site, by the contact widget.
 export async function verifyTurnstile(token: string, ip: string, secret: string): Promise<boolean> {
   const body = new FormData();

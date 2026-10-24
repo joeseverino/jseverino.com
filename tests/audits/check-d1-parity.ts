@@ -5,9 +5,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
 import { SITE } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { wranglerConfig } from '../../bin/lib/wrangler-config.ts';
 import { finish } from './lib.ts';
 
 const read = (file: string): string => fs.readFileSync(path.join(siteRoot, file), 'utf8');
@@ -86,7 +86,11 @@ if (insertCount === 0) failures.push(`no INSERT statements found in ${HANDLERS};
 const databases = wranglerConfig().d1_databases.map(({ database_name }) => database_name);
 if (databases.join() !== SITE.d1) failures.push(`wrangler.jsonc binds D1 ${databases.join(', ') || '<none>'}, src/lib/site-config.ts names ${SITE.d1}`);
 
-finish(failures, `contact handler validates through the contract; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP; the binding names ${SITE.d1}`, {
-  heading: 'check-d1-parity: the Worker boundary disagrees with its schemas:',
-  fix: 'fix: the handlers in src/lib/api, cloudflare/d1.sql and the D1 binding in wrangler.jsonc change together',
-});
+finish(
+  failures,
+  `contact handler validates through the contract; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP; the binding names ${SITE.d1}`,
+  {
+    heading: 'check-d1-parity: the Worker boundary disagrees with its schemas:',
+    fix: 'fix: edit cloudflare/d1.sql, the row types and INSERTs in src/lib/api, or the D1 binding in wrangler.jsonc until the table columns and database name match, as each line above says',
+  },
+);

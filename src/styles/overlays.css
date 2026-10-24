@@ -1,226 +1,234 @@
 @layer components {
-.mobile-nav {
-  position: fixed;
-  inset: var(--menu-offset) 0 0;
-  inline-size: auto;
-  block-size: auto;
-  flex-direction: column;
-  align-items: stretch;
-  margin: 0;
-  border: 0;
-  padding-block: 1rem 2rem;
-  padding-inline: var(--space-30);
-  background: transparent;
-  color: inherit;
-  overflow-y: auto;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    block-size: 3px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
-    pointer-events: none;
-  }
-
-  &:popover-open {
-    display: flex;
-  }
-
-  /* Appearance is shared with .lightbox::backdrop below; only the inset is nav-specific. */
-  &::backdrop {
+  .mobile-nav {
+    position: fixed;
     inset: var(--menu-offset) 0 0;
+    inline-size: auto;
+    block-size: auto;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+    border: 0;
+    padding-block: 1rem 2rem;
+    padding-inline: var(--space-30);
+    background: transparent;
+    color: inherit;
+    overflow-y: auto;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      block-size: 3px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-text-alt));
+      pointer-events: none;
+    }
+
+    &:popover-open {
+      display: flex;
+    }
+
+    /* Appearance is shared with .lightbox::backdrop below; only the inset is nav-specific. */
+    &::backdrop {
+      inset: var(--menu-offset) 0 0;
+    }
   }
-}
 
-.mobile-nav-list {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0;
-  list-style: none;
+  .mobile-nav-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    list-style: none;
 
-  & li {
+    & li {
+      inline-size: 100%;
+      border-block-end: 1px solid var(--color-border-faint);
+    }
+  }
+
+  .mobile-nav:popover-open .mobile-nav-list li {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+      translate var(--motion-duration-deliberate) var(--motion-ease-standard);
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 8px;
+    }
+
+    &:nth-child(2) {
+      transition-delay: var(--motion-stagger-step);
+    }
+
+    &:nth-child(3) {
+      transition-delay: calc(var(--motion-stagger-step) * 2);
+    }
+
+    &:nth-child(4) {
+      transition-delay: calc(var(--motion-stagger-step) * 3);
+    }
+  }
+
+  .mobile-nav-link {
+    display: block;
     inline-size: 100%;
-    border-block-end: 1px solid var(--color-border-faint);
-  }
-}
-
-.nav-js-ready .mobile-nav:popover-open .mobile-nav-list li {
-  opacity: 1;
-  translate: 0 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    translate var(--motion-duration-deliberate) var(--motion-ease-standard);
-
-  @starting-style {
-    opacity: 0;
-    translate: 0 8px;
-  }
-
-  &:nth-child(2) { transition-delay: var(--motion-stagger-step); }
-  &:nth-child(3) { transition-delay: calc(var(--motion-stagger-step) * 2); }
-  &:nth-child(4) { transition-delay: calc(var(--motion-stagger-step) * 3); }
-}
-
-.mobile-nav-link {
-  display: block;
-  inline-size: 100%;
-  padding-block: 1rem;
-  font-size: 1.45rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  color: var(--color-text);
-  text-decoration: none;
-
-  &[aria-current='page'] {
+    padding-block: 1rem;
+    font-size: var(--font-xl);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
     color: var(--color-text);
-    font-weight: 600;
-    text-decoration: underline;
-    text-decoration-color: var(--color-primary);
-    text-decoration-thickness: 3px;
-    text-underline-offset: 6px;
-  }
-
-  &:hover,
-  &:focus-visible {
-    color: var(--color-primary);
     text-decoration: none;
+
+    &[aria-current='page'] {
+      color: var(--color-text);
+      font-weight: 600;
+      text-decoration: underline;
+      text-decoration-color: var(--color-primary);
+      text-decoration-thickness: 3px;
+      text-underline-offset: 6px;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+
+    &:active {
+      color: var(--color-primary-deep);
+    }
   }
 
-  &:active {
-    color: var(--color-primary-deep);
+  .mobile-nav-footer {
+    margin-block-start: auto;
+    padding-block-start: var(--space-30);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
   }
-}
 
-.mobile-nav-footer {
-  margin-block-start: auto;
-  padding-block-start: var(--space-30);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-/* One fade and backdrop treatment for the mobile nav and the lightbox. */
-.mobile-nav,
-.lightbox {
-  opacity: 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
-}
-
-.mobile-nav::backdrop,
-.lightbox::backdrop {
-  background: color-mix(in oklch, var(--color-bg) 72%, transparent);
-  backdrop-filter: blur(var(--blur-chrome));
-  opacity: 0;
-  transition:
-    opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
-    display var(--motion-duration-deliberate) allow-discrete,
-    overlay var(--motion-duration-deliberate) allow-discrete;
-}
-
-.mobile-nav:popover-open,
-.lightbox[open],
-.mobile-nav:popover-open::backdrop,
-.lightbox[open]::backdrop {
-  opacity: 1;
-
-  @starting-style {
+  /* One fade and backdrop treatment for the mobile nav and the lightbox. */
+  .mobile-nav,
+  .lightbox {
     opacity: 0;
+    transition:
+      opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+      display var(--motion-duration-deliberate) allow-discrete,
+      overlay var(--motion-duration-deliberate) allow-discrete;
   }
-}
 
-.prose .image-zoom {
-  display: block;
-  max-inline-size: 100%;
-  margin-inline: auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  cursor: zoom-in;
-
-  &:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 3px;
+  .mobile-nav::backdrop,
+  .lightbox::backdrop {
+    background: color-mix(in oklch, var(--color-bg) 72%, transparent);
+    backdrop-filter: blur(var(--blur-chrome));
+    opacity: 0;
+    transition:
+      opacity var(--motion-duration-deliberate) var(--motion-ease-standard),
+      display var(--motion-duration-deliberate) allow-discrete,
+      overlay var(--motion-duration-deliberate) allow-discrete;
   }
-}
 
-/* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
-.lightbox {
-  max-inline-size: min(92vw, 1400px);
-  max-block-size: 92dvh;
-  margin: auto;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--color-text);
-  overflow: visible;
+  .mobile-nav:popover-open,
+  .lightbox[open],
+  .mobile-nav:popover-open::backdrop,
+  .lightbox[open]::backdrop {
+    opacity: 1;
 
-  &:focus {
-    outline: none;
+    @starting-style {
+      opacity: 0;
+    }
   }
-}
 
-.lightbox-figure {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-15);
-}
+  .prose .image-zoom {
+    display: block;
+    max-inline-size: 100%;
+    margin-inline: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: zoom-in;
 
-.lightbox-img {
-  display: block;
-  max-block-size: 82dvh;
-  object-fit: contain;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  cursor: zoom-out;
-}
-
-.lightbox-caption {
-  max-inline-size: 100%;
-  color: var(--color-text);
-  font-size: var(--font-2xs);
-  line-height: 1.5;
-  text-align: center;
-  text-wrap: balance;
-}
-
-.lightbox-close {
-  position: fixed;
-  inset-block-start: var(--space-20);
-  inset-inline-end: var(--space-20);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: color-mix(in oklch, var(--color-text) 78%, transparent);
-  color: var(--color-bg);
-  font-size: var(--font-md);
-  line-height: 1;
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
-
-  &:hover,
-  &:focus-visible {
-    background: var(--color-text);
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 3px;
+    }
   }
-}
 
-body:has(.mobile-nav:popover-open),
-body:has(.lightbox[open]) {
-  overflow: hidden;
-}
+  /* Native <dialog> via showModal() for the focus trap, Escape, and focus return. */
+  .lightbox {
+    max-inline-size: min(92vw, 1400px);
+    max-block-size: 92dvh;
+    margin: auto;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text);
+    overflow: visible;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .lightbox-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-15);
+  }
+
+  .lightbox-img {
+    display: block;
+    max-block-size: 82dvh;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    cursor: zoom-out;
+  }
+
+  .lightbox-caption {
+    max-inline-size: 100%;
+    color: var(--color-text);
+    font-size: var(--font-2xs);
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .lightbox-close {
+    position: fixed;
+    inset-block-start: var(--space-20);
+    inset-inline-end: var(--space-20);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: color-mix(in oklch, var(--color-text) 78%, transparent);
+    color: var(--color-bg);
+    font-size: var(--font-md);
+    line-height: 1;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+
+    &:hover,
+    &:focus-visible {
+      background: var(--color-text);
+    }
+  }
+
+  body:has(.mobile-nav:popover-open),
+  body:has(.lightbox[open]) {
+    overflow: hidden;
+  }
 }

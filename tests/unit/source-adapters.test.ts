@@ -1,7 +1,7 @@
-import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, test } from 'node:test';
 
 import { createVaultSource, isConflictCopy } from '../../bin/content-sync/source-adapters.ts';
 import { scratchDirs } from './helpers/fs.ts';
@@ -21,6 +21,12 @@ test('vault source: iCloud conflict copies never become slugs', async () => {
     fs.writeFileSync(path.join(vaultRoot, dir, 'index.md'), '---\npublished: true\n---\nBody\n');
   }
   const source = createVaultSource({ vaultRoot });
-  assert.deepEqual((await source.writeups()).map((entry) => entry.slug), ['foo']);
-  assert.deepEqual((await source.pages()).map((entry) => entry.slug), ['home']);
+  assert.deepEqual(
+    (await source.writeups()).map((entry) => entry.slug),
+    ['foo'],
+  );
+  assert.deepEqual(
+    (await source.pages()).map((entry) => entry.slug),
+    ['home'],
+  );
 });

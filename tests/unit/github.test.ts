@@ -1,12 +1,12 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { main } from '../../bin/github.ts';
-import { loadDesired, type DesiredState } from '../../bin/lib/github-settings.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
+import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
-import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
+import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
 
 const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');
@@ -14,9 +14,18 @@ const schema = read<JsonSchema>('.github/repo.schema.json');
 const desired = read<DesiredState>('.github/repo.json');
 
 // A field added to the type and not the schema (or the reverse) fails here.
-const DESIRED_FIELDS = { $schema: true, repository: true, settings: true, topics: true, security: true, actions: true, variables: true, ruleset: true } satisfies Record<keyof DesiredState, true>;
+const DESIRED_FIELDS = {
+  $schema: true,
+  repository: true,
+  settings: true,
+  topics: true,
+  security: true,
+  actions: true,
+  variables: true,
+  ruleset: true,
+} satisfies Record<keyof DesiredState, true>;
 
-const { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
+const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
 
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
@@ -76,15 +85,15 @@ describe('check', () => {
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
-    await bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
+    await shared.bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
   });
 
-  test('a missing token stops before any request', () => missingTokenStops(createGithubFake(seed, TOKEN), /GITHUB_TOKEN/));
+  test('a missing token stops before any request', () => shared.missingTokenStops(createGithubFake(seed, TOKEN), /GITHUB_TOKEN/));
 });
 
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
-    const lines = await planLines(createGithubFake(seed, TOKEN));
+    const lines = await shared.planLines(createGithubFake(seed, TOKEN));
     const repo = '/repos/joeseverino/jseverino.com';
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
@@ -98,7 +107,7 @@ describe('plan', () => {
     ]);
   });
 
-  test('apply without --yes is a plan', () => applyWithoutYesIsAPlan(createGithubFake(seed, TOKEN)));
+  test('apply without --yes is a plan', () => shared.applyWithoutYesIsAPlan(createGithubFake(seed, TOKEN)));
 });
 
 describe('apply --yes', () => {
@@ -121,9 +130,13 @@ describe('apply --yes', () => {
     assert.equal(fake.state.permissions.sha_pinning_required, true);
     assert.equal(fake.state.codeScanning.state, 'configured');
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);
-    assert.deepEqual(fake.state.variables.map((entry) => entry.name).sort(), ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'], 'variables not in repo.json are left alone');
+    assert.deepEqual(
+      fake.state.variables.map((entry) => entry.name).sort(),
+      ['PUBLIC_TURNSTILE_SITE_KEY', 'UNRELATED'],
+      'variables not in repo.json are left alone',
+    );
 
-    await reapplyIsNoOp(fake);
+    await shared.reapplyIsNoOp(fake);
   });
 
   test('one apply turns CodeQL default setup on before the ruleset that requires its results', async () => {
@@ -132,7 +145,9 @@ describe('apply --yes', () => {
     assert.ok(live);
     const rules = live.rules as { type: string; parameters?: { required_status_checks?: { context: string; integration_id?: number }[] } }[];
     live.rules = rules.filter((rule) => rule.type !== 'code_scanning');
-    rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks?.push({ context: 'analyze typescript', integration_id: 15368 });
+    rules
+      .find((rule) => rule.type === 'required_status_checks')
+      ?.parameters?.required_status_checks?.push({ context: 'analyze typescript', integration_id: 15368 });
     const fake = createGithubFake(before, TOKEN);
     const { code, output } = await run(fake, 'apply', '--yes');
     assert.equal(code, 0, output);
@@ -157,7 +172,9 @@ describe('the GitHub client', () => {
     const seen: { url: string; signal: AbortSignal | null | undefined }[] = [];
     const fetch = async (url: string, init: RequestInit) => {
       seen.push({ url, signal: init.signal });
-      const next = url.endsWith('page=2') ? {} : { link: `<${API_BASE}/users/example/repos?page=2>; rel="next", <${API_BASE}/users/example/repos?page=2>; rel="last"` };
+      const next = url.endsWith('page=2')
+        ? {}
+        : { link: `<${API_BASE}/users/example/repos?page=2>; rel="next", <${API_BASE}/users/example/repos?page=2>; rel="last"` };
       return new Response(JSON.stringify([url.endsWith('page=2') ? 'b' : 'a']), { headers: next });
     };
     const items = await createClient({ token: TOKEN, fetch }).list<string>('/users/example/repos');

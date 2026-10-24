@@ -1,22 +1,23 @@
 #!/usr/bin/env node
+
 // Turn Playwright's JSON report into a per-project job-summary table. Runs with
 // `if: always()` and exits zero: the test step decides the job's outcome.
 //
-//   node bin/playwright-summary.ts "Cross-browser suite" [test-results/results.json]
-import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
+//   node bin/playwright-summary.ts "Cross-browser suite" .cache/test-results/e2e.json
+
 import fs from 'node:fs';
 import path from 'node:path';
+import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
+import { readJson } from '../src/lib/json.ts';
+import { siteRoot as root } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
 import { annotate, appendSummary, cell, status, table } from './lib/step-summary.ts';
-import { siteRoot as root } from '../src/lib/site-root.ts';
-import { readJson } from '../src/lib/json.ts';
 
-const [title = 'Playwright', reportFile = 'test-results/results.json', ...extra] = cli({
-  usage: 'usage: node bin/playwright-summary.ts [title] [report.json]',
-  allowPositionals: true,
-}).positionals;
-if (extra.length) {
-  console.error('usage: node bin/playwright-summary.ts [title] [report.json]');
+// Each suite writes its own report (tests/browser-test-env.ts), so the caller names it.
+const usage = 'usage: node bin/playwright-summary.ts <title> <report.json>';
+const [title, reportFile, ...extra] = cli({ usage, allowPositionals: true }).positionals;
+if (!title || !reportFile || extra.length) {
+  console.error(usage);
   process.exit(2);
 }
 const input = path.resolve(root, reportFile);
@@ -48,6 +49,9 @@ function seconds(ms: number): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+// A count that fails the run stands out in its table cell.
+const strong = (count: number): string => (count === 0 ? '0' : `**${count}**`);
+
 function display(file: string): string {
   const relative = path.relative(root, file);
   return relative.startsWith('..') ? file : relative;
@@ -70,18 +74,15 @@ function tally(runs: TestRow[]) {
   return { passed, failed, flaky, skipped: runs.length - passed - failed - flaky, duration };
 }
 
-const byProject = new Map(Map.groupBy(tests, (test) => test.project).entries().map(([project, runs]) => [project, tally(runs)]));
+const byProject = new Map(
+  Map.groupBy(tests, (test) => test.project)
+    .entries()
+    .map(([project, runs]) => [project, tally(runs)]),
+);
 
 const rows = [...byProject.entries()]
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([project, row]) => [
-    project,
-    row.passed,
-    row.failed === 0 ? '0' : `**${row.failed}**`,
-    row.flaky,
-    row.skipped,
-    seconds(row.duration),
-  ]);
+  .map(([project, row]) => [project, row.passed, strong(row.failed), strong(row.flaky), row.skipped, seconds(row.duration)]);
 
 const stats: Partial<JSONReport['stats']> = report.stats ?? {};
 const failed = tests.filter((test) => test.status === 'unexpected');
@@ -91,32 +92,45 @@ for (const [project, row] of byProject) {
   status(project, `${row.passed} passed, ${row.failed} failed, ${row.flaky} flaky, ${row.skipped} skipped in ${seconds(row.duration)}`);
 }
 
+// A flaky test passed only on retry, which fails the run (failOnFlakyTests), so the headline
+// never calls it passed, and a skipped test is never counted as one that passed. A run that
+// stopped early (a global timeout, a web server or setup error) reports its tests as skipped
+// and its cause in report.errors, so an error also fails the headline.
 const projects = `${byProject.size} ${byProject.size === 1 ? 'project' : 'projects'}`;
-const headline = failed.length === 0
-  ? `${tests.length} tests across ${projects} passed in ${seconds(stats.duration ?? 0)}.`
-  : `${failed.length} of ${tests.length} tests failed across ${projects}.`;
+const total = tally(tests);
+const errors = report.errors ?? [];
+const problems = [
+  [failed.length, 'failed'],
+  [flaky.length, 'flaky'],
+  [errors.length, errors.length === 1 ? 'run error' : 'run errors'],
+] as const;
+const counted = problems.filter(([count]) => count > 0).map(([count, label]) => `${count} ${label}`);
+const headline =
+  counted.length === 0
+    ? `${total.passed} tests passed and ${total.skipped} skipped across ${projects} in ${seconds(stats.duration ?? 0)}.`
+    : `${counted.join(', ')} across ${tests.length} tests in ${projects}; the run fails.`;
 
-const sections = [
-  `## ${cell(title)}`,
-  '',
-  headline,
-  '',
-  table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows),
-];
+const sections = [`## ${cell(title)}`, '', headline, '', table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows)];
 
-if (failed.length > 0) {
-  sections.push('', '### Failed', '');
-  for (const test of failed.slice(0, 20)) {
+function list(heading: string, runs: TestRow[], verdict: string): void {
+  if (runs.length === 0) return;
+  sections.push('', `### ${heading}`, '');
+  for (const test of runs.slice(0, 20)) {
     sections.push(`- \`${cell(test.file)}\` › ${cell(test.title)} (${cell(test.project)})`);
-    annotate('error', `playwright: ${test.project}`, `${test.file} › ${test.title}`);
+    annotate('error', `playwright: ${test.project}`, `${verdict}: ${test.file} › ${test.title}`);
   }
-  if (failed.length > 20) sections.push(`- and ${failed.length - 20} more`);
+  if (runs.length > 20) sections.push(`- and ${runs.length - 20} more`);
 }
 
-if (flaky.length > 0) {
-  sections.push('', '### Passed on retry', '');
-  for (const test of flaky.slice(0, 20)) {
-    sections.push(`- \`${cell(test.file)}\` › ${cell(test.title)} (${cell(test.project)})`);
+list('Failed', failed, 'failed');
+list('Flaky: passed only on retry', flaky, 'flaky');
+
+if (errors.length > 0) {
+  sections.push('', '### Run errors', '');
+  for (const error of errors) {
+    const message = (error.message ?? 'unknown error').split('\n')[0] ?? '';
+    sections.push(`- ${cell(message)}`);
+    annotate('error', 'playwright', message);
   }
 }
 

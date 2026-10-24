@@ -1,16 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { buildOutDir } from '../../src/lib/build-output.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
+import { cacheRuleFindings, contactRefusalFindings, cspFindings, inlineHashFindings, staticHeaderFindings } from '../../src/lib/edge-expectations.ts';
 import { SITE_ORIGIN, writeupPath } from '../../src/lib/site-config.ts';
-import {
-  cacheRuleFindings,
-  contactRefusalFindings,
-  cspFindings,
-  inlineHashFindings,
-  staticHeaderFindings,
-} from '../../src/lib/edge-expectations.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
 
 // Every assertion here is against the Cloudflare runtime serving the built
 // output (see tests/playwright.edge.config.ts). The expectations are the functions
@@ -100,7 +94,7 @@ test.describe('static serving', () => {
     const icon = await request.get(pathname);
     expect(icon.status()).toBe(200);
     expect(cacheRuleFindings(icon.headers(), pathname)).toEqual([]);
-    expect(staticHeaderFindings(icon.headers()).filter((finding) => !finding.startsWith('access-control'))).toEqual([]);
+    expect(staticHeaderFindings(icon.headers())).toEqual([]);
   });
 
   for (const prefix of ['assets', '_astro', '.well-known']) {
@@ -115,7 +109,7 @@ test.describe('static serving', () => {
 test('a page path without its slash redirects to the slashed page', async ({ request }) => {
   const response = await request.get('/about', { maxRedirects: 0 });
   expect(response.status()).toBe(307);
-  expect(response.headers()['location']).toBe('/about/');
+  expect(response.headers().location).toBe('/about/');
 });
 
 test('the preview review proxy is absent from a production build', async ({ request }) => {

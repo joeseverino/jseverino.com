@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { contentRoot } from './content-root.ts';
-import { parseFrontmatter, type ParsedFrontmatter } from './frontmatter.ts';
+import { type ParsedFrontmatter, parseFrontmatter } from './frontmatter.ts';
 import { siteRoot } from './site-root.ts';
 
 export interface SnapshotWriteup extends ParsedFrontmatter {
@@ -16,7 +16,8 @@ const content = path.resolve(siteRoot, contentRoot);
 
 function documentSlugs(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true })
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(dir, entry.name, DOCUMENT_FILE)))
     .map((entry) => entry.name)
     .sort();

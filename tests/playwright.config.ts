@@ -16,7 +16,9 @@ export default defineConfig({
   testDir: './playwright',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // The retry records a trace and tells a flaky test from a broken one; either fails the run.
   retries: process.env.CI ? 1 : 0,
+  failOnFlakyTests: true,
   // Four-core runners: three workers plus the preview server.
   ...workers(3),
   ...suiteArtifacts('e2e'),

@@ -1,14 +1,20 @@
 // Guard cases compile as MDX, the format content ships in, and expect a refusal.
 
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, test } from 'node:test';
 import { compile, html, render } from './helpers/render.ts';
 
 describe('```terminal', () => {
   test('renders a prompt span for $-prefixed lines and an output span otherwise', () => {
     const html = render('```terminal\n$ ssh edge\nConnected.\n```');
-    assert.match(html, /<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"><\/span><span class="terminal-label">TERMINAL<\/span><\/div>/);
-    assert.match(html, /<span class="line"><span class="prompt">\$<\/span> <span class="cmd">ssh edge<\/span><\/span><span class="line out">Connected\.<\/span>/);
+    assert.match(
+      html,
+      /<div class="terminal-block"><div class="terminal-bar"><span class="terminal-dots" aria-hidden="true"><\/span><span class="terminal-label">TERMINAL<\/span><\/div>/,
+    );
+    assert.match(
+      html,
+      /<span class="line"><span class="prompt">\$<\/span> <span class="cmd">ssh edge<\/span><\/span><span class="line out">Connected\.<\/span>/,
+    );
   });
 
   test('escapes content as text, so markup in output stays literal', () => {
@@ -29,11 +35,17 @@ describe('```terminal', () => {
 
 describe(':::figure', () => {
   test('builds a figure with the line after the image as its caption', () => {
-    assert.equal(render(':::figure\n![Alt](./images/a.png)\nThe caption.\n:::'), '<figure><img src="./images/a.png" alt="Alt"><figcaption>The caption.</figcaption></figure>');
+    assert.equal(
+      render(':::figure\n![Alt](./images/a.png)\nThe caption.\n:::'),
+      '<figure><img src="./images/a.png" alt="Alt"><figcaption>The caption.</figcaption></figure>',
+    );
   });
 
   test('takes the caption from the paragraph after a blank line too', () => {
-    assert.equal(render(':::figure\n![Alt](./images/a.png)\n\nThe *caption*.\n:::'), '<figure><img src="./images/a.png" alt="Alt"><figcaption>The <em>caption</em>.</figcaption></figure>');
+    assert.equal(
+      render(':::figure\n![Alt](./images/a.png)\n\nThe *caption*.\n:::'),
+      '<figure><img src="./images/a.png" alt="Alt"><figcaption>The <em>caption</em>.</figcaption></figure>',
+    );
   });
 
   test('is just its content when it holds no image', () => {
@@ -67,11 +79,17 @@ describe('text that looks like a directive', () => {
 
 describe(':::split', () => {
   test('renders two sides', () => {
-    assert.equal(render('::::split\n:::side\nLeft\n:::\n:::side\nRight\n:::\n::::', 'pages'), '<div class="split"><div><p>Left</p></div><div><p>Right</p></div></div>');
+    assert.equal(
+      render('::::split\n:::side\nLeft\n:::\n:::side\nRight\n:::\n::::', 'pages'),
+      '<div class="split"><div><p>Left</p></div><div><p>Right</p></div></div>',
+    );
   });
 
   test('renders an image-only side bare, without a paragraph', () => {
-    assert.match(render('::::split\n:::side\n![Me|340](./images/me.jpg)\n:::\n:::side\nText\n:::\n::::', 'pages'), /<div class="split"><div><img src="\.\/images\/me\.jpg" alt="Me" width="340"><\/div>/);
+    assert.match(
+      render('::::split\n:::side\n![Me|340](./images/me.jpg)\n:::\n:::side\nText\n:::\n::::', 'pages'),
+      /<div class="split"><div><img src="\.\/images\/me\.jpg" alt="Me" width="340"><\/div>/,
+    );
   });
 
   test('a side outside a split is refused', () => {
@@ -90,7 +108,10 @@ describe(':::button and :::buttons', () => {
 
   test('marks the first link primary and the rest secondary', () => {
     // The newline between buttons is the gap between them.
-    assert.equal(html(':::buttons\n- [One](/1/)\n- [Two](/2/)\n- [Three](/3/)\n:::', 'pages').trim(), '<div class="actions"><a href="/1/" class="button">One</a>\n<a href="/2/" class="button secondary">Two</a>\n<a href="/3/" class="button secondary">Three</a></div>');
+    assert.equal(
+      html(':::buttons\n- [One](/1/)\n- [Two](/2/)\n- [Three](/3/)\n:::', 'pages').trim(),
+      '<div class="actions"><a href="/1/" class="button">One</a>\n<a href="/2/" class="button secondary">Two</a>\n<a href="/3/" class="button secondary">Three</a></div>',
+    );
   });
 
   test('refuses anything but bare links', () => {
@@ -108,13 +129,19 @@ describe(':::center and :::hero', () => {
   });
 
   test('nest with longer fences outside', () => {
-    assert.match(render('::::hero\n# Hi\n\n:::buttons\n- [A](/a/)\n:::\n::::', 'pages'), /^<header class="hero"><h1>Hi<\/h1><div class="actions"><a href="\/a\/" class="button">A<\/a><\/div><\/header>$/);
+    assert.match(
+      render('::::hero\n# Hi\n\n:::buttons\n- [A](/a/)\n:::\n::::', 'pages'),
+      /^<header class="hero"><h1>Hi<\/h1><div class="actions"><a href="\/a\/" class="button">A<\/a><\/div><\/header>$/,
+    );
   });
 });
 
 describe('placeholders', () => {
   test('a leaf directive renders its component, with the prose between in runs', () => {
-    assert.equal(render('Intro.\n\n::featured-projects\n\nMore.', 'pages'), '<content-run><p>Intro.</p></content-run><featured-projects></featured-projects><content-run><p>More.</p></content-run>');
+    assert.equal(
+      render('Intro.\n\n::featured-projects\n\nMore.', 'pages'),
+      '<content-run><p>Intro.</p></content-run><featured-projects></featured-projects><content-run><p>More.</p></content-run>',
+    );
   });
 
   test('a document without placeholders is not split into runs', () => {
@@ -129,7 +156,10 @@ describe('placeholders', () => {
 
 describe('images', () => {
   test('`alt|width` sets the display width and cleans the alt', () => {
-    assert.equal(render('![WinterFest 5K, 2025.|400](./images/run.jpg)', 'pages'), '<p><img src="./images/run.jpg" alt="WinterFest 5K, 2025." width="400"></p>');
+    assert.equal(
+      render('![WinterFest 5K, 2025.|400](./images/run.jpg)', 'pages'),
+      '<p><img src="./images/run.jpg" alt="WinterFest 5K, 2025." width="400"></p>',
+    );
   });
 
   test('`nozoom` opts the image out of the lightbox', () => {
@@ -143,7 +173,10 @@ describe('images', () => {
 
 describe('standalone links', () => {
   test('in a writeup, a link alone in a paragraph becomes a button', () => {
-    assert.equal(render('[View on GitHub](https://github.com/x)'), '<div class="actions"><a href="https://github.com/x" class="button">View on GitHub</a></div>');
+    assert.equal(
+      render('[View on GitHub](https://github.com/x)'),
+      '<div class="actions"><a href="https://github.com/x" class="button">View on GitHub</a></div>',
+    );
   });
 
   test('on a page it stays a paragraph link', () => {
@@ -164,7 +197,13 @@ describe('content is data, not code', () => {
   });
 
   test('tags outside the allow-list are refused', () => {
-    for (const markup of ['<script>alert(1)</script>', '<iframe src="https://evil.example/"></iframe>', '<style>p{}</style>', '<svg></svg>', '<object data="x"></object>']) {
+    for (const markup of [
+      '<script>alert(1)</script>',
+      '<iframe src="https://evil.example/"></iframe>',
+      '<style>p{}</style>',
+      '<svg></svg>',
+      '<object data="x"></object>',
+    ]) {
       assert.throws(() => compile(`Text ${markup}`), /is not allowed in content/, markup);
     }
   });
@@ -176,7 +215,14 @@ describe('content is data, not code', () => {
   });
 
   test('unsafe URL schemes are refused in links, images, reference definitions, and raw HTML', () => {
-    for (const markup of ['[a](javascript:alert(1))', '![b](javascript:alert(1))', '[c][r]\n\n[r]: javascript:alert(1)', '![d][r]\n\n[r]: javascript:alert(1)', '<a href="javascript:alert(1)">e</a>', '<a href=" JaVaScRiPt:alert(1)">f</a>']) {
+    for (const markup of [
+      '[a](javascript:alert(1))',
+      '![b](javascript:alert(1))',
+      '[c][r]\n\n[r]: javascript:alert(1)',
+      '![d][r]\n\n[r]: javascript:alert(1)',
+      '<a href="javascript:alert(1)">e</a>',
+      '<a href=" JaVaScRiPt:alert(1)">f</a>',
+    ]) {
       assert.throws(() => compile(markup), /scheme other than http\(s\) or mailto/, markup);
     }
   });
@@ -186,6 +232,8 @@ describe('content is data, not code', () => {
   });
 
   test('the raw HTML published content uses compiles', () => {
-    compile('<p class="hero-eyebrow">Cybersecurity • Networking • AI</p>\n\nText <kbd>Ctrl</kbd> and <a href="https://example.com/" target="_blank" rel="noopener">x</a>.');
+    compile(
+      '<p class="hero-eyebrow">Cybersecurity • Networking • AI</p>\n\nText <kbd>Ctrl</kbd> and <a href="https://example.com/" target="_blank" rel="noopener">x</a>.',
+    );
   });
 });

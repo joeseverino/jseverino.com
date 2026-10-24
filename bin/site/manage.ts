@@ -4,23 +4,33 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import {
-  anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint,
-} from './tui.ts';
-import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import { WriteupError, applyPlan, writeupStore, type WriteupPlan } from '../lib/writeups/store.ts';
-import { EXIT, SiteError } from './cli.ts';
 import { isoDate } from '../../src/lib/dates.ts';
+import { errorMessage } from '../../src/lib/error-message.ts';
+import { siteRoot } from '../../src/lib/site-root.ts';
+import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
+import { type MiseTask, miseTasks } from '../lib/mise.ts';
+import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';
+import { EXIT, SiteError } from './cli.ts';
 import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
+import { handleManageKey, type ManageEffect, pasteManageInput } from './manage-input.ts';
 import {
-  FIELDS, OUTCOME, SITE, SITE_ACTIONS, TABS, createWriteup, describeActions, diff, load, loadSiteStatus, reload,
-  type CommandSummaries, type Model, type SiteAction,
+  type CommandSummaries,
+  createWriteup,
+  describeActions,
+  diff,
+  FIELDS,
+  load,
+  loadSiteStatus,
+  type Model,
+  OUTCOME,
+  reload,
+  SITE,
+  SITE_ACTIONS,
+  type SiteAction,
+  TABS,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
-import { miseTasks, type MiseTask } from '../lib/mise.ts';
-import { errorMessage } from '../../src/lib/error-message.ts';
-import { handleManageKey, pasteManageInput, type ManageEffect } from './manage-input.ts';
+import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {
@@ -76,7 +86,7 @@ async function runCommandInline(command: Exclude<SiteAction['command'], 'dev-ser
   await lendTerminal(`site manage: ${title}`, async () => {
     process.stdout.write(`\n=== ${tint('strong', title)} ===\n\n`);
     const child = spawn(bin, args, { cwd: siteRoot, stdio: 'inherit' });
-    const [code, signal] = await once(child, 'close') as [number | null, NodeJS.Signals | null];
+    const [code, signal] = (await once(child, 'close')) as [number | null, NodeJS.Signals | null];
     process.stdout.write(`\n${rule(terminalColumns())}\n`);
     process.stdout.write(`Finished with exit code ${code ?? signal}. Press any key to return...`);
     await anyKey();
@@ -102,11 +112,7 @@ function openInObsidian(model: Model): void {
   const item = model.items[model.cursor];
   if (!item) return;
   const vaultName = path.basename(vaultRoot());
-  const uri =
-    'obsidian://open?vault=' +
-    encodeURIComponent(vaultName) +
-    '&file=' +
-    encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`);
+  const uri = `obsidian://open?vault=${encodeURIComponent(vaultName)}&file=${encodeURIComponent(`${WRITEUPS_FOLDER}/${item.slug}/index`)}`;
   spawn('open', [uri], { stdio: 'ignore' }).once('error', (error) => {
     model.flash = { tone: 'error', text: `could not open Obsidian: ${error.message}` };
     draw(model);
@@ -199,7 +205,7 @@ function finish(code: number, message: string | null, runApply = false): void {
   if (done) return;
   done = true;
   restore();
-  if (message) process.stdout.write(message + '\n');
+  if (message) process.stdout.write(`${message}\n`);
   if (runApply) code = apply(model);
   if (!runApply && model.created.length) {
     process.stdout.write(`${tint('muted', `note: scaffolded this session (already on disk): ${model.created.join(', ')}`)}\n`);
@@ -210,9 +216,12 @@ function finish(code: number, message: string | null, runApply = false): void {
 // Keys apply in order: one that starts async work (a scaffold, a reload) holds the next until it settles.
 let pending: Promise<void> = Promise.resolve();
 const enqueue = (work: () => void | Promise<void>): void => {
-  pending = pending.then(work).catch((error: unknown) => {
-    model.flash = { tone: 'error', text: errorMessage(error) };
-  }).then(() => draw(model));
+  pending = pending
+    .then(work)
+    .catch((error: unknown) => {
+      model.flash = { tone: 'error', text: errorMessage(error) };
+    })
+    .then(() => draw(model));
 };
 
 function handleKey(key: string): void {
@@ -224,10 +233,18 @@ function handleKey(key: string): void {
 
 async function execute(effect: ManageEffect): Promise<void> {
   switch (effect.type) {
-    case 'exit': finish(0, effect.message, effect.save); return;
-    case 'reload': await reload(model); return;
-    case 'open': openInObsidian(model); return;
-    case 'action': await runAction(model, effect.key); return;
+    case 'exit':
+      finish(0, effect.message, effect.save);
+      return;
+    case 'reload':
+      await reload(model);
+      return;
+    case 'open':
+      openInObsidian(model);
+      return;
+    case 'action':
+      await runAction(model, effect.key);
+      return;
     case 'refresh': {
       const seconds = await gatherSiteStatus(model);
       if (effect.announce) model.flash = { tone: 'ok', text: `status refreshed in ${seconds}s` };
@@ -274,13 +291,13 @@ export async function manage(commands: CommandSummaries): Promise<never> {
     if (smoke === 'detail') {
       model.cursor = model.items.length - 1;
       model.mode = 'detail';
-      process.stdout.write(frameLines(detailFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(detailFrame(model)).join('\n')}\n`);
     } else if (smoke === 'site') {
       model.tab = 'site';
       model.siteStatus = await loadSiteStatus();
-      process.stdout.write(frameLines(siteFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(siteFrame(model)).join('\n')}\n`);
     } else {
-      process.stdout.write(frameLines(listFrame(model)).join('\n') + '\n');
+      process.stdout.write(`${frameLines(listFrame(model)).join('\n')}\n`);
     }
     process.exit(0);
   }
@@ -296,7 +313,7 @@ export async function manage(commands: CommandSummaries): Promise<never> {
       else for (const character of t) handleKey(character);
     }
     await pending;
-    process.stdout.write(fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n') + '\n');
+    process.stdout.write(`${fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n')}\n`);
     process.exit(0);
   }
 

@@ -1,16 +1,18 @@
 // The dev server as site manage and site dev see it: Astro's lock file, and an answer at its url.
-import { after, test } from 'node:test';
+
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import { after, test } from 'node:test';
 import { devLock, headStatus, servingDevServer } from '../../bin/site/dev-server.ts';
 import { scratchDirs } from './helpers/fs.ts';
 
 const server = http.createServer((request, response) =>
-  (request.url === '/moved' ? response.writeHead(301, { location: '/' }) : response.writeHead(204)).end());
+  (request.url === '/moved' ? response.writeHead(301, { location: '/' }) : response.writeHead(204)).end(),
+);
 await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
 const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
 const dirs = scratchDirs('dev-server-');

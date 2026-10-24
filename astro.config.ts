@@ -1,26 +1,22 @@
-import { defineConfig } from 'astro/config';
-import { loadEnv } from 'vite';
 import cloudflare from '@astrojs/cloudflare';
-import mdx from '@astrojs/mdx';
 import { satteri } from '@astrojs/markdown-satteri';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
-import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
-import { snapshotWriteups } from './src/lib/snapshot.ts';
-import { astroOutDir } from './src/lib/build-output.ts';
-import { sitemapLastmods } from './src/lib/sitemap.ts';
+import { defineConfig } from 'astro/config';
 import { contentOverlay } from './src/integrations/content-overlay.ts';
 import { sitedriftPreview } from './src/integrations/sitedrift-preview.ts';
-import { processorOptions } from './src/lib/markdown/index.ts';
+import { astroOutDir } from './src/lib/build-output.ts';
 import { IMAGE_WIDTHS } from './src/lib/images.ts';
+import { processorOptions } from './src/lib/markdown/index.ts';
+import { SITE_ORIGIN as origin, writeupUrl } from './src/lib/site-config.ts';
+import { sitemapLastmods } from './src/lib/sitemap.ts';
+import { snapshotWriteups } from './src/lib/snapshot.ts';
 
-// Local-only dev server settings from the gitignored .env; unset in prod/CI.
-//   DEV_ALLOWED_HOSTS  comma-separated hostnames the dev server answers to
-//   DEV_HOST           "true" binds all interfaces
-//   DEV_PORT           pin the port
-const env = loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), '');
-const devAllowedHosts = env.DEV_ALLOWED_HOSTS ? env.DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
-const devHost = env.DEV_HOST === 'true' || env.DEV_HOST === '1';
-const devPort = env.DEV_PORT ? Number(env.DEV_PORT) : undefined;
+// Dev server settings from the [env] of the gitignored mise.local.toml, which mise exports to every task.
+const { DEV_ALLOWED_HOSTS, DEV_HOST, DEV_PORT } = process.env;
+const devAllowedHosts = DEV_ALLOWED_HOSTS ? DEV_ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [];
+const devHost = DEV_HOST === 'true' || DEV_HOST === '1';
+const devPort = DEV_PORT ? Number(DEV_PORT) : undefined;
 
 // Sitemap lastmod comes from the page's own content date (src/lib/sitemap.ts).
 const lastmods = sitemapLastmods(
@@ -100,8 +96,9 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
-      // lightningcss folds `animation-timeline: scroll()` into the `animation` shorthand,
-      // invalid syntax that kills the scroll-driven header shadow. esbuild leaves it alone.
+      // lightningcss, Vite's default, folds `animation-timeline: scroll()` into the `animation`
+      // shorthand, which no browser parses, so the scroll-driven header shadow never runs.
+      // esbuild keeps the longhand; it is a devDependency because Vite only lists it as an optional peer.
       cssMinify: 'esbuild',
       // Silences the bundler's report of Astro's "use astro:head-inject" directive in MDX modules.
       rolldownOptions: {

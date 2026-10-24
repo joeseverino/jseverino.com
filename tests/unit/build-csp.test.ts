@@ -1,16 +1,15 @@
-import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { PLACEHOLDERS, buildCsp } from '../../bin/build-csp.ts';
+import { after, describe, test } from 'node:test';
+import { buildCsp, PLACEHOLDERS } from '../../bin/build-csp.ts';
 import { CSP_INLINE_MARKER, hashSource } from '../../src/lib/csp.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('build-csp-');
 after(scratch.cleanup);
 
-const page = (extra = '') =>
-  `<html><head><script nonce="${CSP_INLINE_MARKER}">theme()</script><style>body{}</style></head><body>${extra}</body></html>`;
+const page = (extra = '') => `<html><head><script nonce="${CSP_INLINE_MARKER}">theme()</script><style>body{}</style></head><body>${extra}</body></html>`;
 const headers = `/*\n  Content-Security-Policy: __CSP__\n  Reporting-Endpoints: __REPORTING_ENDPOINTS__\n\n/contact/*\n  ! Content-Security-Policy\n  Content-Security-Policy: __CSP_CONTACT__\n  Content-Security-Policy-Report-Only: __TT_REPORT_ONLY__\n`;
 
 function dist(pages: Record<string, string>): string {
@@ -43,7 +42,10 @@ describe('buildCsp', () => {
   test('the contact policy differs only in Trusted Types, which it reports instead', async () => {
     const dir = dist({ 'index.html': page() });
     await run(dir);
-    const lines = fs.readFileSync(path.join(dir, '_headers'), 'utf8').split('\n').map((line) => line.trim());
+    const lines = fs
+      .readFileSync(path.join(dir, '_headers'), 'utf8')
+      .split('\n')
+      .map((line) => line.trim());
     const enforced = lines.filter((line) => line.startsWith('Content-Security-Policy: '));
     assert.equal(enforced.length, 2);
     assert.match(enforced[0] ?? '', /require-trusted-types-for 'script'/);
@@ -63,7 +65,9 @@ describe('buildCsp', () => {
   });
 
   test('fails when pages grow more inline scripts than the policy expects', async () => {
-    const pages = Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`p${i}.html`, `<head><script nonce="${CSP_INLINE_MARKER}">v${i}()</script><style>a{}</style></head>`]));
+    const pages = Object.fromEntries(
+      Array.from({ length: 5 }, (_, i) => [`p${i}.html`, `<head><script nonce="${CSP_INLINE_MARKER}">v${i}()</script><style>a{}</style></head>`]),
+    );
     await assert.rejects(run(dist(pages)), /5 inline script/);
   });
 

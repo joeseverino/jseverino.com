@@ -1,7 +1,7 @@
 // Terminal primitives behind `site manage`.
 import { once } from 'node:events';
 import os from 'node:os';
-import { emitKeypressEvents as nodeEmitKeypressEvents, type Key as Keypress } from 'node:readline';
+import { type Key as Keypress, emitKeypressEvents as nodeEmitKeypressEvents } from 'node:readline';
 import { stripVTControlCharacters, styleText } from 'node:util';
 
 // What a piece of text means; tint() turns it into styling only when a frame is drawn.
@@ -38,10 +38,10 @@ function cellWidth(grapheme: string | undefined): number {
   // An emoji draws two cells; a pictograph in text presentation (©, ™, ↔) draws one.
   if (/\p{RGI_Emoji}/v.test(grapheme)) return 2;
   const cp = grapheme.codePointAt(0) ?? 0;
-  return (
-    cp >= 0x1100 && (
-      cp <= 0x115f ||
-      cp === 0x2329 || cp === 0x232a ||
+  return cp >= 0x1100 &&
+    (cp <= 0x115f ||
+      cp === 0x2329 ||
+      cp === 0x232a ||
       (cp >= 0x2e80 && cp <= 0xa4cf && cp !== 0x303f) ||
       (cp >= 0xac00 && cp <= 0xd7a3) ||
       (cp >= 0xf900 && cp <= 0xfaff) ||
@@ -49,9 +49,9 @@ function cellWidth(grapheme: string | undefined): number {
       (cp >= 0xfe30 && cp <= 0xfe6f) ||
       (cp >= 0xff00 && cp <= 0xff60) ||
       (cp >= 0xffe0 && cp <= 0xffe6) ||
-      (cp >= 0x20000 && cp <= 0x3fffd)
-    )
-  ) ? 2 : 1;
+      (cp >= 0x20000 && cp <= 0x3fffd))
+    ? 2
+    : 1;
 }
 
 function displayWidth(text: unknown): number {
@@ -163,7 +163,7 @@ export function truncate(text: unknown, width: number): string {
   if (width <= 0) return '';
   if (displayWidth(s) <= width) return s;
   if (width === 1) return '…';
-  return clipAnsi(s, width - 1) + '…';
+  return `${clipAnsi(s, width - 1)}…`;
 }
 
 // The TUI hides the terminal's cursor, so the editor draws its own in inverse video even under
@@ -186,10 +186,7 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   const beforeBudget = Math.max(0, available - cursorWidth - reserveRight - 1);
   const before = suffixByWidth(input.slice(0, cursorIndex), beforeBudget);
   const leftHidden = before.length < cursorIndex;
-  const afterBudget = Math.max(
-    0,
-    available - cursorWidth - displayWidth(before) - (leftHidden ? 1 : 0) - reserveRight,
-  );
+  const afterBudget = Math.max(0, available - cursorWidth - displayWidth(before) - (leftHidden ? 1 : 0) - reserveRight);
   const after = prefixByWidth(rightSource, afterBudget);
   const rightHidden = after.length < rightSource.length;
 
@@ -281,10 +278,7 @@ export interface KeyHandlers {
 // Node reads escapeCodeTimeout from emitKeypressEvents' second argument
 // (lib/internal/readline/emitKeypressEvents.js), but its types call that argument a readline
 // Interface, which declares no such field; this signature states what Node reads.
-const emitKeypressEvents = nodeEmitKeypressEvents as unknown as (
-  stream: NodeJS.ReadableStream,
-  options: { escapeCodeTimeout: number },
-) => void;
+const emitKeypressEvents = nodeEmitKeypressEvents as unknown as (stream: NodeJS.ReadableStream, options: { escapeCodeTimeout: number }) => void;
 
 // How long a lone Esc waits for the rest of a sequence; Node's default is GNU readline's 500 ms.
 const ESCAPE_TIMEOUT_MS = 30;

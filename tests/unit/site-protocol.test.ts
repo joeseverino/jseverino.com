@@ -1,11 +1,11 @@
-import { after, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { validate, type JsonSchema } from '../../bin/lib/json-schema.ts';
+import { after, describe, test } from 'node:test';
+import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
+import { SiteError } from '../../bin/site/cli.ts';
 import { EXIT, PROTOCOL_VERSION } from '../../bin/site/types.ts';
 import { failureDocument, successDocument } from '../../bin/site.ts';
-import { SiteError } from '../../bin/site/cli.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read } from './helpers/desired-state.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
@@ -18,7 +18,9 @@ after(scratch.cleanup);
 // One `site` invocation: the exit code and the single JSON document on stdout.
 function site(args: string[], env: NodeJS.ProcessEnv = {}): { code: number | null; document: Record<string, unknown> } {
   const run = spawnSync(process.execPath, [fromRoot('bin/site.ts'), ...args, '--json'], {
-    cwd: fromRoot('.'), encoding: 'utf8', env: { ...process.env, ...env },
+    cwd: fromRoot('.'),
+    encoding: 'utf8',
+    env: { ...process.env, ...env },
   });
   return { code: run.status, document: JSON.parse(run.stdout) as Record<string, unknown> };
 }
@@ -52,7 +54,7 @@ describe('real documents', () => {
     assert.deepEqual(problemsIn(document), []);
   });
 
-  test('a write\'s receipt is valid, and the schema holds it to the receipt shape', () => {
+  test("a write's receipt is valid, and the schema holds it to the receipt shape", () => {
     const vault = path.join(scratch.make(), 'vault');
     write(path.join(vault, '05 Writeups/alpha/index.md'), '---\ntitle: Alpha\npublished: false\n---\nBody\n');
     const { code, document } = site(['set', 'alpha', '--title', 'Alpha, retitled'], { VAULT_DIR: vault });
@@ -82,12 +84,12 @@ describe('the envelope', () => {
     assert.equal(document.status, 'ok');
   });
 
-  test('a command\'s own status is kept', () => {
+  test("a command's own status is kept", () => {
     const result = { status: 'landed', next: null } as unknown as Parameters<typeof successDocument<'land'>>[1];
     assert.equal(successDocument('land', result).status, 'landed');
   });
 
-  test('a failure\'s partial result never replaces ok, status, or error', () => {
+  test("a failure's partial result never replaces ok, status, or error", () => {
     const error = new SiteError('boom', { code: EXIT.usage, result: { ok: true, status: 'landed', error: null, pr: 'u' } });
     const document = failureDocument('land', error);
     assert.equal(document.ok, false);

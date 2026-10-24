@@ -8,15 +8,19 @@ latest major on purpose, and how an update is reviewed before it merges.
 Renovate is the only dependency updater, and
 [`.github/renovate.json`](../.github/renovate.json) is its whole configuration here; Renovate
 itself runs outside this repository, so no workflow carries it. The file extends
-`config:best-practices` (actions and container images pinned by digest,
-development dependencies pinned exactly, weekly lock file maintenance) and adds
+`config:best-practices` (actions and container images pinned by digest, a pin
+update proposed for each development dependency `package.json` still declares
+as a `^` range, weekly lock file maintenance; the lockfile fixes the installed
+version either way) and adds
 this repository's rules, each with a `description`:
 
 - Every update short of a major waits 7 days after its release, npm included
   (the preset's own npm rule holds only three), then lands in one weekly pull
   request.
 - Astro and its `@astrojs/*` integrations move in a pull request of their own,
-  and so does `sitedrift`, which is bundled into the Worker.
+  and so does `sitedrift`, which is bundled into the Worker. `@playwright/test`
+  and the Playwright image the `e2e` job runs in move together, majors included,
+  since the image's browsers serve only the release of the same version.
 - Each major comes on its own, except the holds below, which are disabled.
 - Renovate's mise manager moves each mise tool, Node included, across
   `mise.toml` and `mise.lock` together.
@@ -51,7 +55,7 @@ disables the package's major updates, and the `wrangler` hold disables all of it
 
 | Package | Held at | Why | Revisit when |
 | :--- | :--- | :--- | :--- |
-| `typescript` | 6.x | The audits and the site CLI call the TypeScript compiler API (scanner and program APIs), and Astro's language tools load it. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's tooling and the compiler API used by `tests/audits` support 7.x. |
+| `typescript` | 6.x | `astro check` runs Astro's language tools, which load the TypeScript compiler API. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's language tools support 7.x. |
 | `@types/node` | 24.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 24 does not have. | `mise.toml` moves to a newer Node major. |
 | `wrangler` | 4.151.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler`; this pin moves to the same release. |
 | `npm` (`packageManager`) | 11.x | The pin names the npm release the pinned Node bundles. | `mise.toml` moves to a Node major that bundles a newer npm. |

@@ -1,6 +1,6 @@
-import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { miseTasks, namesTask, type MiseTask } from '../../bin/lib/mise.ts';
+import { test } from 'node:test';
+import { type MiseTask, miseTasks, namesTask } from '../../bin/lib/mise.ts';
 
 const task = (name: string, aliases: string[] = []): MiseTask => ({ name, aliases, description: '', hide: false });
 const tasks = [task('checks', ['fast']), task('checks:types'), task('browser:e2e')];
@@ -16,6 +16,8 @@ test('a name no task carries, or a glob that matches none, names nothing', () =>
 // `mise tasks` and the generated list in docs/Commands.md are the command reference, so a task
 // without a description is a command nobody can find.
 test('every visible task carries a description', () => {
-  const undescribed = miseTasks().filter((task) => !task.description.trim()).map((task) => task.name);
+  const undescribed = miseTasks()
+    .filter((task) => !task.description.trim())
+    .map((task) => task.name);
   assert.deepEqual(undescribed, []);
 });

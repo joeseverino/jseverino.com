@@ -3,14 +3,17 @@ name: link check
 on:
   pull_request:
     branches: [main]
+    # Every doc in mise.toml's vars.docs, held to it by tests/unit/link-check-workflow.test.ts.
     paths:
       - 'README.md'
+      - 'AGENTS.md'
       - '.github/SECURITY.md'
       - '.github/CONTRIBUTING.md'
       - 'docs/**/*.md'
       - 'tests/*.md'
       - 'src/content/**/*.md'
       - 'src/content/**/*.mdx'
+      - 'mise.toml'
   schedule:
     - cron: '37 11 * * 2'
   workflow_dispatch:
@@ -23,64 +26,30 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# The links:* tasks (mise.toml) hold the checks; each writes its Markdown report
+# into its step's summary, and its failures into the log.
 jobs:
   lychee:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      MISE_ENABLE_TOOLS: aqua:lycheeverse/lychee
+      # lychee checks github.com links through the API with this token, under its
+      # rate limit instead of the anonymous one.
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # 403, 429, and 999 come from targets that wall off automated clients, and a link that
-      # answers at all is not dead. A real 404 or a connection failure still fails.
-      - name: Check repository documentation links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+      - uses: $/.github/actions/setup
         with:
-          output: lychee/repository-documentation.md
-          args: >-
-            --no-progress
-            --verbose
-            --accept 200,204,206,301,302,303,307,308,403,429,999
-            README.md
-            .github/SECURITY.md
-            .github/CONTRIBUTING.md
-            docs/**/*.md
-            tests/*.md
-          fail: true
+          install: 'false'
+
+      # Neither check imports a package, so nothing is installed for them.
+      - name: Check repository documentation links
+        run: mise run --no-deps links:docs --format markdown --output "$GITHUB_STEP_SUMMARY"
 
       - name: Check public content links
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
-        with:
-          output: lychee/public-content.md
-          # Self-domain links are excluded: a PR adding a page would 404 against live until it
-          # deploys. Internal links are audited against the build by built:links in CI.
-          args: >-
-            --no-progress
-            --verbose
-            --base-url https://jseverino.com
-            --exclude '^https://jseverino\.com'
-            --accept 200,204,206,301,302,303,307,308,403,429,999
-            src/content/**/*.md
-            src/content/**/*.mdx
-          fail: true
-
-      - name: Summarize link checks
-        if: always()
-        run: |
-          for report in lychee/repository-documentation.md lychee/public-content.md; do
-            [ -f "$report" ] || continue
-            {
-              printf '## %s\n\n' "$(basename "$report" .md | tr '-' ' ')"
-              cat "$report"
-              printf '\n'
-            } >> "$GITHUB_STEP_SUMMARY"
-          done
-
-      - name: Upload link check reports
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: link-check-reports
-          path: lychee
-          if-no-files-found: ignore
+        if: ${{ !cancelled() }}
+        run: mise run --no-deps links:content --format markdown --output "$GITHUB_STEP_SUMMARY"

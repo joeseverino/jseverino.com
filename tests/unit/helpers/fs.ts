@@ -18,6 +18,8 @@ export function scratchDirs(prefix: string): { make: () => string; cleanup: () =
       made.push(dir);
       return dir;
     },
-    cleanup: () => { for (const dir of made.splice(0)) fs.rmSync(dir, { recursive: true, force: true }); },
+    cleanup: () => {
+      for (const dir of made.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+    },
   };
 }

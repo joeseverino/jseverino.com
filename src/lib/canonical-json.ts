@@ -5,7 +5,11 @@ function canonicalJson(value: unknown): string {
   const sort = (item: unknown): unknown => {
     if (Array.isArray(item)) return item.map(sort);
     if (item && typeof item === 'object') {
-      return Object.fromEntries(Object.keys(item).sort().map((key) => [key, sort((item as Record<string, unknown>)[key])]));
+      return Object.fromEntries(
+        Object.keys(item)
+          .sort()
+          .map((key) => [key, sort((item as Record<string, unknown>)[key])]),
+      );
     }
     return item;
   };

@@ -1,19 +1,20 @@
-import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lookup, snapshotPackages, type GetJson } from '../../bin/lib/package-registry.ts';
+import { describe, test } from 'node:test';
+import { type GetJson, lookup, snapshotPackages } from '../../bin/lib/package-registry.ts';
 
-const registries = (overrides: Record<string, unknown> = {}): GetJson => (async (url: string) => {
-  const answers: Record<string, unknown> = {
-    'https://pypi.org/pypi/py-pkg/json': { info: { version: '1.2.3' } },
-    'https://registry.npmjs.org/npm-pkg': { 'dist-tags': { latest: '0.4.0' } },
-    'https://api.npmjs.org/downloads/point/last-month/npm-pkg': { downloads: 352 },
-    ...overrides,
-  };
-  if (!(url in answers)) throw new Error(`HTTP 404: ${url}`);
-  const answer = answers[url];
-  if (answer instanceof Error) throw answer;
-  return answer;
-}) as GetJson;
+const registries = (overrides: Record<string, unknown> = {}): GetJson =>
+  (async (url: string) => {
+    const answers: Record<string, unknown> = {
+      'https://pypi.org/pypi/py-pkg/json': { info: { version: '1.2.3' } },
+      'https://registry.npmjs.org/npm-pkg': { 'dist-tags': { latest: '0.4.0' } },
+      'https://api.npmjs.org/downloads/point/last-month/npm-pkg': { downloads: 352 },
+      ...overrides,
+    };
+    if (!(url in answers)) throw new Error(`HTTP 404: ${url}`);
+    const answer = answers[url];
+    if (answer instanceof Error) throw answer;
+    return answer;
+  }) as GetJson;
 
 describe('lookup', () => {
   test('reads a PyPI version and an npm version with its monthly downloads', async () => {
@@ -31,7 +32,10 @@ describe('lookup', () => {
 });
 
 describe('snapshotPackages', () => {
-  const packages = [{ registry: 'pypi', name: 'py-pkg' }, { registry: 'npm', name: 'npm-pkg' }] as const;
+  const packages = [
+    { registry: 'pypi', name: 'py-pkg' },
+    { registry: 'npm', name: 'npm-pkg' },
+  ] as const;
 
   test('keys every package by registry and name, sorted, with the date', async () => {
     const result = await snapshotPackages(packages, { getJson: registries(), today: new Date('2026-10-05T12:00:00Z') });
