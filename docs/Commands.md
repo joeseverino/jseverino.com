@@ -190,7 +190,7 @@ The functional Playwright specs pass across Chromium, Firefox, and WebKit
 
 - **Usage:** `browser:edge`
 
-Served through the local Worker runtime: the CSP and its inline-tag hashes, the _headers rules, the contact page exemption, a real 404, the contact refusals, and security.txt parity
+The built site served by the local Worker runtime: CSP, headers, 404, contact refusals and security.txt
 
 ## `browser:visual`
 
@@ -349,7 +349,7 @@ Renovate's own validator finds no error, warning or needed migration in .github/
 
 - **Usage:** `checks:repo-policy`
 
-Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; runners fixed, every job time-boxed
+Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout
 
 ## `checks:security-txt`
 
@@ -387,7 +387,7 @@ The node:test specs under tests/unit pass
 
 - **Usage:** `checks:workflows`
 
-zizmor finds no security issue in the workflows or actions (pinned uses, permissions, injection, triggers), apart from the findings a `# zizmor: ignore[<audit>]` comment beside them accepts with a reason
+zizmor finds no security issue in the workflows; an accepted finding carries an inline reason
 
 ## `ci`
 
@@ -399,7 +399,7 @@ Every gate the pipeline runs: check, then the browser suites
 
 - **Usage:** `clean:generated`
 
-Remove build output (`dist/`), `.astro/` and the Vite cache; the shared caches under SITE_CACHE_DIR and synced content are left alone
+Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and synced content stay
 
 ## `cloudflare`
 
@@ -508,7 +508,7 @@ Serve the build through the local Worker runtime: _headers, redirects, the 404 p
 
 - **Usage:** `preview:wrap`
 
-Turn the finished build into a branch preview: the sitedrift review viewer over every page, then the CSP filled again to cover it (the deploy job sets WORKERS_CI=1 and WORKERS_CI_BRANCH)
+Turn the finished build into a branch preview: add the review viewer, then rebuild the CSP to cover it
 
 ## `publish:dist`
 

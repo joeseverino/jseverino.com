@@ -91,6 +91,6 @@ finish(
   `contact handler validates through the contract; ${insertCount} D1 inserts and ${rowTypes} row types match storage; inserts cap per IP; the binding names ${SITE.d1}`,
   {
     heading: 'check-d1-parity: the Worker boundary disagrees with its schemas:',
-    fix: 'fix: the handlers in src/lib/api, cloudflare/d1.sql and the D1 binding in wrangler.jsonc change together',
+    fix: 'fix: edit cloudflare/d1.sql, the row types and INSERTs in src/lib/api, or the D1 binding in wrangler.jsonc until the table columns and database name match, as each line above says',
   },
 );

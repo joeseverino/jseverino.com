@@ -35,7 +35,7 @@ jobs:
       # The gate a laptop runs: every static gate, the build, every gate on the
       # build. src/content is the committed snapshot; CI has no vault. The build
       # carries the production site key because it is the one that ships.
-      - name: Gates
+      - name: Static gates
         run: mise run check
         env:
           PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
