@@ -54,7 +54,7 @@ The sparse result shows the branch changed branding, not layout or content.
 
 Both deployments receive the same metadata preview and SEO checklist. Here the
 title, description, canonical URL, headings, Open Graph fields, favicon, and
-image-alt coverage all pass, so the redesign carries no SEO regression.
+image-alt coverage all pass, so the change makes no SEO difference.
 
 ![DEV and LIVE metadata previews and SEO checks](./images/sitedrift-brand-demo/seo-comparison.png)
 

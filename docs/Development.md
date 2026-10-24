@@ -6,19 +6,16 @@ How the repository is built, checked, and shipped. Every script is in
 
 ## Setup
 
-[mise](https://mise.jdx.dev) installs the toolchain: Node, pinned in
-[`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock).
-npm comes from `package.json`'s `packageManager`. `mise install` installs the
-tools. The npm packages come from mise's `[deps.npm]` provider: before any
-`mise run` or `mise exec`, it runs `npm ci` from the lockfile whenever
-`package.json` or `package-lock.json` changed since the last install or
-`node_modules` is missing, so a fresh checkout or a pull that moves the
-lockfile is installed by the first task it runs (`mise deps install npm` runs
-it on its own). CI installs packages per job in its setup action instead.
-Machine paths for the content sync go in the `[env]` of a gitignored
-`mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)), and
-so do the dev server's settings, which `astro.config.ts` reads from the
-environment mise exports:
+[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools.
+
+The npm packages come from mise's `[deps.npm]` provider. Before any `mise run` or `mise exec`, it runs `npm ci` from the lockfile in two cases:
+
+- `package.json` or `package-lock.json` changed since the last install.
+- `node_modules` is missing.
+
+So a fresh checkout, or a pull that moves the lockfile, installs on the first task it runs. `mise deps install npm` runs it on its own. CI installs packages per job in its setup action instead.
+
+Machine paths for the content sync go in the `[env]` of a gitignored `mise.local.toml` ([Vault Workflow](./Vault-Workflow.md#local-workflow)). So do the dev server's settings, which `astro.config.ts` reads from the environment mise exports:
 
 ```toml
 [env]
@@ -71,16 +68,15 @@ check over the repo; `astro check` covers the `.astro` files. Shared logic lives
 once, in `bin/lib/`, `src/lib/`, or a test helper, and the
 gate fails on duplicated code.
 
-Biome, pinned in `mise.toml`, is the one formatter and linter. It formats the
-TypeScript, JSON, CSS and YAML and lints them from its recommended rules, holds
-an `.astro` file's frontmatter and scripts to no explicit `any` and no
-`@ts-ignore`, and refuses a literal color or font size in a stylesheet
-(`noHexColors`, the named and `rgb()`/`hsl()` spellings through the plugin
-`tests/literal-colors.grit`, and a rem, px or em `font-size` through
-`tests/literal-font-sizes.grit`); `biome.jsonc` names what it leaves out and
-why.
-`mise run checks:lint` fails on any difference or any finding at warning or
-above, and `mise run fix:lint` applies the fixes Biome can make.
+Biome, pinned in `mise.toml`, is the one formatter and linter. It formats the TypeScript, JSON, CSS and YAML and lints them from its recommended rules. `biome.jsonc` names what it leaves out and why.
+
+Biome also enforces these:
+
+- An `.astro` file's frontmatter and scripts carry no explicit `any` and no `@ts-ignore`.
+- A stylesheet carries no literal color: `noHexColors` covers hex, and the plugin `tests/literal-colors.grit` covers the named and `rgb()`/`hsl()` spellings.
+- A stylesheet carries no rem, px or em `font-size`, through the plugin `tests/literal-font-sizes.grit`.
+
+`mise run checks:lint` fails on any difference or any finding at warning or above, and `mise run fix:lint` applies the fixes Biome can make.
 
 ## Gates
 

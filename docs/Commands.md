@@ -39,15 +39,16 @@ an 8 GB laptop never runs two browsers at once. Each suite run alone builds
 what it serves. `mise run ci` is `check` and then `browser`: every gate the
 pipeline runs.
 
-**`mise run browser:edge`**: the edge runtime suite (`tests/edge/`). Serves
-the output through `astro preview`, which runs the built Worker and its static
-assets in the local Cloudflare runtime under `wrangler.jsonc`, and asserts what
-only that runtime produces: the hash CSP covering every inline script and style, one identical
-policy on every request, the `/contact/` Trusted Types exemption, the `public/_headers` security and cache rules, a real 404, the trailing-slash redirect,
-the contact route's refusals and its security headers (no Turnstile token, wrong content type,
-malformed JSON, fields outside the contract), byte-exact `security.txt`, and the
-WKD key's content type. CI's `edge` leg runs it. **`mise run preview`**
-starts the same runtime for by-hand checks.
+**`mise run browser:edge`**: the edge runtime suite (`tests/edge/`). It serves the output through `astro preview`, which runs the built Worker and its static assets in the local Cloudflare runtime under `wrangler.jsonc`. It asserts what only that runtime produces:
+
+- The hash CSP covers every inline script and style, with one identical policy on every request.
+- The `/contact/` Trusted Types exemption.
+- The `public/_headers` security and cache rules.
+- A real 404 and the trailing-slash redirect.
+- The contact route's refusals (no Turnstile token, wrong content type, malformed JSON, fields outside the contract) and its security headers.
+- A byte-exact `security.txt` and the WKD key's content type.
+
+CI's `edge` leg runs it. **`mise run preview`** starts the same runtime for by-hand checks.
 
 ## Daily, in detail
 
@@ -91,20 +92,19 @@ Chromium and its system packages with `mise run setup:browsers chromium`
 before the audit. Per-page logs accompany the reports,
 including when Chrome fails to launch.
 
-**`mise run deploy:verify`**: run after a production deploy, from a residential IP
-and a clean `main` checkout. Confirms the local HEAD matches origin, waits for every required check
-(build, e2e, visual, edge, deploy) to pass,
-then probes the live site: security headers on `/` and a deep writeup page
-picked from the live sitemap, every sitemap URL returns 200, the preview proxy
-is absent in production, the live home page's inline script and stylesheet are covered by the
-CSP's hashes (`inline`), an unknown route returns a real 404, `POST
-/api/contact` without a Turnstile token is refused, the contact form carries a
-Turnstile site key, the live `security.txt`
-matches the committed file, and zero open CodeQL alerts. Every check
-runs even after an earlier one fails. `--origin <url>` verifies one Worker
-version at its preview URL instead (what `deploy.yml` runs before a version
-takes traffic), `--preview` marks a branch preview, and `--slug <writeup>`
-checks one writeup.
+**`mise run deploy:verify`**: run after a production deploy, from a residential IP and a clean `main` checkout. It confirms the local HEAD matches origin and waits for every required check (build, e2e, visual, edge, deploy) to pass. Then it probes the live site:
+
+- Security headers on `/` and on a deep writeup page picked from the live sitemap.
+- Every sitemap URL returns 200.
+- The preview proxy is absent in production.
+- The live home page's inline script and stylesheet are covered by the CSP's hashes (`inline`).
+- An unknown route returns a real 404.
+- `POST /api/contact` without a Turnstile token is refused.
+- The contact form carries a Turnstile site key.
+- The live `security.txt` matches the committed file.
+- No CodeQL alert is open.
+
+Every check runs even after an earlier one fails. `--origin <url>` verifies one Worker version at its preview URL instead (what `deploy.yml` runs before a version takes traffic). `--preview` marks a branch preview, and `--slug <writeup>` checks one writeup.
 
 **`mise run build`**: the build every deploy ships (`bin/build-static.ts`):
 `astro build`, then the CSP hashes. CI builds once and the `deploy` workflow

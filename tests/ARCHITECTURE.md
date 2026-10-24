@@ -153,7 +153,15 @@ Structural health:
 - **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
 - **No unexplained suppressions**: no `@ts-nocheck` in a `.ts` or `.astro` file, and every `@ts-expect-error` comment carries a reason.
 
-What a maintained tool checks is left to it: `npm ci` refuses a lockfile out of step with `package.json`; Biome (`checks:lint`) refuses an explicit `any` and a `@ts-ignore` (`noExplicitAny`, `noTsIgnore`) in TypeScript and in an `.astro` file's frontmatter and `<script>` elements, and a literal color or font size in a stylesheet (`noHexColors`, the named and `rgb()`/`hsl()` spellings through the plugin [`literal-colors.grit`](./literal-colors.grit), and a rem, px or em `font-size` through [`literal-font-sizes.grit`](./literal-font-sizes.grit), whose node patterns [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds to Biome's CSS grammar) everywhere except the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip; and zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA, with each finding it accepts marked by a `# zizmor: ignore[<audit>]` comment and its reason where it is found.
+What a maintained tool checks is left to it:
+
+- `npm ci` refuses a lockfile out of step with `package.json`.
+- Biome (`checks:lint`) refuses an explicit `any` and a `@ts-ignore` (`noExplicitAny`, `noTsIgnore`) in TypeScript and in an `.astro` file's frontmatter and `<script>` elements.
+- Biome's `noHexColors` refuses a hex color in a stylesheet.
+- The plugin [`literal-colors.grit`](./literal-colors.grit) refuses the named and `rgb()`/`hsl()` color spellings.
+- The plugin [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuses a rem, px or em `font-size`. [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds its node patterns to Biome's CSS grammar.
+- The color and font-size rules skip the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip.
+- zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA. Each finding it accepts is marked by a `# zizmor: ignore[<audit>]` comment with its reason where it is found.
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.
@@ -299,7 +307,7 @@ Route-level responses, engine-independent so chromium only: every URL in the sit
 Asserts every `target="_blank"` link across the key pages carries `rel="noopener"`, so an opened tab cannot reach back through `window.opener`.
 
 ### `portfolio-software.single.spec.ts`
-Covers the Software tab of `/portfolio`. Asserts the tab toggle behaviour: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
+Covers the Software tab of `/portfolio`. Asserts the tab toggle behavior: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
 
 ### `scroll-lock.single.spec.ts`
 Opens the lightbox and the mobile menu with Chromium's scrollbars shown, and asserts the header does not move when the lock removes the scrollbar: the root's `scrollbar-gutter: stable` keeps its width. macOS overlays its scrollbars, so the specs skip there and run on the Linux CI runners.
