@@ -197,10 +197,14 @@ description = "`mise tasks validate` finds no error in the task definitions: no 
 run = "mise tasks validate --errors-only"
 
 [tasks."checks:patch"]
-description = "No whitespace error or conflict marker in any tracked file outside the synced content"
+description = "No whitespace error or conflict marker in any tracked file; synced content may keep trailing spaces and blank last lines"
 # Against the empty tree, so every tracked file is checked, edited or not. Synced content
-# keeps the trailing double space that Markdown reads as a line break.
-run = "git diff --check $(git hash-object -t tree /dev/null) -- . ':!src/content' ':!tests/fixtures/content'"
+# keeps the trailing double space that Markdown reads as a line break, so only its
+# end-of-line rules are relaxed, and its conflict markers still fail.
+run = [
+  "git diff --check $(git hash-object -t tree /dev/null) -- . ':!src/content' ':!tests/fixtures/content'",
+  "git -c core.whitespace=-blank-at-eol,-blank-at-eof diff --check $(git hash-object -t tree /dev/null) -- src/content tests/fixtures/content",
+]
 
 # ------------------------------------------------------------------- build
 
