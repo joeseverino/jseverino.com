@@ -17,11 +17,11 @@ const spec = (title: string, status: JSONReportTest['status']): Partial<JSONRepo
   tests: [{ projectName: 'chromium-desktop', status, results: [{ duration: 1000 }] } as JSONReportTest],
 });
 
-function summarize(specs: Partial<JSONReportSpec>[]): { summary: string; stdout: string } {
+function summarize(specs: Partial<JSONReportSpec>[], errors: { message: string }[] = []): { summary: string; stdout: string } {
   const dir = dirs.make();
   const report = path.join(dir, 'e2e.json');
   const summary = path.join(dir, 'summary.md');
-  write(report, JSON.stringify({ suites: [{ title: 'smoke.spec.ts', specs }], stats: { duration: 3000 } }));
+  write(report, JSON.stringify({ suites: [{ title: 'smoke.spec.ts', specs }], errors, stats: { duration: 3000 } }));
   const result = spawnSync(process.execPath, [fromRoot('bin/playwright-summary.ts'), 'Cross-browser suite', report], {
     encoding: 'utf8',
     env: { ...process.env, GITHUB_ACTIONS: 'true', GITHUB_STEP_SUMMARY: '', JOB_SUMMARY_FILE: summary },
@@ -33,13 +33,21 @@ function summarize(specs: Partial<JSONReportSpec>[]): { summary: string; stdout:
 test('a test that passed only on retry is reported as failing the run, with an error annotation', () => {
   const { summary, stdout } = summarize([spec('home renders', 'expected'), spec('menu opens', 'flaky')]);
   assert.doesNotMatch(summary, /passed in/);
-  assert.match(summary, /1 flaky .*fails the run/);
+  assert.match(summary, /^1 flaky across 2 tests in 1 project; the run fails\.$/m);
   assert.match(stdout, /^::error title=playwright%3A chromium-desktop::flaky: smoke\.spec\.ts › menu opens$/m);
 });
 
 test('a skipped test is never counted among the passed', () => {
   const { summary } = summarize([spec('home renders', 'expected'), spec('forced colors', 'skipped')]);
   assert.match(summary, /^1 tests passed and 1 skipped /m);
+});
+
+test('a run that stopped on an error is never reported as passed, even with no failed test', () => {
+  const message = 'Timed out waiting 900s for the entire test run';
+  const { summary, stdout } = summarize([spec('home renders', 'expected'), spec('menu opens', 'skipped')], [{ message }]);
+  assert.doesNotMatch(summary, /tests passed/);
+  assert.match(summary, /^1 run error across 2 tests in 1 project; the run fails\.$/m);
+  assert.match(stdout, /^::error title=playwright::Timed out waiting 900s for the entire test run$/m);
 });
 
 // Playwright passes a test that failed and then passed on retry unless the config says otherwise,

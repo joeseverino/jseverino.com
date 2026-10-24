@@ -93,13 +93,22 @@ for (const [project, row] of byProject) {
 }
 
 // A flaky test passed only on retry, which fails the run (failOnFlakyTests), so the headline
-// never calls it passed, and a skipped test is never counted as one that passed.
+// never calls it passed, and a skipped test is never counted as one that passed. A run that
+// stopped early (a global timeout, a web server or setup error) reports its tests as skipped
+// and its cause in report.errors, so an error also fails the headline.
 const projects = `${byProject.size} ${byProject.size === 1 ? 'project' : 'projects'}`;
 const total = tally(tests);
+const errors = report.errors ?? [];
+const problems = [
+  [failed.length, 'failed'],
+  [flaky.length, 'flaky'],
+  [errors.length, errors.length === 1 ? 'run error' : 'run errors'],
+] as const;
+const counted = problems.filter(([count]) => count > 0).map(([count, label]) => `${count} ${label}`);
 const headline =
-  failed.length + flaky.length === 0
+  counted.length === 0
     ? `${total.passed} tests passed and ${total.skipped} skipped across ${projects} in ${seconds(stats.duration ?? 0)}.`
-    : `${failed.length} failed and ${flaky.length} flaky of ${tests.length} tests across ${projects}; either fails the run.`;
+    : `${counted.join(', ')} across ${tests.length} tests in ${projects}; the run fails.`;
 
 const sections = [`## ${cell(title)}`, '', headline, '', table(['Project', 'Passed', 'Failed', 'Flaky', 'Skipped', 'Duration'], rows)];
 
@@ -115,5 +124,14 @@ function list(heading: string, runs: TestRow[], verdict: string): void {
 
 list('Failed', failed, 'failed');
 list('Flaky: passed only on retry', flaky, 'flaky');
+
+if (errors.length > 0) {
+  sections.push('', '### Run errors', '');
+  for (const error of errors) {
+    const message = (error.message ?? 'unknown error').split('\n')[0] ?? '';
+    sections.push(`- ${cell(message)}`);
+    annotate('error', 'playwright', message);
+  }
+}
 
 appendSummary(sections.join('\n'));
