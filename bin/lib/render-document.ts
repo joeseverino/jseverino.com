@@ -6,7 +6,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getViteConfig } from 'astro/config';
 import { createLogger, createServer } from 'vite';
-import { brandVarsCss } from '../../src/lib/brand.ts';
 import { interFontFace } from '../../src/lib/web-styles.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
@@ -43,7 +42,8 @@ export async function renderDocument(input: DocumentInput): Promise<string> {
     const { default: WriteupPreview } = await server.ssrLoadModule('/src/components/content/WriteupPreview.astro');
     const { default: baseCss } = await server.ssrLoadModule('/src/styles/base.css?inline');
     const font = `data:font/woff2;base64,${fs.readFileSync(FONT).toString('base64')}`;
-    const styles = [brandVarsCss(), baseCss, interFontFace(font)].join('\n');
+    // base.css imports brand.css, which carries the brand vars in the tokens layer.
+    const styles = [baseCss, interFontFace(font)].join('\n');
     const container = await experimental_AstroContainer.create();
     const html: string = await container.renderToString(WriteupPreview, { props: input });
     const page = html.replace('</head>', `<style>${styles}</style></head>`);
