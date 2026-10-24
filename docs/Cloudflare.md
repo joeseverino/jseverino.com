@@ -157,7 +157,7 @@ hostnames are `turnstile.domains` in `zone.json`, set by apply, and name the
 same host. A token solved anywhere else, a preview deployment included, fails
 verification.
 
-## Web Analytics
+## Web analytics
 
 The zone injects the Web Analytics beacon into each HTML response, and the
 site emits none of its own. The beacon is an external script the CSP allows by

@@ -1,4 +1,4 @@
-# Authoring Guide
+# Authoring guide
 
 Content is written in the private vault as Markdown with
 [directives](https://talk.commonmark.org/t/generic-directives-plugins-syntax/444).
@@ -41,7 +41,7 @@ one more colon than the tallest block it holds.
 A name that is not a block, or a typo such as `:::figrue`, fails the build
 with its line. `site validate` reports it before anything syncs.
 
-## General Rules
+## General rules
 
 - Keep frontmatter factual and public-safe.
 - Set `published: true` only when the page or writeup is ready to ship.
@@ -112,7 +112,7 @@ Contact form controls.
 Every table scrolls sideways on small screens, with or without the block.
 Separator-delimited values (IPs, MACs) break at their `.` and `:`.
 
-## Terminal Output
+## Terminal output
 
 A fenced block tagged `terminal` renders as a terminal:
 
@@ -143,7 +143,7 @@ literal, so `<placeholders>` need no escaping.
 In a row the first button is primary and the rest secondary. In a writeup, a
 paragraph that is only a link renders as a button too.
 
-## Split Sections
+## Split sections
 
 ```md
 ::::split
@@ -192,7 +192,7 @@ fails the build:
 - Attribute values are plain strings, and URLs in `href` and `src` are relative
   or `http`, `https`, or `mailto`.
 
-## Review Checklist
+## Review checklist
 
 Before publishing:
 
@@ -204,7 +204,7 @@ Before publishing:
 - `site validate` passes, then `mise run check` after the sync (see
   [Release Checklist](./Release-Checklist.md)).
 
-## Related Docs
+## Related docs
 
 - [Vault Workflow](./Vault-Workflow.md)
 - [Site CLI](./Site-CLI.md)

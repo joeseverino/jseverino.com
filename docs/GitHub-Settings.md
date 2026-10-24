@@ -1,4 +1,4 @@
-# GitHub Settings
+# GitHub settings
 
 The repository's merge rules, security features, Actions permissions, and the
 `main` ruleset are declared in [`.github/repo.json`](../.github/repo.json) and

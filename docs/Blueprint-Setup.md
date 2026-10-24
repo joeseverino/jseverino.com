@@ -1,4 +1,4 @@
-# Blueprint Setup
+# Blueprint setup
 
 This repo is the reference implementation behind a future site blueprint. This
 file lists every *instance-specific* value: what a new site built from this

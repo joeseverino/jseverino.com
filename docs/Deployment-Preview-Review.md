@@ -1,4 +1,4 @@
-# Deployment Preview Review
+# Deployment preview review
 
 Every pull request's preview of `jseverino.com` carries a compact
 [sitedrift](https://github.com/joeseverino/sitedrift) review layer. The preview
@@ -6,7 +6,7 @@ is a version of the `jseverino` Worker on its workers.dev preview URL
 ([Preview access](./Cloudflare.md#preview-access)); it is DEV, and the current
 `https://jseverino.com` release is LIVE.
 
-## Case Study: One Brand Change, Fully Reviewed
+## Case study: one brand change, fully reviewed
 
 Two public tools: [`branding-engine`](https://github.com/joeseverino/branding-engine)
 generates a brand system from structured inputs, and
@@ -20,21 +20,21 @@ preview. Only the branch's preview received the change; production stayed navy.
 
 ![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
 
-### 1. Turn A Commit Into A Reviewable Version
+### 1. Turn a commit into a reviewable version
 
 No separate review server exists. Once `ci` passes, the `deploy` workflow wraps
 the build `ci` gated in the sitedrift viewer and uploads it as a Worker version
 tagged with the commit. Its `deploy` check on the commit names the version's own
 URL, which never moves, and the branch alias, which follows the next push.
 
-### 2. Confirm The Branch Works By Itself
+### 2. Confirm the branch works by itself
 
 Solo mode presents DEV as a normal, interactive website with a compact review
 bar. The layer must not break navigation, menus, scrolling, or responsive layout.
 
 ![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)
 
-### 3. Compare The Complete Result With Production
+### 3. Compare the complete result with production
 
 Split mode places the red branch and navy production site on the same route and
 scroll position. Structure and content stay aligned; the brand change appears in
@@ -43,14 +43,14 @@ change; `sitedrift` shows how far it reached.
 
 ![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
-### 4. Isolate Changed Pixels
+### 4. Isolate changed pixels
 
 Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
 The sparse result shows the branch changed branding, not layout or content.
 
 ![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-### 5. Check More Than Appearance
+### 5. Check more than appearance
 
 Both deployments receive the same metadata preview and SEO checklist. Here the
 title, description, canonical URL, headings, Open Graph fields, favicon, and
@@ -64,14 +64,14 @@ that fails, redirects, or gets heavier.
 
 ![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
 
-### 6. Leave Review Context Without Adding A Service
+### 6. Leave review context without adding a service
 
 Review notes live only in that browser's `localStorage`, and the interface says
 so. They need no account system, write API, or database.
 
 ![Browser-local review notes](./images/sitedrift-brand-demo/browser-local-notes.png)
 
-## What Reviewers Get
+## What reviewers get
 
 - **Solo** view by default, with one-click switching between DEV and LIVE.
 - **Split** view with synchronized routes, links, and scrolling.
@@ -85,7 +85,7 @@ so. They need no account system, write API, or database.
   coverage.
 - Review notes stored only in that browser's `localStorage`.
 
-## Repository Integration
+## Repository integration
 
 The build is the same for production and a preview. The `deploy` workflow's
 `preview` job wraps it afterwards with `mise run preview:wrap`
@@ -124,7 +124,7 @@ this route's guards:
 
 `sitedrift` is pinned in `devDependencies` and locked in `package-lock.json`.
 
-## Preview Build Flow
+## Preview build flow
 
 ```mermaid
 flowchart TB
@@ -140,7 +140,7 @@ flowchart TB
 The branch alias and the version URL expose the same interface. Verify against
 the version URL, which cannot move to a newer build mid-test.
 
-## Production Invariant
+## Production invariant
 
 Production is never wrapped. The `production` job ships the build as `ci`
 left it and never runs the wrap, and `installCloudflarePreview` itself leaves
@@ -157,7 +157,7 @@ report receiver, headers, and static assets are unchanged.
 asserts that a feature branch receives the wrapper, with the CSP filled again,
 while `main` stays the original Astro document.
 
-## Security Boundary
+## Security boundary
 
 - The route owns only `/__sitedrift/*`.
 - It allows only `GET` and `HEAD`.
@@ -173,7 +173,7 @@ while `main` stays the original Astro document.
 The surface is read-only: no account system, production content API, database
 binding, secret, upload endpoint, or public write path.
 
-## Review Procedure
+## Review procedure
 
 1. Open the version URL the commit's `deploy` check names.
 2. Confirm DEV Solo mode renders the intended branch.
@@ -186,14 +186,14 @@ binding, secret, upload endpoint, or public write path.
 9. Keep browser-local notes free of sensitive information.
 10. Confirm the production guard before merging to `main`.
 
-## Dependency Updates
+## Dependency updates
 
 Renovate opens each sitedrift update in a pull request of its own
 ([Dependencies](./Dependencies.md#updates)). Review the upstream release notes
 and the pull request's preview before merging. A sitedrift update changes both build tooling (HTML transform) and the
 preview runtime (edge proxy).
 
-## Related Docs
+## Related docs
 
 - [Architecture](./Architecture.md)
 - [SEO And Metadata](./SEO.md)

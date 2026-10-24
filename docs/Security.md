@@ -191,7 +191,7 @@ only content-negotiation headers to LIVE, never cookies or authorization.
 Hosted notes stay in browser `localStorage`. See
 [Deployment Preview Review](./Deployment-Preview-Review.md).
 
-### Content Security Policy
+### Content security policy
 
 The policy starts from `default-src 'none'`, so every fetch type needs its own
 directive and any new resource category fails closed. It allowlists what

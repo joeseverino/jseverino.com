@@ -1,4 +1,4 @@
-# Validation Architecture (Full Reference)
+# Validation architecture (full reference)
 
 The complete reference for how `jseverino.com` is verified: the exact assertion
 each check makes, the command that runs it, and how to fix a failure. A short

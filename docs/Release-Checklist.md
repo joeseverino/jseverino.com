@@ -1,4 +1,4 @@
-# Release Checklist
+# Release checklist
 
 This checklist separates the deterministic repository gate from checks that
 require a deployed environment or human judgment.
@@ -23,7 +23,7 @@ git status -sb
 
 The worktree is clean before the gate runs.
 
-## 2. Local Release Gate
+## 2. Local release gate
 
 Run every gate the pipeline runs (macOS, for the visual baselines):
 
@@ -72,7 +72,7 @@ mise run checks:security-txt
 `checks:security-txt` is one of the static gates, so a release with an unsigned,
 expired, or WKD-mismatched `security.txt` fails before the build runs.
 
-## 3. Pull Request And Merge
+## 3. Pull request and merge
 
 Push the branch and open a pull request against `main`. The ruleset's
 required checks (`build`, `e2e`, `visual`, `edge`, `dependency-review`,
@@ -125,7 +125,7 @@ Dependency freshness arrives as Renovate pull requests
 ([Dependencies](./Dependencies.md#updates)); an available update is not itself
 a failed deployment.
 
-## 4. Signed Version Tag
+## 4. Signed version tag
 
 Tag a versioned release once the final release commit is on `main`. A tag is
 never moved: its push publishes the release.
@@ -150,7 +150,7 @@ gh release download v<version> -R joeseverino/jseverino.com -p '*.tar.gz'
 gh attestation verify jseverino.com-v<version>.tar.gz -R joeseverino/jseverino.com
 ```
 
-## 5. Cloudflare Deploy Verification
+## 5. Cloudflare deploy verification
 
 `mise run deploy:verify` asserts the live headers with the same predicates as
 the [edge suite](../tests/ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
@@ -201,7 +201,7 @@ expected) and zero output from the second command. A POST to
 (grep the entry's `request.postData.text` for `effective-directive`) or
 read the matching D1 row to identify the source.
 
-## 6. D1 And CSP Reporting Checks
+## 6. D1 and CSP reporting checks
 
 After any change to [`cloudflare/d1.sql`](../cloudflare/d1.sql), apply the schema to the
 remote D1 database (`jseverino-contact`, the `d1` value in
@@ -234,7 +234,7 @@ across that window, remove the `/contact/*` override in
 [`public/_headers`](../public/_headers) so the global policy, which enforces
 the directive, applies to the page.
 
-## 7. SEO And Accessibility Spot Checks
+## 7. SEO and accessibility spot checks
 
 After deployment, validate the high-value URLs:
 

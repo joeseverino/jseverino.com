@@ -1,8 +1,8 @@
-# Technical Architecture
+# Technical architecture
 
 How `jseverino.com` is built: where data enters, what the build transforms, and what runs at Cloudflare's edge.
 
-## 1. System Shape
+## 1. System shape
 
 The site is one Astro program on the Cloudflare Workers adapter: every page is prerendered into a static asset, and a few on-demand routes run in the same Worker. GitHub Actions builds it once, gates that build, and deploys it as the `jseverino` Worker ([§14](#14-release-gate)).
 
@@ -44,7 +44,7 @@ The public serving layer is static: every HTML page is a prerendered asset the a
 
 There is no public admin panel, user account system, comment system, upload endpoint, or origin application server. Measurements are in the [WordPress to Astro migration comparison](./WordPress-To-Astro-Migration.md#may-2026-migration-comparison).
 
-## 2. Source Of Truth
+## 2. Source of truth
 
 The private Obsidian vault is the editorial source of truth. This repository is the sanitized public snapshot and build source.
 
@@ -70,7 +70,7 @@ Worker handler, and generated API Shield OpenAPI document consume or
 derive from that contract. Contract-projection audits fail when any generated
 surface becomes stale.
 
-### Portfolio Software list
+### Portfolio software list
 
 The Software tab of `/portfolio` is not vault-synced. Repo facts (which
 repos, description, primary language, last push) come from the GitHub
@@ -96,7 +96,7 @@ The snapshot scripts' registry requests have a five-second timeout, including
 response-body reads. Content, GitHub, and software loaders share pending work
 through [`async-cache.ts`](../src/lib/async-cache.ts); failed loads can be retried.
 
-## 3. Sync Pipeline
+## 3. Sync pipeline
 
 [`bin/sync-content.ts`](../bin/sync-content.ts) orchestrates the private-to-public sync.
 It delegates source-specific parsing to [`bin/content-sync/source-adapters.ts`](../bin/content-sync/source-adapters.ts)
@@ -120,7 +120,7 @@ Main responsibilities:
 
 The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/): asset references, image masters, document rows, education, prune, the compile check, and the one writer that records every output. `--check` resolves the same references and the frontmatter contract, and compiles every document with the site's renderer, without writing anything (`site validate`), so an MDX error or a refused block surfaces with its line before a build. Masters are cached by source hash and encoder version under the cache root every checkout and worktree shares (`SITE_CACHE_DIR` in `mise.toml`'s `[env]`); each is written to a temp name and renamed, so an interrupted sync leaves no partial file. A relative link outside `images/` would 404 on the site: `--check` reports it, and the sync stops on it for a published document and warns for a draft.
 
-## 4. Content Collections
+## 4. Content collections
 
 Astro content collections are registered in [`src/content.config.ts`](../src/content.config.ts).
 Their field validators come from the committed generated module
@@ -155,7 +155,7 @@ To add or change a writeup field, edit only the canonical contract and run
 `mise run sync:contract`. Adding a field is one line in
 `contracts/content.v1.json`, beside the fields it resembles.
 
-## 5. Markdown Rendering
+## 5. Markdown rendering
 
 Documents are MDX, rendered by Astro 7's default Markdown processor,
 [Sätteri](https://satteri.bruits.org/): a Rust parser with plugins written in
@@ -189,7 +189,7 @@ component, and each run of prose in the page's wrapper. The syntax is in the
 [Authoring Guide](./Authoring-Guide.md); the plugins' behavior is pinned by
 [`tests/unit/content-render.test.ts`](../tests/unit/content-render.test.ts).
 
-## 6. Site Chrome And Taxonomy
+## 6. Site chrome and taxonomy
 
 Site chrome is repo configuration; the vault holds none of it. It lives in [`src/lib/site.ts`](../src/lib/site.ts), a typed object derived from the identity primitive [`src/lib/site-config.ts`](../src/lib/site-config.ts). `astro check` validates its shape, and the header, footer, and `SeoHead` import it directly with no async content load.
 
@@ -207,7 +207,7 @@ The five instance primitives everything else derives from (`domain`, `owner`, `g
 
 Technology labels and groupings come from [`src/content/technology-groups.md`](../src/content/technology-groups.md). Writeups store technology slugs; the renderer resolves those slugs to labels and groups at build time.
 
-## 7. Client Conventions
+## 7. Client conventions
 
 ### Browser contract
 
@@ -267,7 +267,7 @@ The stylesheet has no viewport breakpoints. Type, spacing, and the corner radius
 
 A size container is a containing block for fixed-position descendants, so `main` and the content flow must not become containers: the resume page's fixed download button would anchor to them instead of the viewport.
 
-## 8. Image Pipeline
+## 8. Image pipeline
 
 Images are encoded by Astro at build time from the masters the sync commits
 beside each document (at most 1600 pixels wide, sRGB, no metadata).
@@ -293,7 +293,7 @@ shares one cache. CI's `build` job, whose output ships, and the browser legs res
 changed images. See the
 [Custom Detection Engine comparison](./WordPress-To-Astro-Migration.md#case-study-custom-detection-engine-writeup).
 
-## 9. SEO And Metadata
+## 9. SEO and metadata
 
 [`src/components/SeoHead.astro`](../src/components/SeoHead.astro) emits page metadata from route-level props and shared site data.
 
@@ -310,7 +310,7 @@ It handles:
 
 The homepage canonical must be `/`, not `/home/`. The page loader preserves explicit synced paths and falls back to `/` only for the `home` slug.
 
-## 10. Edge Security
+## 10. Edge security
 
 [`public/_headers`](../public/_headers) defines the security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`) and holds placeholders for the Content-Security-Policy. The CSP is built at build time, so every page is a static asset that carries it without the Worker. The assets layer applies `_headers` to static assets only; [`src/middleware.ts`](../src/middleware.ts) gives the responses the Worker renders the `/*` rule's security headers, with a policy that has no hashes.
 
@@ -379,7 +379,7 @@ Coverage:
 
 The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Worker compute.
 
-## 11. Build Output
+## 11. Build output
 
 `mise run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
 
@@ -447,7 +447,7 @@ static security headers.
 
 Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src/pages/contact.astro` passes `preconnect={['https://challenges.cloudflare.com']}`. The insights beacon preconnect is always emitted, with per-page entries after it. Browsers may skip resource hints.
 
-## 12. Asset Organization
+## 12. Asset organization
 
 `public/` is the input side of the asset pipeline. Astro copies its contents verbatim into `dist/client/` at build time (Astro emits the rest under `_astro/` from component imports). The `public/assets/` subdirectories follow a strict convention.
 
@@ -509,7 +509,7 @@ The zone's `browser_cache_ttl` is `0`, so these headers decide browser TTLs
 
 Add a new top-level bucket under `public/assets/`, such as `videos/` for MP4/WebM downloads or `data/` for JSON exports. Keep existing buckets to their own content; a video does not go under `docs/`.
 
-## 13. Runtime Configuration
+## 13. Runtime configuration
 
 The Worker's shape is declared in [`wrangler.jsonc`](../wrangler.jsonc): the assets binding, which paths start the Worker, 404 and trailing-slash handling, the compatibility date, and the D1 binding. Its bindings, the Turnstile secret, the one build variable, and how the D1 schema is applied are in [Cloudflare, Worker configuration](./Cloudflare.md#worker-configuration). Zone and account settings (WAF, rate limit, API Shield, TLS) are declared in [`cloudflare/zone.json`](../cloudflare/zone.json) and checked with `mise run cloudflare check`.
 
@@ -528,7 +528,7 @@ mise run preview
 assets layer's `_headers`, redirects and 404 page, and the API routes active,
 using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run browser:edge` runs the same runtime under the edge suite (`tests/edge/`), which CI's `edge` leg and the local `mise run browser` execute. `curl -sI` against the preview's address, filtered for `content-security-policy` and `reporting-endpoints`, is the quick by-hand check.
 
-## 14. Release Gate
+## 14. Release gate
 
 Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [task list](./Commands.md#every-task).
 
@@ -631,7 +631,7 @@ Every workflow declares a top-level `permissions: contents: read`. Any wider sco
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 
-## Related Docs
+## Related docs
 
 - [`docs/Vault-Workflow.md`](./Vault-Workflow.md)
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)

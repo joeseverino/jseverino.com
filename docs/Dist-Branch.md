@@ -1,4 +1,4 @@
-# Dist Branch
+# Dist branch
 
 The `dist` branch holds the HTML, CSS, scripts, and images production serves, one
 commit per deploy that changed them, so anyone can browse the site's served
