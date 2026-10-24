@@ -231,10 +231,4 @@
   body:has(.lightbox[open]) {
     overflow: hidden;
   }
-
-  /* The lock removes a classic scrollbar; its gutter holds the width, so the page stays still.
-     Only while locked, so an unlocked page lays out the same with any scrollbar style. */
-  html:has(.mobile-nav:popover-open, .lightbox[open]) {
-    scrollbar-gutter: stable;
-  }
 }

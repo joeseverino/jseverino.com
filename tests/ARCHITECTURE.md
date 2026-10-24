@@ -310,7 +310,7 @@ Asserts every `target="_blank"` link across the key pages carries `rel="noopener
 Covers the Software tab of `/portfolio`. Asserts the tab toggle behavior: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
 
 ### `scroll-lock.single.spec.ts`
-Opens the lightbox and the mobile menu with Chromium's scrollbars shown, and asserts the header does not move when the lock removes the scrollbar: the root's `scrollbar-gutter: stable`, set only while locked, keeps its width. macOS overlays its scrollbars, so the specs skip there and run on the Linux CI runners.
+Opens the lightbox and the mobile menu with Chromium's scrollbars shown, and asserts the header does not move when the lock removes the scrollbar: the root's `scrollbar-gutter: stable` keeps its width. macOS overlays its scrollbars, so the specs skip there and run on the Linux CI runners.
 
 ### Running the suite
 
