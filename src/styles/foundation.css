@@ -7,12 +7,10 @@
     box-sizing: border-box;
   }
 
-  /* Fragment targets and the skip link land below the sticky header, at its tallest. The
-     reserved gutter keeps the page still when an overlay's scroll lock removes the scrollbar. */
+  /* Fragment targets and the skip link land below the sticky header, at its tallest. */
   html {
     scroll-behavior: smooth;
     scroll-padding-block-start: calc(var(--menu-offset) + var(--space-10));
-    scrollbar-gutter: stable;
   }
 
   body {

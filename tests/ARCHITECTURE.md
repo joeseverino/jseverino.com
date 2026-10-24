@@ -91,7 +91,6 @@ The unit specs, the browser specs, and the checks that run outside the gates.
 | E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
 | E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
 | E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
-| E2E | [scroll lock](#scroll-locksinglespects) | `tests/playwright/scroll-lock.single.spec.ts` | Opening the lightbox or the mobile menu locks scroll without shifting the page by the scrollbar's width. |
 | Routes | [routes + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | Every URL in the sitemap returns 200, plus `robots.txt`, `feed.xml`, and unknown-route 404 behavior. |
 | Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
 | A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser, in the light and the dark color scheme. |
@@ -308,9 +307,6 @@ Asserts every `target="_blank"` link across the key pages carries `rel="noopener
 
 ### `portfolio-software.single.spec.ts`
 Covers the Software tab of `/portfolio`. Asserts the tab toggle behavior: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
-
-### `scroll-lock.single.spec.ts`
-Opens the lightbox and the mobile menu with Chromium's scrollbars shown, and asserts the header does not move when the lock removes the scrollbar: the root's `scrollbar-gutter: stable` keeps its width. macOS overlays its scrollbars, so the specs skip there and run on the Linux CI runners.
 
 ### Running the suite
 
