@@ -129,13 +129,15 @@ Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`
 
 [knip](https://knip.dev) follows the imports from every entry point and fails on a file nothing reaches, an export or type nothing imports, a package in `package.json` nothing uses, or one the code imports without declaring it. Its plugins find Astro's routes and content config and the Playwright specs; [`tests/knip.jsonc`](./knip.jsonc) names the rest, each with the program that reads it: the scripts the mise tasks run, the audits, the unit specs, the fixture content tree, and the files loaded by path. A package or binary only a gate runs is ignored there by name. An export kept for a reader outside the code carries `@public` and the reader's name. A configured entry or ignore that no longer matches anything fails the gate too.
 
-### `check-d1-parity.ts`
+### `check-d1-writes.ts`
 
-It verifies that the contact handler
-consumes [`contracts/contact.v1.json`](../contracts/contact.v1.json) instead of restating its fields and limits, and that
-every handler `INSERT` names only columns the D1 schema defines with matching
-bind counts, and that `wrangler.jsonc` binds the D1 database `site-config.ts` names. A persistence mismatch fails before deployment. The API Shield
-document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
+Every handler under `src/lib/api` that writes D1 is imported by a unit spec
+that also loads [`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts), which builds
+`cloudflare/d1.sql` in `node:sqlite`. SQLite then rejects a column the schema
+lacks or a value count that differs from the column list, and the specs hold
+the per-IP caps; the contact spec holds the handler to the limits
+[`contracts/contact.v1.json`](../contracts/contact.v1.json) declares. The API
+Shield document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
 is regenerated and compared whole by `mise run checks:contracts`, which also
 runs `make:icons --check` so the committed vector brand marks (`favicon.svg`,
 `mark.svg`, `wordmark-caps.svg`) match what the engine renders.

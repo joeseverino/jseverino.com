@@ -39,9 +39,9 @@ env = { NODE_OPTIONS = "--max-old-space-size=4096" }
 run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
 
 ["checks:d1"]
-description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
+description = "Every handler under src/lib/api that writes D1 has a unit spec running it against cloudflare/d1.sql in node:sqlite"
 hide = true
-run = "node tests/audits/check-d1-parity.ts"
+run = "node tests/audits/check-d1-writes.ts"
 
 ["checks:unit"]
 description = "The node:test specs under tests/unit pass"

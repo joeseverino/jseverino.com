@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
-import { SITE } from '../../src/lib/site-config.ts';
 import { createClient } from './cloudflare.ts';
 import { DetailedError } from './detailed-error.ts';
+import { wranglerConfig } from './wrangler-config.ts';
 
 export interface SiteOpsConfig {
   d1Database: string;
@@ -19,8 +19,11 @@ export interface SiteOpsConfig {
 // The production site; tests pass their own. Cloudflare credentials come from
 // the environment (injected by `op run`), the same as every other Cloudflare script here.
 export function siteOpsConfig(): SiteOpsConfig {
+  // The database the Worker binds, so the reads name the one it writes.
+  const [database] = wranglerConfig().d1_databases;
+  if (!database) throw new SiteOpsError('wrangler.jsonc binds no D1 database');
   return {
-    d1Database: SITE.d1,
+    d1Database: database.database_name,
     auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
     token: process.env.CLOUDFLARE_API_TOKEN,
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID,

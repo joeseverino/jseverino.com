@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 import { type ContactEnv, submitContact } from '../../src/lib/api/contact.ts';
-import { CONTACT_RUNTIME } from '../../src/lib/api/contact-contract.ts';
+import { CONTACT_PROPERTIES, CONTACT_RUNTIME } from '../../src/lib/api/contact-contract.ts';
 import { siteverifyAccepts, TURNSTILE_TEST_SECRETS } from '../../src/lib/api/turnstile.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
@@ -76,9 +76,20 @@ describe('request validation', () => {
     assert.match(body.error, /name, email, and message/);
   });
 
-  test('rejects over-length fields with 400', async () => {
-    const response = await call(contactRequest({ ...validPayload, name: 'n'.repeat(191) }));
-    assert.equal(response.status, 400);
+  // Read from the contract, so a limit the handler sets on its own fails at the boundary.
+  test("accepts each field at its contract's maxLength and rejects one past it", async () => {
+    const fill = (format: string | undefined, length: number) => {
+      const [prefix, suffix] = format === 'email' ? ['', '@example.com'] : format === 'uri' ? ['https://jseverino.com/contact/?q=', ''] : ['', ''];
+      return prefix + 'x'.repeat(length - prefix.length - suffix.length) + suffix;
+    };
+    // A filled honeypot is accepted and dropped whatever its length.
+    const limited = Object.entries(CONTACT_PROPERTIES).filter(([field, spec]) => field !== 'company' && spec.maxLength !== undefined);
+    assert.ok(limited.length > 0);
+    for (const [field, { format, maxLength = 0 }] of limited) {
+      const status = async (length: number) => (await call(contactRequest({ ...validPayload, [field]: fill(format, length) }))).status;
+      assert.equal(await status(maxLength), 200, `${field} at ${maxLength}`);
+      assert.equal(await status(maxLength + 1), 400, `${field} at ${maxLength + 1}`);
+    }
   });
 
   test('rejects under-length fields with 400', async () => {

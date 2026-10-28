@@ -4,7 +4,6 @@ export interface SiteIdentity {
   domain: string;
   owner: string;
   github: string;
-  d1: string;
   // The Worker's name, as wrangler.jsonc declares it.
   worker: string;
   focus: readonly string[];
@@ -14,7 +13,6 @@ export const SITE: SiteIdentity = {
   domain: 'jseverino.com',
   owner: 'Joe Severino',
   github: 'joeseverino',
-  d1: 'jseverino-contact',
   worker: 'jseverino',
   focus: ['Cybersecurity', 'Networking', 'AI'],
 };
