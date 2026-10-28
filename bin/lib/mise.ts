@@ -7,11 +7,11 @@ export interface MiseTask {
   name: string;
   aliases: string[];
   description: string;
-  hide: boolean;
 }
 
-export function miseTasks(cwd = siteRoot): MiseTask[] {
-  return (JSON.parse(runSync('mise', ['tasks', 'ls', '--json'], { cwd })) as MiseTask[]).filter((task) => !task.hide);
+// The tasks `mise tasks` lists; `hidden` adds the gates, which a doc may name as `mise run <gate>`.
+export function miseTasks({ hidden = false } = {}): MiseTask[] {
+  return JSON.parse(runSync('mise', ['tasks', 'ls', '--json', ...(hidden ? ['--hidden'] : [])], { cwd: siteRoot })) as MiseTask[];
 }
 
 // Whether `mise run <name>` names a task: a name, an alias, or a glob matching one.

@@ -4,8 +4,9 @@ The complete reference for how `jseverino.com` is verified: the exact assertion
 each check makes, the command that runs it, and how to fix a failure. A short
 tour is in [`tests/README.md`](./README.md).
 
-Verification lives in four directories, and [`mise.toml`](../mise.toml) names
-each check a gate and sequences them:
+Verification lives in four directories, and the task files under
+[`mise-tasks/`](../mise-tasks/) name each check a gate, which the aggregates in
+[`mise.toml`](../mise.toml) sequence:
 
 | Directory | What it holds | How it runs |
 | :--- | :--- | :--- |
@@ -18,9 +19,12 @@ each check a gate and sequences them:
 
 A gate is a task named `<job>:<gate>`: `checks:*` run before a build, `built:*`
 against the build in `dist/client/`, `browser:*` in a browser. Each aggregate runs its
-job by glob (`mise run -c 'checks:*'`), so a task added to `mise.toml` runs
-locally and in CI with no second list to edit, and its `description` is the
-one-line assertion the [task list](../docs/Commands.md#every-task) shows.
+job by glob (`mise run -c 'checks:*'`), so a gate added to its job's file
+under `mise-tasks/` (`mise-tasks/checks.toml`, or a script in
+`mise-tasks/checks/`) runs locally and in CI with no second list to edit. Every
+gate is hidden, so `mise tasks` and the [task list](../docs/Commands.md#every-task)
+show the entry points, and `mise tasks --hidden` shows each gate with its
+`description`, the one-line assertion a pass guarantees.
 
 mise does the orchestration: `-c` keeps a phase going past a failure and ends
 on the list of gates that failed, `output = "keep-order"` prints each gate's
@@ -34,12 +38,11 @@ last lines.
 
 ## Adding a new audit
 
-Four steps; the gates enforce most of them:
+Three steps; the gates enforce most of them:
 
 1. **Write the script** in `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in [`src/lib/site-root.ts`](../src/lib/site-root.ts), never the cwd, and list files with `fs.readdirSync(dir, { recursive: true })`. Post-build audits get the built pages from `builtPages()` in [`lib.ts`](./audits/lib.ts) instead of re-resolving the outDir; the outDir decision itself is single-sourced in [`src/lib/build-output.ts`](../src/lib/build-output.ts). End through `finish()`: on violation it prints the problems and the `fix` line and exits non-zero; on success it prints one `ok` summary line. Export the pure logic and guard the run with `import.meta.main` so a unit spec can import it.
-2. **Declare the task** in [`mise.toml`](../mise.toml) as `checks:<thing>` (before the build) or `built:<thing>` (on it), with a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI.
-3. **Regenerate the docs**: `mise generate task-docs --inject --output docs/Commands.md` writes the task's entry in the [task list](../docs/Commands.md#every-task); `mise run checks:docs-sync` refuses a stale copy. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
-4. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
+2. **Declare the task** in [`mise-tasks/checks.toml`](../mise-tasks/checks.toml) as `checks:<thing>` (before the build) or [`mise-tasks/built.toml`](../mise-tasks/built.toml) as `built:<thing>` (on it), with `hide = true` and a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
+3. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
 
 ---
 
@@ -56,14 +59,14 @@ sections below say what each gate asserts.
 3. **`mise run browser`**: builds once with the Turnstile test key and runs the three `browser:*` suites one at a time against it (`PREBUILT=1`), so an 8 GB machine never runs two browsers at once. The CI legs `e2e`, `visual`, and `edge` each run one of those tasks.
 4. **`mise run ci`**: `check`, then `browser`; every gate the pipeline runs.
 
-Every gate with what it asserts is the generated [task list](../docs/Commands.md#every-task).
+`mise tasks --hidden` lists every gate with what it asserts.
 
 ---
 
 ## 2. Audits
 
-Each audit's assertion is its task's `description` in the
-[task list](../docs/Commands.md#every-task); a failing audit prints its fix. The
+Each audit's assertion is its task's `description`, which
+`mise tasks --hidden` lists; a failing audit prints its fix. The
 detail that does not fit one line is in [§3](#3-testsaudits-audit-detail).
 
 ### Other checks

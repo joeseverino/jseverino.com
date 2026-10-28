@@ -36,7 +36,7 @@ build, every gate on the build) and then `mise run browser` (the
 cross-browser, visual, and edge runtime suites, one at a time). Each phase
 keeps going past a failure and ends on the list of gates that failed; each
 failing gate prints its own fix. `mise run fast` runs only the static gates.
-The [task list](./Commands.md#every-task) says what each gate asserts.
+`mise tasks --hidden` says what each gate asserts.
 
 For a focused frontend check without the full run:
 

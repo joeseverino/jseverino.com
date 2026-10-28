@@ -524,7 +524,7 @@ using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run
 
 ## 14. Release gate
 
-Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [task list](./Commands.md#every-task).
+Every gate is a hidden mise task named `<job>:<gate>`, declared in its job's file under [`mise-tasks/`](../mise-tasks/); what each asserts is its `description`, which `mise tasks --hidden` lists. The aggregates that run them are in [`mise.toml`](../mise.toml) and the [task list](./Commands.md#every-task).
 
 - `mise run fast` runs the static `checks:*` gates, collect-all.
 - `mise run check` runs them, then the production build, then the `built:*` gates on what it built; CI's `build` job runs exactly this.

@@ -89,9 +89,8 @@ mise run diff:build       # build HEAD and the working tree, report any change t
 mise run deploy:verify    # after a merge: required checks, then the live deployment
 ```
 
-Every gate is a mise task named `<job>:<gate>` (`mise tasks` lists them; the
-[task list](./Commands.md#every-task) says what each asserts), and CI runs the same
-tasks. The gates validate the current checkout without vault access; run
+Every gate is a hidden mise task named `<job>:<gate>` (`mise tasks --hidden`
+lists each with what it asserts), and CI runs the same tasks. The gates validate the current checkout without vault access; run
 `mise run sync:content` explicitly before checking new editorial content. A
 failing gate prints its own fix. Signature verification uses an isolated
 keyring containing only the committed WKD public keys. Unit-test Git
@@ -127,7 +126,7 @@ matches what changed:
 | Rendered or interactive behavior | [`tests/playwright/`](../tests/playwright/) |
 | Headers, CSP, or the API routes as the Workers runtime serves them | [`tests/edge/`](../tests/edge/) |
 
-A new audit is a task in `mise.toml`;
+A new audit is a hidden task in its job's file under `mise-tasks/`;
 [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md#adding-a-new-audit) has the
 steps.
 

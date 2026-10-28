@@ -1,5 +1,6 @@
 #!/bin/sh
 #MISE description="jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere"
+#MISE hide=true
 set -eu
 
 # jscpd takes one threshold per run: the code bar, then the looser bar specs

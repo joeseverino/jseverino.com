@@ -4,7 +4,8 @@ Every change passes four layers: Node audits that assert invariants about the
 source and the build, unit tests for the pure logic, Playwright specs that drive
 the **built** output in a browser and through the Cloudflare runtime, and
 post-deploy probes against each deployment. This directory holds the first
-three; [`mise.toml`](../mise.toml) names each one a gate and sequences them.
+three; the task files under [`mise-tasks/`](../mise-tasks/) name each one a
+gate, and the aggregates in [`mise.toml`](../mise.toml) sequence them.
 
 > This file is the tour. Every audit with its fix, every spec, and the CI
 > workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
@@ -34,7 +35,7 @@ local gates through the pull request's CI and preview to production.
 | `mise run browser` | local and CI (`e2e`, `visual`, `edge`) | one build, then the cross-browser, visual, and edge runtime suites, one at a time |
 | `mise run deploy:verify` | after a deploy | live headers and CSP hash coverage of inline code, sitemap 200s, a real 404, the contact gate, `security.txt` parity; on production also remote CI status and open CodeQL alerts |
 
-Every gate with what it asserts is the generated [task list](../docs/Commands.md#every-task).
+`mise tasks --hidden` lists every gate with what it asserts.
 `mise run ci` runs `check` and then `browser`: every gate the pipeline runs.
 Each phase keeps going past a failure and ends on the gates that failed; each
 failing gate prints its own fix.
@@ -47,7 +48,7 @@ contract's handler/OpenAPI/D1 parity, strict types, duplicated
 code, unused CSS variables, repository policy, and the docs' links and paths.
 After the build they cover internal links, page and image weight, structural HTML
 (including unprocessed directives), the built headers, and SEO metadata.
-The [task list](../docs/Commands.md#every-task) says what each one asserts; a failing one prints its fix.
+`mise tasks --hidden` says what each one asserts; a failing one prints its fix.
 
 **[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
 build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in

@@ -1,0 +1,34 @@
+# The gates on the build in dist/client/: `mise run built` runs every built:*
+# gate, and `mise run check` runs it only after the build succeeded.
+
+["built:links"]
+description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
+hide = true
+# Root-relative and https://jseverino.com/ URLs both resolve against the static
+# build; a directory link needs its index.html, as the assets layer serves it.
+# The excluded paths have no file: the Worker routes (`run_worker_first` in
+# wrangler.jsonc) and Cloudflare's own /cdn-cgi/.
+run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
+
+["built:html"]
+description = "html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
+hide = true
+run = [
+  "html-validate --config tests/html-validate.json dist",
+  "node tests/audits/check-html.ts",
+]
+
+["built:weight"]
+description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
+hide = true
+run = "node tests/audits/check-page-weight.ts"
+
+["built:headers"]
+description = "The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
+hide = true
+run = "node tests/audits/check-headers.ts"
+
+["built:seo"]
+description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
+hide = true
+run = "node tests/audits/check-seo.ts"

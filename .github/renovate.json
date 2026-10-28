@@ -96,7 +96,7 @@
     {
       "description": "The Renovate release checks:renovate validates this file with, pinned in the task itself.",
       "customType": "regex",
-      "managerFilePatterns": ["/^mise\\.toml$/"],
+      "managerFilePatterns": ["/^mise-tasks/checks\\.toml$/"],
       "matchStrings": ["--package (?<depName>renovate)@(?<currentValue>\\S+)"],
       "datasourceTemplate": "npm"
     }
