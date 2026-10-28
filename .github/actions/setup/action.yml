@@ -37,8 +37,9 @@ runs:
       shell: bash
       run: python3 -c "import tomllib; print('version=' + tomllib.load(open('mise.toml', 'rb'))['min_version'])" >> "$GITHUB_OUTPUT"
 
-    # Installs the tools mise.lock records (mise.toml sets `locked`) and exports
-    # mise.toml's [env] to every later step.
+    # Installs the tools mise.toml does not mark lazy, from mise.lock (mise.toml
+    # sets `locked`), and exports mise.toml's [env] to every later step. A lazy
+    # tool installs from the lock on its first run in a task.
     - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
       with:
         version: ${{ steps.mise.outputs.version }}

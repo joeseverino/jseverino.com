@@ -6,7 +6,7 @@ How the repository is built, checked, and shipped. Every script is in
 
 ## Setup
 
-[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools.
+[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools every task needs. A tool only one gate or task runs is marked lazy there, and its first run installs it from `mise.lock`.
 
 The npm packages come from mise's `[deps.npm]` provider. Before any `mise run` or `mise exec`, it runs `npm ci` from the lockfile in two cases:
 

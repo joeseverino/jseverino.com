@@ -92,8 +92,11 @@ run = "node tests/audits/check-repository-policy.ts"
 description = "zizmor finds no security issue in the workflows; an accepted finding carries an inline reason"
 hide = true
 # Offline: the online audits need a token and the network, and a gate gives the
-# same verdict on a laptop and in CI.
-run = "zizmor --offline --quiet .github"
+# same verdict on a laptop and in CI. Set through zizmor's environment: zizmor
+# is lazy, and its bootstrap shim reads an `--offline` argument as mise's own,
+# so the install that runs first would refuse to download.
+env = { ZIZMOR_OFFLINE = "true" }
+run = "zizmor --quiet .github"
 
 ["checks:actionlint"]
 description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"

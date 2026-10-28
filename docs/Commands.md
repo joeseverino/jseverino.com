@@ -131,7 +131,7 @@ Inter's optical-size axis. The character list and range live in
 with `--source <InterVariable.woff2>` from an upstream Inter release (the
 committed file is already a subset, so it can only shrink further).
 `--output <path>` writes the result elsewhere to compare it first. The
-fontTools CLIs run through `uvx`, which `mise install` provides.
+fontTools CLIs run through `uvx`, which mise installs from mise.lock on first use.
 
 **`mise run make:content-index`**: emits `public/content-index.json` from the
 validated, published writeup snapshot. The static build invokes it
