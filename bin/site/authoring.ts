@@ -1,7 +1,7 @@
 // Vault-side commands: scaffold, validate, order the featured list, browse technologies.
 import fs from 'node:fs';
 import path from 'node:path';
-import { isoDate } from '../../src/lib/dates.ts';
+import { localDate } from '../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
 import { checkContent } from '../content-sync/sync.ts';
@@ -19,7 +19,7 @@ export async function newWriteup({ slug: requested, out }: { slug: string | unde
   if (!fs.existsSync(template)) throw new SiteError(`writeup template not found: ${template}`, { fix: 'set VAULT_DIR to the vault root' });
   if (fs.existsSync(target)) throw new SiteError(`writeup already exists: ${target}`, { code: EXIT.usage, fix: `site validate ${slug} --draft` });
 
-  const body = fs.readFileSync(template, 'utf8').replaceAll('{{date:YYYY-MM-DD}}', isoDate()).replaceAll('{{title}}', slug);
+  const body = fs.readFileSync(template, 'utf8').replaceAll('{{date:YYYY-MM-DD}}', localDate()).replaceAll('{{title}}', slug);
   if (parseFrontmatter(body).data.published !== false) {
     throw new SiteError(`the template does not start writeups at published: false: ${template}`);
   }

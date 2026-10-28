@@ -23,7 +23,7 @@ then deploys the gated build.
 | Site | [Astro 7](https://astro.build), static output |
 | Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
-| Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
+| Language | TypeScript everywhere, run directly by Node 26 (no build step for scripts) |
 | Edge | one Cloudflare Worker with static assets: every page prerendered under a build-time hash CSP, the Worker started only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
 | Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |

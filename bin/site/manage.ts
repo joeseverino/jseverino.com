@@ -4,7 +4,7 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import { isoDate } from '../../src/lib/dates.ts';
+import { localDate } from '../../src/lib/dates.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
@@ -143,7 +143,7 @@ function apply(model: Model): number {
     return 0;
   }
 
-  const today = isoDate();
+  const today = localDate();
   const touched = new Set([...publishFlips, ...fieldEdits].map((i) => i.slug));
   const updates: ({ slug: string } & Record<string, unknown>)[] = [];
   const labels: string[] = [];
@@ -226,7 +226,7 @@ const enqueue = (work: () => void | Promise<void>): void => {
 
 function handleKey(key: string): void {
   enqueue(async () => {
-    const effect = handleManageKey(model, key, isoDate());
+    const effect = handleManageKey(model, key, localDate());
     if (effect) await execute(effect);
   });
 }

@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { collectionFields, contentContract, contentContractFingerprint } from '../../../src/lib/content-contract.ts';
-import { isoDate } from '../../../src/lib/dates.ts';
+import { isoDate, localDate } from '../../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
 import { type CheckedDocument, checkContent } from '../../content-sync/sync.ts';
@@ -412,7 +412,7 @@ export function updateFrontmatter(
   store: WriteupStore,
   slug: string,
   fields: Record<string, unknown>,
-  { touchLastReviewed = false, today = isoDate(new Date()) }: { touchLastReviewed?: boolean; today?: string } = {},
+  { touchLastReviewed = false, today = localDate() }: { touchLastReviewed?: boolean; today?: string } = {},
 ): FrontmatterResult {
   const unknown = Object.keys(fields)
     .filter((key) => !EDITABLE_FIELDS.includes(key))

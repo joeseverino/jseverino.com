@@ -1,5 +1,6 @@
 // PyPI and npm lookups for the Software tab, apart from bin/snapshot-software.ts so the all-or-nothing rule is testable offline.
 
+import { localDate } from '../../src/lib/dates.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { fetchJson } from '../../src/lib/fetch-json.ts';
 
@@ -30,7 +31,7 @@ export type RegistrySnapshot = { generatedAt: string; packages: Record<string, R
 // outage cannot blank a number.
 export async function snapshotPackages(
   packages: readonly RegistryPackage[],
-  { getJson = fetchJson, today = new Date() }: { getJson?: GetJson; today?: Date } = {},
+  { getJson = fetchJson, today = localDate() }: { getJson?: GetJson; today?: string } = {},
 ): Promise<{ ok: true; snapshot: RegistrySnapshot } | { ok: false; failures: string[] }> {
   const outcomes = await Promise.all(
     packages
@@ -47,5 +48,5 @@ export async function snapshotPackages(
   if (failures.length > 0) return { ok: false, failures };
 
   const entries = outcomes.flatMap((outcome) => ('entry' in outcome ? [[packageKey(outcome.pkg), outcome.entry] as const] : []));
-  return { ok: true, snapshot: { generatedAt: today.toISOString().slice(0, 10), packages: Object.fromEntries(entries) } };
+  return { ok: true, snapshot: { generatedAt: today, packages: Object.fromEntries(entries) } };
 }

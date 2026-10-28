@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   EXPECTED_CANONICAL,
+  expiresInDays,
   expiryProblem,
   parseFields,
   REQUIRED_FIELDS,
@@ -46,7 +47,6 @@ function check(): string {
 
   const expired = expiryProblem(Expires);
   if (expired) fail(expired);
-  const daysUntil = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
 
   if (Canonical !== EXPECTED_CANONICAL) {
     fail(`security.txt Canonical is "${Canonical}"; expected "${EXPECTED_CANONICAL}"`);
@@ -61,7 +61,7 @@ function check(): string {
     fail(`Encryption points at ${Encryption} but local file is missing: ${path.relative(siteRoot, wkdFile)}`);
   }
 
-  return `signed, ${REQUIRED_FIELDS.length} fields present, expires in ${daysUntil}d, WKD file present`;
+  return `signed, ${REQUIRED_FIELDS.length} fields present, expires in ${expiresInDays(Expires)}d, WKD file present`;
 }
 
 let problems: string[] = [];

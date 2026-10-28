@@ -96,6 +96,6 @@ test('a scaffold does not absorb an outside edit made after the session loaded',
   const loaded = model.sourceFingerprint;
   const alpha = path.join(vault, '05 Writeups/alpha/index.md');
   fs.writeFileSync(alpha, fs.readFileSync(alpha, 'utf8').replace(/^title: .*$/m, 'title: Edited elsewhere'));
-  assert.ok(await createWriteup(model, 'delta'), model.flash?.text);
+  assert.ok(await createWriteup(model, 'delta'), model.flash?.text ?? 'createWriteup failed');
   assert.equal(model.sourceFingerprint, loaded);
 });

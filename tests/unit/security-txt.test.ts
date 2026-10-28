@@ -29,9 +29,10 @@ test('signature verification ignores the personal keyring and rejects modified c
 });
 
 test('the gate fails from 60 days before Expires, so the scheduled run fails before the file lapses', () => {
-  const now = Date.parse('2026-01-01T00:00:00Z');
+  const now = Temporal.Instant.from('2026-01-01T00:00:00Z');
   assert.equal(expiryProblem('2026-03-03T00:00:00Z', now), undefined, '61 days out passes');
   assert.match(expiryProblem('2026-02-25T00:00:00Z', now) ?? '', /55d \(< 60d\)/);
   assert.match(expiryProblem('2025-12-31T00:00:00Z', now) ?? '', /in the past/);
-  assert.match(expiryProblem('soon', now) ?? '', /not a parseable date/);
+  assert.match(expiryProblem('soon', now) ?? '', /not an RFC 3339 date-time/);
+  assert.match(expiryProblem('2026-06-01', now) ?? '', /not an RFC 3339 date-time/, 'a date without a time and offset fails');
 });

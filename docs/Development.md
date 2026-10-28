@@ -60,7 +60,7 @@ sync's image masters, and Astro's encoded images in `astro/`.
 
 ## Code
 
-Everything is TypeScript, run directly by Node 24, which strips the types: no
+Everything is TypeScript, run directly by Node 26, which strips the types: no
 build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
 properties) is out, so `erasableSyntaxOnly` is on and every relative import
 names its `.ts` file. `mise run checks:types` is the one strict

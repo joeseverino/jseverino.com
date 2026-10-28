@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
-import { isoDate } from '../../src/lib/dates.ts';
+import { localDate } from '../../src/lib/dates.ts';
 import { type FrontmatterData, type ParsedFrontmatter, parseFrontmatter, stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
@@ -95,7 +95,7 @@ export async function syncContent({
   includeDrafts = false,
   snapshotDir = layout.content,
   educationSource,
-  date = isoDate(),
+  date = localDate(),
 }: SyncOptions): Promise<SyncResult> {
   const writer = createWriter({ root: layout.root });
   const vault = createVaultSource({ vaultRoot, includeDrafts });

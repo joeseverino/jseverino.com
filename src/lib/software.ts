@@ -86,11 +86,9 @@ export function getMoreSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
   return entries.filter((entry) => !entry.featured);
 }
 
-const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-
+// 'YYYY-MM' -> 'Oct 2026'. A malformed snapshot value fails the build.
 function formatUpdated(ym?: string): string {
-  const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
-  return year && month && Number(month) >= 1 && Number(month) <= 12 ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1)) : '';
+  return ym ? Temporal.PlainYearMonth.from(ym).toPlainDate({ day: 1 }).toLocaleString('en-US', { month: 'short', year: 'numeric' }) : '';
 }
 
 export function metaLine(entry: SoftwareEntry): string {
