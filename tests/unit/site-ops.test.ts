@@ -2,47 +2,23 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, beforeEach, describe, test } from 'node:test';
-import {
-  abbreviateName,
-  applyD1Schema,
-  contactSubmissions,
-  cspCounts,
-  cspReports,
-  preview,
-  type Runner,
-  redactEmail,
-  type SiteOpsConfig,
-  SiteOpsError,
-} from '../../bin/lib/site-ops.ts';
+import { abbreviateName, contactSubmissions, cspCounts, cspReports, preview, redactEmail, type SiteOpsConfig, SiteOpsError } from '../../bin/lib/site-ops.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('site-ops-');
-let calls: string[][] = [];
-let reply: (args: readonly string[]) => { code: number; stdout: string; stderr?: string } = () => ({ code: 0, stdout: '[]' });
 
 function config(overrides: Partial<SiteOpsConfig> = {}): SiteOpsConfig {
   const root = scratch.make();
-  const run: Runner = (_cmd, args) => {
-    calls.push([...args]);
-    const { code, stdout, stderr = '' } = reply(args);
-    return { code, stdout, stderr, error: undefined };
-  };
   return {
     d1Database: 'jseverino-contact',
-    siteRepo: root,
     auditLog: path.join(root, 'state', 'audit.log'),
     token: undefined,
     accountId: undefined,
-    run,
     fetch: globalThis.fetch,
     ...overrides,
   };
 }
 
-beforeEach(() => {
-  calls = [];
-  reply = () => ({ code: 0, stdout: '[]' });
-});
 after(scratch.cleanup);
 
 describe('redaction helpers', () => {
@@ -195,31 +171,5 @@ describe('CSP reports', () => {
       counts.byDirective.map((row) => row.count),
       [5, 2],
     );
-  });
-});
-
-describe('D1 schema apply', () => {
-  test('refuses without confirm and runs nothing', () => {
-    assert.throws(
-      () => applyD1Schema(config()),
-      (error) => error instanceof SiteOpsError && error.details.refused === true,
-    );
-    assert.equal(calls.length, 0);
-  });
-
-  test('a wrangler that cannot start reports why', () => {
-    const missing = Object.assign(new Error('spawnSync wrangler ENOENT'), { code: 'ENOENT' });
-    const cfg = config({ run: () => ({ code: 1, stdout: '', stderr: '', error: missing }) });
-    assert.throws(
-      () => applyD1Schema(cfg, { confirm: true }),
-      (error) => error instanceof SiteOpsError && String(error.details.output).includes('ENOENT'),
-    );
-  });
-
-  test('runs the schema file remotely with confirm', () => {
-    reply = () => ({ code: 0, stdout: 'Executed 4 commands' });
-    const result = applyD1Schema(config(), { confirm: true });
-    assert.equal(result.applied, true);
-    assert.deepEqual(calls[0], ['d1', 'execute', 'jseverino-contact', '--remote', '--file=cloudflare/d1.sql']);
   });
 });

@@ -1,24 +1,18 @@
-// Fixed operations on the live site: read-only D1 queries and the additive schema apply. Not a shell:
-// statements are internal, and the schema write refuses without confirm.
+// Fixed, read-only D1 queries on the live site. Not a shell: every statement is internal and every
+// value travels as a bound parameter.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { SITE } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { createClient } from './cloudflare.ts';
 import { DetailedError } from './detailed-error.ts';
-import { type SpawnResult, spawnResult } from './run.ts';
-
-export type Runner = (cmd: string, args: readonly string[], options: { cwd: string; timeout: number }) => SpawnResult;
 
 export interface SiteOpsConfig {
   d1Database: string;
-  siteRepo: string;
   auditLog: string;
   token: string | undefined;
   accountId: string | undefined;
-  run: Runner;
   fetch: typeof fetch;
 }
 
@@ -27,11 +21,9 @@ export interface SiteOpsConfig {
 export function siteOpsConfig(): SiteOpsConfig {
   return {
     d1Database: SITE.d1,
-    siteRepo: siteRoot,
     auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
     token: process.env.CLOUDFLARE_API_TOKEN,
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-    run: spawnResult,
     fetch: globalThis.fetch,
   };
 }
@@ -194,21 +186,4 @@ export async function cspCounts(config: SiteOpsConfig): Promise<CspCounts> {
     total: Number(total.results[0]?.total ?? 0),
     byDirective: grouped.results.map((row) => ({ effective_directive: String(row.effective_directive), count: Number(row.count) })),
   };
-}
-
-export interface SchemaApply {
-  applied: boolean;
-  command: string;
-  output: string;
-}
-
-// Apply cloudflare/d1.sql (CREATE ... IF NOT EXISTS) remotely; refuses without confirm.
-export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { confirm?: boolean } = {}): SchemaApply {
-  const command = `wrangler d1 execute ${config.d1Database} --remote --file=cloudflare/d1.sql`;
-  if (!confirm) throw new SiteOpsError('refusing to apply the D1 schema without confirm', { refused: true, command });
-  // `site` runs as a mise task, which puts node_modules/.bin (wrangler) on PATH.
-  const proc = config.run('wrangler', ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], { cwd: config.siteRepo, timeout: 120_000 });
-  const output = `${proc.stdout}${proc.stderr}`.trim() || proc.error?.message || '';
-  if (proc.code !== 0) throw new SiteOpsError(`${command} failed`, { exit_code: proc.code, output });
-  return { applied: true, command, output };
 }

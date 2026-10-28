@@ -1,7 +1,7 @@
 -- Contact form submissions for jseverino.com.
 --
 -- Apply to the remote D1 database:
---   mise run site d1-apply --confirm
+--   mise exec -- wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
 -- Apply to the local database `astro dev` and `astro preview` bind:
 --   wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
 

@@ -42,7 +42,6 @@
         "render",
         "contact",
         "csp",
-        "d1-apply",
         "manage"
       ]
     },
@@ -204,7 +203,6 @@
             "render",
             "contact",
             "csp",
-            "d1-apply",
             "manage",
             "help"
           ]

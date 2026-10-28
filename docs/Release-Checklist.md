@@ -208,7 +208,7 @@ remote D1 database (`jseverino-contact`, the `d1` value in
 `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-mise run site d1-apply --confirm
+mise exec -- wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
 ```
 
 Then confirm the reports still arrive: `mise run site csp --count`.
