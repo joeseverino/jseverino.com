@@ -1,7 +1,7 @@
 // POST /api/contact (src/pages/api/contact.ts): verifies the Turnstile token and stores the submission in D1.
 
 import { SITE_ORIGIN } from '../site-config.ts';
-import { CONTACT_PROPERTIES, CONTACT_RUNTIME, validateContactPayload } from './contact-contract.ts';
+import { CONTACT_PROPERTIES, CONTACT_RUNTIME, type ContactValidation, validateContactPayload } from './contact-contract.ts';
 import type { D1Database } from './d1.ts';
 import { readRequestJson, requestMediaType } from './request-json.ts';
 import { ownPageUrl, requestMeta } from './request-meta.ts';
@@ -33,6 +33,19 @@ function parseDevice(ua: string): string {
   return 'Unknown';
 }
 
+const REJECTIONS: Record<Extract<ContactValidation, { ok: false }>['reason'], string> = {
+  missing: 'Please fill in your name, email, and message.',
+  too_short: 'One of the fields is too short.',
+  too_long: 'One of the fields is too long.',
+  email: 'Please enter a valid email address.',
+  uri: 'Invalid request.',
+  invalid: 'Invalid request.',
+};
+
+// What the visitor reads when a submission breaks the contract; a missing token means the challenge never ran.
+const rejection = ({ reason, field }: Extract<ContactValidation, { ok: false }>): string =>
+  reason === 'missing' && field === 'turnstileToken' ? 'Please complete the verification challenge.' : REJECTIONS[reason];
+
 export async function submitContact(request: Request, env: ContactEnv): Promise<Response> {
   if (requestMediaType(request) !== 'application/json') {
     return json({ ok: false, error: 'Invalid request.' }, 415);
@@ -44,20 +57,7 @@ export async function submitContact(request: Request, env: ContactEnv): Promise<
   }
 
   const validation = validateContactPayload(payload.value);
-  if (!validation.ok) {
-    if (validation.reason === 'missing' && validation.field === 'turnstileToken') {
-      return json({ ok: false, error: 'Please complete the verification challenge.' }, 400);
-    }
-    const error = {
-      missing: 'Please fill in your name, email, and message.',
-      too_short: 'One of the fields is too short.',
-      too_long: 'One of the fields is too long.',
-      email: 'Please enter a valid email address.',
-      uri: 'Invalid request.',
-      invalid: 'Invalid request.',
-    }[validation.reason];
-    return json({ ok: false, error }, 400);
-  }
+  if (!validation.ok) return json({ ok: false, error: rejection(validation) }, 400);
   const { name, email, message, company, sourceUrl: submittedSourceUrl, turnstileToken } = validation.value;
 
   // Honeypot: bots fill the hidden "company" field. Pretend success, store nothing.

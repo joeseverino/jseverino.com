@@ -13,27 +13,27 @@ export interface TechnologyGroup {
   tags: TechnologyTag[];
 }
 
+// One table row as a tag; the header row, the delimiter row and anything not a row are not tags.
+function tagOf(line: string): TechnologyTag | undefined {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) return undefined;
+  const [slug, label, featured] = trimmed
+    .slice(1, -1)
+    .split('|')
+    .map((cell) => cell.trim());
+  if (!slug || !label) return undefined;
+  if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') return undefined;
+  if (/^:?-{2,}:?$/.test(slug)) return undefined;
+  return { slug, label, featured: featured?.toLowerCase() === 'yes' };
+}
+
 export function parseTechnologyGroups(body: string): TechnologyGroup[] {
   return body
     .split(/^##\s+/m)
     .slice(1)
     .map((section) => {
       const [nameLine = '', ...lines] = section.split('\n');
-      const tags: TechnologyTag[] = [];
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) continue;
-        const cells = trimmed
-          .slice(1, -1)
-          .split('|')
-          .map((cell) => cell.trim());
-        const [slug, label, featured] = cells;
-        if (!slug || !label) continue;
-        if (slug.toLowerCase() === 'slug' && label.toLowerCase() === 'label') continue;
-        if (/^:?-{2,}:?$/.test(slug)) continue;
-        tags.push({ slug, label, featured: featured?.toLowerCase() === 'yes' });
-      }
-      return { name: nameLine.trim(), tags };
+      return { name: nameLine.trim(), tags: lines.map(tagOf).filter((tag) => tag !== undefined) };
     })
     .filter((group) => group.name && group.tags.length > 0);
 }
