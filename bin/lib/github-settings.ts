@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, same } from './drift.ts';
+import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, type Step, same } from './drift.ts';
 import type { Client } from './github.ts';
 
 interface RulesetSpec {
@@ -105,17 +105,20 @@ function canonicalRuleset(ruleset: Record<string, unknown>): unknown {
 
 const toggle = (path: string, on: boolean) => ({ method: on ? 'PUT' : 'DELETE', path }) as const;
 
-function diff(desired: DesiredState, live: LiveState): Item[] {
-  const base = `/repos/${desired.repository}`;
-  const items: Item[] = [];
+// A setting compared whole as an object; a drift names the keys that differ and takes one step.
+function objectItem(area: string, name: string, want: Record<string, unknown>, have: Record<string, unknown>, step: Step): Item {
+  return same(want, have)
+    ? item(area, name, want, have, 'ok')
+    : item(area, name, want, have, 'drift', [step], `differs: ${changedKeys(want, have).join(', ')}`);
+}
 
-  for (const [key, want] of Object.entries(desired.settings)) {
+function repoItems(desired: DesiredState, live: LiveState, base: string): Item[] {
+  const items = Object.entries(desired.settings).map(([key, want]) => {
     const have = live.repo[key];
-    items.push(
-      same(have, want) ? item('repo', key, want, have, 'ok') : item('repo', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { [key]: want } }]),
-    );
-  }
-
+    return same(have, want)
+      ? item('repo', key, want, have, 'ok')
+      : item('repo', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { [key]: want } }]);
+  });
   const topics = [...desired.topics].sort();
   const topicsNow = (Array.isArray(live.repo.topics) ? live.repo.topics.map(String) : []).sort();
   items.push(
@@ -123,19 +126,19 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
       ? item('repo', 'topics', topics, topicsNow, 'ok')
       : item('repo', 'topics', topics, topicsNow, 'drift', [{ method: 'PUT', path: `${base}/topics`, body: { names: topics } }]),
   );
+  return items;
+}
 
+function securityItems(desired: DesiredState, live: LiveState, base: string): Item[] {
   const analysis = fields(live.repo.security_and_analysis);
-  for (const key of ['secret_scanning', 'secret_scanning_push_protection', 'dependabot_security_updates'] as const) {
+  const items = (['secret_scanning', 'secret_scanning_push_protection', 'dependabot_security_updates'] as const).map((key) => {
     const want = desired.security[key];
     const have = fields(analysis[key]).status;
-    items.push(
-      have === undefined
-        ? item('security', key, want, null, 'unavailable', [], 'not exposed for this repository')
-        : have === want
-          ? item('security', key, want, have, 'ok')
-          : item('security', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { security_and_analysis: { [key]: { status: want } } } }]),
-    );
-  }
+    if (have === undefined) return item('security', key, want, null, 'unavailable', [], 'not exposed for this repository');
+    return have === want
+      ? item('security', key, want, have, 'ok')
+      : item('security', key, want, have, 'drift', [{ method: 'PATCH', path: base, body: { security_and_analysis: { [key]: { status: want } } } }]);
+  });
   for (const [key, have, path] of [
     ['vulnerability_alerts', live.vulnerabilityAlerts, `${base}/vulnerability-alerts`],
     ['private_vulnerability_reporting', live.privateReporting, `${base}/private-vulnerability-reporting`],
@@ -151,55 +154,28 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
     state: live.codeScanning.state,
     languages: (Array.isArray(live.codeScanning.languages) ? live.codeScanning.languages.map(String) : []).sort(),
   };
-  items.push(
-    same(scanning, scanningNow)
-      ? item('security', 'code_scanning', scanning, scanningNow, 'ok')
-      : item(
-          'security',
-          'code_scanning',
-          scanning,
-          scanningNow,
-          'drift',
-          [{ method: 'PATCH', path: `${base}/code-scanning/default-setup`, body: scanning }],
-          `differs: ${changedKeys(scanning, scanningNow).join(', ')}`,
-        ),
-  );
+  items.push(objectItem('security', 'code_scanning', scanning, scanningNow, { method: 'PATCH', path: `${base}/code-scanning/default-setup`, body: scanning }));
+  return items;
+}
 
+function actionsItems(desired: DesiredState, live: LiveState, base: string): Item[] {
   const permissions = { allowed_actions: desired.actions.allowed_actions, sha_pinning_required: desired.actions.sha_pinning_required };
-  const permissionsNow = pick(live.permissions, Object.keys(permissions));
-  items.push(
-    same(permissionsNow, permissions)
-      ? item('actions', 'permissions', permissions, permissionsNow, 'ok')
-      : item(
-          'actions',
-          'permissions',
-          permissions,
-          permissionsNow,
-          'drift',
-          [{ method: 'PUT', path: `${base}/actions/permissions`, body: { enabled: true, ...permissions } }],
-          `differs: ${changedKeys(permissions, permissionsNow).join(', ')}`,
-        ),
-  );
-
   const workflow = {
     default_workflow_permissions: desired.actions.default_workflow_permissions,
     can_approve_pull_request_reviews: desired.actions.can_approve_pull_request_reviews,
   };
-  const workflowNow = pick(live.workflow, Object.keys(workflow));
-  items.push(
-    same(workflowNow, workflow)
-      ? item('actions', 'workflow token', workflow, workflowNow, 'ok')
-      : item(
-          'actions',
-          'workflow token',
-          workflow,
-          workflowNow,
-          'drift',
-          [{ method: 'PUT', path: `${base}/actions/permissions/workflow`, body: workflow }],
-          `differs: ${changedKeys(workflow, workflowNow).join(', ')}`,
-        ),
-  );
-
+  const items = [
+    objectItem('actions', 'permissions', permissions, pick(live.permissions, Object.keys(permissions)), {
+      method: 'PUT',
+      path: `${base}/actions/permissions`,
+      body: { enabled: true, ...permissions },
+    }),
+    objectItem('actions', 'workflow token', workflow, pick(live.workflow, Object.keys(workflow)), {
+      method: 'PUT',
+      path: `${base}/actions/permissions/workflow`,
+      body: workflow,
+    }),
+  ];
   for (const [name, value] of Object.entries(desired.variables)) {
     const have = live.variables[name];
     items.push(
@@ -212,22 +188,24 @@ function diff(desired: DesiredState, live: LiveState): Item[] {
           ]),
     );
   }
-
-  const name = `ruleset ${desired.ruleset.name}`;
-  if (!live.ruleset) {
-    items.push(item('ruleset', name, 'present', null, 'drift', [{ method: 'POST', path: `${base}/rulesets`, body: desired.ruleset }]));
-  } else {
-    const want = canonicalRuleset({ ...desired.ruleset });
-    const have = canonicalRuleset(live.ruleset);
-    items.push(
-      same(want, have)
-        ? item('ruleset', name, 'as in repo.json', 'as in repo.json', 'ok')
-        : item('ruleset', name, 'as in repo.json', `differs: ${changedKeys(fields(want), fields(have)).join(', ')}`, 'drift', [
-            { method: 'PUT', path: `${base}/rulesets/${live.ruleset.id}`, body: desired.ruleset },
-          ]),
-    );
-  }
   return items;
+}
+
+function rulesetItem(desired: DesiredState, live: LiveState, base: string): Item {
+  const name = `ruleset ${desired.ruleset.name}`;
+  if (!live.ruleset) return item('ruleset', name, 'present', null, 'drift', [{ method: 'POST', path: `${base}/rulesets`, body: desired.ruleset }]);
+  const want = canonicalRuleset({ ...desired.ruleset });
+  const have = canonicalRuleset(live.ruleset);
+  return same(want, have)
+    ? item('ruleset', name, 'as in repo.json', 'as in repo.json', 'ok')
+    : item('ruleset', name, 'as in repo.json', `differs: ${changedKeys(fields(want), fields(have)).join(', ')}`, 'drift', [
+        { method: 'PUT', path: `${base}/rulesets/${live.ruleset.id}`, body: desired.ruleset },
+      ]);
+}
+
+function diff(desired: DesiredState, live: LiveState): Item[] {
+  const base = `/repos/${desired.repository}`;
+  return [...repoItems(desired, live, base), ...securityItems(desired, live, base), ...actionsItems(desired, live, base), rulesetItem(desired, live, base)];
 }
 
 export const createRun = (desired: DesiredState, client: Client): Run => ({

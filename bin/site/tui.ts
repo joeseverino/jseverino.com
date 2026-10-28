@@ -108,6 +108,29 @@ function closerOf(code: number): number | undefined {
   return undefined;
 }
 
+// Updates the set of closers a clip would owe after one SGR sequence's parameters.
+function trackSgr(open: Set<number>, params: string | undefined): void {
+  for (const code of (params || '0').split(';').map(Number)) {
+    const closer = closerOf(code);
+    if (code === 0) open.clear();
+    else if (closer) open.add(closer);
+    else open.delete(code);
+  }
+}
+
+// The graphemes of a run of plain text that fit in room cells, and whether the run was cut.
+function fitCells(chunk: string, room: number): { text: string; cells: number; clipped: boolean } {
+  let text = '';
+  let cells = 0;
+  for (const grapheme of graphemes(chunk)) {
+    const width = cellWidth(grapheme);
+    if (cells + width > room) return { text, cells, clipped: true };
+    text += grapheme;
+    cells += width;
+  }
+  return { text, cells, clipped: false };
+}
+
 // Clips to a width in cells, passing escape sequences through. A clip that cuts a styled span off
 // before its close ends with a reset, so the style cannot bleed into the next line.
 function clipAnsi(text: string, width: number): string {
@@ -117,7 +140,6 @@ function clipAnsi(text: string, width: number): string {
   let out = '';
   let visible = 0;
   let i = 0;
-  let clipped = false;
 
   while (i < text.length) {
     ansi.lastIndex = i;
@@ -125,37 +147,20 @@ function clipAnsi(text: string, width: number): string {
     if (match) {
       out += match[0];
       i += match[0].length;
-      if (match[2] === 'm') {
-        for (const code of (match[1] || '0').split(';').map(Number)) {
-          const closer = closerOf(code);
-          if (code === 0) open.clear();
-          else if (closer) open.add(closer);
-          else open.delete(code);
-        }
-      }
+      if (match[2] === 'm') trackSgr(open, match[1]);
       continue;
     }
 
-    const ansiStart = i;
     let nextAnsi = text.indexOf('\x1b', i);
     if (nextAnsi === -1) nextAnsi = text.length;
-    const chunk = text.slice(ansiStart, nextAnsi);
-    let consumed = 0;
-    for (const grapheme of graphemes(chunk)) {
-      const cells = cellWidth(grapheme);
-      if (visible + cells > width) {
-        clipped = true;
-        break;
-      }
-      out += grapheme;
-      visible += cells;
-      consumed += grapheme.length;
-    }
-    i += consumed;
-    if (clipped) break;
+    const fit = fitCells(text.slice(i, nextAnsi), width - visible);
+    out += fit.text;
+    visible += fit.cells;
+    i += fit.text.length;
+    if (fit.clipped) return open.size ? `${out}\x1b[0m` : out;
   }
 
-  return clipped && open.size ? `${out}\x1b[0m` : out;
+  return out;
 }
 
 export function truncate(text: unknown, width: number): string {

@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import type { Dirent } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -32,6 +33,16 @@ export interface SourceEntry {
   parsed: ParsedFrontmatter;
 }
 
+// Where a folder entry's source lives: a Markdown file itself, or a folder's index.md. Underscored
+// and hidden entries, conflict copies and the wrong kind of entry are not sources.
+function sourceOf(root: string, entry: Dirent, files: boolean): Omit<SourceEntry, 'parsed'> | undefined {
+  if (entry.name.startsWith('_') || entry.name.startsWith('.') || isConflictCopy(entry.name)) return undefined;
+  if (files) return entry.isFile() ? { slug: path.basename(entry.name, '.md'), sourceDir: root, sourceFile: path.join(root, entry.name) } : undefined;
+  if (!entry.isDirectory()) return undefined;
+  const sourceDir = path.join(root, entry.name);
+  return { slug: entry.name, sourceDir, sourceFile: path.join(sourceDir, 'index.md') };
+}
+
 export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultRoot: string; includeDrafts?: boolean }) {
   const pagesRoot = path.join(vaultRoot, PAGES_FOLDER);
   const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);
@@ -39,16 +50,12 @@ export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultR
   async function entries(root: string, { files = false } = {}): Promise<SourceEntry[]> {
     const result: SourceEntry[] = [];
     for (const entry of await fs.readdir(root, { withFileTypes: true })) {
-      if (entry.name.startsWith('_') || entry.name.startsWith('.') || isConflictCopy(entry.name)) continue;
-      if (files ? !entry.isFile() : !entry.isDirectory()) continue;
-      const slug = files ? path.basename(entry.name, '.md') : entry.name;
-      const sourceDir = files ? root : path.join(root, entry.name);
-      const sourceFile = files ? path.join(root, entry.name) : path.join(sourceDir, 'index.md');
-      const text = await readIfPresent(sourceFile);
-      if (text === undefined) continue;
+      const source = sourceOf(root, entry, files);
+      const text = source && (await readIfPresent(source.sourceFile));
+      if (!source || text === undefined) continue;
       const parsed = parseFrontmatter(text);
       if (!includeDrafts && parsed.data.published !== true) continue;
-      result.push({ slug, sourceDir, sourceFile, parsed });
+      result.push({ ...source, parsed });
     }
     return result;
   }
