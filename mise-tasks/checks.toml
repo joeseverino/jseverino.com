@@ -9,7 +9,13 @@ run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: s
 ["checks:drafts"]
 description = "No document under src/content is `published: false`"
 hide = true
-run = "node tests/audits/check-no-drafts.ts"
+# The committed snapshot is what deploys; drafts preview from the gitignored
+# overlay `site dev --drafts` writes. Untracked documents count, since a build
+# reads them. YAML's core schema spells false only as false, False or FALSE.
+run = [
+  "git ls-files --cached --others --exclude-standard -- 'src/content/**/index.mdx' | grep -q . || { echo 'no index.mdx under src/content; run mise run sync:content' >&2; exit 1; }",
+  "if git grep --untracked -nIiE '^published[[:space:]]*:[[:space:]]*false' -- 'src/content/**/index.mdx'; then echo 'fix: run `mise run sync:content` (drafts belong in the overlay `site dev --drafts` writes)' >&2; exit 1; fi",
+]
 
 ["checks:security-txt"]
 description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"

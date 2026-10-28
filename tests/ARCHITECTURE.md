@@ -117,9 +117,6 @@ Verifies `public/.well-known/security.txt`:
 
 Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`mise run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
 
-### `check-no-drafts.ts`
-No document under `src/content` carries `published: false`. The committed snapshot is what deploys; `site dev --drafts` writes drafts to the gitignored `.cache/drafts` overlay instead.
-
 ### TypeScript type check
 
 `mise run checks:types`: `wrangler types` (its dependency `sync:worker-types`), `astro sync`, `tsc -p .`, then `tsc -p src/tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../src/tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into `src/generated/worker-configuration.d.ts`, gitignored and written before every type check. `astro check` reads [`tsconfig.astro.json`](../src/tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
