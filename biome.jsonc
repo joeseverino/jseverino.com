@@ -36,6 +36,8 @@
   ],
   "linter": {
     "rules": {
+      // A function past Biome's default bound is split along its steps into named functions.
+      "complexity": { "noExcessiveCognitiveComplexity": "error" },
       "suspicious": {
         // The terminal UI, the Markdown guard and their tests match control
         // characters on purpose, to strip ANSI escapes and refuse bidi controls.
@@ -75,7 +77,7 @@
       // An .astro file's template uses its frontmatter bindings, which Biome's
       // experimental Astro support reports as unused, and `astro check`
       // (checks:astro) owns its types and markup. Biome holds its TypeScript to
-      // the two type-escape rules alone.
+      // the two type-escape rules and the complexity bound the top level sets.
       "includes": ["**/*.astro"],
       "formatter": { "enabled": false },
       "assist": { "enabled": false },
