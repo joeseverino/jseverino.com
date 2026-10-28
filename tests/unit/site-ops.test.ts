@@ -5,7 +5,6 @@ import { after, beforeEach, describe, test } from 'node:test';
 import {
   abbreviateName,
   applyD1Schema,
-  checkSecurityHeaders,
   contactSubmissions,
   cspCounts,
   cspReports,
@@ -31,7 +30,6 @@ function config(overrides: Partial<SiteOpsConfig> = {}): SiteOpsConfig {
   return {
     d1Database: 'jseverino-contact',
     siteRepo: root,
-    siteOrigin: 'https://jseverino.com',
     auditLog: path.join(root, 'state', 'audit.log'),
     token: undefined,
     accountId: undefined,
@@ -223,41 +221,5 @@ describe('D1 schema apply', () => {
     const result = applyD1Schema(config(), { confirm: true });
     assert.equal(result.applied, true);
     assert.deepEqual(calls[0], ['d1', 'execute', 'jseverino-contact', '--remote', '--file=cloudflare/d1.sql']);
-  });
-});
-
-describe('security headers', () => {
-  const headers = {
-    'content-security-policy': "default-src 'self'; script-src 'self'; report-uri https://jseverino.com/api/csp-report; report-to csp-endpoint",
-    'reporting-endpoints': 'csp-endpoint="https://jseverino.com/api/csp-report"',
-  };
-  const fakeFetch = (status: number, values: Record<string, string>): typeof fetch =>
-    (async (url: string | URL | Request, init?: RequestInit) => {
-      assert.equal(init?.method, 'HEAD');
-      assert.equal(init?.redirect, 'manual');
-      assert.equal(String(url), 'https://jseverino.com/contact/');
-      return new Response(null, { status, headers: values });
-    }) as typeof fetch;
-
-  test('passes every check on a correct response', async () => {
-    const result = await checkSecurityHeaders(config({ fetch: fakeFetch(200, headers) }), '/contact/');
-    assert.equal(result.ok, true);
-    assert.deepEqual(Object.values(result.checks), [true, true, true, true, true]);
-  });
-
-  test('flags an unsafe-inline script source anywhere in script-src', async () => {
-    const unsafe = { ...headers, 'content-security-policy': "default-src 'none'; script-src 'self' 'unsafe-inline'; report-to csp-endpoint" };
-    const result = await checkSecurityHeaders(config({ fetch: fakeFetch(200, unsafe) }), '/contact/');
-    assert.equal(result.checks.noUnsafeInlineScript, false);
-  });
-
-  test('flags a missing CSP', async () => {
-    const result = await checkSecurityHeaders(config({ fetch: fakeFetch(200, {}) }), '/contact/');
-    assert.equal(result.checks.hasCsp, false);
-  });
-
-  test('refuses protocol-relative and relative paths', async () => {
-    await assert.rejects(checkSecurityHeaders(config(), '//evil.example'), SiteOpsError);
-    await assert.rejects(checkSecurityHeaders(config(), 'contact'), SiteOpsError);
   });
 });

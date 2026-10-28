@@ -77,10 +77,10 @@ describe('real documents', () => {
 
 describe('the envelope', () => {
   test('a result field never replaces ok, command, or status', () => {
-    const result = { ok: false, command: 'other', httpStatus: 503, next: null } as unknown as Parameters<typeof successDocument<'headers'>>[1];
-    const document = successDocument('headers', result);
+    const result = { ok: false, command: 'other', httpStatus: 503, next: null } as unknown as Parameters<typeof successDocument<'csp'>>[1];
+    const document = successDocument('csp', result);
     assert.equal(document.ok, true);
-    assert.equal(document.command, 'headers');
+    assert.equal(document.command, 'csp');
     assert.equal(document.status, 'ok');
   });
 

@@ -377,11 +377,11 @@ Rescan after any change to `bin/build-csp.ts` or `public/_headers` to confirm
 Observatory has not regressed. The Pentest-Tools findings reappear on every
 rescan.
 
-The same checks run against the live deployed site with `site headers [<path>]`
-(`--json` for a structured result): the live headers plus named pass/fail checks
-(`hasCsp`, `noUnsafeInlineScript`, `hasCspReportTo`, `hasCspReportUri`,
-`hasReportingEndpoints`), exiting non-zero when any fails. This is the canonical
-post-deploy verification step in
+The same checks run against the live deployed site with `mise run deploy:verify`
+(`--origin <url>` for one deployment), which holds every sitemap route to the
+predicates in [`src/lib/edge-expectations.ts`](../src/lib/edge-expectations.ts)
+and exits non-zero on any finding. This is the canonical post-deploy
+verification step in
 [`docs/Release-Checklist.md`](./Release-Checklist.md#5-cloudflare-deploy-verification).
 
 The HAR audit goes deeper: capture HAR files for `/`, `/contact/` (which

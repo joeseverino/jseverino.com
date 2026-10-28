@@ -43,7 +43,6 @@
         "contact",
         "csp",
         "d1-apply",
-        "headers",
         "manage"
       ]
     },
@@ -206,7 +205,6 @@
             "contact",
             "csp",
             "d1-apply",
-            "headers",
             "manage",
             "help"
           ]

@@ -162,10 +162,9 @@ first-party errors.
 Browser-extension errors, including AdGuard content script messages, are not site
 release failures unless they reproduce with extensions disabled.
 
-**Structured check.** `site headers / --json` returns the same headers as a
-structured result with named pass/fail checks (`hasCsp`, `noUnsafeInlineScript`,
-`hasCspReportTo`, `hasCspReportUri`, `hasReportingEndpoints`) in place of the
-`curl` parse above, and exits non-zero when any check fails.
+**One deployment.** `mise run deploy:verify --origin <url>` runs the same header
+checks against a single deployment, such as a Worker version at its preview URL,
+without the git and check-run preconditions or HSTS.
 
 **HAR audit (deep verification).** The header checks confirm responses carry
 the headers. A HAR audit confirms those headers do not break a real browser

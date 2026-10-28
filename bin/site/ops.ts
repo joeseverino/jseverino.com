@@ -1,9 +1,9 @@
 // `site` commands over the live-site operations (bin/lib/site-ops.ts).
 
 import { INSTALL_PACKAGES } from '../lib/preflight.ts';
-import { applyD1Schema, checkSecurityHeaders, contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from '../lib/site-ops.ts';
+import { applyD1Schema, contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from '../lib/site-ops.ts';
 import { EXIT, type Output, SiteError, translate } from './cli.ts';
-import type { ContactResult, CspResult, D1ApplyResult, HeadersResult } from './types.ts';
+import type { ContactResult, CspResult, D1ApplyResult } from './types.ts';
 
 const CLOUDFLARE_FIX = `needs CLOUDFLARE_API_TOKEN in the environment (op run) and ${INSTALL_PACKAGES} in the site repo`;
 const D1_READ_FIX = 'set CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID through op run';
@@ -61,19 +61,5 @@ export async function csp({
 export async function d1Apply({ confirm, out }: { confirm: boolean; out: Output }): Promise<D1ApplyResult> {
   const result = await guard(() => applyD1Schema(siteOpsConfig(), { confirm }), { fix: CLOUDFLARE_FIX, usage: 'pass --confirm to apply' });
   out.ok('applied', result.command);
-  return { ...result, next: null };
-}
-
-export async function headers({ path, out }: { path: string | undefined; out: Output }): Promise<HeadersResult> {
-  const result = await guard(() => checkSecurityHeaders(siteOpsConfig(), path ?? '/'), {
-    fix: 'check the network connection, then rerun',
-    usage: 'pass a root-relative path, e.g. site headers /contact/',
-  });
-  out.text(`${result.httpStatus} ${result.url}`);
-  for (const [name, passed] of Object.entries(result.checks)) (passed ? out.ok : out.fail)(passed ? 'ok' : 'missing', name);
-  const failed = Object.values(result.checks).filter((passed) => !passed).length;
-  if (!result.ok || failed > 0) {
-    throw new SiteError(`${result.url}: ${result.ok ? `${failed} header checks failed` : `status ${result.httpStatus}`}`, { result });
-  }
   return { ...result, next: null };
 }

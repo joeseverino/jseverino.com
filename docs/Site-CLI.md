@@ -94,7 +94,6 @@ The content model a client edits against is
 | `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1 through Cloudflare's HTTP API, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
 | `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1 through the HTTP API, or counts by directive |
 | `site d1-apply --confirm` | Apply `cloudflare/d1.sql` to the remote D1 database |
-| `site headers [<path>]` | Live security headers on one path, with named pass/fail checks |
 | `site manage` | The interactive manager (below) |
 
 The everyday loop: `site new`, write, `site validate <slug> --draft`, set
@@ -123,7 +122,7 @@ The everyday loop: `site new`, write, `site validate <slug> --draft`, set
 | mise tasks | gates, the build, and tools | `mise run check`, `mise run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
 | [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
-| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters), the schema apply (wrangler), header checks | `contactSubmissions`, `checkSecurityHeaders` |
+| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters), the schema apply (wrangler) | `contactSubmissions`, `applyD1Schema` |
 
 Every write to writeup frontmatter (featured order, publish flags, field edits
 in `site manage`, `site set`, `site featured`) goes through the writeup store:

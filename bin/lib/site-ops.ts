@@ -1,10 +1,10 @@
-// Fixed operations on the live site: read-only D1 queries, the additive schema apply, and a security-header
-// check. Not a shell: statements are internal, and the schema write refuses without confirm.
+// Fixed operations on the live site: read-only D1 queries and the additive schema apply. Not a shell:
+// statements are internal, and the schema write refuses without confirm.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
-import { cspReportUri, SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
+import { SITE } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { createClient } from './cloudflare.ts';
 import { DetailedError } from './detailed-error.ts';
@@ -15,7 +15,6 @@ export type Runner = (cmd: string, args: readonly string[], options: { cwd: stri
 export interface SiteOpsConfig {
   d1Database: string;
   siteRepo: string;
-  siteOrigin: string;
   auditLog: string;
   token: string | undefined;
   accountId: string | undefined;
@@ -29,7 +28,6 @@ export function siteOpsConfig(): SiteOpsConfig {
   return {
     d1Database: SITE.d1,
     siteRepo: siteRoot,
-    siteOrigin: SITE_ORIGIN,
     auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
     token: process.env.CLOUDFLARE_API_TOKEN,
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
@@ -213,58 +211,4 @@ export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { conf
   const output = `${proc.stdout}${proc.stderr}`.trim() || proc.error?.message || '';
   if (proc.code !== 0) throw new SiteOpsError(`${command} failed`, { exit_code: proc.code, output });
   return { applied: true, command, output };
-}
-
-const SECURITY_HEADERS = [
-  'content-security-policy',
-  'reporting-endpoints',
-  'strict-transport-security',
-  'x-content-type-options',
-  'referrer-policy',
-  'permissions-policy',
-  'cross-origin-opener-policy',
-  'cross-origin-resource-policy',
-] as const;
-
-export interface HeaderCheck {
-  url: string;
-  httpStatus: number;
-  ok: boolean;
-  headers: Record<(typeof SECURITY_HEADERS)[number], string | null>;
-  checks: {
-    hasCsp: boolean;
-    noUnsafeInlineScript: boolean;
-    hasCspReportTo: boolean;
-    hasCspReportUri: boolean;
-    hasReportingEndpoints: boolean;
-  };
-}
-
-// HEAD one root-relative path on the live origin, without following redirects.
-export async function checkSecurityHeaders(config: SiteOpsConfig, pathname = '/'): Promise<HeaderCheck> {
-  const target = pathname.trim() || '/';
-  if (!target.startsWith('/') || target.startsWith('//')) throw new SiteOpsError('path must be root-relative, e.g. / or /contact/', { usage: true });
-  const url = `${config.siteOrigin.replace(/\/$/, '')}${target}`;
-  let response: Response;
-  try {
-    response = await config.fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(10_000) });
-  } catch (error) {
-    throw new SiteOpsError(`HEAD ${url} failed: ${errorMessage(error)}`, { network: true });
-  }
-  const headers = Object.fromEntries(SECURITY_HEADERS.map((name) => [name, response.headers.get(name)])) as HeaderCheck['headers'];
-  const csp = headers['content-security-policy'] ?? '';
-  const reporting = headers['reporting-endpoints'] ?? '';
-  return {
-    url,
-    httpStatus: response.status,
-    ok: response.status >= 200 && response.status < 400,
-    headers,
-    checks: {
-      hasCsp: csp !== '',
-      noUnsafeInlineScript: !/script-src[^;]*'unsafe-inline'/.test(csp),
-      hasCspReportTo: csp.includes('report-to csp-endpoint'),
-      hasCspReportUri: csp.includes(`report-uri ${cspReportUri}`),
-      hasReportingEndpoints: reporting.includes('csp-endpoint='),
-    },
-  };
 }
