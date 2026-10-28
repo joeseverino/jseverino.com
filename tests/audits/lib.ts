@@ -5,8 +5,6 @@ import path from 'node:path';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
-export { siteRoot };
-
 export interface FinishOptions {
   heading?: string;
   bullet?: string;

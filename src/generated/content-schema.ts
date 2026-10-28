@@ -10,7 +10,6 @@ export const pagesSchema = (_: SchemaContext) => z.object({
   path: z.string().optional(),
   published: z.boolean().default(true),
 });
-export type Page = z.infer<ReturnType<typeof pagesSchema>>;
 
 export const writeupsSchema = ({ image }: SchemaContext) => z.object({
   doc_id: z.string().optional(),
@@ -27,4 +26,3 @@ export const writeupsSchema = ({ image }: SchemaContext) => z.object({
   related_projects: z.array(z.string()).default([]),
   related_assets: z.array(z.string()).default([]),
 });
-export type Writeup = z.infer<ReturnType<typeof writeupsSchema>>;

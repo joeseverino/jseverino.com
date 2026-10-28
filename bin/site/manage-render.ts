@@ -7,7 +7,7 @@ import { current, diff, FIELDS, fieldValue, type Item, type Model, SITE_ACTIONS,
 import { type Frame, keyLabel, lineEditor, type Tone, terminalColumns, tint, truncate } from './tui.ts';
 
 // Every mark a frame draws, with the tone it draws in unless a row says otherwise.
-export const GLYPH = {
+const GLYPH = {
   filled: { char: '●', tone: 'ok' },
   hollow: { char: '◌', tone: 'draft' },
   raised: { char: '▲', tone: 'ok' },
@@ -49,7 +49,7 @@ function drawTabBar(model: Model): string {
 const frameHead = (model: Model, cols: number, title: string): string[] => ['', drawTabBar(model), `  ${rule(cols)}`, title, ''];
 
 // The key hints for the active bindings, wrapped to the width.
-export function keyHints(model: Model, bindings: readonly Binding[] = activeBindings(model)): string[] {
+function keyHints(model: Model, bindings: readonly Binding[] = activeBindings(model)): string[] {
   const groups: { keys: string[]; hint: string }[] = [];
   for (const binding of bindings) {
     const hint = typeof binding.hint === 'function' ? binding.hint(model) : binding.hint;

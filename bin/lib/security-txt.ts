@@ -15,7 +15,7 @@ export const REQUIRED_FIELDS = ['Contact', 'Encryption', 'Expires', 'Canonical',
 
 // The monthly scheduled check fails, and GitHub emails the failure, at least
 // twice before the file lapses.
-export const EXPIRES_MIN_DAYS = 60;
+const EXPIRES_MIN_DAYS = 60;
 
 // Whole days from `now` until an Expires value. RFC 9116 requires an RFC 3339
 // date-time, and anything else throws.

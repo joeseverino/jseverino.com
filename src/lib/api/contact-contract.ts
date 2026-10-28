@@ -10,7 +10,7 @@ type ContractProperty = {
 };
 
 export type ContactField = keyof typeof contract.request.properties;
-export type ContactFields = Record<ContactField, string>;
+type ContactFields = Record<ContactField, string>;
 export const CONTACT_RUNTIME = contract.runtime;
 export const CONTACT_PROPERTIES: Readonly<Record<ContactField, ContractProperty>> = contract.request.properties;
 const REQUIRED = new Set<string>(contract.request.required);

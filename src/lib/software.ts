@@ -7,7 +7,7 @@ import { fixtureContent } from './content-root.ts';
 import { getGithubRepos } from './github.ts';
 import { FEATURED, PACKAGES, type PackageConfig, SELF_HOSTED, SKIP, WRITEUPS } from './software.config.ts';
 
-export type SoftwarePackage = PackageConfig & {
+type SoftwarePackage = PackageConfig & {
   version?: string | undefined;
   downloadsPerMonth?: number | undefined;
 };

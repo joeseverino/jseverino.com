@@ -208,7 +208,7 @@ export type CommandName = keyof CommandResults;
 // is the command's own when it reports one (publish, land), 'ok' otherwise.
 export type SiteSuccessOf<C extends CommandName> = { ok: true; command: C; status: string } & CommandResults[C];
 
-export type SiteSuccess = { [C in CommandName]: SiteSuccessOf<C> }[CommandName];
+type SiteSuccess = { [C in CommandName]: SiteSuccessOf<C> }[CommandName];
 
 // --help under --json: the usage as data; command is 'help' for the command list.
 export interface SiteHelp {
@@ -236,4 +236,5 @@ export interface SiteFailure {
   [partial: string]: unknown;
 }
 
+/** @public The --json document's type, which docs/Site-CLI.md offers callers to import. */
 export type SiteResult = SiteSuccess | SiteHelp | SiteFailure;

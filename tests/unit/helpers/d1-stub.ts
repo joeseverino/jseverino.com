@@ -1,6 +1,6 @@
 // Records every executed query with its bound values and returns scripted results.
 
-export interface RecordedQuery {
+interface RecordedQuery {
   query: string;
   values: unknown[];
 }

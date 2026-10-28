@@ -1,10 +1,10 @@
 // The part of the D1 binding the endpoints call. The handlers also run under Node in the unit
 // suite, which has no Workers types; tsconfig.worker.json holds the generated D1Database to it.
-export interface D1Result {
+interface D1Result {
   meta: { changes: number };
 }
 
-export interface D1PreparedStatement {
+interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
   run(): Promise<D1Result>;
 }
@@ -16,6 +16,7 @@ export interface D1Database {
 
 // Row shapes of cloudflare/d1.sql; check-d1-parity holds each to its CREATE TABLE.
 
+/** @public check-d1-parity reads it, though no handler selects these rows. */
 // D1 table contact_submissions
 export interface ContactSubmissionRow {
   id: number;
