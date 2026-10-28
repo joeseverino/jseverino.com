@@ -6,9 +6,6 @@ import { readJson } from '../../src/lib/json.ts';
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
 
-// What the client needs from fetch: a URL string and an init.
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
-
 // The options every tool's main() takes, for tests: arguments, environment, and
 // where output goes.
 export interface ToolOptions {

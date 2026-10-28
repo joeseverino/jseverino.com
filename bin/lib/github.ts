@@ -1,21 +1,10 @@
 // GitHub's REST API for the bin/ scripts: one client over fetch, and the
 // repository reads the deploy and land flows make with it.
 import { setTimeout as delay } from 'node:timers/promises';
-import type { Fetch } from './drift.ts';
+import { absentOn404, createSend, type Fetch } from './rest.ts';
 import { spawnResult } from './run.ts';
 
 export const API_BASE = 'https://api.github.com';
-const TIMEOUT_MS = 30_000;
-
-class GitHubError extends Error {
-  status: number;
-
-  constructor(method: string, path: string, status: number, message?: string) {
-    super(`${method} ${path} → ${status}${message ? ` (${message})` : ''}`);
-    this.status = status;
-  }
-}
-
 // GITHUB_TOKEN (Actions), then GH_TOKEN, then the gh CLI's login.
 export const resolveToken = (env: NodeJS.ProcessEnv = process.env): string | undefined =>
   env.GITHUB_TOKEN || env.GH_TOKEN || spawnResult('gh', ['auth', 'token']).stdout.trim() || undefined;
@@ -28,32 +17,23 @@ export interface ClientOptions {
 
 export type Client = ReturnType<typeof createClient>;
 
-// The token only ever goes into the Authorization header.
 export function createClient({ token, fetch }: ClientOptions) {
   if (!token) throw new Error('no GitHub token: set GITHUB_TOKEN or GH_TOKEN, or sign in with `gh auth login`');
-
-  async function send(method: string, url: string, body?: unknown): Promise<Response> {
-    const response = await (fetch ?? globalThis.fetch)(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        // The version where code scanning default setup reports javascript-typescript alone, as its PATCH takes it.
-        'X-GitHub-Api-Version': '2026-03-10',
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
-    if (!response.ok) {
-      const payload: { message?: string } = await response.json().catch(() => ({}));
-      throw new GitHubError(method, new URL(url).pathname, response.status, payload.message);
-    }
-    return response;
-  }
+  const send = createSend({
+    token,
+    fetch,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      // The version where code scanning default setup reports javascript-typescript alone, as its PATCH takes it.
+      'X-GitHub-Api-Version': '2026-03-10',
+    },
+    detail: (payload) => (payload as { message?: string }).message,
+  });
+  // An error is labeled by the path alone, without the query.
+  const call = (method: string, url: string, body?: unknown) => send(method, url, new URL(url).pathname, body);
 
   async function request<T>(method: string, path: string, body?: unknown): Promise<T | undefined> {
-    const text = await (await send(method, `${API_BASE}${path}`, body)).text();
+    const text = await (await call(method, `${API_BASE}${path}`, body)).text();
     return text ? (JSON.parse(text) as T) : undefined;
   }
 
@@ -64,22 +44,14 @@ export function createClient({ token, fetch }: ClientOptions) {
     list: async <T>(path: string): Promise<T[]> => {
       const items: T[] = [];
       for (let url: string | undefined = `${API_BASE}${path}`; url; ) {
-        const response = await send('GET', url);
+        const response = await call('GET', url);
         items.push(...((await response.json()) as T[]));
         url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
       }
       return items;
     },
     // Features answer 204 or 200 when on and 404 when off.
-    isOn: async (path: string): Promise<boolean> => {
-      try {
-        await request('GET', path);
-        return true;
-      } catch (error) {
-        if (error instanceof GitHubError && error.status === 404) return false;
-        throw error;
-      }
-    },
+    isOn: async (path: string): Promise<boolean> => (await absentOn404(request('GET', path).then(() => true))) ?? false,
   };
 }
 

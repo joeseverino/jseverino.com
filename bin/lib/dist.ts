@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DIST_BRANCH } from '../../src/lib/site-config.ts';
-import type { Fetch } from './drift.ts';
 import { createClient } from './github.ts';
+import type { Fetch } from './rest.ts';
 import { runSync } from './run.ts';
 
 export interface PublishOptions {
