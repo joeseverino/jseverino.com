@@ -57,6 +57,11 @@ description = "Biome finds no formatting difference and no lint finding at warni
 hide = true
 run = "biome ci --error-on-warnings || { status=$?; echo 'fix: mise run fix:lint, fix what it reports it cannot, then commit the result' >&2; exit $status; }"
 
+["checks:knip"]
+description = "knip finds no unused file, export, type, dependency or binary, and no stale entry or ignore in tests/knip.jsonc"
+hide = true
+run = "knip --config tests/knip.jsonc --treat-config-hints-as-errors"
+
 ["checks:css-vars"]
 description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
 hide = true

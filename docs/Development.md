@@ -81,7 +81,7 @@ Biome also enforces these:
 ## Gates
 
 ```sh
-mise run fast             # the static gates: types, policy, docs, lint, duplication, unit tests, astro check
+mise run fast             # the static gates: types, policy, docs, lint, duplication, unused code, unit tests, astro check
 mise run check            # + the production build, then every gate on it (CI's build job)
 mise run browser          # the browser suites, one at a time: e2e, visual, edge
 mise run ci               # check, then browser: every gate the pipeline runs

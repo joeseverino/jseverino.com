@@ -128,6 +128,10 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 [jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, the generated projection (`src/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
 
+### `checks:knip`
+
+[knip](https://knip.dev) follows the imports from every entry point and fails on a file nothing reaches, an export or type nothing imports, a package in `package.json` nothing uses, or one the code imports without declaring it. Its plugins find Astro's routes and content config and the Playwright specs; [`tests/knip.jsonc`](./knip.jsonc) names the rest, each with the program that reads it: the scripts the mise tasks run, the audits, the unit specs, the fixture content tree, and the files loaded by path. A package or binary only a gate runs is ignored there by name. An export kept for a reader outside the code carries `@public` and the reader's name. A configured entry or ignore that no longer matches anything fails the gate too.
+
 ### `check-d1-parity.ts`
 
 It verifies that the contact handler
