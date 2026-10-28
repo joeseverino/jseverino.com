@@ -102,6 +102,7 @@ mise run check                               # + the build and every gate on it
 mise run ci                                  # + the browser suites
 
 mise run checks:unit                         # unit suite (fast, no browser)
+mise run checks:unit tests/unit/json.test.ts # one spec, under the pinned Node
 mise run browser:edge                        # the edge runtime suite
 mise run browser:e2e                         # functional specs across Chromium, Firefox, WebKit
 mise run browser:visual                      # visual regression (macOS Chromium)
