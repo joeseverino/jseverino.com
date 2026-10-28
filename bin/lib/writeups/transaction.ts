@@ -31,6 +31,31 @@ interface Staged {
   swapped: boolean;
 }
 
+// Refuses a file changed since its replacement was planned, then renames each staged copy over its file.
+function swapIn(staged: Staged[], rename: NonNullable<TransactionOptions['rename']>): void {
+  for (const { file, before } of staged) {
+    if (fs.readFileSync(file, 'utf8') !== before) throw new Error(`file changed during transaction: ${file}`);
+  }
+  for (const entry of staged) {
+    rename(entry.temp, entry.file);
+    entry.swapped = true;
+  }
+}
+
+// Restores every file already swapped, newest first, and reports the swap's error with any the restore met.
+function rollBack(staged: Staged[], error: unknown): TransactionResult {
+  const rollbackErrors: string[] = [];
+  for (const { file, before } of staged.filter(({ swapped }) => swapped).toReversed()) {
+    try {
+      fs.renameSync(stage(file, before, 'rollback'), file);
+    } catch (rollbackError) {
+      rollbackErrors.push(`${file}: ${errorMessage(rollbackError)}`);
+    }
+  }
+  const detail = errorMessage(error) + (rollbackErrors.length ? `; rollback errors: ${rollbackErrors.join('; ')}` : '');
+  return { ok: false, error: detail, rolledBack: rollbackErrors.length === 0 };
+}
+
 export function transactionalReplace(replacements: ReadonlyMap<string, Replacement>, { rename = fs.renameSync }: TransactionOptions = {}): TransactionResult {
   const staged: Staged[] = [];
   try {
@@ -38,25 +63,10 @@ export function transactionalReplace(replacements: ReadonlyMap<string, Replaceme
       staged.push({ file, before, temp: stage(file, after, 'site'), swapped: false });
     }
     try {
-      for (const { file, before } of staged) {
-        if (fs.readFileSync(file, 'utf8') !== before) throw new Error(`file changed during transaction: ${file}`);
-      }
-      for (const entry of staged) {
-        rename(entry.temp, entry.file);
-        entry.swapped = true;
-      }
+      swapIn(staged, rename);
       return { ok: true };
     } catch (error) {
-      const rollbackErrors: string[] = [];
-      for (const { file, before } of staged.filter(({ swapped }) => swapped).toReversed()) {
-        try {
-          fs.renameSync(stage(file, before, 'rollback'), file);
-        } catch (rollbackError) {
-          rollbackErrors.push(`${file}: ${errorMessage(rollbackError)}`);
-        }
-      }
-      const detail = errorMessage(error) + (rollbackErrors.length ? `; rollback errors: ${rollbackErrors.join('; ')}` : '');
-      return { ok: false, error: detail, rolledBack: rollbackErrors.length === 0 };
+      return rollBack(staged, error);
     }
   } catch (error) {
     return { ok: false, error: errorMessage(error), rolledBack: true };

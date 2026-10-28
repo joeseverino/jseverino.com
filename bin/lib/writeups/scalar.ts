@@ -22,34 +22,55 @@ export function renderScalar(value: unknown): string {
 
 const quoted = (event: ScalarEvent): number => Number(event.style === SCALAR_STYLE.DOUBLE_QUOTED || event.style === SCALAR_STYLE.SINGLE_QUOTED);
 
+type YamlEvent = ReturnType<typeof parseEvents>[number];
+type RootField = { key: ScalarEvent; value: ScalarEvent };
+
+// The root mapping's entries alternate key and value; a value that opens a collection is
+// skipped until its POP brings the walk back to the root.
+interface RootWalk {
+  yaml: string;
+  key: string;
+  depth: number;
+  isKey: boolean;
+  current: ScalarEvent | undefined;
+}
+
+function leave(walk: RootWalk): void {
+  walk.depth -= 1;
+  if (walk.depth === 1) walk.isKey = true;
+}
+
+// One event at the root mapping's level: the wanted key with its value, or nothing yet.
+function rootEntry(walk: RootWalk, event: YamlEvent, opens: boolean): RootField | undefined {
+  if (walk.isKey) {
+    walk.current = event.type === EVENT_ID.SCALAR && getScalarValue(walk.yaml, event) === walk.key ? event : undefined;
+    walk.isKey = false;
+    return undefined;
+  }
+  if (!walk.current) {
+    if (!opens) walk.isKey = true;
+    return undefined;
+  }
+  if (event.type !== EVENT_ID.SCALAR || event.anchorStart !== -1 || event.tagStart !== -1) {
+    throw new Error(`${walk.key} must be a scalar`);
+  }
+  return { key: walk.current, value: event };
+}
+
 // Matches only root keys, so a nested or quoted key is never mistaken for another.
-function rootField(yaml: string, key: string): { key: ScalarEvent; value: ScalarEvent } | undefined {
-  let depth = 0;
-  let isKey = true;
-  let current: ScalarEvent | undefined;
+function rootField(yaml: string, key: string): RootField | undefined {
+  const walk: RootWalk = { yaml, key, depth: 0, isKey: true, current: undefined };
   for (const event of parseEvents(yaml, {})) {
     if (event.type === EVENT_ID.DOCUMENT) continue;
     if (event.type === EVENT_ID.POP) {
-      depth -= 1;
-      if (depth === 1) isKey = true;
+      leave(walk);
       continue;
     }
     const opens = event.type === EVENT_ID.MAPPING || event.type === EVENT_ID.SEQUENCE;
-    if (depth === 0 && opens && event.type !== EVENT_ID.MAPPING) break;
-    if (depth === 1) {
-      if (isKey) {
-        current = event.type === EVENT_ID.SCALAR && getScalarValue(yaml, event) === key ? event : undefined;
-        isKey = false;
-      } else if (current) {
-        if (event.type !== EVENT_ID.SCALAR || event.anchorStart !== -1 || event.tagStart !== -1) {
-          throw new Error(`${key} must be a scalar`);
-        }
-        return { key: current, value: event };
-      } else if (!opens) {
-        isKey = true;
-      }
-    }
-    if (opens) depth += 1;
+    if (walk.depth === 0 && opens && event.type !== EVENT_ID.MAPPING) break;
+    const field = walk.depth === 1 ? rootEntry(walk, event, opens) : undefined;
+    if (field) return field;
+    if (opens) walk.depth += 1;
   }
   return undefined;
 }
