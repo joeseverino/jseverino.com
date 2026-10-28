@@ -11,7 +11,7 @@ hide = true
 run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
 
 ["built:html"]
-description = "html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
+description = "html-validate: every built page has a non-empty <title>, repeats no id, gives every <img> alt, and opens its headings at one h1 without skipping a level; and no literal `::name` directive reaches the page text"
 hide = true
 run = [
   "html-validate --config tests/html-validate.json dist",
@@ -29,6 +29,6 @@ hide = true
 run = "node tests/audits/check-headers.ts"
 
 ["built:seo"]
-description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
+description = "Every built page has a canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
 hide = true
 run = "node tests/audits/check-seo.ts"

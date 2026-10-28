@@ -1,8 +1,8 @@
 // Every built page carries the metadata search engines and link previews read,
-// and its og:image is a file the build emitted.
+// and its og:image is a file the build emitted. built:html holds the <title>.
 import fs from 'node:fs';
 import path from 'node:path';
-import { elementsNamed, linkHref, metaContent, parseHtml, textContent, title } from '../../src/lib/html.ts';
+import { elementsNamed, linkHref, metaContent, parseHtml, textContent } from '../../src/lib/html.ts';
 import { SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { builtPages, finish } from './lib.ts';
 
@@ -20,7 +20,6 @@ const problems = pages.flatMap(({ rel, html }) => {
   const doc = parseHtml(html);
   const image = metaContent(doc, 'og:image');
   const found = [
-    title(doc) ? undefined : 'no non-empty <title>',
     linkHref(doc, 'canonical') ? undefined : 'no canonical link',
     metaContent(doc, 'og:title') ? undefined : 'no og:title',
     image ? imageProblem(image) : 'no og:image',
@@ -38,7 +37,7 @@ const problems = pages.flatMap(({ rel, html }) => {
   return found.filter((problem) => problem !== undefined).map((problem) => `${rel}: ${problem}`);
 });
 
-finish(problems, `${pages.length} pages: title, canonical, og:title, og:image in the build, valid JSON-LD`, {
+finish(problems, `${pages.length} pages: canonical, og:title, og:image in the build, valid JSON-LD`, {
   heading: 'check-seo: pages with missing or invalid SEO metadata:',
   fix: 'fix: check src/components/SeoHead.astro and the page frontmatter',
 });
