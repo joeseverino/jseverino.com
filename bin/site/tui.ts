@@ -2,7 +2,9 @@
 import { once } from 'node:events';
 import os from 'node:os';
 import { type Key as Keypress, emitKeypressEvents as nodeEmitKeypressEvents } from 'node:readline';
-import { stripVTControlCharacters, styleText } from 'node:util';
+import { styleText } from 'node:util';
+// Widths in terminal cells: Unicode's East Asian Width data, an emoji two cells, an escape sequence none.
+import stringWidth from 'string-width';
 
 // What a piece of text means; tint() turns it into styling only when a frame is drawn.
 export type Tone = 'plain' | 'strong' | 'muted' | 'ok' | 'warn' | 'error' | 'accent' | 'draft' | 'active' | 'grabbed';
@@ -33,31 +35,6 @@ function graphemes(text: string): string[] {
   return [...SEGMENTER.segment(text)].map((entry) => entry.segment);
 }
 
-function cellWidth(grapheme: string | undefined): number {
-  if (!grapheme || /^[\p{Cc}\p{Cf}\p{Mn}\p{Me}]+$/u.test(grapheme)) return 0;
-  // An emoji draws two cells; a pictograph in text presentation (©, ™, ↔) draws one.
-  if (/\p{RGI_Emoji}/v.test(grapheme)) return 2;
-  const cp = grapheme.codePointAt(0) ?? 0;
-  return cp >= 0x1100 &&
-    (cp <= 0x115f ||
-      cp === 0x2329 ||
-      cp === 0x232a ||
-      (cp >= 0x2e80 && cp <= 0xa4cf && cp !== 0x303f) ||
-      (cp >= 0xac00 && cp <= 0xd7a3) ||
-      (cp >= 0xf900 && cp <= 0xfaff) ||
-      (cp >= 0xfe10 && cp <= 0xfe19) ||
-      (cp >= 0xfe30 && cp <= 0xfe6f) ||
-      (cp >= 0xff00 && cp <= 0xff60) ||
-      (cp >= 0xffe0 && cp <= 0xffe6) ||
-      (cp >= 0x20000 && cp <= 0x3fffd))
-    ? 2
-    : 1;
-}
-
-function displayWidth(text: unknown): number {
-  return graphemes(stripVTControlCharacters(String(text))).reduce((width, grapheme) => width + cellWidth(grapheme), 0);
-}
-
 export function previousBoundary(text: string, index: number): number {
   let previous = 0;
   for (const entry of SEGMENTER.segment(text)) {
@@ -74,27 +51,14 @@ export function nextBoundary(text: string, index: number): number {
   return text.length;
 }
 
+// The graphemes at the end of text that fit in width cells.
 function suffixByWidth(text: string, width: number): string {
-  const parts = graphemes(text);
-  const kept: string[] = [];
-  let used = 0;
-  for (let i = parts.length - 1; i >= 0; i -= 1) {
-    const cells = cellWidth(parts[i]);
-    if (used + cells > width) break;
-    kept.unshift(parts[i] ?? '');
-    used += cells;
-  }
-  return kept.join('');
-}
-
-function prefixByWidth(text: string, width: number): string {
   let out = '';
   let used = 0;
-  for (const grapheme of graphemes(text)) {
-    const cells = cellWidth(grapheme);
-    if (used + cells > width) break;
-    out += grapheme;
-    used += cells;
+  for (const grapheme of graphemes(text).reverse()) {
+    used += stringWidth(grapheme);
+    if (used > width) break;
+    out = grapheme + out;
   }
   return out;
 }
@@ -118,12 +82,12 @@ function trackSgr(open: Set<number>, params: string | undefined): void {
   }
 }
 
-// The graphemes of a run of plain text that fit in room cells, and whether the run was cut.
+// The graphemes at the start of a run of plain text that fit in room cells, and whether the run was cut.
 function fitCells(chunk: string, room: number): { text: string; cells: number; clipped: boolean } {
   let text = '';
   let cells = 0;
   for (const grapheme of graphemes(chunk)) {
-    const width = cellWidth(grapheme);
+    const width = stringWidth(grapheme);
     if (cells + width > room) return { text, cells, clipped: true };
     text += grapheme;
     cells += width;
@@ -166,7 +130,7 @@ function clipAnsi(text: string, width: number): string {
 export function truncate(text: unknown, width: number): string {
   const s = String(text);
   if (width <= 0) return '';
-  if (displayWidth(s) <= width) return s;
+  if (stringWidth(s) <= width) return s;
   if (width === 1) return '…';
   return `${clipAnsi(s, width - 1)}…`;
 }
@@ -178,9 +142,9 @@ const cursorCell = (text: string): string => styleText('inverse', text, { valida
 export function lineEditor(input: string, cursorIndex: number, width: number): string {
   const next = nextBoundary(input, cursorIndex);
   const cursorChar = input.slice(cursorIndex, next) || ' ';
-  const cursorWidth = Math.max(1, cellWidth(cursorChar));
+  const cursorWidth = Math.max(1, stringWidth(cursorChar));
   const available = Math.max(1, width);
-  if (displayWidth(input) + (cursorIndex === input.length ? 1 : 0) <= available) {
+  if (stringWidth(input) + (cursorIndex === input.length ? 1 : 0) <= available) {
     const before = input.slice(0, cursorIndex);
     const after = input.slice(next);
     return `${before}${cursorCell(cursorChar)}${after}`;
@@ -191,8 +155,8 @@ export function lineEditor(input: string, cursorIndex: number, width: number): s
   const beforeBudget = Math.max(0, available - cursorWidth - reserveRight - 1);
   const before = suffixByWidth(input.slice(0, cursorIndex), beforeBudget);
   const leftHidden = before.length < cursorIndex;
-  const afterBudget = Math.max(0, available - cursorWidth - displayWidth(before) - (leftHidden ? 1 : 0) - reserveRight);
-  const after = prefixByWidth(rightSource, afterBudget);
+  const afterBudget = Math.max(0, available - cursorWidth - stringWidth(before) - (leftHidden ? 1 : 0) - reserveRight);
+  const after = fitCells(rightSource, afterBudget).text;
   const rightHidden = after.length < rightSource.length;
 
   return `${leftHidden ? '…' : ''}${before}${cursorCell(cursorChar)}${after}${rightHidden ? '…' : ''}`;
