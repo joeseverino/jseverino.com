@@ -1,0 +1,15 @@
+// Client-side HTML parsing is an injection sink and blocks an enforced Trusted Types
+// policy, so a script clones existing nodes or assigns text instead. This refuses an
+// assignment to innerHTML or outerHTML and a call to insertAdjacentHTML; reading the
+// properties stays allowed.
+language js
+
+or {
+  `$target.innerHTML = $html`,
+  `$target.innerHTML += $html`,
+  `$target.outerHTML = $html`,
+  `$target.outerHTML += $html`,
+  `$target.insertAdjacentHTML($position, $html)`
+} as $sink where {
+  register_diagnostic(span=$sink, message="Client-side HTML parsing is an injection sink and blocks Trusted Types: clone existing nodes or assign textContent.")
+}

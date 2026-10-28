@@ -326,7 +326,7 @@ The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-secur
 [`guard.ts`](../src/lib/markdown/guard.ts) limits raw HTML in content to listed formatting tags with listed, plain-string attributes, and `href`/`src` to `http`, `https`, `mailto`, or relative URLs. Any other tag (`<script>`, `<style>`, `<iframe>`, ...), an event handler, an expression, or an `import` fails the build.
 
 Client scripts do not assign `innerHTML`, `outerHTML`, or call
-`insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
+`insertAdjacentHTML`; the Biome plugin [`client-html-sinks.grit`](../tests/client-html-sinks.grit) rejects those browser parsing
 sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
 Button blocks render the Markdown links they hold, so the guard checks their
 URL schemes like any other link.

@@ -29,7 +29,10 @@
   "html": { "experimentalFullSupportEnabled": true },
   "plugins": [
     { "path": "./tests/literal-colors.grit", "includes": ["src/styles/**"] },
-    { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] }
+    { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] },
+    // TypeScript, and an .astro file's frontmatter and <script> elements.
+    { "path": "./tests/client-html-sinks.grit", "includes": ["src/**"] },
+    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] }
   ],
   "linter": {
     "rules": {

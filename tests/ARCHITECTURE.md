@@ -152,7 +152,6 @@ Structural health:
 - **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
 - **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
 - **Stylesheets**: component styles live in `src/styles` modules.
-- **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
 - **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
 - **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
@@ -166,6 +165,7 @@ What a maintained tool checks is left to it:
 - Biome's `noHexColors` refuses a hex color in a stylesheet.
 - The plugin [`literal-colors.grit`](./literal-colors.grit) refuses the named and `rgb()`/`hsl()` color spellings.
 - The plugin [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuses a rem, px or em `font-size`. [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds its node patterns to Biome's CSS grammar.
+- The plugin [`client-html-sinks.grit`](./client-html-sinks.grit) refuses an `innerHTML` or `outerHTML` assignment and an `insertAdjacentHTML` call under `src/`, and [`view-transition-hooks.grit`](./view-transition-hooks.grit) an `astro:after-swap` listener, in TypeScript and in an `.astro` file's frontmatter and `<script>` elements. [`unit/client-script-plugins.test.ts`](./unit/client-script-plugins.test.ts) lints a fixture of each kind.
 - The color and font-size rules skip the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip.
 - zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA. Each finding it accepts is marked by a `# zizmor: ignore[<audit>]` comment with its reason where it is found.
 

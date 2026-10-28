@@ -1,0 +1,7 @@
+// The site runs without Astro's View Transitions, so a listener for their lifecycle
+// events is client code that never runs.
+language js
+
+`"astro:after-swap"` as $event where {
+  register_diagnostic(span=$event, message="Astro View Transition hook: the site does not use View Transitions, so this listener never runs.")
+}

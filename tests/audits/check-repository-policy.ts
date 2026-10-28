@@ -94,23 +94,6 @@ if (import.meta.main) {
     failures.push(`Astro component styles must live in src/styles modules: ${componentStyles.join(', ')}`);
   }
 
-  // No View Transitions, so lifecycle listeners for them are dead client code.
-  const transitionHooks = existingTracked.filter(
-    (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) && read(file).includes('astro:after-swap'),
-  );
-  if (transitionHooks.length > 0) {
-    failures.push(`Astro View Transition hooks are not used by this site: ${transitionHooks.join(', ')}`);
-  }
-
-  // Client-side HTML parsing is an injection sink and blocks an enforced Trusted Types policy;
-  // scripts clone existing nodes or assign text instead.
-  const clientHtmlSinks = existingTracked.filter(
-    (file) => file.startsWith('src/') && /\.(?:astro|[cm]?[jt]sx?)$/.test(file) && /\.(?:innerHTML|outerHTML)\s*=|\.insertAdjacentHTML\s*\(/.test(read(file)),
-  );
-  if (clientHtmlSinks.length > 0) {
-    failures.push(`client-side HTML assignment is forbidden: ${clientHtmlSinks.join(', ')}`);
-  }
-
   // Deprecated private-link markers and internal service URLs must not enter the public snapshot.
   const publicSources = existingTracked.filter(
     (file) => file.startsWith('src/content/') || file.startsWith('src/pages/') || file.startsWith('src/components/'),
