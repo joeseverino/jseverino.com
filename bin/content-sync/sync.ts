@@ -86,6 +86,31 @@ function snapshotReader(contentDir: string): (slug: string) => ParsedFrontmatter
   };
 }
 
+interface EducationSync {
+  resumeSource: ReturnType<typeof createResumeSource>;
+  educationSource: EducationSource;
+  projection: ReturnType<typeof createPublicProjection>;
+  writer: ReturnType<typeof createWriter>;
+  pagesDir: string;
+  grammar: () => Promise<Grammar>;
+}
+
+// Writes the education pages from the index shell, the resume and the dataset; returns the
+// resume orgs that link to an /education/ page.
+async function syncEducation(shell: ParsedFrontmatter, { resumeSource, educationSource, projection, writer, pagesDir, grammar }: EducationSync) {
+  const resume = await resumeSource.load();
+  if (!resume) throw new Error(`education page needs the published resume canonical: ${resumeSource.sourceFile}`);
+  const education = buildEducation({
+    grammar: await grammar(),
+    shell,
+    resume,
+    dataset: await educationSource.load(),
+    projectPage: projection.page,
+  });
+  for (const { page, content } of education.pages) await writer.write(path.join(pagesDir, page), content);
+  return education.links;
+}
+
 export async function syncContent({
   layout,
   vaultRoot,
@@ -138,20 +163,9 @@ export async function syncContent({
   // and every document renderer after it receives those links explicitly.
   const pages = await vault.pages();
   const shell = pages.find(({ parsed }) => parsed.data.education_index);
-  let educationLinks = new Map<string, string>();
-  if (shell) {
-    const resume = await resumeSource.load();
-    if (!resume) throw new Error(`education page needs the published resume canonical: ${resumeSource.sourceFile}`);
-    const education = buildEducation({
-      grammar: await documentGrammar(),
-      shell: shell.parsed,
-      resume,
-      dataset: await educationSource.load(),
-      projectPage: projection.page,
-    });
-    for (const { page, content } of education.pages) await writer.write(path.join(pagesDir, page), content);
-    educationLinks = education.links;
-  }
+  const educationLinks = shell
+    ? await syncEducation(shell.parsed, { resumeSource, educationSource, projection, writer, pagesDir, grammar: documentGrammar })
+    : new Map<string, string>();
 
   for (const { slug, sourceDir, parsed } of pages) {
     if (parsed === shell?.parsed) continue;
@@ -197,13 +211,19 @@ export async function syncContent({
 const PLACEHOLDER = /CHANGEME/;
 const DESCRIPTION_LIMIT = 300;
 
+// The rules that matter only at ship time.
+function shipIssues(data: FrontmatterData): string[] {
+  const issues: string[] = [];
+  if (data.published !== true) issues.push('published is not true (validate a draft with --draft)');
+  if (!data.published_at) issues.push('missing published_at');
+  if (!data.cover_image) issues.push('missing cover_image');
+  return issues;
+}
+
 // Writeup rules beyond the contract's types. draft tolerates the two that only
 // matter at ship time: the published flag and its date.
 function writeupIssues(data: FrontmatterData, { draft, catalog }: { draft: boolean; catalog: ReadonlySet<string> }): string[] {
-  const issues: string[] = [];
-  if (!draft && data.published !== true) issues.push('published is not true (validate a draft with --draft)');
-  if (!draft && !data.published_at) issues.push('missing published_at');
-  if (!draft && !data.cover_image) issues.push('missing cover_image');
+  const issues: string[] = draft ? [] : shipIssues(data);
   if (typeof data.description === 'string' && data.description.trim().length > DESCRIPTION_LIMIT) {
     issues.push(`description is ${data.description.trim().length} characters (limit ${DESCRIPTION_LIMIT})`);
   }

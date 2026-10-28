@@ -4,7 +4,7 @@
 
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, DEPLOY_CHECK, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { contentDiff } from '../content-diff.ts';
+import { type ContentDiff, contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { type CheckName, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
@@ -128,6 +128,52 @@ interface LandOptions {
   hq?: (root: string, out: Output) => Promise<HqSync>;
 }
 
+// The PR once merged into the default branch: an open one is merged after its checks pass, a
+// merged one is taken as it is, and anything else is refused.
+async function merged(
+  root: string,
+  pr: PullRequest,
+  { deadline, intervalMs, out }: { deadline: number; intervalMs: number; out: Output },
+): Promise<PullRequest> {
+  out.step('pr', `#${pr.number} ${pr.title} (${pr.state.toLowerCase()})`);
+  if (pr.baseRefName !== DEFAULT_BRANCH) {
+    throw new SiteError(`#${pr.number} targets ${pr.baseRefName}; site land waits on ${DEFAULT_BRANCH}'s checks and merges only into it`, {
+      code: EXIT.usage,
+      result: { pr: pr.url },
+      fix: `retarget the PR to ${DEFAULT_BRANCH}`,
+    });
+  }
+  if (pr.state === 'CLOSED') {
+    throw new SiteError(`#${pr.number} is closed without merging`, { result: { pr: pr.url }, fix: 'reopen it or publish again' });
+  }
+  if (pr.state !== 'OPEN') return pr;
+  if (pr.isDraft) throw new SiteError(`#${pr.number} is a draft`, { result: { pr: pr.url }, fix: `gh pr ready ${pr.number}` });
+  await waitForChecks(pr, deadline, intervalMs, out);
+  gh(root, 'pr', 'merge', String(pr.number), '--squash', '--delete-branch', '--match-head-commit', pr.headRefOid);
+  out.ok('merge', `#${pr.number} squash-merged`);
+  const after = ghJson<PullRequest>(root, 'pr', 'view', String(pr.number), '--json', PR_FIELDS);
+  if (after.state !== 'MERGED') {
+    throw new SiteError(`#${after.number} is ${after.state.toLowerCase()} after the merge`, { result: { pr: after.url } });
+  }
+  return after;
+}
+
+// Each published or edited writeup is live, and each removed one returns 404.
+async function verifyLanded(diff: ContentDiff, { verify, gone, out }: Required<Pick<LandOptions, 'verify' | 'gone'>> & { out: Output }): Promise<Verified[]> {
+  const verified: Verified[] = [];
+  for (const slug of [...diff.published, ...diff.edited]) {
+    const result = await verify(slug, out);
+    verified.push({ slug, ok: result.ok, url: writeupUrl(slug) });
+    (result.ok ? out.ok : out.fail)('verify', `${slug} ${result.ok ? 'is live' : 'failed live verification'}`);
+  }
+  for (const slug of diff.removed) {
+    const result = await gone(slug);
+    verified.push({ slug, ok: result.ok, removed: true, status: result.status });
+    (result.ok ? out.ok : out.fail)('verify', `${slug} ${result.ok ? 'returns 404' : `returns ${result.status}, expected 404`}`);
+  }
+  return verified;
+}
+
 export async function land({
   root = siteRoot,
   pr: requested,
@@ -141,29 +187,8 @@ export async function land({
 }: LandOptions): Promise<LandResult> {
   requireReady(await preflight(checks, { root }), out);
   const deadline = Date.now() + timeoutMs;
-  let pr = requested ? ghJson<PullRequest>(root, 'pr', 'view', requested, '--json', PR_FIELDS) : latestContentPr(root);
-  out.step('pr', `#${pr.number} ${pr.title} (${pr.state.toLowerCase()})`);
-  if (pr.baseRefName !== DEFAULT_BRANCH) {
-    throw new SiteError(`#${pr.number} targets ${pr.baseRefName}; site land waits on ${DEFAULT_BRANCH}'s checks and merges only into it`, {
-      code: EXIT.usage,
-      result: { pr: pr.url },
-      fix: `retarget the PR to ${DEFAULT_BRANCH}`,
-    });
-  }
-
-  if (pr.state === 'CLOSED') {
-    throw new SiteError(`#${pr.number} is closed without merging`, { result: { pr: pr.url }, fix: 'reopen it or publish again' });
-  }
-  if (pr.state === 'OPEN') {
-    if (pr.isDraft) throw new SiteError(`#${pr.number} is a draft`, { result: { pr: pr.url }, fix: `gh pr ready ${pr.number}` });
-    await waitForChecks(pr, deadline, intervalMs, out);
-    gh(root, 'pr', 'merge', String(pr.number), '--squash', '--delete-branch', '--match-head-commit', pr.headRefOid);
-    out.ok('merge', `#${pr.number} squash-merged`);
-    pr = ghJson<PullRequest>(root, 'pr', 'view', String(pr.number), '--json', PR_FIELDS);
-    if (pr.state !== 'MERGED') {
-      throw new SiteError(`#${pr.number} is ${pr.state.toLowerCase()} after the merge`, { result: { pr: pr.url } });
-    }
-  }
+  const requestedPr = requested ? ghJson<PullRequest>(root, 'pr', 'view', requested, '--json', PR_FIELDS) : latestContentPr(root);
+  const pr = await merged(root, requestedPr, { deadline, intervalMs, out });
 
   const sha = pr.mergeCommit?.oid;
   if (!sha) throw new SiteError(`#${pr.number} has no merge commit`, { result: { pr: pr.url } });
@@ -171,17 +196,7 @@ export async function land({
 
   git(root, 'fetch', '--quiet', 'origin', DEFAULT_BRANCH);
   const diff = contentDiff({ cwd: root, range: `${sha}^..${sha}` });
-  const verified: Verified[] = [];
-  for (const slug of [...diff.published, ...diff.edited]) {
-    const result = await verify(slug, out);
-    verified.push({ slug, ok: result.ok, url: writeupUrl(slug) });
-    (result.ok ? out.ok : out.fail)('verify', `${slug} ${result.ok ? 'is live' : 'failed live verification'}`);
-  }
-  for (const slug of diff.removed) {
-    const result = await gone(slug);
-    verified.push({ slug, ok: result.ok, removed: true, status: result.status });
-    (result.ok ? out.ok : out.fail)('verify', `${slug} ${result.ok ? 'returns 404' : `returns ${result.status}, expected 404`}`);
-  }
+  const verified = await verifyLanded(diff, { verify, gone, out });
 
   const result = { pr: pr.url, number: pr.number, sha, diff, verified };
   const failed = verified.filter((entry) => !entry.ok);

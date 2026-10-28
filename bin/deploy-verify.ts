@@ -365,6 +365,53 @@ function releaseCandidate(): string {
   return sha;
 }
 
+interface SiteChecks {
+  report: Report;
+  run: (name: string, verify: (target: Target) => string | Promise<string>) => Promise<boolean>;
+  // A check that needs the sitemap's pages, or the note that it was skipped without them.
+  fromSitemap: (name: string, verify: () => string | Promise<string>) => unknown;
+  preview: boolean;
+}
+
+// Every check of the whole site: the sitemap's pages, then what the edge serves.
+async function verifySite(target: Target, urls: string[], { report, run, fromSitemap, preview }: SiteChecks): Promise<void> {
+  const { production } = target;
+  await fromSitemap('headers', () => verifyPageHeaders(target, urls));
+  await fromSitemap('routes', () => verifyLiveRoutes(target, urls));
+  if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(target, urls));
+  const served = [
+    ['production', verifyProductionGuard],
+    ['inline', verifyInlineHashes],
+    ['cache', verifyCacheRules],
+    ['turnstile', verifyTurnstileKey],
+  ] as const;
+  for (const [name, verify] of served) {
+    if (preview) skip(report, name, 'branch previews serve HTML through the sitedrift viewer');
+    else await run(name, verify);
+  }
+  await run('not-found', verifyNotFound);
+  await run('contact', verifyContactGate);
+  await run('security-txt', verifySecurityTxt);
+  if (production) await run('security', verifyCodeScanning);
+}
+
+// Writes the report's summary and returns the exit code.
+function conclude(report: Report, against: string, { deployed, production }: { deployed: boolean; production: boolean }): number {
+  const failed = report.failed();
+  report.write(
+    failed.length === 0 ? `All ${report.rows.length} checks passed ${against}.` : `${failed.length} of ${report.rows.length} checks failed ${against}.`,
+  );
+  if (failed.length > 0) {
+    const stalled = deployed ? '' : ' (deployment never reached a verified state)';
+    console.error(`\nfailed: ${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);
+    return 1;
+  }
+  const summary = `${report.rows.filter((row) => row.ok).length} checks passed ${against}`;
+  if (production) annotate('notice', 'deploy-verify', summary);
+  console.log(`\nok ${summary}`);
+  return 0;
+}
+
 export async function main(): Promise<number> {
   const { values } = cli({
     usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
@@ -394,42 +441,9 @@ export async function main(): Promise<number> {
   const fromSitemap = (name: string, verify: () => string | Promise<string>) =>
     sitemapOk ? check(report, name, verify) : skip(report, name, 'sitemap unavailable');
 
-  if (slug) {
-    await fromSitemap('writeup', () => verifyWriteup(target, slug, urls));
-  } else {
-    await fromSitemap('headers', () => verifyPageHeaders(target, urls));
-    await fromSitemap('routes', () => verifyLiveRoutes(target, urls));
-    if (production) await fromSitemap(DIST_BRANCH, () => verifyDist(target, urls));
-    const served = [
-      ['production', verifyProductionGuard],
-      ['inline', verifyInlineHashes],
-      ['cache', verifyCacheRules],
-      ['turnstile', verifyTurnstileKey],
-    ] as const;
-    for (const [name, verify] of served) {
-      if (preview) skip(report, name, 'branch previews serve HTML through the sitedrift viewer');
-      else await run(name, verify);
-    }
-    await run('not-found', verifyNotFound);
-    await run('contact', verifyContactGate);
-    await run('security-txt', verifySecurityTxt);
-    if (production) await run('security', verifyCodeScanning);
-  }
-
-  const against = `for \`${sha.slice(0, 12)}\` against ${origin}`;
-  const failed = report.failed();
-  report.write(
-    failed.length === 0 ? `All ${report.rows.length} checks passed ${against}.` : `${failed.length} of ${report.rows.length} checks failed ${against}.`,
-  );
-  if (failed.length > 0) {
-    const stalled = deployed ? '' : ' (deployment never reached a verified state)';
-    console.error(`\nfailed: ${failed.length} check(s) failed: ${failed.map((row) => row.label).join(', ')}${stalled}`);
-    return 1;
-  }
-  const summary = `${report.rows.filter((row) => row.ok).length} checks passed ${against}`;
-  if (production) annotate('notice', 'deploy-verify', summary);
-  console.log(`\nok ${summary}`);
-  return 0;
+  if (slug) await fromSitemap('writeup', () => verifyWriteup(target, slug, urls));
+  else await verifySite(target, urls, { report, run, fromSitemap, preview: Boolean(preview) });
+  return conclude(report, `for \`${sha.slice(0, 12)}\` against ${origin}`, { deployed, production });
 }
 
 if (import.meta.main) await exitWith('deploy-verify', main);

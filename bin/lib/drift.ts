@@ -131,7 +131,15 @@ interface RunToolOptions extends ToolOptions {
   setup: () => Run;
 }
 
-async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+type Command = (typeof COMMANDS)[number];
+interface Invocation {
+  command: Command;
+  json: boolean;
+  yes: boolean;
+}
+
+// The command and flags, or the exit code once usage is written: 0 for --help, 2 for a bad invocation.
+function invocationOf(argv: string[], usage: string, write: (line: string) => void): Invocation | number {
   let parsed;
   try {
     parsed = parse({ args: argv, allowPositionals: true, options: { json: { type: 'boolean' }, yes: { type: 'boolean' } } });
@@ -140,48 +148,58 @@ async function runTool({ usage, command: invocation, argv = process.argv.slice(2
     return 2;
   }
   const { values, positionals } = parsed;
-  const command = positionals[0];
   if (values.help) {
     write(usage);
     return 0;
   }
-  if (!COMMANDS.some((name) => name === command) || positionals.length > 1) {
+  const command = COMMANDS.find((name) => name === positionals[0]);
+  if (!command || positionals.length > 1) {
     write(usage);
     return 2;
   }
+  return { command, json: Boolean(values.json), yes: Boolean(values.yes) };
+}
 
-  const { target, source, survey, apply } = setup();
-  const items = await survey();
+function check({ target, source }: Run, items: Item[], json: boolean, invocation: string, write: (line: string) => void): number {
   const drift = drifted(items);
-  const calls = plannedCalls(items);
-
-  if (command === 'check') {
-    if (values.json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
-    else {
-      render(items, write);
-      write(drift.length ? `\n${drift.length} item(s) drifted; \`${invocation} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
-    }
-    return drift.length ? 1 : 0;
+  if (json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
+  else {
+    render(items, write);
+    write(drift.length ? `\n${drift.length} item(s) drifted; \`${invocation} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
   }
+  return drift.length ? 1 : 0;
+}
 
+// Lists the calls an apply would make and the items a person must fix; plan stops there,
+// apply with --yes makes the calls and surveys again.
+async function planOrApply(run: Run, items: Item[], { command, json, yes }: Invocation, write: (line: string) => void): Promise<number> {
+  const calls = plannedCalls(items);
   const manual = items.filter((entry) => entry.status === 'manual');
-  if (values.json && command === 'plan') {
-    write(JSON.stringify({ target, calls: calls.map(({ method, path, body }) => ({ method, path, body })), manual }, null, 2));
+  if (json && command === 'plan') {
+    write(JSON.stringify({ target: run.target, calls: calls.map(({ method, path, body }) => ({ method, path, body })), manual }, null, 2));
     return 0;
   }
   write(calls.length ? `${calls.length} call(s):` : 'no API calls needed');
   for (const step of calls) write(`  ${describeCall(step)}`);
   for (const entry of manual) write(`manual: ${entry.area} ${entry.name}: ${entry.note}`);
   if (command === 'plan' || calls.length === 0) return command === 'apply' && manual.length ? 1 : 0;
-  if (!values.yes) {
+  if (!yes) {
     write('\nnothing changed; re-run with --yes to make these calls');
     return 0;
   }
 
-  await apply(items, (call) => write(`done     ${call}`));
-  const after = drifted(await survey());
+  await run.apply(items, (call) => write(`done     ${call}`));
+  const after = drifted(await run.survey());
   for (const entry of after) write(`still    ${entry.area} ${entry.name}: ${entry.note || `${entry.have} → ${entry.want}`}`);
   return after.length ? 1 : 0;
+}
+
+async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+  const parsed = invocationOf(argv, usage, write);
+  if (typeof parsed === 'number') return parsed;
+  const run = setup();
+  const items = await run.survey();
+  return parsed.command === 'check' ? check(run, items, parsed.json, invocation, write) : planOrApply(run, items, parsed, write);
 }
 
 // A tool's main(): the command flow over the Run its setup builds from the

@@ -53,22 +53,29 @@ const GENERATED = /^src\/content\/.+\/images\//;
 
 type WriteupChange = 'published' | 'edited' | 'removed';
 
+// Records what a changed file does to its writeup, if it belongs to one: the index's own add or
+// delete publishes or removes it, and any other change edits it unless something stronger is recorded.
+function recordWriteup(writeups: Map<string, WriteupChange>, file: string, status: FileStatus): boolean {
+  const index = WRITEUP_INDEX.exec(file)?.[1];
+  if (index) {
+    writeups.set(index, status === 'A' ? 'published' : status === 'D' ? 'removed' : (writeups.get(index) ?? 'edited'));
+    return true;
+  }
+  const writeupFile = WRITEUP_FILE.exec(file)?.[1];
+  if (!writeupFile) return false;
+  if (!writeups.has(writeupFile)) writeups.set(writeupFile, 'edited');
+  return true;
+}
+
 function classify(files: readonly ChangedFile[]): ContentDiff {
   const writeups = new Map<string, WriteupChange>();
   const pages = new Set<string>();
   const generated: string[] = [];
   for (const { status, path: file } of files) {
     if (GENERATED.test(file)) generated.push(file);
-    const index = WRITEUP_INDEX.exec(file)?.[1];
-    const writeupFile = WRITEUP_FILE.exec(file)?.[1];
+    if (recordWriteup(writeups, file, status)) continue;
     const page = (PAGE_FILE.exec(file) ?? ROOT_FILE.exec(file))?.[1];
-    if (index) {
-      writeups.set(index, status === 'A' ? 'published' : status === 'D' ? 'removed' : (writeups.get(index) ?? 'edited'));
-    } else if (writeupFile) {
-      if (!writeups.has(writeupFile)) writeups.set(writeupFile, 'edited');
-    } else if (page) {
-      pages.add(page);
-    }
+    if (page) pages.add(page);
   }
   const of = (kind: WriteupChange): string[] =>
     [...writeups]

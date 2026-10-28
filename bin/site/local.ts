@@ -21,17 +21,19 @@ export interface DevOptions {
   root?: string;
 }
 
+// Syncs the drafts into the overlay and points Astro's content root at it.
+async function draftsEnv(root: string, out: Output): Promise<NodeJS.ProcessEnv> {
+  const synced = await runScript('bin/sync-content.ts', ['--drafts'], { out, timeout: SYNC_TIMEOUT_MS });
+  if (!synced.ok) throw new SiteError('the drafts sync failed', { result: synced, fix: 'site validate --draft' });
+  return { SITE_CONTENT_ROOT: path.relative(root, draftsOverlay()) };
+}
+
 // Under --json Astro's own output goes to stderr and Astro reports in JSON.
 // When Astro detects an agent it serves in the background (astro dev
 // --background) and exits; the lock file it leaves names the server.
 export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptions): Promise<DevResult> {
   requireReady(await preflight(drafts ? ['deps', 'vault'] : ['deps'], { root }), out);
-  const env: NodeJS.ProcessEnv = {};
-  if (drafts) {
-    const synced = await runScript('bin/sync-content.ts', ['--drafts'], { out, timeout: SYNC_TIMEOUT_MS });
-    if (!synced.ok) throw new SiteError('the drafts sync failed', { result: synced, fix: 'site validate --draft' });
-    env.SITE_CONTENT_ROOT = path.relative(root, draftsOverlay());
-  }
+  const env = drafts ? await draftsEnv(root, out) : {};
   const args = ['dev', ...(host ? ['--host', host] : []), ...(port ? ['--port', port] : []), ...(out.json ? ['--json'] : [])];
   out.step('dev', `astro dev${drafts ? ' with drafts from the overlay' : ''} (ctrl-c stops it)`);
   const result = await run('astro', args, { cwd: root, env, timeout: 0, stdio: out.json ? 'stderr' : 'inherit' });
@@ -46,6 +48,19 @@ export async function dev({ drafts, host, port, out, root = siteRoot }: DevOptio
     exitCode: result.code,
     next: server ? 'astro dev stop' : null,
   };
+}
+
+function reportStatus(result: Omit<StatusResult, 'next'>, driftCount: number, out: Output): void {
+  const { repo, branch, dirty, ahead, behind, deps, vault, contentPrs } = result;
+  out.step('repo', `${repo} on ${branch ?? 'detached HEAD'}${dirty ? `, ${dirty} uncommitted` : ', clean'}`);
+  const upstream = `origin/${DEFAULT_BRANCH}`;
+  out.step(DEFAULT_BRANCH, ahead === null ? `${upstream} unknown (fetch first)` : `${ahead} ahead, ${behind} behind ${upstream} (as of the last fetch)`);
+  (deps.ok ? out.step : out.warn)('deps', deps.ok ? 'match package-lock.json' : `stale: run ${INSTALL_PACKAGES} (${driftCount} differences)`);
+  (vault.ok ? out.step : out.warn)('vault', vault.ok ? vault.path : `not found at ${vault.path}`);
+  out.step('build', result.built ? `${buildOutDir}/ present` : 'not built');
+  if (contentPrs === null) out.warn('prs', 'gh unavailable; open content PRs unknown');
+  else if (contentPrs.length === 0) out.step('prs', 'no open content PRs');
+  else for (const pr of contentPrs) out.step('pr', `#${pr.number} ${pr.title} ${pr.url}`);
 }
 
 export async function status({ out, root = siteRoot }: { out: Output; root?: string }): Promise<StatusResult> {
@@ -72,15 +87,7 @@ export async function status({ out, root = siteRoot }: { out: Output; root?: str
     draftsOverlay: fs.existsSync(draftsOverlay()),
     contentPrs: prs.code === 0 ? (JSON.parse(prs.stdout) as PullRequestRef[]).filter((pr) => pr.headRefName.startsWith(CONTENT_BRANCH_PREFIX)) : null,
   };
-  out.step('repo', `${root} on ${result.branch ?? 'detached HEAD'}${dirty ? `, ${dirty} uncommitted` : ', clean'}`);
-  const upstream = `origin/${DEFAULT_BRANCH}`;
-  out.step(DEFAULT_BRANCH, ahead === null ? `${upstream} unknown (fetch first)` : `${ahead} ahead, ${behind} behind ${upstream} (as of the last fetch)`);
-  (result.deps.ok ? out.step : out.warn)('deps', result.deps.ok ? 'match package-lock.json' : `stale: run ${INSTALL_PACKAGES} (${drift.length} differences)`);
-  (result.vault.ok ? out.step : out.warn)('vault', result.vault.ok ? vault : `not found at ${vault}`);
-  out.step('build', result.built ? `${buildOutDir}/ present` : 'not built');
-  if (result.contentPrs === null) out.warn('prs', 'gh unavailable; open content PRs unknown');
-  else if (result.contentPrs.length === 0) out.step('prs', 'no open content PRs');
-  else for (const pr of result.contentPrs) out.step('pr', `#${pr.number} ${pr.title} ${pr.url}`);
+  reportStatus(result, drift.length, out);
   return {
     ...result,
     next: !result.deps.ok ? INSTALL_PACKAGES : result.contentPrs?.[0] ? `site land ${result.contentPrs[0].number}` : null,

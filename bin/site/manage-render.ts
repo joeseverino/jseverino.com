@@ -111,6 +111,30 @@ function listFooter(model: Model, cols: number): string[] {
   return wrapHints('', keyHints(model), cols);
 }
 
+// One writeup's row: pointer, featured slot, publish state, gate and edit marks, slug and title.
+function listRow(model: Model, item: Item, idx: number, slugWidth: number, cols: number): string {
+  const selected = idx === model.cursor;
+  const state = publishState(model, item);
+  const pointer = selected ? mark(GLYPH.pointer) : ' ';
+  const slot = idx < model.divider ? tint('accent', String(idx + 1).padStart(2)) : tint('muted', ' ·');
+  const tag = state.tag ? `${state.tag}  ` : '';
+  const gateMark = model.issues.get(item.slug)?.length ? mark(GLYPH.issue) : ' ';
+  const edited = Object.keys(item.edits).length ? mark(GLYPH.edited) : ' ';
+  const slugTone: Tone = selected ? (model.mode === 'move' ? 'grabbed' : 'strong') : 'plain';
+  const title = tint('muted', truncate(item.title, cols - slugWidth - tag.length - 15));
+  return `  ${pointer} ${slot} ${mark(state.glyph)} ${gateMark}${edited}${tint(slugTone, item.slug.padEnd(slugWidth))}${tint(state.glyph.tone, tag)}${title}`;
+}
+
+// What a save would write, counted by kind.
+function stagedLine(model: Model): string {
+  const { featuredChanged, publishFlips, fieldEdits } = diff(model);
+  const staged: string[] = [];
+  if (featuredChanged) staged.push('featured order');
+  if (publishFlips.length) staged.push(`${publishFlips.length} publish flip${publishFlips.length > 1 ? 's' : ''}`);
+  if (fieldEdits.length) staged.push(`${fieldEdits.length} frontmatter edit${fieldEdits.length > 1 ? 's' : ''}`);
+  return staged.length ? `  ${tint('warn', `staged: ${staged.join(' + ')} · press ${SAVE_KEY} to save`)}` : `  ${tint('muted', 'no staged changes')}`;
+}
+
 export function listFrame(model: Model): Frame {
   const cols = terminalColumns();
   const slugWidth = Math.max(...model.items.map((i) => i.slug.length), 10) + 2;
@@ -121,35 +145,30 @@ export function listFrame(model: Model): Frame {
   let focus = 0;
   model.items.forEach((item, idx) => {
     if (idx === model.divider) body.push(notFeaturedDivider(cols));
-    const selected = idx === model.cursor;
-    if (selected) focus = body.length;
-    const state = publishState(model, item);
-    const pointer = selected ? mark(GLYPH.pointer) : ' ';
-    const slot = idx < model.divider ? tint('accent', String(idx + 1).padStart(2)) : tint('muted', ' ·');
-    const tag = state.tag ? `${state.tag}  ` : '';
-    const gateMark = model.issues.get(item.slug)?.length ? mark(GLYPH.issue) : ' ';
-    const edited = Object.keys(item.edits).length ? mark(GLYPH.edited) : ' ';
-    const slugTone: Tone = selected ? (model.mode === 'move' ? 'grabbed' : 'strong') : 'plain';
-    const title = tint('muted', truncate(item.title, cols - slugWidth - tag.length - 15));
-    body.push(
-      `  ${pointer} ${slot} ${mark(state.glyph)} ${gateMark}${edited}${tint(slugTone, item.slug.padEnd(slugWidth))}${tint(state.glyph.tone, tag)}${title}`,
-    );
+    if (idx === model.cursor) focus = body.length;
+    body.push(listRow(model, item, idx, slugWidth, cols));
   });
   if (model.divider === model.items.length) body.push(notFeaturedDivider(cols));
   const onNew = model.cursor === model.items.length;
   if (onNew) focus = body.length;
   body.push(`  ${onNew ? mark(GLYPH.pointer) : ' '} ${tint('muted', ' +')}     ${tint(onNew ? 'strong' : 'muted', 'new writeup…')}`);
 
-  const { featuredChanged, publishFlips, fieldEdits } = diff(model);
-  const staged: string[] = [];
-  if (featuredChanged) staged.push('featured order');
-  if (publishFlips.length) staged.push(`${publishFlips.length} publish flip${publishFlips.length > 1 ? 's' : ''}`);
-  if (fieldEdits.length) staged.push(`${fieldEdits.length} frontmatter edit${fieldEdits.length > 1 ? 's' : ''}`);
-  const stagedLine = staged.length
-    ? `  ${tint('warn', `staged: ${staged.join(' + ')} · press ${SAVE_KEY} to save`)}`
-    : `  ${tint('muted', 'no staged changes')}`;
+  return { head, body, focus, foot: frameFoot(model, cols, [stagedLine(model), ''], listFooter(model, cols)) };
+}
 
-  return { head, body, focus, foot: frameFoot(model, cols, [stagedLine, ''], listFooter(model, cols)) };
+type Field = (typeof FIELDS)[number];
+
+const labelTone = (f: Field, focused: boolean, editing: boolean): Tone => {
+  if (focused && !editing) return 'strong';
+  return f.editable ? 'plain' : 'muted';
+};
+
+// A field's value as the detail view shows it: clipped beside its note, and marked when staged.
+function shownValue(item: Item, f: Field, valueWidth: number): string {
+  const raw = fieldValue(item, f) || (f.editable ? tint('muted', '(empty)') : '');
+  const note = f.note ? `  (${f.note})` : '';
+  const value = truncate(raw, Math.max(1, valueWidth - note.length)) + (note ? tint('muted', note) : '');
+  return f.key in item.edits ? tint('warn', value) : value;
 }
 
 export function detailFrame(model: Model): Frame {
@@ -166,12 +185,9 @@ export function detailFrame(model: Model): Frame {
     const editing = focused && model.mode === 'edit';
     const pointer = focused ? mark(GLYPH.pointer) : ' ';
     const stagedMark = f.key in item.edits ? mark(GLYPH.edited) : ' ';
-    const label = tint(focused && !editing ? 'strong' : f.editable ? 'plain' : 'muted', f.label.padEnd(labelWidth));
-    if (editing) return `  ${pointer} ${stagedMark}${label}${lineEditor(model.input, model.inputCursor, valueWidth)}`;
-    const raw = fieldValue(item, f) || (f.editable ? tint('muted', '(empty)') : '');
-    const note = f.note ? `  (${f.note})` : '';
-    const value = truncate(raw, Math.max(1, valueWidth - note.length)) + (note ? tint('muted', note) : '');
-    return `  ${pointer} ${stagedMark}${label}${f.key in item.edits ? tint('warn', value) : value}`;
+    const label = tint(labelTone(f, focused, editing), f.label.padEnd(labelWidth));
+    const value = editing ? lineEditor(model.input, model.inputCursor, valueWidth) : shownValue(item, f, valueWidth);
+    return `  ${pointer} ${stagedMark}${label}${value}`;
   });
 
   const issues = model.issues.get(item.slug) ?? [];
