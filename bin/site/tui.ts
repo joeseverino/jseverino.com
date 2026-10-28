@@ -115,7 +115,9 @@ function clipAnsi(text: string, width: number): string {
       continue;
     }
 
-    let nextAnsi = text.indexOf('\x1b', i);
+    // A run of plain text reaches the next escape after this one, so an escape that starts no
+    // sequence is taken as text (zero cells) and the clip always moves forward.
+    let nextAnsi = text.indexOf('\x1b', i + 1);
     if (nextAnsi === -1) nextAnsi = text.length;
     const fit = fitCells(text.slice(i, nextAnsi), width - visible);
     out += fit.text;

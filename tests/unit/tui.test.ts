@@ -1,10 +1,12 @@
 // The terminal layer's measuring, clipping and windowing, and the key table every binding names.
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
 import { styleText } from 'node:util';
 import { BINDINGS } from '../../bin/site/manage-input.ts';
 import { fitFrame, KEYS, keyOf, keySequence, truncate } from '../../bin/site/tui.ts';
+import { fromRoot } from '../../src/lib/site-root.ts';
 
 test('a pictograph in text presentation is one cell and an emoji is two', () => {
   for (const text of ['a™b', 'a©b', 'a®b', 'a↔b']) assert.equal(truncate(text, 3), text);
@@ -16,6 +18,14 @@ test('a clip resets only when it cuts a styled span before its close', () => {
   const green = (text: string) => styleText('green', text, { validateStream: false });
   assert.ok(truncate(green('abcdef'), 4).endsWith('\x1b[0m…'));
   assert.equal(truncate(`${green('ab')}cdef`, 4), `${green('ab')}c…`);
+});
+
+test('a lone escape that starts no sequence is clipped like plain text', () => {
+  // In a child with a deadline, so a clip that never returns fails here instead of hanging the run.
+  const source = `import { truncate } from ${JSON.stringify(fromRoot('bin/site/tui.ts'))}; process.stdout.write(truncate('ab\\x1bXcdefghij', 5));`;
+  const run = spawnSync(process.execPath, ['--input-type=module', '--eval', source], { encoding: 'utf8', timeout: 10_000 });
+  assert.equal(run.error, undefined, 'truncate did not return');
+  assert.equal(run.stdout, 'ab\x1bXc…');
 });
 
 test('a frame taller than the terminal keeps its header and footer and shows its focus line', () => {
