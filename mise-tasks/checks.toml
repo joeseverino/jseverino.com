@@ -44,9 +44,14 @@ hide = true
 run = "node tests/audits/check-d1-writes.ts"
 
 ["checks:unit"]
-description = "The node:test specs under tests/unit pass"
+description = "The node:test specs under tests/unit pass, or only the specs named"
 hide = true
-run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
+usage = '''
+arg "[spec]..." help="A spec file or glob to run" default="tests/unit/**/*.test.ts"
+'''
+# usage_spec holds the specs shell-quoted, so each reaches node whole and
+# node, not the shell, expands the glob.
+run = 'eval "set -- $usage_spec" && node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts "$@"'
 
 ["checks:docs"]
 description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
