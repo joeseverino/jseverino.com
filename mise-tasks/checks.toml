@@ -52,6 +52,11 @@ description = "Every relative link, image, and #anchor (GitHub heading slugs) in
 hide = true
 run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
 
+["checks:prose"]
+description = "Vale finds no em dash, praise word, \"not X, but Y\" contrast or narrated history in the engineering docs (tests/vale/)"
+hide = true
+run = "vale --no-global --config tests/vale/vale.ini $(git ls-files -- {{vars.docs}})"
+
 ["checks:lint"]
 description = "Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers"
 hide = true

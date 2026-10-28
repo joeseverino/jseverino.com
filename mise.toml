@@ -109,6 +109,7 @@ node = "26.12.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:astral-sh/uv" = "0.13.5"
 "aqua:biomejs/biome" = "2.6.2"
+"aqua:vale-cli/vale" = "3.24.0"
 
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.

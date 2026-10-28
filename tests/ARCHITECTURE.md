@@ -171,15 +171,18 @@ What a maintained tool checks is left to it:
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.
-- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
+- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `AGENTS.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
 - `built:links` runs after the build over everything in `dist/client/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The API routes and `/cdn-cgi/` have no file and are excluded by the task's `--exclude`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
 
 ### `check-docs.ts`
-What no link checker knows, over the same tracked docs (gitignored local files such as `AGENTS.md` are never read):
+What no link checker knows, over the same tracked docs:
 - every `mise run <task>` reference names a task, and no doc runs an npm script (every command is a mise task),
 - every backticked repo path resolves. A token in inline code is a repo path when its first segment is a top-level entry (`bin/site.ts`, `docs/`, `dist/`); it resolves when `git ls-files` tracks it or a file under it, or when `git check-ignore` reports it ignored (generated output such as `dist/` and `.cache/`). A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked up to the directory before it.
 
 Paths inside fenced code blocks are example syntax and skipped; script and task references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which the weekly link check covers).
+
+### `checks:prose`
+[Vale](https://vale.sh), pinned in `mise.toml`, reads the same tracked docs with the rules in [`tests/vale/styles/Site/`](./vale/styles/Site/), configured in [`tests/vale/vale.ini`](./vale/vale.ini): no em dash (`Dash`), no praise word or phrase of generated copy (`Hype`), no "not X, but Y" contrast (`Contrast`), and no narration of how the code came to be (`History`). Every rule fails at error level. `Dash` reads the rendered text, so a code span is left alone and so is the task list mise writes into [`docs/Commands.md`](../docs/Commands.md#every-task), which spells an argument's help with an em dash; the other rules read the raw file, code included.
 
 ### `check-page-weight.ts`
 `built:weight` runs after the build, as the deterministic complement to the CI Lighthouse run. Four byte budgets over the emitted output: per-page HTML (150 KB), CSS (75 KB: the stylesheet every page inlines, plus any external `.css`), total JS (25 KB), and each image the build ships, committed under `public/assets/` or encoded from content (1.5 MB; any at or over it fails, listed largest first). The page, CSS and JS budgets sit above the measured baseline (~115 KB worst page carrying the ~36 KB inlined stylesheet, ~5 KB JS) with headroom. The `ok` line carries the heaviest page, the totals, and the image count and weight. Raising a budget is a commit to `tests/audits/check-page-weight.ts`.
