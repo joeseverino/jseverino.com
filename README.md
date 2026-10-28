@@ -29,7 +29,7 @@ then deploys the gated build.
 | Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
 | Previews | Worker versions on workers.dev behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
-| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, and source and build audits |
+| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, source and build audits, and gates for source rules and complexity (Biome with GritQL), dead code (knip), and prose (Vale) |
 
 ## Security
 
