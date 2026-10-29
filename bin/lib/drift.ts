@@ -121,8 +121,8 @@ export interface Run {
 
 interface RunToolOptions extends ToolOptions {
   usage: string;
-  // How the tool is invoked, for the hint after a drift.
-  command: string;
+  // The command line that runs the tool, for the hint after a drift.
+  commandLine: string;
   // Called after the arguments are valid, so a bad invocation never loads
   // desired state or reads a token.
   setup: () => Run;
@@ -135,34 +135,37 @@ interface Invocation {
   yes: boolean;
 }
 
-// The command and flags, or the exit code once usage is written: 0 for --help, 2 for a bad invocation.
-function invocationOf(argv: string[], usage: string, write: (line: string) => void): Invocation | number {
+// What argv asks for: the command and flags, or, once usage is written, the exit code
+// (0 for --help, 2 for a bad invocation).
+type ParsedArgv = { invocation: Invocation } | { exitCode: 0 | 2 };
+
+function parseArgv(argv: string[], usage: string, write: (line: string) => void): ParsedArgv {
   let parsed;
   try {
     parsed = parse({ args: argv, allowPositionals: true, options: { json: { type: 'boolean' }, yes: { type: 'boolean' } } });
   } catch (error) {
     write(`${errorMessage(error)}\n\n${usage}`);
-    return 2;
+    return { exitCode: 2 };
   }
   const { values, positionals } = parsed;
   if (values.help) {
     write(usage);
-    return 0;
+    return { exitCode: 0 };
   }
   const command = COMMANDS.find((name) => name === positionals[0]);
   if (!command || positionals.length > 1) {
     write(usage);
-    return 2;
+    return { exitCode: 2 };
   }
-  return { command, json: Boolean(values.json), yes: Boolean(values.yes) };
+  return { invocation: { command, json: Boolean(values.json), yes: Boolean(values.yes) } };
 }
 
-function check({ target, source }: Run, items: Item[], json: boolean, invocation: string, write: (line: string) => void): number {
+function check({ target, source }: Run, items: Item[], json: boolean, commandLine: string, write: (line: string) => void): number {
   const drift = drifted(items);
   if (json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
   else {
     render(items, write);
-    write(drift.length ? `\n${drift.length} item(s) drifted; \`${invocation} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
+    write(drift.length ? `\n${drift.length} item(s) drifted; \`${commandLine} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
   }
   return drift.length ? 1 : 0;
 }
@@ -191,17 +194,18 @@ async function planOrApply(run: Run, items: Item[], { command, json, yes }: Invo
   return after.length ? 1 : 0;
 }
 
-async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
-  const parsed = invocationOf(argv, usage, write);
-  if (typeof parsed === 'number') return parsed;
+async function runTool({ usage, commandLine, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+  const parsed = parseArgv(argv, usage, write);
+  if ('exitCode' in parsed) return parsed.exitCode;
+  const { invocation } = parsed;
   const run = setup();
   const items = await run.survey();
-  return parsed.command === 'check' ? check(run, items, parsed.json, invocation, write) : planOrApply(run, items, parsed, write);
+  return invocation.command === 'check' ? check(run, items, invocation.json, commandLine, write) : planOrApply(run, items, invocation, write);
 }
 
 // A tool's main(): the command flow over the Run its setup builds from the
 // options. Tests pass the environment, fetch, and output through the options.
 export const toolMain =
-  <O extends ToolOptions>({ usage, command, setup }: { usage: string; command: string; setup: (options: O) => Run }) =>
+  <O extends ToolOptions>({ usage, commandLine, setup }: { usage: string; commandLine: string; setup: (options: O) => Run }) =>
   (options: O): Promise<number> =>
-    runTool({ ...options, usage, command, setup: () => setup(options) });
+    runTool({ ...options, usage, commandLine, setup: () => setup(options) });
