@@ -76,7 +76,7 @@ Biome also enforces these:
 - A stylesheet carries no literal color: `noHexColors` covers hex, and the plugin `tests/literal-colors.grit` covers the named and `rgb()`/`hsl()` spellings.
 - A stylesheet carries no rem, px or em `font-size`, through the plugin `tests/literal-font-sizes.grit`.
 - A script under `src/` assigns no `innerHTML` or `outerHTML` and calls no `insertAdjacentHTML`, through the plugin `tests/client-html-sinks.grit`, and listens for no `astro:after-swap`, through `tests/view-transition-hooks.grit`.
-- No function passes Biome's default cognitive-complexity bound (`noExcessiveCognitiveComplexity`, 15), `.astro` frontmatter and scripts included; one that would is split along its steps into named functions.
+- No function passes Biome's default cognitive-complexity bound (`noExcessiveCognitiveComplexity`, 15), `.astro` frontmatter and scripts included.
 
 `mise run checks:lint` fails on any difference or any finding at warning or above, and `mise run fix:lint` applies the fixes Biome can make.
 

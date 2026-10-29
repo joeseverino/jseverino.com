@@ -36,7 +36,7 @@
   ],
   "linter": {
     "rules": {
-      // A function past Biome's default bound is split along its steps into named functions.
+      // Outside Biome's recommended set: no function passes its default bound (15).
       "complexity": { "noExcessiveCognitiveComplexity": "error" },
       "suspicious": {
         // The terminal UI, the Markdown guard and their tests match control
