@@ -203,12 +203,11 @@ read the matching D1 row to identify the source.
 ## 6. D1 and CSP reporting checks
 
 After any change to [`cloudflare/d1.sql`](../cloudflare/d1.sql), apply the schema to the
-remote D1 database (`jseverino-contact`, the `d1` value in
-[`src/lib/site-config.ts`](../src/lib/site-config.ts)). Every statement is
-`CREATE … IF NOT EXISTS`, so re-applying is safe:
+production D1 database, the one [`wrangler.jsonc`](../wrangler.jsonc) binds as `DB`.
+Every statement is `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-mise exec -- wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
+mise run d1:schema remote
 ```
 
 Then confirm the reports still arrive: `mise run site csp --count`.

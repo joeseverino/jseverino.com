@@ -282,6 +282,19 @@ description = "Serve the build through the local Worker runtime: _headers, redir
 raw_args = true
 run = "astro preview"
 
+# Through the binding, so the database name stays in wrangler.jsonc alone.
+# Every statement in d1.sql is IF NOT EXISTS, so a re-run adds only what is
+# new. interactive: wrangler asks before it runs a file against production.
+[tasks."d1:schema"]
+description = "Apply `cloudflare/d1.sql` to the D1 database bound as `DB`: `local` (the one `mise run preview` serves) or `remote` (production)"
+interactive = true
+usage = '''
+arg "<database>" help="The local database or production" {
+  choices "local" "remote"
+}
+'''
+run = "wrangler d1 execute DB --$usage_database --file=cloudflare/d1.sql"
+
 [tasks.lighthouse]
 description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
 run = "node bin/lighthouse-check.ts"

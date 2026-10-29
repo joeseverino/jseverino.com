@@ -223,7 +223,7 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
 
    ```sh
    mise exec -- wrangler d1 create jseverino-contact
-   mise exec -- wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql
+   mise run d1:schema remote
    ```
 
 2. **The Turnstile widget.** Add one widget for `jseverino.com` (Turnstile →
@@ -287,8 +287,8 @@ in [Security](./Security.md#d1-schema). Their schema is
 `IF NOT EXISTS`, so re-applying it after a change adds only what is new:
 
 ```sh
-mise exec -- wrangler d1 execute jseverino-contact --remote --file=./cloudflare/d1.sql  # production
-mise exec -- wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql   # local, for mise run preview
+mise run d1:schema remote   # production
+mise run d1:schema local    # local, for mise run preview
 ```
 
 `TURNSTILE_SECRET_KEY` never appears in the repository, the build output, or

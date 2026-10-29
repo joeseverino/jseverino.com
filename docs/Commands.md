@@ -233,6 +233,18 @@ Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and s
 
 `check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)
 
+## `d1:schema`
+
+Apply `cloudflare/d1.sql` to the D1 database bound as `DB`: `local` (the one `mise run preview` serves) or `remote` (production)
+
+
+- **Usage:** `d1:schema <database>`
+
+### Arguments
+- **`<database>`** — The local database or production
+
+  **Choices:** `local`, `remote`
+
 ## `deploy:verify`
 
 - **Usage:** `deploy:verify`
