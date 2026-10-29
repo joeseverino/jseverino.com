@@ -719,6 +719,27 @@
       background-color: var(--color-table-stripe);
     }
   }
+  @property --scroll-fade { syntax: "<length>"; inherits: false; initial-value: 0px; }
+  @supports (animation-timeline: scroll()) {
+    :is(.table-box, pre > code) {
+      mask-image:
+        linear-gradient(
+          to left,
+          transparent,
+          currentColor var(--scroll-fade));
+      animation: scroll-fade linear both;
+      animation-timeline: scroll(self inline);
+      animation-range: calc(100% - 2rem) 100%;
+    }
+    @keyframes scroll-fade {
+      from {
+        --scroll-fade: 2rem;
+      }
+      to {
+        --scroll-fade: 0px;
+      }
+    }
+  }
   .terminal-block {
     margin-block: 1.75rem;
     border-radius: var(--radius-md);
@@ -808,6 +829,9 @@
       line-height: 1.55;
       text-wrap: balance;
     }
+    & .hero-line {
+      display: block;
+    }
     & > .hero-summary {
       max-inline-size: 38rem;
       margin-block: var(--space-20);
@@ -833,9 +857,6 @@
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
-      & .hero-line {
-        display: block;
-      }
       inline-size: fit-content;
       margin-block-start: var(--space-25);
       margin-inline: auto;

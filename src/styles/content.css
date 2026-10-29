@@ -45,6 +45,34 @@
       background-color: var(--color-table-stripe);
     }
   }
+  /* A block that scrolls sideways fades out at its end edge until it is scrolled there. Its timeline is inactive
+     while nothing overflows, so a block that fits shows no fade. */
+  @property --scroll-fade {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    :is(.table-box, pre > code) {
+      /* Only the mask's alpha counts, so any opaque color draws it. */
+      mask-image: linear-gradient(to left, transparent, currentColor var(--scroll-fade));
+      animation: scroll-fade linear both;
+      animation-timeline: scroll(self inline);
+      animation-range: calc(100% - 2rem) 100%;
+    }
+
+    @keyframes scroll-fade {
+      from {
+        --scroll-fade: 2rem;
+      }
+
+      to {
+        --scroll-fade: 0px;
+      }
+    }
+  }
+
 
   .terminal-block {
     margin-block: 1.75rem;
@@ -157,6 +185,10 @@
       line-height: 1.55;
       text-wrap: balance;
     }
+    & .hero-line {
+      display: block;
+    }
+
 
     & > .hero-summary {
       max-inline-size: 38rem;
@@ -185,10 +217,6 @@
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
-    & .hero-line {
-      display: block;
-    }
-
       inline-size: fit-content;
       margin-block-start: var(--space-25);
       margin-inline: auto;

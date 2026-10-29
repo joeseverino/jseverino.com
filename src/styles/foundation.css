@@ -144,7 +144,12 @@
     font-family: var(--font-mono);
     font-size: var(--font-ui);
     line-height: 1.65;
-    overflow-x: auto;
+
+    /* The code scrolls inside the block's padding, so its end-edge fade dims the text and never the block. */
+    & > code {
+      display: block;
+      overflow-x: auto;
+    }
   }
 
   code {
