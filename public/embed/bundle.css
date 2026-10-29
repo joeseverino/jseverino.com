@@ -688,13 +688,12 @@
     margin-block-start: 0.35rem;
   }
   .table-box {
-    overflow: hidden;
+    overflow-x: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     & table {
       inline-size: 100%;
       background: transparent;
-      table-layout: fixed;
     }
     & thead {
       background: var(--color-table-head);
@@ -710,7 +709,6 @@
       border: 1px solid transparent;
       text-align: center;
       vertical-align: middle;
-      overflow-wrap: anywhere;
     }
     & th {
       font-weight: 600;
@@ -1178,6 +1176,7 @@
   }
   .prose {
     line-height: 1.65;
+    overflow-wrap: break-word;
     & > * + * {
       margin-block-start: var(--space-30);
     }

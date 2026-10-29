@@ -1,7 +1,7 @@
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
 import { rgb } from './helpers/colors.ts';
 import { expect, type Page, settle, test } from './helpers/test.ts';
-import { anyWriteup, tableWriteup } from './helpers/writeups.ts';
+import { anyWriteup } from './helpers/writeups.ts';
 
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
@@ -267,17 +267,6 @@ test('cover images fill their fixed media boxes', async ({ page }) => {
   expect(dimensions.objectFit).toBe('cover');
   expect(dimensions.imageWidth).toBeCloseTo(dimensions.mediaWidth, 0);
   expect(dimensions.imageHeight).toBeCloseTo(dimensions.mediaHeight, 0);
-});
-
-test('tables stay contained at narrow widths', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 800 });
-  await page.goto(tableWriteup());
-
-  // The table fits within the viewport by wrapping, never a horizontal scrollbar.
-  const box = await page.locator('.table-box').first().boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.x + box!.width).toBeLessThanOrEqual(320);
-  await expect(page.locator('.table-box').first()).not.toHaveCSS('overflow-x', 'auto');
 });
 
 test('sticky resume action remains fixed and centered', async ({ page }) => {

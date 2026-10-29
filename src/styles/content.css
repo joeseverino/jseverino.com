@@ -6,16 +6,16 @@
     margin-block-start: 0.35rem;
   }
 
-  /* The border lives on the inner box so the figcaption sits below it. */
+  /* The border lives on the inner box so the figcaption sits below it. Columns size to their content and a cell
+     breaks only at spaces, so a table wider than the column scrolls inside its box. */
   .table-box {
-    overflow: hidden;
+    overflow-x: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
 
     & table {
       inline-size: 100%;
       background: transparent;
-      table-layout: fixed;
     }
 
     & thead {
@@ -34,7 +34,6 @@
       border: 1px solid transparent;
       text-align: center;
       vertical-align: middle;
-      overflow-wrap: anywhere;
     }
 
     & th {
@@ -45,6 +44,7 @@
       background-color: var(--color-table-stripe);
     }
   }
+
   /* A block that scrolls sideways fades out at its end edge until it is scrolled there. Its timeline is inactive
      while nothing overflows, so a block that fits shows no fade. */
   @property --scroll-fade {
@@ -72,7 +72,6 @@
       }
     }
   }
-
 
   .terminal-block {
     margin-block: 1.75rem;
@@ -185,10 +184,10 @@
       line-height: 1.55;
       text-wrap: balance;
     }
+
     & .hero-line {
       display: block;
     }
-
 
     & > .hero-summary {
       max-inline-size: 38rem;
@@ -610,8 +609,11 @@
 
   /* Prose (writeup body) */
 
+  /* A run glued by no-break spaces around inline code can be wider than a phone's column; it breaks rather than
+     scrolling the page sideways. */
   .prose {
     line-height: 1.65;
+    overflow-wrap: break-word;
 
     & > * + * {
       margin-block-start: var(--space-30);
