@@ -11,10 +11,13 @@ description = "No document under src/content is `published: false`"
 hide = true
 # The committed snapshot is what deploys; drafts preview from the gitignored
 # overlay `site dev --drafts` writes. Untracked documents count, since a build
-# reads them. YAML's core schema spells false only as false, False or FALSE.
+# reads them. awk reads only the frontmatter, from a `---` on line one to the
+# next line that opens with `---` (gray-matter's bounds), so a body quoting
+# frontmatter passes. YAML's core schema spells false only as false, False or
+# FALSE.
 run = [
   "git ls-files --cached --others --exclude-standard -- 'src/content/**/index.mdx' | grep -q . || { echo 'no index.mdx under src/content; run mise run sync:content' >&2; exit 1; }",
-  "if git grep --untracked -nIiE '^published[[:space:]]*:[[:space:]]*false' -- 'src/content/**/index.mdx'; then echo 'fix: run `mise run sync:content` (drafts belong in the overlay `site dev --drafts` writes)' >&2; exit 1; fi",
+  '''git ls-files -z --cached --others --exclude-standard -- 'src/content/**/index.mdx' | xargs -0 awk 'FNR == 1 { head = /^---([^-]|$)/; next } head && /^---/ { head = 0 } head && /^published[[:space:]]*:[[:space:]]*(false|False|FALSE)[[:space:]]*(#|$)/ { print FILENAME ":" FNR ": " $0; found = 1 } END { exit found }' || { echo 'fix: run `mise run sync:content` (drafts belong in the overlay `site dev --drafts` writes)' >&2; exit 1; }''',
 ]
 
 ["checks:security-txt"]
