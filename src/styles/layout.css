@@ -15,6 +15,12 @@
     margin-inline: auto;
   }
 
+  /* A card section: its heading, divider and grid share the card measure's edge. */
+  .cards {
+    inline-size: min(var(--cards), calc(100% - (var(--gutter) * 2)));
+    margin-inline: auto;
+  }
+
   main {
     flex: 1;
     padding-block-start: var(--space-25);
@@ -136,8 +142,6 @@
 
   .archive-section {
     container: archive / inline-size;
-    max-inline-size: var(--cards);
-    margin-inline: auto;
     padding-block-start: var(--space-20);
 
     & summary {
@@ -237,14 +241,14 @@
     margin-block: var(--space-30) 25px;
   }
 
-  .center-text {
-    text-align: center;
-  }
-
   @container flow (inline-size < 33.5rem) {
     .center-text {
       text-align: start;
     }
+  }
+
+  .center-text {
+    text-align: center;
   }
 
   /* A page with one message: it sits in the middle of the space between header and footer. */

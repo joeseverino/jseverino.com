@@ -40,8 +40,6 @@
   }
 
   .software-more {
-    max-inline-size: var(--cards);
-    margin-inline: auto;
     margin-block-start: var(--space-50);
   }
 

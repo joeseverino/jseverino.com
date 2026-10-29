@@ -312,6 +312,10 @@
     inline-size: var(--w-wide);
     margin-inline: auto;
   }
+  .cards {
+    inline-size: min(var(--cards), calc(100% - (var(--gutter) * 2)));
+    margin-inline: auto;
+  }
   main {
     flex: 1;
     padding-block-start: var(--space-25);
@@ -413,8 +417,6 @@
   }
   .archive-section {
     container: archive / inline-size;
-    max-inline-size: var(--cards);
-    margin-inline: auto;
     padding-block-start: var(--space-20);
     & summary {
       display: flex;
@@ -498,13 +500,13 @@
   .page-divider {
     margin-block: var(--space-30) 25px;
   }
-  .center-text {
-    text-align: center;
-  }
   @container flow (inline-size < 33.5rem) {
     .center-text {
       text-align: start;
     }
+  }
+  .center-text {
+    text-align: center;
   }
   .empty-state {
     display: grid;
@@ -926,8 +928,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: 24px;
-    max-inline-size: var(--cards);
-    margin-inline: auto;
     padding: 0;
     list-style: none;
   }
