@@ -72,7 +72,7 @@ WRANGLER_SEND_METRICS = "false"
 [vars]
 # The engineering docs the docs gates read, as git pathspecs, so a gate reads
 # only tracked files and never a local or untracked copy.
-docs = "README.md AGENTS.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+docs = "README.md AGENTS.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' ':(glob)tests/*.md'"
 # The statuses the online link checks (links:*) count as a live link.
 links_accept = "200,204,206,301,302,303,307,308,403,429,999"
 
