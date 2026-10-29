@@ -5,6 +5,9 @@ const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;
 
 export const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, (char) => ENTITIES[char] ?? char);
 
+// A run of short items set inline. The no-break space holds each dot to the item before it, so a wrapped line never opens on one.
+export const joinInline = (items: readonly (string | false | undefined)[]): string => items.filter(Boolean).join('\u00a0· ');
+
 // Readers for a built page. The hast parse follows the HTML spec, so values
 // come back with their character references decoded.
 type Element = Extract<HastNode, { type: 'element' }>;

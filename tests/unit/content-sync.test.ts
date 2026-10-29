@@ -200,11 +200,13 @@ describe('education', () => {
         '<h2 class="visually-hidden">Institutions</h2>',
         orgRow({ name: 'School', location: 'City' }, { href: '/education/school/' }),
         roleRow({ title: 'BS Computing', dates: '2020' }),
-        '- 1 course completed · 1 in progress',
+        '- 1 course completed\u00a0· 1 in progress',
       ].join('\n\n'),
     );
     const detail = parseFrontmatter(detailPage.content);
     assert.equal(detail.data.path, '/education/school/');
+    // Each dot stays on the line of the item before it, so a wrapped intro never opens on one.
+    assert.equal(detail.data.intro, 'BS Computing\u00a0· City\u00a0· 2020');
     assert.match(detail.content, /CS 101 — Intro \(Fall 2024\)/);
     assert.doesNotMatch(detail.content, /CS 301/);
   });

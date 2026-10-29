@@ -5,6 +5,7 @@ import registry from '../data/package-registry.json' with { type: 'json' };
 import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
 import { getGithubRepos } from './github.ts';
+import { joinInline } from './html.ts';
 import { FEATURED, PACKAGES, type PackageConfig, SELF_HOSTED, SKIP, WRITEUPS } from './software.config.ts';
 
 type SoftwarePackage = PackageConfig & {
@@ -92,5 +93,5 @@ function formatUpdated(ym?: string): string {
 }
 
 export function metaLine(entry: SoftwareEntry): string {
-  return [entry.language, formatUpdated(entry.updatedAt)].filter(Boolean).join(' · ');
+  return joinInline([entry.language, formatUpdated(entry.updatedAt)]);
 }
