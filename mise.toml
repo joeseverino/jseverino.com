@@ -282,6 +282,12 @@ description = "Serve the build through the local Worker runtime: _headers, redir
 raw_args = true
 run = "astro preview"
 
+[tasks."dev:look"]
+description = "Screenshot pages of the build as `preview` serves it, at each width in light and dark, to see a layout change; exit 1 on a page that scrolls sideways or fails to load"
+raw_args = true
+timeout = "30m"
+run = "node bin/dev-look.ts"
+
 # Through the binding, so the database name stays in wrangler.jsonc alone.
 # Every statement in d1.sql is IF NOT EXISTS, so a re-run adds only what is
 # new. interactive: wrangler asks before it runs a file against production.

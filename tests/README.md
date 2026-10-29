@@ -107,6 +107,7 @@ mise run browser:edge                        # the edge runtime suite
 mise run browser:e2e                         # functional specs across Chromium, Firefox, WebKit
 mise run browser:visual                      # visual regression (macOS Chromium)
 mise run browser:visual --update-snapshots   # re-baseline after an intentional design change
+mise run dev:look all                        # see every page at each width and scheme; fails on sideways scroll
 ```
 
 ---

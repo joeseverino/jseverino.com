@@ -45,6 +45,7 @@ mise install
 mise doctor project                     # is this checkout ready to work in
 mise run dev                            # Astro dev server
 mise run build && mise run preview      # the build on the Workers runtime
+mise run dev:look /resume/              # screenshots at 390, 768 and 1440, light and dark, before a layout change is done
 ```
 
 `mise doctor project` runs the readiness checks `mise.toml` declares under

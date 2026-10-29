@@ -259,6 +259,12 @@ After the merge deploys, from a residential IP: verify remote CI and the live pr
 
 Start the local dev server
 
+## `dev:look`
+
+- **Usage:** `dev:look`
+
+Screenshot pages of the build as `preview` serves it, at each width in light and dark, to see a layout change; exit 1 on a page that scrolls sideways or fails to load
+
 ## `diff:build`
 
 - **Usage:** `diff:build`
