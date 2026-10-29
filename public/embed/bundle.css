@@ -264,7 +264,10 @@
     font-family: var(--font-mono);
     font-size: var(--font-ui);
     line-height: 1.65;
-    overflow-x: auto;
+    & > code {
+      display: block;
+      overflow-x: auto;
+    }
   }
   code {
     font-family: var(--font-mono);
@@ -316,8 +319,11 @@
   main > * + * {
     margin-block-start: var(--space-30);
   }
-  .content-flow > * + * {
-    margin-block-start: var(--space-30);
+  .content-flow {
+    container: flow / inline-size;
+    & > * + * {
+      margin-block-start: var(--space-30);
+    }
   }
   .page-hero {
     container: hero / inline-size;
@@ -494,6 +500,11 @@
   }
   .center-text {
     text-align: center;
+  }
+  @container flow (inline-size < 33.5rem) {
+    .center-text {
+      text-align: start;
+    }
   }
   .empty-state {
     display: grid;

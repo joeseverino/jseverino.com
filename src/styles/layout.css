@@ -24,8 +24,13 @@
     margin-block-start: var(--space-30);
   }
 
-  .content-flow > * + * {
-    margin-block-start: var(--space-30);
+  /* A container so text under the hero can follow the hero's alignment, which keys off this same column width. */
+  .content-flow {
+    container: flow / inline-size;
+
+    & > * + * {
+      margin-block-start: var(--space-30);
+    }
   }
 
   /* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
@@ -234,6 +239,12 @@
 
   .center-text {
     text-align: center;
+  }
+
+  @container flow (inline-size < 33.5rem) {
+    .center-text {
+      text-align: start;
+    }
   }
 
   /* A page with one message: it sits in the middle of the space between header and footer. */
