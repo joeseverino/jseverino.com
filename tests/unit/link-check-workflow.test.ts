@@ -11,7 +11,8 @@ test('a pull request that edits any doc the docs gates read runs the link check'
   const docs = execFileSync('mise', ['config', 'get', '-f', fromRoot('mise.toml'), 'vars.docs'], { encoding: 'utf8' })
     .trim()
     .split(/\s+/)
-    .map((spec) => spec.replaceAll("'", ''));
+    // A pathspec's magic prefix, such as :(glob), says how git matches; the path follows it.
+    .map((spec) => spec.replaceAll("'", '').replace(/^:\([^)]*\)/, ''));
   const workflow = load(fs.readFileSync(fromRoot('.github/workflows/link-check.yml'), 'utf8')) as { on: { pull_request: { paths: string[] } } };
   const paths = workflow.on.pull_request.paths;
   for (const spec of docs) {
