@@ -1,6 +1,7 @@
 // The REST core the bin/ scripts' API clients (Cloudflare, GitHub) share: a bearer token, JSON
-// bodies, a timeout on every request, and an error that names the call by a label the provider
-// chooses, so a token or a resolved id never reaches output.
+// bodies, and an error that names the call by a label the provider chooses, so a token or a
+// resolved id never reaches output. Every request times out, so an API that stops answering
+// fails the run with the call named instead of holding a CI job until its own limit.
 
 // What the clients need from fetch: a URL string and an init.
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
@@ -16,20 +17,21 @@ export class RestError extends Error {
   }
 }
 
-export interface RestOptions {
+export interface RestOptions<ErrorBody> {
   token: string;
   // Headers the provider adds to every request.
   headers?: Record<string, string>;
   // Read at each request when omitted, so a test can stand in for the global.
   fetch?: Fetch | undefined;
-  // The error detail in a failed response's body, in the provider's shape.
-  detail: (payload: unknown) => string | undefined;
+  // The error detail in a failed response's body, read in the provider's documented error shape.
+  // A body that is not JSON reads as empty, so every field may be missing.
+  detail: (payload: Partial<ErrorBody>) => string | undefined;
 }
 
 export type Send = (method: string, url: string, label: string, body?: unknown) => Promise<Response>;
 
 // The token only ever goes into the Authorization header; nothing here formats a request's headers into output.
-export function createSend({ token, headers = {}, fetch, detail }: RestOptions): Send {
+export function createSend<ErrorBody>({ token, headers = {}, fetch, detail }: RestOptions<ErrorBody>): Send {
   return async (method, url, label, body) => {
     const response = await (fetch ?? globalThis.fetch)(url, {
       method,
@@ -37,7 +39,10 @@ export function createSend({ token, headers = {}, fetch, detail }: RestOptions):
       signal: AbortSignal.timeout(TIMEOUT_MS),
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
-    if (!response.ok) throw new RestError(method, label, response.status, detail(await response.json().catch(() => ({}))));
+    if (!response.ok) {
+      const payload: Partial<ErrorBody> = await response.json().catch(() => ({}));
+      throw new RestError(method, label, response.status, detail(payload));
+    }
     return response;
   };
 }

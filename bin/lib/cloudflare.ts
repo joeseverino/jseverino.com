@@ -8,7 +8,6 @@ import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import type {
   AccessApp,
   AccessPolicy,
-  ApiErrorEntry,
   ApiPayload,
   ApiSchema,
   DesiredState,
@@ -49,12 +48,11 @@ export interface ClientOptions {
 
 export type Client = ReturnType<typeof createClient>;
 
-const errorDetail = (payload: unknown): string =>
-  ((payload as ApiPayload<unknown>).errors ?? []).map((error: ApiErrorEntry) => `${error.code ?? ''} ${error.message ?? ''}`.trim()).join('; ');
+const errorDetail = ({ errors = [] }: ApiPayload<unknown>): string => errors.map((error) => `${error.code ?? ''} ${error.message ?? ''}`.trim()).join('; ');
 
 export function createClient({ token, fetch }: ClientOptions) {
   if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
-  const send = createSend({ token, fetch, detail: errorDetail });
+  const send = createSend<ApiPayload<unknown>>({ token, fetch, detail: errorDetail });
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
     template.replace(/:([a-z]+)/g, (_, name: string) => {

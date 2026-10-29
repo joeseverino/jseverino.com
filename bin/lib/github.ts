@@ -19,7 +19,7 @@ export type Client = ReturnType<typeof createClient>;
 
 export function createClient({ token, fetch }: ClientOptions) {
   if (!token) throw new Error('no GitHub token: set GITHUB_TOKEN or GH_TOKEN, or sign in with `gh auth login`');
-  const send = createSend({
+  const send = createSend<{ message: string }>({
     token,
     fetch,
     headers: {
@@ -27,7 +27,7 @@ export function createClient({ token, fetch }: ClientOptions) {
       // The version where code scanning default setup reports javascript-typescript alone, as its PATCH takes it.
       'X-GitHub-Api-Version': '2026-03-10',
     },
-    detail: (payload) => (payload as { message?: string }).message,
+    detail: ({ message }) => message,
   });
   // An error is labeled by the path alone, without the query.
   const call = (method: string, url: string, body?: unknown) => send(method, url, new URL(url).pathname, body);
