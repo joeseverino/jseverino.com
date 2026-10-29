@@ -89,6 +89,7 @@ public/       static assets, _headers, _redirects
 cloudflare/   zone settings and the D1 schema, as code
 contracts/    the content and contact contracts, and the generated OpenAPI
 bin/          the site CLI, the content sync, generators, and checks
+mise-tasks/   the gates and build steps each mise task runs
 tests/        unit, audit, Playwright, and edge suites, and their configs
 docs/         architecture, operations, and guides
 ```
@@ -99,6 +100,7 @@ docs/         architecture, operations, and guides
 mise install             # the pinned tools
 mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
 mise run check           # the gate: every static check, the build, every check on the build
+mise run ci              # check, then the browser suites: everything CI runs
 mise run site --help     # scaffold, validate, publish, and verify writeups
 ```
 
