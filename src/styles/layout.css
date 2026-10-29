@@ -230,25 +230,21 @@
     font-weight: var(--weight-label);
   }
 
-  .page-divider,
-  .article-separator {
+  .page-divider {
+    margin-block: var(--space-30) 25px;
     border: 0;
     border-block-start: 2px solid var(--color-text);
     opacity: 0.4;
   }
 
-  .page-divider {
-    margin-block: var(--space-30) 25px;
+  .center-text {
+    text-align: center;
   }
 
   @container flow (inline-size < 33.5rem) {
     .center-text {
       text-align: start;
     }
-  }
-
-  .center-text {
-    text-align: center;
   }
 
   /* A page with one message: it sits in the middle of the space between header and footer. */

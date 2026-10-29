@@ -576,10 +576,6 @@
     }
   }
 
-  .article-separator {
-    margin-block-start: var(--space-30);
-  }
-
   /* Prose (writeup body) */
 
   .prose {

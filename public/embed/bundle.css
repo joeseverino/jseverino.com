@@ -491,22 +491,19 @@
     font-size: var(--font-2xs);
     font-weight: var(--weight-label);
   }
-  .page-divider,
-  .article-separator {
+  .page-divider {
+    margin-block: var(--space-30) 25px;
     border: 0;
     border-block-start: 2px solid var(--color-text);
     opacity: 0.4;
   }
-  .page-divider {
-    margin-block: var(--space-30) 25px;
+  .center-text {
+    text-align: center;
   }
   @container flow (inline-size < 33.5rem) {
     .center-text {
       text-align: start;
     }
-  }
-  .center-text {
-    text-align: center;
   }
   .empty-state {
     display: grid;
@@ -1154,9 +1151,6 @@
       margin-block: var(--space-5);
       margin-inline: 0 var(--space-10);
     }
-  }
-  .article-separator {
-    margin-block-start: var(--space-30);
   }
   .prose {
     line-height: 1.65;
