@@ -30,7 +30,7 @@ concurrency:
 # into its step's summary, and its failures into the log.
 jobs:
   lychee:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
       MISE_ENABLE_TOOLS: aqua:lycheeverse/lychee
