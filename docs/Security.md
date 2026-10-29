@@ -221,11 +221,11 @@ if any `_headers` line exceeds 2000 characters. The policy module is
 [`src/lib/csp.ts`](../src/lib/csp.ts) (`htmlPolicy`, `scanInline`,
 `inlineHashes`, `hashSource`).
 
-Astro's `security.csp` option is not used. It delivers the policy in a `<meta>`
+Astro's `security.csp` option is not used. The Cloudflare adapter does not
+take Astro's static headers, so the option delivers the policy in a `<meta>`
 element, which browsers ignore for `frame-ancestors`, `report-to`, and
-`report-uri`, and it does not pin Turnstile's script by host. `build-csp` does
-the same hashing and writes response headers, where all of those directives
-apply.
+`report-uri`. `build-csp` does the same hashing and writes response headers,
+where all of those directives apply.
 
 Component scripts are emitted as external `/_astro/*.js` bundles
 (via `vite.build.assetsInlineLimit: 0` in
