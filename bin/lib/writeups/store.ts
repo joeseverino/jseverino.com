@@ -296,12 +296,11 @@ export interface PlanResult {
   receipt?: MutationReceipt;
 }
 
-function planUpdates(plan: WriteupPlan): NonNullable<WriteupPlan['updates']> {
+// A plan arrives as JSON, so its shape is checked before any field is read.
+function assertPlanShape(plan: WriteupPlan): void {
   if (!plan || typeof plan !== 'object' || Array.isArray(plan)) throw new WriteupError('invalid', 'plan must be a JSON object');
-  const rawUpdates = plan.updates ?? [];
-  if (!Array.isArray(rawUpdates)) throw new WriteupError('invalid', 'updates must be a list');
+  if (!Array.isArray(plan.updates ?? [])) throw new WriteupError('invalid', 'updates must be a list');
   if (plan.featured_order !== undefined && !Array.isArray(plan.featured_order)) throw new WriteupError('invalid', 'featured_order must be a list');
-  return rawUpdates;
 }
 
 // A plan reviewed against an older dashboard is refused, so it never overwrites a change made since.
@@ -334,21 +333,25 @@ function fieldUpdates(rawUpdates: NonNullable<WriteupPlan['updates']>, bySlug: M
   return updates;
 }
 
-// Adds the featured and featured_order changes the complete order implies to updates.
-function featureInOrder(featuredOrder: string[], writeups: Writeup[], bySlug: Map<string, Writeup>, updates: Map<string, Record<string, unknown>>): string[] {
+// The plan's featured order as slugs, refused when it repeats a slug or names an unknown one.
+function checkedOrder(featuredOrder: string[], bySlug: Map<string, Writeup>): string[] {
   const order = featuredOrder.map(String);
   if (new Set(order).size !== order.length) throw new WriteupError('invalid', 'featured_order contains duplicate slugs');
   const unknown = order.filter((slug) => !bySlug.has(slug));
   if (unknown.length) throw new WriteupError('not_found', `featured_order contains unknown slugs: ${unknown.join(', ')}`);
+  return order;
+}
+
+// The featured and featured_order values the complete order gives each writeup whose values differ.
+function placements(order: readonly string[], writeups: readonly Writeup[]): Map<string, { featured: boolean; featured_order: number | null }> {
   const slots = new Map(order.map((slug, index) => [slug, index + 1]));
+  const changes = new Map<string, { featured: boolean; featured_order: number | null }>();
   for (const w of writeups) {
     const featured = slots.has(w.slug);
     const slot = slots.get(w.slug) ?? null;
-    if (w.featured !== featured || w.featured_order !== slot) {
-      updates.set(w.slug, { ...updates.get(w.slug), featured, featured_order: slot });
-    }
+    if (w.featured !== featured || w.featured_order !== slot) changes.set(w.slug, { featured, featured_order: slot });
   }
-  return order;
+  return changes;
 }
 
 // The new text of each writeup the updates change, and the fields that changed in it.
@@ -369,12 +372,13 @@ function replacementsFor(updates: Map<string, Record<string, unknown>>, bySlug: 
 
 // Scalar updates and the complete featured order in one transaction.
 export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: TransactionOptions = {}): PlanResult {
-  const rawUpdates = planUpdates(plan);
+  assertPlanShape(plan);
   const writeups = loadWriteups(store);
   assertFresh(writeups, plan.source_fingerprint);
   const bySlug = new Map(writeups.map((w) => [w.slug, w]));
-  const updates = fieldUpdates(rawUpdates, bySlug);
-  const order = plan.featured_order === undefined ? undefined : featureInOrder(plan.featured_order, writeups, bySlug, updates);
+  const updates = fieldUpdates(plan.updates ?? [], bySlug);
+  const order = plan.featured_order === undefined ? undefined : checkedOrder(plan.featured_order, bySlug);
+  if (order) for (const [slug, placement] of placements(order, writeups)) updates.set(slug, { ...updates.get(slug), ...placement });
   const { replacements, changedFields } = replacementsFor(updates, bySlug);
   if (replacements.size === 0) {
     return { noOp: true, changedWriteups: [], changedFields: {}, featuredOrderAfter: order ?? featuredOrder(writeups).map((e) => e.slug) };
