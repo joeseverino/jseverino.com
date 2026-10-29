@@ -106,7 +106,7 @@ depends = ["packages"]
 # backend lists its commands in lazy_bins, which mise makes into the shims
 # that install it.
 [tools]
-node = "26.12.1"
+node = "26.13.0"
 "aqua:lycheeverse/lychee" = "0.24.2"
 "aqua:biomejs/biome" = "2.6.2"
 
