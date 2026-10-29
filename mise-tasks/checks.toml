@@ -39,7 +39,7 @@ env = { NODE_OPTIONS = "--max-old-space-size=4096" }
 run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
 
 ["checks:d1"]
-description = "Every handler under src/lib/api that writes D1 has a unit spec running it against cloudflare/d1.sql in node:sqlite"
+description = "Every module under src that writes D1 is imported by a unit spec that runs it against cloudflare/d1.sql in node:sqlite"
 hide = true
 run = "node tests/audits/check-d1-writes.ts"
 

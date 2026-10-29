@@ -131,11 +131,18 @@ Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`
 
 ### `check-d1-writes.ts`
 
-Every handler under `src/lib/api` that writes D1 is imported by a unit spec
-that also loads [`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts), which builds
-`cloudflare/d1.sql` in `node:sqlite`. SQLite then rejects a column the schema
-lacks or a value count that differs from the column list, and the specs hold
-the per-IP caps; the contact spec holds the handler to the limits
+Every module under `src` that passes an `INSERT`, `UPDATE` or `DELETE` to
+D1's `prepare()` or `exec()` is imported, beside
+[`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts), by one unit spec; the audit
+parses each file with TypeScript and resolves each import from the spec's
+directory. `d1-sqlite.ts` builds `cloudflare/d1.sql` in `node:sqlite`, so
+SQLite rejects a column the schema lacks or a value count that differs from
+the column list. The per-IP caps live inside each `INSERT`, and two specs run
+them against that schema: "caps an IP at the hourly limit inside one
+statement" in [`contact-api.test.ts`](./unit/contact-api.test.ts) and "stores
+at most thirty reports per IP per hour" in
+[`csp-report-api.test.ts`](./unit/csp-report-api.test.ts). The contact spec
+also holds the handler to the limits
 [`contracts/contact.v1.json`](../contracts/contact.v1.json) declares. The API
 Shield document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
 is regenerated and compared whole by `mise run checks:contracts`, which also
