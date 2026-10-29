@@ -54,7 +54,8 @@ const GENERATED = /^src\/content\/.+\/images\//;
 type WriteupChange = 'published' | 'edited' | 'removed';
 
 // Records what a changed file does to its writeup, if it belongs to one: the index's own add or
-// delete publishes or removes it, and any other change edits it unless something stronger is recorded.
+// delete publishes or removes it, and any other change edits it unless a published or removed state is
+// already recorded for that writeup.
 function recordWriteup(writeups: Map<string, WriteupChange>, file: string, status: FileStatus): boolean {
   const index = WRITEUP_INDEX.exec(file)?.[1];
   if (index) {

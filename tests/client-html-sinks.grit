@@ -10,6 +10,4 @@ or {
   `$target.outerHTML = $html`,
   `$target.outerHTML += $html`,
   `$target.insertAdjacentHTML($position, $html)`
-} as $sink where {
-  register_diagnostic(span=$sink, message="Client-side HTML parsing is an injection sink and blocks Trusted Types: clone existing nodes or assign textContent.")
-}
+} as $sink where { register_diagnostic(span=$sink, message="Build the markup from DOM nodes instead: createElement, cloneNode, or assign textContent.") }
