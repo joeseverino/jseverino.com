@@ -4,9 +4,9 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import { localDate } from '../../src/lib/dates.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { type MiseTask, miseTasks } from '../lib/mise.ts';
 import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';

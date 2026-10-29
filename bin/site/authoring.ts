@@ -1,10 +1,10 @@
 // Vault-side commands: scaffold, validate, order the featured list, browse technologies.
 import fs from 'node:fs';
 import path from 'node:path';
-import { localDate } from '../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { writeupPath } from '../../src/lib/site-config.ts';
 import { checkContent } from '../content-sync/sync.ts';
+import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';

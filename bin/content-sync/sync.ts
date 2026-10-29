@@ -2,11 +2,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { frontmatterIssues } from '../../src/lib/content-contract.ts';
-import { localDate } from '../../src/lib/dates.ts';
 import { type FrontmatterData, type ParsedFrontmatter, parseFrontmatter, stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { readTechnologyGroups } from '../../src/lib/technology-groups.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
+import { localDate } from '../lib/dates.ts';
 import { mapLimit } from '../lib/map-limit.ts';
 import {
   collectAssetRefs,

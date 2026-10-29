@@ -3,10 +3,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { collectionFields, contentContract, contentContractFingerprint } from '../../../src/lib/content-contract.ts';
-import { isoDate, localDate } from '../../../src/lib/dates.ts';
+import { isoDate } from '../../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
 import { type CheckedDocument, checkContent } from '../../content-sync/sync.ts';
+import { localDate } from '../dates.ts';
 import { DetailedError } from '../detailed-error.ts';
 import { PAGES_FOLDER, vaultRoot, WRITEUPS_FOLDER } from '../local-paths.ts';
 import { fingerprint, type MutationReceipt, receipt } from './receipt.ts';
