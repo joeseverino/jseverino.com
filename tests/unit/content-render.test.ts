@@ -126,6 +126,13 @@ describe(':::center and :::hero', () => {
   test('wrap their rendered body', () => {
     assert.equal(render(':::center\nHi\n:::', 'pages'), '<div class="center-text"><p>Hi</p></div>');
     assert.equal(render(':::hero\n# Title\n:::', 'pages'), '<header class="hero"><h1>Title</h1></header>');
+  test("a hero paragraph's hard-broken lines each become a line of their own", () => {
+    assert.equal(
+      render(':::hero\nOne *a*  \nTwo\n:::', 'pages'),
+      '<header class="hero"><p><span class="hero-line">One <em>a</em></span><span class="hero-line">Two</span></p></header>',
+    );
+  });
+
   });
 
   test('nest with longer fences outside', () => {

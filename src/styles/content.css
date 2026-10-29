@@ -185,6 +185,10 @@
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
+    & .hero-line {
+      display: block;
+    }
+
       inline-size: fit-content;
       margin-block-start: var(--space-25);
       margin-inline: auto;
