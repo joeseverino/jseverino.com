@@ -245,7 +245,7 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
 
    ```sh
    mise run build
-   TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'printf "TURNSTILE_SECRET_KEY=%s\n" "$TURNSTILE_SECRET_KEY" | mise exec -- wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
+   TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'jq -n "{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}" | mise exec -- wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
    ```
 
    Later versions inherit the secret. Rotate it with
