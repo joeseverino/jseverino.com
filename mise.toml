@@ -102,40 +102,18 @@ hint = "Run `mise exec -- playwright install chromium firefox webkit`."
 depends = ["packages"]
 
 # A tool one gate or one task runs is lazy: `mise install` leaves it out, and
-# the first run of its command installs it from mise.lock. A tool named by its
-# backend lists its commands in lazy_bins, which mise makes into the shims
-# that install it.
+# the first run of its command installs it from mise.lock.
 [tools]
 node = "26.13.0"
-"aqua:lycheeverse/lychee" = "0.24.2"
-"aqua:biomejs/biome" = "2.6.4"
-
-[tools."aqua:zizmorcore/zizmor"]
-version = "1.31.1"
-lazy = true
-lazy_bins = ["zizmor"]
-
-[tools."github:jdx/jactionlint"]
-version = "2.4.0"
-lazy = true
-lazy_bins = ["jactionlint"]
-
+lychee = "0.24.2"
+biome = "2.6.4"
+zizmor = { version = "1.31.1", lazy = true }
+jactionlint = { version = "2.4.0", lazy = true }
 # checks:shellcheck, and jactionlint on every workflow `run:` script.
-[tools."aqua:koalaman/shellcheck"]
-version = "0.11.0"
-lazy = true
-lazy_bins = ["shellcheck"]
-
+shellcheck = { version = "0.11.0", lazy = true }
 # make:font's uvx.
-[tools."aqua:astral-sh/uv"]
-version = "0.13.6"
-lazy = true
-lazy_bins = ["uv", "uvx"]
-
-[tools."aqua:vale-cli/vale"]
-version = "3.25.1"
-lazy = true
-lazy_bins = ["vale"]
+uv = { version = "0.13.6", lazy = true }
+vale = { version = "3.25.1", lazy = true }
 
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.

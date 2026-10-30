@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     env:
-      MISE_ENABLE_TOOLS: aqua:lycheeverse/lychee
+      MISE_ENABLE_TOOLS: lychee
       # lychee checks github.com links through the API with this token, under its
       # rate limit instead of the anonymous one.
       GITHUB_TOKEN: ${{ github.token }}
