@@ -8,7 +8,7 @@ import { fromRoot } from '../../../src/lib/site-root.ts';
 export const read = <T>(file: string): T => readJson<T>(fromRoot(file));
 
 // A request one of the API fakes received.
-export interface RecordedCall {
+interface RecordedCall {
   method: string;
   path: string;
   body: unknown;

@@ -273,20 +273,6 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     },
     run: async ({ values, out }) => (await siteOps()).csp({ count: values.count, limit: values.limit, directive: values.directive, pii: values.pii, out }),
   }),
-  'd1-apply': define({
-    summary: 'Apply cloudflare/d1.sql to the remote D1 database (needs --confirm)',
-    usage: 'site d1-apply --confirm',
-    help: 'The schema is CREATE ... IF NOT EXISTS, so it only adds. Needs CLOUDFLARE_API_TOKEN (op run).',
-    options: { confirm: flag },
-    run: async ({ values, out }) => (await siteOps()).d1Apply({ confirm: values.confirm, out }),
-  }),
-  headers: define({
-    summary: 'Check the live security headers on one path',
-    usage: 'site headers [<path>]',
-    help: 'HEAD against the production origin, redirects not followed.',
-    positionals: [0, 1],
-    run: async ({ positionals: [pathname], out }) => (await siteOps()).headers({ path: pathname, out }),
-  }),
   manage: define({
     summary: 'Interactive writeup manager: featured order, publish state, gate issues (needs a terminal)',
     usage: 'site manage',

@@ -81,6 +81,17 @@ function single(node: ContainerDirective): MdastNode {
   return element('div', [link], { className: ['actions'] });
 }
 
+// A hero paragraph's hard-broken lines each wrap and balance on their own, so each is its own block-level span.
+function heroLines(node: RootContent): RootContent | MdastNode {
+  if (!isParagraph(node) || !node.children.some((child) => child.type === 'break')) return node;
+  const lines: PhrasingContent[][] = [[]];
+  for (const child of node.children) {
+    if (child.type === 'break') lines.push([]);
+    else lines.at(-1)?.push(child);
+  }
+  return { ...node, children: lines.map((line) => element('span', line, { className: ['hero-line'] })) } as unknown as MdastNode;
+}
+
 function side(node: ContainerDirective): MdastNode {
   const [only] = node.children;
   const bare = node.children.length === 1 && isParagraph(only) && only.children.length === 1 && only.children[0]?.type === 'image';
@@ -93,7 +104,7 @@ const CONTAINERS: Record<string, (node: ContainerDirective) => MdastNode | reado
   buttons,
   button: single,
   center: (node) => element('div', node.children, { className: ['center-text'] }),
-  hero: (node) => element('header', node.children, { className: ['hero'] }),
+  hero: (node) => element('header', node.children.map(heroLines), { className: ['hero'] }),
   split: (node) => element('div', node.children, { className: ['split'] }),
   side,
 };

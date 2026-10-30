@@ -221,11 +221,11 @@ if any `_headers` line exceeds 2000 characters. The policy module is
 [`src/lib/csp.ts`](../src/lib/csp.ts) (`htmlPolicy`, `scanInline`,
 `inlineHashes`, `hashSource`).
 
-Astro's `security.csp` option is not used. It delivers the policy in a `<meta>`
+Astro's `security.csp` option is not used. The Cloudflare adapter does not
+take Astro's static headers, so the option delivers the policy in a `<meta>`
 element, which browsers ignore for `frame-ancestors`, `report-to`, and
-`report-uri`, and it does not pin Turnstile's script by host. `build-csp` does
-the same hashing and writes response headers, where all of those directives
-apply.
+`report-uri`. `build-csp` does the same hashing and writes response headers,
+where all of those directives apply.
 
 Component scripts are emitted as external `/_astro/*.js` bundles
 (via `vite.build.assetsInlineLimit: 0` in
@@ -377,11 +377,11 @@ Rescan after any change to `bin/build-csp.ts` or `public/_headers` to confirm
 Observatory has not regressed. The Pentest-Tools findings reappear on every
 rescan.
 
-The same checks run against the live deployed site with `site headers [<path>]`
-(`--json` for a structured result): the live headers plus named pass/fail checks
-(`hasCsp`, `noUnsafeInlineScript`, `hasCspReportTo`, `hasCspReportUri`,
-`hasReportingEndpoints`), exiting non-zero when any fails. This is the canonical
-post-deploy verification step in
+The same checks run against the live deployed site with `mise run deploy:verify`
+(`--origin <url>` for one deployment), which holds every sitemap route to the
+predicates in [`src/lib/edge-expectations.ts`](../src/lib/edge-expectations.ts)
+and exits non-zero on any finding. This is the canonical post-deploy
+verification step in
 [`docs/Release-Checklist.md`](./Release-Checklist.md#5-cloudflare-deploy-verification).
 
 The HAR audit goes deeper: capture HAR files for `/`, `/contact/` (which

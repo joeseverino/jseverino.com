@@ -15,14 +15,23 @@ export const REQUIRED_FIELDS = ['Contact', 'Encryption', 'Expires', 'Canonical',
 
 // The monthly scheduled check fails, and GitHub emails the failure, at least
 // twice before the file lapses.
-export const EXPIRES_MIN_DAYS = 60;
+const EXPIRES_MIN_DAYS = 60;
+
+// Whole days from `now` until an Expires value. RFC 9116 requires an RFC 3339
+// date-time, and anything else throws.
+export function expiresInDays(expires: string, now = Temporal.Now.instant()): number {
+  return Math.floor(now.until(Temporal.Instant.from(expires)).total('days'));
+}
 
 // Why an Expires value fails the gate at `now`, or undefined when it passes.
-export function expiryProblem(expires: string, now = Date.now()): string | undefined {
-  const at = new Date(expires).getTime();
-  if (Number.isNaN(at)) return `security.txt Expires is not a parseable date: ${expires}`;
-  if (at <= now) return `security.txt Expires (${expires}) is in the past`;
-  const days = Math.floor((at - now) / 86_400_000);
+export function expiryProblem(expires: string, now = Temporal.Now.instant()): string | undefined {
+  let days: number;
+  try {
+    days = expiresInDays(expires, now);
+  } catch {
+    return `security.txt Expires is not an RFC 3339 date-time: ${expires}`;
+  }
+  if (days < 0) return `security.txt Expires (${expires}) is in the past`;
   if (days < EXPIRES_MIN_DAYS) return `security.txt Expires in ${days}d (< ${EXPIRES_MIN_DAYS}d). Bump it, re-sign, commit.`;
   return undefined;
 }

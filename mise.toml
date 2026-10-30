@@ -1,4 +1,4 @@
-# The toolchain and every gate, declared once.
+# The toolchain, the environment, the entry points and the operator's tools.
 #
 #   mise install        the pinned tools (versions here, checksums in mise.lock)
 #   mise run <task>     first installs the npm packages when package.json or
@@ -8,13 +8,17 @@
 #                       build, then every gate on what it built
 #   mise run browser    the browser suites, one at a time
 #   mise run ci         every gate the pipeline runs
-#   mise run <gate>     one gate, e.g. `mise run checks:types`
-#   mise tasks          the list
+#   mise run <gate>     one gate a verdict names, e.g. `mise run checks:types`
+#   mise tasks          the entry points and tools; --hidden adds every gate
 #
-# A gate is a task named <job>:<gate>: checks:* run before a build, built:*
-# against the build in dist/client/, browser:* in a browser. Each aggregate runs its
-# job by glob (`mise run -c 'checks:*'`), so a gate added here runs locally and
-# in CI with no second list to edit. `-c` keeps going past a failure and names
+# A gate is a task named <job>:<gate>, declared in its job's file under
+# mise-tasks/ (mise-tasks/checks.toml for checks:*), mise's default task
+# directory, where it reads every .toml as a task file and every executable as
+# a file task. checks:* run before a build, built:* against the build in
+# dist/client/, browser:* in a browser. Each aggregate runs its job by glob
+# (`mise run -c 'checks:*'`), so a gate added there runs locally and in CI with
+# no second list to edit. Every gate is `hide = true`: the glob and
+# `mise run <gate>` still reach it. `-c` keeps going past a failure and names
 # every gate that failed. Under `-c` a task whose dependency failed still
 # starts, so no built:* gate depends on the build: the aggregates run the build
 # first and the built:* gates only after it succeeded. A failing gate prints
@@ -68,7 +72,7 @@ WRANGLER_SEND_METRICS = "false"
 [vars]
 # The engineering docs the docs gates read, as git pathspecs, so a gate reads
 # only tracked files and never a local or untracked copy.
-docs = "README.md AGENTS.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' 'tests/*.md'"
+docs = "README.md AGENTS.md .github/SECURITY.md .github/CONTRIBUTING.md 'docs/*.md' ':(glob)tests/*.md'"
 # The statuses the online link checks (links:*) count as a live link.
 links_accept = "200,204,206,301,302,303,307,308,403,429,999"
 
@@ -97,165 +101,63 @@ hint = "Run `mise exec -- playwright install chromium firefox webkit`."
 # It loads @playwright/test from node_modules.
 depends = ["packages"]
 
+# A tool one gate or one task runs is lazy: `mise install` leaves it out, and
+# the first run of its command installs it from mise.lock. A tool named by its
+# backend lists its commands in lazy_bins, which mise makes into the shims
+# that install it.
 [tools]
-node = "24.22.1"
+node = "26.13.0"
 "aqua:lycheeverse/lychee" = "0.24.2"
-"aqua:zizmorcore/zizmor" = "1.31.1"
-"github:jdx/jactionlint" = "2.3.0"
-"aqua:koalaman/shellcheck" = "0.11.0"
-"aqua:astral-sh/uv" = "0.13.5"
-"aqua:biomejs/biome" = "2.6.2"
+"aqua:biomejs/biome" = "2.6.4"
 
-# ------------------------------------------------------------------ checks
+[tools."aqua:zizmorcore/zizmor"]
+version = "1.31.1"
+lazy = true
+lazy_bins = ["zizmor"]
+
+[tools."github:jdx/jactionlint"]
+version = "2.4.0"
+lazy = true
+lazy_bins = ["jactionlint"]
+
+# checks:shellcheck, and jactionlint on every workflow `run:` script.
+[tools."aqua:koalaman/shellcheck"]
+version = "0.11.0"
+lazy = true
+lazy_bins = ["shellcheck"]
+
+# make:font's uvx.
+[tools."aqua:astral-sh/uv"]
+version = "0.13.6"
+lazy = true
+lazy_bins = ["uv", "uvx"]
+
+[tools."aqua:vale-cli/vale"]
+version = "3.25.1"
+lazy = true
+lazy_bins = ["vale"]
+
+# ------------------------------------------------------------ entry points
+# The aggregates CI's jobs and the inner loop run, and the builds they serve.
 
 [tasks.checks]
 description = "CI job build, first phase: every static gate, collect-all"
 alias = "fast"
 run = "mise run -c 'checks:*'"
 
-[tasks."checks:contracts"]
-description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source"
-run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: make:icons --check"
-
-[tasks."checks:drafts"]
-description = "No document under src/content is `published: false`"
-run = "node tests/audits/check-no-drafts.ts"
-
-[tasks."checks:security-txt"]
-description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
-run = "node tests/audits/check-security-txt.ts"
-
-[tasks."checks:types"]
-description = "Every TypeScript file compiles under one strict program, and the Worker's routes again under the Workers runtime types wrangler.jsonc declares"
-depends = ["sync:worker-types"]
-# astro sync writes the generated types under .astro/ that tsc reads.
-run = ["astro sync --silent", "tsc -p .", "tsc -p src/tsconfig.worker.json"]
-
-[tasks."checks:astro"]
-description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
-depends = ["sync:worker-types"]
-# astro sync and astro check both rewrite .astro/; never at once.
-wait_for = ["checks:types"]
-env = { NODE_OPTIONS = "--max-old-space-size=4096" }
-run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
-
-[tasks."checks:d1"]
-description = "The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database"
-run = "node tests/audits/check-d1-parity.ts"
-
-[tasks."checks:unit"]
-description = "The node:test specs under tests/unit pass"
-run = "node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts 'tests/unit/**/*.test.ts'"
-
-[tasks."checks:docs"]
-description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
-run = "node tests/audits/check-docs.ts {{vars.docs}}"
-
-[tasks."checks:doc-links"]
-description = "Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves"
-run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
-
-[tasks."checks:lint"]
-description = "Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers"
-run = "biome ci --error-on-warnings || { status=$?; echo 'fix: mise run fix:lint, fix what it reports it cannot, then commit the result' >&2; exit $status; }"
-
-[tasks."checks:css-vars"]
-description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
-run = "node tests/audits/check-css.ts"
-
-[tasks."checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout"
-run = "node tests/audits/check-repository-policy.ts"
-
-[tasks."checks:workflows"]
-description = "zizmor finds no security issue in the workflows; an accepted finding carries an inline reason"
-# Offline: the online audits need a token and the network, and a gate gives the
-# same verdict on a laptop and in CI.
-run = "zizmor --offline --quiet .github"
-
-[tasks."checks:actionlint"]
-description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
-# The correctness profile is actionlint's checks; zizmor (checks:workflows)
-# owns the security audits.
-run = "jactionlint --profile correctness --no-hints"
-
-[tasks."checks:shellcheck"]
-description = "ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names"
-run = "find mise-tasks -type f -exec shellcheck {} +"
-
-[tasks."checks:renovate"]
-description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
-# Pinned here and moved by .github/renovate.json's regex manager for this file. npm
-# prints only errors, so the deprecation warnings of Renovate's own
-# dependencies stay out of the gate's output. The exact pin is the gate on the
-# release, so the machine's npm release-age hold does not apply to this fetch.
-env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
-run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
-
-[tasks."checks:tasks"]
-description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"
-run = "mise tasks validate --errors-only"
-
-[tasks."checks:patch"]
-description = "No whitespace error or conflict marker in any tracked file; synced content may keep trailing spaces and blank last lines"
-# Against the empty tree, so every tracked file is checked, edited or not. Synced content
-# keeps the trailing double space that Markdown reads as a line break, so only its
-# end-of-line rules are relaxed, and its conflict markers still fail.
-run = [
-  "git diff --check $(git hash-object -t tree /dev/null) -- . ':!src/content' ':!tests/fixtures/content'",
-  "git -c core.whitespace=-blank-at-eol,-blank-at-eof diff --check $(git hash-object -t tree /dev/null) -- src/content tests/fixtures/content",
-]
-
-# ------------------------------------------------------------------- build
-
 [tasks.build]
 description = "The build every deploy ships: astro build, then the CSP hashes"
 timeout = "10m"
 run = "node bin/build-static.ts"
 
-[tasks."build:browser"]
-description = "The build the browser suites serve under PREBUILT: the deploy build, with the test site key"
-timeout = "10m"
-run = "node tests/browser-test-env.ts build"
-
-# ------------------------------------------------------------------- built
-
 [tasks.built]
 description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
 run = "mise run -c 'built:*'"
 
-[tasks."built:links"]
-description = "Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route"
-# Root-relative and https://jseverino.com/ URLs both resolve against the static
-# build; a directory link needs its index.html, as the assets layer serves it.
-# The excluded paths have no file: the Worker routes (`run_worker_first` in
-# wrangler.jsonc) and Cloudflare's own /cdn-cgi/.
-run = "lychee --offline --include-fragments --no-progress --index-files index.html --root-dir '{{config_root}}/dist/client' --remap '^https://jseverino\\.com/(.*)$ file://{{config_root}}/dist/client/$1' --exclude '^file://.*/dist/client/(?:api|__sitedrift|cdn-cgi)/' dist/client"
-
-[tasks."built:html"]
-description = "html-validate: no built page repeats an id, every <img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text"
-run = [
-  "html-validate --config tests/html-validate.json dist",
-  "node tests/audits/check-html.ts",
-]
-
-[tasks."built:weight"]
-description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
-run = "node tests/audits/check-page-weight.ts"
-
-[tasks."built:headers"]
-description = "The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*"
-run = "node tests/audits/check-headers.ts"
-
-[tasks."built:seo"]
-description = "Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD"
-run = "node tests/audits/check-seo.ts"
-
-# ----------------------------------------------------------------- browser
-# Each suite builds what it serves unless PREBUILT is set, which `mise run
-# browser` and the CI legs set after building once. Arguments after the task
-# name go to Playwright: `mise run browser:e2e --ui`,
-# `mise run browser:visual --update-snapshots`.
+[tasks."build:browser"]
+description = "The build the browser suites serve under PREBUILT: the deploy build, with the test site key"
+timeout = "10m"
+run = "node tests/browser-test-env.ts build"
 
 # One suite at a time (-j 1): each starts browsers and a server, and two at
 # once exhaust a small machine's memory. The suites serve this one build.
@@ -265,30 +167,10 @@ timeout = "45m"
 env = { PREBUILT = "1" }
 run = ["mise run build:browser", "mise run -c -j 1 'browser:*'"]
 
-[tasks."setup:browsers"]
-description = "Install the named Playwright browsers and their system packages"
-timeout = "20m"
-usage = '''
-arg "<browser>..." help="A browser to install" {
-  choices "chromium" "firefox" "webkit"
-}
-'''
-run = "playwright install --with-deps $usage_browser"
-
 [tasks.ci]
 description = "Every gate the pipeline runs: check, then the browser suites"
 timeout = "90m"
 run = "mise run -c -j 1 check ::: browser"
-
-[tasks."browser:e2e"]
-description = "The functional Playwright specs pass across Chromium, Firefox, and WebKit"
-timeout = "15m"
-run = "playwright test -c tests/playwright.config.ts"
-
-[tasks."browser:edge"]
-description = "The built site served by the local Worker runtime: CSP, headers, 404, contact refusals and security.txt"
-timeout = "5m"
-run = "playwright test -c tests/playwright.edge.config.ts"
 
 # ------------------------------------------------------------------- links
 # Every external link, online. Never a gate: the verdict turns on other sites,
@@ -400,6 +282,25 @@ description = "Serve the build through the local Worker runtime: _headers, redir
 raw_args = true
 run = "astro preview"
 
+[tasks."dev:look"]
+description = "Screenshot pages of the build as `preview` serves it, at each width in light and dark, to see a layout change; exit 1 on a page that scrolls sideways or fails to load"
+raw_args = true
+timeout = "30m"
+run = "node bin/dev-look.ts"
+
+# Through the binding, so the database name stays in wrangler.jsonc alone.
+# Every statement in d1.sql is IF NOT EXISTS, so a re-run adds only what is
+# new. interactive: wrangler asks before it runs a file against production.
+[tasks."d1:schema"]
+description = "Apply `cloudflare/d1.sql` to the D1 database bound as `DB`: `local` (the one `mise run preview` serves) or `remote` (production)"
+interactive = true
+usage = '''
+arg "<database>" help="The local database or production" {
+  choices "local" "remote"
+}
+'''
+run = "wrangler d1 execute DB --$usage_database --file=cloudflare/d1.sql"
+
 [tasks.lighthouse]
 description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
 run = "node bin/lighthouse-check.ts"
@@ -442,3 +343,13 @@ run = "node bin/sign-security.ts"
 [tasks."clean:generated"]
 description = "Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and synced content stay"
 run = "rm -rf dist .astro node_modules/.vite"
+
+[tasks."setup:browsers"]
+description = "Install the named Playwright browsers and their system packages"
+timeout = "20m"
+usage = '''
+arg "<browser>..." help="A browser to install" {
+  choices "chromium" "firefox" "webkit"
+}
+'''
+run = "playwright install --with-deps $usage_browser"

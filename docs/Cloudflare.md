@@ -218,13 +218,12 @@ CI deploys every version after the first. These steps run once, by hand and in
 order, for a new account or a fresh instance of the site. The wrangler commands
 run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
 
-1. **The D1 database.** Create it under the name `SITE.d1` in
-   [`src/lib/site-config.ts`](../src/lib/site-config.ts), then apply the
-   schema:
+1. **The D1 database.** Create it under the `database_name` in
+   [`wrangler.jsonc`](../wrangler.jsonc), then apply the schema:
 
    ```sh
    mise exec -- wrangler d1 create jseverino-contact
-   mise run site d1-apply --confirm
+   mise run d1:schema remote
    ```
 
 2. **The Turnstile widget.** Add one widget for `jseverino.com` (Turnstile →
@@ -246,7 +245,7 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
 
    ```sh
    mise run build
-   TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'printf "TURNSTILE_SECRET_KEY=%s\n" "$TURNSTILE_SECRET_KEY" | mise exec -- wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
+   TURNSTILE_SECRET_KEY="op://<vault>/<turnstile item>/credential" op run -- sh -c 'jq -n "{TURNSTILE_SECRET_KEY: env.TURNSTILE_SECRET_KEY}" | mise exec -- wrangler deploy --config dist/server/wrangler.json --secrets-file /dev/stdin'
    ```
 
    Later versions inherit the secret. Rotate it with
@@ -275,21 +274,21 @@ adapter adds `main` and the assets directory at build time.
 
 | Name | Kind | Set in | Read by |
 |---|---|---|---|
-| `DB` | D1 binding to `jseverino-contact` (`SITE.d1`) | `wrangler.jsonc` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts), [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) |
+| `DB` | D1 binding to `jseverino-contact` | `wrangler.jsonc` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts), [`src/pages/api/csp-report.ts`](../src/pages/api/csp-report.ts) |
 | `TURNSTILE_SECRET_KEY` | Worker secret | the first deploy, then `wrangler secret put` | [`src/lib/api/contact.ts`](../src/lib/api/contact.ts) |
 | `PUBLIC_TURNSTILE_SITE_KEY` | public build variable | the repository variable in [`.github/repo.json`](../.github/repo.json), which CI's `build` job reads | [`src/components/ContactForm.astro`](../src/components/ContactForm.astro) |
 
 The D1 binding carries no `database_id`: at deploy, wrangler looks the database
 up by name in the account and binds it, so the public file holds no account
-resource ID. `mise run checks:d1` holds the binding's name to `SITE.d1`. The
+resource ID. `site contact` and `site csp` read the same name from there. The
 database holds two tables, `contact_submissions` and `csp_reports`, described
 in [Security](./Security.md#d1-schema). Their schema is
 [`cloudflare/d1.sql`](../cloudflare/d1.sql); every statement is
 `IF NOT EXISTS`, so re-applying it after a change adds only what is new:
 
 ```sh
-mise run site d1-apply --confirm                                                 # production
-mise exec -- wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql   # local, for mise run preview
+mise run d1:schema remote   # production
+mise run d1:schema local    # local, for mise run preview
 ```
 
 `TURNSTILE_SECRET_KEY` never appears in the repository, the build output, or

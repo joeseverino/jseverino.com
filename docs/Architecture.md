@@ -326,7 +326,7 @@ The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-secur
 [`guard.ts`](../src/lib/markdown/guard.ts) limits raw HTML in content to listed formatting tags with listed, plain-string attributes, and `href`/`src` to `http`, `https`, `mailto`, or relative URLs. Any other tag (`<script>`, `<style>`, `<iframe>`, ...), an event handler, an expression, or an `import` fails the build.
 
 Client scripts do not assign `innerHTML`, `outerHTML`, or call
-`insertAdjacentHTML`; the repository-policy gate rejects those browser parsing
+`insertAdjacentHTML`; the Biome plugin [`client-html-sinks.grit`](../tests/client-html-sinks.grit) rejects those browser parsing
 sinks. The lightbox preserves rich captions by cloning their existing DOM nodes.
 Button blocks render the Markdown links they hold, so the guard checks their
 URL schemes like any other link.
@@ -524,7 +524,7 @@ using the compatibility date in [`wrangler.jsonc`](../wrangler.jsonc). `mise run
 
 ## 14. Release gate
 
-Every gate is a mise task in [`mise.toml`](../mise.toml), named `<job>:<gate>`; what each asserts is its `description`, rendered into the [task list](./Commands.md#every-task).
+Every gate is a hidden mise task named `<job>:<gate>`, declared in its job's file under [`mise-tasks/`](../mise-tasks/); what each asserts is its `description`, which `mise tasks --hidden` lists. The aggregates that run them are in [`mise.toml`](../mise.toml) and the [task list](./Commands.md#every-task).
 
 - `mise run fast` runs the static `checks:*` gates, collect-all.
 - `mise run check` runs them, then the production build, then the `built:*` gates on what it built; CI's `build` job runs exactly this.
@@ -621,7 +621,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-24.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Its tool and package caches are ones the lockfiles verify (mise's downloads against `mise.lock`'s checksums, npm's against `package-lock.json`'s integrity hashes), so a cache another workflow wrote cannot change what a job installs. The Astro image cache is the one cache nothing verifies, and the `build` job that produces the shipped artifact restores it.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-26.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; the repository policy audit fails on a `-latest` label or a job without a timeout. The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Its tool and package caches are ones the lockfiles verify (mise's downloads against `mise.lock`'s checksums, npm's against `package-lock.json`'s integrity hashes), so a cache another workflow wrote cannot change what a job installs. The Astro image cache is the one cache nothing verifies, and the `build` job that produces the shipped artifact restores it.
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 

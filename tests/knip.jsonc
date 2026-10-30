@@ -1,0 +1,43 @@
+{
+  "$schema": "../node_modules/knip/schema-jsonc.json",
+  // Paths are relative to the repository root, where checks:knip runs.
+  "entry": [
+    // The operator's scripts: mise tasks run them, and bin/site/local.ts
+    // spawns draft-cover-alt.ts and seo-preview.ts by path.
+    "bin/*.ts",
+    // The audits each gate under mise-tasks/ runs; knip's mise plugin reads
+    // only the tasks in mise.toml.
+    "tests/audits/check-*.ts",
+    // checks:unit's specs and its --test-reporter.
+    "tests/unit/**/*.test.ts",
+    "tests/unit/helpers/quiet-reporter.ts",
+    // The visual suite's build config, passed to astro as --config.
+    "tests/fixtures/astro.config.ts",
+    // The fixture content tree, which content.config.ts's glob loaders read
+    // when the visual suite sets SITE_CONTENT_ROOT to it.
+    "tests/fixtures/content/**/*.mdx",
+    // Loaded by path through Vite's ssrLoadModule in bin/lib/render-document.ts.
+    "src/components/content/WriteupPreview.astro"
+  ],
+  "playwright": {
+    // The suites' configs, which browser:* passes to playwright test -c.
+    "config": ["tests/playwright*.config.ts"]
+  },
+  "ignoreDependencies": [
+    // `cloudflare:workers` is the Workers runtime's own module, which knip
+    // reads as the npm package `cloudflare`.
+    "cloudflare",
+    // Command-line tools the gates under mise-tasks/ run: astro check
+    // (checks:astro), html-validate (built:html), jscpd (checks:duplication).
+    "@astrojs/check",
+    "html-validate",
+    "jscpd",
+    // Spawned from node_modules/.bin by bin/lighthouse-check.ts.
+    "lighthouse"
+  ],
+  "ignoreBinaries": [
+    // tests/unit/link-check-workflow.test.ts runs mise itself, which no npm
+    // package provides.
+    "mise"
+  ]
+}

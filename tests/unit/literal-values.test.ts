@@ -28,7 +28,7 @@ function flagged(css: string): string[] {
   write(path.join(dir, 'fixture.css'), css);
   // From the checkout, where mise resolves the pinned Biome; the config is the scratch one.
   const result = spawnResult('biome', ['lint', `--config-path=${dir}`, '--reporter=rdjson', path.join(dir, 'fixture.css')], { cwd: siteRoot });
-  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.error, undefined, result.error);
   const lines = css.split('\n');
   const { diagnostics }: { diagnostics: Diagnostic[] } = JSON.parse(result.stdout);
   return diagnostics.map(({ code, location: { range } }) => {

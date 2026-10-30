@@ -138,7 +138,7 @@ describe('text fidelity', () => {
     );
   });
 
-  test('break opportunities in table cells never change the text', () => {
+  test('a table cell renders its source text unchanged', () => {
     const cell = fc
       .array(fc.stringMatching(/^[a-z0-9]{1,4}$/), { minLength: 1, maxLength: 6 })
       .chain((parts) => fc.constantFrom('.', ':').map((separator) => parts.join(separator)));

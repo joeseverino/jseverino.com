@@ -8,7 +8,6 @@ import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import type {
   AccessApp,
   AccessPolicy,
-  ApiErrorEntry,
   ApiPayload,
   ApiSchema,
   DesiredState,
@@ -24,7 +23,8 @@ import type {
   Widget,
   Zone,
 } from './cloudflare-types.ts';
-import { applySteps, type Call, changedKeys, type Fetch, fields, type Item, item, loadDesired as load, type Method, pick, type Run, same } from './drift.ts';
+import { applySteps, type Call, changedKeys, fields, type Item, item, loadDesired as load, type Method, pick, type Run, same } from './drift.ts';
+import { absentOn404, createSend, type Fetch, RestError } from './rest.ts';
 
 export type * from './cloudflare-types.ts';
 
@@ -39,29 +39,20 @@ const FIREWALL_PHASE = 'http_request_firewall_custom';
 const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 
-class ApiError extends Error {
-  status: number;
-
-  constructor(method: string, template: string, status: number, errors: ApiErrorEntry[] = []) {
-    const detail = errors.map((error) => `${error.code ?? ''} ${error.message ?? ''}`.trim()).join('; ');
-    super(`${method} ${template} → ${status}${detail ? ` (${detail})` : ''}`);
-    this.status = status;
-  }
-}
-
 export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 export interface ClientOptions {
   token: string | undefined;
-  fetch?: Fetch;
+  fetch?: Fetch | undefined;
 }
 
 export type Client = ReturnType<typeof createClient>;
 
-// The token only ever goes into the Authorization header; nothing here
-// formats a request's headers into output.
-export function createClient({ token, fetch = globalThis.fetch }: ClientOptions) {
+const errorDetail = ({ errors = [] }: ApiPayload<unknown>): string => errors.map((error) => `${error.code ?? ''} ${error.message ?? ''}`.trim()).join('; ');
+
+export function createClient({ token, fetch }: ClientOptions) {
   if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
+  const send = createSend<ApiPayload<unknown>>({ token, fetch, detail: errorDetail });
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
     template.replace(/:([a-z]+)/g, (_, name: string) => {
@@ -70,34 +61,22 @@ export function createClient({ token, fetch = globalThis.fetch }: ClientOptions)
       return encodeURIComponent(id);
     });
 
-  // Response bodies are trusted to carry the documented v4 shape; nothing validates them.
+  // Response bodies are trusted to carry the documented v4 shape; nothing validates them. An error
+  // is labeled by the template, so it never prints a resolved id.
   async function request<T>(method: Method, template: string, body?: unknown): Promise<ApiPayload<T>> {
-    const response = await fetch(`${API_BASE}${resolve(template)}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    });
+    const response = await send(method, `${API_BASE}${resolve(template)}`, template, body);
     const payload: ApiPayload<T> = await response.json().catch(() => ({}));
-    if (!response.ok || payload.success === false) throw new ApiError(method, template, response.status, payload.errors);
+    if (payload.success === false) throw new RestError(method, template, response.status, errorDetail(payload));
     return payload;
   }
+  const get = async <T>(template: string): Promise<T> => (await request<T>('GET', template)).result as T;
 
   return {
     ids,
     request,
-    get: async <T>(template: string): Promise<T> => (await request<T>('GET', template)).result as T,
+    get,
     // A missing ruleset entrypoint (or setting) answers 404, which reads as absent.
-    maybe: async <T>(template: string): Promise<T | null> => {
-      try {
-        return (await request<T>('GET', template)).result as T;
-      } catch (error) {
-        if (error instanceof ApiError && error.status === 404) return null;
-        throw error;
-      }
-    },
+    maybe: <T>(template: string): Promise<T | null> => absentOn404(get<T>(template)),
     async list<T>(template: string): Promise<T[]> {
       const results: T[] = [];
       for (let page = 1; ; page += 1) {

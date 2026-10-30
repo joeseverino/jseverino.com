@@ -4,8 +4,9 @@ The complete reference for how `jseverino.com` is verified: the exact assertion
 each check makes, the command that runs it, and how to fix a failure. A short
 tour is in [`tests/README.md`](./README.md).
 
-Verification lives in four directories, and [`mise.toml`](../mise.toml) names
-each check a gate and sequences them:
+Verification lives in four directories, and the task files under
+[`mise-tasks/`](../mise-tasks/) name each check a gate, which the aggregates in
+[`mise.toml`](../mise.toml) sequence:
 
 | Directory | What it holds | How it runs |
 | :--- | :--- | :--- |
@@ -18,9 +19,12 @@ each check a gate and sequences them:
 
 A gate is a task named `<job>:<gate>`: `checks:*` run before a build, `built:*`
 against the build in `dist/client/`, `browser:*` in a browser. Each aggregate runs its
-job by glob (`mise run -c 'checks:*'`), so a task added to `mise.toml` runs
-locally and in CI with no second list to edit, and its `description` is the
-one-line assertion the [task list](../docs/Commands.md#every-task) shows.
+job by glob (`mise run -c 'checks:*'`), so a gate added to its job's file
+under `mise-tasks/` (`mise-tasks/checks.toml`, or a script in
+`mise-tasks/checks/`) runs locally and in CI with no second list to edit. Every
+gate is hidden, so `mise tasks` and the [task list](../docs/Commands.md#every-task)
+show the entry points, and `mise tasks --hidden` shows each gate with its
+`description`, the one-line assertion a pass guarantees.
 
 mise does the orchestration: `-c` keeps a phase going past a failure and ends
 on the list of gates that failed, `output = "keep-order"` prints each gate's
@@ -34,12 +38,11 @@ last lines.
 
 ## Adding a new audit
 
-Four steps; the gates enforce most of them:
+Three steps; the gates enforce most of them:
 
 1. **Write the script** in `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in [`src/lib/site-root.ts`](../src/lib/site-root.ts), never the cwd, and list files with `fs.readdirSync(dir, { recursive: true })`. Post-build audits get the built pages from `builtPages()` in [`lib.ts`](./audits/lib.ts) instead of re-resolving the outDir; the outDir decision itself is single-sourced in [`src/lib/build-output.ts`](../src/lib/build-output.ts). End through `finish()`: on violation it prints the problems and the `fix` line and exits non-zero; on success it prints one `ok` summary line. Export the pure logic and guard the run with `import.meta.main` so a unit spec can import it.
-2. **Declare the task** in [`mise.toml`](../mise.toml) as `checks:<thing>` (before the build) or `built:<thing>` (on it), with a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI.
-3. **Regenerate the docs**: `mise generate task-docs --inject --output docs/Commands.md` writes the task's entry in the [task list](../docs/Commands.md#every-task); `mise run checks:docs-sync` refuses a stale copy. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
-4. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
+2. **Declare the task** in [`mise-tasks/checks.toml`](../mise-tasks/checks.toml) as `checks:<thing>` (before the build) or [`mise-tasks/built.toml`](../mise-tasks/built.toml) as `built:<thing>` (on it), with `hide = true` and a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
+3. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
 
 ---
 
@@ -56,14 +59,14 @@ sections below say what each gate asserts.
 3. **`mise run browser`**: builds once with the Turnstile test key and runs the three `browser:*` suites one at a time against it (`PREBUILT=1`), so an 8 GB machine never runs two browsers at once. The CI legs `e2e`, `visual`, and `edge` each run one of those tasks.
 4. **`mise run ci`**: `check`, then `browser`; every gate the pipeline runs.
 
-Every gate with what it asserts is the generated [task list](../docs/Commands.md#every-task).
+`mise tasks --hidden` lists every gate with what it asserts.
 
 ---
 
 ## 2. Audits
 
-Each audit's assertion is its task's `description` in the
-[task list](../docs/Commands.md#every-task); a failing audit prints its fix. The
+Each audit's assertion is its task's `description`, which
+`mise tasks --hidden` lists; a failing audit prints its fix. The
 detail that does not fit one line is in [§3](#3-testsaudits-audit-detail).
 
 ### Other checks
@@ -114,9 +117,6 @@ Verifies `public/.well-known/security.txt`:
 
 Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`mise run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
 
-### `check-no-drafts.ts`
-No document under `src/content` carries `published: false`. The committed snapshot is what deploys; `site dev --drafts` writes drafts to the gitignored `.cache/drafts` overlay instead.
-
 ### TypeScript type check
 
 `mise run checks:types`: `wrangler types` (its dependency `sync:worker-types`), `astro sync`, `tsc -p .`, then `tsc -p src/tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../src/tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into `src/generated/worker-configuration.d.ts`, gitignored and written before every type check. `astro check` reads [`tsconfig.astro.json`](../src/tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
@@ -125,13 +125,26 @@ No document under `src/content` carries `published: false`. The committed snapsh
 
 [jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, the generated projection (`src/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
 
-### `check-d1-parity.ts`
+### `checks:knip`
 
-It verifies that the contact handler
-consumes [`contracts/contact.v1.json`](../contracts/contact.v1.json) instead of restating its fields and limits, and that
-every handler `INSERT` names only columns the D1 schema defines with matching
-bind counts, and that `wrangler.jsonc` binds the D1 database `site-config.ts` names. A persistence mismatch fails before deployment. The API Shield
-document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
+[knip](https://knip.dev) follows the imports from every entry point and fails on a file nothing reaches, an export or type nothing imports, a package in `package.json` nothing uses, or one the code imports without declaring it. Its plugins find Astro's routes and content config and the Playwright specs; [`tests/knip.jsonc`](./knip.jsonc) names the rest, each with the program that reads it: the scripts the mise tasks run, the audits, the unit specs, the fixture content tree, and the files loaded by path. A package or binary only a gate runs is ignored there by name. An export kept for a reader outside the code carries `@public` and the reader's name. A configured entry or ignore that no longer matches anything fails the gate too.
+
+### `check-d1-writes.ts`
+
+Every module under `src` that passes an `INSERT`, `UPDATE` or `DELETE` to
+D1's `prepare()` or `exec()` is imported, beside
+[`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts), by one unit spec; the audit
+parses each file with TypeScript and resolves each import from the spec's
+directory. `d1-sqlite.ts` builds `cloudflare/d1.sql` in `node:sqlite`, so
+SQLite rejects a column the schema lacks or a value count that differs from
+the column list. The per-IP caps live inside each `INSERT`, and two specs run
+them against that schema: "caps an IP at the hourly limit inside one
+statement" in [`contact-api.test.ts`](./unit/contact-api.test.ts) and "stores
+at most thirty reports per IP per hour" in
+[`csp-report-api.test.ts`](./unit/csp-report-api.test.ts). The contact spec
+also holds the handler to the limits
+[`contracts/contact.v1.json`](../contracts/contact.v1.json) declares. The API
+Shield document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
 is regenerated and compared whole by `mise run checks:contracts`, which also
 runs `make:icons --check` so the committed vector brand marks (`favicon.svg`,
 `mark.svg`, `wordmark-caps.svg`) match what the engine renders.
@@ -145,7 +158,6 @@ Structural health:
 - **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
 - **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
 - **Stylesheets**: component styles live in `src/styles` modules.
-- **No client-side HTML sinks** (`innerHTML` and kin) and no Astro View Transition hooks.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
 - **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
 - **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
@@ -159,32 +171,36 @@ What a maintained tool checks is left to it:
 - Biome's `noHexColors` refuses a hex color in a stylesheet.
 - The plugin [`literal-colors.grit`](./literal-colors.grit) refuses the named and `rgb()`/`hsl()` color spellings.
 - The plugin [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuses a rem, px or em `font-size`. [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds its node patterns to Biome's CSS grammar.
+- The plugin [`client-html-sinks.grit`](./client-html-sinks.grit) refuses an `innerHTML` or `outerHTML` assignment and an `insertAdjacentHTML` call under `src/`, and [`view-transition-hooks.grit`](./view-transition-hooks.grit) an `astro:after-swap` listener, in TypeScript and in an `.astro` file's frontmatter and `<script>` elements. [`unit/client-script-plugins.test.ts`](./unit/client-script-plugins.test.ts) lints a fixture of each kind.
 - The color and font-size rules skip the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip.
 - zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA. Each finding it accepts is marked by a `# zizmor: ignore[<audit>]` comment with its reason where it is found.
 
 ### Links: `checks:doc-links` and `built:links`
 [lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.
-- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/**`, `tests/*.md`): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
+- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `AGENTS.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/*.md` and its subdirectories, and `tests/*.md` at the top of `tests/` only): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
 - `built:links` runs after the build over everything in `dist/client/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The API routes and `/cdn-cgi/` have no file and are excluded by the task's `--exclude`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
 
 ### `check-docs.ts`
-What no link checker knows, over the same tracked docs (gitignored local files such as `AGENTS.md` are never read):
+What no link checker knows, over the same tracked docs:
 - every `mise run <task>` reference names a task, and no doc runs an npm script (every command is a mise task),
 - every backticked repo path resolves. A token in inline code is a repo path when its first segment is a top-level entry (`bin/site.ts`, `docs/`, `dist/`); it resolves when `git ls-files` tracks it or a file under it, or when `git check-ignore` reports it ignored (generated output such as `dist/` and `.cache/`). A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked up to the directory before it.
 
 Paths inside fenced code blocks are example syntax and skipped; script and task references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which the weekly link check covers).
 
+### `checks:prose`
+[Vale](https://vale.sh), pinned in `mise.toml`, reads the same tracked docs with the rules in [`tests/vale/styles/Site/`](./vale/styles/Site/), configured in [`tests/vale/vale.ini`](./vale/vale.ini): no em dash (`Dash`), no praise word or phrase of generated copy (`Hype`), no "not X, but Y" contrast (`Contrast`), and no narration of how the code came to be (`History`). Every rule fails at error level. `Dash` reads the rendered text, so a code span is left alone and so is the task list mise writes into [`docs/Commands.md`](../docs/Commands.md#every-task), which spells an argument's help with an em dash; the other rules read the raw file, code included.
+
 ### `check-page-weight.ts`
 `built:weight` runs after the build, as the deterministic complement to the CI Lighthouse run. Four byte budgets over the emitted output: per-page HTML (150 KB), CSS (75 KB: the stylesheet every page inlines, plus any external `.css`), total JS (25 KB), and each image the build ships, committed under `public/assets/` or encoded from content (1.5 MB; any at or over it fails, listed largest first). The page, CSS and JS budgets sit above the measured baseline (~115 KB worst page carrying the ~36 KB inlined stylesheet, ~5 KB JS) with headroom. The `ok` line carries the heaviest page, the totals, and the image count and weight. Raising a budget is a commit to `tests/audits/check-page-weight.ts`.
 
 ### `built:html`
-Runs after the build. Structural assertions over every emitted page, statically. [html-validate](https://html-validate.org), configured in [`html-validate.json`](./html-validate.json) with only these rules: `no-dup-id` (duplicate ids silently break fragment links, label association, and `aria-*` references), `wcag/h37` (every `<img>` carries an `alt` attribute; empty `alt` is valid and marks a decorative image, a missing attribute is always an authoring bug), and `heading-level` (a page opens at its one `h1` and never skips a level going down; an `h3` straight under the `h1` hides the structure assistive technology navigates by). Then `check-html.ts` asserts no literal `::name` directive reaches the page text, which no rule covers. A leaked directive is a typo (`::termnial`) or a directive the page's renderer does not support; text inside `<pre>`, `<code>`, `<script>`, `<style>`, and comments is ignored, and `a::b` or `::1` never counts. The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
+Runs after the build. Structural assertions over every emitted page, statically. [html-validate](https://html-validate.org), configured in [`html-validate.json`](./html-validate.json) with only these rules: `element-required-content` and `empty-title` (every `<head>` holds a `<title>` with text, which search results and the browser tab show; the first rule also holds `<html>`, `<details>` and `<hgroup>` to their required children), `no-dup-id` (duplicate ids silently break fragment links, label association, and `aria-*` references), `wcag/h37` (every `<img>` carries an `alt` attribute; empty `alt` is valid and marks a decorative image, a missing attribute is always an authoring bug), and `heading-level` (a page opens at its one `h1` and never skips a level going down; an `h3` straight under the `h1` hides the structure assistive technology navigates by). Then `check-html.ts` asserts no literal `::name` directive reaches the page text, which no rule covers. A leaked directive is a typo (`::termnial`) or a directive the page's renderer does not support; text inside `<pre>`, `<code>`, `<script>`, `<style>`, and comments is ignored, and `a::b` or `::1` never counts. The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
 
 ### `check-headers.ts`
 Runs after the build. Pages and assets are static files the assets layer serves without starting the Worker ([Worker routing](../docs/Cloudflare.md#worker-routing)), so the CSP is written into the built `_headers`, not issued per request. The audit reads `dist/client/_headers` and fails if a build placeholder is left, a path rule is listed twice, `/*` sets no Content-Security-Policy, or `/contact/*` lacks its own (detach the global policy, then an enforced and a report-only line). The edge suite proves the routing and the headers under `astro preview`.
 
 ### `check-seo.ts`
-Runs after the build, over the emitted HTML in the outDir (`dist`), read through the hast readers in [`src/lib/html.ts`](../src/lib/html.ts). Every rendered page must carry a non-empty `<title>`, a canonical link, `og:title`, an `og:image`, and only valid JSON-LD. The `og:image` URL must be on the site and name a file the build emitted, since `built:links` (lychee) never reads a `<meta content>` value. It also fails on zero pages, since an empty or stale outDir is a broken build.
+Runs after the build, over the emitted HTML in the outDir (`dist`), read through the hast readers in [`src/lib/html.ts`](../src/lib/html.ts). Every rendered page must carry a canonical link, `og:title`, an `og:image`, and only valid JSON-LD. The `og:image` URL must be on the site and name a file the build emitted, since `built:links` (lychee) never reads a `<meta content>` value. It also fails on zero pages, since an empty or stale outDir is a broken build.
 
 ### The unit layer
 
@@ -200,10 +216,11 @@ A third pre-build layer beside the audits and browser specs: `node:test` suites 
 
 [`tests/unit/content-render.test.ts`](./unit/content-render.test.ts) compiles Markdown with Sätteri and the site's plugins from [`src/lib/markdown/`](../src/lib/markdown/), the same options Astro's processor gets. The guard cases compile as MDX, the format content ships in, and assert the refusal.
 
-Runs on Node's test runner via type stripping, with no extra dependency. Its reporter, [`quiet-reporter.ts`](./unit/helpers/quiet-reporter.ts), prints one line on a pass and hands a failing run to Node's own spec reporter, so every failure prints in full:
+Runs on Node's test runner via type stripping, with no extra dependency. Its reporter, [`quiet-reporter.ts`](./unit/helpers/quiet-reporter.ts), prints one line on a pass and hands a failing run to Node's own spec reporter, so every failure prints in full. The task runs every spec, or only the files or globs it is given, under the pinned Node:
 
 ```sh
 mise run checks:unit
+mise run checks:unit tests/unit/contact-api.test.ts
 ```
 
 Each case pairs a markdown input with the HTML it must produce, so a processor upgrade either keeps the block grammar or fails.

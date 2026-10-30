@@ -42,8 +42,6 @@
         "render",
         "contact",
         "csp",
-        "d1-apply",
-        "headers",
         "manage"
       ]
     },
@@ -205,8 +203,6 @@
             "render",
             "contact",
             "csp",
-            "d1-apply",
-            "headers",
             "manage",
             "help"
           ]

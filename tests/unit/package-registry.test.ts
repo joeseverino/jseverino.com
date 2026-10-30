@@ -38,7 +38,7 @@ describe('snapshotPackages', () => {
   ] as const;
 
   test('keys every package by registry and name, sorted, with the date', async () => {
-    const result = await snapshotPackages(packages, { getJson: registries(), today: new Date('2026-10-05T12:00:00Z') });
+    const result = await snapshotPackages(packages, { getJson: registries(), today: '2026-10-05' });
     assert.ok(result.ok);
     assert.deepEqual(result.snapshot, {
       generatedAt: '2026-10-05',

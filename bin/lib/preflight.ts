@@ -21,6 +21,14 @@ const lockPackages = (file: string): Record<string, LockEntry> => readJson<{ pac
 // compares every installed package, so it can find drift the provider calls fresh.
 export const INSTALL_PACKAGES = 'mise deps install npm --force';
 
+// How one installed package differs from its lockfile entry, if it does.
+function packageDrift(key: string, entry: LockEntry, have: LockEntry | undefined): string | undefined {
+  if (!have) return entry.optional || entry.devOptional ? undefined : `${key} is missing`;
+  if (entry.version && have.version !== entry.version) return `${key} is ${have.version}, lockfile wants ${entry.version}`;
+  if (entry.integrity && have.integrity && have.integrity !== entry.integrity) return `${key} ${have.version} differs from the lockfile's integrity hash`;
+  return undefined;
+}
+
 // Installed packages that differ from the lockfile. npm's hidden lockfile
 // (node_modules/.package-lock.json) records what is installed; optional
 // packages for another platform are legitimately absent.
@@ -30,18 +38,11 @@ export function lockfileDrift(root: string): string[] {
   if (!fs.existsSync(installedFile)) return ['node_modules is not installed'];
   const locked = lockPackages(lockFile);
   const installed = lockPackages(installedFile);
-  const drift: string[] = [];
-  for (const [key, entry] of Object.entries(locked)) {
-    if (!key) continue;
-    const have = installed[key];
-    if (!have) {
-      if (!entry.optional && !entry.devOptional) drift.push(`${key} is missing`);
-    } else if (entry.version && have.version !== entry.version) {
-      drift.push(`${key} is ${have.version}, lockfile wants ${entry.version}`);
-    } else if (entry.integrity && have.integrity && have.integrity !== entry.integrity) {
-      drift.push(`${key} ${have.version} differs from the lockfile's integrity hash`);
-    }
-  }
+  // The root project's own entry has the empty key.
+  const drift = Object.entries(locked)
+    .filter(([key]) => key)
+    .map(([key, entry]) => packageDrift(key, entry, installed[key]))
+    .filter((line) => line !== undefined);
   for (const key of Object.keys(installed)) {
     if (!(key in locked)) drift.push(`${key} is installed but not in the lockfile`);
   }

@@ -116,7 +116,7 @@ if (import.meta.main) {
   const docs = trackedFiles(siteRoot, ...pathspecs).filter((file) => file.endsWith('.md') && fs.existsSync(path.join(siteRoot, file)));
   if (docs.length === 0) abort('check-docs', `no tracked docs match ${pathspecs.join(' ')}`);
 
-  const tasks = miseTasks();
+  const tasks = miseTasks({ hidden: true });
 
   const problems: string[] = [];
   const index = repoIndex(siteRoot);

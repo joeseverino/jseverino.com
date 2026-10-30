@@ -9,7 +9,7 @@ import { siteRoot } from '../../src/lib/site-root.ts';
 import { checkContent } from '../content-sync/sync.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import type { MiseTask } from '../lib/mise.ts';
-import { expiryProblem, parseFields, SECURITY_FILE, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
+import { expiresInDays, expiryProblem, parseFields, SECURITY_FILE, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
 import { fingerprint } from '../lib/writeups/receipt.ts';
 import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from '../lib/writeups/store.ts';
 import { newWriteup } from './authoring.ts';
@@ -190,7 +190,7 @@ function toItem(w: Partial<WriteupSummary> & { slug: string }, contractFields: R
 function builtStatus(distPath: string | null): Note {
   if (!distPath) return { tone: 'muted', text: 'not built' };
   try {
-    return { tone: 'ok', text: `Present (built ${statSync(distPath).mtime.toISOString().slice(0, 16).replace('T', ' ')})` };
+    return { tone: 'ok', text: `Present (built ${statSync(distPath).mtimeInstant.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })})` };
   } catch {
     return { tone: 'ok', text: 'Present' };
   }
@@ -205,8 +205,7 @@ function securityStatus(): Note {
     const { Expires = '' } = parseFields(stripSignature(readFileSync(SECURITY_FILE, 'utf8')));
     const problem = expiryProblem(Expires);
     if (problem) return { tone: 'error', text: problem };
-    const days = Math.floor((new Date(Expires).getTime() - Date.now()) / 86_400_000);
-    return { tone: 'ok', text: `signed, expires in ${days}d` };
+    return { tone: 'ok', text: `signed, expires in ${expiresInDays(Expires)}d` };
   } catch (error) {
     return { tone: 'error', text: errorMessage(error) };
   }
@@ -229,7 +228,7 @@ export async function loadSiteStatus(): Promise<SiteStatus> {
     build: builtStatus(resolveBuiltDir(siteRoot)),
     security,
     live: { code: liveCode, tone: liveCode !== null && liveCode < 400 ? 'ok' : 'error' },
-    loadedAt: new Date().toTimeString().slice(0, 8),
+    loadedAt: Temporal.Now.plainTimeISO().toString({ smallestUnit: 'second' }),
   };
 }
 

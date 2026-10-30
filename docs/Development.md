@@ -6,7 +6,7 @@ How the repository is built, checked, and shipped. Every script is in
 
 ## Setup
 
-[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools.
+[mise](https://mise.jdx.dev) installs the toolchain. Node is pinned in [`mise.toml`](../mise.toml) with its checksums in [`mise.lock`](../mise.lock). npm comes from `package.json`'s `packageManager`. `mise install` installs the tools every task needs. A tool only one gate or task runs is marked lazy there, and its first run installs it from `mise.lock`.
 
 The npm packages come from mise's `[deps.npm]` provider. Before any `mise run` or `mise exec`, it runs `npm ci` from the lockfile in two cases:
 
@@ -45,6 +45,7 @@ mise install
 mise doctor project                     # is this checkout ready to work in
 mise run dev                            # Astro dev server
 mise run build && mise run preview      # the build on the Workers runtime
+mise run dev:look /resume/              # screenshots at 390, 768 and 1440, light and dark, before a layout change is done
 ```
 
 `mise doctor project` runs the readiness checks `mise.toml` declares under
@@ -60,7 +61,7 @@ sync's image masters, and Astro's encoded images in `astro/`.
 
 ## Code
 
-Everything is TypeScript, run directly by Node 24, which strips the types: no
+Everything is TypeScript, run directly by Node 26, which strips the types: no
 build step and no loader. Syntax Node cannot strip (enums, namespaces, parameter
 properties) is out, so `erasableSyntaxOnly` is on and every relative import
 names its `.ts` file. `mise run checks:types` is the one strict
@@ -75,13 +76,17 @@ Biome also enforces these:
 - An `.astro` file's frontmatter and scripts carry no explicit `any` and no `@ts-ignore`.
 - A stylesheet carries no literal color: `noHexColors` covers hex, and the plugin `tests/literal-colors.grit` covers the named and `rgb()`/`hsl()` spellings.
 - A stylesheet carries no rem, px or em `font-size`, through the plugin `tests/literal-font-sizes.grit`.
+- A script under `src/` assigns no `innerHTML` or `outerHTML` and calls no `insertAdjacentHTML`, through the plugin `tests/client-html-sinks.grit`, and listens for no `astro:after-swap`, through `tests/view-transition-hooks.grit`.
+- No function passes Biome's default cognitive-complexity bound (`noExcessiveCognitiveComplexity`, 15), `.astro` frontmatter and scripts included.
 
 `mise run checks:lint` fails on any difference or any finding at warning or above, and `mise run fix:lint` applies the fixes Biome can make.
+
+Vale, pinned in `mise.toml`, holds the engineering docs to the repository's wording rules: no em dash, no praise word, no "not X, but Y" contrast and no narration of how the code came to be. `tests/vale/vale.ini` and the rules beside it in `tests/vale/styles/Site/` say what each refuses, and `mise run checks:prose` runs them.
 
 ## Gates
 
 ```sh
-mise run fast             # the static gates: types, policy, docs, lint, duplication, unit tests, astro check
+mise run fast             # the static gates: types, policy, docs, prose, lint, duplication, unused code, unit tests, astro check
 mise run check            # + the production build, then every gate on it (CI's build job)
 mise run browser          # the browser suites, one at a time: e2e, visual, edge
 mise run ci               # check, then browser: every gate the pipeline runs
@@ -89,9 +94,8 @@ mise run diff:build       # build HEAD and the working tree, report any change t
 mise run deploy:verify    # after a merge: required checks, then the live deployment
 ```
 
-Every gate is a mise task named `<job>:<gate>` (`mise tasks` lists them; the
-[task list](./Commands.md#every-task) says what each asserts), and CI runs the same
-tasks. The gates validate the current checkout without vault access; run
+Every gate is a hidden mise task named `<job>:<gate>` (`mise tasks --hidden`
+lists each with what it asserts), and CI runs the same tasks. The gates validate the current checkout without vault access; run
 `mise run sync:content` explicitly before checking new editorial content. A
 failing gate prints its own fix. Signature verification uses an isolated
 keyring containing only the committed WKD public keys. Unit-test Git
@@ -127,7 +131,7 @@ matches what changed:
 | Rendered or interactive behavior | [`tests/playwright/`](../tests/playwright/) |
 | Headers, CSP, or the API routes as the Workers runtime serves them | [`tests/edge/`](../tests/edge/) |
 
-A new audit is a task in `mise.toml`;
+A new audit is a hidden task in its job's file under `mise-tasks/`;
 [`tests/ARCHITECTURE.md`](../tests/ARCHITECTURE.md#adding-a-new-audit) has the
 steps.
 

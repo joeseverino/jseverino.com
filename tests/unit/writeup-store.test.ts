@@ -144,6 +144,11 @@ describe('scalar writes', () => {
     assert.deepEqual(parseFrontmatter(updated).data, { description: 'first title: inside', meta: { title: 'nested' }, title: 'New' });
   });
 
+  test('a value is never read as a key, even after a collection key', () => {
+    const original = '---\n? [a, b]\n: title\ntitle: Old\n---\nBody\n';
+    assert.equal(replaceScalar(original, 'title', 'New'), '---\n? [a, b]\n: title\ntitle: New\n---\nBody\n');
+  });
+
   test('CRLF frontmatter keeps its line endings', () => {
     const original = '---\r\ntitle: |-\r\n  Old\r\npublished: true\r\n---\r\nBody\r\n';
     assert.equal(replaceScalar(original, 'title', 'New'), '---\r\ntitle: New\r\npublished: true\r\n---\r\nBody\r\n');

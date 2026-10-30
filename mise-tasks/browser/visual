@@ -1,6 +1,7 @@
 #!/bin/sh
 #MISE description="Screenshots of the fixture build match the committed macOS Chromium baselines; on any other platform the suite does not run and the task fails"
 #MISE timeout="10m"
+#MISE hide=true
 # Arguments go to Playwright: `mise run browser:visual --update-snapshots`.
 set -eu
 

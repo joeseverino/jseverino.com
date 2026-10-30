@@ -5,9 +5,10 @@ import registry from '../data/package-registry.json' with { type: 'json' };
 import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
 import { getGithubRepos } from './github.ts';
+import { joinInline } from './html.ts';
 import { FEATURED, PACKAGES, type PackageConfig, SELF_HOSTED, SKIP, WRITEUPS } from './software.config.ts';
 
-export type SoftwarePackage = PackageConfig & {
+type SoftwarePackage = PackageConfig & {
   version?: string | undefined;
   downloadsPerMonth?: number | undefined;
 };
@@ -86,13 +87,11 @@ export function getMoreSoftware(entries: SoftwareEntry[]): SoftwareEntry[] {
   return entries.filter((entry) => !entry.featured);
 }
 
-const updatedFormat = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-
+// 'YYYY-MM' -> 'Oct 2026'. A malformed snapshot value fails the build.
 function formatUpdated(ym?: string): string {
-  const [, year, month] = /^(\d{4})-(\d{1,2})$/.exec(ym ?? '') ?? [];
-  return year && month && Number(month) >= 1 && Number(month) <= 12 ? updatedFormat.format(Date.UTC(Number(year), Number(month) - 1)) : '';
+  return ym ? Temporal.PlainYearMonth.from(ym).toPlainDate({ day: 1 }).toLocaleString('en-US', { month: 'short', year: 'numeric' }) : '';
 }
 
 export function metaLine(entry: SoftwareEntry): string {
-  return [entry.language, formatUpdated(entry.updatedAt)].filter(Boolean).join(' · ');
+  return joinInline([entry.language, formatUpdated(entry.updatedAt)]);
 }

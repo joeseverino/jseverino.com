@@ -1,0 +1,41 @@
+# A claim of quality says nothing a reader can check, and these words and
+# phrases are the marks of generated copy: name what the thing does instead.
+extends: existence
+message: "'%s' praises instead of describing; say what it does"
+level: error
+ignorecase: true
+scope: raw
+tokens:
+  - seamless(?:ly)?
+  - effortless(?:ly)?
+  - blazing(?:ly)?(?:[- ]fast)?
+  - lightning[- ]fast
+  - cutting[- ]edge
+  - game[- ]chang(?:er|ing)
+  - world[- ]class
+  - best[- ]in[- ]class
+  - state[- ]of[- ]the[- ]art
+  - next[- ]generation
+  - next[- ]level
+  - supercharg(?:e|es|ed|ing)
+  - unleash(?:es|ed|ing)?
+  - delightful(?:ly)?
+  - revolutionary
+  - unparalleled
+  - rock[- ]solid
+  - battle[- ]tested
+  - zero[- ]drift
+  - self[- ]healing
+  - continuous trust
+  - unified verification
+  - paradigm shift
+  - synerg(?:y|ies|istic)
+  - delv(?:e|es|ed|ing)
+  - fast[- ]paced
+  - ever[- ](?:evolving|changing)
+  - (?:unlock|harness|leverage) the power
+  - elevate your
+  - robust and scalable
+  - it['’]s worth noting
+  - needless to say
+  - in conclusion

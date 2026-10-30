@@ -36,7 +36,7 @@ build, every gate on the build) and then `mise run browser` (the
 cross-browser, visual, and edge runtime suites, one at a time). Each phase
 keeps going past a failure and ends on the list of gates that failed; each
 failing gate prints its own fix. `mise run fast` runs only the static gates.
-The [task list](./Commands.md#every-task) says what each gate asserts.
+`mise tasks --hidden` says what each gate asserts.
 
 For a focused frontend check without the full run:
 
@@ -162,10 +162,9 @@ first-party errors.
 Browser-extension errors, including AdGuard content script messages, are not site
 release failures unless they reproduce with extensions disabled.
 
-**Structured check.** `site headers / --json` returns the same headers as a
-structured result with named pass/fail checks (`hasCsp`, `noUnsafeInlineScript`,
-`hasCspReportTo`, `hasCspReportUri`, `hasReportingEndpoints`) in place of the
-`curl` parse above, and exits non-zero when any check fails.
+**One deployment.** `mise run deploy:verify --origin <url>` runs the same header
+checks against a single deployment, such as a Worker version at its preview URL,
+without the git and check-run preconditions or HSTS.
 
 **HAR audit (deep verification).** The header checks confirm responses carry
 the headers. A HAR audit confirms those headers do not break a real browser
@@ -204,12 +203,11 @@ read the matching D1 row to identify the source.
 ## 6. D1 and CSP reporting checks
 
 After any change to [`cloudflare/d1.sql`](../cloudflare/d1.sql), apply the schema to the
-remote D1 database (`jseverino-contact`, the `d1` value in
-[`src/lib/site-config.ts`](../src/lib/site-config.ts)). Every statement is
-`CREATE … IF NOT EXISTS`, so re-applying is safe:
+production D1 database, the one [`wrangler.jsonc`](../wrangler.jsonc) binds as `DB`.
+Every statement is `CREATE … IF NOT EXISTS`, so re-applying is safe:
 
 ```sh
-mise run site d1-apply --confirm
+mise run d1:schema remote
 ```
 
 Then confirm the reports still arrive: `mise run site csp --count`.

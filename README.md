@@ -23,13 +23,13 @@ then deploys the gated build.
 | Site | [Astro 7](https://astro.build), static output |
 | Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
 | Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
-| Language | TypeScript everywhere, run directly by Node 24 (no build step for scripts) |
+| Language | TypeScript everywhere, run directly by Node 26 (no build step for scripts) |
 | Edge | one Cloudflare Worker with static assets: every page prerendered under a build-time hash CSP, the Worker started only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
 | Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
 | Previews | Worker versions on workers.dev behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
-| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, and source and build audits |
+| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, source and build audits, and gates for source rules and complexity (Biome with GritQL), dead code (knip), and prose (Vale) |
 
 ## Security
 
@@ -89,6 +89,7 @@ public/       static assets, _headers, _redirects
 cloudflare/   zone settings and the D1 schema, as code
 contracts/    the content and contact contracts, and the generated OpenAPI
 bin/          the site CLI, the content sync, generators, and checks
+mise-tasks/   the gates and build steps each mise task runs
 tests/        unit, audit, Playwright, and edge suites, and their configs
 docs/         architecture, operations, and guides
 ```
@@ -99,6 +100,7 @@ docs/         architecture, operations, and guides
 mise install             # the pinned tools
 mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
 mise run check           # the gate: every static check, the build, every check on the build
+mise run ci              # check, then the browser suites: everything CI runs
 mise run site --help     # scaffold, validate, publish, and verify writeups
 ```
 

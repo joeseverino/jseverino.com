@@ -4,9 +4,9 @@
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import path from 'node:path';
-import { isoDate } from '../../src/lib/dates.ts';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
+import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { type MiseTask, miseTasks } from '../lib/mise.ts';
 import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';
@@ -136,6 +136,42 @@ function saveFailure(error: unknown): string {
     : 'a staged write failed and was rolled back; nothing was written';
 }
 
+type Update = { slug: string } & Record<string, unknown>;
+
+// One touched writeup's update and the label that reports it: its edited fields, and a
+// publish flip, which stamps today's date on a first publish without one.
+function writeupUpdate(model: Model, slug: string, today: string): { update: Update; label: string } | undefined {
+  const item = model.items.find((i) => i.slug === slug);
+  if (!item) return undefined;
+  const update: Update = { slug };
+  const what: string[] = [];
+  for (const f of FIELDS) {
+    if (f.editable && f.key in item.edits) {
+      update[f.label] = item.edits[f.key];
+      what.push(f.label);
+    }
+  }
+  if (item.published !== model.origPublished.get(slug)) {
+    update.published = item.published;
+    what.push(item.published ? 'publish' : 'unpublish');
+    if (item.published && !item.publishedAt && !('publishedAt' in item.edits)) {
+      update.published_at = today;
+    }
+  }
+  return { update, label: `${slug}: ${what.join(', ')}` };
+}
+
+function reportSaved(model: Model, labels: string[]): void {
+  for (const label of labels) {
+    process.stdout.write(`  ${tint('ok', '✓')} ${label}\n`);
+  }
+  const featuredDrafts = model.items.slice(0, model.divider).filter((i) => !i.published);
+  for (const item of featuredDrafts) {
+    process.stdout.write(`  ${tint('warn', 'note')} ${item.slug} is featured but a draft; it holds a slot only after publishing\n`);
+  }
+  process.stdout.write(`${tint('muted', 'saved · run `site publish` to ship')}\n`);
+}
+
 function apply(model: Model): number {
   const { desired, featuredChanged, publishFlips, fieldEdits } = diff(model);
   if (!featuredChanged && !publishFlips.length && !fieldEdits.length) {
@@ -143,34 +179,12 @@ function apply(model: Model): number {
     return 0;
   }
 
-  const today = isoDate();
+  const today = localDate();
   const touched = new Set([...publishFlips, ...fieldEdits].map((i) => i.slug));
-  const updates: ({ slug: string } & Record<string, unknown>)[] = [];
-  const labels: string[] = [];
-  for (const slug of touched) {
-    const item = model.items.find((i) => i.slug === slug);
-    if (!item) continue;
-    const update: { slug: string } & Record<string, unknown> = { slug };
-    const what: string[] = [];
-    for (const f of FIELDS) {
-      if (f.editable && f.key in item.edits) {
-        update[f.label] = item.edits[f.key];
-        what.push(f.label);
-      }
-    }
-    if (item.published !== model.origPublished.get(slug)) {
-      update.published = item.published;
-      what.push(item.published ? 'publish' : 'unpublish');
-      if (item.published && !item.publishedAt && !('publishedAt' in item.edits)) {
-        update.published_at = today;
-      }
-    }
-    updates.push(update);
-    labels.push(`${slug}: ${what.join(', ')}`);
-  }
-
+  const changes = [...touched].map((slug) => writeupUpdate(model, slug, today)).filter((change) => change !== undefined);
+  const labels = changes.map(({ label }) => label);
   const plan: WriteupPlan = {
-    updates,
+    updates: changes.map(({ update }) => update),
     source_fingerprint: model.sourceFingerprint,
   };
   if (featuredChanged) {
@@ -185,16 +199,7 @@ function apply(model: Model): number {
     process.stdout.write(`${tint('error', saveFailure(error))}\n`);
     return 1;
   }
-  for (const label of labels) {
-    process.stdout.write(`  ${tint('ok', '✓')} ${label}\n`);
-  }
-
-  const featuredDrafts = model.items.slice(0, model.divider).filter((i) => !i.published);
-  for (const item of featuredDrafts) {
-    process.stdout.write(`  ${tint('warn', 'note')} ${item.slug} is featured but a draft; it holds a slot only after publishing\n`);
-  }
-
-  process.stdout.write(`${tint('muted', 'saved · run `site publish` to ship')}\n`);
+  reportSaved(model, labels);
   return 0;
 }
 
@@ -226,7 +231,7 @@ const enqueue = (work: () => void | Promise<void>): void => {
 
 function handleKey(key: string): void {
   enqueue(async () => {
-    const effect = handleManageKey(model, key, isoDate());
+    const effect = handleManageKey(model, key, localDate());
     if (effect) await execute(effect);
   });
 }
@@ -272,6 +277,37 @@ function tasks(): MiseTask[] {
   }
 }
 
+// The one static frame MANAGE_TUI_SMOKE names: the detail view, the Site tab, or the list.
+async function printSmokeFrame(smoke: string): Promise<never> {
+  if (smoke === 'detail') {
+    model.cursor = model.items.length - 1;
+    model.mode = 'detail';
+    process.stdout.write(`${frameLines(detailFrame(model)).join('\n')}\n`);
+  } else if (smoke === 'site') {
+    model.tab = 'site';
+    model.siteStatus = await loadSiteStatus();
+    process.stdout.write(`${frameLines(siteFrame(model)).join('\n')}\n`);
+  } else {
+    process.stdout.write(`${frameLines(listFrame(model)).join('\n')}\n`);
+  }
+  process.exit(0);
+}
+
+// e.g. MANAGE_TUI_KEYS='down,enter' or 'p,s'. An unnamed token is typed one character at a
+// time, so 'n,my-slug,enter' types a slug into the line editor.
+async function replayKeys(replay: string): Promise<never> {
+  for (const token of replay.split(',')) {
+    const t = token.trim();
+    const named = keySequence(t);
+    if (t.startsWith('paste:')) pasteInput(t.slice(6));
+    else if (named) handleKey(named);
+    else for (const character of t) handleKey(character);
+  }
+  await pending;
+  process.stdout.write(`${fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n')}\n`);
+  process.exit(0);
+}
+
 // MANAGE_TUI_KEYS replays a comma-separated key script without a TTY and prints the final frame;
 // MANAGE_TUI_SMOKE renders one static frame. Used by tests/unit/site-manage.test.ts.
 // The caller passes the CLI's commands, whose summaries describe the Site tab's actions.
@@ -287,35 +323,8 @@ export async function manage(commands: CommandSummaries): Promise<never> {
   model = await load();
   model.descriptions = describeActions(commands, tasks());
 
-  if (smoke) {
-    if (smoke === 'detail') {
-      model.cursor = model.items.length - 1;
-      model.mode = 'detail';
-      process.stdout.write(`${frameLines(detailFrame(model)).join('\n')}\n`);
-    } else if (smoke === 'site') {
-      model.tab = 'site';
-      model.siteStatus = await loadSiteStatus();
-      process.stdout.write(`${frameLines(siteFrame(model)).join('\n')}\n`);
-    } else {
-      process.stdout.write(`${frameLines(listFrame(model)).join('\n')}\n`);
-    }
-    process.exit(0);
-  }
-
-  if (replay) {
-    // e.g. MANAGE_TUI_KEYS='down,enter' or 'p,s'. An unnamed token is typed
-    // one character at a time, so 'n,my-slug,enter' types a slug into the line editor.
-    for (const token of replay.split(',')) {
-      const t = token.trim();
-      const named = keySequence(t);
-      if (t.startsWith('paste:')) pasteInput(t.slice(6));
-      else if (named) handleKey(named);
-      else for (const character of t) handleKey(character);
-    }
-    await pending;
-    process.stdout.write(`${fitFrame(currentFrame(model), terminalColumns(), terminalRows()).join('\n')}\n`);
-    process.exit(0);
-  }
+  if (smoke) await printSmokeFrame(smoke);
+  if (replay) await replayKeys(replay);
 
   openTerminal({ onKey: handleKey, onPaste: pasteInput });
   draw(model);

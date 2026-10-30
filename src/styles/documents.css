@@ -4,6 +4,8 @@
 
 @layer pages {
   :is(.resume-page, .document-page) .prose {
+    container: document / inline-size;
+
     & hr {
       display: none;
     }
@@ -18,8 +20,11 @@
       margin-block-start: var(--space-40);
     }
 
+    /* An employer, school or project heads the roles under it, so it is set heavier than their names. */
     & h3 {
       font-size: var(--font-sm);
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     & ul {
@@ -71,21 +76,18 @@
     }
   }
 
-  .resume-org,
-  .resume-role,
-  .resume-projmeta {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 2px 24px;
-  }
-
-  .resume-cert {
+  /* A row is its name, then the dates, issuer or location it carries. Where they fit beside the name they hold the end
+     edge; in a narrow column (the document container) every row puts its name on its own line and the rest on the
+     next, at the start edge. */
+  :is(.resume-org, .resume-role, .resume-cert, .resume-projmeta) {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 2px 14px;
+
+    & > :last-child {
+      margin-inline-start: auto;
+    }
   }
 
   .resume-role strong {
@@ -104,16 +106,36 @@
     font-size: var(--font-ui);
     font-weight: 400;
     color: var(--color-muted);
-  }
-
-  .resume-issuer {
-    margin-inline-end: auto;
+    text-transform: none;
+    letter-spacing: normal;
   }
 
   .resume-dates {
     font-family: var(--font-mono);
     font-size: var(--font-2xs);
+    font-weight: 400;
     color: var(--color-muted);
+    text-transform: none;
+    letter-spacing: normal;
     white-space: nowrap;
+  }
+
+  @container document (inline-size < 33.5rem) {
+    :is(.resume-org, .resume-role, .resume-cert, .resume-projmeta) {
+      & > :first-child {
+        flex-basis: 100%;
+      }
+
+      & > :last-child {
+        margin-inline-start: 0;
+      }
+    }
+
+    .resume-org-meta {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 14px;
+    }
   }
 }

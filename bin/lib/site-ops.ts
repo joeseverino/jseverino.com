@@ -1,39 +1,32 @@
-// Fixed operations on the live site: read-only D1 queries, the additive schema apply, and a security-header
-// check. Not a shell: statements are internal, and the schema write refuses without confirm.
+// Fixed, read-only D1 queries on the live site. Not a shell: every statement is internal and every
+// value travels as a bound parameter.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
-import { cspReportUri, SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
 import { createClient } from './cloudflare.ts';
 import { DetailedError } from './detailed-error.ts';
-import { type SpawnResult, spawnResult } from './run.ts';
-
-export type Runner = (cmd: string, args: readonly string[], options: { cwd: string; timeout: number }) => SpawnResult;
+import { wranglerConfig } from './wrangler-config.ts';
 
 export interface SiteOpsConfig {
   d1Database: string;
-  siteRepo: string;
-  siteOrigin: string;
   auditLog: string;
   token: string | undefined;
   accountId: string | undefined;
-  run: Runner;
   fetch: typeof fetch;
 }
 
 // The production site; tests pass their own. Cloudflare credentials come from
 // the environment (injected by `op run`), the same as every other Cloudflare script here.
 export function siteOpsConfig(): SiteOpsConfig {
+  // The database the Worker binds, so the reads name the one it writes.
+  const [database] = wranglerConfig().d1_databases;
+  if (!database) throw new SiteOpsError('wrangler.jsonc binds no D1 database');
   return {
-    d1Database: SITE.d1,
-    siteRepo: siteRoot,
-    siteOrigin: SITE_ORIGIN,
+    d1Database: database.database_name,
     auditLog: path.join(os.homedir(), '.local', 'state', 'jseverino.com', 'audit.log'),
     token: process.env.CLOUDFLARE_API_TOKEN,
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
-    run: spawnResult,
     fetch: globalThis.fetch,
   };
 }
@@ -195,76 +188,5 @@ export async function cspCounts(config: SiteOpsConfig): Promise<CspCounts> {
     database: config.d1Database,
     total: Number(total.results[0]?.total ?? 0),
     byDirective: grouped.results.map((row) => ({ effective_directive: String(row.effective_directive), count: Number(row.count) })),
-  };
-}
-
-export interface SchemaApply {
-  applied: boolean;
-  command: string;
-  output: string;
-}
-
-// Apply cloudflare/d1.sql (CREATE ... IF NOT EXISTS) remotely; refuses without confirm.
-export function applyD1Schema(config: SiteOpsConfig, { confirm = false }: { confirm?: boolean } = {}): SchemaApply {
-  const command = `wrangler d1 execute ${config.d1Database} --remote --file=cloudflare/d1.sql`;
-  if (!confirm) throw new SiteOpsError('refusing to apply the D1 schema without confirm', { refused: true, command });
-  // `site` runs as a mise task, which puts node_modules/.bin (wrangler) on PATH.
-  const proc = config.run('wrangler', ['d1', 'execute', config.d1Database, '--remote', '--file=cloudflare/d1.sql'], { cwd: config.siteRepo, timeout: 120_000 });
-  const output = `${proc.stdout}${proc.stderr}`.trim() || proc.error?.message || '';
-  if (proc.code !== 0) throw new SiteOpsError(`${command} failed`, { exit_code: proc.code, output });
-  return { applied: true, command, output };
-}
-
-const SECURITY_HEADERS = [
-  'content-security-policy',
-  'reporting-endpoints',
-  'strict-transport-security',
-  'x-content-type-options',
-  'referrer-policy',
-  'permissions-policy',
-  'cross-origin-opener-policy',
-  'cross-origin-resource-policy',
-] as const;
-
-export interface HeaderCheck {
-  url: string;
-  httpStatus: number;
-  ok: boolean;
-  headers: Record<(typeof SECURITY_HEADERS)[number], string | null>;
-  checks: {
-    hasCsp: boolean;
-    noUnsafeInlineScript: boolean;
-    hasCspReportTo: boolean;
-    hasCspReportUri: boolean;
-    hasReportingEndpoints: boolean;
-  };
-}
-
-// HEAD one root-relative path on the live origin, without following redirects.
-export async function checkSecurityHeaders(config: SiteOpsConfig, pathname = '/'): Promise<HeaderCheck> {
-  const target = pathname.trim() || '/';
-  if (!target.startsWith('/') || target.startsWith('//')) throw new SiteOpsError('path must be root-relative, e.g. / or /contact/', { usage: true });
-  const url = `${config.siteOrigin.replace(/\/$/, '')}${target}`;
-  let response: Response;
-  try {
-    response = await config.fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(10_000) });
-  } catch (error) {
-    throw new SiteOpsError(`HEAD ${url} failed: ${errorMessage(error)}`, { network: true });
-  }
-  const headers = Object.fromEntries(SECURITY_HEADERS.map((name) => [name, response.headers.get(name)])) as HeaderCheck['headers'];
-  const csp = headers['content-security-policy'] ?? '';
-  const reporting = headers['reporting-endpoints'] ?? '';
-  return {
-    url,
-    httpStatus: response.status,
-    ok: response.status >= 200 && response.status < 400,
-    headers,
-    checks: {
-      hasCsp: csp !== '',
-      noUnsafeInlineScript: !/script-src[^;]*'unsafe-inline'/.test(csp),
-      hasCspReportTo: csp.includes('report-to csp-endpoint'),
-      hasCspReportUri: csp.includes(`report-uri ${cspReportUri}`),
-      hasReportingEndpoints: reporting.includes('csp-endpoint='),
-    },
   };
 }

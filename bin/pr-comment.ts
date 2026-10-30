@@ -12,8 +12,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { cli, exitWith } from './lib/args.ts';
-import type { Fetch } from './lib/drift.ts';
 import { type CheckRun, checkRuns, createClient, requiredContexts } from './lib/github.ts';
+import type { Fetch } from './lib/rest.ts';
 
 const USAGE = 'usage: node bin/pr-comment.ts [summaries]';
 

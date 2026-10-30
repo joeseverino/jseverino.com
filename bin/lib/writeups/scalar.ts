@@ -22,34 +22,41 @@ export function renderScalar(value: unknown): string {
 
 const quoted = (event: ScalarEvent): number => Number(event.style === SCALAR_STYLE.DOUBLE_QUOTED || event.style === SCALAR_STYLE.SINGLE_QUOTED);
 
-// Matches only root keys, so a nested or quoted key is never mistaken for another.
+type YamlEvent = ReturnType<typeof parseEvents>[number];
+
+const opensNode = (event: YamlEvent): boolean => event.type === EVENT_ID.DOCUMENT || event.type === EVENT_ID.MAPPING || event.type === EVENT_ID.SEQUENCE;
+
+const keyNamed = (yaml: string, key: string, event: YamlEvent): ScalarEvent | undefined =>
+  event.type === EVENT_ID.SCALAR && getScalarValue(yaml, event) === key ? event : undefined;
+
+// A value written in place must be a plain scalar, with no collection, anchor or tag to carry over.
+function plainScalar(key: string, event: YamlEvent): ScalarEvent {
+  if (event.type !== EVENT_ID.SCALAR || event.anchorStart !== -1 || event.tagStart !== -1) {
+    throw new Error(`${key} must be a scalar`);
+  }
+  return event;
+}
+
+// Matches only root keys, so a nested or quoted key is never mistaken for another. The events
+// open the document, then the root mapping, so depth counts both and the root's entries sit at
+// depth 2, where they alternate key and value.
 function rootField(yaml: string, key: string): { key: ScalarEvent; value: ScalarEvent } | undefined {
+  const events = parseEvents(yaml, {});
+  if (events[1]?.type !== EVENT_ID.MAPPING) return undefined;
   let depth = 0;
-  let isKey = true;
+  let entries = 0;
   let current: ScalarEvent | undefined;
-  for (const event of parseEvents(yaml, {})) {
-    if (event.type === EVENT_ID.DOCUMENT) continue;
+  for (const event of events) {
     if (event.type === EVENT_ID.POP) {
       depth -= 1;
-      if (depth === 1) isKey = true;
       continue;
     }
-    const opens = event.type === EVENT_ID.MAPPING || event.type === EVENT_ID.SEQUENCE;
-    if (depth === 0 && opens && event.type !== EVENT_ID.MAPPING) break;
-    if (depth === 1) {
-      if (isKey) {
-        current = event.type === EVENT_ID.SCALAR && getScalarValue(yaml, event) === key ? event : undefined;
-        isKey = false;
-      } else if (current) {
-        if (event.type !== EVENT_ID.SCALAR || event.anchorStart !== -1 || event.tagStart !== -1) {
-          throw new Error(`${key} must be a scalar`);
-        }
-        return { key: current, value: event };
-      } else if (!opens) {
-        isKey = true;
-      }
+    if (depth === 2) {
+      if (entries % 2 === 0) current = keyNamed(yaml, key, event);
+      else if (current) return { key: current, value: plainScalar(key, event) };
+      entries += 1;
     }
-    if (opens) depth += 1;
+    if (opensNode(event)) depth += 1;
   }
   return undefined;
 }

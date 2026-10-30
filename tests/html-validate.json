@@ -3,6 +3,8 @@
   "rules": {
     "no-dup-id": "error",
     "wcag/h37": "error",
-    "heading-level": "error"
+    "heading-level": "error",
+    "empty-title": "error",
+    "element-required-content": "error"
   }
 }

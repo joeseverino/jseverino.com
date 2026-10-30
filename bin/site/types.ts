@@ -4,7 +4,7 @@ import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
 import type { ContentDiff } from '../content-diff.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import type { PreflightCheck } from '../lib/preflight.ts';
-import type { CspCounts, HeaderCheck, PiiRows, SchemaApply } from '../lib/site-ops.ts';
+import type { CspCounts, PiiRows } from '../lib/site-ops.ts';
 import type {
   FrontmatterResult,
   LinkResult,
@@ -169,8 +169,6 @@ export interface RenderResult extends Step {
 export type ContractResult = Step & ReturnType<typeof writeupContract> & { next: null };
 export type ContactResult = Step & PiiRows & { next: null };
 export type CspResult = Step & (({ mode: 'count' } & CspCounts) | ({ mode: 'list' } & PiiRows)) & { next: null };
-export type D1ApplyResult = Step & SchemaApply & { next: null };
-export type HeadersResult = Step & HeaderCheck & { next: null };
 
 // Each command's own fields.
 export interface CommandResults {
@@ -196,8 +194,6 @@ export interface CommandResults {
   render: RenderResult;
   contact: ContactResult;
   csp: CspResult;
-  'd1-apply': D1ApplyResult;
-  headers: HeadersResult;
   // Interactive: it exits from inside the TUI and never prints a result.
   manage: never;
 }
@@ -208,7 +204,7 @@ export type CommandName = keyof CommandResults;
 // is the command's own when it reports one (publish, land), 'ok' otherwise.
 export type SiteSuccessOf<C extends CommandName> = { ok: true; command: C; status: string } & CommandResults[C];
 
-export type SiteSuccess = { [C in CommandName]: SiteSuccessOf<C> }[CommandName];
+type SiteSuccess = { [C in CommandName]: SiteSuccessOf<C> }[CommandName];
 
 // --help under --json: the usage as data; command is 'help' for the command list.
 export interface SiteHelp {
@@ -236,4 +232,5 @@ export interface SiteFailure {
   [partial: string]: unknown;
 }
 
+/** @public The --json document's type, which docs/Site-CLI.md offers callers to import. */
 export type SiteResult = SiteSuccess | SiteHelp | SiteFailure;

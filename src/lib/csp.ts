@@ -80,6 +80,21 @@ const attribute = (attributes: string, name: string): string | undefined =>
     ?.slice(1)
     .find((value) => value !== undefined);
 
+// What the policy needs for one script block: its hash, a problem to report, or nothing (an
+// allowed source, or a data block the browser never runs).
+function scriptVerdict(attributes: string, marked: boolean, excerpt: string): 'hash' | { problem: string } | undefined {
+  const src = attribute(attributes, 'src');
+  if (src !== undefined) {
+    const allowed = SAME_ORIGIN.test(src) || SCRIPT_HOSTS.some((host) => src.startsWith(`${host}/`));
+    return allowed ? undefined : { problem: `script from a source the policy does not allow: ${excerpt}` };
+  }
+  if (!EXECUTABLE_TYPES.has((attribute(attributes, 'type') ?? '').toLowerCase())) return undefined;
+  return marked ? 'hash' : { problem: `inline script the site did not mark: ${excerpt}` };
+}
+
+// A style the site emitted: marked, or the bare stylesheet inlined in the head.
+const ownStyle = (attributes: string, marked: boolean, inHead: boolean): boolean => marked || (inHead && attributes.trim() === '');
+
 // Hash the marked inline scripts and styles and report anything the policy would block.
 // Unmarked content (raw HTML in a writeup, an injected tag) fails the build.
 export async function scanInline(html: string): Promise<InlineScan> {
@@ -96,16 +111,10 @@ export async function scanInline(html: string): Promise<InlineScan> {
     const excerpt = block.slice(0, 100);
 
     if (name === 'script') {
-      const src = attribute(attributes, 'src');
-      if (src !== undefined) {
-        if (!SAME_ORIGIN.test(src) && !SCRIPT_HOSTS.some((host) => src.startsWith(`${host}/`))) {
-          problems.push(`script from a source the policy does not allow: ${excerpt}`);
-        }
-      } else if (EXECUTABLE_TYPES.has((attribute(attributes, 'type') ?? '').toLowerCase())) {
-        if (marked) scriptHashes.add(await hashSource(body));
-        else problems.push(`inline script the site did not mark: ${excerpt}`);
-      }
-    } else if (marked || (inHead && attributes.trim() === '')) {
+      const verdict = scriptVerdict(attributes, marked, excerpt);
+      if (verdict === 'hash') scriptHashes.add(await hashSource(body));
+      else if (verdict) problems.push(verdict.problem);
+    } else if (ownStyle(attributes, marked, inHead)) {
       styleHashes.add(await hashSource(body));
     } else {
       problems.push(`inline style the site did not emit: ${excerpt}`);

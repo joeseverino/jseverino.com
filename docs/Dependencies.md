@@ -56,8 +56,9 @@ disables the package's major updates, and the `wrangler` hold disables all of it
 | Package | Held at | Why | Revisit when |
 | :--- | :--- | :--- | :--- |
 | `typescript` | 6.x | `astro check` runs Astro's language tools, which load the TypeScript compiler API. TypeScript 7's native compiler does not ship that API as a drop-in replacement. | Astro's language tools support 7.x. |
-| `@types/node` | 24.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 24 does not have. | `mise.toml` moves to a newer Node major. |
-| `wrangler` | 4.151.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler`; this pin moves to the same release. |
+| `@types/node` | 26.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 26 does not have. | `mise.toml` moves to a newer Node major. |
+| `wrangler` | 4.154.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
+| `satteri` | 0.10.x | The content renderer's plugins in `src/lib/markdown/` run inside the copy `@astrojs/markdown-satteri` depends on, and a newer 0.x installs a second copy with its native bindings. | `@astrojs/markdown-satteri` depends on a newer satteri; then `prose.ts` moves its MDAST `setProperty` calls to `setField`. |
 | `npm` (`packageManager`) | 11.x | The pin names the npm release the pinned Node bundles. | `mise.toml` moves to a Node major that bundles a newer npm. |
 
 ## No overrides

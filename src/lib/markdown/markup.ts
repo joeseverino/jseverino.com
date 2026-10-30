@@ -1,11 +1,8 @@
-// HTML-level finishing: separator-delimited values in table cells (IPs, MACs)
-// may wrap at their separators, a ```terminal fence renders as the terminal
-// block, and every table sits in a scrollable figure. Wrapping is its own
-// pass, after the cell edits, because a pass cannot move a node it also
-// edited inside.
+// HTML-level finishing: a ```terminal fence renders as the terminal block, and
+// every table sits in a scrollable figure.
 
 import type { Element, ElementContent, Text } from 'hast';
-import { defineHastPlugin, type HastNode, type HastVisitorContext } from 'satteri';
+import { defineHastPlugin } from 'satteri';
 
 const el = (tagName: string, className: string[] | undefined, children: ElementContent[], properties: Element['properties'] = {}): Element => ({
   type: 'element',
@@ -15,17 +12,7 @@ const el = (tagName: string, className: string[] | undefined, children: ElementC
 });
 const text = (value: string): Text => ({ type: 'text', value });
 
-function ancestors(node: HastNode, ctx: HastVisitorContext): Element[] {
-  const found: Element[] = [];
-  for (let parent = ctx.parent(node); parent && parent.type === 'element'; parent = ctx.parent(parent as HastNode)) found.push(parent);
-  return found;
-}
-
 const hasClass = (node: Element, name: string): boolean => Array.isArray(node.properties?.className) && node.properties.className.includes(name);
-
-// A break opportunity after each `.` or `:` between letters or digits, so a
-// narrow column breaks `00:00:00:00:` / `02:1e`, never mid-token.
-const SEPARATOR = /(?<=[\p{L}\p{N}][.:])(?=[\p{L}\p{N}])/u;
 
 function terminal(code: Element): Element {
   const source = code.children
@@ -56,23 +43,6 @@ export const markup = defineHastPlugin({
       if (code?.type === 'element' && code.tagName === 'code' && hasClass(code, 'language-terminal')) ctx.replaceNode(node, terminal(code));
     },
   },
-  text(node, ctx) {
-    // A separator may open this node while the letter or digit before it
-    // closes the previous one.
-    const before = previousText(node, ctx);
-    const opens = /^[.:][\p{L}\p{N}]/u.test(node.value) && /[\p{L}\p{N}]$/u.test(before);
-    if (!opens && !SEPARATOR.test(node.value)) return;
-    const chain = ancestors(node, ctx);
-    if (!chain.some((parent) => parent.tagName === 'td' || parent.tagName === 'th')) return;
-    if (chain.some((parent) => parent.tagName === 'code')) return;
-    const parts = node.value.split(SEPARATOR);
-    const [head = ''] = parts;
-    if (opens) parts.splice(0, 1, head.slice(0, 1), head.slice(1));
-    ctx.replaceNode(
-      node,
-      parts.flatMap((part, index) => (index ? [el('wbr', undefined, []), text(part)] : [text(part)])),
-    );
-  },
 });
 
 // Each table ends up in figure.table-figure > div.table-box: one pass adds the
@@ -100,11 +70,3 @@ export const tableBoxes = wrapTable(
   (parent) => parent !== undefined && hasClass(parent, 'table-figure'),
   () => el('div', ['table-box'], []),
 );
-
-function previousText(node: HastNode, ctx: HastVisitorContext): string {
-  const parent = ctx.parent(node);
-  const index = ctx.indexOf(node);
-  if (!parent || index === undefined || index === 0) return '';
-  const previous = (parent as Element).children[index - 1];
-  return previous?.type === 'text' ? previous.value : '';
-}

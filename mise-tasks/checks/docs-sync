@@ -1,5 +1,6 @@
 #!/bin/sh
 #MISE description="The task list in docs/Commands.md matches these tasks (fix: `mise generate task-docs --inject --output docs/Commands.md`, then commit it)"
+#MISE hide=true
 set -eu
 
 mise generate task-docs --inject --output docs/Commands.md

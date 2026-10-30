@@ -15,6 +15,12 @@
     margin-inline: auto;
   }
 
+  /* A card section: its heading, divider and grid share the card measure's edge. */
+  .cards {
+    inline-size: min(var(--cards), calc(100% - (var(--gutter) * 2)));
+    margin-inline: auto;
+  }
+
   main {
     flex: 1;
     padding-block-start: var(--space-25);
@@ -24,8 +30,13 @@
     margin-block-start: var(--space-30);
   }
 
-  .content-flow > * + * {
-    margin-block-start: var(--space-30);
+  /* A container so text under the hero can follow the hero's alignment, which keys off this same column width. */
+  .content-flow {
+    container: flow / inline-size;
+
+    & > * + * {
+      margin-block-start: var(--space-30);
+    }
   }
 
   /* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
@@ -131,8 +142,6 @@
 
   .archive-section {
     container: archive / inline-size;
-    max-inline-size: var(--cards);
-    margin-inline: auto;
     padding-block-start: var(--space-20);
 
     & summary {
@@ -221,19 +230,21 @@
     font-weight: var(--weight-label);
   }
 
-  .page-divider,
-  .article-separator {
+  .page-divider {
+    margin-block: var(--space-30) 25px;
     border: 0;
     border-block-start: 2px solid var(--color-text);
     opacity: 0.4;
   }
 
-  .page-divider {
-    margin-block: var(--space-30) 25px;
-  }
-
   .center-text {
     text-align: center;
+  }
+
+  @container flow (inline-size < 33.5rem) {
+    .center-text {
+      text-align: start;
+    }
   }
 
   /* A page with one message: it sits in the middle of the space between header and footer. */

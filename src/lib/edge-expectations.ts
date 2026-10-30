@@ -21,19 +21,21 @@ export function headersToRecord(headers: Headers): HeaderRecord {
   return record;
 }
 
-// The policy public/_headers gives every route once bin/build-csp.ts fills in the hashes.
-// Trusted Types is report-only on the contact form because Turnstile's script trips it.
-export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
-  const findings: string[] = [];
-  const csp = headers['content-security-policy'] ?? '';
-  const directive = (name: string): string => new RegExp(`(?:^|;\\s*)${name}\\s([^;]*)`).exec(csp)?.[1] ?? '';
-  for (const clause of ["default-src 'none'", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'self'", 'report-to csp-endpoint']) {
-    if (!csp.includes(clause)) findings.push(`content-security-policy lacks ${clause}`);
-  }
+// The clauses every response's policy carries, whatever its route.
+function baseClauseFindings(csp: string): string[] {
+  const findings = ["default-src 'none'", "object-src 'none'", "base-uri 'self'", "frame-ancestors 'self'", 'report-to csp-endpoint']
+    .filter((clause) => !csp.includes(clause))
+    .map((clause) => `content-security-policy lacks ${clause}`);
   // report-uri is the fallback for browsers that ignore report-to (Firefox).
   if (!csp.includes(`report-uri ${cspReportUri}`)) findings.push(`content-security-policy lacks the report-uri ${cspReportUri} fallback`);
   if (csp.includes('__')) findings.push('content-security-policy still carries a build placeholder');
+  return findings;
+}
 
+// script-src and style-src allow the site's own files and the hashed inline blocks, and nothing looser.
+function sourceFindings(csp: string): string[] {
+  const directive = (name: string): string => new RegExp(`(?:^|;\\s*)${name}\\s([^;]*)`).exec(csp)?.[1] ?? '';
+  const findings: string[] = [];
   const script = directive('script-src');
   const style = directive('style-src');
   if (!script.includes("'self'")) findings.push("script-src lacks 'self'");
@@ -44,16 +46,31 @@ export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
   }
   if (!style.includes("'self'")) findings.push("style-src lacks 'self'");
   if (!/'sha256-[A-Za-z0-9+/=]+'/.test(style)) findings.push('style-src carries no hash for the inlined stylesheet');
+  return findings;
+}
 
-  const reportOnly = headers['content-security-policy-report-only'] ?? '';
+function trustedTypesFindings(csp: string, reportOnly: string, pathname: string): string[] {
   if (trustedTypesExempt(pathname)) {
-    if (csp.includes(TRUSTED_TYPES)) findings.push('the exempt page enforces Trusted Types');
-    if (!reportOnly.includes(TRUSTED_TYPES)) findings.push(`the report-only policy lacks ${TRUSTED_TYPES}`);
-  } else {
-    if (!csp.includes(TRUSTED_TYPES)) findings.push(`content-security-policy lacks ${TRUSTED_TYPES}`);
-    if (reportOnly) findings.push('a report-only policy is still issued');
+    return [
+      ...(csp.includes(TRUSTED_TYPES) ? ['the exempt page enforces Trusted Types'] : []),
+      ...(reportOnly.includes(TRUSTED_TYPES) ? [] : [`the report-only policy lacks ${TRUSTED_TYPES}`]),
+    ];
   }
+  return [
+    ...(csp.includes(TRUSTED_TYPES) ? [] : [`content-security-policy lacks ${TRUSTED_TYPES}`]),
+    ...(reportOnly ? ['a report-only policy is still issued'] : []),
+  ];
+}
 
+// The policy public/_headers gives every route once bin/build-csp.ts fills in the hashes.
+// Trusted Types is report-only on the contact form because Turnstile's script trips it.
+export function cspFindings(headers: HeaderRecord, pathname = '/'): string[] {
+  const csp = headers['content-security-policy'] ?? '';
+  const findings = [
+    ...baseClauseFindings(csp),
+    ...sourceFindings(csp),
+    ...trustedTypesFindings(csp, headers['content-security-policy-report-only'] ?? '', pathname),
+  ];
   if (!(headers['reporting-endpoints'] ?? '').includes(cspReportPath)) {
     findings.push(`reporting-endpoints lacks ${cspReportPath}`);
   }

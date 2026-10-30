@@ -33,25 +33,27 @@ const { values } = cli({
   },
 });
 
-async function main(): Promise<number> {
-  if (values.check) {
-    const result = await checkContent({ vaultRoot: existingDir('vault', vaultRoot(), 'VAULT_DIR'), slug: values.slug, draft: values.draft });
-    if (values.json) {
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      for (const doc of result.documents) {
-        if (doc.issues.length === 0) continue;
-        console.log(`${doc.collection}/${doc.slug}:`);
-        for (const issue of doc.issues) console.log(`  - ${issue}`);
-      }
-      const failing = result.documents.filter((doc) => doc.issues.length > 0).length;
-      console.log(
-        failing === 0 ? `ok       ${result.documents.length} documents resolve` : `failed: ${failing} of ${result.documents.length} documents have issues`,
-      );
-    }
+// --check: resolve every reference and the contract, write nothing.
+async function check(): Promise<number> {
+  const result = await checkContent({ vaultRoot: existingDir('vault', vaultRoot(), 'VAULT_DIR'), slug: values.slug, draft: values.draft });
+  if (values.json) {
+    console.log(JSON.stringify(result, null, 2));
     return result.ok ? 0 : 1;
   }
+  const failing = result.documents.filter((doc) => doc.issues.length > 0);
+  for (const doc of failing) {
+    console.log(`${doc.collection}/${doc.slug}:`);
+    for (const issue of doc.issues) console.log(`  - ${issue}`);
+  }
+  console.log(
+    failing.length === 0
+      ? `ok       ${result.documents.length} documents resolve`
+      : `failed: ${failing.length} of ${result.documents.length} documents have issues`,
+  );
+  return result.ok ? 0 : 1;
+}
 
+async function sync(): Promise<number> {
   const overlay = draftsOverlay();
   const layout = values.drafts ? overlayLayout(overlay, siteRoot) : committedLayout(siteRoot);
   const result = await syncContent({
@@ -78,4 +80,4 @@ async function main(): Promise<number> {
   return 0;
 }
 
-await exitWith('sync-content', main);
+await exitWith('sync-content', values.check ? check : sync);

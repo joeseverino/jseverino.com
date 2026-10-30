@@ -7,6 +7,7 @@ import { isoDate } from '../../../src/lib/dates.ts';
 import { parseFrontmatter } from '../../../src/lib/frontmatter.ts';
 import { parseTechnologyGroups, type TechnologyGroup } from '../../../src/lib/technology-groups.ts';
 import { type CheckedDocument, checkContent } from '../../content-sync/sync.ts';
+import { localDate } from '../dates.ts';
 import { DetailedError } from '../detailed-error.ts';
 import { PAGES_FOLDER, vaultRoot, WRITEUPS_FOLDER } from '../local-paths.ts';
 import { fingerprint, type MutationReceipt, receipt } from './receipt.ts';
@@ -296,25 +297,28 @@ export interface PlanResult {
   receipt?: MutationReceipt;
 }
 
-// Scalar updates and the complete featured order in one transaction.
-export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: TransactionOptions = {}): PlanResult {
+// A plan arrives as JSON, so its shape is checked before any field is read.
+function assertPlanShape(plan: WriteupPlan): void {
   if (!plan || typeof plan !== 'object' || Array.isArray(plan)) throw new WriteupError('invalid', 'plan must be a JSON object');
-  const rawUpdates = plan.updates ?? [];
-  if (!Array.isArray(rawUpdates)) throw new WriteupError('invalid', 'updates must be a list');
+  if (!Array.isArray(plan.updates ?? [])) throw new WriteupError('invalid', 'updates must be a list');
   if (plan.featured_order !== undefined && !Array.isArray(plan.featured_order)) throw new WriteupError('invalid', 'featured_order must be a list');
+}
 
-  const writeups = loadWriteups(store);
-  if (plan.source_fingerprint) {
-    const current = fingerprint(writeups.map(summary));
-    if (current !== plan.source_fingerprint) {
-      throw new WriteupError('stale_plan', 'writeup source changed after this dashboard was loaded; reload and review the plan again', {
-        expected_fingerprint: plan.source_fingerprint,
-        current_fingerprint: current,
-        retryable: true,
-      });
-    }
+// A plan reviewed against an older dashboard is refused, so it never overwrites a change made since.
+function assertFresh(writeups: Writeup[], expected: string | undefined): void {
+  if (!expected) return;
+  const current = fingerprint(writeups.map(summary));
+  if (current !== expected) {
+    throw new WriteupError('stale_plan', 'writeup source changed after this dashboard was loaded; reload and review the plan again', {
+      expected_fingerprint: expected,
+      current_fingerprint: current,
+      retryable: true,
+    });
   }
-  const bySlug = new Map(writeups.map((w) => [w.slug, w]));
+}
+
+// Each writeup's fields to set, merged across the plan's updates for it.
+function fieldUpdates(rawUpdates: NonNullable<WriteupPlan['updates']>, bySlug: Map<string, Writeup>): Map<string, Record<string, unknown>> {
   const updates = new Map<string, Record<string, unknown>>();
   for (const item of rawUpdates) {
     if (!item || typeof item !== 'object') throw new WriteupError('invalid', 'every update must be an object');
@@ -327,23 +331,32 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
     const { slug: _slug, ...fields } = item;
     updates.set(slug, { ...updates.get(slug), ...fields });
   }
+  return updates;
+}
 
-  let order: string[] | undefined;
-  if (plan.featured_order !== undefined) {
-    order = plan.featured_order.map(String);
-    if (new Set(order).size !== order.length) throw new WriteupError('invalid', 'featured_order contains duplicate slugs');
-    const unknown = order.filter((slug) => !bySlug.has(slug));
-    if (unknown.length) throw new WriteupError('not_found', `featured_order contains unknown slugs: ${unknown.join(', ')}`);
-    const slots = new Map(order.map((slug, index) => [slug, index + 1]));
-    for (const w of writeups) {
-      const featured = slots.has(w.slug);
-      const slot = slots.get(w.slug) ?? null;
-      if (w.featured !== featured || w.featured_order !== slot) {
-        updates.set(w.slug, { ...updates.get(w.slug), featured, featured_order: slot });
-      }
-    }
+// The plan's featured order as slugs, refused when it repeats a slug or names an unknown one.
+function checkedOrder(featuredOrder: string[], bySlug: Map<string, Writeup>): string[] {
+  const order = featuredOrder.map(String);
+  if (new Set(order).size !== order.length) throw new WriteupError('invalid', 'featured_order contains duplicate slugs');
+  const unknown = order.filter((slug) => !bySlug.has(slug));
+  if (unknown.length) throw new WriteupError('not_found', `featured_order contains unknown slugs: ${unknown.join(', ')}`);
+  return order;
+}
+
+// The featured and featured_order values the complete order gives each writeup whose values differ.
+function placements(order: readonly string[], writeups: readonly Writeup[]): Map<string, { featured: boolean; featured_order: number | null }> {
+  const slots = new Map(order.map((slug, index) => [slug, index + 1]));
+  const changes = new Map<string, { featured: boolean; featured_order: number | null }>();
+  for (const w of writeups) {
+    const featured = slots.has(w.slug);
+    const slot = slots.get(w.slug) ?? null;
+    if (w.featured !== featured || w.featured_order !== slot) changes.set(w.slug, { featured, featured_order: slot });
   }
+  return changes;
+}
 
+// The new text of each writeup the updates change, and the fields that changed in it.
+function replacementsFor(updates: Map<string, Record<string, unknown>>, bySlug: Map<string, Writeup>) {
   const replacements = new Map<string, Replacement>();
   const changedFields: Record<string, string[]> = {};
   for (const [slug, fields] of updates) {
@@ -355,6 +368,19 @@ export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: Trans
       changedFields[slug] = changed;
     }
   }
+  return { replacements, changedFields };
+}
+
+// Scalar updates and the complete featured order in one transaction.
+export function applyPlan(store: WriteupStore, plan: WriteupPlan, options: TransactionOptions = {}): PlanResult {
+  assertPlanShape(plan);
+  const writeups = loadWriteups(store);
+  assertFresh(writeups, plan.source_fingerprint);
+  const bySlug = new Map(writeups.map((w) => [w.slug, w]));
+  const updates = fieldUpdates(plan.updates ?? [], bySlug);
+  const order = plan.featured_order === undefined ? undefined : checkedOrder(plan.featured_order, bySlug);
+  if (order) for (const [slug, placement] of placements(order, writeups)) updates.set(slug, { ...updates.get(slug), ...placement });
+  const { replacements, changedFields } = replacementsFor(updates, bySlug);
   if (replacements.size === 0) {
     return { noOp: true, changedWriteups: [], changedFields: {}, featuredOrderAfter: order ?? featuredOrder(writeups).map((e) => e.slug) };
   }
@@ -412,7 +438,7 @@ export function updateFrontmatter(
   store: WriteupStore,
   slug: string,
   fields: Record<string, unknown>,
-  { touchLastReviewed = false, today = isoDate(new Date()) }: { touchLastReviewed?: boolean; today?: string } = {},
+  { touchLastReviewed = false, today = localDate() }: { touchLastReviewed?: boolean; today?: string } = {},
 ): FrontmatterResult {
   const unknown = Object.keys(fields)
     .filter((key) => !EDITABLE_FIELDS.includes(key))

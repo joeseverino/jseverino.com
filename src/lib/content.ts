@@ -9,7 +9,7 @@ import { isoDate } from './dates.ts';
 import { site } from './site.ts';
 import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 
-export type { TechnologyGroup, TechnologyTag } from './technology-groups.ts';
+export type { TechnologyGroup } from './technology-groups.ts';
 
 export type Writeup = {
   slug: string;
@@ -163,9 +163,7 @@ export function titleCase(value: string): string {
     .join(' ');
 }
 
-const longDate = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-
-// 'YYYY-MM-DD' -> 'June 17, 2026'. A bare ISO date parses as UTC.
+// 'YYYY-MM-DD' -> 'June 17, 2026'.
 export function formatDate(value: string): string {
-  return value ? longDate.format(new Date(value)) : '';
+  return value ? Temporal.PlainDate.from(value).toLocaleString('en-US', { dateStyle: 'long' }) : '';
 }

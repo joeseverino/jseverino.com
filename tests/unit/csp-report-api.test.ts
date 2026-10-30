@@ -3,7 +3,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { storeCspReports } from '../../src/lib/api/csp-report.ts';
-import type { CspReportRow } from '../../src/lib/api/d1.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
 import { postRequest } from './helpers/requests.ts';
@@ -134,13 +133,16 @@ describe('persistence', () => {
   test('writes every report of a request in one batch', async () => {
     const db = createD1Stub();
     let batches = 0;
+    let batched = 0;
     const batch = db.batch.bind(db);
     db.batch = async (statements) => {
       batches += 1;
+      batched += statements.length;
       return batch(statements);
     };
     await call(reportRequest([legacyReport, legacyReport]), db);
     assert.equal(batches, 1);
+    assert.equal(db.queries.length, batched, 'no statement runs outside the batch, so the per-IP cap reads inside the INSERT');
     assert.equal(inserts(db).length, 2);
   });
 
@@ -213,7 +215,7 @@ describe('write bounds', () => {
     );
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
-    const row = await db.prepare('SELECT * FROM csp_reports').first<CspReportRow>();
+    const row = await db.prepare('SELECT * FROM csp_reports').first<Record<string, unknown>>();
     assert.ok(row);
     assert.equal(row.document_uri, 'https://jseverino.com/contact/');
     assert.equal(row.blocked_uri, 'https://evil.example/payload.js');

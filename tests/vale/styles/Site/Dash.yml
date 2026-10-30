@@ -1,0 +1,10 @@
+# The most recognizable mark of generated prose, and it spreads by copying.
+# Read as text, so a code span quoting one and the task list mise writes into
+# docs/Commands.md (a BlockIgnores in vale.ini) are left alone.
+extends: existence
+message: 'Rewrite the sentence without the em dash'
+level: error
+nonword: true
+scope: text
+tokens:
+  - '—'

@@ -10,7 +10,7 @@ type ContractProperty = {
 };
 
 export type ContactField = keyof typeof contract.request.properties;
-export type ContactFields = Record<ContactField, string>;
+type ContactFields = Record<ContactField, string>;
 export const CONTACT_RUNTIME = contract.runtime;
 export const CONTACT_PROPERTIES: Readonly<Record<ContactField, ContractProperty>> = contract.request.properties;
 const REQUIRED = new Set<string>(contract.request.required);
@@ -22,6 +22,21 @@ export type ContactValidation =
   | { ok: false; reason: 'invalid' | 'missing' | 'too_short' | 'too_long' | 'email' | 'uri'; field?: ContactField };
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type ContactFailure = Extract<ContactValidation, { ok: false }>;
+
+// Why one field's trimmed value breaks its contract property, or undefined when it holds.
+function fieldFailure(name: ContactField, spec: ContractProperty, normalized: string): ContactFailure | undefined {
+  if (REQUIRED.has(name) && normalized.length === 0) return { ok: false, reason: 'missing', field: name };
+  if (normalized && spec.minLength !== undefined && normalized.length < spec.minLength) return { ok: false, reason: 'too_short', field: name };
+  if (spec.maxLength !== undefined && normalized.length > spec.maxLength) return { ok: false, reason: 'too_long' };
+  if (spec.format === 'email' && normalized && !EMAIL.test(normalized)) return { ok: false, reason: 'email', field: name };
+  if (spec.format === 'uri' && normalized) {
+    const protocol = URL.parse(normalized)?.protocol;
+    if (protocol !== 'http:' && protocol !== 'https:') return { ok: false, reason: 'uri', field: name };
+  }
+  return undefined;
+}
 
 export function validateContactPayload(payload: unknown): ContactValidation {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
@@ -36,22 +51,8 @@ export function validateContactPayload(payload: unknown): ContactValidation {
     const raw = source[name];
     if (raw !== undefined && typeof raw !== 'string') return { ok: false, reason: 'invalid' };
     const normalized = typeof raw === 'string' ? raw.trim() : '';
-    if (REQUIRED.has(name) && normalized.length === 0) {
-      return { ok: false, reason: 'missing', field: name };
-    }
-    if (normalized && spec.minLength !== undefined && normalized.length < spec.minLength) {
-      return { ok: false, reason: 'too_short', field: name };
-    }
-    if (spec.maxLength !== undefined && normalized.length > spec.maxLength) {
-      return { ok: false, reason: 'too_long' };
-    }
-    if (spec.format === 'email' && normalized && !EMAIL.test(normalized)) {
-      return { ok: false, reason: 'email', field: name };
-    }
-    if (spec.format === 'uri' && normalized) {
-      const protocol = URL.parse(normalized)?.protocol;
-      if (protocol !== 'http:' && protocol !== 'https:') return { ok: false, reason: 'uri', field: name };
-    }
+    const failure = fieldFailure(name, spec, normalized);
+    if (failure) return failure;
     value[name] = normalized;
   }
   // The loop assigned every contract field or returned early.

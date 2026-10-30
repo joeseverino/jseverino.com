@@ -1,13 +1,13 @@
 # Command Reference
 
-Every command in the repository is a mise task. `mise tasks` lists them with
-their descriptions, `mise run <task>` runs one, and arguments after the task
-name go to its script unchanged: `mise run site validate`,
-`mise run cloudflare plan --json`. The detail that doesn't fit one line comes
-first; the [full list](#every-task) at the end is generated from each task's
-`description` in `mise.toml` by
-`mise generate task-docs --inject --output docs/Commands.md`, and the
-`checks:docs-sync` gate refuses a stale copy.
+Every command in the repository is a mise task. `mise tasks` lists the entry
+points and tools with their descriptions, `mise run <task>` runs one, and
+arguments after the task name go to its script unchanged:
+`mise run site validate`, `mise run cloudflare plan --json`. The detail that
+doesn't fit one line comes first; the [full list](#every-task) at the end is
+generated from each visible task's `description` in `mise.toml` and
+`mise-tasks/` by `mise generate task-docs --inject --output docs/Commands.md`,
+and the `checks:docs-sync` gate refuses a stale copy.
 
 ## Gates
 
@@ -16,7 +16,11 @@ first; the [full list](#every-task) at the end is generated from each task's
 lockfile when `package.json` or `package-lock.json` changed (`[deps.npm]`;
 the `--no-deps` flag skips it). A gate is a task
 named `<job>:<gate>`: `checks:*` before a build, `built:*` against the build
-in `dist/`, `browser:*` in a browser. Each aggregate runs its job collect-all
+in `dist/`, `browser:*` in a browser. Gates are hidden from `mise tasks` and
+this list: `mise tasks --hidden` lists every one with what its pass
+guarantees, and each is declared in its job's file under `mise-tasks/`
+(`mise-tasks/checks.toml`) or as a script in its job's directory
+(`mise-tasks/checks/`). Each aggregate runs its job collect-all
 and names every gate that failed; a failing gate prints its own fix. CI runs
 the same tasks, one aggregate per job.
 
@@ -127,7 +131,7 @@ Inter's optical-size axis. The character list and range live in
 with `--source <InterVariable.woff2>` from an upstream Inter release (the
 committed file is already a subset, so it can only shrink further).
 `--output <path>` writes the result elsewhere to compare it first. The
-fontTools CLIs run through `uvx`, which `mise install` provides.
+fontTools CLIs run through `uvx`, which mise installs from mise.lock on first use.
 
 **`mise run make:content-index`**: emits `public/content-index.json` from the
 validated, published writeup snapshot. The static build invokes it
@@ -180,24 +184,6 @@ reports an advisory ([`Dependencies.md`](./Dependencies.md)). The publishing wor
 
 Every browser gate, one at a time: one build with the test site key, then each suite
 
-## `browser:e2e`
-
-- **Usage:** `browser:e2e`
-
-The functional Playwright specs pass across Chromium, Firefox, and WebKit
-
-## `browser:edge`
-
-- **Usage:** `browser:edge`
-
-The built site served by the local Worker runtime: CSP, headers, 404, contact refusals and security.txt
-
-## `browser:visual`
-
-- **Usage:** `browser:visual`
-
-Screenshots of the fixture build match the committed macOS Chromium baselines; on any other platform the suite does not run and the task fails
-
 ## `build`
 
 - **Usage:** `build`
@@ -216,36 +202,6 @@ The build the browser suites serve under PREBUILT: the deploy build, with the te
 
 CI job build, last phase: every gate on the build in dist/client/, collect-all
 
-## `built:headers`
-
-- **Usage:** `built:headers`
-
-The built _headers has no placeholder left, lists each path once, and carries the policy on /* and its own on /contact/*
-
-## `built:html`
-
-- **Usage:** `built:html`
-
-html-validate: no built page repeats an id, every &lt;img> has alt, headings open at one h1 and never skip a level; and no literal `::name` directive reaches the page text
-
-## `built:links`
-
-- **Usage:** `built:links`
-
-Every internal link, src, and srcset in the build, its #fragment included, resolves to an emitted file or a Worker route
-
-## `built:seo`
-
-- **Usage:** `built:seo`
-
-Every built page has a title, canonical link, og:title, an og:image the build emitted, and only valid JSON-LD
-
-## `built:weight`
-
-- **Usage:** `built:weight`
-
-Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget
-
 ## `check`
 
 - **Usage:** `check`
@@ -258,136 +214,6 @@ Does my change work: every static gate, the production build, then every gate on
 - **Aliases:** `fast`
 
 CI job build, first phase: every static gate, collect-all
-
-## `checks:actionlint`
-
-- **Usage:** `checks:actionlint`
-
-jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions
-
-## `checks:astro`
-
-- Depends: sync:worker-types
-
-- **Usage:** `checks:astro`
-
-`astro check` reports no errors or warnings in the .astro files, content schemas, or imports
-
-## `checks:contracts`
-
-- **Usage:** `checks:contracts`
-
-Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source
-
-## `checks:css-vars`
-
-- **Usage:** `checks:css-vars`
-
-Every CSS custom property defined in src/styles is referenced somewhere in src/
-
-## `checks:d1`
-
-- **Usage:** `checks:d1`
-
-The contact handler consumes the contact contract, every INSERT names only columns cloudflare/d1.sql defines, and wrangler.jsonc binds the site's D1 database
-
-## `checks:doc-links`
-
-- **Usage:** `checks:doc-links`
-
-Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves
-
-## `checks:docs`
-
-- **Usage:** `checks:docs`
-
-Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script
-
-## `checks:docs-sync`
-
-- **Usage:** `checks:docs-sync`
-
-The task list in docs/Commands.md matches these tasks (fix: `mise generate task-docs --inject --output docs/Commands.md`, then commit it)
-
-## `checks:drafts`
-
-- **Usage:** `checks:drafts`
-
-No document under src/content is `published: false`
-
-## `checks:duplication`
-
-- **Usage:** `checks:duplication`
-
-jscpd finds no run of 30+ identical tokens over 3+ lines twice in the TypeScript outside the tests, nor of 40+ over 4+ anywhere
-
-## `checks:lint`
-
-- **Usage:** `checks:lint`
-
-Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers
-
-## `checks:mise-fmt`
-
-- **Usage:** `checks:mise-fmt`
-
-Every tracked mise config is as `mise fmt` writes it
-
-## `checks:patch`
-
-- **Usage:** `checks:patch`
-
-No whitespace error or conflict marker in any tracked file; synced content may keep trailing spaces and blank last lines
-
-## `checks:renovate`
-
-- **Usage:** `checks:renovate`
-
-Renovate's own validator finds no error, warning or needed migration in .github/renovate.json
-
-## `checks:repo-policy`
-
-- **Usage:** `checks:repo-policy`
-
-Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout
-
-## `checks:security-txt`
-
-- **Usage:** `checks:security-txt`
-
-security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key
-
-## `checks:shellcheck`
-
-- **Usage:** `checks:shellcheck`
-
-ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names
-
-## `checks:tasks`
-
-- **Usage:** `checks:tasks`
-
-`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task
-
-## `checks:types`
-
-- Depends: sync:worker-types
-
-- **Usage:** `checks:types`
-
-Every TypeScript file compiles under one strict program, and the Worker's routes again under the Workers runtime types wrangler.jsonc declares
-
-## `checks:unit`
-
-- **Usage:** `checks:unit`
-
-The node:test specs under tests/unit pass
-
-## `checks:workflows`
-
-- **Usage:** `checks:workflows`
-
-zizmor finds no security issue in the workflows; an accepted finding carries an inline reason
 
 ## `ci`
 
@@ -407,6 +233,18 @@ Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and s
 
 `check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)
 
+## `d1:schema`
+
+Apply `cloudflare/d1.sql` to the D1 database bound as `DB`: `local` (the one `mise run preview` serves) or `remote` (production)
+
+
+- **Usage:** `d1:schema <database>`
+
+### Arguments
+- **`<database>`** — The local database or production
+
+  **Choices:** `local`, `remote`
+
 ## `deploy:verify`
 
 - **Usage:** `deploy:verify`
@@ -420,6 +258,12 @@ After the merge deploys, from a residential IP: verify remote CI and the live pr
 - **Usage:** `dev`
 
 Start the local dev server
+
+## `dev:look`
+
+- **Usage:** `dev:look`
+
+Screenshot pages of the build as `preview` serves it, at each width in light and dark, to see a layout change; exit 1 on a page that scrolls sideways or fails to load
 
 ## `diff:build`
 

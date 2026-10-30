@@ -1,0 +1,16 @@
+# The browser suites: `mise run browser` builds once and runs every browser:*
+# gate here and under mise-tasks/browser/. Each suite builds what it serves
+# unless PREBUILT is set, as that aggregate and the CI legs set it. Arguments
+# after the task name go to Playwright: `mise run browser:e2e --ui`.
+
+["browser:e2e"]
+description = "The functional Playwright specs pass across Chromium, Firefox, and WebKit"
+hide = true
+timeout = "15m"
+run = "playwright test -c tests/playwright.config.ts"
+
+["browser:edge"]
+description = "The built site served by the local Worker runtime: CSP, headers, 404, contact refusals and security.txt"
+hide = true
+timeout = "5m"
+run = "playwright test -c tests/playwright.edge.config.ts"

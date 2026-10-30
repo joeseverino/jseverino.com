@@ -139,16 +139,23 @@ export function createGithubFake(seed: FakeState, token: string) {
     ],
   ];
 
-  async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
-    const { path, method, body, authorized } = record(input, init);
-    if (!authorized) return json({ message: 'Bad credentials' }, 401);
-    if (path !== REPO && !path.startsWith(`${REPO}/`)) throw new Error(`the fake has no route for ${method} ${path}`);
+  // The handler for a request under the repository, with the id its pattern captured.
+  function route(method: string, path: string) {
+    if (path !== REPO && !path.startsWith(`${REPO}/`)) return undefined;
     const rest = path.slice(REPO.length);
     for (const [verb, pattern, handle] of routes) {
       const match = verb === method ? rest.match(pattern) : null;
-      if (match) return handle(match[1] ?? '', (body ?? {}) as Fields, new Headers(init.headers).get('X-GitHub-Api-Version') ?? '');
+      if (match) return { handle, id: match[1] ?? '' };
     }
-    throw new Error(`the fake has no route for ${method} ${path}`);
+    return undefined;
+  }
+
+  async function fetch(input: RequestInfo | URL, init: RequestInit = {}) {
+    const { path, method, body, authorized } = record(input, init);
+    if (!authorized) return json({ message: 'Bad credentials' }, 401);
+    const found = route(method, path);
+    if (!found) throw new Error(`the fake has no route for ${method} ${path}`);
+    return found.handle(found.id, (body ?? {}) as Fields, new Headers(init.headers).get('X-GitHub-Api-Version') ?? '');
   }
 
   return { fetch, calls, writes, state };

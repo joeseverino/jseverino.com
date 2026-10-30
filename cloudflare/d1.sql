@@ -1,9 +1,7 @@
 -- Contact form submissions for jseverino.com.
 --
--- Apply to the remote D1 database:
---   mise run site d1-apply --confirm
--- Apply to the local database `astro dev` and `astro preview` bind:
---   wrangler d1 execute jseverino-contact --local --file=./cloudflare/d1.sql
+-- Apply to the production database: mise run d1:schema remote
+-- Apply to the local database `astro dev` and `astro preview` bind: mise run d1:schema local
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,

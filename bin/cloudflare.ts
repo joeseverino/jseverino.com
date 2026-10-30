@@ -39,7 +39,7 @@ one account.
 
 export const main = toolMain<ToolOptions & Pick<ClientOptions, 'fetch'>>({
   usage: USAGE,
-  command: 'node bin/cloudflare.ts',
+  commandLine: 'node bin/cloudflare.ts',
   setup({ env = process.env, fetch = globalThis.fetch }) {
     const desired = loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json'));
     const openapi = fs.readFileSync(fromRoot(desired.schemaValidation.file), 'utf8');

@@ -2,6 +2,7 @@
 // `severino-vault-mcp export education` (coursework). A course renders once it is active or
 // completed and has `## Site` bullets; the page marked `education_index: true` is the shell and gates the tree.
 import { stringifyFrontmatter } from '../../src/lib/frontmatter.ts';
+import { joinInline } from '../../src/lib/html.ts';
 import { DOCUMENT_FILE } from '../../src/lib/snapshot.ts';
 import { type Grammar, type Org, orgRow, type Role, renderDocumentRows, roleRow } from './documents.ts';
 
@@ -72,16 +73,14 @@ function resumeEducationOrgs(grammar: Grammar, content: string): EducationOrg[] 
 
 function courseRow(course: Course): string {
   const code = course.code.replace(/(\d)/, ' $1');
-  const dates = course.status === 'active' ? `${course.term} · in progress` : course.term;
+  const dates = course.status === 'active' ? joinInline([course.term, 'in progress']) : course.term;
   return `**${code} — ${course.title} (${dates})**`;
 }
 
 function courseProgress(courses: readonly Course[]): string {
   const completed = courses.filter((course) => course.status === 'completed').length;
   const active = courses.filter((course) => course.status === 'active').length;
-  return [completed > 0 ? `${completed} course${completed === 1 ? '' : 's'} completed` : '', active > 0 ? `${active} in progress` : '']
-    .filter(Boolean)
-    .join(' · ');
+  return joinInline([completed > 0 && `${completed} course${completed === 1 ? '' : 's'} completed`, active > 0 && `${active} in progress`]);
 }
 
 // Pure: the education pages as { page, content } (page relative to the pages
@@ -109,7 +108,7 @@ export function buildEducation({ grammar, shell, resume, dataset, projectPage }:
         projectPage({
           title: org.name,
           description: institution.description,
-          intro: [org.degree?.title, org.location, org.degree?.dates].filter(Boolean).join(' · '),
+          intro: joinInline([org.degree?.title, org.location, org.degree?.dates]),
           path: href,
           published: shell.data.published,
         }),

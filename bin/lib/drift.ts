@@ -6,9 +6,6 @@ import { readJson } from '../../src/lib/json.ts';
 import { parse } from './args.ts';
 import { assertMatches, type JsonSchema } from './json-schema.ts';
 
-// What the client needs from fetch: a URL string and an init.
-export type Fetch = (url: string, init: RequestInit) => Promise<Response>;
-
 // The options every tool's main() takes, for tests: arguments, environment, and
 // where output goes.
 export interface ToolOptions {
@@ -124,69 +121,91 @@ export interface Run {
 
 interface RunToolOptions extends ToolOptions {
   usage: string;
-  // How the tool is invoked, for the hint after a drift.
-  command: string;
+  // The command line that runs the tool, for the hint after a drift.
+  commandLine: string;
   // Called after the arguments are valid, so a bad invocation never loads
   // desired state or reads a token.
   setup: () => Run;
 }
 
-async function runTool({ usage, command: invocation, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+type Command = (typeof COMMANDS)[number];
+interface Invocation {
+  command: Command;
+  json: boolean;
+  yes: boolean;
+}
+
+// What argv asks for: the command and flags, or, once usage is written, the exit code
+// (0 for --help, 2 for a bad invocation).
+type ParsedArgv = { invocation: Invocation } | { exitCode: 0 | 2 };
+
+function parseArgv(argv: string[], usage: string, write: (line: string) => void): ParsedArgv {
   let parsed;
   try {
     parsed = parse({ args: argv, allowPositionals: true, options: { json: { type: 'boolean' }, yes: { type: 'boolean' } } });
   } catch (error) {
     write(`${errorMessage(error)}\n\n${usage}`);
-    return 2;
+    return { exitCode: 2 };
   }
   const { values, positionals } = parsed;
-  const command = positionals[0];
   if (values.help) {
     write(usage);
-    return 0;
+    return { exitCode: 0 };
   }
-  if (!COMMANDS.some((name) => name === command) || positionals.length > 1) {
+  const command = COMMANDS.find((name) => name === positionals[0]);
+  if (!command || positionals.length > 1) {
     write(usage);
-    return 2;
+    return { exitCode: 2 };
   }
+  return { invocation: { command, json: Boolean(values.json), yes: Boolean(values.yes) } };
+}
 
-  const { target, source, survey, apply } = setup();
-  const items = await survey();
+function check({ target, source }: Run, items: Item[], json: boolean, commandLine: string, write: (line: string) => void): number {
   const drift = drifted(items);
-  const calls = plannedCalls(items);
-
-  if (command === 'check') {
-    if (values.json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
-    else {
-      render(items, write);
-      write(drift.length ? `\n${drift.length} item(s) drifted; \`${invocation} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
-    }
-    return drift.length ? 1 : 0;
+  if (json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
+  else {
+    render(items, write);
+    write(drift.length ? `\n${drift.length} item(s) drifted; \`${commandLine} plan\` shows the fix` : `\nok       ${target} matches ${source}`);
   }
+  return drift.length ? 1 : 0;
+}
 
+// Lists the calls an apply would make and the items a person must fix; plan stops there,
+// apply with --yes makes the calls and surveys again.
+async function planOrApply(run: Run, items: Item[], { command, json, yes }: Invocation, write: (line: string) => void): Promise<number> {
+  const calls = plannedCalls(items);
   const manual = items.filter((entry) => entry.status === 'manual');
-  if (values.json && command === 'plan') {
-    write(JSON.stringify({ target, calls: calls.map(({ method, path, body }) => ({ method, path, body })), manual }, null, 2));
+  if (json && command === 'plan') {
+    write(JSON.stringify({ target: run.target, calls: calls.map(({ method, path, body }) => ({ method, path, body })), manual }, null, 2));
     return 0;
   }
   write(calls.length ? `${calls.length} call(s):` : 'no API calls needed');
   for (const step of calls) write(`  ${describeCall(step)}`);
   for (const entry of manual) write(`manual: ${entry.area} ${entry.name}: ${entry.note}`);
   if (command === 'plan' || calls.length === 0) return command === 'apply' && manual.length ? 1 : 0;
-  if (!values.yes) {
+  if (!yes) {
     write('\nnothing changed; re-run with --yes to make these calls');
     return 0;
   }
 
-  await apply(items, (call) => write(`done     ${call}`));
-  const after = drifted(await survey());
+  await run.apply(items, (call) => write(`done     ${call}`));
+  const after = drifted(await run.survey());
   for (const entry of after) write(`still    ${entry.area} ${entry.name}: ${entry.note || `${entry.have} → ${entry.want}`}`);
   return after.length ? 1 : 0;
+}
+
+async function runTool({ usage, commandLine, argv = process.argv.slice(2), write = console.log, setup }: RunToolOptions): Promise<number> {
+  const parsed = parseArgv(argv, usage, write);
+  if ('exitCode' in parsed) return parsed.exitCode;
+  const { invocation } = parsed;
+  const run = setup();
+  const items = await run.survey();
+  return invocation.command === 'check' ? check(run, items, invocation.json, commandLine, write) : planOrApply(run, items, invocation, write);
 }
 
 // A tool's main(): the command flow over the Run its setup builds from the
 // options. Tests pass the environment, fetch, and output through the options.
 export const toolMain =
-  <O extends ToolOptions>({ usage, command, setup }: { usage: string; command: string; setup: (options: O) => Run }) =>
+  <O extends ToolOptions>({ usage, commandLine, setup }: { usage: string; commandLine: string; setup: (options: O) => Run }) =>
   (options: O): Promise<number> =>
-    runTool({ ...options, usage, command, setup: () => setup(options) });
+    runTool({ ...options, usage, commandLine, setup: () => setup(options) });

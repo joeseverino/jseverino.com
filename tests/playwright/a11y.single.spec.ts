@@ -41,7 +41,15 @@ for (const colorScheme of ['light', 'dark'] as const) {
       // The dialog fades in; axe computes contrast through opacity, so a scan
       // mid-fade fails color-contrast on the caption. Scan the settled state.
       await expect.poll(() => dialog.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
-      await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))));
+      // Only time-based animations finish; a scroll-driven one (a scroller's end fade) runs as long as its scroller.
+      await page.evaluate(() =>
+        Promise.all(
+          document
+            .getAnimations()
+            .filter((animation) => animation.timeline instanceof DocumentTimeline)
+            .map((animation) => animation.finished.catch(() => undefined)),
+        ),
+      );
 
       expect(summarize(await scan(page))).toEqual([]);
     });

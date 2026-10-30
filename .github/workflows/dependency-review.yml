@@ -16,7 +16,7 @@ jobs:
   # A pull request that changes no manifest passes at once: the action finds no
   # dependency changes and returns.
   dependency-review:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     # The review lands in the job summary on every run; it comments on the pull
     # request only when it has something to block, and that comment is the one

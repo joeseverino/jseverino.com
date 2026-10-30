@@ -29,10 +29,15 @@
   "html": { "experimentalFullSupportEnabled": true },
   "plugins": [
     { "path": "./tests/literal-colors.grit", "includes": ["src/styles/**"] },
-    { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] }
+    { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] },
+    // TypeScript, and an .astro file's frontmatter and <script> elements.
+    { "path": "./tests/client-html-sinks.grit", "includes": ["src/**"] },
+    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] }
   ],
   "linter": {
     "rules": {
+      // Outside Biome's recommended set: no function passes its default bound (15).
+      "complexity": { "noExcessiveCognitiveComplexity": "error" },
       "suspicious": {
         // The terminal UI, the Markdown guard and their tests match control
         // characters on purpose, to strip ANSI escapes and refuse bidi controls.
@@ -72,7 +77,7 @@
       // An .astro file's template uses its frontmatter bindings, which Biome's
       // experimental Astro support reports as unused, and `astro check`
       // (checks:astro) owns its types and markup. Biome holds its TypeScript to
-      // the two type-escape rules alone.
+      // the two type-escape rules and the complexity bound the top level sets.
       "includes": ["**/*.astro"],
       "formatter": { "enabled": false },
       "assist": { "enabled": false },

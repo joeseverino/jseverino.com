@@ -1,0 +1,142 @@
+# The static gates, before a build: `mise run checks` (alias fast) runs every
+# checks:* gate here and under mise-tasks/checks/.
+
+["checks:contracts"]
+description = "Each generated projection (brand tokens, contact OpenAPI, content schemas, embed CSS, vector brand marks) matches what its script derives from the canonical source"
+hide = true
+run = "mise run -c -q sync:tokens --check ::: sync:contact-openapi --check ::: sync:contract --check ::: make:embed --check ::: make:icons --check"
+
+["checks:drafts"]
+description = "No document under src/content is `published: false`"
+hide = true
+# The committed snapshot is what deploys; drafts preview from the gitignored
+# overlay `site dev --drafts` writes. Untracked documents count, since a build
+# reads them. awk reads only the frontmatter, from a `---` on line one to the
+# next line that opens with `---` (gray-matter's bounds), so a body quoting
+# frontmatter passes. YAML's core schema spells false only as false, False or
+# FALSE.
+run = [
+  "git ls-files --cached --others --exclude-standard -- 'src/content/**/index.mdx' | grep -q . || { echo 'no index.mdx under src/content; run mise run sync:content' >&2; exit 1; }",
+  '''git ls-files -z --cached --others --exclude-standard -- 'src/content/**/index.mdx' | xargs -0 awk 'FNR == 1 { head = /^---([^-]|$)/; next } head && /^---/ { head = 0 } head && /^published[[:space:]]*:[[:space:]]*(false|False|FALSE)[[:space:]]*(#|$)/ { print FILENAME ":" FNR ": " $0; found = 1 } END { exit found }' || { echo 'fix: run `mise run sync:content` (drafts belong in the overlay `site dev --drafts` writes)' >&2; exit 1; }''',
+]
+
+["checks:security-txt"]
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
+hide = true
+run = "node tests/audits/check-security-txt.ts"
+
+["checks:types"]
+description = "Every TypeScript file compiles under one strict program, and the Worker's routes again under the Workers runtime types wrangler.jsonc declares"
+hide = true
+depends = ["sync:worker-types"]
+# astro sync writes the generated types under .astro/ that tsc reads.
+run = ["astro sync --silent", "tsc -p .", "tsc -p src/tsconfig.worker.json"]
+
+["checks:astro"]
+description = "`astro check` reports no errors or warnings in the .astro files, content schemas, or imports"
+hide = true
+depends = ["sync:worker-types"]
+# astro sync and astro check both rewrite .astro/; never at once.
+wait_for = ["checks:types"]
+env = { NODE_OPTIONS = "--max-old-space-size=4096" }
+run = "astro check --silent --minimumSeverity warning --tsconfig src/tsconfig.astro.json"
+
+["checks:d1"]
+description = "Every module under src that writes D1 is imported by a unit spec that runs it against cloudflare/d1.sql in node:sqlite"
+hide = true
+run = "node tests/audits/check-d1-writes.ts"
+
+["checks:unit"]
+description = "The node:test specs under tests/unit pass, or only the specs named"
+hide = true
+usage = '''
+arg "[spec]..." help="A spec file or glob to run" default="tests/unit/**/*.test.ts"
+'''
+# usage_spec holds the specs shell-quoted, so each reaches node whole and
+# node, not the shell, expands the glob.
+run = 'eval "set -- $usage_spec" && node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts "$@"'
+
+["checks:docs"]
+description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
+hide = true
+run = "node tests/audits/check-docs.ts {{vars.docs}}"
+
+["checks:doc-links"]
+description = "Every relative link, image, and #anchor (GitHub heading slugs) in the engineering docs resolves"
+hide = true
+run = "lychee --offline --include-fragments --no-progress --root-dir '{{config_root}}' $(git ls-files -- {{vars.docs}})"
+
+["checks:prose"]
+description = "Vale finds no em dash, praise word, \"not X, but Y\" contrast or narrated history in the engineering docs (tests/vale/)"
+hide = true
+run = "vale --no-global --config tests/vale/vale.ini $(git ls-files -- {{vars.docs}})"
+
+["checks:lint"]
+description = "Biome finds no formatting difference and no lint finding at warning or above in the files biome.jsonc covers"
+hide = true
+run = "biome ci --error-on-warnings || { status=$?; echo 'fix: mise run fix:lint, fix what it reports it cannot, then commit the result' >&2; exit $status; }"
+
+["checks:knip"]
+description = "knip finds no unused file, export, type, dependency or binary, and no stale entry or ignore in tests/knip.jsonc"
+hide = true
+run = "knip --config tests/knip.jsonc --treat-config-hints-as-errors"
+
+["checks:css-vars"]
+description = "Every CSS custom property defined in src/styles is referenced somewhere in src/"
+hide = true
+run = "node tests/audits/check-css.ts"
+
+["checks:repo-policy"]
+description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout"
+hide = true
+run = "node tests/audits/check-repository-policy.ts"
+
+["checks:workflows"]
+description = "zizmor finds no security issue in the workflows; an accepted finding carries an inline reason"
+hide = true
+# Offline: the online audits need a token and the network, and a gate gives the
+# same verdict on a laptop and in CI. Set through zizmor's environment: zizmor
+# is lazy, and its bootstrap shim reads an `--offline` argument as mise's own,
+# so the install that runs first would refuse to download.
+env = { ZIZMOR_OFFLINE = "true" }
+run = "zizmor --quiet .github"
+
+["checks:actionlint"]
+description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
+hide = true
+# The correctness profile is actionlint's checks; zizmor (checks:workflows)
+# owns the security audits.
+run = "jactionlint --profile correctness --no-hints"
+
+["checks:shellcheck"]
+description = "ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names"
+hide = true
+# The .toml files there are task files, not scripts.
+run = "find mise-tasks -type f ! -name '*.toml' -exec shellcheck {} +"
+
+["checks:renovate"]
+description = "Renovate's own validator finds no error, warning or needed migration in .github/renovate.json"
+hide = true
+# Pinned here and moved by .github/renovate.json's regex manager for this file.
+# npm prints only errors, so the deprecation warnings of Renovate's own
+# dependencies stay out of the gate's output. The exact pin is the gate on the
+# release, so the machine's npm release-age hold does not apply to this fetch.
+env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
+run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
+
+["checks:tasks"]
+description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"
+hide = true
+run = "mise tasks validate --errors-only"
+
+["checks:patch"]
+description = "No whitespace error or conflict marker in any tracked file; synced content may keep trailing spaces and blank last lines"
+hide = true
+# Against the empty tree, so every tracked file is checked, edited or not.
+# Synced content keeps the trailing double space that Markdown reads as a line
+# break, so only its end-of-line rules are relaxed, and its conflict markers
+# still fail.
+run = [
+  "git diff --check $(git hash-object -t tree /dev/null) -- . ':!src/content' ':!tests/fixtures/content'",
+  "git -c core.whitespace=-blank-at-eol,-blank-at-eof diff --check $(git hash-object -t tree /dev/null) -- src/content tests/fixtures/content",
+]

@@ -63,11 +63,9 @@ describe(':::table and tables', () => {
     assert.match(render('| A |\n| --- |\n| 1 |'), /^<figure class="table-figure"><div class="table-box"><table>.*<\/table><\/div><\/figure>$/);
   });
 
-  test('lets addresses in cells break at their separators, but not in code', () => {
-    const html = render('| IP | MAC | Code |\n| --- | --- | --- |\n| 10.0.0.1 | 00:00:00:00:01:1e | `a.b` |');
-    assert.match(html, /<td>10\.<wbr>0\.<wbr>0\.<wbr>1<\/td>/);
-    assert.match(html, /<td>00:<wbr>00:<wbr>00:<wbr>00:<wbr>01:<wbr>1e<\/td>/);
-    assert.match(html, /<td><code>a\.b<\/code><\/td>/);
+  test('keeps an address in a cell one token, so it never breaks at its separators', () => {
+    const html = render('| IP | MAC |\n| --- | --- |\n| 10.0.0.1 | 00:00:00:00:01:1e |');
+    assert.match(html, /<td>10\.0\.0\.1<\/td><td>00:00:00:00:01:1e<\/td>/);
   });
 });
 
@@ -126,6 +124,13 @@ describe(':::center and :::hero', () => {
   test('wrap their rendered body', () => {
     assert.equal(render(':::center\nHi\n:::', 'pages'), '<div class="center-text"><p>Hi</p></div>');
     assert.equal(render(':::hero\n# Title\n:::', 'pages'), '<header class="hero"><h1>Title</h1></header>');
+  });
+
+  test("a hero paragraph's hard-broken lines each become a line of their own", () => {
+    assert.equal(
+      render(':::hero\nOne *a*  \nTwo\n:::', 'pages'),
+      '<header class="hero"><p><span class="hero-line">One <em>a</em></span><span class="hero-line">Two</span></p></header>',
+    );
   });
 
   test('nest with longer fences outside', () => {
