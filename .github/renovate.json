@@ -65,6 +65,11 @@
       "matchPackageNames": ["@types/node", "npm"],
       "matchUpdateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "description": "satteri stays on the 0.x line @astrojs/markdown-satteri depends on, since the content plugins run inside the integration's copy; checks:repo-policy fails while two copies are installed (docs/Dependencies.md).",
+      "matchPackageNames": ["satteri"],
+      "allowedVersions": "<0.11.0"
     }
   ],
   "customManagers": [
