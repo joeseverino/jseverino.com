@@ -108,7 +108,7 @@ depends = ["packages"]
 [tools]
 node = "26.13.0"
 "aqua:lycheeverse/lychee" = "0.24.2"
-"aqua:biomejs/biome" = "2.6.2"
+"aqua:biomejs/biome" = "2.6.4"
 
 [tools."aqua:zizmorcore/zizmor"]
 version = "1.31.1"
@@ -116,7 +116,7 @@ lazy = true
 lazy_bins = ["zizmor"]
 
 [tools."github:jdx/jactionlint"]
-version = "2.3.0"
+version = "2.4.0"
 lazy = true
 lazy_bins = ["jactionlint"]
 
@@ -128,12 +128,12 @@ lazy_bins = ["shellcheck"]
 
 # make:font's uvx.
 [tools."aqua:astral-sh/uv"]
-version = "0.13.5"
+version = "0.13.6"
 lazy = true
 lazy_bins = ["uv", "uvx"]
 
 [tools."aqua:vale-cli/vale"]
-version = "3.24.0"
+version = "3.25.1"
 lazy = true
 lazy_bins = ["vale"]
 
