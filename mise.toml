@@ -33,7 +33,7 @@
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.10.18"
+min_version = "2026.10.25"
 
 [settings]
 # For [deps], mise's package installer.
@@ -133,7 +133,7 @@ lazy = true
 lazy_bins = ["uv", "uvx"]
 
 [tools."aqua:vale-cli/vale"]
-version = "3.25.1"
+version = "3.26.0"
 lazy = true
 lazy_bins = ["vale"]
 
