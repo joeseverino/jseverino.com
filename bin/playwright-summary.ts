@@ -6,16 +6,13 @@ import path from 'node:path';
 import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import { readJson } from '../src/lib/json.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
-import { cli } from './lib/args.ts';
+import { cli, usageError } from './lib/args.ts';
 import { annotate, appendSummary, cell, seconds, status, table } from './lib/step-summary.ts';
 
 // Each suite writes its own report (tests/browser-test-env.ts), so the caller names it.
 const usage = 'usage: node bin/playwright-summary.ts <title> <report.json>';
 const [title, reportFile, ...extra] = cli({ usage, allowPositionals: true }).positionals;
-if (!title || !reportFile || extra.length) {
-  console.error(usage);
-  process.exit(2);
-}
+if (!title || !reportFile || extra.length) usageError(usage);
 const input = path.resolve(root, reportFile);
 
 interface TestRow {

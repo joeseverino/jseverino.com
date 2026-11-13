@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFrontmatter } from '../src/lib/frontmatter.ts';
-import { cli, flag } from './lib/args.ts';
+import { cli, flag, usageError } from './lib/args.ts';
 import { vaultRoot as vaultRootFor, WRITEUPS_FOLDER } from './lib/local-paths.ts';
 import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
 
@@ -25,10 +25,7 @@ const { values, positionals } = cli({
 const { all, apply } = values;
 const [slug] = positionals;
 
-if (!slug && !all) {
-  console.error(usage);
-  process.exit(2);
-}
+if (!slug && !all) usageError(usage);
 
 const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
 if (!apiKey) {

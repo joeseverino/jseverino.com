@@ -8,7 +8,7 @@ import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
 import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
-import { cli } from './lib/args.ts';
+import { cli, usageError } from './lib/args.ts';
 import { routeFile } from './lib/routes.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
@@ -84,10 +84,7 @@ const { values, positionals } = cli({
 const resultOnly = values.result;
 const [input] = positionals;
 
-if (!input) {
-  console.error(USAGE);
-  process.exit(2);
-}
+if (!input) usageError(USAGE);
 
 const urlPath = normalizePath(input);
 const file = path.join(distRoot, routeFile(urlPath));

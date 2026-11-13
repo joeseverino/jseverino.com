@@ -8,7 +8,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readJson } from '../src/lib/json.ts';
-import { cli, exitWith } from './lib/args.ts';
+import { cli, exitWith, usageError } from './lib/args.ts';
 import { type CheckRun, checkRuns, createClient, passed, requiredContexts } from './lib/github.ts';
 import type { Fetch } from './lib/rest.ts';
 
@@ -139,9 +139,6 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
 
 if (import.meta.main) {
   const [dir, ...extra] = cli({ usage: USAGE, allowPositionals: true }).positionals;
-  if (extra.length) {
-    console.error(USAGE);
-    process.exit(2);
-  }
+  if (extra.length) usageError(USAGE);
   await exitWith('pr-comment', () => main({ dir }));
 }

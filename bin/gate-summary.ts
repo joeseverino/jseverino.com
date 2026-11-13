@@ -6,15 +6,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readJson } from '../src/lib/json.ts';
-import { cli } from './lib/args.ts';
+import { cli, usageError } from './lib/args.ts';
 import { annotate, appendSummary, createReport, seconds, status } from './lib/step-summary.ts';
 
-cli({ usage: 'usage: GATE_REPORT_DIR=<dir> node bin/gate-summary.ts' });
-const dir = process.env.GATE_REPORT_DIR;
-if (!dir) {
-  console.error('gate-summary: GATE_REPORT_DIR must be set');
-  process.exit(2);
-}
+const usage = 'usage: GATE_REPORT_DIR=<dir> node bin/gate-summary.ts';
+cli({ usage });
+const dir = process.env.GATE_REPORT_DIR || usageError(usage, 'GATE_REPORT_DIR must be set');
 
 // Version 1 of mise's report, the one this script reads.
 interface TaskReport {
