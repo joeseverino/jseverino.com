@@ -569,19 +569,21 @@ GitHub Actions provide the remote quality gate:
   builds the fixtures it serves. Each suite writes its own `.cache/test-results/<suite>/` and
   `.cache/playwright-report/<suite>/`, uploaded on every run, so expected, actual, and
   diff images are retained on failure.
-- [`deploy`](../.github/workflows/deploy.yml) starts when a `ci` run
-  completes successfully and ships that run's `site` artifact; it runs the
-  default branch's code and never checks out a pull request. Each job opens a
+- [`preview`](../.github/workflows/preview.yml) starts when a pull request's
+  `ci` run completes, and [`deploy`](../.github/workflows/deploy.yml) when
+  `main`'s does; each ships that run's `site` artifact, runs the default
+  branch's code, never checks out a pull request, and titles its run with the
+  branch and the `ci` run's title. Each deploying job opens a
   `deploy` check-run on the commit it ships
   ([`.github/actions/deploy-check`](../.github/actions/deploy-check/action.yml))
   and closes it with the outcome, and the ruleset requires that check, so a
   pull request cannot merge before its preview is verified.
-  - `preview` (pull requests): `mise run preview:wrap` refuses a deploy
+  - `preview` (in `preview.yml`): `mise run preview:wrap` refuses a deploy
     config the adapter would not write, wraps the build in the sitedrift
     viewer and fills the CSP again; `wrangler versions upload` uploads it as a
     version with the branch's alias, and `deploy-verify --origin --preview`
     checks it at its preview URL. A version takes no production traffic.
-  - `tip` (pushes to `main`): `ci` runs can finish out of order, so only
+  - `tip` (in `deploy.yml`, pushes to `main`): `ci` runs can finish out of order, so only
     `main`'s current tip deploys. A superseded commit's `deploy` check passes
     at once and names the commit that carries it live.
   - `production`: uploads the build as a version, runs
@@ -592,8 +594,10 @@ GitHub Actions provide the remote quality gate:
     issues Sigstore provenance and SBOM attestations, kept as the
     `release-<sha>` artifact that [`release`](../.github/workflows/release.yml)
     publishes for a tag.
-  - `dist`: commits the attested archive to the [`dist` branch](./Dist-Branch.md).
-  - `report`: runs [`bin/pr-comment.ts`](../bin/pr-comment.ts) from the default
+  - `dist`: checks the attested archive against the digest `attest` signed,
+    unpacks it and commits it to the [`dist` branch](./Dist-Branch.md), with
+    trailers naming the run, that digest and the attestation.
+  - `report` (in `preview.yml`, whatever `ci` concluded): runs [`bin/pr-comment.ts`](../bin/pr-comment.ts) from the default
     branch's checkout to keep one comment per pull request current with `ci`'s
     job summaries and the preview's: each required check links to its run, a
     passing job's tables fold under their one-line results, and a failing
@@ -626,7 +630,7 @@ pull request runs the same required checks and is merged like any other. For
 dependency review to block merging, the main ruleset must require the
 `dependency-review` status check.
 
-Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload, `pull-requests: write` for the PR comment (`deploy` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-26.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, every step a short imperative name (an unnamed `uses:` step is listed by its pinned SHA), checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; jactionlint fails on a `-latest` label or a job without a timeout ([`.github/jactionlint.yaml`](../.github/jactionlint.yaml)). The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Tools and packages install fresh on every run, checked against `mise.lock`'s checksums and `package-lock.json`'s integrity hashes. The one cache is Astro's encoded images, which the `build` job that produces the shipped artifact restores.
+Every workflow declares a top-level `permissions: contents: read`. Any wider scope is granted at the **job** level only, so unrelated jobs cannot inherit it: `security-events: write` for the Scorecard SARIF upload and `id-token: write` for its published result, `pull-requests: write` for the PR comment (`preview` / `report`) and the dependency review's comment on a blocked PR. Workflow dependencies are pinned to immutable commit SHAs. Version comments beside action pins record the upstream release tag used when the SHA was selected. Runners are pinned too (`ubuntu-26.04`, `macos-26` for the visual baselines), every job carries its own `timeout-minutes`, every step a short imperative name (an unnamed `uses:` step is listed by its pinned SHA), checkouts set `persist-credentials: false`, and pull-request workflows cancel a superseded run; jactionlint fails on a `-latest` label or a job without a timeout ([`.github/jactionlint.yaml`](../.github/jactionlint.yaml)). The mise toolchain and the npm install live in one composite action, [`.github/actions/setup`](../.github/actions/setup/action.yml). Tools and packages install fresh on every run, checked against `mise.lock`'s checksums and `package-lock.json`'s integrity hashes. The one cache is Astro's encoded images, which the `build` job that produces the shipped artifact restores.
 
 CodeQL findings are fixed at the source, and `mise run deploy:verify` fails while one is open ([Release Checklist](./Release-Checklist.md#3-pull-request-and-merge)). Scorecard findings that do not apply to a solo personal repo are dismissed with an inline justification; the checks below maximum are explained in [Security](./Security.md#supply-chain-and-ci).
 
