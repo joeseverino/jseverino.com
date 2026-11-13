@@ -12,7 +12,7 @@ import '@styles/software.css';
 
 const page = await getPage('portfolio');
 const writeups = await getWriteups();
-const software = await getSoftware();
+const software = getSoftware();
 const featuredSoftware = getFeaturedSoftware(software);
 const moreSoftware = getMoreSoftware(software);
 const tagGroups = await groupedTags();

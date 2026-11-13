@@ -40,6 +40,13 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
 <script is:inline async src={TURNSTILE_SCRIPT_URL}></script>
 
 <script>
+  declare global {
+    interface Window {
+      // The Turnstile script's global, once it has loaded.
+      turnstile?: { reset(): void };
+    }
+  }
+
   const form = document.querySelector<HTMLFormElement>('.contact-intake-form');
 
   if (form) {
@@ -106,8 +113,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
         button.disabled = false;
         form.removeAttribute('aria-busy');
         button.textContent = 'Send Message';
-        const turnstile = (window as unknown as { turnstile?: { reset: () => void } }).turnstile;
-        turnstile?.reset();
+        window.turnstile?.reset();
       }
     });
     form.hidden = false;

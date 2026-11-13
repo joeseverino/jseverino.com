@@ -1,7 +1,8 @@
 // Container directives (`:::figure`) render to site markup, leaf directives to page components; nothing else is a directive.
 
-import type { ListItem, Paragraph, PhrasingContent, RootContent } from 'mdast';
-import { defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
+import type { Properties } from 'hast';
+import type { Link, ListItem, Paragraph, PhrasingContent, Root, RootContent, Text } from 'mdast';
+import { type Custom, defineMdastPlugin, type MdastNode, type MdastVisitorContext } from 'satteri';
 
 type ContainerDirective = Extract<MdastNode, { type: 'containerDirective' }>;
 
@@ -11,10 +12,17 @@ const placeholders: ReadonlySet<string> = new Set(PLACEHOLDERS);
 export const CONTENT_RUN = 'content-run';
 
 type Children = readonly RootContent[];
+type Node = MdastNode | Custom;
 type Positioned = { position?: { start: { line: number; offset?: number | undefined }; end: { offset?: number | undefined } } | undefined };
 
-const element = (tagName: string, children: readonly unknown[], properties: Record<string, unknown> = {}) =>
-  ({ type: tagName, data: { hName: tagName, hProperties: properties }, children }) as unknown as MdastNode;
+// A node of the site's own markup: satteri renders a custom node as the element `data.hName` names.
+const element = (tagName: string, children: readonly Node[], properties: Properties = {}): Custom => ({
+  type: tagName,
+  data: { hName: tagName, hProperties: properties },
+  children: [...children],
+});
+
+const newline: Text = { type: 'text', value: '\n' };
 
 const line = (node: Positioned): string => (node.position ? ` (line ${node.position.start.line})` : '');
 
@@ -23,25 +31,21 @@ const isParagraph = (node: RootContent | undefined): node is Paragraph => node?.
 function inline(nodes: Children): PhrasingContent[] {
   return nodes.flatMap((node, index) => {
     const content = isParagraph(node) ? node.children : [];
-    return index === 0 ? content : [{ type: 'text', value: '\n' } as PhrasingContent, ...content];
+    return index === 0 ? content : [newline, ...content];
   });
 }
 
-function figure(node: ContainerDirective): MdastNode | readonly RootContent[] {
+function figure(node: ContainerDirective): Custom | Children {
   const [first, ...rest] = node.children;
   const [image, ...trailing] = isParagraph(first) ? first.children : [];
   if (image?.type !== 'image') return node.children;
   const sameParagraph = trailing.filter((child, index) => index > 0 || !(child.type === 'break' || (child.type === 'text' && !child.value.trim())));
   if (sameParagraph[0]?.type === 'text') sameParagraph[0] = { ...sameParagraph[0], value: sameParagraph[0].value.replace(/^\s+/, '') };
-  const captionContent = [
-    ...sameParagraph,
-    ...(sameParagraph.length && rest.length ? [{ type: 'text', value: '\n' } as PhrasingContent] : []),
-    ...inline(rest),
-  ];
+  const captionContent = [...sameParagraph, ...(sameParagraph.length && rest.length ? [newline] : []), ...inline(rest)];
   return element('figure', captionContent.length ? [image, element('figcaption', captionContent)] : [image]);
 }
 
-function table(node: ContainerDirective): MdastNode | readonly RootContent[] {
+function table(node: ContainerDirective): Custom | Children {
   const [grid, ...caption] = node.children;
   if (grid?.type !== 'table') return node.children;
   const captionContent = inline(caption);
@@ -50,14 +54,14 @@ function table(node: ContainerDirective): MdastNode | readonly RootContent[] {
   });
 }
 
-function button(paragraph: RootContent | undefined, className: string): MdastNode | undefined {
+function button(paragraph: RootContent | undefined, className: string): Link | undefined {
   if (!isParagraph(paragraph) || paragraph.children.length !== 1) return undefined;
   const [link] = paragraph.children;
   if (link?.type !== 'link') return undefined;
-  return { ...link, data: { hProperties: { className: className.split(' ') } } } as unknown as MdastNode;
+  return { ...link, data: { hProperties: { className: className.split(' ') } } };
 }
 
-function buttons(node: ContainerDirective): MdastNode {
+function buttons(node: ContainerDirective): Custom {
   const [list] = node.children;
   if (node.children.length !== 1 || list?.type !== 'list') throw new Error(`:::buttons holds one list of links${line(node)}`);
   const links = list.children.map((item: ListItem, index) => {
@@ -67,12 +71,12 @@ function buttons(node: ContainerDirective): MdastNode {
   });
   return element(
     'div',
-    links.flatMap((link, index) => (index ? [{ type: 'text', value: '\n' }, link] : [link])),
+    links.flatMap((link, index) => (index ? [newline, link] : [link])),
     { className: ['actions'] },
   );
 }
 
-function single(node: ContainerDirective): MdastNode {
+function single(node: ContainerDirective): Custom {
   const sticky = String(node.attributes?.class ?? '')
     .split(/\s+/)
     .includes('sticky');
@@ -82,23 +86,23 @@ function single(node: ContainerDirective): MdastNode {
 }
 
 // A hero paragraph's hard-broken lines each wrap and balance on their own, so each is its own block-level span.
-function heroLines(node: RootContent): RootContent | MdastNode {
+function heroLines(node: RootContent): Node {
   if (!isParagraph(node) || !node.children.some((child) => child.type === 'break')) return node;
   const lines: PhrasingContent[][] = [[]];
   for (const child of node.children) {
     if (child.type === 'break') lines.push([]);
     else lines.at(-1)?.push(child);
   }
-  return { ...node, children: lines.map((line) => element('span', line, { className: ['hero-line'] })) } as unknown as MdastNode;
+  return { type: 'paragraph', children: lines.map((line) => element('span', line, { className: ['hero-line'] })) };
 }
 
-function side(node: ContainerDirective): MdastNode {
+function side(node: ContainerDirective): Custom {
   const [only] = node.children;
   const bare = node.children.length === 1 && isParagraph(only) && only.children.length === 1 && only.children[0]?.type === 'image';
   return element('div', bare ? only.children : node.children);
 }
 
-const CONTAINERS: Record<string, (node: ContainerDirective) => MdastNode | readonly RootContent[]> = {
+const CONTAINERS: Record<string, (node: ContainerDirective) => Custom | Children> = {
   figure,
   table,
   buttons,
@@ -109,9 +113,9 @@ const CONTAINERS: Record<string, (node: ContainerDirective) => MdastNode | reado
   side,
 };
 
-function sections(root: { children: Children }, ctx: MdastVisitorContext): void {
+function sections(root: Readonly<Root>, ctx: MdastVisitorContext): void {
   if (!root.children.some((child) => child.type === 'leafDirective')) return;
-  const out: unknown[] = [];
+  const out: Custom[] = [];
   let run: RootContent[] = [];
   const flush = () => {
     if (run.length) out.push(element(CONTENT_RUN, run));
@@ -126,7 +130,7 @@ function sections(root: { children: Children }, ctx: MdastVisitorContext): void 
     out.push(element(child.name, []));
   }
   flush();
-  ctx.replaceNode(root as never, { type: 'root', children: out } as never);
+  ctx.replaceNode(root, { type: 'root', children: out });
 }
 
 export const blocks = defineMdastPlugin({
@@ -137,11 +141,11 @@ export const blocks = defineMdastPlugin({
     if (!render) throw new Error(`:::${node.name} is not a block${line(node)}`);
     if (node.name === 'side' && ctx.parent(node)?.type !== 'containerDirective') throw new Error(`:::side belongs inside :::split${line(node)}`);
     const result = render(node);
-    ctx.replaceNode(node, (Array.isArray(result) ? result : [result]) as MdastNode[]);
+    ctx.replaceNode(node, 'type' in result ? result : [...result]);
   },
   leafDirective(node, ctx) {
     if (!placeholders.has(node.name)) throw new Error(`::${node.name} is not a placeholder${line(node)}`);
     if (ctx.parent(node)?.type !== 'root') throw new Error(`::${node.name} belongs at the top level${line(node)}`);
   },
-  after: (root, ctx) => sections(root, ctx),
+  after: sections,
 });

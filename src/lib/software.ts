@@ -2,7 +2,6 @@
 // package-registry.json snapshot (PyPI/npm versions and downloads).
 
 import registry from '../data/package-registry.json' with { type: 'json' };
-import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
 import { getGithubRepos } from './github.ts';
 import { joinInline } from './html.ts';
@@ -36,10 +35,8 @@ function enrich(pkg: SoftwarePackage): void {
   pkg.downloadsPerMonth = known?.downloadsPerMonth;
 }
 
-export const getSoftware = asyncCache(build);
-
-async function build(): Promise<SoftwareEntry[]> {
-  const repos = await getGithubRepos();
+export function getSoftware(): SoftwareEntry[] {
+  const repos = getGithubRepos();
 
   const entries: SoftwareEntry[] = repos
     .filter((repo) => !repo.fork && !SKIP.has(repo.name) && repo.description.trim() !== '')

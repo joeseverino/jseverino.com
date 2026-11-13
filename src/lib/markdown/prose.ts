@@ -22,6 +22,6 @@ export const prose = defineMdastPlugin({
       type: 'actions',
       data: { hName: 'div', hProperties: { className: ['actions'] } },
       children: [{ ...link, data: { hProperties: { className: ['button'] } } }],
-    } as never);
+    });
   },
 });
