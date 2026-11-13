@@ -3,7 +3,7 @@
 import { contentContract, contentContractFingerprint, type FieldSpec } from '../src/lib/content-contract.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/sync-content-contract.ts [--check]');
 const schemaTarget = fromRoot('src/generated/content-schema.ts');

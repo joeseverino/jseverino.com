@@ -8,7 +8,7 @@ import { BRAND } from '../src/lib/brand.ts';
 import { SITE } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/make-icons.ts [--check]');
 

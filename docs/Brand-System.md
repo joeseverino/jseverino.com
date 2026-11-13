@@ -146,7 +146,7 @@ The assembly is owned once so an embedder does not re-derive it:
 - [`src/lib/web-styles.ts`](../src/lib/web-styles.ts) exports
   **`interFontFace(fontUrl)`**, the Inter `@font-face` that `base.css` expects,
   which the document renderer
-  ([`bin/lib/render-document.ts`](../bin/lib/render-document.ts)) adds with the
+  ([`bin/site/preview-document.ts`](../bin/site/preview-document.ts)) adds with the
   font as a data URL when it styles a rendered writeup with `base.css`.
   [`bin/make-embed-bundle.ts`](../bin/make-embed-bundle.ts) builds
   `public/embed/bundle.css` with esbuild, which inlines the font `tokens.css`

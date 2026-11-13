@@ -7,7 +7,7 @@ import { syncTargets, toJs, webContract } from 'severino-brand';
 import { brandVarsCss } from '../src/lib/brand.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { regenerateCommand } from './lib/projection.ts';
+import { regenerateCommand } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/sync-tokens.ts [--check]');
 

@@ -4,7 +4,7 @@ import { jsonText, readJson } from '../src/lib/json.ts';
 import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/sync-contact-openapi.ts [--check]');
 const contract = readJson<{ request: unknown }>(fromRoot('contracts/contact.v1.json'));

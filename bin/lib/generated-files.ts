@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
-export interface ProjectionTarget {
+export interface GeneratedFile {
   file: string;
   content: string;
 }
@@ -18,7 +18,7 @@ export const regenerateCommand = (): string => {
 
 // targets: [{ file, content }] with absolute paths. Writes the files whose
 // content changed, or with check exits 1 naming them and how to regenerate them.
-export function writeOrCheck(targets: readonly ProjectionTarget[], { check }: { check: boolean }): void {
+export function writeOrCheck(targets: readonly GeneratedFile[], { check }: { check: boolean }): void {
   const stale = targets.filter(({ file, content }) => !fs.existsSync(file) || fs.readFileSync(file, 'utf8') !== content);
   if (check) {
     if (stale.length === 0) return;

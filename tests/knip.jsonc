@@ -15,7 +15,7 @@
     // The fixture content tree, which content.config.ts's glob loaders read
     // when the visual suite sets SITE_CONTENT_ROOT to it.
     "tests/fixtures/content/**/*.mdx",
-    // Loaded by path through Vite's ssrLoadModule in bin/lib/render-document.ts.
+    // Loaded by path through Vite's ssrLoadModule in bin/site/preview-document.ts.
     "src/components/content/WriteupPreview.astro"
   ],
   "astro": {

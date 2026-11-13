@@ -7,7 +7,7 @@
 import { buildSync } from 'esbuild';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/make-embed-bundle.ts [--check]');
 
