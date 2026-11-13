@@ -10,13 +10,16 @@ satisfy it, and is the one actor that may move `dist`. The Cloudflare side of th
 
 ## What is declared
 
-| Section | Declares |
-|---|---|
-| `settings` | Squash as the only merge method (rebase merging strips SSH commit signatures), auto-merge off (nothing merges on its own), branches deleted on merge, the squash commit title and message, no wiki, and the About description, homepage and topics (the description makes claims about the site, so it is held to the file) |
-| `security` | Secret scanning and push protection, vulnerability alerts on with Dependabot security updates off (Renovate reads the alerts and opens the fixes, see [Dependencies](./Dependencies.md#advisories)), private vulnerability reporting, immutable releases (a published release's files and tag are locked, and GitHub attests the release; `release.yml` publishes each one with its files attached), and CodeQL default setup for `actions` and `javascript-typescript` |
-| `actions` | Every `uses:` reference pinned to a commit SHA, a read-only default workflow token, and no workflow approving pull requests |
-| `variables` | Actions variables, by name: the public Turnstile site key the `ci` workflow's `build` job builds with. Variables not listed are left alone |
-| `rulesets` | Each branch ruleset, matched by name and compared as a whole. `main`: pull request required with squash only, the required status checks, CodeQL results with no error or high-severity alert, no force pushes, no deletion, signed commits required. `dist`: no update, force push or deletion, with GitHub Actions as the one bypass actor |
+The file has five sections: `settings` (merge methods, branch cleanup, the
+About text and topics), `security` (secret scanning, vulnerability alerts,
+private vulnerability reporting, immutable releases, CodeQL default setup),
+`actions` (SHA pinning and the default token), `variables` (Actions variables
+by name) and `rulesets`. The schema's descriptions say why each value is what
+it is. The `main` ruleset requires a pull request merged by squash, the
+required status checks, CodeQL results with no error or high-severity alert,
+and signed commits, and refuses force pushes and deletion. The `dist` ruleset
+refuses any update, force push or deletion, with GitHub Actions as the one
+bypass actor.
 
 The `main` ruleset has no bypass actors: every change to `main`, the owner's
 included, goes through a pull request with the required checks green. The
