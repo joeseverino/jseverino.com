@@ -56,15 +56,16 @@ reason.
 
 ## Deliberate holds
 
-Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json): a major hold
-disables the package's major updates, and the `wrangler` hold disables all of its updates.
+Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json), whose
+`description` gives the reason: a major hold disables the package's major updates,
+the `satteri` hold caps its 0.x line, and the `wrangler` hold disables all of its updates.
 
-| Package | Held at | Why | Revisit when |
-| :--- | :--- | :--- | :--- |
-| `typescript` | 6.x | TypeScript 7.0 ships no compiler API. `astro check` runs Astro's language tools, which load it (`@astrojs/check` declares `typescript` `^5.0.0 \|\| ^6.0.0`), and `checks:d1` parses the source with it. | Astro's language tools support 7.x and TypeScript ships its new compiler API. |
-| `@types/node` | 26.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 26 does not have. | `mise.toml` moves to a newer Node major. |
-| `wrangler` | 4.160.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin --min-release-age=0` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
-| `satteri` | 0.11.x | The content renderer's plugins in `src/lib/markdown/` run inside the copy `@astrojs/markdown-satteri` depends on, and a newer 0.x installs a second copy with its native bindings. | `@astrojs/markdown-satteri` depends on a newer satteri. |
+| Package | Held at | Revisit when |
+| :--- | :--- | :--- |
+| `typescript` | 6.x | Astro's language tools support 7.x and TypeScript ships its new compiler API. |
+| `@types/node` | 26.x | `mise.toml` moves to a newer Node major. |
+| `wrangler` | 4.160.0, exact | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin --min-release-age=0` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
+| `satteri` | 0.11.x | `@astrojs/markdown-satteri` depends on a newer satteri. |
 
 ## No overrides
 

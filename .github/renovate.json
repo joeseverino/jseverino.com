@@ -50,24 +50,24 @@
       "automerge": false
     },
     {
-      "description": "wrangler stays on the release the Cloudflare adapter's Vite plugin pins, so it moves by hand with the adapter; checks:repo-policy fails while two copies are installed (docs/Dependencies.md).",
+      "description": "@astrojs/cloudflare builds and runs dev through @cloudflare/vite-plugin 1.x, which pins its own wrangler and miniflare to exact releases; any other wrangler installs a second copy of both and of the native workerd binary, which checks:repo-policy fails. wrangler moves by hand to the release the plugin pins (docs/Dependencies.md).",
       "matchPackageNames": ["wrangler"],
       "enabled": false
     },
     {
-      "description": "Held at TypeScript 6: Astro's language tools (astro check) and checks:d1 call the compiler API that TypeScript 7.0 does not ship (docs/Dependencies.md).",
+      "description": "TypeScript 7.0 ships no compiler API. astro check runs Astro's language tools, which load it (@astrojs/check declares typescript ^5.0.0 || ^6.0.0), and checks:d1 parses the source with it, so the majors are held (docs/Dependencies.md).",
       "matchPackageNames": ["typescript"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
-      "description": "@types/node follows the Node major in mise.toml, so its majors move with a Node major (docs/Dependencies.md).",
+      "description": "The types describe the Node runtime mise.toml pins; a newer major would type APIs that Node does not have, so its majors move with a Node major (docs/Dependencies.md).",
       "matchPackageNames": ["@types/node"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
-      "description": "satteri stays on the 0.x line @astrojs/markdown-satteri depends on, since the content plugins run inside the integration's copy; checks:repo-policy fails while two copies are installed (docs/Dependencies.md).",
+      "description": "The content plugins in src/lib/markdown/ run inside the copy @astrojs/markdown-satteri depends on, and a newer 0.x installs a second copy with its native bindings, which checks:repo-policy fails; satteri stays on that 0.x line (docs/Dependencies.md).",
       "matchPackageNames": ["satteri"],
       "allowedVersions": "<0.12.0"
     }
