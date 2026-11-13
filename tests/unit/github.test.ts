@@ -4,7 +4,7 @@ import { main } from '../../bin/github.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
 import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
-import { DIST_BRANCH } from '../../src/lib/site-config.ts';
+import { DIST_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
 import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
@@ -22,7 +22,6 @@ const mainRuleset = ruleset('main');
 // The app GitHub's Actions token acts as (`gh api /apps/github-actions --jq .id`).
 const GITHUB_ACTIONS_APP = 15368;
 
-// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
   $schema: true,
   repository: true,
@@ -63,6 +62,10 @@ describe('.github/repo.json', () => {
     assert.deepEqual(dist.bypass_actors, [{ actor_id: GITHUB_ACTIONS_APP, actor_type: 'Integration', bypass_mode: 'always' }]);
     const types = dist.rules.map((rule) => rule.type);
     for (const type of ['update', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
+  });
+
+  test('names the repository the site config declares', () => {
+    assert.equal(desired.repository, SITE_REPOSITORY);
   });
 
   // README and docs/Security.md: CodeQL runs as default setup, and a high-severity alert blocks a merge.
@@ -127,7 +130,7 @@ describe('check', () => {
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
     const lines = await shared.planLines(createGithubFake(seed, TOKEN));
-    const repo = '/repos/joeseverino/jseverino.com';
+    const repo = `/repos/${desired.repository}`;
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
       `PATCH ${repo}`,

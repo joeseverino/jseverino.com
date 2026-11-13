@@ -9,6 +9,7 @@ test('mapLimit never runs more than the limit at once, and keeps the input order
   const results = await mapLimit([1, 2, 3, 4, 5, 6], 2, async (n: number) => {
     running += 1;
     peak = Math.max(peak, running);
+    // Odd items take longer, so they finish out of input order and the result order is the map's doing.
     await sleep(n % 2 ? 10 : 2);
     running -= 1;
     return n * 2;

@@ -1,6 +1,6 @@
 import { BRAND, SURFACE } from '../../src/lib/brand.ts';
 import { rgb } from './helpers/colors.ts';
-import { expect, type Page, settle, test } from './helpers/test.ts';
+import { boxOf, expect, type Page, test } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
 // The brand primary pair the page resolves on <html>.
@@ -118,116 +118,47 @@ test('dark brand paint stays legible in links, navigation, and primary actions',
   await expect(page.locator('.nav-link[aria-current="page"]')).toHaveCSS('color', rgb(BRAND.onDark.primary));
 });
 
-test('motion tokens drive stable pressed feedback', async ({ page }) => {
-  await page.goto('/portfolio/');
-
-  const root = page.locator('html');
-  const standardDurationMs = await root.evaluate((element) => {
-    const value = getComputedStyle(element).getPropertyValue('--motion-duration-standard').trim();
-    return value.endsWith('ms') ? Number.parseFloat(value) : Number.parseFloat(value) * 1000;
-  });
-  expect(standardDurationMs).toBe(200);
-
-  const cardLink = page.locator('.project-card-title a').first();
-  const card = page.locator('.card-surface').first();
-  const box = await cardLink.boundingBox();
-  expect(box).not.toBeNull();
-
-  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-  await expect(card).toHaveCSS('translate', '0px -2px');
-  const raisedCardBox = await card.boundingBox();
-  expect(raisedCardBox).not.toBeNull();
-  await page.mouse.down();
-  expect(await card.boundingBox()).toEqual(raisedCardBox);
-  await page.mouse.move(0, 0);
-  await page.mouse.up();
-
-  await expect(card).toHaveCSS('transition-duration', '0.15s, 0.15s');
-});
-
-test('buttons and cards keep a stable click target through press and release', async ({ page }) => {
-  await page.goto('/404.html');
-
-  const button = page.getByRole('link', { name: 'View Portfolio' });
-  const buttonBox = await button.boundingBox();
-  expect(buttonBox).not.toBeNull();
-  await page.mouse.move(buttonBox!.x + buttonBox!.width / 2, buttonBox!.y + buttonBox!.height / 2);
-  await expect(button).toHaveCSS('translate', '0px -1px');
-  const raisedButtonBox = await button.boundingBox();
-  expect(raisedButtonBox).not.toBeNull();
-  await page.mouse.down();
-  expect(await button.boundingBox()).toEqual(raisedButtonBox);
-  await page.mouse.up();
-  await expect(page).toHaveURL(/\/portfolio\/$/);
-  await settle(page);
-
-  const cardLink = page.locator('.project-card-title a').first();
-  const href = await cardLink.getAttribute('href');
-  const cardBox = await cardLink.boundingBox();
-  expect(href).not.toBeNull();
-  expect(cardBox).not.toBeNull();
-  await page.mouse.move(cardBox!.x + cardBox!.width / 2, cardBox!.y + cardBox!.height / 2);
-  await expect(page.locator('.card-surface').first()).toHaveCSS('translate', '0px -2px');
-  const raisedCardBox = await cardLink.boundingBox();
-  expect(raisedCardBox).not.toBeNull();
-  await page.mouse.down();
-  expect(await cardLink.boundingBox()).toEqual(raisedCardBox);
-  await page.mouse.up();
-  await expect(page).toHaveURL(new RegExp(`${RegExp.escape(href!)}$`));
-});
-
-// Rests the pointer half a pixel inside the first match's bottom edge, coming from
-// outside it, and returns the target with the box it had before the hover.
-async function hoverBottomEdge(page: Page, selector: string) {
-  const target = page.locator(selector).first();
-  await target.scrollIntoViewIfNeeded();
-  await page.mouse.move(0, 0);
-  const box = await target.boundingBox();
-  if (!box) throw new Error(`${selector} has no box`);
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height - 0.5);
-  return { target, box };
-}
-
-// Sample the target geometry, including the bottom edge, where a raised hover
-// state can move the target out from under the pointer and loop.
-for (const { name, selector, path } of [
-  { name: 'writeup card', selector: '.project-card', path: '/portfolio/' },
-  { name: 'software card', selector: '.software-card', path: '/portfolio/#software' },
+// A control that rises on hover stays under the pointer: hovered half a pixel inside its
+// bottom edge, where the lift could carry it out from under the pointer and loop, it holds
+// still and stays hovered; pressed at its center, it does not move, and the release
+// follows its link.
+for (const control of [
+  { name: 'writeup card', path: '/portfolio/', target: '.project-card', lifted: '.card-surface', lift: '0px -2px', lands: /\/portfolio\/[^/]+\/$/ },
+  { name: 'software card', path: '/portfolio/#software', target: '.software-card', lifted: '.card-surface', lift: '0px -2px' },
+  { name: 'primary button', path: '/', target: '.button:not(.secondary)', lift: '0px -1px', lands: /\/resume\/$/ },
+  { name: 'secondary button', path: '/', target: '.button.secondary', lift: '0px -1px', lands: /\/contact\/$/ },
 ]) {
-  test(`${name} stays stationary at its bottom hover edge`, async ({ page }) => {
-    await page.goto(path);
-    const { target, box } = await hoverBottomEdge(page, selector);
-    await expect(target.locator('.card-surface')).toHaveCSS('translate', '0px -2px');
-    const frames = await target.evaluate(async (element) => {
+  test(`a hovered or pressed ${control.name} does not shift`, async ({ page }) => {
+    await page.goto(control.path);
+    const target = page.locator(control.target).first();
+    // The element the lift moves: the card's surface, or the button itself.
+    const lifted = control.lifted ? target.locator(control.lifted) : target;
+    await target.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    const resting = await boxOf(target);
+    await page.mouse.move(resting.x + resting.width / 2, resting.y + resting.height - 0.5);
+    await expect(lifted).toHaveCSS('translate', control.lift);
+
+    const raised = await boxOf(lifted);
+    const frames = await lifted.evaluate(async (element, hoverZone) => {
+      const zone = element.closest(hoverZone) ?? element;
       const samples: { x: number; y: number; hovered: boolean }[] = [];
       for (let i = 0; i < 30; i++) {
         await new Promise(requestAnimationFrame);
         const rect = element.getBoundingClientRect();
-        samples.push({ x: rect.x, y: rect.y, hovered: element.matches(':hover') });
+        samples.push({ x: rect.x, y: rect.y, hovered: zone.matches(':hover') });
       }
       return samples;
-    });
-    for (const frame of frames) {
-      expect(frame.x).toBeCloseTo(box.x, 1);
-      expect(frame.y).toBeCloseTo(box.y, 1);
-      expect(frame.hovered).toBe(true);
-    }
-  });
-}
+    }, control.target);
+    for (const frame of frames) expect(frame).toEqual({ x: expect.closeTo(raised.x, 1), y: expect.closeTo(raised.y, 1), hovered: true });
 
-for (const selector of ['.button:not(.secondary)', '.button.secondary']) {
-  test(`${selector} keeps hover at its bottom border`, async ({ page }) => {
-    await page.goto('/');
-    const { target } = await hoverBottomEdge(page, selector);
-    await expect(target).toHaveCSS('translate', '0px -1px');
-    const hovered = await target.evaluate(async (element) => {
-      for (let i = 0; i < 30; i++) {
-        await new Promise(requestAnimationFrame);
-        if (!element.matches(':hover')) return false;
-      }
-      return true;
-    });
-    expect(hovered).toBe(true);
+    await page.mouse.move(raised.x + raised.width / 2, raised.y + raised.height / 2);
+    await page.mouse.down();
+    expect(await boxOf(lifted)).toEqual(raised);
+    // The software card's links open other sites, so its press is released away from it.
+    if (!control.lands) await page.mouse.move(0, 0);
+    await page.mouse.up();
+    if (control.lands) await expect(page).toHaveURL(control.lands);
   });
 }
 

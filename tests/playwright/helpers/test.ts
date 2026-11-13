@@ -1,5 +1,7 @@
 // The `test` every browser spec imports in place of Playwright's own.
-import { test as base, type ConsoleMessage, expect, type Page } from '@playwright/test';
+import { type APIRequestContext, test as base, type ConsoleMessage, expect, type Locator, type Page } from '@playwright/test';
+import { TURNSTILE_ORIGIN } from '../../../src/lib/csp.ts';
+import { sitemapUrls } from '../../../src/lib/sitemap.ts';
 
 export * from '@playwright/test';
 
@@ -47,4 +49,30 @@ export function isWebKitInterceptionBlobError(message: ConsoleMessage): boolean 
     message.location().url.startsWith('blob:https://challenges.cloudflare.com/') &&
     (text.includes('WebKitBlobResource error 1.') || text === 'Failed to load resource')
   );
+}
+
+// Turnstile's always-pass test key solves the challenge on its own schedule, and its script
+// keeps the network busy and resizes the widget, so a spec that does not test the
+// challenge aborts every request to it.
+export const withoutTurnstile = (page: Page) => page.route(`${TURNSTILE_ORIGIN}/**`, (route) => route.abort());
+
+// A locator's bounding box, which Playwright gives as null for an element that is
+// not rendered; a spec that measures one fails on that here, by the element's name.
+export async function boxOf(locator: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error(`${locator} has no box: it is not rendered`);
+  return box;
+}
+
+// Every page the sitemap lists, as a path on the server under test, since each <loc>
+// names the canonical origin. Each sitemap file it reads must answer 200.
+export async function sitemapPaths(request: APIRequestContext): Promise<string[]> {
+  const pathOf = (url: string) => (url.startsWith('/') ? url : new URL(url).pathname);
+  const urls = await sitemapUrls('/sitemap-index.xml', async (url) => {
+    const response = await request.get(pathOf(url));
+    expect(response.status(), `expected 200 from ${pathOf(url)}`).toBe(200);
+    return response.text();
+  });
+  expect(urls, 'the sitemap lists no page').not.toHaveLength(0);
+  return urls.map(pathOf);
 }

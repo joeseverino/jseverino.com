@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { after, afterEach, beforeEach, describe, test } from 'node:test';
 import { createEducationSource } from '../../bin/content-sync/source-adapters.ts';
-import { scratchDirs } from './helpers/fs.ts';
+import { scratchDirs, write } from './helpers/fs.ts';
 
 const exported = {
   ok: true,
@@ -19,9 +19,10 @@ const exported = {
 };
 
 let dir: string;
-const write = (name: string, body: unknown, mode?: number): string => {
+// A file in this test's directory, a value written as JSON.
+const fileIn = (name: string, body: unknown): string => {
   const file = path.join(dir, name);
-  fs.writeFileSync(file, typeof body === 'string' ? body : JSON.stringify(body), mode === undefined ? undefined : { mode });
+  write(file, typeof body === 'string' ? body : JSON.stringify(body));
   return file;
 };
 const loadFrom = (file: string) => createEducationSource({ file }).load();
@@ -34,12 +35,12 @@ after(scratch.cleanup);
 
 describe('an export file', () => {
   test('loads, with fields the site does not read left in place', async () => {
-    const dataset = await loadFrom(write('export.json', exported));
+    const dataset = await loadFrom(fileIn('export.json', exported));
     assert.equal(dataset.institutions[0]?.courses[0]?.code, 'CS 101');
   });
 
   test('is read once', async () => {
-    const file = write('export.json', exported);
+    const file = fileIn('export.json', exported);
     const source = createEducationSource({ file });
     const first = await source.load();
     fs.writeFileSync(file, 'not json');
@@ -47,21 +48,21 @@ describe('an export file', () => {
   });
 
   test('is held to the published schema', async () => {
-    await assert.rejects(loadFrom(write('missing.json', { ok: true })), /missing institutions/);
+    await assert.rejects(loadFrom(fileIn('missing.json', { ok: true })), /missing institutions/);
     const badStatus = structuredClone(exported);
     (badStatus.institutions[0]?.courses[0] as { status: string }).status = 'dropped';
-    await assert.rejects(loadFrom(write('status.json', badStatus)), /\$\.institutions\[0\]\.courses\[0\]\.status: must be one of/);
+    await assert.rejects(loadFrom(fileIn('status.json', badStatus)), /\$\.institutions\[0\]\.courses\[0\]\.status: must be one of/);
   });
 
   test('that reports a failure says what failed', async () => {
     await assert.rejects(
-      loadFrom(write('failed.json', { ok: false, errors: ['vault not found', 'no courses'] })),
+      loadFrom(fileIn('failed.json', { ok: false, errors: ['vault not found', 'no courses'] })),
       /reports:\n {2}vault not found\n {2}no courses/,
     );
   });
 
   test('that is not JSON is named', async () => {
-    const file = write('text.json', 'nope');
+    const file = fileIn('text.json', 'nope');
     await assert.rejects(loadFrom(file), new RegExp(`${RegExp.escape(file)} is not JSON`));
   });
 });
@@ -76,7 +77,7 @@ describe('the export command', () => {
     process.env.PATH = path0;
   });
   const exporter = (body: string) => {
-    write('severino-vault-mcp', `#!/bin/sh\n${body}\n`, 0o755);
+    fs.chmodSync(fileIn('severino-vault-mcp', `#!/bin/sh\n${body}\n`), 0o755);
     return createEducationSource().load();
   };
 

@@ -2,6 +2,7 @@
 // state and every call is recorded; an unknown route fails the test.
 
 import { API_BASE } from '../../../bin/lib/github.ts';
+import { SITE_REPOSITORY } from '../../../src/lib/site-config.ts';
 import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
@@ -18,7 +19,7 @@ export interface FakeState {
   rulesets: (Fields & { id: number; name: string })[];
 }
 
-const REPO = '/repos/joeseverino/jseverino.com';
+const REPO = `/repos/${SITE_REPOSITORY}`;
 
 export function createGithubFake(seed: FakeState, token: string) {
   const state = structuredClone(seed);

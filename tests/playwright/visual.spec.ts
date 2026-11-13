@@ -1,4 +1,4 @@
-import { expect, type Page, settle, test } from './helpers/test.ts';
+import { expect, type Page, settle, test, withoutTurnstile } from './helpers/test.ts';
 
 // Runs against the fixture build (tests/fixtures/content), never real content.
 // After an intended change, re-baseline with `mise run browser:visual --update-snapshots`.
@@ -20,10 +20,6 @@ async function open(page: Page, path: string, viewport: { width: number; height:
   await page.goto(path);
   await settle(page);
 }
-
-// The Turnstile widget changes height when it renders. Aborting its script keeps the
-// reserved box empty so the baseline pins this site's layout.
-const withoutTurnstile = (page: Page) => page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
 
 async function expectContactScreenshot(page: Page, name: string): Promise<void> {
   await withoutTurnstile(page);

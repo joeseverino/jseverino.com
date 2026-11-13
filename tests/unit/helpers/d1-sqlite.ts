@@ -37,5 +37,7 @@ export function createD1Sqlite() {
       }
     },
     count: (table: string) => Number((db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n),
+    // Every row of a table, oldest first, read by column name.
+    rows: (table: string) => db.prepare(`SELECT * FROM ${table} ORDER BY id`).all() as Record<string, unknown>[],
   };
 }

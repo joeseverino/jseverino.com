@@ -21,7 +21,6 @@ const seed: FakeState = { ...fixture, accessApps: [previewApp] };
 const schema = read<JsonSchema>('cloudflare/zone.schema.json');
 const desired = read<DesiredState>('cloudflare/zone.json');
 
-// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
   $schema: true,
   zone: true,

@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, type Page, test } from './helpers/test.ts';
+import { expect, type Page, test, withoutTurnstile } from './helpers/test.ts';
 import { anyWriteup, imageHeavyWriteup } from './helpers/writeups.ts';
 
 const scan = (page: Page) => new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
@@ -16,11 +16,8 @@ const summarize = (results: Awaited<ReturnType<typeof scan>>) =>
 
 const pages = ['/', '/portfolio/', anyWriteup(), '/contact/', '/resume/'];
 
-// Abort the Turnstile script as contact.spec.ts does: it keeps network activity alive
-// on CI (so do not wait for networkidle), and axe should scan only the site's markup.
-test.beforeEach(async ({ page }) => {
-  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
-});
+// axe scans only the site's markup, not the Turnstile widget.
+test.beforeEach(({ page }) => withoutTurnstile(page));
 
 for (const colorScheme of ['light', 'dark'] as const) {
   test.describe(`${colorScheme} scheme`, () => {

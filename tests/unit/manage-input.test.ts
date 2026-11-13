@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
 import { test } from 'node:test';
-import { setTimeout as delay } from 'node:timers/promises';
+import { setImmediate as streamFlushed } from 'node:timers/promises';
 import { handleManageKey, pasteManageInput } from '../../bin/site/manage-input.ts';
 import { FIELDS, hasStaged, type Model } from '../../bin/site/manage-model.ts';
 import { siteFrame } from '../../bin/site/manage-render.ts';
@@ -41,18 +41,24 @@ function model(): Model {
 function keyStream() {
   const stream = new PassThrough();
   const events: string[] = [];
-  const detach = listenForKeys(stream, {
-    onKey: (sequence) => events.push(`key ${sequence}`),
-    onPaste: (text) => events.push(`paste ${text}`),
-  });
-  return { stream, events, detach };
+  const { promise: first, resolve } = Promise.withResolvers<void>();
+  const report = (event: string) => {
+    events.push(event);
+    resolve();
+  };
+  const detach = listenForKeys(stream, { onKey: (sequence) => report(`key ${sequence}`), onPaste: (text) => report(`paste ${text}`) });
+  return { stream, events, first, detach };
 }
 
+// readline holds an Escape until its timeout passes, since it may open a sequence.
 test("a lone Escape arrives as a key well inside readline's 500 ms default", async () => {
-  const { stream, events, detach } = keyStream();
+  const { stream, events, first, detach } = keyStream();
+  const written = performance.now();
   stream.write('\x1b');
-  await delay(150);
+  await first;
+  const waited = performance.now() - written;
   assert.deepEqual(events, ['key \x1b']);
+  assert.ok(waited < 250, `arrived after ${Math.round(waited)} ms`);
   detach();
 });
 
@@ -62,12 +68,12 @@ test('keys arrive as their raw sequences, a bracketed paste as one string, and s
   stream.write('\x1b[1;5Cq\x1b[200~a\r\nb\x1b[201~');
   stream.write(accent.subarray(0, 1));
   stream.write(accent.subarray(1));
-  await delay(10);
+  await streamFlushed();
   assert.deepEqual(events, ['key \x1b[1;5C', 'key q', 'paste a\r\nb', 'key é']);
   detach();
   stream.write('x');
-  await delay(10);
-  assert.equal(events.length, 4);
+  await streamFlushed();
+  assert.equal(events.at(-1), 'key é', 'a detached stream reports nothing');
 });
 
 test('moving a writeup across the divider stages the new order without requesting a write', () => {

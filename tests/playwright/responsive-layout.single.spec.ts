@@ -1,5 +1,4 @@
-import { sitemapUrls } from '../../src/lib/sitemap.ts';
-import { expect, test } from './helpers/test.ts';
+import { expect, sitemapPaths, test, withoutTurnstile } from './helpers/test.ts';
 
 // Runs in the page: the document's width, and for each table box whether its table fits or
 // scrolls, and the tokens (runs between spaces and dashes: a name, an address, a path) it
@@ -39,11 +38,8 @@ function measureLayout() {
 for (const width of [320, 390, 768, 1440]) {
   test(`every page stays within a ${width}px viewport`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
-    // <loc>s name the canonical origin; read each from the server under test.
-    const pathOf = (url: string) => (url.startsWith('/') ? url : new URL(url).pathname);
-    const urls = await sitemapUrls('/sitemap-index.xml', async (url) => (await page.request.get(pathOf(url))).text());
-    const paths = [...urls.map(pathOf), '/portfolio/#software'];
+    await withoutTurnstile(page);
+    const paths = [...(await sitemapPaths(page.request)), '/portfolio/#software'];
 
     for (const path of paths) {
       await page.goto(path);

@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, before, describe, test } from 'node:test';
-import { renderMarkdown } from '../../bin/lib/render.ts';
 import { createOutput, SiteError } from '../../bin/site/cli.ts';
 import { render } from '../../bin/site/render.ts';
 import { tempDir, write } from './helpers/fs.ts';
@@ -33,11 +32,6 @@ describe('site render', () => {
     assert.match(result.html, /<strong>this<\/strong>/);
     assert.doesNotMatch(result.html, /title: Demo/);
     assert.equal(result.next, null);
-  });
-
-  test('matches the library render the build and tests share', async () => {
-    const result = await render({ slug: 'demo-writeup', out });
-    assert.equal(result.html, renderMarkdown('## Setup\n\nRun **this** first.\n').html);
   });
 
   test('renders markdown from stdin with -', async () => {

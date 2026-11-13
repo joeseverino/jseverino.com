@@ -1,22 +1,20 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 import { publishDist, README } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
-import { DIST_BRANCH } from '../../src/lib/site-config.ts';
+import { DIST_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
+import { tempDir, write as writeFile } from './helpers/fs.ts';
 
 let root: string;
 let origin: string;
 let repo: string;
 let site: string;
 
-const write = (file: string, text: string) => {
-  fs.mkdirSync(path.dirname(path.join(site, file)), { recursive: true });
-  fs.writeFileSync(path.join(site, file), text);
-};
+// A file in the site directory the publisher reads.
+const write = (file: string, text: string) => writeFile(path.join(site, file), text);
 const head = () => git(repo, 'rev-parse', 'HEAD');
 const publish = (push = true, trailers = {}) => publishDist({ repo, dir: site, sha: head(), push, trailers });
 // The site's own files; the branch's README is checked on its own.
@@ -32,7 +30,7 @@ const API_IDENTITY = { GIT_AUTHOR_NAME: 'api', GIT_AUTHOR_EMAIL: 'api@example.co
 const apiCalls: { method: string; route: string }[] = [];
 const fakeApi = async (url: string, init: RequestInit) => {
   const body = JSON.parse(String(init.body)) as { message: string; tree: string; parents: string[]; ref?: string; sha: string };
-  const route = new URL(url).pathname.replace('/repos/joeseverino/jseverino.com', '');
+  const route = new URL(url).pathname.replace(`/repos/${SITE_REPOSITORY}`, '');
   apiCalls.push({ method: init.method ?? 'GET', route });
   if (route === '/git/commits') {
     const parents = body.parents.flatMap((parent) => ['-p', parent]);
@@ -42,11 +40,11 @@ const fakeApi = async (url: string, init: RequestInit) => {
   git(origin, 'update-ref', body.ref ?? route.replace('/git/refs/', 'refs/'), body.sha);
   return new Response('{}', { status: 200 });
 };
-const publishSigned = () => publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
+const publishSigned = () => publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: fakeApi });
 
 beforeEach(() => {
   apiCalls.length = 0;
-  root = fs.mkdtempSync(path.join(os.tmpdir(), 'publish-dist-'));
+  root = tempDir('publish-dist-');
   origin = path.join(root, 'origin.git');
   repo = path.join(root, 'repo');
   site = path.join(root, 'site');
@@ -168,7 +166,7 @@ describe('publishDist through the API', () => {
   test('a failed API call still removes the staging ref', async () => {
     const failing = (): Promise<Response> => Promise.resolve(new Response('{"message":"nope"}', { status: 500 }));
     await assert.rejects(
-      publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: failing }),
+      publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: failing }),
       /500/,
     );
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');

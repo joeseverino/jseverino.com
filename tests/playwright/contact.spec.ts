@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, test } from './helpers/test.ts';
+import { expect, type Locator, type Page, test, withoutTurnstile } from './helpers/test.ts';
 
 async function fillContact(page: Page, name: string, email: string, message: string): Promise<void> {
   await page.locator('#contact-name').fill(name);
@@ -17,8 +17,7 @@ async function submitExpecting(page: Page, kind: 'error' | 'success', text: stri
 
 test.describe('Contact Form Interactive Verification', () => {
   test.beforeEach(async ({ page }) => {
-    // Block the Turnstile script so its always-pass test key cannot auto-solve mid-test.
-    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
+    await withoutTurnstile(page);
     await page.goto('/contact/');
   });
 

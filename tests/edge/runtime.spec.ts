@@ -62,44 +62,32 @@ test('the contact page enforces everything but Trusted Types, which it only repo
   expect(withoutTrustedTypes(contact['content-security-policy'])).toBe(withoutTrustedTypes(home['content-security-policy']));
 });
 
-test('fingerprinted and chrome assets carry the cache rules public/_headers gives them', async ({ request }) => {
-  for (const pathname of [firstFile('_astro', (name) => /\.(css|js)$/.test(name)), firstFile('assets/icons', (name) => !name.startsWith('.'))]) {
-    const response = await request.get(pathname);
-    expect(response.status()).toBe(200);
-    expect(cacheRuleFindings(response.headers(), pathname)).toEqual([]);
-  }
-});
-
-test('an unknown route returns a real 404', async ({ request }) => {
-  const response = await request.get(`/edge-probe-${Date.now().toString(36)}`);
-  expect(response.status()).toBe(404);
-  expect(response.headers()['content-type'] ?? '').toContain('text/html');
-});
-
 // Only `run_worker_first` in wrangler.jsonc starts the Worker, so every page
 // and asset is served from static assets, with the policy and security headers
 // from public/_headers.
 test.describe('static serving', () => {
-  const probe = Date.now().toString(36);
+  for (const pathname of ['/no-such-page', '/no-such-page/']) {
+    test(`a missing page, ${pathname}, is a static HTML 404 with the policy`, async ({ request }) => {
+      const response = await request.get(pathname);
+      expect(response.status()).toBe(404);
+      expect(response.headers()['content-type']).toContain('text/html');
+      expect(cspFindings(response.headers())).toEqual([]);
+      expect(await inlineHashFindings(await response.text(), response.headers()['content-security-policy'])).toEqual([]);
+    });
+  }
 
-  test('a missing page is a static 404 with the policy', async ({ request }) => {
-    const response = await request.get(`/edge-probe-${probe}/`);
-    expect(response.status()).toBe(404);
-    expect(cspFindings(response.headers())).toEqual([]);
-    expect(await inlineHashFindings(await response.text(), response.headers()['content-security-policy'])).toEqual([]);
-  });
-
-  test('an asset keeps its cache rule and the security headers', async ({ request }) => {
-    const pathname = firstFile('assets/icons', (name) => !name.startsWith('.'));
-    const icon = await request.get(pathname);
-    expect(icon.status()).toBe(200);
-    expect(cacheRuleFindings(icon.headers(), pathname)).toEqual([]);
-    expect(staticHeaderFindings(icon.headers())).toEqual([]);
+  test('a fingerprinted and a chrome asset carry the cache rule public/_headers gives them, and the security headers', async ({ request }) => {
+    for (const pathname of [firstFile('_astro', (name) => /\.(css|js)$/.test(name)), firstFile('assets/icons', (name) => !name.startsWith('.'))]) {
+      const response = await request.get(pathname);
+      expect(response.status(), pathname).toBe(200);
+      expect(cacheRuleFindings(response.headers(), pathname)).toEqual([]);
+      expect(staticHeaderFindings(response.headers())).toEqual([]);
+    }
   });
 
   for (const prefix of ['assets', '_astro', '.well-known']) {
     test(`a miss under /${prefix}/ is a static 404 with the policy`, async ({ request }) => {
-      const miss = await request.get(`/${prefix}/edge-probe-${probe}/x.png`);
+      const miss = await request.get(`/${prefix}/no-such-file.png`);
       expect(miss.status()).toBe(404);
       expect(cspFindings(miss.headers())).toEqual([]);
     });

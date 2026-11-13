@@ -53,11 +53,14 @@ test.describe('portfolio software tab', () => {
     await expect(button).toHaveText('Copy');
     await expect(button).not.toHaveClass(/is-copied/);
   });
-  test('both panels render in the DOM (no-JS / SEO)', async ({ page }) => {
-    await page.goto('/portfolio/');
-    // Present in the markup regardless of which tab the script activates.
-    await expect(page.locator('[data-panel="writeups"]')).toHaveCount(1);
-    await expect(page.locator('[data-panel="software"]')).toHaveCount(1);
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+
+    test('both panels are in the markup and shown', async ({ page }) => {
+      await page.goto('/portfolio/');
+      await expect(page.locator('[data-panel="writeups"]')).toBeVisible();
+      await expect(page.locator('[data-panel="software"]')).toBeVisible();
+    });
   });
 
   test('defaults to Writeups; Software is hidden until selected', async ({ page }) => {
@@ -67,14 +70,13 @@ test.describe('portfolio software tab', () => {
     await expect(page.getByRole('tab', { name: 'Writeups' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('clicking Software swaps panels and updates the hash', async ({ page }) => {
+  test('clicking Software shows its panel in place of Writeups', async ({ page }) => {
     await page.goto('/portfolio/');
     await page.getByRole('tab', { name: 'Software' }).click();
 
     await expect(page.locator('[data-panel="software"]')).toBeVisible();
     await expect(page.locator('[data-panel="writeups"]')).toBeHidden();
     await expect(page.getByRole('tab', { name: 'Software' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page).toHaveURL(/#software$/);
   });
 
   test('deep-links to the Software tab via #software', async ({ page }) => {

@@ -7,25 +7,29 @@ import { PREVIEW_HOST_SUFFIX, SITE } from '../../src/lib/site-config.ts';
 
 const env = { CF_ACCESS_CLIENT_ID: 'id', CF_ACCESS_CLIENT_SECRET: 'secret' };
 
-test("access headers go only to the Worker's preview URLs, and only with both values", () => {
+test('access headers carry both values, and none when either is missing', () => {
   assert.deepEqual(accessHeaders(`https://0b43cfea${PREVIEW_HOST_SUFFIX}/`, env), {
     'CF-Access-Client-Id': 'id',
     'CF-Access-Client-Secret': 'secret',
   });
-  assert.deepEqual(accessHeaders('https://jseverino.com/', env), {});
   assert.deepEqual(accessHeaders(`https://0b43cfea${PREVIEW_HOST_SUFFIX}/`, { CF_ACCESS_CLIENT_ID: 'id' }), {});
 });
 
 test('the token goes to one-label preview hosts of this Worker only', () => {
   const sent = (url: string) => Object.keys(accessHeaders(url, env)).length > 0;
   assert.equal(sent(`https://feature-x${PREVIEW_HOST_SUFFIX}/a`), true);
+  assert.equal(sent('https://jseverino.com/'), false);
   assert.equal(sent(`https://${PREVIEW_HOST_SUFFIX.slice(1)}/`), false);
   assert.equal(sent('https://feature-x-other.severino.workers.dev/'), false);
   assert.equal(sent('https://evil.workers.dev/'), false);
   assert.equal(sent(`https://a.b${PREVIEW_HOST_SUFFIX}/`), false);
   assert.equal(sent(`https://x${PREVIEW_HOST_SUFFIX}.evil.example/`), false);
   assert.equal(sent(`http://0b43cfea${PREVIEW_HOST_SUFFIX}/`), false);
+});
+
+test('isPreviewDeployment matches a host under the suffix it is given', () => {
   assert.equal(isPreviewDeployment('https://x-site.example.workers.dev/', '-site.example.workers.dev'), true);
+  assert.equal(isPreviewDeployment('https://x-other.example.workers.dev/', '-site.example.workers.dev'), false);
 });
 
 test('the preview host names the Worker wrangler.jsonc deploys', () => {
