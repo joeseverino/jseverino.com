@@ -93,7 +93,7 @@ The sync script:
 - writes the image's master beside the synced document: at most 1600 pixels wide, sRGB, every metadata block removed, cached under the cache root every checkout shares (`SITE_CACHE_DIR` in `mise.toml`);
 - leaves the reference relative, so Astro's image pipeline encodes the AVIF variants at build time.
 
-### What does NOT live in the vault
+### What stays out of the vault
 
 The vault holds editorial content and assets attached to a specific page or writeup. Site-wide chrome (favicons, web fonts, the default Open Graph image, downloadable documents) lives in the repo under `public/assets/`. Vault markdown references those assets by their stable public URL:
 

@@ -83,7 +83,7 @@ Biome also enforces these:
 
 `mise run checks:lint` fails on any difference or any finding at warning or above, and `mise run fix:lint` applies the fixes Biome can make.
 
-Vale, pinned in `mise.toml`, holds the engineering docs to the repository's wording rules: no em dash, no praise word, no "not X, but Y" contrast and no narration of how the code came to be. `tests/vale/vale.ini` and the rules beside it in `tests/vale/styles/Site/` say what each refuses, and `mise run checks:prose` runs them.
+Vale, pinned in `mise.toml`, holds the engineering docs to the repository's wording rules: no em dash, no praise or filler word, no "not X, but Y" contrast, no narration of how the code came to be, sentence-case headings, and no gate named other than by its task. `tests/vale/vale.ini` and the rules beside it in `tests/vale/styles/Site/` say what each refuses, and `mise run checks:prose` runs them.
 
 ## Gates
 
