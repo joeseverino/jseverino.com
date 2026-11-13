@@ -4,20 +4,23 @@ The `dist` branch holds the HTML, CSS, scripts, and images production serves, on
 commit per deploy that changed them, so anyone can browse the site's served
 source on GitHub without building it. `git log -p dist` shows what each deploy
 changed in the rendered pages. The branch is generated; nothing is edited on it.
+Its [README](https://github.com/joeseverino/jseverino.com/tree/dist), written
+by `README` in [`bin/lib/dist.ts`](../bin/lib/dist.ts), names the trailers each
+commit carries as its proof and how to verify a deploy against its attestation.
 
 ## How it is published
 
-| Piece | Does |
-|---|---|
-| [`deploy`](../.github/workflows/deploy.yml) job `dist` | After a production deploy and its attestation, checks the attested archive of `dist/client/` (the bytes the Worker now serves) against the digest the `attest` job signed, unpacks it and publishes it. Nothing is rebuilt |
-| [`bin/publish-dist.ts`](../bin/publish-dist.ts) | Builds a git tree from the output directory with a temporary index, adds the branch's README to that index alone, and commits it on top of `origin/dist`; no commit when the tree is unchanged |
-
-Each commit's trailers name its proof: `Source` (the `main` commit), `Run` (the
-workflow run), `Archive-SHA256` (the attested archive's digest) and
-`Attestation` (its provenance). The README, from `README` in
-[`bin/lib/dist.ts`](../bin/lib/dist.ts), says what the branch is and how to
-verify a deploy; its text is the same on every deploy, so it never makes a
+After a production deploy and its attestation, the
+[`deploy`](../.github/workflows/deploy.yml) workflow's `dist` job checks the
+attested archive of `dist/client/` (the bytes the Worker serves) against the
+digest the `attest` job signed, unpacks it, and publishes it; nothing is
+rebuilt. [`bin/publish-dist.ts`](../bin/publish-dist.ts) builds a git tree from
+that directory with a temporary index, adds the branch's README to that index
+alone, and commits it on top of `origin/dist`, with no commit when the tree is
+unchanged. The README's text is the same on every deploy, so it never makes a
 commit of its own, and it is never in the site directory, so no host serves it.
+`mise run publish:dist` runs the same script locally, and `--push` pushes the
+commit.
 
 The `dist` job is the only one with `contents: write`, holds no Cloudflare secret,
 and runs only after `main`'s tip deploys, so pull-request code never holds the write
@@ -36,7 +39,3 @@ live site serves, byte for byte. The publish runs a few minutes after the deploy
 mismatch is retried for six minutes before it fails. A difference that persists means
 the edge rewrote the page, or `dist` is behind the deploy. The check also fails if the
 tip of `dist` is not a verified commit.
-
-| Command | Does |
-|---|---|
-| `mise run publish:dist` | Commit a build directory to `dist` locally; with `--push`, push it (CI does this) |
