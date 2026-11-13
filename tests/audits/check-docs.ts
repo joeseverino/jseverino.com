@@ -2,8 +2,8 @@
 // no doc runs an npm script (package.json has none; every command is a mise task), every
 // backticked repo path resolves (git tracks or ignores it), and every backticked bare file name
 // is a tracked file's, so a renamed file leaves no stale name behind. Command refs are checked
-// everywhere, fenced code included. The two source lists a doc keeps in prose for its reader (the
-// security headers, the raw HTML tags) match their source. Links and #anchors are lychee's
+// everywhere, fenced code included. The lists a doc keeps for its reader (the security headers,
+// the raw HTML tags, the table of every spec and audit) match their source. Links and #anchors are lychee's
 // (`mise run checks:doc-links`).
 
 import fs from 'node:fs';
@@ -179,6 +179,9 @@ export function copyDrift(listed: ReadonlySet<string>, source: ReadonlySet<strin
   return { extra: [...listed].filter((name) => !source.has(name)), missing: [...source].filter((name) => !listed.has(name)) };
 }
 
+// What tests/ARCHITECTURE.md maps: every file a gate runs as a spec or an audit.
+const SPEC_AND_AUDIT_FILES = ['tests/audits/check-*.ts', 'tests/unit/*.test.ts', 'tests/playwright/*.spec.ts', 'tests/edge/*.spec.ts'];
+
 interface Copy {
   doc: string;
   heading: string;
@@ -206,6 +209,14 @@ const COPIES: Copy[] = [
     source: 'RAW_HTML_TAGS in src/lib/markdown/guard.ts',
     listed: (text) => itemNames(text, 'Tags:'),
     names: () => new Set(RAW_HTML_TAGS),
+  },
+  {
+    doc: 'tests/ARCHITECTURE.md',
+    heading: 'Every spec and audit',
+    source: "tests/' spec and audit files",
+    listed: tableNames,
+    names: () =>
+      new Set(trackedFiles(siteRoot, ...SPEC_AND_AUDIT_FILES.map((glob) => `:(glob)${glob}`)).filter((file) => fs.existsSync(path.join(siteRoot, file)))),
   },
 ];
 
@@ -264,7 +275,7 @@ if (import.meta.main) {
     `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths, ${allNameRefs.length} file names resolve, ${COPIES.length} copied lists match`,
     {
       heading: 'check-docs: documentation references that do not resolve:',
-      fix: 'fix: correct the reference at the reported file:line, or restore its target',
+      fix: 'fix: correct the reference at the reported file:line or restore its target, and make a copied list match its source',
     },
   );
 }
