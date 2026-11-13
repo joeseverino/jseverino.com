@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { miseTaskRuns, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import { fileName, fileNameRefs, miseTaskRuns, missingNames, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
 
@@ -43,10 +43,31 @@ test('a path resolves when tracked, under a tracked directory, or ignored', () =
   );
 });
 
+test('a bare token names a file by a source extension, never a host, a property or an image', () => {
+  assert.equal(fileName('contact.openapi.json'), 'contact.openapi.json');
+  assert.equal(fileName('guard.ts:12'), 'guard.ts');
+  assert.equal(fileName('SITE_CACHE_DIR=mise.toml'), 'mise.toml');
+  for (const token of ['jseverino.com', 'SITE.domain', 'engines.node', 'favicon.svg', 'robots.txt', '.env', 'tokens.json', 'mise.local.toml']) {
+    assert.equal(fileName(token), null, token);
+  }
+});
+
+test('a bare file name resolves only to a tracked file of that name', () => {
+  const markdown = 'Bound to `contact-openapi.json`, built by `build-csp.ts`.\n```sh\ncat stale.ts\n```';
+  const refs = fileNameRefs(markdown);
+  assert.deepEqual(refs, [
+    { line: 1, path: 'contact-openapi.json' },
+    { line: 1, path: 'build-csp.ts' },
+  ]);
+  const names = new Set(['contact.openapi.json', 'build-csp.ts']);
+  assert.deepEqual(missingNames(refs, { names }).map((ref) => ref.path), ['contact-openapi.json']);
+});
+
 test('the repo index sees tracked files and ignored generated output', () => {
   const index = repoIndex(siteRoot);
   assert.ok(index.tracked.has('tests/audits/check-docs.ts'));
   assert.ok(index.tracked.has('tests/audits'));
+  assert.ok(index.names.has('check-docs.ts'));
   assert.deepEqual([...index.ignored(['dist/index.html', 'bin/site.ts'])], ['dist/index.html']);
   assert.ok(index.topLevel.has('bin') && index.topLevel.has('node_modules'));
 });

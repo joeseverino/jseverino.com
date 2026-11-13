@@ -368,14 +368,14 @@ Cloudflare API Shield's [Schema validation](https://developers.cloudflare.com/ap
 
 Coverage:
 
-- **`POST /api/contact`**: bound to `contact-openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
+- **`POST /api/contact`**: bound to `contact.openapi.json`'s `ContactSubmission` schema. Validates `name` (1-190 chars), `email` (RFC format, 3-190 chars), `message` (1-5000 chars), and `turnstileToken` (non-empty). Optional `company` honeypot and `sourceUrl` are permitted (`sourceUrl` is stored only when it, or the `Referer`, names this site, as a path without query or fragment); unknown properties are rejected (`additionalProperties: false`). Documents the 200, 400, 413, 415, 429, and 500 response shapes too.
 - **`POST /api/csp-report`**: left without a schema. Report payload shape is dictated by the browser and varies between legacy CSP and Reporting API; validating it would create false rejections.
 
 The action is **Block**, the only one offered: non-compliant payloads are rejected at the edge and consume no Worker compute.
 
 ## 11. Build output
 
-`mise run build` writes the static site to `dist/client/` and the Worker with its deploy config (`wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
+`mise run build` writes the static site to `dist/client/` and the Worker with its deploy config (`dist/server/wrangler.json`) to `dist/server/`; [`src/lib/build-output.ts`](../src/lib/build-output.ts) is the one place that names them.
 
 [`bin/build-static.ts`](../bin/build-static.ts) writes the content index, runs
 `astro build`, then fills the CSP. The build is the same for production and a
@@ -447,7 +447,7 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
-| `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
+| `public/assets/docs/` | Repo | Downloadable documents (e.g., `joseph-severino-resume.pdf`) | Hand-edited in the repo |
 | `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `mise run make:icons` |
 | `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `mise run make:icons` (marks) / headshot hand-added |
 | `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `mise run make:og` |
@@ -479,7 +479,7 @@ For the full story (how the brand went from an inherited theme purple and an unk
 
 Repo-managed assets resolve under `/assets/<bucket>/<filename>` and are not fingerprinted; Astro fingerprints what goes through `_astro/` (component bundles, CSS, and content images).
 
-Stable URLs suit assets that external links bookmark, like `https://jseverino.com/assets/docs/Joseph_Severino_Resume.pdf`.
+Stable URLs suit assets that external links bookmark, like `https://jseverino.com/assets/docs/joseph-severino-resume.pdf`.
 
 ### Cache behavior
 

@@ -37,7 +37,7 @@ Worker. `run_worker_first` in [`wrangler.jsonc`](../wrangler.jsonc) sends only
 307. Static asset requests are not billed as Worker requests.
 
 The adapter writes the static site to `dist/client/` and the Worker with its
-deploy config to `dist/server/` (`wrangler.json`, which `wrangler deploy`
+deploy config to `dist/server/` (`dist/server/wrangler.json`, which `wrangler deploy`
 reads). [`bin/build-csp.ts`](../bin/build-csp.ts) writes the
 Content-Security-Policy into `dist/client/_headers` at build time, so it does not
 depend on the Worker. The assets layer applies `_headers` to static assets only,

@@ -1,8 +1,8 @@
 // Engineering docs integrity that no link checker knows: every `mise run` reference names a task,
-// no doc runs an npm script (package.json has none; every command is a mise task), and every
-// backticked repo path resolves (git tracks or ignores it). Command refs are checked everywhere,
-// fenced code included. Links and #anchors are lychee's
-// (`mise run checks:doc-links`).
+// no doc runs an npm script (package.json has none; every command is a mise task), every
+// backticked repo path resolves (git tracks or ignores it), and every backticked bare file name
+// is a tracked file's, so a renamed file leaves no stale name behind. Command refs are checked
+// everywhere, fenced code included. Links and #anchors are lychee's (`mise run checks:doc-links`).
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,12 +19,16 @@ export interface PathRef {
 
 const PLACEHOLDER = /[*<>{}$[\]()|"'`?]/;
 
-// The repo path a backticked token names, or null when it names none.
-export function repoPath(token: string, topLevel: ReadonlySet<string>): string | null {
-  let candidate = token
+// A token without its `NAME=` prefix, #fragment, ?query and :line suffix.
+const bare = (token: string): string =>
+  token
     .slice(token.lastIndexOf('=') + 1)
     .replace(/[#?].*$/, '')
     .replace(/:\d+(?:-\d+)?$/, '');
+
+// The repo path a backticked token names, or null when it names none.
+export function repoPath(token: string, topLevel: ReadonlySet<string>): string | null {
+  let candidate = bare(token);
   const wild = candidate.search(PLACEHOLDER);
   if (wild === 0) return null;
   if (wild > 0) {
@@ -37,9 +41,22 @@ export function repoPath(token: string, topLevel: ReadonlySet<string>): string |
   return candidate;
 }
 
-// Every backticked repo path in a markdown document, outside fenced code.
-export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathRef[] {
-  const refs: PathRef[] = [];
+// A source file's extension: a doc names one of these by its tracked file. Images and build
+// output are left out, since the docs name those as served or as another system's.
+const FILE_NAME = /^[\w.-]*[\w-]\.(?:astro|css|fig|grit|json|jsonc|md|mdx|mjs|pdf|sh|sql|toml|ts|ya?ml)$/;
+// Files the docs name that git never tracks here: severino-brand's token source, the vault's
+// taxonomy note the sync copies, and the checkout's own machine paths.
+const OUTSIDE = new Set(['tokens.json', '_technology-groups.md', 'mise.local.toml']);
+
+// The file name a backticked token names without a directory, or null when it names none.
+export function fileName(token: string): string | null {
+  const candidate = bare(token);
+  return FILE_NAME.test(candidate) && !OUTSIDE.has(candidate) ? candidate : null;
+}
+
+// Every token of inline code in a markdown document, outside fenced code, with its line.
+function codeTokens(markdown: string): { line: number; token: string }[] {
+  const tokens: { line: number; token: string }[] = [];
   let inFence = false;
   markdown.split(/\r?\n/).forEach((text, index) => {
     if (/^\s*(```|~~~)/.test(text)) {
@@ -48,13 +65,26 @@ export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathR
     }
     if (inFence) return;
     for (const [, span = ''] of text.matchAll(/`([^`]+)`/g)) {
-      for (const token of span.trim().split(/\s+/)) {
-        const found = repoPath(token, topLevel);
-        if (found) refs.push({ line: index + 1, path: found });
-      }
+      for (const token of span.trim().split(/\s+/)) tokens.push({ line: index + 1, token });
     }
   });
-  return refs;
+  return tokens;
+}
+
+// Every backticked repo path in a markdown document, outside fenced code.
+export function pathRefs(markdown: string, topLevel: ReadonlySet<string>): PathRef[] {
+  return codeTokens(markdown).flatMap(({ line, token }) => {
+    const found = repoPath(token, topLevel);
+    return found ? [{ line, path: found }] : [];
+  });
+}
+
+// Every backticked bare file name in a markdown document, outside fenced code.
+export function fileNameRefs(markdown: string): PathRef[] {
+  return codeTokens(markdown).flatMap(({ line, token }) => {
+    const found = fileName(token);
+    return found ? [{ line, path: found }] : [];
+  });
 }
 
 // The npm scripts a line of a doc runs (`npm run <name>`).
@@ -72,14 +102,18 @@ export function miseTaskRuns(line: string): string[] {
 export interface RepoIndex {
   topLevel: Set<string>;
   tracked: Set<string>;
+  // The last segment of every tracked file's path.
+  names: Set<string>;
   ignored(paths: readonly string[]): Set<string>;
 }
 
 export function repoIndex(root: string): RepoIndex {
   const tracked = new Set<string>();
+  const names = new Set<string>();
   for (const file of trackedFiles(root)) {
     const parts = file.split('/');
     for (let i = 1; i <= parts.length; i += 1) tracked.add(parts.slice(0, i).join('/'));
+    names.add(parts.at(-1) ?? file);
   }
   const ignored = (paths: readonly string[]): Set<string> => {
     if (paths.length === 0) return new Set();
@@ -96,7 +130,7 @@ export function repoIndex(root: string): RepoIndex {
   // A directory-only pattern (/dist/) matches a missing path only with its slash.
   const ignoredDirs = [...ignored(rootEntries.map((name) => `${name}/`))].map((name) => name.replace(/\/$/, ''));
   const topLevel = new Set([...rootEntries.filter((name) => tracked.has(name)), ...ignored(rootEntries), ...ignoredDirs]);
-  return { topLevel, tracked, ignored };
+  return { topLevel, tracked, names, ignored };
 }
 
 // The refs that name nothing git tracks or ignores.
@@ -106,6 +140,11 @@ export function missingPaths<R extends PathRef>(refs: readonly R[], index: Pick<
   const keys = [...new Set(untracked.map(key))];
   const ignored = index.ignored([...keys, ...keys.map((k) => `${k}/`)]);
   return untracked.filter((ref) => !ignored.has(key(ref)) && !ignored.has(`${key(ref)}/`));
+}
+
+// The bare file names no tracked file has.
+export function missingNames<R extends PathRef>(refs: readonly R[], index: Pick<RepoIndex, 'names'>): R[] {
+  return refs.filter((ref) => !index.names.has(ref.path));
 }
 
 if (import.meta.main) {
@@ -121,11 +160,13 @@ if (import.meta.main) {
   const problems: string[] = [];
   const index = repoIndex(siteRoot);
   const allPathRefs: (PathRef & { doc: string })[] = [];
+  const allNameRefs: (PathRef & { doc: string })[] = [];
   let taskRefCount = 0;
 
   for (const doc of docs) {
     const text = fs.readFileSync(path.join(siteRoot, doc), 'utf8');
     allPathRefs.push(...pathRefs(text, index.topLevel).map((ref) => ({ ...ref, doc })));
+    allNameRefs.push(...fileNameRefs(text).map((ref) => ({ ...ref, doc })));
 
     text.split(/\r?\n/).forEach((line, lineIndex) => {
       for (const name of npmScriptRuns(line)) {
@@ -142,8 +183,11 @@ if (import.meta.main) {
   for (const ref of missingPaths(allPathRefs, index)) {
     problems.push(`${ref.doc}:${ref.line}  no such path -> ${ref.path}`);
   }
+  for (const ref of missingNames(allNameRefs, index)) {
+    problems.push(`${ref.doc}:${ref.line}  no tracked file has this name -> ${ref.path}`);
+  }
 
-  finish(problems, `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths resolve`, {
+  finish(problems, `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths, ${allNameRefs.length} file names resolve`, {
     heading: 'check-docs: documentation references that do not resolve:',
     fix: 'fix: correct the reference at the reported file:line, or restore its target',
   });
