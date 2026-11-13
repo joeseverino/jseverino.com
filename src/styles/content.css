@@ -348,6 +348,8 @@
   .card-surface {
     --card-border: color-mix(in oklch, var(--color-text) 14%, transparent);
     --card-border-active: color-mix(in oklch, var(--color-primary) 55%, transparent);
+    --card-border-width: 1px;
+    --card-lift: 0px;
 
     position: relative;
     flex: 1;
@@ -355,7 +357,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-15);
-    border: 1px solid var(--card-border);
+    border: var(--card-border-width) solid var(--card-border);
     border-radius: var(--radius-sm);
     background: var(--color-surface);
     transition:
@@ -365,7 +367,9 @@
 
   @media (hover: hover) and (pointer: fine) {
     :where(.project-card, .software-card):hover > .card-surface {
-      translate: 0 -2px;
+      --card-lift: 2px;
+
+      translate: 0 calc(var(--card-lift) * -1);
       border-color: var(--card-border-active);
     }
   }
@@ -405,10 +409,13 @@
         text-decoration: none;
       }
 
+      /* The whole card is the link: the target covers the border, and reaches down by the lift
+         so the strip a lifted surface uncovers still follows it. */
       &::before {
         content: '';
         position: absolute;
-        inset: 0;
+        inset: calc(var(--card-border-width) * -1);
+        inset-block-end: calc((var(--card-border-width) + var(--card-lift)) * -1);
         z-index: 1;
       }
     }

@@ -124,7 +124,7 @@ test('dark brand paint stays legible in links, navigation, and primary actions',
 
 // A control that rises on hover stays under the pointer: hovered half a pixel inside its
 // bottom edge, where the lift could carry it out from under the pointer and loop, it holds
-// still and stays hovered; pressed at its center, it does not move, and the release
+// still and stays hovered; pressed at that same point, it does not move, and the release
 // follows its link.
 for (const control of [
   { name: 'writeup card', path: '/portfolio/', target: '.project-card', lifted: '.card-surface', lift: '0px -2px', lands: /\/portfolio\/[^/]+\/$/ },
@@ -137,7 +137,8 @@ for (const control of [
     const target = page.locator(control.target).first();
     // The element the lift moves: the card's surface, or the button itself.
     const lifted = control.lifted ? target.locator(control.lifted) : target;
-    await target.scrollIntoViewIfNeeded();
+    // Centered, so its bottom edge sits inside the viewport rather than on its last row of pixels.
+    await target.evaluate((element) => element.scrollIntoView({ block: 'center', behavior: 'instant' }));
     await page.mouse.move(0, 0);
     const resting = await boxOf(target);
     await page.mouse.move(resting.x + resting.width / 2, resting.y + resting.height - 0.5);
@@ -156,7 +157,6 @@ for (const control of [
     }, control.target);
     for (const frame of frames) expect(frame).toEqual({ x: expect.closeTo(raised.x, 1), y: expect.closeTo(raised.y, 1), hovered: true });
 
-    await page.mouse.move(raised.x + raised.width / 2, raised.y + raised.height / 2);
     await page.mouse.down();
     expect(await boxOf(lifted)).toEqual(raised);
     // The software card's links open other sites, so its press is released away from it.
