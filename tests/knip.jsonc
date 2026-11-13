@@ -8,9 +8,8 @@
     // The audits each gate under mise-tasks/ runs; knip's mise plugin reads
     // only the tasks in mise.toml.
     "tests/audits/check-*.ts",
-    // checks:unit's specs and its --test-reporter.
+    // checks:unit's specs.
     "tests/unit/**/*.test.ts",
-    "tests/unit/helpers/quiet-reporter.ts",
     // The visual suite's build config, passed to astro as --config.
     "tests/fixtures/astro.config.ts",
     // The fixture content tree, which content.config.ts's glob loaders read

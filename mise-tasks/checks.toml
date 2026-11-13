@@ -52,9 +52,11 @@ hide = true
 usage = '''
 arg "[spec]..." help="A spec file or glob to run" default="tests/unit/**/*.test.ts"
 '''
+# One line on a pass; a failure prints the spec reporter's whole run.
+output = "summary"
 # usage_spec holds the specs shell-quoted, so each reaches node whole and
 # node, not the shell, expands the glob.
-run = 'eval "set -- $usage_spec" && node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts "$@"'
+run = 'eval "set -- $usage_spec" && node --test "$@"'
 
 ["checks:docs"]
 description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
