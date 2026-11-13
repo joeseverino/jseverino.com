@@ -301,7 +301,7 @@ DNS.
   requests are redirected at the edge before reaching the origin path.
 - **HSTS.** Set at the zone with `includeSubDomains` and
   `max-age=31536000`, declared in [`cloudflare/zone.json`](../cloudflare/zone.json)
-  (preload is off pending a decision; it is one flag there). After the first
+  (preload is off). After the first
   HTTPS visit, browsers refuse to downgrade to HTTP for one year.
 - **CAA DNS records.** [Certificate Authority Authorization](https://www.rfc-editor.org/rfc/rfc8659)
   records published in DNS restrict which CAs may issue certificates for
@@ -349,13 +349,18 @@ each choice, the token permissions, and the post-apply checks.
 
 ## External verification
 
-Independent scanners verify the HTTP and DNS controls. Current snapshot:
+Independent scanners verify the HTTP and DNS controls. Each result is dated:
+it is a record of that scan.
+
+<!-- vale Site.History = NO -->
 
 | Scanner | Result | Notes |
 | --- | --- | --- |
 | [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com) | A+, 145 / 100, 12 / 12 tests passed (2026-10-03) | Bonus points come from `default-src 'none'` with no `'unsafe-*'`, Subresource Integrity on all scripts, `Referrer-Policy`, `X-Frame-Options` via CSP `frame-ancestors`, and `Cross-Origin-Resource-Policy`. The outstanding recommendation is HSTS preload, deferred: preload is effectively irreversible across every current and future subdomain. |
 | Google PageSpeed Insights | Homepage 100 / 100 / 100 / 100 on desktop and 99 / 100 / 100 / 100 on mobile, for Performance, Accessibility, Best Practices, and SEO (2026-09-05) | Best Practices includes Lighthouse's trust-and-safety checks for an effective CSP, strong HSTS, and Trusted Types mitigation. The weekly [`lighthouse`](../.github/workflows/lighthouse.yml) run fails below 95 on accessibility. |
 | [Pentest-Tools Light Website Scanner](https://pentest-tools.com/website-vulnerability-scanning/website-scanner) | Low, 0 critical / 0 high / 0 medium / 3 low (2026-05-27, 40 tests) | The three low findings were reviewed and dismissed as not applicable to this site's threat model; see below. |
+
+<!-- vale Site.History = YES -->
 
 The Pentest-Tools low findings, accepted:
 

@@ -321,7 +321,7 @@ The origin and report endpoint the policy and the report receiver name come from
 
 Component scripts are external `/_astro/*.js` bundles (`vite.build.assetsInlineLimit: 0` in [`astro.config.ts`](../astro.config.ts)). Besides the hashed theme-bootstrap script, the only inline `<script>` in production HTML is the JSON-LD data block.
 
-The [hash-based CSP](./WordPress-To-Astro-Migration.md#server-response-and-security) replaced the legacy platform's `'unsafe-inline'`. The full header set is in [Security](./Security.md#http-response-headers).
+The CSP is hash-based and carries no `'unsafe-inline'` ([migration comparison](./WordPress-To-Astro-Migration.md#server-response-and-security)). The full header set is in [Security](./Security.md#http-response-headers).
 
 [`guard.ts`](../src/lib/markdown/guard.ts) limits raw HTML in content to listed formatting tags with listed, plain-string attributes, and `href`/`src` to `http`, `https`, `mailto`, or relative URLs. Any other tag (`<script>`, `<style>`, `<iframe>`, ...), an event handler, an expression, or an `import` fails the build.
 

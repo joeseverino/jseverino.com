@@ -57,7 +57,7 @@ the built `_headers` has a leftover placeholder, lists a path twice, lacks a
 | WAF custom rules | 5, no regex | 2 here, 2 made in the dashboard; one stays free for an incident |
 | Rate-limiting rules | 1; path and verified-bot fields; per IP; 10 s period; 10 s block | 1: `/api/*`, 15 requests per 10 s |
 | API Shield schema validation | Block is the only action | Block on `POST /api/contact` |
-| Workers Rate Limiting binding | available to the Worker | not used yet: the contact and report handlers count in D1 |
+| Workers Rate Limiting binding | available to the Worker | unused: the contact and report handlers count in D1 |
 
 Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in the
 zone, and workers.dev is outside it. The Worker therefore has no workers.dev
