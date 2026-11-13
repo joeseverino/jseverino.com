@@ -181,7 +181,7 @@ if (import.meta.main) {
 
   finish(
     failures,
-    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; every shebang on an executable file; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
+    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; no private marker in the public sources; every shebang on an executable file; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
     { heading: 'repository policy failed:', bullet: '- ' },
   );
 }
