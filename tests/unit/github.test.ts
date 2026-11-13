@@ -41,6 +41,9 @@ const status = (report: { items: { name: string; status: string }[] }, name: str
 describe('.github/repo.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
 
+  // Each test holds the file to a policy the docs state, so an edit to repo.json
+  // alone cannot change the policy.
+  // AGENTS.md: squash-merged, never rebase-merged, since a rebase strips signatures.
   test('squash is the only merge method, in the settings and in the ruleset', () => {
     const { settings } = desired;
     assert.deepEqual([settings.allow_squash_merge, settings.allow_merge_commit, settings.allow_rebase_merge], [true, false, false]);
@@ -48,7 +51,7 @@ describe('.github/repo.json', () => {
     assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, ['squash']);
   });
 
-  test('the ruleset keeps signed commits required and the branch undeletable', () => {
+  test('main requires signed commits and cannot be force-pushed or deleted', () => {
     const types = mainRuleset.rules.map((rule) => rule.type);
     for (const type of ['required_signatures', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
   });
@@ -62,6 +65,7 @@ describe('.github/repo.json', () => {
     for (const type of ['update', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
   });
 
+  // README and docs/Security.md: CodeQL runs as default setup, and a high-severity alert blocks a merge.
   test('CodeQL gates merges through default setup and the code_scanning rule, never a workflow check', () => {
     assert.equal(desired.security.code_scanning.state, 'configured');
     const scanning = mainRuleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;

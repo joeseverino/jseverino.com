@@ -1,41 +1,14 @@
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { after, test } from 'node:test';
-import { spawnResult } from '../../bin/lib/run.ts';
-import { siteRoot } from '../../src/lib/site-root.ts';
-import { scratchDirs, write } from './helpers/fs.ts';
-
-const dirs = scratchDirs('literal-values-');
-after(dirs.cleanup);
-
-// Biome's rdjson report (reviewdog's diagnostic format).
-interface Diagnostic {
-  code: { value: string };
-  location: { range: { start: { line: number; column: number }; end: { line: number; column: number } } };
-}
+import { test } from 'node:test';
+import { biomeFindings } from './helpers/biome.ts';
 
 // The literal-color and literal-font-size rules biome.jsonc applies to src/styles, run over one
 // stylesheet. The plugins match Biome's CSS syntax tree by node name, so a Biome release that
 // renames a node would otherwise leave them matching nothing.
-function flagged(css: string): string[] {
-  const dir = dirs.make();
-  const config = {
-    root: true,
-    plugins: ['literal-colors', 'literal-font-sizes'].map((name) => path.join(siteRoot, `tests/${name}.grit`)),
-    linter: { rules: { preset: 'none', style: { noHexColors: 'error' } } },
-  };
-  write(path.join(dir, 'biome.json'), JSON.stringify(config));
-  write(path.join(dir, 'fixture.css'), css);
-  // From the checkout, where mise resolves the pinned Biome; the config is the scratch one.
-  const result = spawnResult('biome', ['lint', `--config-path=${dir}`, '--reporter=rdjson', path.join(dir, 'fixture.css')], { cwd: siteRoot });
-  assert.equal(result.error, undefined, result.error);
-  const lines = css.split('\n');
-  const { diagnostics }: { diagnostics: Diagnostic[] } = JSON.parse(result.stdout);
-  return diagnostics.map(({ code, location: { range } }) => {
-    assert.equal(range.start.line, range.end.line);
-    return `${code.value} ${lines[range.start.line - 1]?.slice(range.start.column - 1, range.end.column - 1)}`;
-  });
-}
+const flagged = (css: string): string[] =>
+  biomeFindings(['literal-colors', 'literal-font-sizes'], 'fixture.css', css, { linter: { rules: { preset: 'none', style: { noHexColors: 'error' } } } }).map(
+    ({ rule, text }) => `${rule} ${text}`,
+  );
 
 test('a hex color, an rgb() or hsl() call, and a named color are each refused', () => {
   const css = [

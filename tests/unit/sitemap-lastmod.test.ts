@@ -27,8 +27,10 @@ describe('sitemapLastmods', () => {
   test('anything without a date gets none', () => {
     assert.equal(lastmods.get(`${origin}/portfolio/undated/`), undefined);
     assert.equal(lastmods.get(`${origin}/tag/linux/`), undefined);
-    assert.equal(lastmods.get(`${origin}/about/`), undefined);
-    assert.equal(lastmods.size, 6);
+    assert.deepEqual(
+      [...lastmods.keys()].sort(),
+      ['/', '/portfolio/', '/portfolio/a/', '/portfolio/b/', '/tag/astro/', '/tag/cloudflare/'].map((pathname) => `${origin}${pathname}`),
+    );
   });
 
   test('an unparseable date counts as none', () => {

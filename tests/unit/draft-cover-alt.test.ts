@@ -11,12 +11,14 @@ after(scratch.cleanup);
 
 test('bulk cover-alt generation skips unpublished metadata before reading images or calling the API', () => {
   const vault = scratch.make();
-  for (const [slug, published] of [
+  // Only a literal `published: true` publishes, so each of these is skipped.
+  const unpublished = [
     ['draft', 'false'],
     ['missing-state', ''],
     ['ambiguous', '"true"'],
-  ]) {
-    write(path.join(vault, '05 Writeups', slug ?? '', 'index.md'), `---\ntitle: Private\npublished: ${published}\ncover_image: ./missing.png\n---\nBody\n`);
+  ] as const;
+  for (const [slug, published] of unpublished) {
+    write(path.join(vault, '05 Writeups', slug, 'index.md'), `---\ntitle: Private\npublished: ${published}\ncover_image: ./missing.png\n---\nBody\n`);
   }
   const stub = path.join(vault, 'deny-fetch.mjs');
   write(stub, 'globalThis.fetch = () => { throw new Error("unexpected external request"); };\n');
@@ -27,7 +29,7 @@ test('bulk cover-alt generation skips unpublished metadata before reading images
   });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stderr, '');
-  assert.equal(result.stdout.match(/not published/g)?.length, 3);
+  assert.equal(result.stdout.match(/not published/g)?.length, unpublished.length);
 });
 
 test('unusable replies and request failures are reported per slug, never applied, and fail the run', () => {

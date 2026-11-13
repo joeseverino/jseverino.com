@@ -80,7 +80,11 @@ describe('asset references', () => {
       'missing image: images/cover.png',
       'Obsidian wikilink does not render on the site: ![[embed.png]]',
     ]);
-    assert.deepEqual(collectReferences('[a](images/x.png) [b](images/x.png)').length, 1);
+    assert.deepEqual(
+      collectReferences('[a](images/x.png) [b](images/x.png)'),
+      [{ ref: 'images/x.png', raw: 'images/x.png' }],
+      'a repeated reference is collected once',
+    );
   });
 });
 

@@ -34,8 +34,10 @@ describe('cspFindings', () => {
     assert.deepEqual(cspFindings(contact, '/contact/'), []);
   });
 
-  test('names a missing policy', () => {
-    assert.ok(cspFindings({}, '/').length > 3);
+  test('a page with neither policy header is refused for both', () => {
+    const findings = cspFindings({}, '/');
+    assert.ok(findings.includes("content-security-policy lacks default-src 'none'"), findings.join('\n'));
+    assert.ok(findings.includes(`reporting-endpoints lacks ${cspReportPath}`), findings.join('\n'));
   });
 
   test('flags every escape hatch', async () => {
@@ -84,8 +86,12 @@ describe('inlineHashFindings', () => {
   });
 
   test('flags a page with no inline script or style, a missing policy, and a nonce other than the build marker', async () => {
-    assert.equal((await inlineHashFindings('<html><body></body></html>', await policyFor(true))).length, 2);
-    assert.ok((await inlineHashFindings(page, undefined)).length >= 2);
+    assert.deepEqual(await inlineHashFindings('<html><body></body></html>', await policyFor(true)), [
+      'the page carries no inline theme script',
+      'the page carries no inlined stylesheet',
+    ]);
+    const uncovered = async (source: string) => `content-security-policy does not carry the hash of an inline tag (${await hashSource(source)})`;
+    assert.deepEqual(await inlineHashFindings(page, undefined), [await uncovered(script), await uncovered(style)]);
     assert.deepEqual(await inlineHashFindings(page.replace('<script>', `<script nonce="${CSP_INLINE_MARKER}">`), await policyFor(true)), []);
     assert.ok(
       (await inlineHashFindings(page.replace('<script>', '<script nonce="abc">'), await policyFor(true))).some((finding) => /nonce other than/.test(finding)),
@@ -104,7 +110,7 @@ describe('header and cache predicates', () => {
 
   test('hstsFindings wants includeSubDomains', () => {
     assert.deepEqual(hstsFindings({ 'strict-transport-security': 'max-age=31536000; includeSubDomains' }), []);
-    assert.equal(hstsFindings({}).length, 1);
+    assert.deepEqual(hstsFindings({}), ['strict-transport-security is <missing>, expected includeSubDomains']);
   });
 
   test('cacheRuleFindings holds an asset to the rule public/_headers gives its path', () => {
@@ -116,7 +122,7 @@ describe('header and cache predicates', () => {
     assert.deepEqual(cacheRuleFindings({ 'cache-control': immutable, 'access-control-allow-origin': '*' }, '/_astro/a.js'), [
       'access-control-allow-origin is *, expected none',
     ]);
-    assert.equal(cacheRuleFindings({}, '/about/').length, 1);
+    assert.deepEqual(cacheRuleFindings({}, '/about/'), ['public/_headers gives /about/ no Cache-Control']);
   });
 
   // Cloudflare merges every rule matching a path, so a broad immutable rule would pin the in-place chrome for a year.
@@ -142,6 +148,10 @@ describe('header and cache predicates', () => {
 
   test('contactRefusalFindings accepts only the 400 verification refusal', () => {
     assert.deepEqual(contactRefusalFindings(400, { ok: false, error: 'Verification failed.' }), []);
-    assert.equal(contactRefusalFindings(200, { ok: true }).length, 3);
+    assert.deepEqual(contactRefusalFindings(200, { ok: true }), [
+      'status 200, expected 400',
+      'payload does not carry ok: false',
+      'error does not name the verification challenge',
+    ]);
   });
 });

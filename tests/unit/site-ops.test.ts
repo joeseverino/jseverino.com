@@ -28,7 +28,7 @@ describe('redaction helpers', () => {
     assert.equal(abbreviateName('Jane Q Doe'), 'Jane D.');
     assert.equal(abbreviateName('Cher'), 'Cher');
     assert.equal(preview('a\n  b   c'), 'a b c');
-    assert.equal(preview('x'.repeat(100)).length, 81);
+    assert.equal(preview('x'.repeat(100)), `${'x'.repeat(80)}…`);
   });
 });
 

@@ -27,6 +27,13 @@ function site(args: string[], env: NodeJS.ProcessEnv = {}): { code: number | nul
 
 const problemsIn = (document: unknown): string[] => validate(schema, document);
 
+// The schema's top-level oneOf reports every alternative's problems, so a
+// refusal is asserted by the one problem that names its cause.
+function assertRefused(document: unknown, problem: string, message?: string): void {
+  const problems = problemsIn(document);
+  assert.ok(problems.includes(problem), `${message ?? problem}\n  ${problems.join('\n  ')}`);
+}
+
 describe('the protocol schema', () => {
   test('is published where its id says', () => {
     assert.equal(schema.$id, 'https://jseverino.com/schemas/site-protocol-v1.json');
@@ -62,9 +69,9 @@ describe('real documents', () => {
     assert.deepEqual(problemsIn(document), []);
     const receipt = document.receipt as Record<string, unknown>;
     assert.deepEqual(receipt.changed_fields, ['title']);
-    assert.notDeepEqual(problemsIn({ ...document, receipt: { ...receipt, receipt_version: 2 } }), []);
+    assertRefused({ ...document, receipt: { ...receipt, receipt_version: 2 } }, '$.receipt.receipt_version: must be equal to constant');
     const { receipt: _receipt, ...unreceipted } = document;
-    assert.notDeepEqual(problemsIn({ ...unreceipted, command: 'link' }), [], 'a link always writes, so it always carries a receipt');
+    assertRefused({ ...unreceipted, command: 'link' }, '$: missing receipt', 'a link always writes, so it always carries a receipt');
   });
 
   test('a failure is valid, and its error code is the process exit code', () => {
@@ -108,21 +115,24 @@ describe('documents the schema refuses', () => {
   });
 
   test('a different protocol version', () => {
-    assert.notDeepEqual(problemsIn({ ...success, protocolVersion: 2 }), []);
+    assertRefused({ ...success, protocolVersion: 2 }, '$.protocolVersion: must be equal to constant');
   });
 
   test('a success with no status, or a command that does not exist', () => {
     const { status: _status, ...withoutStatus } = success;
-    assert.notDeepEqual(problemsIn(withoutStatus), []);
-    assert.notDeepEqual(problemsIn({ ...success, command: 'deploy' }), []);
+    assertRefused(withoutStatus, '$: missing status');
+    assert.ok(
+      problemsIn({ ...success, command: 'deploy' }).some((problem) => problem.startsWith('$.command: must be one of "new"')),
+      'deploy is not a command',
+    );
   });
 
   test('a failure with an unknown exit code or no error', () => {
     const failure = { protocolVersion: 1, ok: false, command: 'publish', status: 'failed', error: { message: 'x', code: 1, fix: null } };
     assert.deepEqual(problemsIn(failure), []);
-    assert.notDeepEqual(problemsIn({ ...failure, error: { ...failure.error, code: 9 } }), []);
+    assertRefused({ ...failure, error: { ...failure.error, code: 9 } }, '$.error.code: must be one of 0, 1, 2, 3, 4');
     const { error: _error, ...withoutError } = failure;
-    assert.notDeepEqual(problemsIn(withoutError), []);
+    assertRefused(withoutError, '$: missing error');
   });
 });
 
@@ -135,7 +145,7 @@ describe('the apply-plan input', () => {
   });
 
   test('refuses an update with no slug and a field it does not know', () => {
-    assert.notDeepEqual(plan({ updates: [{ title: 'A' }] }), []);
-    assert.notDeepEqual(plan({ featured: ['a'] }), []);
+    assert.deepEqual(plan({ updates: [{ title: 'A' }] }), ['$.updates[0]: missing slug']);
+    assert.deepEqual(plan({ featured: ['a'] }), ['$: unexpected property featured']);
   });
 });

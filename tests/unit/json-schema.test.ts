@@ -9,7 +9,7 @@ test('oneOf accepts a value that matches exactly one alternative', () => {
   const schema: JsonSchema = { oneOf: [{ type: 'string' }, { type: 'null' }] };
   assert.deepEqual(validate(schema, 'x'), []);
   assert.deepEqual(validate(schema, null), []);
-  assert.notDeepEqual(validate(schema, 3), []);
+  assert.deepEqual(validate(schema, 3), ['$: must be string', '$: must be null', '$: must match exactly one schema in oneOf']);
 });
 
 test("oneOf reports every alternative's problems when none match", () => {
@@ -25,7 +25,7 @@ test("oneOf reports every alternative's problems when none match", () => {
 });
 
 test('oneOf refuses a value that matches more than one alternative', () => {
-  assert.notDeepEqual(validate({ oneOf: [{ type: 'object' }, { type: 'object', required: [] }] }, {}), []);
+  assert.deepEqual(validate({ oneOf: [{ type: 'object' }, { type: 'object', required: [] }] }, {}), ['$: must match exactly one schema in oneOf']);
 });
 
 test('a problem names the path and the unexpected property', () => {

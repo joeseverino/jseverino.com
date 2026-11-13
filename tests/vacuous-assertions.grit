@@ -1,0 +1,21 @@
+// An inequality against a value the result cannot be passes for any result: a
+// non-empty list passes whatever problem it holds, and a fresh object, array or
+// instance is never the same reference. Assert the value the test expects.
+language js
+
+pattern fresh() {
+  or {
+    JsObjectExpression(),
+    JsArrayExpression(),
+    JsNewExpression()
+  }
+}
+
+or {
+  `$_.notDeepEqual($_, [])`,
+  `$_.notDeepStrictEqual($_, [])`,
+  `$_.notEqual($left, $right)` where { or { $left <: fresh(), $right <: fresh() } },
+  `$_.notStrictEqual($left, $right)` where { or { $left <: fresh(), $right <: fresh() } }
+} as $check where {
+  register_diagnostic(span=$check, message="Assert the expected value: an inequality against an empty list or a fresh object passes for any result.")
+}

@@ -32,7 +32,8 @@
     { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] },
     // TypeScript, and an .astro file's frontmatter and <script> elements.
     { "path": "./tests/client-html-sinks.grit", "includes": ["src/**"] },
-    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] }
+    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] },
+    { "path": "./tests/vacuous-assertions.grit", "includes": ["tests/**"] }
   ],
   "linter": {
     "rules": {
