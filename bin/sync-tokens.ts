@@ -12,7 +12,6 @@ import { regenerateCommand } from './lib/projection.ts';
 const check = checkMode('usage: node bin/sync-tokens.ts [--check]');
 
 const brandBlock = [
-  `export const BRAND_CONTRACT = ${toJs({ schema: webContract.schema, digest: webContract.digest })};`,
   `export const BRAND = ${toJs(webContract.identity)};`,
   `export const CARD_COLORS = ${toJs(webContract.cardColors)};`,
   `export const PRIMARY_BY_THEME = ${toJs(webContract.primaryByTheme)};`,

@@ -1,11 +1,6 @@
 // Vendored mirror of the lockfile-pinned severino-brand contract. Regenerate with
 // `mise run sync:tokens`; edit upstream. Dependency-free so node generators can import it.
 // tokens:start
-export const BRAND_CONTRACT = {
-  schema: 1,
-  digest: 'sha256-38e73ec5928d7530464f1e0fffa4ee64081f8210b9ac2201f8318d8160faffc7',
-};
-
 export const BRAND = {
   navy: '#1E3A8A',
   navyDeep: '#14245C',
