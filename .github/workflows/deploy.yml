@@ -178,6 +178,10 @@ jobs:
       SHA: ${{ github.event.workflow_run.head_sha }}
       TARBALL: jseverino.com-${{ github.event.workflow_run.head_sha }}.tar.gz
       SBOM: jseverino.com-${{ github.event.workflow_run.head_sha }}.cdx.json
+    # What the dist commit names as its proof.
+    outputs:
+      digest: ${{ steps.package.outputs.digest }}
+      attestation: ${{ steps.provenance.outputs.attestation-url }}
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -199,11 +203,13 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Package the build and its SBOM
+        id: package
         run: |
           set -euo pipefail
           tar --sort=name --owner=0 --group=0 --numeric-owner --mtime="@$(git log -1 --format=%ct)" \
             -czf "$TARBALL" -C dist/client .
           npm sbom --sbom-format=cyclonedx --package-lock-only > "$SBOM"
+          echo "digest=$(sha256sum "$TARBALL" | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
 
       # actions/attest writes SLSA build provenance when given no predicate, and the SBOM
       # predicate when given sbom-path.
@@ -239,7 +245,9 @@ jobs:
           if-no-files-found: error
 
   # The attested archive, committed to the dist branch: the HTML production serves, readable in
-  # the repository. No Cloudflare secret; the one write is the commit.
+  # the repository. The archive is checked against the digest attest signed before it is unpacked,
+  # and the commit names the run, that digest and the attestation. No Cloudflare secret; the one
+  # write is the commit.
   dist:
     needs: attest
     # As on attest: the guard CodeQL reads on checking out a workflow_run's commit.
@@ -274,8 +282,12 @@ jobs:
       - name: Publish to the dist branch
         run: |
           set -euo pipefail
+          archive=$RUNNER_TEMP/release/jseverino.com-$SHA.tar.gz
+          echo "$DIGEST  $archive" | sha256sum --check --strict
           mkdir "$RUNNER_TEMP/site"
-          tar -xzf "$RUNNER_TEMP/release/jseverino.com-$SHA.tar.gz" -C "$RUNNER_TEMP/site"
-          node bin/publish-dist.ts "$RUNNER_TEMP/site" --push
+          tar -xzf "$archive" -C "$RUNNER_TEMP/site"
+          node bin/publish-dist.ts "$RUNNER_TEMP/site" --push --archive-sha256 "$DIGEST" --attestation "$ATTESTATION"
         env:
+          DIGEST: ${{ needs.attest.outputs.digest }}
+          ATTESTATION: ${{ needs.attest.outputs.attestation }}
           GITHUB_TOKEN: ${{ github.token }}

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
-import { publishDist } from '../../bin/lib/dist.ts';
+import { publishDist, README } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
 import { DIST_BRANCH } from '../../src/lib/site-config.ts';
@@ -18,8 +18,13 @@ const write = (file: string, text: string) => {
   fs.writeFileSync(path.join(site, file), text);
 };
 const head = () => git(repo, 'rev-parse', 'HEAD');
-const publish = (push = true) => publishDist({ repo, dir: site, sha: head(), push });
-const tree = () => git(origin, 'ls-tree', '-r', '--name-only', DIST_BRANCH).split('\n');
+const publish = (push = true, trailers = {}) => publishDist({ repo, dir: site, sha: head(), push, trailers });
+// The site's own files; the branch's README is checked on its own.
+const tree = () =>
+  git(origin, 'ls-tree', '-r', '--name-only', DIST_BRANCH)
+    .split('\n')
+    .filter((file) => file !== 'README.md');
+const message = () => git(origin, 'log', '-1', '--format=%B', DIST_BRANCH);
 
 // The API calls the publisher makes, run against the bare origin. The commit comes back from an
 // identity the publisher never set, as a signed API commit does.
@@ -67,7 +72,34 @@ describe('publishDist', () => {
     assert.equal(result.status, 'pushed');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
     assert.equal(git(origin, 'rev-list', '--count', DIST_BRANCH), '1');
-    assert.match(git(origin, 'log', '-1', '--format=%B', DIST_BRANCH), new RegExp(`Source: ${head()}`));
+    assert.match(message(), new RegExp(`Source: ${head()}`));
+  });
+
+  test('the branch carries its README, and the site directory never does', async () => {
+    await publish();
+    assert.equal(git(origin, 'show', `${DIST_BRANCH}:README.md`), README.trimEnd());
+    assert.ok(!fs.existsSync(path.join(site, 'README.md')), 'nothing the site serves gains a README');
+  });
+
+  test('the trailers name the run, the archive digest and the attestation, after Source', async () => {
+    const trailers = {
+      Run: 'https://github.example/runs/1',
+      'Archive-SHA256': 'a'.repeat(64),
+      Attestation: 'https://github.example/attestations/2',
+    };
+    await publish(true, trailers);
+    const lines = git(origin, 'log', '-1', '--format=%(trailers:only,unfold)', DIST_BRANCH).split('\n');
+    assert.deepEqual(lines, [
+      `Source: ${head()}`,
+      `Run: ${trailers.Run}`,
+      `Archive-SHA256: ${trailers['Archive-SHA256']}`,
+      `Attestation: ${trailers.Attestation}`,
+    ]);
+  });
+
+  test('a trailer with no value is left out', async () => {
+    await publish(true, { Run: undefined });
+    assert.doesNotMatch(message(), /^Run:/m);
   });
 
   test('publishes ignored files and leaves the source checkout alone', async () => {
@@ -103,6 +135,7 @@ describe('publishDist', () => {
 describe('publishDist through the API', () => {
   test('the commit on the branch is the API commit, and the staging ref is gone', async () => {
     const result = await publishSigned();
+    assert.match(message(), new RegExp(`^Source: ${head()}$`, 'm'), 'the API commit carries the trailers');
     assert.equal(git(origin, 'rev-parse', DIST_BRANCH), result.commit);
     assert.equal(git(origin, 'log', '-1', '--format=%an', DIST_BRANCH), 'api', 'made by the API, not by a local identity');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);

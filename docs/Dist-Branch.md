@@ -9,8 +9,15 @@ changed in the rendered pages. The branch is generated; nothing is edited on it.
 
 | Piece | Does |
 |---|---|
-| [`deploy`](../.github/workflows/deploy.yml) job `dist` | After a production deploy and its attestation, unpacks the attested archive of `dist/client/` (the bytes the Worker now serves) and publishes it. Nothing is rebuilt |
-| [`bin/publish-dist.ts`](../bin/publish-dist.ts) | Builds a git tree from the output directory with a temporary index and commits it on top of `origin/dist`; no commit when the tree is unchanged |
+| [`deploy`](../.github/workflows/deploy.yml) job `dist` | After a production deploy and its attestation, checks the attested archive of `dist/client/` (the bytes the Worker now serves) against the digest the `attest` job signed, unpacks it and publishes it. Nothing is rebuilt |
+| [`bin/publish-dist.ts`](../bin/publish-dist.ts) | Builds a git tree from the output directory with a temporary index, adds the branch's README to that index alone, and commits it on top of `origin/dist`; no commit when the tree is unchanged |
+
+Each commit's trailers name its proof: `Source` (the `main` commit), `Run` (the
+workflow run), `Archive-SHA256` (the attested archive's digest) and
+`Attestation` (its provenance). The README, from `README` in
+[`bin/lib/dist.ts`](../bin/lib/dist.ts), says what the branch is and how to
+verify a deploy; its text is the same on every deploy, so it never makes a
+commit of its own, and it is never in the site directory, so no host serves it.
 
 The `dist` job is the only one with `contents: write`, holds no Cloudflare secret,
 and runs only after `main`'s tip deploys, so pull-request code never holds the write
