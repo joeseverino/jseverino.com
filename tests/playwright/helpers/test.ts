@@ -1,6 +1,10 @@
 // The `test` every browser spec imports in place of Playwright's own.
+import { readFile } from 'node:fs/promises';
 import { type APIRequestContext, test as base, type ConsoleMessage, expect, type Locator, type Page } from '@playwright/test';
+import { buildOutDir } from '../../../src/lib/build-output.ts';
 import { TURNSTILE_ORIGIN } from '../../../src/lib/csp.ts';
+import { SITE_ORIGIN } from '../../../src/lib/site-config.ts';
+import { fromRoot } from '../../../src/lib/site-root.ts';
 import { sitemapUrls } from '../../../src/lib/sitemap.ts';
 
 export * from '@playwright/test';
@@ -75,4 +79,14 @@ export async function sitemapPaths(request: APIRequestContext): Promise<string[]
   });
   expect(urls, 'the sitemap lists no page').not.toHaveLength(0);
   return urls.map(pathOf);
+}
+
+// The pages the served build's sitemap lists, read from its files, for a spec that makes one test
+// per page when it loads. Playwright starts the web server, and with it the build, before it
+// loads any spec, and every worker reads the same files, so each one lists the same tests.
+export async function builtSitemapPaths(): Promise<string[]> {
+  const read = (url: string) => readFile(fromRoot(buildOutDir, new URL(url, SITE_ORIGIN).pathname), 'utf8');
+  const paths = (await sitemapUrls('/sitemap-index.xml', read)).map((url) => new URL(url).pathname);
+  if (paths.length === 0) throw new Error(`the sitemap in ${buildOutDir} lists no page`);
+  return paths;
 }
