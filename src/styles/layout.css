@@ -325,13 +325,6 @@
     display: inline-flex;
     align-items: center;
 
-    & svg {
-      /* 352-tall canvas with a 192-unit em renders the wordmark at --font-md. */
-      display: block;
-      block-size: calc(var(--font-md) * 352 / 192);
-      inline-size: auto;
-    }
-
     &:hover,
     &:focus-visible {
       color: var(--color-primary);
@@ -340,6 +333,13 @@
     &:active {
       color: var(--color-primary-deep);
     }
+  }
+
+  .brand-mark {
+    /* 352-tall canvas with a 192-unit em renders the wordmark at --font-md. */
+    display: block;
+    block-size: calc(var(--font-md) * 352 / 192);
+    inline-size: auto;
   }
 
   .nav-list {

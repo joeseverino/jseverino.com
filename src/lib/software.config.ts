@@ -7,14 +7,7 @@
 import { SITE } from './site-config.ts';
 
 /** Repos to hide (meta, archived predecessors, or not portfolio-worthy). */
-export const SKIP = new Set<string>([
-  'arp-spoofing-mininet-lab',
-  'phptest',
-  'AdGuardHome_DNSQueryAnalyzer',
-  'jseverino.com-legacy',
-  SITE.github,
-  'severino-brand',
-]);
+export const SKIP = new Set<string>(['arp-spoofing-mininet-lab', 'phptest', 'jseverino.com-legacy', SITE.github, 'severino-brand']);
 
 /** Repos rendered as rich featured cards, in this order; the rest sort after, by title. */
 export const FEATURED: readonly string[] = ['severino-vault-mcp', 'branding-engine', 'sitedrift', 'tools', 'cordon'];

@@ -199,7 +199,7 @@ Site chrome is repo configuration; the vault holds none of it. It lives in [`src
 - `jobTitle`: professional title (JSON-LD `Person.jobTitle`);
 - `summary`: one-sentence summary (JSON-LD `Person.description`, default meta description);
 - `skills`: string list (`Person.knowsAbout`);
-- `socialLinks`: `{label, href}[]` (footer icons, `Person.sameAs`);
+- `socialLinks`: `{label, icon, href}[]` (footer icons, `Person.sameAs`);
 - `navItems`: `{label, href}[]` (primary navigation);
 - `url` / `repoUrl`: derived from `SITE.domain` and `SITE.github`.
 

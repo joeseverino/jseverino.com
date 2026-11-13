@@ -9,8 +9,6 @@ import { isoDate } from './dates.ts';
 import { site } from './site.ts';
 import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 
-export type { TechnologyGroup } from './technology-groups.ts';
-
 export type Writeup = {
   slug: string;
   title: string;

@@ -14,7 +14,6 @@ type SoftwarePackage = PackageConfig & {
 };
 
 export type SoftwareEntry = {
-  slug: string;
   title: string;
   description: string;
   repoUrl: string;
@@ -27,13 +26,6 @@ export type SoftwareEntry = {
   package?: SoftwarePackage | undefined;
   order: number;
 };
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 // From the committed snapshot (`mise run snapshot:software`), so a build never calls PyPI or npm.
 const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
@@ -56,7 +48,6 @@ async function build(): Promise<SoftwareEntry[]> {
       const pkg: SoftwarePackage | undefined = config ? { ...config } : undefined;
       const rank = FEATURED.indexOf(repo.name);
       return {
-        slug: slugify(repo.name),
         title: pkg?.name ?? repo.name,
         description: repo.description,
         repoUrl: repo.url,

@@ -2,14 +2,12 @@
 import { site } from '@lib/site.ts';
 import SocialLinks from '@components/SocialLinks.astro';
 import ThemeToggle from '@components/ThemeToggle.astro';
-
-const { socialLinks } = site;
 ---
 
 <footer class="site-footer">
   <div class="wide footer-inner">
     <a href={site.repoUrl} class="source-link"><span aria-hidden="true">&lt;/&gt;</span>&nbsp;View Source</a>
     <ThemeToggle />
-    <SocialLinks links={socialLinks} />
+    <SocialLinks />
   </div>
 </footer>

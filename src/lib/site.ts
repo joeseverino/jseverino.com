@@ -21,8 +21,9 @@ export const site = {
   focusLabel,
   skills: [...SITE.focus, 'Network Security', 'Infrastructure', 'Detection Engineering', 'Homelab', 'Linux'],
   socialLinks: [
-    { label: 'LinkedIn', href: 'https://linkedin.com/in/joeseverino/' },
-    { label: 'GitHub', href: `https://github.com/${SITE.github}` },
+    // `icon` names the symbol in SocialIconsDefs.astro.
+    { label: 'LinkedIn', icon: 'linkedin', href: 'https://linkedin.com/in/joeseverino/' },
+    { label: 'GitHub', icon: 'github', href: `https://github.com/${SITE.github}` },
   ],
   navItems: [
     { label: 'About', href: '/about/' },

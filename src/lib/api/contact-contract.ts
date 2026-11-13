@@ -6,7 +6,6 @@ type ContractProperty = {
   readonly minLength?: number;
   readonly maxLength?: number;
   readonly format?: string;
-  readonly 'x-purpose'?: string;
 };
 
 export type ContactField = keyof typeof contract.request.properties;

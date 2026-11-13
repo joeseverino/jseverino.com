@@ -83,7 +83,6 @@
     text-decoration: none;
 
     &[aria-current='page'] {
-      color: var(--color-text);
       font-weight: 600;
       text-decoration: underline;
       text-decoration-color: var(--color-primary);

@@ -12,14 +12,14 @@ if (!wordmarkViewBox) throw new Error('wordmark-caps.svg needs a viewBox on its 
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
-const { name, navItems, socialLinks, focusLabel } = site;
+const { name, navItems, focusLabel } = site;
 const navigation = navItems.map((item) => ({
   ...item,
   current: normalize(current) === normalize(item.href),
 }));
 ---
 
-<div id="scroll-sentinel" class="scroll-sentinel"></div>
+<div class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
@@ -41,7 +41,7 @@ const navigation = navItems.map((item) => ({
     <NavLinks items={navigation} listClass="mobile-nav-list" linkClass="mobile-nav-link" />
     <div class="mobile-nav-footer">
       <p class="page-kicker">{focusLabel}</p>
-      <SocialLinks links={socialLinks} class="mobile-nav-social" />
+      <SocialLinks />
     </div>
   </nav>
 </header>

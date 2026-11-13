@@ -10,9 +10,9 @@
       "name": { "type": "string", "minLength": 1, "maxLength": 190 },
       "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 190 },
       "message": { "type": "string", "minLength": 1, "maxLength": 5000 },
-      "company": { "type": "string", "maxLength": 190, "description": "Honeypot; human submissions leave this empty.", "x-purpose": "honeypot" },
-      "sourceUrl": { "type": "string", "format": "uri", "maxLength": 2048, "x-purpose": "request-context" },
-      "turnstileToken": { "type": "string", "minLength": 1, "x-purpose": "verification" }
+      "company": { "type": "string", "maxLength": 190, "description": "Honeypot; human submissions leave this empty." },
+      "sourceUrl": { "type": "string", "format": "uri", "maxLength": 2048 },
+      "turnstileToken": { "type": "string", "minLength": 1 }
     }
   },
   "runtime": {

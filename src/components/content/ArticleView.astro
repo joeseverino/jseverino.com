@@ -14,7 +14,7 @@ const { title, date, technologies } = Astro.props;
 
 <main id="main" class="article">
   <header class="article-header">
-    <div class="article-meta">
+    <div>
       <h1 class="article-title">{title}</h1>
       {date && <p class="article-date"><time datetime={date}>{formatDate(date)}</time></p>}
     </div>

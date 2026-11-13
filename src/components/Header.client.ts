@@ -2,7 +2,7 @@
 
 if (!CSS.supports('animation-timeline', 'scroll()')) {
   const header = document.querySelector('[data-sticky-header]');
-  const sentinel = document.querySelector('#scroll-sentinel');
+  const sentinel = document.querySelector('.scroll-sentinel');
   if (header && sentinel) {
     const observer = new IntersectionObserver(
       ([entry]) => {

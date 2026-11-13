@@ -560,11 +560,6 @@
   .brand {
     display: inline-flex;
     align-items: center;
-    & svg {
-      display: block;
-      block-size: calc(var(--font-md) * 352 / 192);
-      inline-size: auto;
-    }
     &:hover,
     &:focus-visible {
       color: var(--color-primary);
@@ -572,6 +567,11 @@
     &:active {
       color: var(--color-primary-deep);
     }
+  }
+  .brand-mark {
+    display: block;
+    block-size: calc(var(--font-md) * 352 / 192);
+    inline-size: auto;
   }
   .nav-list {
     display: flex;
@@ -1028,7 +1028,6 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 4;
-    line-clamp: 4;
     overflow: hidden;
     color: var(--color-muted);
     font-size: var(--font-ui);
@@ -1378,7 +1377,6 @@
     color: var(--color-text);
     text-decoration: none;
     &[aria-current=page] {
-      color: var(--color-text);
       font-weight: 600;
       text-decoration: underline;
       text-decoration-color: var(--color-primary);

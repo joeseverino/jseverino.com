@@ -74,7 +74,7 @@ A single gate (`mise run built:weight`) is for iterating on a failure.
   inlined CSS, total JavaScript and each image, each set in
   `tests/audits/check-page-weight.ts` about a quarter above what the build
   ships.
-- Markdown images take `|width`, `|nocap` and `|nozoom` modifiers
+- Markdown images take `|width` and `|nozoom` modifiers
   (`src/lib/markdown/`); a new modifier is documented in
   [the Authoring Guide](docs/Authoring-Guide.md).
 - The footer holds View Source, the theme control and the social icons. No

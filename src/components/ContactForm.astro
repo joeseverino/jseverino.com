@@ -5,7 +5,7 @@ import { TURNSTILE_SCRIPT_URL } from '@lib/api/turnstile.ts';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
-const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn');
+const linkedin = site.socialLinks.find((link) => link.icon === 'linkedin');
 if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socialLinks for its fallback link.');
 ---
 
