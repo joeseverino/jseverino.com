@@ -1,57 +1,34 @@
-# Brand System
+# Brand system
 
-How `jseverino.com` got a deliberate brand, and how the code that renders it
-moved from a script in this repository to a standalone engine shared by the
-site, the brand kit, and the command-line tools.
+How the brand is defined, how the site renders it, and how to embed its
+styles elsewhere.
 
-## Two Colors
+## The identity
 
-The site started with the theme's default purple accent and a yellow `JS` logo
-with no source file. Neither color was chosen, and they did not match.
-
-## Choosing A Color
-
-The mark was rendered in a range of candidate colors and compared side by side.
-Navy (`#1E3A8A`) was picked: it suits a security and networking portfolio, and it
-reads cleanly as a white glyph on a solid tile at favicon sizes. Severino HQ, the
-private operations app, uses its own teal (`#1f4d57`) with the same monogram.
-
-The navy is the favicon and mark tile and the site's theme color
+The accent is navy (`#1E3A8A`), which reads as a white glyph on a solid tile at
+favicon sizes. It is the favicon and mark tile and the site's theme color
 (`--color-primary`, `<meta name="theme-color">`), so logo and interface share
 one value.
 
-## Generated Assets
+## Generated assets
 
 The `JS` monogram is built from Inter (weight 800) glyph outlines and laid out
-into an SVG. One token
-file, [`src/lib/brand.ts`](../src/lib/brand.ts), holds the identity (the navy,
-the glyph), and three consumers read it: the favicon generator, the social-card
-renderer, and the CSS that sets the theme color. Changing the color in that file
-changes the favicon, the Open Graph card, and the interface together.
-
-## SVG First
+into an SVG. The identity (the navy, the glyph) is synced into
+[`src/lib/brand.ts`](../src/lib/brand.ts), and three consumers read it: the
+favicon generator, the social-card renderer, and the CSS that sets the theme
+color. A change to the color reaches the favicon, the Open Graph card, and the
+interface together.
 
 The wordmark lockup (the tile plus the name) is composed from the same Inter
 outlines into `wordmark.svg`, and the light and dark PNGs are rasterized from
-that SVG. An all-caps lockup matches
-how the header sets the name. Geometry is vector; only assets that must be raster
-(social cards, platform icons) are raster.
+that SVG. An all-caps lockup matches how the header sets the name. Geometry is
+vector; only assets that must be raster (social cards, platform icons) are
+raster.
 
-## Out Of The Repo
+## One engine, many surfaces
 
-The generators take a color, a set of initials, and a name, and know nothing else
-about this site. They moved out in two steps. The brand data (the navy, the
-glyph, the card copy, the portrait) moved into its own kit, `severino-brand`.
-The rendering code moved into a standalone package, `branding-engine`. The site
-keeps the data and a dependency.
-
-Each step was checked by regenerating every asset and diffing it against the
-committed copy. The favicons, marks, social cards, and brand sheets came out
-byte-for-byte identical.
-
-## One Engine, Many Surfaces
-
-The result is one engine with several consumers:
+The generators know only a color, initials and a name; the brand data lives in
+`severino-brand`, the rendering in `branding-engine`.
 
 ```mermaid
 flowchart TB
@@ -61,52 +38,21 @@ flowchart TB
     TB["tools/brand (local checkout)"] --> BE
 ```
 
-- **The site** depends on the engine to regenerate its favicons, social cards, and
+- The site depends on the engine to regenerate its favicons, social cards, and
   header wordmark, and commits the output. Its production build never runs the
   engine; the header inlines the committed `wordmark-caps.svg` so its glyphs pick
   up the link's hover color through `currentColor`.
-- **The brand kit** (`severino-brand`) is pure data plus a dependency on the
-  engine; building it renders the navy kit, the HQ teal kit, and one-off kits for
-  other people.
-- **The `brand` tool** wraps the engine for everyday use from the terminal.
+- The brand kit, `severino-brand`, is data plus a dependency on the engine;
+  building it renders each kit it declares.
+- The `brand` tool wraps the engine for use from the terminal.
 
-The engine itself is the public, reusable piece:
-[`branding-engine`](https://github.com/joeseverino/branding-engine). It renders a kit from one accent
-color and a set of initials.
+The engine is the public, reusable piece:
+[`branding-engine`](https://github.com/joeseverino/branding-engine). It renders
+a kit from one accent color and a set of initials.
+[Deployment preview review](./Deployment-Preview-Review.md#what-the-preview-shows)
+shows a brand change on a preview beside production.
 
-## Proving A Brand Change Before Shipping It
-
-Consistent assets do not show how a redesign looks once deployed.
-[`sitedrift`](https://github.com/joeseverino/sitedrift) checks that.
-
-For a temporary Cloudflare branch deployment, the site's primary token changed
-from navy to red. `branding-engine` regenerated the favicon, marks, wordmark,
-Open Graph card, social preview, and interface-facing brand values from that
-single edit. Sitedrift then loaded the red branch as DEV and the current navy
-site as LIVE on the same route.
-
-In the commit diff, a few palette values changed in `src/lib/brand.ts` and the
-generated Open Graph card changed with them. The portrait, typography,
-dimensions, and content stayed fixed.
-
-![Brand token edit and generated Open Graph card diff](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
-
-The same input carried through the GitHub social preview and the transparent
-mark, with no exported file recolored by hand.
-
-![Generated social preview and mark changing together](./images/sitedrift-brand-demo/github-generated-assets-diff.png)
-
-![One branding-engine input change compared against production with sitedrift](./images/sitedrift-brand-demo/red-vs-live-split.png)
-
-Side by side, every brand-colored surface changes while the layout and content
-stay aligned. Diff mode hides identical pixels and shows only the changed brand
-surfaces.
-
-![Brand-only pixel differences](./images/sitedrift-brand-demo/red-vs-live-diff.png)
-
-The branch went back to navy afterward.
-
-## How The Site Consumes It
+## How the site consumes it
 
 The site keeps self-contained generated inputs while consuming one versioned
 upstream contract:
@@ -126,15 +72,15 @@ upstream contract:
   projection without writing and fails on drift. Each projection embeds the upstream token
   SHA-256 digest for provenance.
 - `bin/make-icons.ts`, `bin/make-og-image.ts`, and `bin/make-github-social.ts`
-  import `markSvg` / `renderCard` from `branding-engine` instead of a local copy,
-  and pass it the synced `BRAND`. The engine is generic; the tokens supply the color.
+  import `markSvg` / `renderCard` from `branding-engine` and pass it the
+  synced `BRAND`. The engine is generic; the tokens supply the color.
 - The generated assets in `public/assets/` are committed. `mise run checks:contracts`
   runs `make:icons --check`, which fails when the vector marks (`favicon.svg`,
   `mark.svg`, `wordmark-caps.svg`) differ from what the engine renders. To restyle the brand,
   edit `tokens.json` upstream, run `mise run sync:tokens`, re-run the generators,
   and commit the new tokens and assets together.
 
-### Light And Dark From One Token Block
+### Light and dark from one token block
 
 `designSystemDark` lists only the tokens whose value changes in dark. The renderer
 folds the two maps together into a single `:root` block where each themeable token
@@ -152,15 +98,15 @@ holds both values at once:
 There is no dark stylesheet, no `[data-theme]` selector, and no per-component
 dark override. Consequences:
 
-- **Derived tokens adapt for free.** `--color-border` is a `color-mix()` over
+- A derived token adapts on its own. `--color-border` is a `color-mix()` over
   `--color-text`, so it has no dark entry and follows the text color. Anything
-  expressible as a mix of an already-themeable token should stay derived.
-- **`light-dark()` only accepts colors.** `--shadow-md` is geometry plus a color,
-  so the color half was split into `--shadow-color-md` and the shadow composes it.
-  Apply the same split to any future token that isn't a bare color.
-- **A dark key with no light counterpart throws.** `mergeThemes` in the
-  versioned `severino-brand` contract refuses to emit a token that exists only in the
-  dark map, so a typo there fails instead of dropping out of the output.
+  expressible as a mix of an already-themeable token stays derived.
+- `light-dark()` accepts only colors. `--shadow-md` is geometry plus a color, so
+  it composes `--shadow-color-md`, which holds the color. A token that is not a
+  bare color splits the same way.
+- A dark key with no light counterpart throws. `mergeThemes` in the versioned
+  `severino-brand` contract refuses to emit a token that exists only in the dark
+  map, so a typo there fails instead of dropping out of the output.
 
 The terminal group (`--code-*`, `--term-*`) has no dark entries on purpose: it
 represents a real terminal and stays dark in both themes. `--color-primary` is
@@ -174,7 +120,7 @@ The engine is a devDependency from npm. `mise run checks:contracts` runs
 `make:icons --check`, which renders the vector marks with it, so every install
 needs it. The production build never runs it: the rendered assets are committed.
 
-## Embedding The Styles Elsewhere: Load Both
+## Embedding the styles elsewhere
 
 The site's writeup styling is two concerns in one stylesheet, and anything that
 renders writeup HTML outside the site must carry both.
@@ -185,8 +131,7 @@ renders writeup HTML outside the site must carry both.
   for itself (the contact form, the software list, the resume and education
   documents), into each page as one `<style>` block, pinned by hash in the CSP.
 - **`src/styles/brand.css`** is the brand identity: `--color-primary` and
-  `--color-primary-deep`, generated by `mise run sync:tokens`. It is swappable
-  (the sitedrift demo changes one token and regenerates everything).
+  `--color-primary-deep`, generated by `mise run sync:tokens`.
 
 The two stay in separate files because brand identity (`brand` in `tokens.json`)
 is swappable and the design system (`designSystem`) is stable. The design
@@ -207,7 +152,7 @@ The assembly is owned once so an embedder does not re-derive it:
   `public/embed/bundle.css` with esbuild, which inlines the font `tokens.css`
   declares as a data URL.
 
-## Related Docs
+## Related docs
 
 - [`docs/Architecture.md`](./Architecture.md)
 - [`docs/WordPress-To-Astro-Migration.md`](./WordPress-To-Astro-Migration.md)
