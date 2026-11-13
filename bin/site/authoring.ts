@@ -8,7 +8,8 @@ import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
-import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from './writeup-store/store.ts';
+import { reorderFeatured } from './writeup-store/plan.ts';
+import { listWriteups, technologyCatalog, writeupStore } from './writeup-store/store.ts';
 import { guard } from './writeups.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {

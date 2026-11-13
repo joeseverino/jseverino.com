@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { createPublicProjection, reviewedDate } from '../../bin/content-sync/public-projection.ts';
 import { FIELDS } from '../../bin/site/manage-model.ts';
-import { updateFrontmatter, WriteupError } from '../../bin/site/writeup-store/store.ts';
+import { updateFrontmatter } from '../../bin/site/writeup-store/plan.ts';
+import { WriteupError } from '../../bin/site/writeup-store/store.ts';
 import { collectionFields, contentContractFingerprint, frontmatterIssues, projectFrontmatter } from '../../src/lib/content-contract.ts';
 import { stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 

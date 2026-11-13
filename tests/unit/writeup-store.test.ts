@@ -2,19 +2,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, beforeEach, describe, test } from 'node:test';
+import { updateLink } from '../../bin/site/writeup-store/link.ts';
+import { applyPlan, reorderFeatured, updateFrontmatter } from '../../bin/site/writeup-store/plan.ts';
 import { renderScalar, replaceScalar, yamlEscape } from '../../bin/site/writeup-store/scalar.ts';
 import {
-  applyPlan,
   featuredOrder,
   listWriteups,
   loadWriteups,
   prepare,
-  reorderFeatured,
   snapshot,
   tagUsage,
   technologyCatalog,
-  updateFrontmatter,
-  updateLink,
   WriteupError,
   type WriteupStore,
 } from '../../bin/site/writeup-store/store.ts';

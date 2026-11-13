@@ -1,21 +1,19 @@
-// `site` commands over the writeup store (bin/site/writeup-store/store.ts): the CLI
+// `site` commands over the writeup store (bin/site/writeup-store/): the CLI
 // formats; the store reads and writes.
 import fs from 'node:fs';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { assertSlug, EXIT, type Output, SiteError, translate } from './cli.ts';
 import type { ApplyPlanResult, ContractResult, DashboardResult, LinkCommandResult, PrepareResult, SetResult, TagResult, WriteupsResult } from './types.ts';
+import { updateLink } from './writeup-store/link.ts';
+import { applyPlan, updateFrontmatter, type WriteupPlan } from './writeup-store/plan.ts';
 import {
-  applyPlan,
   dashboard,
   listWriteups,
   prepare,
   tagUsage,
-  updateFrontmatter,
-  updateLink,
   WRITEUP_FILTERS,
   WriteupError,
   type WriteupFilter,
-  type WriteupPlan,
   writeupContract,
   writeupStore,
 } from './writeup-store/store.ts';

@@ -30,7 +30,8 @@ import {
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
 import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
-import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from './writeup-store/store.ts';
+import { applyPlan, type WriteupPlan } from './writeup-store/plan.ts';
+import { WriteupError, writeupStore } from './writeup-store/store.ts';
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {
