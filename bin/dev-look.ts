@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Screenshots of the built site as production serves it, at each width and color scheme, for a
 // look at a layout change before calling it done. Fails on a page that scrolls sideways or does
 // not load.

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Emit public/content-index.json for Severino HQ to pull (gated by a Cloudflare
 // Access service token). Gitignored build output; sorted with stable keys.
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Turn the JSON reports `mise run --report-file` writes for `mise run check`'s phases, one per
 // phase in GATE_REPORT_DIR (mise-tasks/check), into one job-summary table and an error
 // annotation per failed task. Runs with `if: always()` and exits zero on any report it can read:

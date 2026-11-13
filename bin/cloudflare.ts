@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // The Cloudflare zone and account posture in cloudflare/zone.json, checked
 // against the live API and applied on request. See docs/Cloudflare.md.
 //

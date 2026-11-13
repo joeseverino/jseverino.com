@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // The one ci comment on a pull request, created or updated in place: the required checks'
 // states, ci's job summaries and the preview's, for the workflow_run event the preview
 // workflow's report job runs on. See .github/workflows/preview.yml.

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Clear-signs public/.well-known/security.txt with the security contact's GPG key.
 //
 //   node bin/sign-security.ts

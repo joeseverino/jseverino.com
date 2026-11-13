@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Build a baseline ref (in a detached worktree, no stash) and the working tree, then
 // report which built files differ. Known varying tokens are normalized.
 //

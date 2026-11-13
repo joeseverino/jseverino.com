@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Project contracts/content.v1.json into the typed Astro schemas.
 //
 //   node bin/sync-content-contract.ts           # write the projection

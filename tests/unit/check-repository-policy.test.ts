@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { SUPPRESSION } from '../audits/check-repository-policy.ts';
+import { executableMismatch, SUPPRESSION } from '../audits/check-repository-policy.ts';
 
 // Built from parts, so this file never carries the directives the audit refuses.
 const nocheck = `@ts-${'nocheck'}`;
@@ -17,4 +17,11 @@ test('an escape with a reason, or a name on the line after a comment, is not', (
   for (const source of [`// ${expectError} the fixture is malformed on purpose`, `const note = \`see //\n${nocheck} in a template string\`;`]) {
     assert.doesNotMatch(source, SUPPRESSION, source);
   }
+});
+
+test('a shebang and the executable bit come together or not at all', () => {
+  assert.equal(executableMismatch('100755', '#!'), undefined);
+  assert.equal(executableMismatch('100644', '//'), undefined);
+  assert.ok(executableMismatch('100644', '#!'));
+  assert.ok(executableMismatch('100755', '//'));
 });

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Generates the favicon set and brand marks from the shared mark renderer into
 // public/favicon.ico, public/assets/icons/*, and public/assets/brand/*.
 //

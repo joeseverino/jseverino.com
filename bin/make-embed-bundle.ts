@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Emit the one embeddable stylesheet:
 //
 //   public/embed/bundle.css  =  base.css (which imports the brand vars), its Inter inlined as base64

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // The GitHub repository posture in .github/repo.json, checked against the live
 // repository and applied on request. See docs/GitHub-Settings.md.
 //

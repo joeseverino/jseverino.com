@@ -14,6 +14,16 @@ import { abort, finish } from './lib.ts';
 // gone. A directive is a comment that opens with it, as TypeScript reads one.
 export const SUPPRESSION = /(?:\/\/|\/\*|^[ \t]*\*)[ \t/*]*@ts-(?:nocheck\b|expect-error\b(?![ \t]+(?!\*\/)\S))/m;
 
+// A shebang is read only when a file is run by its path, which takes the executable bit, and the
+// bit is for a file that names its interpreter. Either one alone is dead.
+export function executableMismatch(mode: string, head: string): string | undefined {
+  const shebang = head.startsWith('#!');
+  const executable = mode === '100755';
+  if (shebang && !executable) return 'has a shebang but no executable bit (delete the shebang, or git update-index --chmod=+x)';
+  if (executable && !shebang) return 'has the executable bit but no shebang (git update-index --chmod=-x)';
+  return undefined;
+}
+
 function read(file: string): string {
   return fs.readFileSync(path.join(root, file), 'utf8');
 }
@@ -112,6 +122,18 @@ if (import.meta.main) {
     }
   }
 
+  // The mode git records, which is what a checkout and CI get. Symlinks and submodules have none to check.
+  for (const entry of runSync('git', ['ls-files', '--stage', '-z'], { cwd: root, raw: true }).split('\0').filter(Boolean)) {
+    const [, mode = '', file = ''] = /^(\d+) \S+ \d+\t(.*)$/s.exec(entry) ?? [];
+    if (!/^100(?:644|755)$/.test(mode) || !fs.existsSync(path.join(root, file))) continue;
+    const head = Buffer.alloc(2);
+    const fd = fs.openSync(path.join(root, file), 'r');
+    fs.readSync(fd, head, 0, 2, 0);
+    fs.closeSync(fd);
+    const mismatch = executableMismatch(mode, head.toString('latin1'));
+    if (mismatch) failures.push(`${file} ${mismatch}`);
+  }
+
   // One language: TypeScript run by Node type stripping.
   const javascript = tracked.filter((file) => /\.[cm]?jsx?$/.test(file));
   if (javascript.length > 0) {
@@ -141,11 +163,11 @@ if (import.meta.main) {
 
   finish(
     failures,
-    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
+    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; every shebang on an executable file; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
     {
       heading: 'repository policy failed:',
       bullet: '- ',
-      fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or a type-check suppression, or a workflow job (add npm to its MISE_ENABLE_TOOLS)',
+      fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a shebang without the executable bit or the reverse, a stylesheet rule, a JavaScript file or a type-check suppression, or a workflow job (add npm to its MISE_ENABLE_TOOLS)',
     },
   );
 }

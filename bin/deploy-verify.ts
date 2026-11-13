@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Post-merge production verification, run from a clean main checkout. Expectations
 // come from src/lib/edge-expectations.ts, shared with tests/edge.
 //

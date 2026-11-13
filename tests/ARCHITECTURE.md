@@ -157,6 +157,7 @@ Structural health:
 - **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` names its major, and the npm on `PATH` is the exact `packageManager` release.
 - **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
 - **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
+- **Shebangs**: a tracked file starts with `#!` if and only if git records its executable bit, so no shebang is dead and every file run by its path names its interpreter.
 - **Stylesheets**: component styles live in `src/styles` modules.
 - **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
 - **Workflows**, read as YAML: a job whose `MISE_ENABLE_TOOLS` names `node` also names `npm`, so it runs the `packageManager` release.

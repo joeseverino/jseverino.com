@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Turns a finished build into a branch preview: the sitedrift review viewer over every page, then
 // the CSP filled again so it covers the viewer. sitedrift wraps only a Workers CI build of a branch
 // other than main, so the deploy job sets WORKERS_CI=1 on this step alone and the build itself

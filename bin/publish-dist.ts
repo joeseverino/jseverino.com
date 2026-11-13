@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Commits a built site to the dist branch, one commit per change. See docs/Dist-Branch.md.
 //
 //   node bin/publish-dist.ts [dir] [--push] [--archive-sha256 <hex>] [--attestation <url>]

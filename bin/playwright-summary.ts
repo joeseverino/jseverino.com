@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Turn Playwright's JSON report into a per-project job-summary table. Runs with
 // `if: always()` and exits zero: the test step decides the job's outcome.
 //

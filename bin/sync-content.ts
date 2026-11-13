@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Sync the public pages and writeups from the vault into the repo snapshot:
 // src/content/<collection>/<slug>/index.mdx with its image masters beside it.
 //

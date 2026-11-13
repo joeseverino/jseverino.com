@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Project contracts/contact.v1.json into the OpenAPI document API Shield validates requests against.
 //
 //   node bin/sync-contact-openapi.ts           # write the projection

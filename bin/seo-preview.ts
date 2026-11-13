@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Prints the Google-style result, metadata, and SEO checks for one built page.
 //
 //   node bin/seo-preview.ts [--result] <url|path|slug>
