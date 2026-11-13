@@ -84,12 +84,6 @@
       "formatter": { "enabled": false },
       "assist": { "enabled": false },
       "linter": { "rules": { "preset": "none", "suspicious": { "noExplicitAny": "error", "noTsIgnore": "error" } } }
-    },
-    {
-      // Playwright's expect does not narrow a type, so a spec checks for null
-      // with expect and then asserts the value present.
-      "includes": ["tests/playwright/**", "tests/edge/**"],
-      "linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
     }
   ]
 }

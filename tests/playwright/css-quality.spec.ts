@@ -3,6 +3,8 @@ import { rgb } from './helpers/colors.ts';
 import { boxOf, expect, type Page, test } from './helpers/test.ts';
 import { anyWriteup } from './helpers/writeups.ts';
 
+// Each test here measures a component's own styles, so it finds the component by its class.
+
 // The brand primary pair the page resolves on <html>.
 async function expectBrandVars(page: Page, primary: string, deep: string): Promise<void> {
   const declared = (property: string) =>
@@ -33,15 +35,13 @@ for (const path of ['/', '/contact/', '/portfolio/', '/resume/', '/education/'])
 test('a #fragment target lands below the sticky header', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(anyWriteup());
-  const id = await page.locator('.prose :is(h2, h3)[id]').first().getAttribute('id');
-  expect(id).not.toBeNull();
+  const heading = page.getByRole('article').getByRole('heading', { level: 2 }).first();
+  const id = await heading.getAttribute('id');
+  expect(id, 'the first section heading has no id to link to').toBeTruthy();
   await page.goto(`${anyWriteup()}#${id}`);
 
-  const header = await page.locator('.site-header').boundingBox();
-  const target = await page.locator(`[id="${id}"]`).boundingBox();
-  expect(header).not.toBeNull();
-  expect(target).not.toBeNull();
-  expect(target!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+  const header = await boxOf(page.getByRole('banner'));
+  expect((await boxOf(heading)).y).toBeGreaterThanOrEqual(header.y + header.height);
 });
 
 test('the nav underline animates without layout', async ({ page }) => {
@@ -68,7 +68,7 @@ test('the nav underline animates without layout', async ({ page }) => {
 test('focus exposes the skip link', async ({ page }) => {
   await page.goto('/');
 
-  const skipLink = page.locator('.skip-link');
+  const skipLink = page.getByRole('link', { name: 'Skip to main content' });
   await skipLink.focus();
   await expect(skipLink).toBeFocused();
   await expect(skipLink).toBeVisible();
@@ -212,11 +212,10 @@ test('sticky resume action remains fixed and centered', async ({ page }) => {
 
   const button = page.locator('.sticky-button');
   await expect(button).toHaveCSS('position', 'fixed');
-  const box = await button.boundingBox();
+  const box = await boxOf(button);
   const viewport = page.viewportSize();
-  expect(box).not.toBeNull();
-  expect(viewport).not.toBeNull();
-  expect(box!.x + box!.width / 2).toBeCloseTo(viewport!.width / 2, 0);
+  if (!viewport) throw new Error('the project sets no viewport');
+  expect(box.x + box.width / 2).toBeCloseTo(viewport.width / 2, 0);
 });
 
 test('forced colors preserve visible controls and focus', async ({ page, browserName }) => {
@@ -224,8 +223,8 @@ test('forced colors preserve visible controls and focus', async ({ page, browser
   await page.emulateMedia({ forcedColors: 'active' });
   await page.goto('/contact/');
 
-  const input = page.locator('#contact-name');
+  const input = page.getByLabel('Name', { exact: true });
   await input.focus();
   await expect(input).toHaveCSS('outline-style', 'solid');
-  await expect(page.locator('.contact-submit')).toHaveCSS('border-style', 'solid');
+  await expect(page.getByRole('button', { name: 'Send Message' })).toHaveCSS('border-style', 'solid');
 });

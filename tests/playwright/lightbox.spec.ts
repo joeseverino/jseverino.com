@@ -5,7 +5,7 @@ const WRITEUP = imageHeavyWriteup();
 
 async function openFigurePage(page: Page) {
   await page.goto(WRITEUP);
-  return { trigger: page.locator('.prose .image-zoom').first(), dialog: page.locator('dialog.lightbox') };
+  return { trigger: page.getByRole('button', { name: /^Open image/ }).first(), dialog: page.getByRole('dialog', { name: 'Image viewer' }) };
 }
 
 async function openWithPointer(page: Page) {
@@ -33,7 +33,7 @@ test.describe('figure lightbox', () => {
     await trigger.click();
 
     await expect(dialog).toBeVisible();
-    await expect(page.locator('.lightbox-img')).toHaveAttribute('src', /.+/);
+    await expect(dialog.getByRole('img')).toHaveAttribute('src', /.+/);
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
     await expect(dialog).toBeFocused();
     await expect(closeButton(page)).not.toBeFocused();

@@ -32,8 +32,11 @@ for (const colorScheme of ['light', 'dark'] as const) {
 
     test('axe finds no WCAG A/AA violations with the lightbox open', async ({ page }) => {
       await page.goto(imageHeavyWriteup(), { waitUntil: 'load' });
-      await page.locator('.prose .image-zoom').first().click();
-      const dialog = page.locator('dialog.lightbox');
+      await page
+        .getByRole('button', { name: /^Open image/ })
+        .first()
+        .click();
+      const dialog = page.getByRole('dialog', { name: 'Image viewer' });
       await expect(dialog).toBeVisible();
       // The dialog fades in; axe computes contrast through opacity, so a scan
       // mid-fade fails color-contrast on the caption. Scan the settled state.

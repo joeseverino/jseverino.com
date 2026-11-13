@@ -11,7 +11,8 @@ const DARK_BG = rgb(SURFACE.dark);
 
 const expectPageBg = (page: Page, color: string) => expect(page.locator('body')).toHaveCSS('background-color', color);
 
-const themeChoice = (page: Page, value: 'light' | 'dark' | 'auto') => page.locator(`[data-theme-choice="${value}"]`);
+const CHOICE = { auto: 'Match system theme', light: 'Light theme', dark: 'Dark theme' } as const;
+const themeChoice = (page: Page, value: keyof typeof CHOICE) => page.getByRole('button', { name: CHOICE[value], exact: true });
 
 async function homeIn(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.emulateMedia({ colorScheme: scheme });
@@ -112,8 +113,8 @@ test('the sticky header scrim follows a runtime theme switch', async ({ page }) 
   await homeIn(page, 'light');
 
   const scrimLightness = () =>
-    page.evaluate(() => {
-      const raw = getComputedStyle(document.querySelector('.site-header')!, '::before').backgroundColor;
+    page.getByRole('banner').evaluate((header) => {
+      const raw = getComputedStyle(header, '::before').backgroundColor;
       return Number(raw.match(/oklch\(([\d.]+)/)?.[1] ?? NaN);
     });
 
@@ -136,7 +137,7 @@ test.describe('without JavaScript', () => {
   test('auto still works, and the control is hidden', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('.theme-toggle')).toBeHidden();
+    await expect(page.getByRole('group', { name: 'Color theme', includeHidden: true })).toBeHidden();
     await expectPageBg(page, DARK_BG);
   });
 });

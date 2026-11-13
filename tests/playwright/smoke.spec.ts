@@ -35,7 +35,7 @@ test('the home page names Joe Severino in its title and its heading', async ({ p
 
 test('every primary navigation link opens a page that answers 200 and has a heading', async ({ page }) => {
   await page.goto('/');
-  const links = page.locator('.primary-nav').getByRole('link');
+  const links = page.getByRole('navigation', { name: 'Primary' }).getByRole('link');
   const hrefs = await links.evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href') ?? ''));
   expect(hrefs).not.toHaveLength(0);
   for (const [index, href] of hrefs.entries()) {
@@ -48,11 +48,12 @@ test('every primary navigation link opens a page that answers 200 and has a head
   }
 });
 
-test('writeup page renders article and prose body', async ({ page }) => {
+test('a writeup page shows its title and an article with section headings', async ({ page }) => {
   await page.goto(anyWriteup());
-  await expect(page.locator('.article-title')).toBeVisible();
-  await expect(page.locator('.prose h2').first()).toBeVisible();
-  await expect(page.locator('.prose')).not.toBeEmpty();
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  const article = page.getByRole('article');
+  await expect(article).not.toBeEmpty();
+  await expect(article.getByRole('heading', { level: 2 }).first()).toBeVisible();
 });
 
 test('representative routes emit no browser warnings or errors', async ({ page }) => {
@@ -82,7 +83,5 @@ test('sticky header gains a shadow after scrolling', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, 200));
 
   // The shadow is always drawn and only its color fades in, so the scroll state is the promise.
-  await expect
-    .poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').getPropertyValue('--header-scroll')))
-    .toBe('1');
+  await expect.poll(() => page.getByRole('banner').evaluate((header) => getComputedStyle(header, '::before').getPropertyValue('--header-scroll'))).toBe('1');
 });
