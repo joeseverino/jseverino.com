@@ -282,7 +282,7 @@ test('buttons and cards keep a stable click target through press and release', a
 ```
 
 ### `contact.spec.ts`
-Drives the contact form with Cloudflare Turnstile in test-key mode (`PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`, set in `tests/browser-test-env.ts`). The `beforeEach` aborts the Turnstile script (`challenges.cloudflare.com`) so its always-pass test key cannot auto-solve mid-test; each test then controls the token state deterministically instead of racing the widget. Three paths: HTML5 required-field validation, the error shown when no token is present, and a fully mocked successful submit. The success case intercepts `POST /api/contact`, asserts the payload, and overrides `FormData.prototype.get` so the form reads a stubbed Turnstile token even though no real challenge ran:
+Drives the contact form with Cloudflare Turnstile in test-key mode (`PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`, set in `tests/browser-test-env.ts`). The `beforeEach` aborts the Turnstile script (`challenges.cloudflare.com`) so its always-pass test key cannot auto-solve mid-test; each test then controls the token state deterministically instead of racing the widget. Three paths: HTML5 required-field validation, the error shown when no token is present, and a mocked successful submit. The success case intercepts `POST /api/contact`, asserts the payload, and overrides `FormData.prototype.get` so the form reads a stubbed Turnstile token even though no real challenge ran:
 
 ```ts
 test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
@@ -449,9 +449,9 @@ CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
 
 `bin/deploy-verify.ts` (`mise run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it runs by hand from a clean `main` checkout, since its first check is that checkout's state. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each Worker version's own preview URL on workers.dev, which is outside the zone, before production takes that version: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
 
-1. **Repo state**: local branch is `main`, clean, fully pushed.
+1. **Repo state**: local branch is `main`, clean, and pushed.
 2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and `deploy` report success.
-3. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
+3. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, so a renamed writeup is still found):
    - HSTS present with `includeSubDomains`,
    - CSP active with no `'unsafe-inline'` script source and the home page's inline script and stylesheet covered by its hashes (`inline`),
    - `reporting-endpoints` and `report-to` routed to `/api/csp-report`, Trusted Types enforced with report-only on `/contact/`,
