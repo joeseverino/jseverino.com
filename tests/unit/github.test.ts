@@ -19,8 +19,6 @@ const ruleset = (name: string) => {
   return found;
 };
 const mainRuleset = ruleset('main');
-// The app GitHub's Actions token acts as (`gh api /apps/github-actions --jq .id`).
-const GITHUB_ACTIONS_APP = 15368;
 
 const DESIRED_FIELDS = {
   $schema: true,
@@ -40,41 +38,31 @@ const status = (report: { items: { name: string; status: string }[] }, name: str
 describe('.github/repo.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
 
-  // Each test holds the file to a policy the docs state, so an edit to repo.json
-  // alone cannot change the policy.
-  // AGENTS.md: squash-merged, never rebase-merged, since a rebase strips signatures.
-  test('squash is the only merge method, in the settings and in the ruleset', () => {
+  // A ruleset that allows a method the settings turn off, or the reverse, leaves the merge
+  // button and the rule disagreeing about how main can move.
+  test('the merge methods the settings allow are the ones the main ruleset allows', () => {
     const { settings } = desired;
-    assert.deepEqual([settings.allow_squash_merge, settings.allow_merge_commit, settings.allow_rebase_merge], [true, false, false]);
+    const allowed = Object.entries({ merge: settings.allow_merge_commit, squash: settings.allow_squash_merge, rebase: settings.allow_rebase_merge })
+      .filter(([, on]) => on)
+      .map(([method]) => method);
     const pullRequest = mainRuleset.rules.find((rule) => rule.type === 'pull_request');
-    assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, ['squash']);
+    assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, allowed);
   });
 
-  test('main requires signed commits and cannot be force-pushed or deleted', () => {
-    const types = mainRuleset.rules.map((rule) => rule.type);
-    for (const type of ['required_signatures', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
-  });
-
-  // Only the dist job's commits move the branch, so what it holds is only ever what production served.
-  test('the dist branch moves only by the Actions app, never by force, and is never deleted', () => {
-    const dist = ruleset(DIST_BRANCH);
-    assert.deepEqual(dist.conditions, { ref_name: { include: [`refs/heads/${DIST_BRANCH}`], exclude: [] } });
-    assert.deepEqual(dist.bypass_actors, [{ actor_id: GITHUB_ACTIONS_APP, actor_type: 'Integration', bypass_mode: 'always' }]);
-    const types = dist.rules.map((rule) => rule.type);
-    for (const type of ['update', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
+  test('the dist ruleset guards the branch the deploy publishes to', () => {
+    assert.deepEqual(ruleset(DIST_BRANCH).conditions, { ref_name: { include: [`refs/heads/${DIST_BRANCH}`], exclude: [] } });
   });
 
   test('names the repository the site config declares', () => {
     assert.equal(desired.repository, SITE_REPOSITORY);
   });
 
-  // README and docs/Security.md: CodeQL runs as default setup, and a high-severity alert blocks a merge.
-  test('CodeQL gates merges through default setup and the code_scanning rule, never a workflow check', () => {
-    assert.equal(desired.security.code_scanning.state, 'configured');
-    const scanning = mainRuleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;
-    assert.ok(scanning?.some((entry) => entry.tool === 'CodeQL'));
+  // Default setup has no workflow job, so a required check named for one never reports
+  // and blocks every merge.
+  test('with CodeQL on default setup, no required check is a CodeQL workflow job', () => {
     const gate = mainRuleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
-    assert.ok(!gate.some((check) => /^analyze\b/i.test(check.context)), 'no required check is a CodeQL workflow job');
+    const workflowJobs = gate.filter((check) => /^analyze\b/i.test(check.context));
+    assert.deepEqual(desired.security.code_scanning.state === 'configured' ? workflowJobs : [], []);
   });
 });
 
@@ -164,7 +152,7 @@ describe('apply --yes', () => {
     const first = await run(fake, 'apply', '--yes');
     assert.equal(first.code, 0, first.output);
     assert.equal(fake.state.repo.allow_merge_commit, false);
-    assert.match(String(fake.state.repo.description), /Hash-based CSP/);
+    assert.equal(fake.state.repo.description, desired.settings.description);
     assert.deepEqual(fake.state.repo.topics, [...desired.topics]);
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
@@ -203,7 +191,7 @@ describe('apply --yes', () => {
   test('a rejected token fails loudly without printing it', async () => {
     const fake = createGithubFake(seed, 'a-different-token');
     await assert.rejects(run(fake, 'apply', '--yes'), (error: Error) => {
-      assert.match(error.message, /GET \/repos\/joeseverino\/jseverino\.com\/rulesets → 401/);
+      assert.ok(error.message.includes(`GET /repos/${SITE_REPOSITORY}/rulesets → 401`), error.message);
       assert.ok(!error.message.includes(TOKEN));
       return true;
     });

@@ -25,7 +25,7 @@ function isWebKitIsolationNotice(message: ConsoleMessage): boolean {
   );
 }
 
-test('home page loads with hero heading', async ({ page }) => {
+test('the home page names Joe Severino in its title and its heading', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Joe Severino/);
   const heroHeading = page.getByRole('heading', { level: 1 }).first();
@@ -33,15 +33,19 @@ test('home page loads with hero heading', async ({ page }) => {
   await expect(heroHeading).toContainText(/Joe Severino/i);
 });
 
-test('primary navigation links resolve', async ({ page }) => {
+test('every primary navigation link opens a page that answers 200 and has a heading', async ({ page }) => {
   await page.goto('/');
-  const portfolioLink = page
-    .locator('.primary-nav')
-    .getByRole('link', { name: /portfolio/i })
-    .first();
-  await portfolioLink.click();
-  await expect(page).toHaveURL(/\/portfolio\/$/);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText(/portfolio/i);
+  const links = page.locator('.primary-nav').getByRole('link');
+  const hrefs = await links.evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute('href') ?? ''));
+  expect(hrefs).not.toHaveLength(0);
+  for (const [index, href] of hrefs.entries()) {
+    await page.goto('/');
+    const response = page.waitForResponse((answer) => answer.request().isNavigationRequest());
+    await links.nth(index).click();
+    expect((await response).status(), href).toBe(200);
+    await expect(page).toHaveURL(new RegExp(`${RegExp.escape(href)}$`));
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  }
 });
 
 test('writeup page renders article and prose body', async ({ page }) => {

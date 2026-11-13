@@ -165,10 +165,7 @@ describe('publishDist through the API', () => {
 
   test('a failed API call still removes the staging ref', async () => {
     const failing = (): Promise<Response> => Promise.resolve(new Response('{"message":"nope"}', { status: 500 }));
-    await assert.rejects(
-      publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: failing }),
-      /500/,
-    );
+    await assert.rejects(publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: failing }), /500/);
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');
   });
 });

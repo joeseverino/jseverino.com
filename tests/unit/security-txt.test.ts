@@ -1,31 +1,39 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { test } from 'node:test';
+import { after, type TestContext, test } from 'node:test';
 import { expiryProblem, SECURITY_FILE, verifySecuritySignature } from '../../bin/lib/security-txt.ts';
-import { tempDir } from './helpers/fs.ts';
+import { scratchDirs } from './helpers/fs.ts';
 
-test('signature verification ignores the personal keyring and rejects modified content', (t) => {
-  const directory = tempDir('signature-test-');
+const scratch = scratchDirs('signature-test-');
+after(scratch.cleanup);
+
+// GNUPGHOME points at a directory that must never appear, so a verification that
+// reads or writes the personal keyring fails the test.
+function isolatedKeyring(t: TestContext): string {
+  const home = path.join(scratch.make(), 'personal-keyring-must-not-be-created');
   const previous = process.env.GNUPGHOME;
-  process.env.GNUPGHOME = path.join(directory, 'personal-keyring-must-not-be-created');
+  process.env.GNUPGHOME = home;
   t.after(() => {
     if (previous === undefined) delete process.env.GNUPGHOME;
     else process.env.GNUPGHOME = previous;
-    fs.rmSync(directory, { recursive: true, force: true });
   });
+  return home;
+}
 
-  const tampered = path.join(directory, 'tampered.txt');
-  const original = fs.readFileSync(SECURITY_FILE, 'utf8');
-  fs.writeFileSync(tampered, original.replace('Contact:', 'Changed:'));
+test('a modified file fails verification against the committed key, without touching the personal keyring', (t) => {
+  const home = isolatedKeyring(t);
+  const tampered = path.join(scratch.make(), 'tampered.txt');
+  fs.writeFileSync(tampered, fs.readFileSync(SECURITY_FILE, 'utf8').replace('Contact:', 'Changed:'));
   const invalid = verifySecuritySignature(tampered);
   assert.notEqual(invalid.code, 0);
   assert.match(invalid.stdout, /\[GNUPG:\] BADSIG /);
-  assert.equal(fs.existsSync(process.env.GNUPGHOME), false);
+  assert.equal(fs.existsSync(home), false);
+});
 
-  const emptyKeys = path.join(directory, 'empty-keys');
-  fs.mkdirSync(emptyKeys);
-  assert.throws(() => verifySecuritySignature(SECURITY_FILE, emptyKeys), /No committed WKD public keys/);
+test('verification refuses to run without a committed WKD key', (t) => {
+  isolatedKeyring(t);
+  assert.throws(() => verifySecuritySignature(SECURITY_FILE, scratch.make()), /No committed WKD public keys/);
 });
 
 test('the gate fails from 60 days before Expires, so the scheduled run fails before the file lapses', () => {

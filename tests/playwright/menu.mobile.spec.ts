@@ -15,7 +15,7 @@ async function openMenu(page: Page) {
   return nav;
 }
 
-test('touch targets suppress title-only tap highlights', async ({ page, browserName }) => {
+test('the brand link and the card links draw no tap highlight', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not implement -webkit-tap-highlight-color.');
 
   await page.goto('/portfolio/');

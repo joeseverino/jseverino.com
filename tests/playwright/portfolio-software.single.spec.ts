@@ -101,7 +101,7 @@ test.describe('portfolio software tab', () => {
     await expect(copy).toHaveAttribute('data-copy', 'npm i sitedrift');
   });
 
-  test('renders the "More projects" compact list', async ({ page }) => {
+  test('the "More projects" list has an entry', async ({ page }) => {
     await page.goto('/portfolio/#software');
     const list = page.locator('[data-panel="software"] .software-list .sli');
     await expect(list).not.toHaveCount(0);

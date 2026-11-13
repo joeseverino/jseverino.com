@@ -17,7 +17,7 @@ test('a mistyped flag exits 2 before the script does any work', async () => {
   assert.equal(result.stdout, '');
 });
 
-test('positiveInt: a whole number at or above the floor, else undefined', () => {
+test('positiveInt reads a whole number at or above the floor, and anything else as undefined', () => {
   assert.equal(positiveInt('3'), 3);
   assert.equal(positiveInt('390', 200), 390);
   for (const value of ['0', '-1', '1.5', '', 'ten']) assert.equal(positiveInt(value), undefined, value);

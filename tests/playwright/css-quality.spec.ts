@@ -75,19 +75,23 @@ test('focus exposes the skip link', async ({ page }) => {
   await expect(skipLink).toHaveCSS('outline-style', 'solid');
 });
 
-test('brand tokens drive document chrome and interactive states', async ({ page }) => {
+// The browser toolbar takes the page background of each scheme, so it blends into the
+// page instead of staying brand navy in both.
+test('theme-color names the page surface of each scheme', async ({ page }) => {
   await page.goto('/portfolio/');
-
-  // Chrome tint tracks the page background per theme, not the brand navy, so the
-  // browser toolbar blends into the page instead of staying dark in both themes.
   await expect(page.locator('meta[name="theme-color"][data-scheme="light"]')).toHaveAttribute('content', new RegExp(SURFACE.light, 'i'));
   await expect(page.locator('meta[name="theme-color"][data-scheme="dark"]')).toHaveAttribute('content', new RegExp(SURFACE.dark, 'i'));
-  // The whole stylesheet, brand vars included, is inlined: first paint never
-  // waits on a stylesheet request.
+});
+
+// First paint never waits on a stylesheet request.
+test('the whole stylesheet is inlined in one style element', async ({ page }) => {
+  await page.goto('/portfolio/');
   await expect(page.locator('link[rel="stylesheet"]')).toHaveCount(0);
   await expect(page.locator('head style')).toHaveCount(1);
+});
 
-  // The shared brand emitter resolves the light palette explicitly.
+test('light brand paint resolves on the root, the card links and the source link', async ({ page }) => {
+  await page.goto('/portfolio/');
   await expectBrandVars(page, BRAND.navy, BRAND.navyDeep);
 
   const cardLink = page.locator('.project-card-title a').first();

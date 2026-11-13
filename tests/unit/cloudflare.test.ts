@@ -117,31 +117,41 @@ describe('check', () => {
     }
   });
 
-  test('the preview Access app takes Service Auth policies only; apply never touches Access', async () => {
+  describe('the preview Access app', () => {
     const policyItem = (policies: AccessPolicy[]) => previewItem([{ ...previewApp, policies }]);
     const ci = { name: 'ci', decision: 'non_identity', include: [{ service_token: { token_id: 'token-ci' } }] };
     const proxy = { name: 'proxy', decision: 'non_identity', include: [{ service_token: { token_id: 'token-proxy' } }] };
-    assert.equal((await policyItem([ci, proxy])).status, 'ok');
-    assert.equal((await policyItem([{ ...ci, include: [{ any_valid_service_token: {} }] }])).status, 'ok');
-    const { domain: _, ...byDestination } = previewApp;
-    assert.equal(
-      (await previewItem([{ ...byDestination, destinations: [{ uri: PREVIEW_HOSTS }], policies: [ci] }])).status,
-      'ok',
-      'an app naming the wildcard as a destination covers it',
-    );
 
-    const human = await policyItem([ci, { name: 'me', decision: 'allow', include: [{ email: { email: 'me@example.com' } }] }]);
-    assert.equal(human.status, 'manual');
-    assert.match(human.have, /me \(allow\)/);
-    assert.equal((await policyItem([{ ...ci, include: [{ service_token: {} }, { everyone: {} }] }])).status, 'manual', 'a token plus everyone admits everyone');
-    assert.equal((await policyItem([])).status, 'manual', 'no policy at all is not service auth');
+    test('is ok with service-token policies, named or any valid token', async () => {
+      assert.equal((await policyItem([ci, proxy])).status, 'ok');
+      assert.equal((await policyItem([{ ...ci, include: [{ any_valid_service_token: {} }] }])).status, 'ok');
+    });
 
-    const fake = createCloudflareFake(seed, TOKEN);
-    await run(fake, 'apply', '--yes');
-    assert.ok(
-      fake.writes().every((call) => !call.path.includes('/access/')),
-      'apply makes no Access call',
-    );
+    test('covers the wildcard by naming it as a destination', async () => {
+      const { domain: _, ...byDestination } = previewApp;
+      assert.equal((await previewItem([{ ...byDestination, destinations: [{ uri: PREVIEW_HOSTS }], policies: [ci] }])).status, 'ok');
+    });
+
+    test('is a manual item when a policy admits a person, everyone, or nothing is set', async () => {
+      const human = await policyItem([ci, { name: 'me', decision: 'allow', include: [{ email: { email: 'me@example.com' } }] }]);
+      assert.equal(human.status, 'manual');
+      assert.match(human.have, /me \(allow\)/);
+      assert.equal(
+        (await policyItem([{ ...ci, include: [{ service_token: {} }, { everyone: {} }] }])).status,
+        'manual',
+        'a token plus everyone admits everyone',
+      );
+      assert.equal((await policyItem([])).status, 'manual', 'no policy at all is not service auth');
+    });
+
+    test('is never written by apply', async () => {
+      const fake = createCloudflareFake(seed, TOKEN);
+      await run(fake, 'apply', '--yes');
+      assert.deepEqual(
+        fake.writes().filter((call) => call.path.includes('/access/')),
+        [],
+      );
+    });
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {

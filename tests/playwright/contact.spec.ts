@@ -15,13 +15,13 @@ async function submitExpecting(page: Page, kind: 'error' | 'success', text: stri
   return status;
 }
 
-test.describe('Contact Form Interactive Verification', () => {
+test.describe('contact form', () => {
   test.beforeEach(async ({ page }) => {
     await withoutTurnstile(page);
     await page.goto('/contact/');
   });
 
-  test('pending submissions are single-flight and network failure preserves the message', async ({ page }) => {
+  test('a submit while one is pending sends nothing, and a network failure keeps the message for a retry', async ({ page }) => {
     let requests = 0;
     let finish!: () => void;
     const pending = new Promise<void>((resolve) => {
@@ -56,23 +56,23 @@ test.describe('Contact Form Interactive Verification', () => {
     await expect(page.locator('#contact-message')).toHaveValue('Keep this message for retry.');
     expect(requests).toBe(1);
   });
-  test('validates required fields and shows HTML5 constraints', async ({ page }) => {
-    const submitButton = page.locator('.contact-submit');
-    const nameInput = page.locator('#contact-name');
-    const emailInput = page.locator('#contact-email');
-    const messageInput = page.locator('#contact-message');
 
-    await expect(nameInput).toHaveValue('');
-    await expect(emailInput).toHaveValue('');
-    await expect(messageInput).toHaveValue('');
-
-    await submitButton.click();
-
-    const isNameInvalid = await nameInput.evaluate((el: HTMLInputElement) => !el.checkValidity());
-    expect(isNameInvalid).toBe(true);
+  test('an empty form is held by the browser: each required field is missing and nothing is sent', async ({ page }) => {
+    let sent = false;
+    await page.route('/api/contact', (route) => {
+      sent = true;
+      return route.abort();
+    });
+    await page.getByRole('button', { name: 'Send Message' }).click();
+    for (const label of ['Name', 'Email', 'Message']) {
+      const field = page.getByLabel(label, { exact: true });
+      expect(await field.evaluate((element: HTMLInputElement) => element.validity.valueMissing), label).toBe(true);
+    }
+    await expect(page.getByLabel('Name', { exact: true })).toBeFocused();
+    expect(sent).toBe(false);
   });
 
-  test('shows turnstile error message if challenge is not completed', async ({ page }) => {
+  test('without a Turnstile token the form asks for the challenge, and typing clears the notice', async ({ page }) => {
     await fillContact(page, 'John Doe', 'john@example.com', 'Hello! This is a test message.');
 
     const status = await submitExpecting(page, 'error', 'Please complete the verification challenge');
@@ -81,7 +81,7 @@ test.describe('Contact Form Interactive Verification', () => {
     await expect(status).toBeHidden();
   });
 
-  test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
+  test('a verified submit posts the fields and the token, confirms, and clears the form', async ({ page }) => {
     await page.route('/api/contact', async (route) => {
       await route.fulfill({
         status: 200,

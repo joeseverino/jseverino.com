@@ -329,11 +329,9 @@ describe('site land', () => {
     );
     const calls = ghCalls();
     assert.equal(headPolls(), 3, 'polled until both required checks reported and passed');
-    const order = [
-      `api repos/${SITE_REPOSITORY}/rules/branches/main`,
-      'pr merge 7 --squash',
-      `api repos/${SITE_REPOSITORY}/commits/${mergeSha}`,
-    ].map((prefix) => calls.findIndex((call) => call.startsWith(prefix)));
+    const order = [`api repos/${SITE_REPOSITORY}/rules/branches/main`, 'pr merge 7 --squash', `api repos/${SITE_REPOSITORY}/commits/${mergeSha}`].map(
+      (prefix) => calls.findIndex((call) => call.startsWith(prefix)),
+    );
     assert.ok(
       order.every((index, i) => index >= 0 && (i === 0 || index > (order[i - 1] ?? -1))),
       calls.join('\n'),

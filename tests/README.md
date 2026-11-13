@@ -1,4 +1,4 @@
-# Tests & Validation
+# Tests and validation
 
 Every change passes four layers: Node audits that assert invariants about the
 source and the build, unit tests for the pure logic, Playwright specs that drive
@@ -91,6 +91,14 @@ merge:
 Functional failures screenshot the page at the moment of the failed assertion.
 The full baseline gallery and more diff/failure examples are in
 [ARCHITECTURE.md §5](./ARCHITECTURE.md#5-visual-regression).
+
+## Writing a test
+
+A test's name is the behavior it holds, written as a sentence: what is true,
+with no subject prefix and no "should". A `describe` groups tests only where a
+file holds more than one subject; it never wraps a whole file. Each behavior is
+tested once, and setup two files share lives in `unit/helpers/` or
+`playwright/helpers/`.
 
 ## Run it
 
