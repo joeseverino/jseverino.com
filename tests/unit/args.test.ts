@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { parse } from '../../bin/lib/args.ts';
+import { parse, positiveInt } from '../../bin/lib/args.ts';
 import { run } from '../../bin/lib/run.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
@@ -25,4 +25,11 @@ test('cli: a mistyped flag exits 2 before the script does any work', async () =>
   assert.equal(result.code, 2);
   assert.match(result.stderr, /Unknown option '--chek'/);
   assert.equal(result.stdout, '');
+});
+
+test('positiveInt: a whole number at or above the floor, else undefined', () => {
+  assert.equal(positiveInt('3'), 3);
+  assert.equal(positiveInt('390', 200), 390);
+  for (const value of ['0', '-1', '1.5', '', 'ten']) assert.equal(positiveInt(value), undefined, value);
+  assert.equal(positiveInt('199', 200), undefined);
 });

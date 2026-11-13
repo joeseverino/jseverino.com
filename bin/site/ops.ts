@@ -1,5 +1,6 @@
 // `site` commands over the live-site operations (bin/lib/site-ops.ts).
 
+import { positiveInt } from '../lib/args.ts';
 import { contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from '../lib/site-ops.ts';
 import { EXIT, type Output, SiteError, translate } from './cli.ts';
 import type { ContactResult, CspResult } from './types.ts';
@@ -11,8 +12,8 @@ const guard = <T>(work: () => Promise<T>): Promise<T> =>
 
 const limit = (value: string | undefined): number | undefined => {
   if (value === undefined) return undefined;
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 1) throw new SiteError('--limit must be a positive integer', { code: EXIT.usage });
+  const n = positiveInt(value);
+  if (n === undefined) throw new SiteError(`--limit must be a whole number, 1 or more, got ${value}`, { code: EXIT.usage });
   return n;
 };
 

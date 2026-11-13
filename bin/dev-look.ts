@@ -13,7 +13,7 @@ import { buildOutDir, workerConfig } from '../src/lib/build-output.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 import { fromCheckoutCache, fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
-import { cli, exitWith, flag } from './lib/args.ts';
+import { cli, exitWith, flag, positiveInt } from './lib/args.ts';
 import { mapLimit } from './lib/map-limit.ts';
 import { spawnResult } from './lib/run.ts';
 
@@ -205,8 +205,8 @@ async function look(): Promise<number> {
   });
   if (positionals.length === 0) throw new Error(`name a page or all\n\n${USAGE}`);
   const widths = list(values.widths, 'widths').map((width) => {
-    const number = Number(width);
-    if (!Number.isInteger(number) || number < 200) throw new Error(`--widths: ${width} is not a width in CSS pixels`);
+    const number = positiveInt(width, 200);
+    if (number === undefined) throw new Error(`--widths: ${width} is not a width in CSS pixels, 200 or more`);
     return number;
   });
   const schemes = list(values.schemes, 'schemes').map((scheme) => {

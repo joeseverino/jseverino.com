@@ -9,7 +9,7 @@ import type { ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
-import { flag, parse } from './lib/args.ts';
+import { flag, parse, positiveInt } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
 import { createOutput, EXIT, type Output, SiteError, terminalText } from './site/cli.ts';
 import { type CommandName, type CommandResults, PROTOCOL_VERSION, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
@@ -63,9 +63,9 @@ function setFields(values: Record<string, unknown>): Record<string, unknown> {
   return fields;
 }
 
-const minutes = (value: string, name: string): number => {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) throw new SiteError(`--${name} must be a positive number of minutes`, { code: EXIT.usage });
+const minutes = (value: string): number => {
+  const n = positiveInt(value);
+  if (n === undefined) throw new SiteError(`--timeout must be a whole number of minutes, got ${value}`, { code: EXIT.usage });
   return n * 60_000;
 };
 
@@ -133,7 +133,7 @@ const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ values, positionals: [pr], out }) =>
       (await import('./site/land.ts')).land({
         pr,
-        timeoutMs: minutes(values.timeout, 'timeout'),
+        timeoutMs: minutes(values.timeout),
         out,
       }),
   }),

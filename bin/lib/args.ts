@@ -27,6 +27,13 @@ export function parse<const O extends ParseArgsOptionsConfig = Record<never, nev
   });
 }
 
+// A whole-number option value of at least min, or undefined, so each caller words the error for
+// its own option and throws its own error type.
+export function positiveInt(value: string, min = 1): number | undefined {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= min ? n : undefined;
+}
+
 // parse() for an entry point: usage on --help, usage and exit 2 on bad input.
 export function cli<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
   usage,
