@@ -7,6 +7,13 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
 const linkedin = site.socialLinks.find((link) => link.icon === 'linkedin');
 if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socialLinks for its fallback link.');
+
+// The form posts JSON with a Turnstile token, so it cannot work without JavaScript: it ships
+// hidden, the script reveals it, and until then the LinkedIn line stands in. forms.css holds that
+// line back for three seconds when scripting is on, so a page whose module loads in time never
+// flashes it.
+// "company" is a honeypot. inert keeps it from people (no focus, nothing read aloud), a bot that
+// fills every input still fills it, and the API drops any submission that does.
 ---
 
 <div class="contact-intake">
@@ -59,6 +66,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       status.dataset.kind = kind;
     };
 
+    // An error stands only until the visitor changes the form.
     form.addEventListener('input', () => {
       if (status?.dataset.kind === 'error') {
         status.textContent = '';
@@ -71,6 +79,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       if (!button || button.disabled) return;
 
       const data = new FormData(form);
+      // Turnstile writes its token into the form; without one the API refuses the submission.
       const token = String(data.get('cf-turnstile-response') ?? '');
       if (!token) {
         show('Please complete the verification challenge, then try again.', 'error');
@@ -86,6 +95,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: AbortSignal.timeout(Number(form.dataset.timeoutMs)),
+          // The contract names the token turnstileToken, so the widget's own field stays out.
           body: JSON.stringify({
             ...Object.fromEntries(
               [...data.entries()].filter(([name]) => name !== 'cf-turnstile-response'),
@@ -113,9 +123,11 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
         button.disabled = false;
         form.removeAttribute('aria-busy');
         button.textContent = 'Send Message';
+        // A token verifies once, so a retry needs a fresh one.
         window.turnstile?.reset();
       }
     });
+    // Only a module that ran gets here, so the form can now stand in for the fallback.
     form.hidden = false;
     const fallback = document.querySelector<HTMLElement>('.contact-fallback');
     if (fallback) fallback.hidden = true;

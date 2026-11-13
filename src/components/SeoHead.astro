@@ -53,6 +53,7 @@ async function socialCard(source: ImageMetadata | string): Promise<{ src: string
 const card = await socialCard(image);
 const ogImage = new URL(card.src, site.url).href;
 const personImage = new URL('/assets/brand/joe-severino.jpg', site.url).href;
+// The default title already leads with the name.
 const fullTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
 
 const imageObject: JsonLdNode = { '@type': 'ImageObject', url: ogImage, ...card.size };
@@ -84,6 +85,7 @@ const breadcrumbList =
       }
     : undefined;
 
+// One @graph whose nodes point at each other by @id, so the Person is declared once per page.
 const primaryNode: JsonLdNode =
   type === 'article'
     ? {
@@ -176,4 +178,5 @@ const jsonLd = {
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {tags.map((tag) => <meta property="article:tag" content={tag} />)}
+{/* Escaping < keeps a "</script>" inside any string from closing the element early. */}
 <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />

@@ -38,8 +38,6 @@
     }
   }
 
-  /* Forced colors */
-
   @media (forced-colors: active) {
     /* biome-ignore-start lint/complexity/noImportantStyles: the system focus ring outranks every component's own outline. */
     :where(a, button, input, textarea, summary):focus {
@@ -71,8 +69,6 @@
       backdrop-filter: none;
     }
   }
-
-  /* Reduced motion */
 
   @media (prefers-reduced-motion: reduce) {
     /* biome-ignore-start lint/complexity/noImportantStyles: the reader's reduced-motion preference outranks every animation and transition. */

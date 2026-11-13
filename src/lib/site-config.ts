@@ -1,5 +1,4 @@
 // Instance identity, dependency-free so the site and bin/ scripts can both import it.
-// A new site from this blueprint changes these plus the residue in docs/Blueprint-Setup.md.
 export interface SiteIdentity {
   domain: string;
   owner: string;

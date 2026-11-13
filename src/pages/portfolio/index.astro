@@ -82,6 +82,8 @@ const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0
     const panelFor = (name: string) =>
       document.querySelector<HTMLElement>(`[data-panel="${name}"]`);
 
+    // The tab roles come from the script, not the markup: without it both panels render as plain
+    // sections and the tab bar stays hidden, and a tablist that switched nothing would mislead.
     root.setAttribute('role', 'tablist');
     root.setAttribute('aria-label', 'Portfolio sections');
     for (const tab of tabs) {
@@ -99,6 +101,8 @@ const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0
         const panel = panelFor(tab.dataset.tab ?? '');
         if (panel) panel.hidden = !on;
       });
+      // Only #software is written, so the default tab's URL stays bare, and replaceState keeps a
+      // tab switch out of the history.
       if (updateHash) {
         const url = new URL(window.location.href);
         url.hash = name === 'software' ? 'software' : '';
@@ -111,6 +115,8 @@ const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0
       if (tab) activate(tab.dataset.tab ?? '', true);
     });
 
+    // The ARIA tabs pattern with automatic activation: the arrows move and wrap, Home and End
+    // jump, and the tab moved to is selected.
     root.addEventListener('keydown', (event) => {
       const tab = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[role="tab"]') : null;
       if (!tab) return;
@@ -129,6 +135,7 @@ const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0
       activate(next.dataset.tab ?? '', true);
     });
 
+    // A link to #software, or Back to it, selects that tab.
     const syncFromUrl = () => activate(window.location.hash === '#software' ? 'software' : 'writeups', false);
     window.addEventListener('hashchange', syncFromUrl);
     syncFromUrl();

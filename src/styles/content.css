@@ -1,6 +1,4 @@
 @layer components {
-  /* Lists, tables, and terminal blocks in page and writeup bodies */
-
   .prose li + li,
   .content-flow li + li {
     margin-block-start: 0.35rem;
@@ -143,8 +141,6 @@
     }
   }
 
-  /* Home content (prose runs wrapped by HomeRun) */
-
   .home-content {
     container: home / inline-size;
 
@@ -156,8 +152,6 @@
       margin-block-start: var(--space-50);
     }
   }
-
-  /* Hero (:::hero block on the home page) */
 
   .hero {
     text-align: center;
@@ -241,8 +235,6 @@
     }
   }
 
-  /* Buttons + action rows */
-
   .actions {
     display: flex;
     flex-wrap: wrap;
@@ -322,8 +314,6 @@
       translate: -50% calc(var(--button-lift) * -1);
     }
   }
-
-  /* Project cards */
 
   .project-grid {
     display: grid;
@@ -449,8 +439,6 @@
     text-transform: uppercase;
   }
 
-  /* Split / 2-column */
-
   .split {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
@@ -471,8 +459,6 @@
       }
     }
   }
-
-  /* Figures / images / captions (shared across home, prose, content-flow) */
 
   figure {
     margin: 0;
@@ -502,8 +488,6 @@
     font-size: var(--font-ui);
     text-align: center;
   }
-
-  /* Tag pills (writeup tags + grouped tag cloud) */
 
   .tag-list {
     display: flex;
@@ -552,8 +536,6 @@
     display: grid;
     gap: 1.5rem;
   }
-
-  /* Writeup article */
 
   .article > * + * {
     margin-block-start: 2rem;
@@ -605,8 +587,6 @@
       margin-inline: 0 var(--space-10);
     }
   }
-
-  /* Prose (writeup body) */
 
   /* A run glued by no-break spaces around inline code can be wider than a phone's column; it breaks rather than
      scrolling the page sideways. */

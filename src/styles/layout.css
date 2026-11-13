@@ -39,7 +39,6 @@
     }
   }
 
-  /* Keyed off container width, not the viewport. 33.5rem is these containers' width at a 600px viewport. */
   .page-hero {
     container: hero / inline-size;
     max-inline-size: 760px;
@@ -126,6 +125,8 @@
     color: var(--color-primary-deep);
   }
 
+  /* The narrow layouts in this file key off container width, not the viewport: 33.5rem is these
+     containers' width at a 600px viewport. */
   @container hero (inline-size < 33.5rem) {
     .page-hero > * {
       text-align: start;
@@ -254,8 +255,6 @@
     justify-items: center;
     text-align: center;
   }
-
-  /* Site header */
 
   /* Scroll progress as a number so both paths set one value and colors compose in one place.
    A keyframe holding var() colors resolves once and keeps the stale pair after a theme switch. */

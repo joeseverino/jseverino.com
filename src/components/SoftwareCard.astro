@@ -71,6 +71,8 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 </li>
 
 <script>
+  // The copy buttons ship hidden and show only once this runs, since without it they do nothing.
+  // Each button's pending label reset, so a second click restarts the timer.
   const resets = new WeakMap<HTMLButtonElement, number>();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>('.software-copy')) button.hidden = false;
@@ -82,6 +84,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     try {
       await navigator.clipboard.writeText(button.dataset.copy ?? '');
     } catch {
+      // A denied clipboard leaves the label as it was; the command stays selectable.
       return;
     }
     const label = button.querySelector('.copy-label');
