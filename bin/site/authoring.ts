@@ -21,7 +21,9 @@ export async function newWriteup({ slug: requested, out }: { slug: string | unde
 
   const body = fs.readFileSync(template, 'utf8').replaceAll('{{date:YYYY-MM-DD}}', localDate()).replaceAll('{{title}}', slug);
   if (parseFrontmatter(body).data.published !== false) {
-    throw new SiteError(`the template does not start writeups at published: false: ${template}`);
+    throw new SiteError(`the template does not start writeups at published: false: ${template}`, {
+      fix: `set published: false in the frontmatter of ${template}`,
+    });
   }
   fs.mkdirSync(path.join(target, 'images'), { recursive: true });
   const file = path.join(target, 'index.md');

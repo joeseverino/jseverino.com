@@ -191,7 +191,12 @@ export async function land({
   const pr = await merged(root, requestedPr, { deadline, intervalMs, out });
 
   const sha = pr.mergeCommit?.oid;
-  if (!sha) throw new SiteError(`#${pr.number} has no merge commit`, { result: { pr: pr.url } });
+  if (!sha) {
+    throw new SiteError(`#${pr.number} is merged but GitHub reports no merge commit yet`, {
+      result: { pr: pr.url },
+      fix: `rerun site land ${pr.number}; a merged PR skips straight to the deploy wait`,
+    });
+  }
   await waitForDeploy(sha, deadline, intervalMs, out);
 
   git(root, 'fetch', '--quiet', 'origin', DEFAULT_BRANCH);
