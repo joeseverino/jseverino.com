@@ -106,7 +106,22 @@ the dashboard during an incident is never touched.
 | `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the route already 404s there; this stops it at the edge) |
 
-At most five custom rules, dashboard rules included. `cloudflare check` reports the total as `rule budget`.
+`cloudflare check` reports the custom rules in use, dashboard rules included,
+against the platform limit as `rule budget`.
+
+## API Shield
+
+[Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/)
+checks a request body against an OpenAPI 3 schema at the edge, before the
+Worker runs. `POST /api/contact` is bound to
+[`contracts/contact.openapi.json`](../contracts/contact.openapi.json)'s
+`ContactSubmission` schema, which `mise run sync:contact-openapi` derives from
+[`contracts/contact.v1.json`](../contracts/contact.v1.json); it refuses unknown
+properties (`additionalProperties: false`) and documents each response shape.
+`POST /api/csp-report` has no schema: browsers shape legacy CSP reports and
+Reporting API reports differently, so a schema would refuse real ones. The
+action is Block, the only one offered, so a non-compliant payload costs no
+Worker compute. The binding is declared as `schemaValidation` in `zone.json`.
 
 ## Features that stay off
 
