@@ -550,7 +550,11 @@ GitHub Actions provide the remote quality gate:
   `build` runs `mise run check`: the static gates, then the gates on the
   artifact `bin/build-static.ts` produces, then uploads that artifact as
   `site` for the `deploy` workflow, so what ships is the build that passed
-  every gate. `e2e` serves the build with `astro preview` and runs functional
+  every gate. Each phase writes mise's JSON report of its tasks
+  (mise's `--report-file`, under `GATE_REPORT_DIR`), and
+  [`bin/gate-summary.ts`](../bin/gate-summary.ts) turns them into the job
+  summary's table of every gate and its duration, an error annotation naming
+  each gate that failed, and the job's section of the PR comment. `e2e` serves the build with `astro preview` and runs functional
   checks across Chromium, Firefox, and WebKit on three workers, inside
   Playwright's image for the locked release, which carries the browsers and
   their system packages, so the job installs none. The `playwright` matrix:

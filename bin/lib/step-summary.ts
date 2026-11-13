@@ -59,7 +59,10 @@ export function appendSummary(markdown: string): boolean {
   return true;
 }
 
-// Rows for one gate's job-summary table: add() each step, write() once at the end.
+export const seconds = (ms: number): string => `${(ms / 1000).toFixed(1)}s`;
+
+// Rows for one gate's job-summary table: add() each step, then write() once at the end, or
+// markdown() for the text alone.
 interface ReportRow {
   label: string;
   ok: Outcome;
@@ -68,25 +71,24 @@ interface ReportRow {
 
 export function createReport(title: string, column = 'Step') {
   const rows: ReportRow[] = [];
+  const markdown = (intro: string): string =>
+    [
+      `## ${title}`,
+      '',
+      intro,
+      '',
+      table(
+        [column, 'Result', 'Detail'],
+        rows.map((row) => [`\`${row.label}\``, outcome(row.ok), row.detail]),
+      ),
+    ].join('\n');
   return {
     rows,
     add(label: string, ok: Outcome, detail: string): void {
       rows.push({ label, ok, detail });
     },
     failed: () => rows.filter((row) => row.ok === false),
-    write(intro: string): boolean {
-      return appendSummary(
-        [
-          `## ${title}`,
-          '',
-          intro,
-          '',
-          table(
-            [column, 'Result', 'Detail'],
-            rows.map((row) => [`\`${row.label}\``, outcome(row.ok), row.detail]),
-          ),
-        ].join('\n'),
-      );
-    },
+    markdown,
+    write: (intro: string): boolean => appendSummary(markdown(intro)),
   };
 }

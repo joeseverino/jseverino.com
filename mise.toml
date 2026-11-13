@@ -124,10 +124,12 @@ vale = { version = "3.27.0", lazy = true }
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.
 
+# Under GATE_REPORT_DIR (mise-tasks/check), each aggregate writes mise's report
+# of every gate it ran to <dir>/<aggregate>.json.
 [tasks.checks]
 description = "CI job build, first phase: every static gate, collect-all"
 alias = "fast"
-run = "mise run -c 'checks:*'"
+run = "mise run -c ${GATE_REPORT_DIR:+\"--report-file=$GATE_REPORT_DIR/checks.json\"} 'checks:*'"
 
 [tasks.build]
 description = "The build every deploy ships: astro build, then the CSP hashes"
@@ -136,7 +138,7 @@ run = "node bin/build-static.ts"
 
 [tasks.built]
 description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
-run = "mise run -c 'built:*'"
+run = "mise run -c ${GATE_REPORT_DIR:+\"--report-file=$GATE_REPORT_DIR/built.json\"} 'built:*'"
 
 [tasks."build:browser"]
 description = "The build the browser suites serve under PREBUILT: the deploy build, with the test site key"

@@ -11,7 +11,7 @@ import type { JSONReport, JSONReportSuite } from '@playwright/test/reporter';
 import { readJson } from '../src/lib/json.ts';
 import { siteRoot as root } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
-import { annotate, appendSummary, cell, status, table } from './lib/step-summary.ts';
+import { annotate, appendSummary, cell, seconds, status, table } from './lib/step-summary.ts';
 
 // Each suite writes its own report (tests/browser-test-env.ts), so the caller names it.
 const usage = 'usage: node bin/playwright-summary.ts <title> <report.json>';
@@ -43,10 +43,6 @@ function collect(suite: JSONReportSuite, out: TestRow[]): void {
     }
   }
   for (const child of suite.suites ?? []) collect(child, out);
-}
-
-function seconds(ms: number): string {
-  return `${(ms / 1000).toFixed(1)}s`;
 }
 
 // A count that fails the run stands out in its table cell.

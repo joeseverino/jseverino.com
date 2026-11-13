@@ -3,10 +3,14 @@
 #MISE timeout="30m"
 
 # Each phase reports every failure it finds. The built:* gates run only on a
-# build that succeeded, never on a stale or partial dist/.
+# build that succeeded, never on a stale or partial dist/. With
+# GATE_REPORT_DIR set (CI's build job), each phase writes mise's JSON report
+# of its tasks there; a report covers only its own run, so the aggregates
+# write theirs.
 status=0
+[ -z "${GATE_REPORT_DIR-}" ] || mkdir -p "$GATE_REPORT_DIR"
 mise run -c checks || status=1
-if mise run build; then
+if mise run ${GATE_REPORT_DIR:+"--report-file=$GATE_REPORT_DIR/build.json"} build; then
   mise run -c built || status=1
 else
   echo 'check: the build failed, so the built:* gates did not run' >&2

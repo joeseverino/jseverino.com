@@ -21,7 +21,7 @@ const USAGE = 'usage: node bin/pr-comment.ts [summaries]';
 export const MARKER = '<!-- ci-summary -->';
 
 // ci's summary artifacts (summary-<name>.md), in the order the comment shows them.
-const CI_SUMMARIES = ['e2e', 'visual', 'edge'];
+const CI_SUMMARIES = ['build', 'e2e', 'visual', 'edge'];
 
 export interface WorkflowRun {
   head_sha: string;
