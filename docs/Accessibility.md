@@ -62,7 +62,7 @@ The site renders in light or dark. Both come from one set of dual-valued tokens 
 
 Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against `prefers-color-scheme`.
 
-The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, not a light/dark pair, so an explicit choice can be released back to the OS. Details:
+The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, so an explicit choice can be released back to the OS. Details:
 
 - The control is a `role="group"` of three buttons, each carrying `aria-label` and `aria-pressed`. Segments are 28x24 CSS px, above the WCAG 2.2 target-size minimum (2.5.8).
 - An explicit choice sets `data-theme-mode` on `<html>`, whose `light` and `dark` values pin `color-scheme` in `tokens.css`, and persists to `localStorage`; auto clears the stored choice.

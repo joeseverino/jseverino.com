@@ -1,5 +1,6 @@
 # "Not X, but Y" sets up a reading nobody held in order to knock it down; say
-# what the thing is. A plain "X, but Y" concession is left alone.
+# what the thing is. ", not a Y, so" is the same move mid-sentence. A plain
+# "X, but Y" concession is left alone.
 extends: existence
 message: "'%s' contrasts with a reading nobody held; say what it is"
 level: error
@@ -8,3 +9,4 @@ scope: raw
 tokens:
   - '(?:^|[.:;!?#*/(]|--)\s*Not\b[^.;:\n]{1,60},\s*but\b'
   - '(?i)\bnot\s+(?:just|only|merely|simply)\b[^.;:]{1,80}?\bbut\b'
+  - '(?i),\s+not\s+(?:a|an|the)\s+[^,.;:\n]{1,40},\s+(?:so|because)\b'
