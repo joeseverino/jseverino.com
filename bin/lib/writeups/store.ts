@@ -158,9 +158,10 @@ export interface WriteupListing {
   writeups: WriteupSummary[];
 }
 
-export function listWriteups(store: WriteupStore, filter: WriteupFilter = 'all', writeups = loadWriteups(store)): WriteupListing {
+export function listWriteups(store: WriteupStore, filter: WriteupFilter = 'all'): WriteupListing {
   if (!WRITEUP_FILTERS.includes(filter)) throw new WriteupError('invalid', `unknown filter '${filter}'; expected one of ${WRITEUP_FILTERS.join(', ')}`);
-  let selected = [...writeups];
+  const writeups = loadWriteups(store);
+  let selected = writeups;
   if (filter === 'published') selected = selected.filter((w) => w.published);
   if (filter === 'draft') selected = selected.filter((w) => !w.published);
   if (filter === 'featured') selected = selected.filter((w) => w.featured).toSorted(byFeaturedOrder);

@@ -89,6 +89,8 @@ export function createReport(title: string, column = 'Step') {
     },
     failed: () => rows.filter((row) => row.ok === false),
     markdown,
-    write: (intro: string): boolean => appendSummary(markdown(intro)),
+    write(intro: string): void {
+      appendSummary(markdown(intro));
+    },
   };
 }
