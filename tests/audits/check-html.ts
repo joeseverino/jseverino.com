@@ -23,12 +23,12 @@ if (import.meta.main) {
 
   for (const { rel, html } of pages) {
     for (const name of directiveLeaks(html)) {
-      problems.push(`${rel}: unprocessed directive "::${name}" (a typo, or a directive this page's renderer does not support)`);
+      problems.push(`${rel}: ::${name}`);
     }
   }
 
   finish(problems, `${pages.length} pages: no unprocessed directives`, {
     heading: 'check-html: directives leaked into the built HTML:',
-    fix: "fix: correct the directive in the content at the reported page; a leaked directive is a typo or one the page's renderer does not support",
+    fix: "fix: each one is a typo or a directive the page's renderer does not support; correct it in the page's content",
   });
 }

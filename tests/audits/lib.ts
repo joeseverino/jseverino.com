@@ -5,17 +5,18 @@ import path from 'node:path';
 import { resolveBuiltDir } from '../../src/lib/build-output.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 
-export interface FinishOptions {
-  heading?: string;
+// A failing audit always says how to fix what it found, so `fix` is required.
+interface FinishOptions {
+  heading: string;
   bullet?: string;
-  fix?: string;
+  fix: string;
 }
 
-export function finish(problems: readonly string[], ok: string, { heading, bullet = '  ', fix }: FinishOptions = {}): void {
+export function finish(problems: readonly string[], ok: string, { heading, bullet = '  ', fix }: FinishOptions): void {
   if (problems.length > 0) {
-    if (heading) console.error(heading);
+    console.error(heading);
     for (const problem of problems) console.error(`${bullet}${problem}`);
-    if (fix) console.error(fix);
+    console.error(fix);
     process.exit(1);
   }
   console.log(`ok       ${ok}`);
