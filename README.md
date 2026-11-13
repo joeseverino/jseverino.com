@@ -1,12 +1,22 @@
-# jseverino.com
-
-[![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/joeseverino/jseverino.com/badge)](https://scorecard.dev/viewer/?uri=github.com/joeseverino/jseverino.com)
+# [jseverino.com](https://jseverino.com)
 
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
 
-![The Obsidian vault on the Mac syncs through a pull request into the GitHub repository. GitHub Actions builds and gates it, deploys it as a Cloudflare Worker, and commits the shipped site to the dist branch](./docs/diagrams/system-shape.png)
+[![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/joeseverino/jseverino.com/badge)](https://scorecard.dev/viewer/?uri=github.com/joeseverino/jseverino.com)
+
+## Working on it
+
+```sh
+mise install             # the pinned tools
+mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
+mise run check           # the gate: every static check, the build, every check on the build
+mise run ci              # check, then the browser suites: everything CI runs
+mise run site --help     # scaffold, validate, publish, and verify writeups
+```
+
+![The vault and content sync on the Mac, a pull request into the GitHub repository, and Actions publishing the dist branch and the Cloudflare Worker](./docs/diagrams/system-shape.png)
 
 <sup>Diagram source: [`docs/diagrams/system-shape.fig`](./docs/diagrams/system-shape.fig),
 pre-rendered with [`brand figure`](https://github.com/joeseverino/branding-engine).</sup>
@@ -29,7 +39,7 @@ then deploys the gated build.
 | Zone | WAF, rate limiting, API Shield schema validation, and Turnstile hostnames declared in [`cloudflare/zone.json`](./cloudflare/zone.json) and applied by `mise run cloudflare apply` |
 | Previews | Worker versions on workers.dev behind Cloudflare Access, reviewed with [sitedrift](https://github.com/joeseverino/sitedrift) |
 | Brand | Icons and social cards rendered by [branding-engine](https://github.com/joeseverino/branding-engine) |
-| Tests | Node's test runner, Playwright on Chromium, Firefox, and WebKit, the Workers runtime through `astro preview`, source and build audits, and gates for source rules and complexity (Biome with GritQL), dead code (knip), and prose (Vale) |
+| Tests | Node's test runner, Playwright on three browser engines, and the [gates](./docs/Development.md#gates) |
 
 ## Security
 
@@ -51,7 +61,7 @@ The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
 ## Performance
 
 PageSpeed Insights scored the homepage 100 in every category on desktop and
-99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces them: every
+99 / 100 / 100 / 100 on mobile. The build enforces them: every
 page has a weight budget for HTML, CSS, and JavaScript, every shipped image one
 of its own, images ship as AVIF with fixed dimensions, and a weekly
 Lighthouse run on desktop and mobile fails on any score below its floor in
@@ -71,7 +81,7 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 ```
 
 - [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
-  A+, 145 / 100, 12 of 12 tests on 2026-10-03.
+  A+, 145 / 100, 12 of 12 tests.
 - The [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/joeseverino/jseverino.com)
   score is published from a weekly run; Scorecard and CodeQL's default setup
   send their findings to code scanning, and a pull request cannot merge past a
@@ -80,8 +90,19 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
   squash-merged pull request.
 - Each release carries the exact build production served and its CycloneDX
   SBOM, with the Sigstore attestations the deploy issued: `gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com`.
+- The [`dist` branch](./docs/Dist-Branch.md) holds the pages production serves,
+  one commit per deploy, each naming the attested archive it came from.
 - [`docs/Security.md`](./docs/Security.md#external-verification) records each
   scanner result with its date and what was reviewed.
+
+## Publishing
+
+Content ships through the repo's own `site` CLI. `site publish` opens a pull
+request from a clean worktree, and `site land` merges it once the checks pass,
+then verifies the deploy live. `site manage` shows every writeup's order, state,
+and gate issues on one screen.
+
+![site manage: status dashboard with the dev server running, content counts, and the action list](./docs/images/site-cli/manage-site-tab-dev-running.png)
 
 ## Repository
 
@@ -95,23 +116,6 @@ mise-tasks/   the gates and build steps each mise task runs
 tests/        unit, audit, Playwright, and edge suites, and their configs
 docs/         architecture, operations, and guides
 ```
-
-## Working on it
-
-```sh
-mise install             # the pinned tools
-mise run dev             # local site (each task first installs the npm packages when the lockfile moved)
-mise run check           # the gate: every static check, the build, every check on the build
-mise run ci              # check, then the browser suites: everything CI runs
-mise run site --help     # scaffold, validate, publish, and verify writeups
-```
-
-Content ships through the repo's own `site` CLI. `site publish` opens a pull
-request from a clean worktree, and `site land` merges it once the checks pass,
-then verifies the deploy live. `site manage` shows every writeup's order, state,
-and gate issues on one screen.
-
-![site manage: status dashboard with the dev server running, content counts, and the action list](./docs/images/site-cli/manage-site-tab-dev-running.png)
 
 ## Documentation
 
@@ -128,9 +132,9 @@ and gate issues on one screen.
 | [Authoring Guide](./docs/Authoring-Guide.md) | the Markdown extensions |
 | [Deployment Preview Review](./docs/Deployment-Preview-Review.md) | sitedrift on preview deployments |
 | [SEO](./docs/SEO.md) · [Accessibility](./docs/Accessibility.md) | metadata, structured data, and accessibility |
-| [Brand System](./docs/Brand-System.md) | one navy identity, rendered by a shared engine |
+| [Brand System](./docs/Brand-System.md) | the brand tokens, how the site renders them, and embedding the styles |
 | [Commands](./docs/Commands.md) | every mise task |
-| [Release Checklist](./docs/Release-Checklist.md) | releasing and verifying a deploy |
+| [Release Checklist](./docs/Release-Checklist.md) | the release steps no gate covers |
 | [Dependencies](./docs/Dependencies.md) | runtime pins, deliberate version holds, and reviewing an update |
 | [Blueprint Setup](./docs/Blueprint-Setup.md) | every instance-specific value, for reuse |
 | [WordPress to Astro](./docs/WordPress-To-Astro-Migration.md) | why the site left WordPress, with measurements |
