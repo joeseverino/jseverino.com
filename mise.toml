@@ -33,7 +33,7 @@
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.10.18"
+min_version = "2026.11.2"
 
 [settings]
 # For [deps], mise's package installer.
@@ -106,17 +106,17 @@ depends = ["packages"]
 # backend lists its commands in lazy_bins, which mise makes into the shims
 # that install it.
 [tools]
-node = "26.13.0"
+node = "26.13.1"
 "aqua:lycheeverse/lychee" = "0.24.2"
 "aqua:biomejs/biome" = "2.6.4"
 
 [tools."aqua:zizmorcore/zizmor"]
-version = "1.31.1"
+version = "1.32.0"
 lazy = true
 lazy_bins = ["zizmor"]
 
 [tools."github:jdx/jactionlint"]
-version = "2.4.0"
+version = "v2.5.0"
 lazy = true
 lazy_bins = ["jactionlint"]
 
@@ -128,12 +128,12 @@ lazy_bins = ["shellcheck"]
 
 # make:font's uvx.
 [tools."aqua:astral-sh/uv"]
-version = "0.13.6"
+version = "0.13.7"
 lazy = true
 lazy_bins = ["uv", "uvx"]
 
 [tools."aqua:vale-cli/vale"]
-version = "3.25.1"
+version = "3.26.0"
 lazy = true
 lazy_bins = ["vale"]
 
