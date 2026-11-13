@@ -80,7 +80,6 @@
     letter-spacing: -0.01em;
     line-height: 1.3;
     color: var(--color-text);
-    text-decoration: none;
 
     &[aria-current='page'] {
       font-weight: 600;
@@ -93,7 +92,6 @@
     &:hover,
     &:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
 
     &:active {

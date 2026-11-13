@@ -322,7 +322,6 @@
     &:focus-visible,
     &[aria-current='page'] {
       color: var(--color-primary);
-      text-decoration: none;
 
       &::after {
         scale: 1;

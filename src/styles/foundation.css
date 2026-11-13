@@ -35,12 +35,6 @@
     transition: color var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
-  a:hover,
-  a:focus-visible {
-    text-decoration: underline;
-    text-decoration-style: dashed;
-  }
-
   button,
   input,
   textarea,

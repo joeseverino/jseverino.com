@@ -47,12 +47,9 @@
       margin-block-start: 10px;
     }
 
-    & :is(.resume-org, .resume-cert, .resume-projmeta) a {
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
+    /* A row's link carries no underline until pointed at; the prose rule draws it then. */
+    & :is(.resume-org, .resume-cert, .resume-projmeta) a:not(:hover, :focus-visible) {
+      text-decoration-line: none;
     }
 
     & .resume-cert {

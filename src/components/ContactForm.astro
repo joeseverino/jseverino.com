@@ -36,8 +36,8 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       <input id="contact-company" name="company" autocomplete="off" />
     </div>
     <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction}></div>
-    <p class="contact-privacy">
-      Messages are stored in a private database. See <a href="/privacy/" class="privacy-link">Privacy</a> for details and data requests.
+    <p class="contact-privacy prose">
+      Messages are stored in a private database. See <a href="/privacy/">Privacy</a> for details and data requests.
     </p>
     <button type="submit" class="button contact-submit">Send Message</button>
     <output class="contact-status"></output>

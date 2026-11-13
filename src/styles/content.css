@@ -275,7 +275,6 @@
     &:focus-visible {
       translate: 0 calc(var(--button-lift) * -1);
       background: var(--color-primary-deep);
-      text-decoration: none;
     }
 
     &.secondary {
@@ -399,7 +398,6 @@
       &:hover,
       &:focus-visible {
         color: var(--color-primary);
-        text-decoration: none;
       }
 
       /* The whole card is the link: the target covers the border, and reaches down by the lift
@@ -521,7 +519,6 @@
       border-color: color-mix(in oklch, var(--color-primary) 40%, var(--color-border-faint));
       background: var(--color-fill-faint-strong);
       color: var(--color-primary);
-      text-decoration: none;
     }
 
     &:active {
@@ -638,8 +635,14 @@
       font-size: var(--font-prose-md);
     }
 
+    /* Links in running text: underlined, dashed while pointed at or focused. */
     & a:not(.button) {
-      text-decoration: underline;
+      text-decoration-line: underline;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration-style: dashed;
+      }
     }
 
     & img {

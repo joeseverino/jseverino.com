@@ -175,11 +175,6 @@
     text-underline-offset: 0.25ch;
     transition: color var(--motion-duration-fast) var(--motion-ease-standard);
   }
-  a:hover,
-  a:focus-visible {
-    text-decoration: underline;
-    text-decoration-style: dashed;
-  }
   button,
   input,
   textarea,
@@ -558,7 +553,6 @@
     &:focus-visible,
     &[aria-current=page] {
       color: var(--color-primary);
-      text-decoration: none;
       &::after {
         scale: 1;
       }
@@ -861,7 +855,6 @@
     &:focus-visible {
       translate: 0 calc(var(--button-lift) * -1);
       background: var(--color-primary-deep);
-      text-decoration: none;
     }
     &.secondary {
       --button-border: 2px;
@@ -964,7 +957,6 @@
       &:hover,
       &:focus-visible {
         color: var(--color-primary);
-        text-decoration: none;
       }
       &::before {
         content: "";
@@ -1065,7 +1057,6 @@
       border-color: color-mix(in oklch, var(--color-primary) 40%, var(--color-border-faint));
       background: var(--color-fill-faint-strong);
       color: var(--color-primary);
-      text-decoration: none;
     }
     &:active {
       background: var(--color-border-faint);
@@ -1160,7 +1151,11 @@
       font-size: var(--font-prose-md);
     }
     & a:not(.button) {
-      text-decoration: underline;
+      text-decoration-line: underline;
+      &:hover,
+      &:focus-visible {
+        text-decoration-style: dashed;
+      }
     }
     & img {
       display: block;
@@ -1196,12 +1191,10 @@
     font-size: var(--font-ui);
     font-weight: 700;
     color: var(--color-primary);
-    text-decoration: none;
     letter-spacing: 0.04em;
     &:hover,
     &:focus-visible {
       color: var(--color-primary-deep);
-      text-decoration: none;
     }
     &:active {
       color: var(--color-primary);
@@ -1268,7 +1261,6 @@
       &:hover,
       &:focus-visible {
         color: var(--color-primary-deep);
-        text-decoration: none;
       }
       &:active {
         color: var(--color-primary);
@@ -1355,7 +1347,6 @@
     letter-spacing: -0.01em;
     line-height: 1.3;
     color: var(--color-text);
-    text-decoration: none;
     &[aria-current=page] {
       font-weight: 600;
       text-decoration: underline;
@@ -1366,7 +1357,6 @@
     &:hover,
     &:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
     &:active {
       color: var(--color-primary-deep);
@@ -1521,7 +1511,6 @@
       translate: 0 0;
       outline: 2px solid var(--color-bg);
       outline-offset: -2px;
-      text-decoration: none;
     }
   }
   @media (forced-colors: active) {
