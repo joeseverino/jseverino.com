@@ -131,7 +131,7 @@ export function loadWriteups(store: WriteupStore): Writeup[] {
 export const byFeaturedOrder = (a: WriteupSummary, b: WriteupSummary): number =>
   (a.featured_order ?? 1e9) - (b.featured_order ?? 1e9) || a.slug.localeCompare(b.slug);
 
-const entry = (writeup: Writeup, slot: number | null): OrderEntry => ({
+const orderEntry = (writeup: Writeup, slot: number | null): OrderEntry => ({
   slot,
   slug: writeup.slug,
   title: writeup.title,
@@ -144,7 +144,7 @@ export function featuredOrder(writeups: readonly Writeup[]): OrderEntry[] {
   return writeups
     .filter((w) => w.published && w.featured)
     .toSorted(byFeaturedOrder)
-    .map((w, index) => entry(w, index + 1));
+    .map((w, index) => orderEntry(w, index + 1));
 }
 
 export const WRITEUP_FILTERS = ['all', 'published', 'draft', 'featured'] as const;
@@ -168,7 +168,7 @@ export function listWriteups(store: WriteupStore, filter: WriteupFilter = 'all')
   return {
     filter,
     count: selected.length,
-    order: selected.map((w, index) => entry(w, index + 1)),
+    order: selected.map((w, index) => orderEntry(w, index + 1)),
     featuredOrder: featuredOrder(writeups),
     writeups: selected.map(summary),
   };
@@ -238,7 +238,6 @@ export interface PublishReadiness {
   tagUsage?: Record<string, { totalWriteups: number; publishedWriteups: number }>;
 }
 
-// The writeup with this slug, or a not_found error.
 function findWriteup(writeups: readonly Writeup[], slug: string): Writeup {
   const writeup = writeups.find((candidate) => candidate.slug === slug);
   if (!writeup) throw new WriteupError('not_found', `writeup not found: ${slug}`);
@@ -490,7 +489,7 @@ const isHttpUrl = (href: string): boolean => {
   }
 };
 
-// Replace exactly one `[label](href)` in a writeup body; not a general editor.
+// Replace the one `[label](href)` in a writeup body whose label and href match.
 export function updateLink(store: WriteupStore, slug: string, label: string, expectedHref: string, replacementHref: string): LinkResult {
   const writeup = findWriteup(loadWriteups(store), slug);
   if (!label.trim()) throw new WriteupError('invalid', 'link label required');

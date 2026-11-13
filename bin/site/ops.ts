@@ -5,8 +5,11 @@ import { contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig 
 import { EXIT, type Output, SiteError, translate } from './cli.ts';
 import type { ContactResult, CspResult } from './types.ts';
 
+// Every command here reads D1 through Cloudflare's API, so a failure names the token and account
+// that read takes.
 const D1_READ_FIX = 'set CLOUDFLARE_API_TOKEN (Account · D1 · Read) and CLOUDFLARE_ACCOUNT_ID through op run';
 
+// A SiteOpsError becomes the CLI's failure, with the result it carries and that fix.
 const guard = <T>(work: () => Promise<T>): Promise<T> =>
   translate(work, SiteOpsError, (error) => new SiteError(error.message, { code: EXIT.failed, result: error.details, fix: D1_READ_FIX }));
 

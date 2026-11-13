@@ -247,7 +247,7 @@ const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ out }) => (await writeupOps()).contract({ out }),
   }),
   render: define({
-    summary: 'One writeup body rendered exactly as the build renders it',
+    summary: 'One writeup body rendered as the build renders it',
     usage: 'site render <slug|-> [--document]',
     help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. html is the body the build ships. --document adds document: a self-contained page with the site article layout and styles inlined, for previews (the Obsidian plugin, HQ). Asset paths stay vault-relative.',
     positionals: [1, 1],

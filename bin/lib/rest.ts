@@ -1,7 +1,7 @@
 // The REST core the bin/ scripts' API clients (Cloudflare, GitHub) share: a bearer token, JSON
 // bodies, and an error that names the call by a label the provider chooses, so a token or a
 // resolved id never reaches output. Every request times out, so an API that stops answering
-// fails the run with the call named instead of holding a CI job until its own limit.
+// fails the run with the call named, before the CI job reaches its own limit.
 
 // What the clients need from fetch: a URL string and an init.
 export type Fetch = (url: string, init: RequestInit) => Promise<Response>;

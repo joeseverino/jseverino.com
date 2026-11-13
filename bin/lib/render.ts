@@ -1,6 +1,6 @@
 // The build's markdown render as a library call: Sätteri with the site's
-// plugins, so previews (the Obsidian plugin, HQ) and tests see exactly what
-// the build ships.
+// plugins, so previews (the Obsidian plugin, HQ) and tests see what the
+// build ships.
 import { pathToFileURL } from 'node:url';
 import { markdownToHtml } from 'satteri';
 import { processorOptions } from '../../src/lib/markdown/index.ts';

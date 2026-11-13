@@ -141,7 +141,6 @@ interface PublishOptions {
   gate?: (context: GateContext) => Promise<void>;
 }
 
-// out: a createOutput(); sync/gate are injectable for tests.
 export async function publish({
   root = siteRoot,
   from,

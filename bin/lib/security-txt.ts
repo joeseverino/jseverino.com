@@ -1,11 +1,11 @@
+// The security.txt file, its signing key and its RFC 9116 rules, in one place so the signer
+// (bin/sign-security.ts) and the verifier (tests/audits/check-security-txt.ts) cannot disagree.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { SITE, SITE_ORIGIN } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { type SpawnOptions, type SpawnResult, spawnResult } from './run.ts';
-
-// Shared by the security.txt signer (bin/sign-security.ts) and verifier (tests/audits/check-security-txt.ts).
 
 export const SECURITY_FILE = path.join(siteRoot, 'public/.well-known/security.txt');
 export const WKD_DIR = path.join(siteRoot, 'public/.well-known/openpgpkey/hu');

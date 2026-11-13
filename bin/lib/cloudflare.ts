@@ -271,7 +271,7 @@ function botManagementItem(desired: DesiredState, live: LiveState): Item {
   );
 }
 
-// Dashboard rules count against the limit, so the total is checked, not just this file's share.
+// Dashboard rules count against the limit, so the check is on the phase's total.
 function firewallBudgetItem(desired: DesiredState, live: LiveState): Item {
   const others = (live.firewall?.rules ?? []).filter((rule) => !isOwned(desired, rule)).length;
   const total = others + desired.firewall.length;
