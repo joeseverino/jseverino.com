@@ -1,7 +1,5 @@
 // Turn Playwright's JSON report into a per-project job-summary table. Runs with
 // `if: always()` and exits zero: the test step decides the job's outcome.
-//
-//   node bin/playwright-summary.ts "Cross-browser suite" .cache/test-results/e2e.json
 
 import fs from 'node:fs';
 import path from 'node:path';

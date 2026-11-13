@@ -2,8 +2,6 @@
 // phase in GATE_REPORT_DIR (mise-tasks/check), into one job-summary table and an error
 // annotation per failed task. Runs with `if: always()` and exits zero on any report it can read:
 // the gate step decides the job's outcome.
-//
-//   node bin/gate-summary.ts
 
 import fs from 'node:fs';
 import path from 'node:path';

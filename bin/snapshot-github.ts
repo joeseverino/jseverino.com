@@ -1,9 +1,5 @@
 // Refresh src/data/github-repos.json, the only source src/lib/github.ts reads
 // (builds never call GitHub). Commit the result.
-//
-//   mise run snapshot:github
-//
-// The token comes from GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`.
 
 import type { GithubRepo } from '../src/lib/github.ts';
 import { writeJson } from '../src/lib/json.ts';
@@ -12,7 +8,7 @@ import { fromRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
 import { createClient, resolveToken } from './lib/github.ts';
 
-cli({ usage: 'usage: node bin/snapshot-github.ts' });
+cli({ usage: 'usage: node bin/snapshot-github.ts\n\nThe token comes from GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`.' });
 const OUTPUT = 'src/data/github-repos.json';
 
 // The REST fields the snapshot keeps. This endpoint lists public repositories only.

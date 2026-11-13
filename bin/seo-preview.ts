@@ -1,6 +1,4 @@
 // Prints the Google-style result, metadata, and SEO checks for one built page.
-//
-//   node bin/seo-preview.ts [--result] <url|path|slug>
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,7 +13,7 @@ import { routeFile } from './lib/routes.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;
-const USAGE = `usage: node bin/seo-preview.ts <url|path|slug>
+const USAGE = `usage: node bin/seo-preview.ts [--result] <url|path|slug>
 
 Examples:
   node bin/seo-preview.ts ${SITE.domain}

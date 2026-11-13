@@ -2,8 +2,6 @@
 // states, ci's job summaries and the preview's, for the workflow_run event the preview
 // workflow's report job runs on. See .github/workflows/preview.yml.
 //
-//   node bin/pr-comment.ts [summaries]
-//
 // GitHub Actions supplies the event (GITHUB_EVENT_PATH), GITHUB_REPOSITORY and the token
 // (GITHUB_TOKEN); PREVIEW is the preview job's result.
 

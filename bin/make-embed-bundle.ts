@@ -3,9 +3,6 @@
 //   public/embed/bundle.css  =  base.css (which imports the brand vars), its Inter inlined as base64
 //
 // Served at https://jseverino.com/embed/bundle.css for the vault theme and Obsidian.
-//
-//   node bin/make-embed-bundle.ts           # (re)write public/embed/bundle.css
-//   node bin/make-embed-bundle.ts --check   # fail if the committed copy is stale
 
 import { buildSync } from 'esbuild';
 import { fromRoot, siteRoot } from '../src/lib/site-root.ts';

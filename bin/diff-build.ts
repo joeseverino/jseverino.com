@@ -1,8 +1,5 @@
 // Build a baseline ref (in a detached worktree, no stash) and the working tree, then
 // report which built files differ. Known varying tokens are normalized.
-//
-// Usage:
-//   node bin/diff-build.ts [baseline-ref]   # default baseline: HEAD
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,7 +9,10 @@ import { siteRoot } from '../src/lib/site-root.ts';
 import { cli } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 
-const [baselineRef = 'HEAD'] = cli({ usage: 'usage: node bin/diff-build.ts [baseline-ref]', allowPositionals: true }).positionals;
+const [baselineRef = 'HEAD'] = cli({
+  usage: 'usage: node bin/diff-build.ts [baseline-ref]\n\n  baseline-ref  The ref to build and compare against (default: HEAD).',
+  allowPositionals: true,
+}).positionals;
 const TEXT_EXT = /\.(html|xml|txt|json|css|js)$/;
 
 function run(command: string, args: readonly string[], cwd: string, extraEnv: NodeJS.ProcessEnv = {}): void {

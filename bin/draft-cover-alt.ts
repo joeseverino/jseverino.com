@@ -1,11 +1,4 @@
 // Draft a one-sentence cover_alt for a writeup's cover image with Claude's API.
-//
-// Usage:
-//   node bin/draft-cover-alt.ts <slug>
-//   node bin/draft-cover-alt.ts <slug> --apply        # write cover_alt to the writeup
-//   node bin/draft-cover-alt.ts --all                 # draft for every published writeup missing alt
-//
-// Requires ANTHROPIC_API_KEY in the environment.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +10,13 @@ import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
 const vaultRoot = vaultRootFor();
 const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);
 
-const usage = 'usage: node bin/draft-cover-alt.ts <slug> [--apply]\n   or: node bin/draft-cover-alt.ts --all [--apply]';
+const usage = `usage: node bin/draft-cover-alt.ts <slug> [--apply]
+   or: node bin/draft-cover-alt.ts --all [--apply]
+
+Prints the draft. Reads ANTHROPIC_API_KEY, and CLAUDE_MODEL when set.
+
+  --all    Draft for every published writeup with no cover_alt.
+  --apply  Write the draft to the writeup's cover_alt.`;
 const { values, positionals } = cli({
   usage,
   options: { all: flag, apply: flag },

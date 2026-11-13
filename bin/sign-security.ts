@@ -1,6 +1,4 @@
 // Clear-signs public/.well-known/security.txt with the security contact's GPG key.
-//
-//   node bin/sign-security.ts
 
 import fs from 'node:fs';
 import path from 'node:path';
