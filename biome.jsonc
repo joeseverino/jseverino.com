@@ -84,6 +84,21 @@
       "formatter": { "enabled": false },
       "assist": { "enabled": false },
       "linter": { "rules": { "preset": "none", "suspicious": { "noExplicitAny": "error", "noTsIgnore": "error" } } }
+    },
+    {
+      // Every browser spec takes test and expect from the harness module, so a fixture it
+      // adds reaches every suite.
+      "includes": ["tests/playwright/**", "tests/edge/**", "!tests/playwright/helpers/test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "paths": { "@playwright/test": "Import test and expect from tests/playwright/helpers/test.ts." } }
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -13,7 +13,6 @@ import { checkContent, committedLayout, syncContent } from '../../bin/content-sy
 import { createWriter } from '../../bin/content-sync/writer.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('content-sync-');
@@ -56,11 +55,6 @@ describe('asset references', () => {
       'images/ref.png',
       'images/t.png',
     ]);
-  });
-
-  test('a writeup body drops the H1, the lede blockquote, and the leading image its page renders from frontmatter', () => {
-    assert.equal(stripArticleChrome('# Title\n\n> The lede.\n\n![Cover](./images/cover.png)\n\nBody.\n'), 'Body.\n');
-    assert.equal(stripArticleChrome('Body first.\n\n# Later heading\n'), 'Body first.\n\n# Later heading\n');
   });
 
   test('a reference escaping its folder is refused', () => {

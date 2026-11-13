@@ -100,6 +100,12 @@ file holds more than one subject; it never wraps a whole file. Each behavior is
 tested once, and setup two files share lives in `unit/helpers/` or
 `playwright/helpers/`.
 
+A test that holds one repository file to a rule (a workflow's permissions,
+`repo.json`, the mise config) lives in `unit/` beside the logic tests: it reads
+files and needs no build or browser, so `checks:unit` runs it in the fast gate.
+An audit in `audits/` is its own gate, for a rule over every file or over the
+build, and prints the fix for each failure.
+
 ## Run it
 
 ```sh
