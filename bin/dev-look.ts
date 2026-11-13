@@ -141,12 +141,13 @@ async function waitForServer(origin: string, server: ChildProcess, log: () => st
 const settle = (page: Page) =>
   page.evaluate(async () => {
     for (const image of document.querySelectorAll('img[loading="lazy"]')) (image as HTMLImageElement).loading = 'eager';
-    // Through the page once, for whatever loads or reveals on scroll.
+    // Through the page once, for whatever loads or reveals on scroll. Each scroll is instant,
+    // since the site's smooth scroll-behavior would still be moving the page at the shot.
     for (let y = 0; y < document.documentElement.scrollHeight; y += window.innerHeight) {
-      window.scrollTo(0, y);
+      window.scrollTo({ top: y, behavior: 'instant' });
       await new Promise(requestAnimationFrame);
     }
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     await document.fonts.ready;
     await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
   });
