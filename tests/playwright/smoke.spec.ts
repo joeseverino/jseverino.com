@@ -5,12 +5,24 @@ const turnstileFeaturePolicyWarnings = new Set(['autoplay', 'cross-origin-isolat
 
 function isKnownTurnstileWarning(message: ConsoleMessage): boolean {
   const text = message.text();
-  const match = text.match(/Feature Policy: Skipping unsupported feature name [“"]([^"”]+)[”"]\./);
+  const match = text.match(/Permissions Policy: Skipping unsupported feature name [“"]([^"”]+)[”"]\./);
   const sourceUrl = message.location().url;
   const isTurnstileSource =
     sourceUrl.startsWith('https://challenges.cloudflare.com/turnstile/') ||
     /^\[JavaScript Warning: ".+" \{file: "https:\/\/challenges\.cloudflare\.com\/turnstile\/v0\/api\.js" line: \d+\}\]$/.test(text);
   return message.type() === 'warning' && isTurnstileSource && match !== null && turnstileFeaturePolicyWarnings.has(match[1] ?? '');
+}
+
+// WebKit notes on every page that sends Cross-Origin-Opener-Policy without
+// Cross-Origin-Embedder-Policy that it is not cross-origin isolated. The site
+// needs no isolation (no SharedArrayBuffer), and require-corp would block the
+// Turnstile challenge, so the notice describes the chosen headers.
+function isWebKitIsolationNotice(message: ConsoleMessage): boolean {
+  return (
+    message.type() === 'warning' &&
+    message.page()?.context().browser()?.browserType().name() === 'webkit' &&
+    message.text().startsWith('This document is not cross-origin isolated because the Cross-Origin-Embedder-Policy header is missing')
+  );
 }
 
 test('home page loads with hero heading', async ({ page }) => {
@@ -47,6 +59,7 @@ test('representative routes emit no browser warnings or errors', async ({ page }
       ['warning', 'error'].includes(msg.type()) &&
       !msg.text().startsWith('Failed to preconnect to ') &&
       !isKnownTurnstileWarning(msg) &&
+      !isWebKitIsolationNotice(msg) &&
       !isWebKitInterceptionBlobError(msg)
     ) {
       diagnostics.push(`${msg.type()}: ${msg.text()}`);

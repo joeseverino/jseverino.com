@@ -24,9 +24,6 @@
     "config": ["tests/playwright*.config.ts"]
   },
   "ignoreDependencies": [
-    // `cloudflare:workers` is the Workers runtime's own module, which knip
-    // reads as the npm package `cloudflare`.
-    "cloudflare",
     // Command-line tools the gates under mise-tasks/ run: astro check
     // (checks:astro), html-validate (built:html), jscpd (checks:duplication).
     "@astrojs/check",

@@ -8,8 +8,8 @@ export const prose = defineMdastPlugin({
   image(node, ctx) {
     const { alt, width, noZoom } = parseImageDirectives(node.alt ?? '');
     if (alt === node.alt && !width && !noZoom) return;
-    ctx.setProperty(node, 'alt', alt);
-    ctx.setProperty(node, 'data', {
+    ctx.setField(node, 'alt', alt);
+    ctx.setField(node, 'data', {
       hProperties: { ...(width ? { width: Number(width) } : {}), ...(noZoom ? { 'data-no-zoom': '' } : {}) },
     });
   },
