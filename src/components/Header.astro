@@ -26,7 +26,7 @@ const navigation = navItems.map((item) => ({
       <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" set:html={wordmarkInner} />
     </a>
 
-    <nav class="primary-nav" aria-label="Primary navigation">
+    <nav class="primary-nav" aria-label="Primary">
       <NavLinks items={navigation} listClass="nav-list" linkClass="nav-link" />
     </nav>
 
@@ -37,7 +37,7 @@ const navigation = navItems.map((item) => ({
     </button>
   </div>
 
-  <nav class="mobile-nav" id="mobile-nav" popover aria-label="Mobile navigation" data-mobile-nav>
+  <nav class="mobile-nav" id="mobile-nav" popover aria-label="Mobile" data-mobile-nav>
     <NavLinks items={navigation} listClass="mobile-nav-list" linkClass="mobile-nav-link" />
     <div class="mobile-nav-footer">
       <p class="page-kicker">{focusLabel}</p>

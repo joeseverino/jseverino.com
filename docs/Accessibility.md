@@ -14,11 +14,11 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 ## Landmarks and ARIA
 
-- Primary navigation: `<nav aria-label="Primary navigation">` in [`src/components/Header.astro`](../src/components/Header.astro).
-- Mobile navigation: `<nav aria-label="Mobile navigation">` with `popover="auto"` so the browser handles focus trap, escape-to-dismiss, and outside-click.
+- Primary navigation: `<nav aria-label="Primary">` in [`src/components/Header.astro`](../src/components/Header.astro).
+- Mobile navigation: `<nav aria-label="Mobile">` with `popover` so the browser handles focus trap, escape-to-dismiss, and outside-click.
 - Active nav item: `aria-current="page"` on the matching link.
-- Contact form: `role="status" aria-live="polite"` on the submit-result region so screen readers announce success or failure without stealing focus.
-- Decorative SVGs (social icons, defs sheet): `aria-hidden="true" focusable="false"`. Each social *link* declares its destination via `aria-label`, since the icon itself carries no accessible name.
+- Contact form: the submit-result region is an `<output>`, whose implicit `status` role is a polite live region, so screen readers announce success or failure without stealing focus.
+- Decorative SVGs (social icons, defs sheet): `aria-hidden="true"`. Each social *link* declares its destination via `aria-label`, since the icon itself carries no accessible name.
 
 ## Image alt text
 
