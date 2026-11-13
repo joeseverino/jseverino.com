@@ -33,7 +33,7 @@
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.10.18"
+min_version = "2026.11.7"
 
 [settings]
 # For [deps], mise's package installer.
@@ -104,16 +104,16 @@ depends = ["packages"]
 # A tool one gate or one task runs is lazy: `mise install` leaves it out, and
 # the first run of its command installs it from mise.lock.
 [tools]
-node = "26.13.0"
+node = "26.13.1"
 lychee = "0.24.2"
-biome = "2.6.4"
-zizmor = { version = "1.31.1", lazy = true }
-jactionlint = { version = "2.4.0", lazy = true }
+biome = "2.6.7"
+zizmor = { version = "1.32.0", lazy = true }
+jactionlint = { version = "2.6.0", lazy = true }
 # checks:shellcheck, and jactionlint on every workflow `run:` script.
 shellcheck = { version = "0.11.0", lazy = true }
 # make:font's uvx.
-uv = { version = "0.13.6", lazy = true }
-vale = { version = "3.25.1", lazy = true }
+uv = { version = "0.13.8", lazy = true }
+vale = { version = "3.27.0", lazy = true }
 
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.

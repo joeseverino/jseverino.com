@@ -122,7 +122,7 @@ hide = true
 # dependencies stay out of the gate's output. The exact pin is the gate on the
 # release, so the machine's npm release-age hold does not apply to this fetch.
 env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
-run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
+run = "npx --yes --package renovate@44.237.0 -- renovate-config-validator --strict --no-global .github/renovate.json"
 
 ["checks:tasks"]
 description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"
