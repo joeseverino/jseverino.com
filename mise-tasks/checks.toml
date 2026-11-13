@@ -121,7 +121,10 @@ hide = true
 # npm prints only errors, so the deprecation warnings of Renovate's own
 # dependencies stay out of the gate's output. The exact pin is the gate on the
 # release, so the machine's npm release-age hold does not apply to this fetch.
-env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
+# re2's install script fetches the RE2 binding Renovate validates regexes with,
+# as it does in production; npx skips the scripts of the dependencies the
+# validator does not use, where .npmrc's strict-allow-scripts would fail it.
+env = { npm_config_loglevel = "error", npm_config_min_release_age = "0", npm_config_allow_scripts = "re2", npm_config_strict_allow_scripts = "false" }
 run = "npx --yes --package renovate@44.237.0 -- renovate-config-validator --strict --no-global .github/renovate.json"
 
 ["checks:tasks"]

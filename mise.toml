@@ -57,9 +57,11 @@ output = "keep-order"
 # node_modules is missing. --no-audit: dependency review and Renovate's alerts
 # enforce advisories; an install would only print them. npm's output goes to
 # stderr, so a task whose stdout another program reads (`site --json`) still
-# prints only its own. CI installs in its setup action, and a job that holds a
-# secret installs nothing and runs its task with `mise run --no-deps`, so no
-# package install script sees the secret.
+# prints only its own. CI installs the same way, in its setup action. No
+# dependency's install script runs: package.json's allowScripts denies each one
+# there is, and .npmrc fails an install that meets one it does not name. The
+# deploy workflow also sets npm_config_ignore_scripts, so a script approved
+# later still never runs beside its secrets.
 [deps.npm]
 auto = true
 run = "npm ci --no-audit --no-fund >&2"

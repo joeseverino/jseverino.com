@@ -414,6 +414,10 @@ ships to visitors:
   mise's `[deps.npm]` provider), then runs the gate audits and the publish gate on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
   Each release carries the attested SBOM.
+- **Install scripts** of dependencies never run: `package.json`'s
+  `allowScripts` denies each one, and `.npmrc`'s `strict-allow-scripts` fails
+  an install that meets one it names neither way. The deploy workflow, which
+  holds the Cloudflare token, also sets `npm_config_ignore_scripts`.
 - **Preview wrap** is unit-tested in `mise run checks:unit`
   ([`tests/unit/wrap-preview.test.ts`](../tests/unit/wrap-preview.test.ts)):
   a feature branch receives the review wrapper with the CSP filled again,
