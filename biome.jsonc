@@ -33,7 +33,7 @@
     // TypeScript, and an .astro file's frontmatter and <script> elements.
     { "path": "./tests/client-html-sinks.grit", "includes": ["src/**"] },
     { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] },
-    { "path": "./tests/type-escapes.grit", "includes": ["src/**"] },
+    { "path": "./tests/type-escapes.grit", "includes": ["src/**", "bin/**"] },
     { "path": "./tests/vacuous-assertions.grit", "includes": ["tests/**"] }
   ],
   "linter": {
