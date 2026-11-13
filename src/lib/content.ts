@@ -165,3 +165,8 @@ export function titleCase(value: string): string {
 export function formatDate(value: string): string {
   return value ? Temporal.PlainDate.from(value).toLocaleString('en-US', { dateStyle: 'long' }) : '';
 }
+
+const plural = new Intl.PluralRules('en-US');
+
+// '1 project', '3 projects'.
+export const projectCount = (count: number): string => `${count} ${plural.select(count) === 'one' ? 'project' : 'projects'}`;

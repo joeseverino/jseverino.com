@@ -6,10 +6,9 @@ type Props = {
 };
 
 const { title, description, class: className } = Astro.props;
-const classes = ['page-hero', className].filter(Boolean).join(' ');
 ---
 
-<header class={classes}>
+<header class:list={['page-hero', className]}>
   <h1>{title}</h1>
   {description && <p class="page-intro">{description}</p>}
   <slot />
