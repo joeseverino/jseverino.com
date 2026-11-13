@@ -9,7 +9,7 @@ const { title, description, class: className } = Astro.props;
 ---
 
 <header class:list={['page-hero', className]}>
-  <h1>{title}</h1>
+  <h1 id="page-title">{title}</h1>
   {description && <p class="page-intro">{description}</p>}
   <slot />
 </header>
