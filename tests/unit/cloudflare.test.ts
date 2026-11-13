@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import { main } from '../../bin/cloudflare.ts';
-import type { AccessPolicy, DesiredState } from '../../bin/lib/cloudflare.ts';
+import type { AccessPolicy, DesiredState } from '../../bin/lib/cloudflare-settings.ts';
 import { loadDesired } from '../../bin/lib/drift.ts';
 import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';

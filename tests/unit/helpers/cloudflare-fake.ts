@@ -10,7 +10,7 @@ import {
   type Rule,
   type ValidationSettings,
   type Widget,
-} from '../../../bin/lib/cloudflare.ts';
+} from '../../../bin/lib/cloudflare-settings.ts';
 import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;

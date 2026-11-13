@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';
-import { createClient, createRun, type DesiredState } from './lib/cloudflare.ts';
+import { createClient, createRun, type DesiredState } from './lib/cloudflare-settings.ts';
 import { loadDesired, type ToolOptions, toolMain } from './lib/drift.ts';
 import type { ClientOptions } from './lib/rest.ts';
 
