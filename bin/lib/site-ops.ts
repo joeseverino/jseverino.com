@@ -100,7 +100,7 @@ export const abbreviateName = (name: string): string => {
   return `${parts[0]} ${(parts.at(-1) ?? '').slice(0, 1)}.`;
 };
 
-export const preview = (text: string, limit = 80): string => {
+export const messagePreview = (text: string, limit = 80): string => {
   const collapsed = text.split(/\s+/).filter(Boolean).join(' ');
   return collapsed.length <= limit ? collapsed : `${collapsed.slice(0, limit).trimEnd()}…`;
 };
@@ -112,7 +112,7 @@ const redactContact = (row: Row): Row => {
     created_at: row.created_at,
     name: abbreviateName(String(row.name ?? '')),
     email: redactEmail(String(row.email ?? '')),
-    message_preview: preview(message),
+    message_preview: messagePreview(message),
     message_chars: message.length,
     status: row.status,
     browser: row.browser,

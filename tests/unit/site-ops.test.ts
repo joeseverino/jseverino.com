@@ -2,7 +2,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { after, beforeEach, describe, test } from 'node:test';
-import { abbreviateName, contactSubmissions, cspCounts, cspReports, preview, redactEmail, type SiteOpsConfig, SiteOpsError } from '../../bin/lib/site-ops.ts';
+import {
+  abbreviateName,
+  contactSubmissions,
+  cspCounts,
+  cspReports,
+  messagePreview,
+  redactEmail,
+  type SiteOpsConfig,
+  SiteOpsError,
+} from '../../bin/lib/site-ops.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('site-ops-');
@@ -27,8 +36,8 @@ describe('redaction helpers', () => {
     assert.equal(redactEmail('nope'), '***');
     assert.equal(abbreviateName('Jane Q Doe'), 'Jane D.');
     assert.equal(abbreviateName('Cher'), 'Cher');
-    assert.equal(preview('a\n  b   c'), 'a b c');
-    assert.equal(preview('x'.repeat(100)), `${'x'.repeat(80)}…`);
+    assert.equal(messagePreview('a\n  b   c'), 'a b c');
+    assert.equal(messagePreview('x'.repeat(100)), `${'x'.repeat(80)}…`);
   });
 });
 
