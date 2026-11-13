@@ -125,8 +125,8 @@ The sync is split along its seams in [`bin/content-sync/`](../bin/content-sync/)
 Astro content collections are registered in [`src/content.config.ts`](../src/content.config.ts).
 Their field validators come from the committed generated module
 [`src/generated/content-schema.ts`](../src/generated/content-schema.ts), which is
-derived from the canonical content contract and checked for freshness in every
-diagnosis.
+derived from the canonical content contract and held to it by
+`mise run checks:contracts`.
 
 Pages:
 

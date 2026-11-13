@@ -36,9 +36,8 @@ stable pointer target. Preserve keyboard focus, reduced motion, forced colors,
 and touch behavior when adding interactions. Prefer native controls and bundled
 component scripts; reserve inline execution for first-paint initialization.
 
-After CSS changes, regenerate `public/embed/bundle.css` with `mise run make:embed`.
-The diagnostic gate verifies that generated output matches its source, along
-with contrast, page weight, responsive layouts, and interaction regressions.
+After CSS changes, regenerate `public/embed/bundle.css` with `mise run make:embed`;
+`mise run checks:contracts` fails while it differs from what the script derives.
 
 ## 2. Residue: change by hand per instance
 

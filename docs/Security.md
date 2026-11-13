@@ -416,7 +416,7 @@ ships to visitors:
 - **Dependency review** runs on every PR and fails on a high-severity
   advisory ([`.github/workflows/dependency-review.yml`](../.github/workflows/dependency-review.yml)).
 - **Build CI** installs the npm packages from the lockfile (`npm ci`, run by
-  mise's `[deps.npm]` provider), then runs the gate audits and the publish gate on every
+  mise's `[deps.npm]` provider), then runs the `checks:*` and `built:*` gates on every
   push and PR ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)).
   Each release carries the attested SBOM.
 - **Install scripts** of dependencies never run: `package.json`'s

@@ -44,7 +44,7 @@ depend on the Worker. The assets layer applies `_headers` to static assets only,
 so [`src/middleware.ts`](../src/middleware.ts) gives every response the Worker
 renders the `/*` rule's security headers, with a policy that has no hashes.
 
-[`check-headers.ts`](../tests/audits/check-headers.ts) fails the publish gate if
+[`check-headers.ts`](../tests/audits/check-headers.ts) (`mise run built:headers`) fails if
 the built `_headers` has a leftover placeholder, lists a path twice, lacks a
 `Content-Security-Policy` on `/*`, or lacks the detach-plus-set override on
 `/contact/*`. The edge suite proves the routing and the headers under
