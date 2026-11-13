@@ -66,5 +66,10 @@ const preconnectOrigins = [INSIGHTS_SCRIPT_ORIGIN, ...preconnect];
       <slot />
       <Footer />
     </div>
+    <script>
+      // Every page runs both, so they ship as one module and one request.
+      import '@components/Header.client.ts';
+      import '@components/ThemeToggle.client.ts';
+    </script>
   </body>
 </html>

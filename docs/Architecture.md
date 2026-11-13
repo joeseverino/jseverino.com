@@ -230,7 +230,7 @@ Markdown output (tables, terminal blocks) stays global, since any content page c
 
 ### Sticky-header shadow
 
-The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. The bundled script in [`src/components/Header.astro`](../src/components/Header.astro) gates an `IntersectionObserver` fallback behind `CSS.supports()`. The same module owns mobile-menu state and delegates link clicks to the menu.
+The header shadow is driven by `animation-timeline: scroll()` in supporting browsers. [`src/components/Header.client.ts`](../src/components/Header.client.ts) gates an `IntersectionObserver` fallback behind `CSS.supports()`, and closes the mobile menu on a followed link. [`BaseLayout.astro`](../src/layouts/BaseLayout.astro) loads it with the theme toggle's `ThemeToggle.client.ts` as one module, since every page runs both.
 
 Interactive CSS separates hit areas from visual effects. Writeup and software
 cards share one `.card-surface` element: the list item stays stationary while
