@@ -5,9 +5,9 @@ import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { renderMarkdown } from '../lib/render.ts';
-import { optionalString } from '../lib/writeups/store.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { RenderResult } from './types.ts';
+import { optionalString } from './writeup-store/store.ts';
 
 const text = (value: unknown): string => optionalString(value) ?? '';
 

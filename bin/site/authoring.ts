@@ -6,9 +6,9 @@ import { writeupPath } from '../../src/lib/site-config.ts';
 import { checkContent } from '../content-sync/sync.ts';
 import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
+import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from './writeup-store/store.ts';
 import { guard } from './writeups.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {

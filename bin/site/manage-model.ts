@@ -10,14 +10,14 @@ import { checkContent } from '../content-sync/sync.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import type { MiseTask } from '../lib/mise.ts';
 import { expiresInDays, expiryProblem, parseFields, SECURITY_FILE, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
-import { fingerprint } from '../lib/writeups/receipt.ts';
-import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from '../lib/writeups/store.ts';
 import { newWriteup } from './authoring.ts';
 import { createOutput, SiteError, SLUG, slugMessage } from './cli.ts';
 import { type DevLock, headStatus, servingDevServer } from './dev-server.ts';
 import { repoState } from './git.ts';
 import type { Note, Tone } from './tui.ts';
 import type { CommandName } from './types.ts';
+import { fingerprint } from './writeup-store/receipt.ts';
+import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from './writeup-store/store.ts';
 
 export const SITE_CLI = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
 

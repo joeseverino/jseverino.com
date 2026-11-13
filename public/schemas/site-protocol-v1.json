@@ -116,7 +116,7 @@
       ]
     },
     "receipt": {
-      "description": "A completed write, shaped as bin/lib/writeups/receipt.ts defines MutationReceipt. Evidence only, never a second source of truth.",
+      "description": "A completed write, shaped as bin/site/writeup-store/receipt.ts defines MutationReceipt. Evidence only, never a second source of truth.",
       "type": "object",
       "required": ["receipt_version", "operation", "entity", "changed_fields", "affected_projections", "idempotency_key", "metadata"],
       "properties": {

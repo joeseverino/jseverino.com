@@ -9,7 +9,6 @@ import { siteRoot } from '../../src/lib/site-root.ts';
 import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { type MiseTask, miseTasks } from '../lib/mise.ts';
-import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';
 import { EXIT, SiteError } from './cli.ts';
 import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
 import { handleManageKey, type ManageEffect, pasteManageInput } from './manage-input.ts';
@@ -31,6 +30,7 @@ import {
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
 import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
+import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from './writeup-store/store.ts';
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {

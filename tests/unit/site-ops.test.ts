@@ -11,7 +11,7 @@ import {
   redactEmail,
   type SiteOpsConfig,
   SiteOpsError,
-} from '../../bin/lib/site-ops.ts';
+} from '../../bin/site/site-ops.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('site-ops-');

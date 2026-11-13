@@ -4,8 +4,7 @@
 request, production. It lives here, in [`bin/site.ts`](../bin/site.ts)
 and [`bin/site/`](../bin/site/), on top of the same modules the other mise tasks
 use: the content sync ([`bin/content-sync/`](../bin/content-sync/)), the
-content diff ([`bin/content-diff.ts`](../bin/content-diff.ts)), the shared
-preflight ([`bin/lib/preflight.ts`](../bin/lib/preflight.ts)), and the
+shared preflight ([`bin/lib/preflight.ts`](../bin/lib/preflight.ts)), and the
 mise gates.
 
 ```sh
@@ -107,8 +106,8 @@ Write, run `site validate <slug> --draft`, set `published: true`,
 | :--- | :--- | :--- |
 | mise tasks | gates, the build, and tools | `mise run check`, `mise run sync:content` |
 | `site` | the workflow across vault, repo, PR, and live site | `site publish`, `site land` |
-| [`bin/lib/writeups/`](../bin/lib/writeups/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
-| [`bin/lib/site-ops.ts`](../bin/lib/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters) | `contactSubmissions`, `cspReports` |
+| [`bin/site/writeup-store/`](../bin/site/writeup-store/) | the writeup store: reads and transactional writes to `05 Writeups/` | `listWriteups`, `applyPlan` |
+| [`bin/site/site-ops.ts`](../bin/site/site-ops.ts) | fixed live-site operations: D1 reads (HTTP API, bound parameters) | `contactSubmissions`, `cspReports` |
 
 Every write to writeup frontmatter (featured order, publish flags, field edits
 in `site manage`, `site set`, `site featured`) goes through the writeup store:

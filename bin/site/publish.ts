@@ -7,11 +7,11 @@ import { errorMessage } from '../../src/lib/error-message.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from '../content-diff.ts';
 import type { SyncReport } from '../content-sync/writer.ts';
 import { type CheckName, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, type RunOptions, type RunResult, run, SYNC_TIMEOUT_MS } from '../lib/run.ts';
 import { EXIT, type Output, requireReady, SiteError } from './cli.ts';
+import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from './content-diff.ts';
 import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
 import type { PublishCommitted, PublishResult } from './types.ts';
 

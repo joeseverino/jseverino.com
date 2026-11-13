@@ -4,11 +4,11 @@
 
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, DEPLOY_CHECK, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { type ContentDiff, contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { type CheckName, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
 import { EXIT, type Output, requireReady, runScript, SiteError } from './cli.ts';
+import { type ContentDiff, contentDiff } from './content-diff.ts';
 import { gh, ghJson, git } from './git.ts';
 import type { HqSync, LandResult, PullRequestRef, ScriptRun, Verified } from './types.ts';
 

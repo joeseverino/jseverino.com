@@ -5,7 +5,7 @@ import path from 'node:path';
 import { parseFrontmatter } from '../src/lib/frontmatter.ts';
 import { cli, flag, usageError } from './lib/args.ts';
 import { vaultRoot as vaultRootFor, WRITEUPS_FOLDER } from './lib/local-paths.ts';
-import { updateFrontmatter, writeupStore } from './lib/writeups/store.ts';
+import { updateFrontmatter, writeupStore } from './site/writeup-store/store.ts';
 
 const vaultRoot = vaultRootFor();
 const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);

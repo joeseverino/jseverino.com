@@ -1,8 +1,8 @@
-// `site` commands over the live-site operations (bin/lib/site-ops.ts).
+// `site` commands over the live-site operations (bin/site/site-ops.ts).
 
 import { positiveInt } from '../lib/args.ts';
-import { contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from '../lib/site-ops.ts';
 import { EXIT, type Output, SiteError, translate } from './cli.ts';
+import { contactSubmissions, cspCounts, cspReports, SiteOpsError, siteOpsConfig } from './site-ops.ts';
 import type { ContactResult, CspResult } from './types.ts';
 
 // Every command here reads D1 through Cloudflare's API, so a failure names the token and account
