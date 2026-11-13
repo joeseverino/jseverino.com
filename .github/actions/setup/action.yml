@@ -39,7 +39,7 @@ runs:
 
     # Installs the tools mise.toml does not mark lazy, from mise.lock (mise.toml
     # sets `locked`), and exports mise.toml's [env] to every later step.
-    - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+    - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
       with:
         version: ${{ steps.mise.outputs.version }}
         cache: false
