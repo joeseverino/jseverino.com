@@ -28,7 +28,8 @@ runs:
     # that needs only some tools sets MISE_ENABLE_TOOLS at the job level, so the
     # install and every later `mise run` see the same list. The action's cache
     # of installed tools stays off: nothing verifies a restored install.
-    - uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+    - name: Install mise and the tools
+      uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
       with:
         version: ${{ steps.mise.outputs.version }}
         cache: false

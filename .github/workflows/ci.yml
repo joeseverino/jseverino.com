@@ -27,18 +27,20 @@ jobs:
     env:
       GATE_REPORT_DIR: ${{ github.workspace }}/.cache/gates
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
       # The gate a laptop runs: every static gate, the build, every gate on the
       # build. src/content is the committed snapshot; CI has no vault. The build
       # carries the production site key because it is the one that ships.
-      - name: Static gates
+      - name: Run the gates
         id: gates
         run: mise run check
         env:
@@ -51,7 +53,7 @@ jobs:
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
 
-      - name: Keep the summary for the PR comment
+      - name: Upload the summary for the PR comment
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -62,7 +64,8 @@ jobs:
 
       # The deploy workflow downloads this, unchanged for production and wrapped
       # for a preview. Hidden files hold .well-known/ and the asset ignore list.
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload the build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: site
           path: dist/
@@ -85,11 +88,13 @@ jobs:
     env:
       MISE_ENABLE_TOOLS: node,npm
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
@@ -109,8 +114,9 @@ jobs:
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-e2e.md
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload the Playwright report
         if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-e2e-report
           path: |
@@ -119,7 +125,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Keep the summary for the PR comment
+      - name: Upload the summary for the PR comment
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -153,11 +159,13 @@ jobs:
             browsers: ''
             prebuild: true
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: ${{ matrix.prebuild }}
 
@@ -187,8 +195,9 @@ jobs:
           SUITE: ${{ matrix.suite }}
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload the Playwright report
         if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-${{ matrix.suite }}-report
           path: |
@@ -197,7 +206,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Keep the summary for the PR comment
+      - name: Upload the summary for the PR comment
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

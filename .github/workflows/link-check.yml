@@ -38,11 +38,13 @@ jobs:
       # rate limit instead of the anonymous one.
       GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           install: 'false'
 
