@@ -84,10 +84,10 @@
       "extractVersionTemplate": "^v(?<version>.+)$"
     },
     {
-      "description": "The Python packages the font task runs through uvx, pinned in the task itself.",
+      "description": "The fonttools release the font task runs through uvx, pinned in the task itself.",
       "customType": "regex",
       "managerFilePatterns": ["/^mise-tasks/make/font$/"],
-      "matchStrings": ["--with (?<depName>brotli)==(?<currentValue>\\S+)", "--from (?<depName>fonttools)==(?<currentValue>\\S+)"],
+      "matchStrings": ["--from '(?<depName>fonttools)\\[woff\\]==(?<currentValue>[^']+)'"],
       "datasourceTemplate": "pypi"
     },
     {
