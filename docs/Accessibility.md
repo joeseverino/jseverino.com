@@ -15,7 +15,7 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 ## Landmarks and ARIA
 
 - Primary navigation: `<nav aria-label="Primary">` in [`src/components/Header.astro`](../src/components/Header.astro).
-- Mobile navigation: `<nav aria-label="Mobile">` with `popover` so the browser handles focus trap, escape-to-dismiss, and outside-click.
+- Mobile navigation: `<nav aria-label="Mobile">` is a `popover`, so the browser closes it on Escape or an outside click, reports the toggle's expanded state, and returns focus to the toggle. A popover does not trap focus; its backdrop covers the page behind it ([Architecture, header and menu](./Architecture.md#header-and-menu)).
 - Active nav item: `aria-current="page"` on the matching link.
 - Contact form: the submit-result region is an `<output>`, whose implicit `status` role is a polite live region, so screen readers announce success or failure without stealing focus.
 - Decorative SVGs (social icons, defs sheet): `aria-hidden="true"`. Each social *link* declares its destination via `aria-label`, since the icon itself carries no accessible name.
@@ -31,8 +31,6 @@ An image may use `alt=""` only when it is decorative or its figure caption says 
 ## Focus management
 
 Every interactive element keeps the browser's focus ring. The only rules that remove it are on the contact form's fields, which draw their own border and glow on `:focus`, and on the lightbox `<dialog>` itself, whose controls keep theirs. Components add a `:focus-visible` state that matches their hover (links, buttons, tags, the theme control), so a keyboard user sees the same emphasis a pointer gets and a click leaves none behind; a card raises its border on `:focus-within`. [`src/styles/accessibility.css`](../src/styles/accessibility.css) shows the skip link on `:focus` and, under forced colors, gives every link, button, field and summary a `Highlight` outline on `:focus`.
-
-Mobile navigation uses the native `popover` API. The browser restores focus when the popover closes.
 
 ## Reduced motion
 
