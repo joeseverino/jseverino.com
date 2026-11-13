@@ -9,7 +9,7 @@ import { createLogger, createServer } from 'vite';
 import { interFontFace } from '../../src/lib/web-styles.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const FONT = path.join(ROOT, 'public/assets/fonts/inter/inter-variable-latin.woff2');
+const FONT = path.join(ROOT, 'src/assets/fonts/inter-variable-latin.woff2');
 
 export interface DocumentInput {
   title: string;

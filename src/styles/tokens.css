@@ -10,7 +10,7 @@ html { --font-sans: Inter, system-ui, sans-serif; }
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
-  src: url('/assets/fonts/inter/inter-variable-latin.woff2') format('woff2');
+  src: url('../assets/fonts/inter-variable-latin.woff2') format('woff2');
 }
 
 /* tokens:start: generated from the lockfile-pinned severino-brand contract by `mise run sync:tokens`. Edit tokens upstream, not here. */

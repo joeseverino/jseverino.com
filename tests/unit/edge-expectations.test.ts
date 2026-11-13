@@ -121,9 +121,7 @@ describe('header and cache predicates', () => {
 
   // Cloudflare merges every rule matching a path, so a broad immutable rule would pin the in-place chrome for a year.
   test('public/_headers pins only write-once paths immutable', () => {
-    for (const pathname of ['/_astro/a.js', '/assets/fonts/inter/inter-variable-latin.woff2']) {
-      assert.match(fileHeaders(pathname).get('cache-control') ?? '', /max-age=31536000, immutable$/, pathname);
-    }
+    assert.match(fileHeaders('/_astro/a.js').get('cache-control') ?? '', /max-age=31536000, immutable$/);
     for (const pathname of [
       '/favicon.ico',
       '/assets/icons/favicon.svg',

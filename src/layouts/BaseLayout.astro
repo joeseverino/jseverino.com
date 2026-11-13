@@ -8,6 +8,8 @@ import { SURFACE } from '@lib/brand.ts';
 import { site } from '@lib/site.ts';
 import { CSP_INLINE_MARKER, INSIGHTS_SCRIPT_ORIGIN } from '@lib/csp.ts';
 import '@styles/base.css';
+// The same file tokens.css declares, so Vite gives both one content-hashed URL.
+import interFont from '../assets/fonts/inter-variable-latin.woff2';
 
 type Props = {
   seo?: ComponentProps<typeof SeoHead>;
@@ -45,13 +47,7 @@ const preconnectOrigins = [INSIGHTS_SCRIPT_ORIGIN, ...preconnect];
       })();
     </script>
     {preconnectOrigins.map((origin) => <link rel="preconnect" href={origin} crossorigin />)}
-    <link
-      rel="preload"
-      href="/assets/fonts/inter/inter-variable-latin.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    <link rel="preload" href={interFont} as="font" type="font/woff2" crossorigin />
     <SeoHead {...seo} />
     <link rel="alternate" type="application/rss+xml" title={`${site.name}: Portfolio`} href="/feed.xml" />
     <link rel="icon" href="/favicon.ico" sizes="any" />

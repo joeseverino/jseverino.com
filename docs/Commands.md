@@ -124,7 +124,7 @@ from the brand engine. Generated output is committed, so these only run when
 the brand changes. See [`Brand-System.md`](./Brand-System.md).
 
 **`mise run make:font`**: re-subsets the one webfont,
-`public/assets/fonts/inter/inter-variable-latin.woff2`, to the characters the
+`src/assets/fonts/inter-variable-latin.woff2`, to the characters the
 content uses and the 400 to 700 weight range the stylesheet declares, keeping
 Inter's optical-size axis. The character list and range live in
 [`mise-tasks/make/font`](../mise-tasks/make/font); widen them there, then rerun

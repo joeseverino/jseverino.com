@@ -199,11 +199,13 @@ The assembly is owned once so an embedder does not re-derive it:
   `:root` brand-vars string. `sync:tokens` writes exactly this into
   `src/styles/brand.css`, so the site and any embedder share one definition.
 - [`src/lib/web-styles.ts`](../src/lib/web-styles.ts) exports
-  **`interFontFace(fontUrl)`**, the Inter `@font-face` that `base.css` expects.
+  **`interFontFace(fontUrl)`**, the Inter `@font-face` that `base.css` expects,
+  which the document renderer
+  ([`bin/lib/render-document.ts`](../bin/lib/render-document.ts)) adds with the
+  font as a data URL when it styles a rendered writeup with `base.css`.
   [`bin/make-embed-bundle.ts`](../bin/make-embed-bundle.ts) builds
-  `public/embed/bundle.css` with it, and the document renderer
-  ([`bin/lib/render-document.ts`](../bin/lib/render-document.ts)) styles a
-  rendered writeup with the brand vars, `base.css` and the same rule.
+  `public/embed/bundle.css` with esbuild, which inlines the font `tokens.css`
+  declares as a data URL.
 
 ## Related Docs
 

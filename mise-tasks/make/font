@@ -4,7 +4,7 @@
 #USAGE flag "--output <font>" help="Where to write the result (default: the committed font)"
 set -eu
 
-font=public/assets/fonts/inter/inter-variable-latin.woff2
+font=src/assets/fonts/inter-variable-latin.woff2
 source=${usage_source:-$font}
 output=${usage_output:-$font}
 

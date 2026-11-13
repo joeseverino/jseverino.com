@@ -437,7 +437,7 @@ static security headers.
 |---|---|---|
 | `<link rel="preconnect">` | `https://static.cloudflareinsights.com` (every page) | Warms DNS + TLS for the Cloudflare Web Analytics beacon, which Cloudflare auto-injects into every HTML response. Removes ~100-300ms of cold-start latency on the first request to that origin. |
 | `<link rel="preconnect">` | `https://challenges.cloudflare.com` (contact page only) | Warms DNS + TLS for Cloudflare Turnstile, which loads `turnstile/v0/api.js` from this origin on the contact page. |
-| `<link rel="preload" as="font">` | `/assets/fonts/inter/inter-variable-latin.woff2` | Starts fetching the subset variable font during HTML parsing, before the CSS that declares `@font-face` is parsed. Prevents the brief unstyled-text flash. `crossorigin` matches the fetch mode the browser will use for the actual font request. |
+| `<link rel="preload" as="font">` | The subset Inter WOFF2 at its content-hashed `/_astro/` URL | Starts fetching the subset variable font during HTML parsing, before the CSS that declares `@font-face` is parsed. Prevents the brief unstyled-text flash. `crossorigin` matches the fetch mode the browser will use for the actual font request. |
 
 Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src/pages/contact.astro` passes `preconnect={['https://challenges.cloudflare.com']}`. The insights beacon preconnect is always emitted, with per-page entries after it. Browsers may skip resource hints.
 
@@ -448,7 +448,6 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 | Subdirectory | Source | Purpose | Modified by |
 |---|---|---|---|
 | `public/assets/docs/` | Repo | Downloadable documents (e.g., `Joseph_Severino_Resume.pdf`) | Hand-edited in the repo |
-| `public/assets/fonts/` | Repo | Subset web font (Inter variable WOFF2: Latin, weights 400–700, optical-size axis kept) | `mise run make:font` ([`mise-tasks/make/font`](../mise-tasks/make/font); re-subsets the committed file, or an upstream Inter release via `--source`) |
 | `public/assets/icons/` | Repo | Favicon set (`.ico`, `.svg`, PNG sizes, apple-touch) | `mise run make:icons` |
 | `public/assets/brand/` | Repo | HD brand marks + Person-schema headshot | `mise run make:icons` (marks) / headshot hand-added |
 | `public/assets/og/` | Repo | Open Graph card images (default + per-page) | `mise run make:og` |
@@ -458,9 +457,9 @@ Per-page preconnect origins go into `BaseLayout` via the `preconnect` prop; `src
 This is the central distinction:
 
 - **Vault-synced** images are not under `public/`. Each sits beside its document in `src/content/<collection>/<slug>/images/`, written by `sync:content`, and Astro encodes it. **Direct edits in the repo are wiped on the next sync; edit the vault.**
-- **Repo-managed** (`docs/`, `fonts/`, `icons/`, `brand/`, `og/`) is site chrome: assets that belong to the whole site and change rarely.
+- **Repo-managed** (`docs/`, `icons/`, `brand/`, `og/`) is site chrome: assets that belong to the whole site and change rarely.
 
-An asset specific to one page or writeup belongs in the vault. A site-wide asset (a second downloadable document, a new font, a replacement favicon set) belongs in the matching `public/assets/<bucket>/` directory.
+An asset specific to one page or writeup belongs in the vault. A site-wide asset (a second downloadable document, a replacement favicon set) belongs in the matching `public/assets/<bucket>/` directory. The one webfont is the exception: [`src/assets/fonts/inter-variable-latin.woff2`](../src/assets/fonts/inter-variable-latin.woff2) (Inter variable: Latin, weights 400 to 700, optical-size axis kept, written by `mise run make:font`) is declared by `tokens.css` and preloaded by `BaseLayout.astro`, so Vite ships it once at a content-hashed `/_astro/` URL that the immutable cache rule covers, and a re-subset reaches browsers on the next deploy.
 
 ### Brand assets: one source of truth
 
