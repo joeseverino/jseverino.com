@@ -184,7 +184,7 @@ TypeScript against the standard mdast and hast trees. The site's plugins are in
 
 [`ContentBody.astro`](../src/components/content/ContentBody.astro) renders an
 entry with its component map: every Markdown image as
-[`Picture.astro`](../src/components/Picture.astro), each placeholder as its
+[`Image.astro`](../src/components/Image.astro), each placeholder as its
 component, and each run of prose in the page's wrapper. The syntax is in the
 [Authoring Guide](./Authoring-Guide.md); the plugins' behavior is pinned by
 [`tests/unit/content-render.test.ts`](../tests/unit/content-render.test.ts).
@@ -265,18 +265,18 @@ A size container is a containing block for fixed-position descendants, so `main`
 
 Images are encoded by Astro at build time from the masters the sync commits
 beside each document (at most 1600 pixels wide, sRGB, no metadata).
-[`Picture.astro`](../src/components/Picture.astro) renders every content image
-and cover as a `<picture>`: an AVIF `<source>` and a WebP `<img>`, each at 512,
-768, 1024, and 1600 pixels (Astro drops any wider than the master), with the
-`sizes` the layout needs and the intrinsic `width` and `height` on the `<img>`.
-Every browser the site's CSS supports decodes both formats. The encoder
-settings (AVIF quality 60, WebP 82) live in the image service config in
+[`Image.astro`](../src/components/Image.astro) renders every content image
+and cover as one AVIF `<img>` with a `srcset` at 512, 768, 1024, and 1600
+pixels (Astro drops any wider than the master), the `sizes` the layout needs,
+and the intrinsic `width` and `height`. Every browser the site's CSS supports
+decodes AVIF, so no second format ships. The encoder settings (AVIF quality
+60) live in the image service config in
 [`astro.config.ts`](../astro.config.ts), and the widths in
 [`src/lib/images.ts`](../src/lib/images.ts). The Cloudflare adapter's `compile`
 image service runs that sharp service at build time and has the Worker serve
 the encoded files; `astro dev` transforms through the local Images binding.
 
-`Picture.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and
+`Image.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and
 `built:weight` fails on any shipped image at or over 1.5 MB. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 

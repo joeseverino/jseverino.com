@@ -248,8 +248,7 @@ test('cover images fill their fixed media boxes', async ({ page }) => {
     .first()
     .evaluate((media) => {
       const image = media.querySelector('img');
-      const picture = media.querySelector('picture');
-      if (!image || !picture) throw new Error('Expected project picture and image');
+      if (!image) throw new Error('Expected project image');
 
       const mediaRect = media.getBoundingClientRect();
       const imageRect = image.getBoundingClientRect();
@@ -259,11 +258,9 @@ test('cover images fill their fixed media boxes', async ({ page }) => {
         imageWidth: imageRect.width,
         imageHeight: imageRect.height,
         objectFit: getComputedStyle(image).objectFit,
-        pictureDisplay: getComputedStyle(picture).display,
       };
     });
 
-  expect(dimensions.pictureDisplay).toBe('contents');
   expect(dimensions.objectFit).toBe('cover');
   expect(dimensions.imageWidth).toBeCloseTo(dimensions.mediaWidth, 0);
   expect(dimensions.imageHeight).toBeCloseTo(dimensions.mediaHeight, 0);

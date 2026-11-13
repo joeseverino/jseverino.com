@@ -58,7 +58,7 @@ export default defineConfig({
     ...(devHost && { host: true }),
     ...(devPort && { port: devPort }),
   },
-  // Site plugins in src/lib/markdown/; MDX lets images render as <Picture>.
+  // Site plugins in src/lib/markdown/; MDX lets images render as <Image>.
   markdown: {
     syntaxHighlight: false,
     processor: satteri(processorOptions),
@@ -69,7 +69,6 @@ export default defineConfig({
       entrypoint: 'astro/assets/services/sharp',
       config: {
         avif: { quality: 60 },
-        webp: { quality: 82 },
         jpeg: { quality: 82 },
         png: { compressionLevel: 9 },
       },

@@ -1,7 +1,7 @@
 ---
 import { formatDate, type Writeup } from '@lib/content.ts';
 import { writeupPath } from '@lib/site-config.ts';
-import Picture from '@components/Picture.astro';
+import Image from '@components/Image.astro';
 
 type Props = {
   writeup: Writeup;
@@ -20,7 +20,7 @@ const Heading = `h${headingLevel}` as const;
     </Heading>
     <figure class="project-card-media">
       <a href={writeupPath(writeup.slug)} tabindex="-1" aria-hidden="true">
-        <Picture
+        <Image
           src={writeup.heroImage}
           alt={writeup.heroAlt}
           sizes="(max-width: 700px) 100vw, 360px"

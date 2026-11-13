@@ -22,7 +22,7 @@ then deploys the gated build.
 | :--- | :--- |
 | Site | [Astro 7](https://astro.build), static output |
 | Content | MDX compiled by Astro's Rust Markdown processor, [Sätteri](https://satteri.bruits.org/), with typed plugins; content that tries to run code fails the build |
-| Images | AVIF and WebP encoded at build time from masters the sync strips of metadata |
+| Images | AVIF encoded at build time from masters the sync strips of metadata |
 | Language | TypeScript everywhere, run directly by Node 26 (no build step for scripts) |
 | Edge | one Cloudflare Worker with static assets: every page prerendered under a build-time hash CSP, the Worker started only for the contact form and CSP reporting |
 | Data | Cloudflare D1 for Turnstile-verified contact submissions and for CSP reports from an open endpoint capped by size, batch, and per-IP rate |
@@ -53,7 +53,7 @@ The design is in [`docs/Security.md`](./docs/Security.md); reporting is in
 PageSpeed Insights scored the homepage 100 in every category on desktop and
 99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces them: every
 page has a weight budget for HTML, CSS, and JavaScript, every shipped image one
-of its own, images ship as AVIF and WebP with fixed dimensions, and a weekly
+of its own, images ship as AVIF with fixed dimensions, and a weekly
 Lighthouse run fails below 95 on accessibility.
 
 ## Verify it yourself

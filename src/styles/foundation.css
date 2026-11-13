@@ -59,10 +59,6 @@
     -webkit-user-drag: none;
   }
 
-  picture {
-    display: contents;
-  }
-
   h1,
   h2,
   h3,

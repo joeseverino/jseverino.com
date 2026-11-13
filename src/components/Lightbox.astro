@@ -22,13 +22,12 @@
     for (const img of document.querySelectorAll<HTMLImageElement>('.prose img')) {
       if (img.closest('[data-no-zoom]')) continue;
       const trigger = document.createElement('button');
-      const media = img.closest('picture') ?? img;
       trigger.className = 'image-zoom';
       trigger.type = 'button';
       trigger.setAttribute('aria-haspopup', 'dialog');
       trigger.setAttribute('aria-label', img.alt ? `Open image: ${img.alt}` : 'Open image');
-      media.before(trigger);
-      trigger.append(media);
+      img.before(trigger);
+      trigger.append(img);
     }
 
     const open = (trigger: HTMLElement, restoreFocus: boolean) => {

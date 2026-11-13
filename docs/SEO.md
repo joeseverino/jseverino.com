@@ -75,7 +75,7 @@ The sync ([`bin/content-sync/public-projection.ts`](../bin/content-sync/public-p
 
 Open Graph defaults to `/assets/og/og-default.jpg` unless a route supplies a different image. `og:image:width` and `og:image:height` are emitted alongside `og:image` whenever dimensions are known: from the image manifest for writeup heroes, or from `site.ts` for the default card.
 
-Article and body images are optimized during sync and rendered with stable dimensions (`Picture.astro`, and `enhanceImages()` in [`src/lib/images.ts`](../src/lib/images.ts) for Markdown bodies), so images cause no layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
+Article and body images are optimized during sync and rendered with stable dimensions ([`Image.astro`](../src/components/Image.astro), which renders Markdown body images too), so images cause no layout shift. The May 2026 migration comparison recorded CLS `0` on the measured Astro pages.
 
 ### Cover alt text
 

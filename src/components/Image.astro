@@ -3,7 +3,7 @@
 // and Astro would ship the unprocessed file with its EXIF.
 // A URL string (the default social card) renders as a plain <img>.
 import type { ImageMetadata } from 'astro';
-import { Picture as AstroPicture } from 'astro:assets';
+import { Image as AstroImage } from 'astro:assets';
 import { IMAGE_WIDTHS } from '@lib/images.ts';
 
 type Props = {
@@ -26,12 +26,11 @@ const zoom = noZoom ? { 'data-no-zoom': '' } : {};
   typeof src === 'string' ? (
     <img src={src} alt={alt} class={className} loading={loading} decoding="async" fetchpriority={fetchpriority} {...zoom} />
   ) : (
-    <AstroPicture
+    <AstroImage
       src={src}
       alt={alt}
       class={className}
-      formats={['avif']}
-      fallbackFormat="webp"
+      format="avif"
       widths={IMAGE_WIDTHS}
       sizes={sizes}
       {...(width ? { width } : {})}

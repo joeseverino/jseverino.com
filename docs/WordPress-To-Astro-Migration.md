@@ -20,7 +20,7 @@ The result:
 
 - content is written privately in a [Vault-driven workflow](./Vault-Workflow.md), then synced through an allowlisted pipeline;
 - pages are generated as static HTML, CSS, JavaScript, and optimized assets;
-- screenshots are encoded to responsive AVIF and WebP at build time by the [image pipeline](./Architecture.md#8-image-pipeline);
+- screenshots are encoded to responsive AVIF at build time by the [image pipeline](./Architecture.md#8-image-pipeline);
 - [metadata, sitemap, RSS, JSON-LD, and canonical URLs](./SEO.md) are generated from the same content source;
 - Cloudflare serves the site without exposing a WordPress runtime (see [Architecture](./Architecture.md)).
 
@@ -32,7 +32,7 @@ The result:
 | Admin surface | Public WordPress admin path unless externally protected | No public admin application |
 | Plugin risk | Plugin/theme code executes in the public origin | No production plugin runtime |
 | Content source | Database plus theme/plugin behavior | Markdown snapshot generated from the [private vault](./Vault-Workflow.md) |
-| Image delivery | Large PNG screenshots from uploads | Responsive AVIF/WebP plus optimized fallbacks |
+| Image delivery | Large PNG screenshots from uploads | Responsive AVIF at fixed dimensions |
 | Reviewability | Runtime behavior spread across WordPress, plugins, database, and theme | Public repo contains the build source and [generated content snapshot](./Architecture.md#2-source-of-truth) |
 | Deployment | Origin application and database must remain healthy | Static deploy artifact can be [rebuilt and redeployed](./Architecture.md#14-release-gate) |
 

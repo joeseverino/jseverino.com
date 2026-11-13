@@ -81,7 +81,7 @@ Modifiers go after the alt text, separated by `|`:
 
 The sync writes each image's master beside its document: at most 1600 pixels
 wide, converted to sRGB, with every metadata block (EXIF, XMP, ICC) removed.
-Astro encodes AVIF and WebP at 512, 768, 1024, and 1600 pixels from it, with
+Astro encodes AVIF at 512, 768, 1024, and 1600 pixels from it, with
 the intrinsic size on every `<img>` so nothing shifts as it loads.
 
 ## Figures
