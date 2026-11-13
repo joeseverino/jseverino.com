@@ -34,7 +34,7 @@ function firstFailureLine(log: string): string {
   return lines.find((line) => /^(error|failed|fail|✖|✗|-\s)/i.test(line)) ?? lines.at(-1) ?? 'failed';
 }
 
-const slug = (url: string): string => new URL(url).pathname.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'home';
+const pageKey = (url: string): string => new URL(url).pathname.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'home';
 const percent = (score: Score | undefined): number | '-' => (score === null || score === undefined ? '-' : Math.round(score * 100));
 
 // How each page is audited: the browser, and where its reports go.
@@ -55,7 +55,7 @@ interface PageResult {
 // One Lighthouse run, its reports written beside its log; the log's text, and the report
 // when the run produced one.
 function audit(url: string, formFactor: FormFactor, { chromeFlags, chromePath, outDir, stamp }: AuditSetup): { log: string; reportFile?: string } {
-  const base = path.join(outDir, `${formFactor}-${slug(url)}-${stamp}`);
+  const base = path.join(outDir, `${formFactor}-${pageKey(url)}-${stamp}`);
   // `lighthouse` resolves from node_modules/.bin, which mise puts on PATH.
   const result = spawnResult(
     'lighthouse',
@@ -85,7 +85,7 @@ const missed = (scores: Record<string, Score>, minScores: Record<string, number>
 
 // Audits one page on one form factor and reports it to the log and the annotations.
 function auditPage(url: string, formFactor: FormFactor, setup: AuditSetup, minScores: Record<string, number>): PageResult {
-  const label = `${formFactor} ${slug(url)}`;
+  const label = `${formFactor} ${pageKey(url)}`;
   const { log, reportFile } = audit(url, formFactor, setup);
   if (!reportFile) {
     const reason = firstFailureLine(log);

@@ -310,7 +310,7 @@ async function verifyCodeScanning(): Promise<string> {
   return 'zero open CodeQL alerts';
 }
 
-async function check(report: Report, name: string, verify: () => string | Promise<string>): Promise<boolean> {
+async function runCheck(report: Report, name: string, verify: () => string | Promise<string>): Promise<boolean> {
   try {
     const detail = await verify();
     report.add(name, true, detail);
@@ -426,10 +426,10 @@ With no flags, verifies production from a clean main checkout.
   const sha = production ? releaseCandidate() : (process.env.DEPLOY_SHA ?? 'deployment');
   status('target', `${origin}${preview ? ' (preview)' : ''}`);
 
-  const deployed = production ? await check(report, 'remote', () => waitForChecks(sha)) : true;
+  const deployed = production ? await runCheck(report, 'remote', () => waitForChecks(sha)) : true;
 
   let urls: string[] = [];
-  const sitemapOk = await check(report, 'sitemap', async () => {
+  const sitemapOk = await runCheck(report, 'sitemap', async () => {
     urls = await collectSitemapUrls(target);
     return `${urls.length} URLs listed`;
   });
@@ -437,7 +437,7 @@ With no flags, verifies production from a clean main checkout.
   for (const { name, verify, pages, skipped } of checks) {
     const reason = skipped ?? (pages && !sitemapOk ? 'sitemap unavailable' : undefined);
     if (reason) skip(report, name, reason);
-    else await check(report, name, verify);
+    else await runCheck(report, name, verify);
   }
   return conclude(report, `for \`${sha.slice(0, 12)}\` against ${origin}`, { deployed, production });
 }

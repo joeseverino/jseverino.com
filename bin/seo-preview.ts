@@ -71,7 +71,7 @@ function row(label: string, value: string): void {
   console.log(`  ${styleText('dim', label.padEnd(12))} ${value}`);
 }
 
-function check(label: string, ok: boolean, detail: string): void {
+function verdict(label: string, ok: boolean, detail: string): void {
   const mark = ok ? styleText('green', 'PASS'.padEnd(8)) : styleText('yellow', 'REVIEW'.padEnd(8));
   console.log(`  ${mark} ${label.padEnd(13)} ${detail}`);
 }
@@ -144,9 +144,9 @@ row('og:image', ogImage || styleText('yellow', 'missing'));
 console.log();
 
 console.log(styleText('bold', 'Checks'));
-check('canonical', new URL(canonical).hostname === siteHost, 'production domain');
-check('title', titleLength >= 20 && titleLength <= 65, 'target 20-65 chars');
-check('description', descriptionLength >= 70 && descriptionLength <= 170, 'target 70-170 chars');
-check('robots', !/noindex/i.test(robots), robots || 'indexable');
-check('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image');
+verdict('canonical', new URL(canonical).hostname === siteHost, 'production domain');
+verdict('title', titleLength >= 20 && titleLength <= 65, 'target 20-65 chars');
+verdict('description', descriptionLength >= 70 && descriptionLength <= 170, 'target 70-170 chars');
+verdict('robots', !/noindex/i.test(robots), robots || 'indexable');
+verdict('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image');
 console.log();

@@ -476,7 +476,7 @@ function diff(desired: DesiredState, live: LiveState, openapi: string): Item[] {
 }
 
 // A field a later step depends on; a response without it must not become the id "undefined".
-function required(result: Record<string, unknown>, field: string, step: Call): string {
+function savedField(result: Record<string, unknown>, field: string, step: Call): string {
   const value = result[field];
   if (value === undefined || value === null || value === '') throw new Error(`${step.method} ${step.path}: response has no ${field}`);
   return String(value);
@@ -492,7 +492,7 @@ export const createRun = (desired: DesiredState, client: Client, openapi: string
       log,
       async call(step) {
         const result = fields((await client.request<object>(step.method, step.path, step.body)).result);
-        for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = required(result, field, step);
+        for (const [name, field] of Object.entries(step.saveAs ?? {})) client.ids[name] = savedField(result, field, step);
       },
     }),
 });

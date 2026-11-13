@@ -35,7 +35,7 @@ const { values } = cli({
 });
 
 // --check: resolve every reference and the contract, write nothing.
-async function check(): Promise<number> {
+async function verifyContent(): Promise<number> {
   const result = await checkContent({ vaultRoot: existingDir('vault', vaultRoot(), 'VAULT_DIR'), slug: values.slug, draft: values.draft });
   if (values.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -81,4 +81,4 @@ async function sync(): Promise<number> {
   return 0;
 }
 
-await exitWith('sync-content', values.check ? check : sync);
+await exitWith('sync-content', values.check ? verifyContent : sync);
