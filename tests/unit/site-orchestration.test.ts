@@ -14,7 +14,7 @@ import { DEPLOY_CHECK } from '../../src/lib/site-config.ts';
 import { tempDir, write } from './helpers/fs.ts';
 
 const out = createOutput({ quiet: true });
-const NOW = new Date(2026, 9, 2, 14, 5);
+const NOW = Temporal.PlainDateTime.from('2026-10-02T14:05');
 const BRANCH = 'content/2026-10-02-1405';
 const saved: Record<string, string | undefined> = {};
 let tmp = '';

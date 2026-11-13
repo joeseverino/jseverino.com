@@ -7,6 +7,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { readJson } from '../src/lib/json.ts';
 import { cli, exitWith } from './lib/args.ts';
 import { type CheckRun, checkRuns, createClient, passed, requiredContexts } from './lib/github.ts';
 import type { Fetch } from './lib/rest.ts';
@@ -99,7 +100,7 @@ interface Comment {
 export interface MainOptions {
   env?: NodeJS.ProcessEnv;
   fetch?: Fetch;
-  dir?: string;
+  dir?: string | undefined;
   log?: (line: string) => void;
 }
 
@@ -107,10 +108,10 @@ export async function main({ env = process.env, fetch, dir = 'summaries', log = 
   const { GITHUB_REPOSITORY: repository, GITHUB_EVENT_PATH: eventPath, PREVIEW: preview } = env;
   if (!repository || !eventPath || !preview) throw new Error('GITHUB_REPOSITORY, GITHUB_EVENT_PATH and PREVIEW must be set');
   // The default branch is on the event's own repository; workflow_run.repository is the minimal form without it.
-  const { workflow_run: run, repository: eventRepository } = JSON.parse(fs.readFileSync(eventPath, 'utf8')) as {
+  const { workflow_run: run, repository: eventRepository } = readJson<{
     workflow_run: WorkflowRun;
     repository?: { default_branch?: string };
-  };
+  }>(eventPath);
   const defaultBranch = eventRepository?.default_branch;
   if (!defaultBranch) throw new Error('the event has no repository.default_branch');
   const github = createClient({ token: env.GITHUB_TOKEN, fetch });
@@ -142,5 +143,5 @@ if (import.meta.main) {
     console.error(USAGE);
     process.exit(2);
   }
-  await exitWith('pr-comment', () => main({ ...(dir ? { dir } : {}) }));
+  await exitWith('pr-comment', () => main({ dir }));
 }

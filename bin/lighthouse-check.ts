@@ -124,7 +124,8 @@ async function main(): Promise<number> {
   const { urls, chromeFlags, minScores } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
   const outDir = fromCheckoutCache('lighthouse');
   fs.mkdirSync(outDir, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '');
+  // A UTC basic-format stamp (20260102T030405), safe in a file name.
+  const stamp = Temporal.Now.plainDateTimeISO('UTC').toString({ smallestUnit: 'second' }).replace(/[-:]/g, '');
   const setup = { chromeFlags, chromePath, outDir, stamp };
   const formFactors = Object.entries(minScores) as [FormFactor, Record<string, number>][];
 

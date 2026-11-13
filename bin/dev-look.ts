@@ -3,10 +3,12 @@
 // not load.
 
 import { type ChildProcess, spawn } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from '@playwright/test';
 import { buildOutDir, workerConfig } from '../src/lib/build-output.ts';
@@ -81,9 +83,9 @@ async function sitemapPaths(): Promise<string[]> {
 
 const freePort = async (): Promise<number> => {
   const probe = http.createServer().listen(0, '127.0.0.1');
-  await new Promise((resolve) => probe.once('listening', resolve));
+  await once(probe, 'listening');
   const { port } = probe.address() as AddressInfo;
-  await new Promise((resolve) => probe.close(resolve));
+  await once(probe.close(), 'close');
   return port;
 };
 
@@ -129,7 +131,7 @@ async function waitForServer(origin: string, server: ChildProcess, log: () => st
       await fetch(origin, { method: 'HEAD', signal: AbortSignal.timeout(5_000) });
       return;
     } catch {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await sleep(250);
     }
   }
   throw new Error(`astro preview did not answer at ${origin} within 2 minutes:\n${log()}`);

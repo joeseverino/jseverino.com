@@ -26,8 +26,6 @@ export interface DiffOptions {
   range?: string;
 }
 
-const STATUS: Record<string, FileStatus> = { A: 'A', D: 'D' };
-
 // The files a range (`a..b`, `a...b`) changes, or without one, the working
 // tree against HEAD including untracked files.
 function changedFiles({ cwd = siteRoot, range }: DiffOptions = {}): ChangedFile[] {
@@ -35,7 +33,10 @@ function changedFiles({ cwd = siteRoot, range }: DiffOptions = {}): ChangedFile[
     const out = runSync('git', ['diff', '--name-status', '--no-renames', '-z', range, '--', ...CONTENT_PATHS], { cwd, raw: true });
     const fields = out.split('\0').filter(Boolean);
     const files: ChangedFile[] = [];
-    for (let i = 0; i + 1 < fields.length; i += 2) files.push({ status: STATUS[fields[i]?.[0] ?? ''] ?? 'M', path: fields[i + 1] ?? '' });
+    for (let i = 0; i + 1 < fields.length; i += 2) {
+      const letter = fields[i]?.[0];
+      files.push({ status: letter === 'A' || letter === 'D' ? letter : 'M', path: fields[i + 1] ?? '' });
+    }
     return files;
   }
   return statusEntries(cwd, ...CONTENT_PATHS).map((entry): ChangedFile => {

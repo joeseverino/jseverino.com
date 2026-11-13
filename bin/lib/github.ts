@@ -1,6 +1,6 @@
 // GitHub's REST API for the bin/ scripts: one client over fetch, and the
 // repository reads the deploy and land flows make with it.
-import { setTimeout as delay } from 'node:timers/promises';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { absentOn404, createSend, type Fetch } from './rest.ts';
 import { spawnResult } from './run.ts';
 
@@ -134,6 +134,6 @@ export async function awaitChecks(
     if (missing.length === 0 && pending.length === 0) return [...runs.values()];
     if (Date.now() >= deadline) return null;
     onPending({ missing, pending });
-    await delay(intervalMs);
+    await sleep(intervalMs);
   }
 }
