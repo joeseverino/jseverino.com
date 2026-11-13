@@ -407,7 +407,7 @@ function conclude(report: Report, against: string, { deployed, production }: { d
   return 0;
 }
 
-export async function main(): Promise<number> {
+async function main(): Promise<number> {
   const { values } = cli({
     usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
     options: {

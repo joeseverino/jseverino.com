@@ -5,9 +5,9 @@ import { siteRoot } from '../src/lib/site-root.ts';
 import { statusEntries } from './lib/git.ts';
 import { runSync } from './lib/run.ts';
 
-export const CONTENT_PATHS = ['src/content'];
+const CONTENT_PATHS = ['src/content'];
 
-export type FileStatus = 'A' | 'M' | 'D';
+type FileStatus = 'A' | 'M' | 'D';
 export interface ChangedFile {
   status: FileStatus;
   path: string;

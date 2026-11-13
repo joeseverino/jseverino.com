@@ -112,7 +112,7 @@ function auditPage(url: string, formFactor: FormFactor, setup: AuditSetup, minSc
   };
 }
 
-export async function main(): Promise<number> {
+async function main(): Promise<number> {
   cli({ usage: 'usage: node bin/lighthouse-check.ts\n\nRuns Lighthouse against the URLs in tests/lighthouse.json.' });
 
   const chromePath = process.env.CHROME_PATH || chromium.executablePath();

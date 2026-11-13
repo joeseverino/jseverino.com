@@ -7,7 +7,7 @@ import { exitWith } from './lib/args.ts';
 import { type ClientOptions, createClient, createRun, loadDesired } from './lib/cloudflare.ts';
 import { type ToolOptions, toolMain } from './lib/drift.ts';
 
-export const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
+const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 
   check   Read the live zone and account, diff against cloudflare/zone.json,
           print a table (--json for machine output). Exit 1 on drift.

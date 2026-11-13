@@ -22,7 +22,7 @@ interface RunContext<V> {
   out: Output;
 }
 
-export interface Command<R = unknown> {
+interface Command<R = unknown> {
   summary: string;
   usage: string;
   help?: string;
@@ -69,7 +69,7 @@ const minutes = (value: string, name: string): number => {
   return n * 60_000;
 };
 
-export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
+const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   new: define({
     summary: 'Scaffold a vault writeup from the template (starts published: false)',
     usage: 'site new <slug>',
@@ -425,5 +425,3 @@ async function main(argv: string[]): Promise<number> {
 }
 
 if (import.meta.main) process.exitCode = await main(process.argv.slice(2));
-
-export { main };

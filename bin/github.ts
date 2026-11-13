@@ -11,7 +11,7 @@ import { type ToolOptions, toolMain } from './lib/drift.ts';
 import { type ClientOptions, createClient, resolveToken } from './lib/github.ts';
 import { createRun, loadDesired } from './lib/github-settings.ts';
 
-export const USAGE = `usage: node bin/github.ts <check|plan|apply> [--json] [--yes]
+const USAGE = `usage: node bin/github.ts <check|plan|apply> [--json] [--yes]
 
   check   Read the live repository, diff against .github/repo.json, print a
           table (--json for machine output). Exit 1 on drift.
