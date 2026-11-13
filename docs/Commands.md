@@ -159,44 +159,44 @@ reports an advisory ([`Dependencies.md`](./Dependencies.md)). The publishing wor
 
 - **Usage:** `browser`
 
-Every browser gate, one at a time: one build with the test site key, then each suite
+Run every browser gate, one at a time: one build with the test site key, then each suite
 
 ## `build`
 
 - **Usage:** `build`
 
-The build every deploy ships: astro build, then the CSP hashes
+Build what every deploy ships: the writeup index, astro build, then the CSP hashes
 
 ## `build:browser`
 
 - **Usage:** `build:browser`
 
-The build the browser suites serve under PREBUILT: the deploy build, with the test site key
+Build what the browser suites serve under PREBUILT: the deploy build, with the test site key
 
 ## `built`
 
 - **Usage:** `built`
 
-CI job build, last phase: every gate on the build in dist/client/, collect-all
+Run every gate on the build in dist/client/, collect-all (CI job build, last phase)
 
 ## `check`
 
 - **Usage:** `check`
 
-Does my change work: every static gate, the production build, then every gate on what it built (CI job build)
+Check a change: every static gate, the production build, then every gate on what it built (CI job build)
 
 ## `checks`
 
 - **Usage:** `checks`
 - **Aliases:** `fast`
 
-CI job build, first phase: every static gate, collect-all
+Run every static gate, collect-all (CI job build, first phase)
 
 ## `ci`
 
 - **Usage:** `ci`
 
-Every gate the pipeline runs: check, then the browser suites
+Run every gate the pipeline runs: check, then the browser suites
 
 ## `clean:generated`
 
@@ -208,7 +208,7 @@ Remove build output (`dist/`), `.astro/` and the Vite cache; shared caches and s
 
 - **Usage:** `cloudflare`
 
-`check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)
+Hold the live zone and account to `cloudflare/zone.json`: `check` diffs them (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)
 
 ## `d1:schema`
 
@@ -226,7 +226,7 @@ Apply `cloudflare/d1.sql` to the D1 database bound as `DB`: `local` (the one `mi
 
 - **Usage:** `deploy:verify`
 
-After the merge deploys, from a residential IP: verify remote CI and the live production deploy
+Verify remote CI and the live production deploy, after the merge deploys, from a residential IP
 
 ## `dev`
 
@@ -246,7 +246,7 @@ Screenshot pages of the build as `preview` serves it, at each width in light and
 
 - **Usage:** `diff:build`
 
-Build HEAD and the working tree; show what changed in the shipped site
+Build HEAD and the working tree, and show what changed in the shipped site
 
 ## `fix:lint`
 
@@ -258,31 +258,25 @@ Apply Biome's safe fixes and formatting to the files biome.jsonc covers, and rep
 
 - **Usage:** `github`
 
-`check` diffs the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)
+Hold the live repository settings, security features, Actions permissions, and `main` ruleset to `.github/repo.json`: `check` diffs them (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)
 
 ## `lighthouse`
 
 - **Usage:** `lighthouse`
 
-Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)
+Run Lighthouse against the live site with the URLs and floors in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)
 
 ## `links:content`
 
 - **Usage:** `links:content`
 
-Every external link in the published content answers (online); links to jseverino.com itself are built:links' job
+Check that every external link in the published content answers (online); links to jseverino.com itself are built:links' job
 
 ## `links:docs`
 
 - **Usage:** `links:docs`
 
-Every external link in the engineering docs answers (online)
-
-## `make:content-index`
-
-- **Usage:** `make:content-index`
-
-Emit the published-writeup JSON projection consumed by Severino HQ
+Check that every external link in the engineering docs answers (online)
 
 ## `make:embed`
 
@@ -292,7 +286,7 @@ Regenerate `public/embed/bundle.css`, the embeddable stylesheet (brand vars, bas
 
 ## `make:font`
 
-Re-subset the Inter webfont to the site's characters, weights 400-700 and the optical-size axis, from the committed file or an upstream Inter release
+Re-subset the Inter webfont to the site's characters, weights and optical-size axis, from the committed file or an upstream Inter release
 
 
 - **Usage:** `make:font [--source <font>] [--output <font>]`
@@ -335,7 +329,7 @@ Turn the finished build into a branch preview: add the review viewer, then rebui
 
 - **Usage:** `publish:dist`
 
-Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)
+Commit a build directory to the `dist` branch, as the deploy workflow's `dist` job does; `--push` pushes it
 
 ## `setup:browsers`
 
@@ -359,7 +353,7 @@ Re-sign `public/.well-known/security.txt`
 
 - **Usage:** `site`
 
-The publishing workflow CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)
+Run the publishing CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)
 
 ## `snapshot:github`
 
@@ -377,7 +371,7 @@ Refresh the committed PyPI/npm snapshot (versions, monthly downloads); fails wit
 
 - **Usage:** `sync:contact-openapi`
 
-Regenerate contact OpenAPI from its request contract
+Regenerate the contact OpenAPI from its request contract
 
 ## `sync:content`
 
@@ -389,7 +383,7 @@ Pull published content from the vault into the repo
 
 - **Usage:** `sync:contract`
 
-Regenerate typed content-contract projections
+Regenerate the typed projections of the content contract
 
 ## `sync:tokens`
 

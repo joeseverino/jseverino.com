@@ -1,5 +1,5 @@
 #!/bin/sh
-#MISE description="Re-subset the Inter webfont to the site's characters, weights 400-700 and the optical-size axis, from the committed file or an upstream Inter release"
+#MISE description="Re-subset the Inter webfont to the site's characters, weights and optical-size axis, from the committed file or an upstream Inter release"
 #USAGE flag "--source <font>" help="Inter variable font to start from (default: the committed font)"
 #USAGE flag "--output <font>" help="Where to write the result (default: the committed font)"
 set -eu

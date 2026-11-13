@@ -1,5 +1,5 @@
 #!/bin/sh
-#MISE description="Does my change work: every static gate, the production build, then every gate on what it built (CI job build)"
+#MISE description="Check a change: every static gate, the production build, then every gate on what it built (CI job build)"
 #MISE timeout="30m"
 
 # Each phase reports every failure it finds. The built:* gates run only on a
