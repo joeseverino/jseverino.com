@@ -61,7 +61,7 @@ async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: numb
   if (required.length === 0) {
     throw new SiteError("main's ruleset requires no status checks, so land cannot tell when the PR is ready", {
       result: { pr: pr.url },
-      fix: 'add the required status checks to the main ruleset (docs/Release-Checklist.md)',
+      fix: 'declare the required status checks in .github/repo.json and apply them (docs/GitHub-Settings.md)',
     });
   }
   const head = pr.headRefOid;
