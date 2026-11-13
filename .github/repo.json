@@ -31,6 +31,7 @@
     "dependabot_security_updates": "disabled",
     "vulnerability_alerts": true,
     "private_vulnerability_reporting": true,
+    "immutable_releases": true,
     "code_scanning": { "state": "configured", "languages": ["actions", "javascript-typescript"] }
   },
   "actions": {

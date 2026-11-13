@@ -10,6 +10,7 @@ export interface FakeState {
   repo: Fields;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  immutableReleases: boolean;
   codeScanning: Fields;
   permissions: Fields;
   workflow: Fields;
@@ -28,7 +29,7 @@ export function createGithubFake(seed: FakeState, token: string) {
   const empty = (status = 204) => new Response(null, { status });
   const notFound = () => json({ message: 'Not Found' }, 404);
   const ruleset = (id: string) => state.rulesets.find((entry) => String(entry.id) === id);
-  const toggle = (flag: 'vulnerabilityAlerts' | 'privateReporting', on: boolean) => {
+  const toggle = (flag: 'vulnerabilityAlerts' | 'privateReporting' | 'immutableReleases', on: boolean) => {
     state[flag] = on;
     return empty();
   };
@@ -59,6 +60,9 @@ export function createGithubFake(seed: FakeState, token: string) {
     ['GET', /^\/private-vulnerability-reporting$/, () => json({ enabled: state.privateReporting })],
     ['PUT', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', true)],
     ['DELETE', /^\/private-vulnerability-reporting$/, () => toggle('privateReporting', false)],
+    ['GET', /^\/immutable-releases$/, () => json({ enabled: state.immutableReleases, enforced_by_owner: false })],
+    ['PUT', /^\/immutable-releases$/, () => toggle('immutableReleases', true)],
+    ['DELETE', /^\/immutable-releases$/, () => toggle('immutableReleases', false)],
     // API versions before 2026-03-10 also list javascript-typescript as its single-language aliases.
     [
       'GET',

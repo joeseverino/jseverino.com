@@ -66,6 +66,7 @@ describe('check', () => {
     assert.equal(status(report, 'secret_scanning_push_protection'), 'drift');
     assert.equal(status(report, 'private_vulnerability_reporting'), 'drift');
     assert.equal(status(report, 'vulnerability_alerts'), 'ok');
+    assert.equal(status(report, 'immutable_releases'), 'drift');
     assert.equal(status(report, 'code_scanning'), 'drift');
     assert.equal(status(report, 'permissions'), 'drift');
     assert.equal(status(report, 'workflow token'), 'ok');
@@ -82,6 +83,15 @@ describe('check', () => {
     gate.required_status_checks = gate.required_status_checks.filter((check) => check.context !== 'edge');
     const { report } = await checkJson(createGithubFake(trimmed, TOKEN));
     assert.equal(status(report, 'ruleset main'), 'drift');
+  });
+
+  // GitHub documents a 404 for immutable releases that are off, where the live API answers 200.
+  test('immutable releases answering 404 read as off', async () => {
+    const fake = createGithubFake(seed, TOKEN);
+    const fetch = (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith('/immutable-releases') ? Promise.resolve(new Response('{"message":"Not Found"}', { status: 404 })) : fake.fetch(input, init);
+    const { report } = await checkJson({ ...fake, fetch });
+    assert.equal(status(report, 'immutable_releases'), 'drift');
   });
 
   test('sends the token only as a bearer header and never prints it', async () => {
@@ -102,6 +112,7 @@ describe('plan', () => {
       `PATCH ${repo}/code-scanning/default-setup`,
       `POST ${repo}/actions/variables`,
       `PUT ${repo}/actions/permissions`,
+      `PUT ${repo}/immutable-releases`,
       `PUT ${repo}/private-vulnerability-reporting`,
       `PUT ${repo}/topics`,
     ]);
@@ -127,6 +138,7 @@ describe('apply --yes', () => {
     assert.deepEqual(fake.state.repo.topics, [...desired.topics]);
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
+    assert.equal(fake.state.immutableReleases, true);
     assert.equal(fake.state.permissions.sha_pinning_required, true);
     assert.equal(fake.state.codeScanning.state, 'configured');
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);

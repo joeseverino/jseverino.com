@@ -2,6 +2,7 @@
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
 import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, type Step, same } from './drift.ts';
 import type { Client } from './github.ts';
+import { absentOn404 } from './rest.ts';
 
 interface RulesetSpec {
   name: string;
@@ -36,6 +37,7 @@ export interface DesiredState {
     dependabot_security_updates: Status;
     vulnerability_alerts: boolean;
     private_vulnerability_reporting: boolean;
+    immutable_releases: boolean;
     code_scanning: { state: 'configured' | 'not-configured'; languages: string[] };
   };
   actions: {
@@ -52,6 +54,7 @@ export interface LiveState {
   repo: Record<string, unknown>;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  immutableReleases: boolean;
   codeScanning: Record<string, unknown>;
   permissions: Record<string, unknown>;
   workflow: Record<string, unknown>;
@@ -69,6 +72,8 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
     repo: await client.get<Record<string, unknown>>(base),
     vulnerabilityAlerts: await client.isOn(`${base}/vulnerability-alerts`),
     privateReporting: Boolean(fields(await client.get(`${base}/private-vulnerability-reporting`)).enabled),
+    // GitHub documents a 404 when off; the live API answers 200 with enabled false.
+    immutableReleases: Boolean(fields(await absentOn404(client.get(`${base}/immutable-releases`))).enabled),
     codeScanning: await client.get<Record<string, unknown>>(`${base}/code-scanning/default-setup`),
     permissions: await client.get<Record<string, unknown>>(`${base}/actions/permissions`),
     workflow: await client.get<Record<string, unknown>>(`${base}/actions/permissions/workflow`),
@@ -142,6 +147,7 @@ function securityItems(desired: DesiredState, live: LiveState, base: string): It
   for (const [key, have, path] of [
     ['vulnerability_alerts', live.vulnerabilityAlerts, `${base}/vulnerability-alerts`],
     ['private_vulnerability_reporting', live.privateReporting, `${base}/private-vulnerability-reporting`],
+    ['immutable_releases', live.immutableReleases, `${base}/immutable-releases`],
   ] as const) {
     const want = desired.security[key];
     items.push(have === want ? item('security', key, want, have, 'ok') : item('security', key, want, have, 'drift', [toggle(path, want)]));

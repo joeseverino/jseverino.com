@@ -141,11 +141,15 @@ a good signature. The push runs
 [`release.yml`](../.github/workflows/release.yml), which rebuilds nothing: it
 fetches the `release-<sha>` artifact the `deploy` workflow kept when it shipped
 that commit (the archive production served, its CycloneDX SBOM, and their
-Sigstore provenance and SBOM attestations) and attaches all four files to the
-GitHub release. Tag a commit `main` deployed in the last 90 days, while that
-artifact exists. To check a release:
+Sigstore provenance and SBOM attestations) and publishes the GitHub release with
+all four files attached. Releases are immutable
+([GitHub Settings](./GitHub-Settings.md)): once published, the files and the tag
+are locked and GitHub attests the release, so a release is never edited, and a
+fix ships as the next version. Tag a commit `main` deployed in the last 90 days,
+while that artifact exists. To check a release:
 
 ```sh
+gh release verify v<version> -R joeseverino/jseverino.com
 gh release download v<version> -R joeseverino/jseverino.com -p '*.tar.gz'
 gh attestation verify jseverino.com-v<version>.tar.gz -R joeseverino/jseverino.com
 ```

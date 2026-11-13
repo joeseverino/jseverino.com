@@ -60,6 +60,7 @@
         "dependabot_security_updates",
         "vulnerability_alerts",
         "private_vulnerability_reporting",
+        "immutable_releases",
         "code_scanning"
       ],
       "properties": {
@@ -71,6 +72,10 @@
           "type": "boolean"
         },
         "private_vulnerability_reporting": { "type": "boolean" },
+        "immutable_releases": {
+          "description": "Immutable releases (PUT /repos/:repository/immutable-releases): a published release's files and tag are locked, and GitHub attests it. release.yml publishes each release with its files attached.",
+          "type": "boolean"
+        },
         "code_scanning": {
           "description": "CodeQL default setup (PATCH /repos/:repository/code-scanning/default-setup). The ruleset's code_scanning rule requires its results, so both change in one apply.",
           "type": "object",
