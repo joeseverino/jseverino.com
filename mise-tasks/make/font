@@ -18,7 +18,9 @@ fonttools() {
 instance=$(mktemp)
 trap 'rm -f "$instance"' EXIT
 
-fonttools fonttools varLib.instancer --quiet --output "$instance" "$source" wght=400:700
+# The instance keeps the source's head.modified (pyftsubset keeps it by
+# default), so the same source always gives the same bytes.
+fonttools fonttools varLib.instancer --quiet --no-recalc-timestamp --output "$instance" "$source" wght=400:700
 fonttools pyftsubset "$instance" --output-file="$output" --unicodes="$unicodes" \
   --layout-features='*' --name-IDs='*' --notdef-outline --flavor=woff2
 echo "wrote $output: $(wc -c <"$output" | tr -d ' ') bytes"
