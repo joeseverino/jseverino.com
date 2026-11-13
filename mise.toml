@@ -1,43 +1,28 @@
-# The toolchain, the environment, the entry points and the operator's tools.
+# The toolchain, the environment, the entry points and the tools.
 #
-#   mise install        the pinned tools (versions here, checksums in mise.lock)
-#   mise run <task>     first installs the npm packages when package.json or
-#                       package-lock.json changed ([deps.npm]), then the task
-#   mise run fast       the static gates, collect-all
-#   mise run check      does my change work: the static gates, the production
-#                       build, then every gate on what it built
-#   mise run browser    the browser suites, one at a time
-#   mise run ci         every gate the pipeline runs
-#   mise run <gate>     one gate a verdict names, e.g. `mise run checks:types`
-#   mise tasks          the entry points and tools; --hidden adds every gate
+#   mise run <task>      first installs the npm packages when package.json or
+#                        package-lock.json changed ([deps.npm]), then the task
+#   mise tasks --hidden  every gate too, each with what its pass guarantees
 #
 # A gate is a task named <job>:<gate>, declared in its job's file under
-# mise-tasks/ (mise-tasks/checks.toml for checks:*), mise's default task
-# directory, where it reads every .toml as a task file and every executable as
-# a file task. checks:* run before a build, built:* against the build in
-# dist/client/, browser:* in a browser. Each aggregate runs its job by glob
-# (`mise run -c 'checks:*'`), so a gate added there runs locally and in CI with
-# no second list to edit. Every gate is `hide = true`: the glob and
-# `mise run <gate>` still reach it. `-c` keeps going past a failure and names
-# every gate that failed. Under `-c` a task whose dependency failed still
-# starts, so no built:* gate depends on the build: the aggregates run the build
-# first and the built:* gates only after it succeeded. A failing gate prints
-# its own fix. No gate declares `sources`: a verdict also turns on the
-# environment and on files no list would name. Commands that run in sequence
-# are a `run` array; a body that branches or keeps a status is a file under
-# mise-tasks/, declared in its own #MISE header.
-#
-# Node is pinned here alone, and checks:repo-policy holds engines.node to it.
-# npm is pinned by package.json's packageManager, which mise reads (see
-# [settings]). npm packages come from package-lock.json; node_modules/.bin is
-# on every task's PATH.
+# mise-tasks/ (mise-tasks/checks.toml for checks:*). checks:* run before a
+# build, built:* against the build in dist/client/, browser:* in a browser.
+# Each aggregate runs its job by glob (`mise run -c 'checks:*'`), so a gate
+# added there runs locally and in CI with no second list to edit. Every gate is
+# `hide = true`: the glob and `mise run <gate>` still reach it. `-c` keeps going
+# past a failure and names every gate that failed. Under `-c` a task whose
+# dependency failed still starts, so no built:* gate depends on the build: the
+# aggregates run the build first and the built:* gates only after it succeeded.
+# No gate declares `sources`: a verdict also turns on the environment and on
+# files no list would name. Commands that run in sequence are a `run` array; a
+# body that branches or keeps a status is a file under mise-tasks/.
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
 min_version = "2026.11.7"
 
 [settings]
-# For [deps], mise's package installer.
+# [deps.npm] needs it.
 experimental = true
 # npm installs as its own tool at the release packageManager names, never the
 # one Node bundles.
@@ -52,9 +37,7 @@ lockfile_platforms = ["macos-arm64", "linux-x64"]
 # so each gate's failures sit under its own name.
 output = "keep-order"
 
-# A clean install from the lockfile, run before any `mise run` or `mise exec`
-# while package.json or package-lock.json differs from the last install or
-# node_modules is missing. --no-audit: dependency review and Renovate's alerts
+# A clean install from the lockfile. --no-audit: dependency review and Renovate's alerts
 # enforce advisories; an install would only print them. npm's output goes to
 # stderr, so a task whose stdout another program reads (`site --json`) still
 # prints only its own. CI installs the same way, in its setup action. No
@@ -107,9 +90,10 @@ hint = "Run `mise exec -- playwright install chromium firefox webkit`."
 # It loads @playwright/test from node_modules.
 depends = ["packages"]
 
-# A tool one gate or one task runs is lazy: `mise install` leaves it out, and
-# the first run of its command installs it from mise.lock.
+# A tool only one gate or task runs is lazy, installed on its first run.
 [tools]
+# Node is pinned here alone, and checks:repo-policy holds engines.node to it.
+# npm is pinned by package.json's packageManager (see [settings]).
 node = "26.13.1"
 lychee = "0.24.2"
 biome = "2.6.7"
@@ -216,8 +200,7 @@ raw_args = true
 run = "node bin/sync-contact-openapi.ts"
 
 # Gitignored, so every task that type-checks or resolves `Env` depends on this
-# one, as Cloudflare directs: `wrangler types` before any task that relies on
-# TypeScript. Warnings and errors only, so a gate run does not print the Env.
+# one. Warnings and errors only, so a gate run does not print the Env.
 [tasks."sync:worker-types"]
 description = "Write the Worker's `Env` and runtime types from wrangler.jsonc into src/generated/worker-configuration.d.ts"
 env = { WRANGLER_LOG = "warn" }
