@@ -22,7 +22,9 @@ commit of its own, and it is never in the site directory, so no host serves it.
 The `dist` job is the only one with `contents: write`, holds no Cloudflare secret,
 and runs only after `main`'s tip deploys, so pull-request code never holds the write
 token. The commit is created through the GitHub API, which signs it for the Actions
-token, so every `dist` commit shows Verified. The built tree goes up first under a
+token, so every `dist` commit shows Verified. The `dist` ruleset in
+[`.github/repo.json`](../.github/repo.json) refuses any update, force push or
+deletion except GitHub Actions', so nothing else moves the branch. The built tree goes up first under a
 hidden ref (`refs/dist-staging/<sha>`, not a branch) and is deleted once `dist`
 moves. The `deploy` workflow starts only from a `ci` run, and `ci` runs only on
 `main` and pull requests into it, so a push to `dist` deploys nothing.

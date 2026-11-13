@@ -37,10 +37,10 @@ test('the deploy check-run the workflow writes is the one main requires, from th
   const open = action.runs.steps.find((step) => step.id === 'open');
   assert.equal(open?.env?.NAME, DEPLOY_CHECK);
 
-  const repo = readJson<{ ruleset: { rules: { type: string; parameters?: { required_status_checks?: { context: string; integration_id?: number }[] } }[] } }>(
-    fromRoot('.github/repo.json'),
-  );
-  const required = repo.ruleset.rules.flatMap((rule) => rule.parameters?.required_status_checks ?? []);
+  const repo = readJson<{
+    rulesets: { rules: { type: string; parameters?: { required_status_checks?: { context: string; integration_id?: number }[] } }[] }[];
+  }>(fromRoot('.github/repo.json'));
+  const required = repo.rulesets.flatMap((ruleset) => ruleset.rules).flatMap((rule) => rule.parameters?.required_status_checks ?? []);
   assert.deepEqual(
     required.find((check) => check.context === DEPLOY_CHECK),
     { context: DEPLOY_CHECK, integration_id: GITHUB_ACTIONS_APP },

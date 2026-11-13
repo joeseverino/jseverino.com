@@ -4,6 +4,7 @@ import { main } from '../../bin/github.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
 import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
+import { DIST_BRANCH } from '../../src/lib/site-config.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
 import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
@@ -12,6 +13,14 @@ const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');
 const schema = read<JsonSchema>('.github/repo.schema.json');
 const desired = read<DesiredState>('.github/repo.json');
+const ruleset = (name: string) => {
+  const found = desired.rulesets.find((entry) => entry.name === name);
+  assert.ok(found, `repo.json declares the ${name} ruleset`);
+  return found;
+};
+const mainRuleset = ruleset('main');
+// The app GitHub's Actions token acts as (`gh api /apps/github-actions --jq .id`).
+const GITHUB_ACTIONS_APP = 15368;
 
 // A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
@@ -22,7 +31,7 @@ const DESIRED_FIELDS = {
   security: true,
   actions: true,
   variables: true,
-  ruleset: true,
+  rulesets: true,
 } satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
@@ -33,22 +42,31 @@ describe('.github/repo.json', () => {
   schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
 
   test('squash is the only merge method, in the settings and in the ruleset', () => {
-    const { settings, ruleset } = desired;
+    const { settings } = desired;
     assert.deepEqual([settings.allow_squash_merge, settings.allow_merge_commit, settings.allow_rebase_merge], [true, false, false]);
-    const pullRequest = ruleset.rules.find((rule) => rule.type === 'pull_request');
+    const pullRequest = mainRuleset.rules.find((rule) => rule.type === 'pull_request');
     assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, ['squash']);
   });
 
   test('the ruleset keeps signed commits required and the branch undeletable', () => {
-    const types = desired.ruleset.rules.map((rule) => rule.type);
+    const types = mainRuleset.rules.map((rule) => rule.type);
     for (const type of ['required_signatures', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
+  });
+
+  // Only the dist job's commits move the branch, so what it holds is only ever what production served.
+  test('the dist branch moves only by the Actions app, never by force, and is never deleted', () => {
+    const dist = ruleset(DIST_BRANCH);
+    assert.deepEqual(dist.conditions, { ref_name: { include: [`refs/heads/${DIST_BRANCH}`], exclude: [] } });
+    assert.deepEqual(dist.bypass_actors, [{ actor_id: GITHUB_ACTIONS_APP, actor_type: 'Integration', bypass_mode: 'always' }]);
+    const types = dist.rules.map((rule) => rule.type);
+    for (const type of ['update', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
   });
 
   test('CodeQL gates merges through default setup and the code_scanning rule, never a workflow check', () => {
     assert.equal(desired.security.code_scanning.state, 'configured');
-    const scanning = desired.ruleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;
+    const scanning = mainRuleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;
     assert.ok(scanning?.some((entry) => entry.tool === 'CodeQL'));
-    const gate = desired.ruleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
+    const gate = mainRuleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
     assert.ok(!gate.some((check) => /^analyze\b/i.test(check.context)), 'no required check is a CodeQL workflow job');
   });
 });
@@ -72,6 +90,7 @@ describe('check', () => {
     assert.equal(status(report, 'workflow token'), 'ok');
     assert.equal(status(report, 'PUBLIC_TURNSTILE_SITE_KEY'), 'drift');
     assert.equal(status(report, 'ruleset main'), 'ok', 'the fixture lists the same rules and checks in another order');
+    assert.equal(status(report, 'ruleset dist'), 'drift', 'the fixture has no dist ruleset');
     assert.equal(fake.writes().length, 0, 'check is read-only');
   });
 
@@ -111,6 +130,7 @@ describe('plan', () => {
       `PATCH ${repo}`,
       `PATCH ${repo}/code-scanning/default-setup`,
       `POST ${repo}/actions/variables`,
+      `POST ${repo}/rulesets`,
       `PUT ${repo}/actions/permissions`,
       `PUT ${repo}/immutable-releases`,
       `PUT ${repo}/private-vulnerability-reporting`,
@@ -122,11 +142,14 @@ describe('plan', () => {
 });
 
 describe('apply --yes', () => {
-  test('a missing ruleset is created whole', async () => {
+  test('each missing ruleset is created whole', async () => {
     const fake = createGithubFake({ ...seed, rulesets: [] }, TOKEN);
     await run(fake, 'apply', '--yes');
-    assert.equal(fake.writes().filter((call) => call.method === 'POST' && call.path.endsWith('/rulesets')).length, 1);
-    assert.equal(fake.state.rulesets[0]?.name, desired.ruleset.name);
+    assert.equal(fake.writes().filter((call) => call.method === 'POST' && call.path.endsWith('/rulesets')).length, desired.rulesets.length);
+    assert.deepEqual(
+      fake.state.rulesets.map((entry) => entry.name),
+      desired.rulesets.map((entry) => entry.name),
+    );
   });
 
   test('converges and re-applies as a no-op', async () => {
@@ -139,6 +162,7 @@ describe('apply --yes', () => {
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
     assert.equal(fake.state.immutableReleases, true);
+    assert.ok(fake.state.rulesets.some((entry) => entry.name === DIST_BRANCH));
     assert.equal(fake.state.permissions.sha_pinning_required, true);
     assert.equal(fake.state.codeScanning.state, 'configured');
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);

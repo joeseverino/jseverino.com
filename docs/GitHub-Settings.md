@@ -1,13 +1,12 @@
 # GitHub settings
 
 The repository's merge rules, security features, Actions permissions, and the
-`main` ruleset are declared in [`.github/repo.json`](../.github/repo.json) and
+`main` and `dist` rulesets are declared in [`.github/repo.json`](../.github/repo.json) and
 checked against the live repository by `bin/github.ts`. The file is validated by
 [`.github/repo.schema.json`](../.github/repo.schema.json) and holds no tokens; the
 only id in it is GitHub Actions' public app id (`15368`), which pins the required
-`deploy` check to the check-run the `deploy` workflow opens, so no other app can
-satisfy it. The
-Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
+`deploy` check to the check-run the deploy workflows open, so no other app can
+satisfy it, and is the one actor that may move `dist`. The Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 
 ## What is declared
 
@@ -17,10 +16,13 @@ Cloudflare side of the same pattern is in [Cloudflare](./Cloudflare.md).
 | `security` | Secret scanning and push protection, vulnerability alerts on with Dependabot security updates off (Renovate reads the alerts and opens the fixes, see [Dependencies](./Dependencies.md#advisories)), private vulnerability reporting, immutable releases (a published release's files and tag are locked, and GitHub attests the release; `release.yml` publishes each one with its files attached), and CodeQL default setup for `actions` and `javascript-typescript` |
 | `actions` | Every `uses:` reference pinned to a commit SHA, a read-only default workflow token, and no workflow approving pull requests |
 | `variables` | Actions variables, by name: the public Turnstile site key the `ci` workflow's `build` job builds with. Variables not listed are left alone |
-| `ruleset` | The `main` branch ruleset, compared as a whole: pull request required with squash only, the required status checks, CodeQL results with no error or high-severity alert, no force pushes, no deletion, signed commits required |
+| `rulesets` | Each branch ruleset, matched by name and compared as a whole. `main`: pull request required with squash only, the required status checks, CodeQL results with no error or high-severity alert, no force pushes, no deletion, signed commits required. `dist`: no update, force push or deletion, with GitHub Actions as the one bypass actor |
 
-The ruleset has no bypass actors: every change to `main`, the owner's included,
-goes through a pull request with the required checks green.
+The `main` ruleset has no bypass actors: every change to `main`, the owner's
+included, goes through a pull request with the required checks green. The
+`dist` ruleset lets only GitHub Actions move the branch, so only the deploy
+workflow's `dist` job, whose commits GitHub signs, changes what it holds
+([Dist branch](./Dist-Branch.md)).
 
 CodeQL default setup and the ruleset's `code_scanning` rule change in the same
 apply, default setup first: a rule or required check waiting on an analysis
@@ -42,8 +44,8 @@ The token comes from `GITHUB_TOKEN`, then `GH_TOKEN`, then `gh auth token`, and
 is never printed. It needs repository Administration: read for `check` and
 `plan`, write for `apply`; a classic token with the `repo` scope covers both.
 
-Apply changes only what `.github/repo.json` declares. The ruleset is replaced as
-a whole, matched by name; no other ruleset is touched. Unit tests drive all
+Apply changes only what `.github/repo.json` declares. Each ruleset is replaced
+as a whole, matched by name, and one not declared is never touched. Unit tests drive all
 three commands against an in-memory API
 ([`tests/unit/github.test.ts`](../tests/unit/github.test.ts)); nothing in the
 repo calls GitHub on its own.
