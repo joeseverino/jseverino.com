@@ -79,7 +79,8 @@ export const checkRuns = async (repository: string, sha: string, client = github
 
 // The conclusions a required check passes with, as branch protection counts them.
 const PASSING_CONCLUSIONS: readonly string[] = ['success', 'neutral', 'skipped'];
-export const passed = (check: CheckRun): boolean => check.status === 'completed' && PASSING_CONCLUSIONS.includes(check.conclusion ?? '');
+export const passed = (check: Pick<CheckRun, 'status' | 'conclusion'>): boolean =>
+  check.status === 'completed' && PASSING_CONCLUSIONS.includes(check.conclusion ?? '');
 
 interface BranchRule {
   type: string;

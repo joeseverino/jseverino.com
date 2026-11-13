@@ -22,23 +22,44 @@ describe('commentBody', () => {
     assert.equal(lines[1], '## CI for `0123456789ab`');
   });
 
-  test('gives each required check its conclusion, its status while running, or pending before it starts', () => {
+  test('links each required check to its run with its conclusion, its status while running, or pending before it starts', () => {
     const body = commentBody(
       input({
         required: ['build', 'e2e', 'deploy'],
         checks: [
-          { name: 'build', status: 'completed', conclusion: 'failure' },
-          { name: 'e2e', status: 'in_progress', conclusion: null },
+          { name: 'build', status: 'completed', conclusion: 'failure', details_url: 'https://github.example/job/1' },
+          { name: 'e2e', status: 'in_progress', conclusion: null, details_url: 'https://github.example/job/2' },
         ],
       }),
     );
-    assert.match(body, /^`build` failure · `e2e` in_progress · `deploy` pending$/m);
+    assert.match(
+      body,
+      /^\[`build`\]\(https:\/\/github\.example\/job\/1\) failure · \[`e2e`\]\(https:\/\/github\.example\/job\/2\) in_progress · `deploy` pending$/m,
+    );
   });
 
   test("nests ci's summaries under its run in a fixed order, leaving out the missing", () => {
-    const body = commentBody(input({ summaries: { edge: '## Edge runtime\n\nok\n', e2e: '## Cross-browser suite\n\nok' } }));
-    const ci = '### ci: success · [run](https://github.example/runs/1)\n\n### Cross-browser suite\n\nok\n\n### Edge runtime\n\nok';
+    const body = commentBody(input({ summaries: { edge: '## Edge runtime\n\nok\n', e2e: '## Cross-browser suite\n\nok', build: '## Gates\n\nok' } }));
+    const ci = '### ci: success · [run](https://github.example/runs/1)\n\n### Gates\n\nok\n\n### Cross-browser suite\n\nok\n\n### Edge runtime\n\nok';
     assert.ok(body.includes(ci), body);
+  });
+
+  const table = '| Project | Passed |\n| :--- | :--- |\n| chromium | 12 |';
+  const suite = `## Cross-browser suite\n\n12 tests passed in \`3.0s\`.\n\n${table}\n`;
+  const e2e = (conclusion: string) => ({ name: 'e2e', status: 'completed', conclusion, details_url: 'https://github.example/job/2' });
+
+  test("folds a passing job's table under its one-line result", () => {
+    const body = commentBody(input({ summaries: { e2e: suite }, checks: [e2e('success')] }));
+    assert.ok(body.includes(`<details><summary><b>Cross-browser suite</b>: 12 tests passed in <code>3.0s</code>.</summary>\n\n${table}\n\n</details>`), body);
+    assert.doesNotMatch(body, /### Cross-browser suite/);
+  });
+
+  test("leaves a failing or unfinished job's summary open", () => {
+    for (const checks of [[e2e('failure')], []]) {
+      const body = commentBody(input({ summaries: { e2e: suite }, checks }));
+      assert.ok(body.includes(`### Cross-browser suite\n\n12 tests passed in \`3.0s\`.\n\n${table}`), body);
+      assert.doesNotMatch(body, /<details>/);
+    }
   });
 
   test("the deploy section is the preview's summary, a reason when the preview never ran, or the result when it wrote none", () => {
@@ -71,7 +92,9 @@ describe('main', () => {
       [`/repos/${REPO}/commits/${SHA}/pulls`]: pulls,
       [`/repos/${REPO}/issues/7/comments`]: comments,
       [`/repos/${REPO}/rules/branches/main`]: [{ type: 'required_status_checks', parameters: { required_status_checks: [{ context: 'build' }] } }],
-      [`/repos/${REPO}/commits/${SHA}/check-runs`]: { check_runs: [{ name: 'build', status: 'completed', conclusion: 'success' }] },
+      [`/repos/${REPO}/commits/${SHA}/check-runs`]: {
+        check_runs: [{ name: 'build', status: 'completed', conclusion: 'success', details_url: 'https://github.example/job/1' }],
+      },
     };
     const fetch = async (url: string, init: RequestInit): Promise<Response> => {
       const { pathname } = new URL(url);
@@ -100,7 +123,7 @@ describe('main', () => {
     assert.equal(writes.length, 1);
     assert.equal(writes[0]?.method, 'POST');
     assert.equal(writes[0]?.path, `/repos/${REPO}/issues/7/comments`);
-    assert.ok(writes[0]?.body.body.includes('`build` success'));
+    assert.ok(writes[0]?.body.body.includes('[`build`](https://github.example/job/1) success'));
     assert.ok(writes[0]?.body.body.includes('### Cross-browser suite'));
   });
 

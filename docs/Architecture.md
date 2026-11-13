@@ -596,7 +596,9 @@ GitHub Actions provide the remote quality gate:
   - `dist`: commits the attested archive to the [`dist` branch](./Dist-Branch.md).
   - `report`: runs [`bin/pr-comment.ts`](../bin/pr-comment.ts) from the default
     branch's checkout to keep one comment per pull request current with `ci`'s
-    job summaries and the preview's.
+    job summaries and the preview's: each required check links to its run, a
+    passing job's tables fold under their one-line results, and a failing
+    job's stay open.
 
   The Cloudflare token (`CLOUDFLARE_API_TOKEN`) lives in the `production`
   environment, and the Access service token
