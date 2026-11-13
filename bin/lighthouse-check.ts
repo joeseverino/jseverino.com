@@ -15,11 +15,15 @@ import { cli, exitWith } from './lib/args.ts';
 import { spawnResult } from './lib/run.ts';
 import { annotate, appendSummary, status, table } from './lib/step-summary.ts';
 
+// Lighthouse's own mobile emulation is its default; desktop is its preset.
+const FORM_FACTOR_FLAGS = { desktop: '--preset=desktop', mobile: '--form-factor=mobile' } as const;
+type FormFactor = keyof typeof FORM_FACTOR_FLAGS;
+
 interface LighthouseConfig {
   urls: string[];
-  preset: string;
   chromeFlags: string;
-  thresholds: Record<string, { level: 'error' | 'warn'; minScore: number }>;
+  // Each form factor audited, with the lowest score each category may reach on it.
+  minScores: Partial<Record<FormFactor, Record<string, number>>>;
 }
 type Score = number | null;
 
@@ -37,38 +41,25 @@ function firstFailureLine(log: string): string {
 const slug = (url: string): string => new URL(url).pathname.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'home';
 const percent = (score: Score | undefined): number | '-' => (score === null || score === undefined ? '-' : Math.round(score * 100));
 
-interface Assertion {
-  category: string;
-  level: 'error' | 'warn';
-  minScore: number;
-}
-
-// How each page is audited: the Lighthouse settings, the browser, and where its reports go.
+// How each page is audited: the browser, and where its reports go.
 interface AuditSetup {
-  preset: string;
   chromeFlags: string;
   chromePath: string;
   outDir: string;
   stamp: string;
 }
 
-// A threshold a page's scores fall below, worded for its row.
-interface Miss {
-  level: Assertion['level'];
-  text: string;
-}
-
-// One page's table row and missed thresholds; a page whose run failed has no version.
+// One page's table row and the floors it fell below; a page whose run failed has no version.
 interface PageResult {
   row: (string | number)[];
-  misses: Miss[];
+  misses: string[];
   version?: string;
 }
 
 // One Lighthouse run, its reports written beside its log; the log's text, and the report
 // when the run produced one.
-function audit(url: string, { preset, chromeFlags, chromePath, outDir, stamp }: AuditSetup): { log: string; reportFile?: string } {
-  const base = path.join(outDir, `${slug(url)}-${stamp}`);
+function audit(url: string, formFactor: FormFactor, { chromeFlags, chromePath, outDir, stamp }: AuditSetup): { log: string; reportFile?: string } {
+  const base = path.join(outDir, `${formFactor}-${slug(url)}-${stamp}`);
   // `lighthouse` resolves from node_modules/.bin, which mise puts on PATH.
   const result = spawnResult(
     'lighthouse',
@@ -77,7 +68,7 @@ function audit(url: string, { preset, chromeFlags, chromePath, outDir, stamp }: 
       '--output=json',
       '--output=html',
       `--output-path=${base}`,
-      `--preset=${preset}`,
+      FORM_FACTOR_FLAGS[formFactor],
       `--chrome-flags=${chromeFlags}`,
       '--quiet',
       '--no-enable-error-reporting',
@@ -90,20 +81,21 @@ function audit(url: string, { preset, chromeFlags, chromePath, outDir, stamp }: 
   return result.code === 0 && fs.existsSync(reportFile) ? { log, reportFile } : { log };
 }
 
-const missed = (scores: Record<string, Score>, assertions: readonly Assertion[]): Miss[] =>
-  assertions.flatMap(({ category, level, minScore }) => {
+const missed = (scores: Record<string, Score>, minScores: Record<string, number>): string[] =>
+  Object.entries(minScores).flatMap(([category, minScore]) => {
     const score = scores[category] ?? 0;
-    return score < minScore ? [{ level, text: `${category} ${percent(score)} below ${percent(minScore)}` }] : [];
+    return score < minScore ? [`${category} ${percent(score)} below ${percent(minScore)}`] : [];
   });
 
-// Audits one page and reports it to the log and the annotations.
-function auditPage(url: string, setup: AuditSetup, assertions: readonly Assertion[]): PageResult {
-  const { log, reportFile } = audit(url, setup);
+// Audits one page on one form factor and reports it to the log and the annotations.
+function auditPage(url: string, formFactor: FormFactor, setup: AuditSetup, minScores: Record<string, number>): PageResult {
+  const label = `${formFactor} ${slug(url)}`;
+  const { log, reportFile } = audit(url, formFactor, setup);
   if (!reportFile) {
     const reason = firstFailureLine(log);
-    status(slug(url), `FAILED: ${reason}`);
-    annotate('error', 'lighthouse', `${url}: ${reason}`);
-    return { row: [url, '-', '-', '-', '-', '**FAIL**', reason], misses: [] };
+    status(label, `FAILED: ${reason}`);
+    annotate('error', 'lighthouse', `${url} (${formFactor}): ${reason}`);
+    return { row: [url, formFactor, '-', '-', '-', '-', '**FAIL**', reason], misses: [] };
   }
 
   const report = readJson<{
@@ -111,16 +103,17 @@ function auditPage(url: string, setup: AuditSetup, assertions: readonly Assertio
     categories: Record<string, { score: Score } | undefined>;
   }>(reportFile);
   const scores: Record<string, Score> = Object.fromEntries(COLUMNS.map((name) => [name, report.categories[name]?.score ?? null]));
-  const misses = missed(scores, assertions);
-  for (const { level, text } of misses) annotate(level === 'error' ? 'error' : 'warning', 'lighthouse', `${url}: ${text}`);
-  let result = 'pass';
-  if (misses.some(({ level }) => level === 'error')) result = '**FAIL**';
-  else if (misses.length > 0) result = 'warn';
+  const misses = missed(scores, minScores);
+  for (const text of misses) annotate('error', 'lighthouse', `${url} (${formFactor}): ${text}`);
 
   const percents = COLUMNS.map((name) => percent(scores[name]));
-  const problems = misses.map(({ text }) => text).join('; ');
-  status(slug(url), `${percents.join(' / ')}${problems ? ` (${problems})` : ''}`);
-  return { row: [url, ...percents, result, problems || 'within every threshold'], misses, version: report.lighthouseVersion };
+  const problems = misses.join('; ');
+  status(label, `${percents.join(' / ')}${problems ? ` (${problems})` : ''}`);
+  return {
+    row: [url, formFactor, ...percents, problems ? '**FAIL**' : 'pass', problems || 'at or above every floor'],
+    misses,
+    version: report.lighthouseVersion,
+  };
 }
 
 export async function main(): Promise<number> {
@@ -132,43 +125,48 @@ export async function main(): Promise<number> {
     return 1;
   }
 
-  const { urls, preset, chromeFlags, thresholds: byCategory } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
+  const { urls, chromeFlags, minScores } = readJson<LighthouseConfig>(path.join(root, 'tests/lighthouse.json'));
   const outDir = fromCheckoutCache('lighthouse');
-  const assertions: Assertion[] = Object.entries(byCategory).map(([category, threshold]) => ({ category, ...threshold }));
-
   fs.mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '');
+  const setup = { chromeFlags, chromePath, outDir, stamp };
+  const formFactors = Object.entries(minScores) as [FormFactor, Record<string, number>][];
 
-  const pages = urls.map((url) => auditPage(url, { preset, chromeFlags, chromePath, outDir, stamp }, assertions));
-  const misses = pages.flatMap((page) => page.misses);
-  const errors = misses.filter(({ level }) => level === 'error').length;
-  const warnings = misses.length - errors;
+  const pages = formFactors.flatMap(([formFactor, floors]) => urls.map((url) => auditPage(url, formFactor, setup, floors)));
+  const misses = pages.flatMap((page) => page.misses).length;
   const auditFailures = pages.filter((page) => page.version === undefined).length;
   const version = pages.findLast((page) => page.version)?.version ?? '';
-  const rows = pages.map(({ row }) => row);
 
-  const thresholds = assertions
-    .map((assertion) => `${assertion.category} ${assertion.level === 'error' ? 'fails' : 'warns'} below ${percent(assertion.minScore)}`)
-    .join(', ');
+  const floors = formFactors
+    .map(
+      ([formFactor, byCategory]) =>
+        `${formFactor}: ${Object.entries(byCategory)
+          .map(([category, minScore]) => `${category} ${percent(minScore)}`)
+          .join(', ')}`,
+    )
+    .join('; ');
 
   appendSummary(
     [
       `## Lighthouse${version ? ` ${version}` : ''}`,
       '',
-      errors === 0 && auditFailures === 0
-        ? `${urls.length} page(s) within every failing threshold${warnings ? `, ${warnings} warning(s)` : ''}. ${thresholds}.`
-        : `${auditFailures} audit execution failure(s), ${errors} failing threshold(s) across ${urls.length} page(s). ${thresholds}.`,
+      misses === 0 && auditFailures === 0
+        ? `${pages.length} audit(s) at or above every floor. Floors, ${floors}.`
+        : `${auditFailures} audit execution failure(s), ${misses} score(s) below a floor across ${pages.length} audit(s). Floors, ${floors}.`,
       '',
-      table(['Page', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'], rows),
+      table(
+        ['Page', 'Form factor', 'Performance', 'Accessibility', 'Best practices', 'SEO', 'Result', 'Detail'],
+        pages.map(({ row }) => row),
+      ),
     ].join('\n'),
   );
 
-  if (errors > 0 || auditFailures > 0) {
-    console.error(`\nfailed: ${auditFailures} Lighthouse audit execution failure(s), ${errors} threshold(s)`);
+  if (misses > 0 || auditFailures > 0) {
+    console.error(`\nfailed: ${auditFailures} Lighthouse audit execution failure(s), ${misses} score(s) below a floor`);
     return 1;
   }
 
-  console.log(`\nok lighthouse ${version}: ${urls.length} page(s) within every failing threshold${warnings ? `; ${warnings} warning(s)` : ''}`);
+  console.log(`\nok lighthouse ${version}: ${pages.length} audit(s) at or above every floor`);
   return 0;
 }
 

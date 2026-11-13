@@ -70,8 +70,10 @@ A single gate (`mise run built:weight`) is for iterating on a failure.
   so Astro emits an external, minified module. One delegated listener
   (`closest()`) over per-element handlers. Every page works with JavaScript
   disabled. No View Transitions.
-- Budgets are hard gates (`mise run built:weight`): HTML at most 150 KB per
-  page, CSS 75 KB, JavaScript 25 KB in total.
+- Budgets are hard gates (`mise run built:weight`): per-page HTML, the
+  inlined CSS, total JavaScript and each image, each set in
+  `tests/audits/check-page-weight.ts` about a quarter above what the build
+  ships.
 - Markdown images take `|width`, `|nocap` and `|nozoom` modifiers
   (`src/lib/markdown/`); a new modifier is documented in
   [the Authoring Guide](docs/Authoring-Guide.md).

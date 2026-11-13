@@ -277,7 +277,7 @@ image service runs that sharp service at build time and has the Worker serve
 the encoded files; `astro dev` transforms through the local Images binding.
 
 `Image.astro` never reads an image's metadata itself: an image read outside Astro's pipeline ships its unprocessed original, and
-`built:weight` fails on any shipped image at or over 1.5 MB. Social cards are a 1200px
+`built:weight` fails on any shipped image at or over its per-image budget. Social cards are a 1200px
 JPEG from `getImage()`, which reports the card's size without a read.
 
 Encodes are cached in the `ASTRO_CACHE_DIR` that `mise.toml` derives from the

@@ -1,15 +1,15 @@
 // Byte budgets over the built output: per-page HTML, the inlined stylesheet, total JS, and each image.
-// Set from the measured baseline with headroom.
+// Each sits about a quarter above what the build ships, so growth fails here before it reaches a page.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { builtPages, finish } from './lib.ts';
 
 const BUDGET = {
-  pageHtmlBytes: 150 * 1024,
-  totalCssBytes: 75 * 1024,
-  totalJsBytes: 25 * 1024,
-  imageBytes: 1.5 * 1024 * 1024,
+  pageHtmlBytes: 120 * 1024,
+  totalCssBytes: 40 * 1024,
+  totalJsBytes: 7 * 1024,
+  imageBytes: 300 * 1024,
 };
 
 const { distDir, files, pages } = builtPages('check-page-weight');
@@ -46,12 +46,12 @@ if (totalJs > BUDGET.totalJsBytes) {
 // Committed under public/assets/ or encoded from a content original.
 const images = files.filter((rel) => /\.(?:png|jpe?g|webp|avif|gif|svg)$/i.test(rel));
 for (const rel of images.filter((image) => size(image) >= BUDGET.imageBytes).toSorted((a, b) => size(b) - size(a))) {
-  failures.push(`${rel}: ${mb(size(rel))} image is at or over the ${mb(BUDGET.imageBytes)} per-image budget`);
+  failures.push(`${rel}: ${kb(size(rel))} image is at or over the ${kb(BUDGET.imageBytes)} per-image budget`);
 }
 
 finish(
   failures,
-  `${pages.length} pages within budget: heaviest ${heaviestPage.rel} ${kb(heaviestPage.size)}/${kb(BUDGET.pageHtmlBytes)}, CSS ${kb(totalCss)}/${kb(BUDGET.totalCssBytes)}, JS ${kb(totalJs)}/${kb(BUDGET.totalJsBytes)}, ${images.length} images (${mb(sum(images))}) each under ${mb(BUDGET.imageBytes)}`,
+  `${pages.length} pages within budget: heaviest ${heaviestPage.rel} ${kb(heaviestPage.size)}/${kb(BUDGET.pageHtmlBytes)}, CSS ${kb(totalCss)}/${kb(BUDGET.totalCssBytes)}, JS ${kb(totalJs)}/${kb(BUDGET.totalJsBytes)}, ${images.length} images (${mb(sum(images))}) each under ${kb(BUDGET.imageBytes)}`,
   {
     heading: 'check-page-weight: byte budget exceeded:',
     fix: 'fix: reduce the page, bundle, or image (the committed file under public/assets/, or the content original it was encoded from), or raise BUDGET here in its own commit',

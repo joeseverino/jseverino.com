@@ -54,7 +54,8 @@ PageSpeed Insights scored the homepage 100 in every category on desktop and
 99 / 100 / 100 / 100 on mobile (2026-09-05). The build enforces them: every
 page has a weight budget for HTML, CSS, and JavaScript, every shipped image one
 of its own, images ship as AVIF with fixed dimensions, and a weekly
-Lighthouse run fails below 95 on accessibility.
+Lighthouse run on desktop and mobile fails on any score below its floor in
+[`tests/lighthouse.json`](tests/lighthouse.json).
 
 ## Verify it yourself
 

@@ -86,10 +86,11 @@ shipped output, to show whether a refactor changes the artifact.
 ## Release, in detail
 
 **`mise run lighthouse`**: Lighthouse against the live site, using the
-lockfile's Lighthouse (the generation PageSpeed Insights scores with) and the
-URLs, device preset, and thresholds declared in `tests/lighthouse.json`. Prints a
-score line per page, writes the table to the job summary in CI, and exits
-non-zero on an audit execution failure or an `error`-level threshold. Uses the
+lockfile's Lighthouse (the generation PageSpeed Insights scores with), auditing
+each URL in `tests/lighthouse.json` on each form factor it lists (desktop and
+mobile) against that form factor's floor per category. Prints a score line per
+page and form factor, writes the table to the job summary in CI, and exits
+non-zero on an audit execution failure or any score below its floor. Uses the
 lockfile's Playwright Chromium (`mise exec -- playwright install chromium`),
 with `CHROME_PATH` available for an explicit browser override. CI installs
 Chromium and its system packages with `mise run setup:browsers chromium`

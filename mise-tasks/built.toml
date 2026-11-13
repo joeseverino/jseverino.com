@@ -19,7 +19,7 @@ run = [
 ]
 
 ["built:weight"]
-description = "Per-page HTML (150 KB), CSS (75 KB), total JS (25 KB), and each image the build ships (1.5 MB) stay within budget"
+description = "Per-page HTML, the inlined CSS, total JS, and each image the build ships stay within the byte budgets in tests/audits/check-page-weight.ts"
 hide = true
 run = "node tests/audits/check-page-weight.ts"
 

@@ -1,11 +1,15 @@
 {
-  "urls": ["https://jseverino.com/", "https://jseverino.com/portfolio/architecting-a-custom-detection-engine/"],
-  "preset": "desktop",
+  "urls": [
+    "https://jseverino.com/",
+    "https://jseverino.com/portfolio/",
+    "https://jseverino.com/portfolio/architecting-a-custom-detection-engine/",
+    "https://jseverino.com/about/",
+    "https://jseverino.com/resume/",
+    "https://jseverino.com/contact/"
+  ],
   "chromeFlags": "--headless --no-sandbox --disable-gpu",
-  "thresholds": {
-    "performance": { "level": "warn", "minScore": 0.85 },
-    "accessibility": { "level": "error", "minScore": 0.95 },
-    "best-practices": { "level": "warn", "minScore": 0.7 },
-    "seo": { "level": "error", "minScore": 0.9 }
+  "minScores": {
+    "desktop": { "performance": 0.95, "accessibility": 1, "best-practices": 1, "seo": 1 },
+    "mobile": { "performance": 0.95, "accessibility": 1, "best-practices": 1, "seo": 1 }
   }
 }
