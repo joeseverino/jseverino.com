@@ -437,8 +437,12 @@ ships to visitors:
   ([`.github/workflows/link-check.yml`](../.github/workflows/link-check.yml)).
 - **Lighthouse** checks selected live URLs on a weekly/manual schedule with the
   lockfile's Lighthouse (`bin/lighthouse-check.ts`) and uploads HTML/JSON reports for review ([`.github/workflows/lighthouse.yml`](../.github/workflows/lighthouse.yml)).
-- **OpenSSF Scorecard** runs weekly/manual checks and uploads SARIF to code
-  scanning ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
+- **OpenSSF Scorecard** runs weekly and on demand, publishes its score to the
+  OpenSSF API (the README's badge), and uploads SARIF to code scanning
+  ([`.github/workflows/scorecard.yml`](../.github/workflows/scorecard.yml)).
+  The API takes only a result it can verify, so that workflow holds no
+  workflow-level env or write permission and runs only Scorecard's approved
+  actions.
   The checks below maximum follow from a one-person repo (Branch-Protection,
   Code-Review, Fuzzing, CII-Best-Practices, Contributors), from the
   all-rights-reserved license, and from Vulnerabilities, which counts every
@@ -446,8 +450,8 @@ ships to visitors:
   as accepted.
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
-  Elevated scopes (notably `security-events: write` for the SARIF upload in
-  `scorecard.yml`) are granted per job, never per workflow. The `preview`
+  Elevated scopes (notably `security-events: write` for the SARIF upload and
+  `id-token: write` for the published result in `scorecard.yml`) are granted per job, never per workflow. The `preview`
   and `deploy` workflows hold the Cloudflare token (in the `production` environment) and the
   Access service token, so they run only the default branch's code and never
   checks out a pull request. A pull request's build does reach wrangler, so

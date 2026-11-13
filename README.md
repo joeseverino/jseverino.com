@@ -1,7 +1,7 @@
 # jseverino.com
 
 [![ci](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/ci.yml)
-[![scorecard](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml/badge.svg)](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/joeseverino/jseverino.com/badge)](https://scorecard.dev/viewer/?uri=github.com/joeseverino/jseverino.com)
 
 My cybersecurity portfolio: writeups, projects, and a resume, written in a
 private Obsidian vault and published as a static Astro site on Cloudflare.
@@ -72,9 +72,10 @@ curl -s https://jseverino.com/.well-known/security.txt | gpg --verify
 
 - [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=jseverino.com):
   A+, 145 / 100, 12 of 12 tests on 2026-10-03.
-- [OpenSSF Scorecard runs](https://github.com/joeseverino/jseverino.com/actions/workflows/scorecard.yml)
-  and CodeQL's default setup publish their results to code scanning, and a
-  pull request cannot merge past a high-severity CodeQL alert.
+- The [OpenSSF Scorecard](https://scorecard.dev/viewer/?uri=github.com/joeseverino/jseverino.com)
+  score is published from a weekly run; Scorecard and CodeQL's default setup
+  send their findings to code scanning, and a pull request cannot merge past a
+  high-severity CodeQL alert.
 - Every commit on `main` is signed and every change lands through a
   squash-merged pull request.
 - Each release carries the exact build production served and its CycloneDX
