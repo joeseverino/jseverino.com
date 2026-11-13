@@ -13,14 +13,20 @@ async function expectBrandVars(page: Page, primary: string, deep: string): Promi
 
 // Astro merges a page's own sheet into its <style> in an order of its choosing, so the
 // cascade rests on the layer order every sheet declares first, never on source order.
+// Layers rank in the order their names first appear, in a statement or a block.
 for (const path of ['/', '/contact/', '/portfolio/', '/resume/', '/education/']) {
-  test(`${path} opens its stylesheet with the layer order`, async ({ page }) => {
+  test(`${path} ranks its layers in the declared order`, async ({ page }) => {
     await page.goto(path);
-    const first = await page.evaluate(() => {
-      const rule = document.styleSheets[0]?.cssRules[0];
-      return rule instanceof CSSLayerStatementRule ? [...rule.nameList] : null;
+    const order = await page.evaluate(() => {
+      const names = [...document.styleSheets].flatMap((sheet) =>
+        [...sheet.cssRules].flatMap((rule) => {
+          if (rule instanceof CSSLayerStatementRule) return [...rule.nameList];
+          return rule instanceof CSSLayerBlockRule ? [rule.name] : [];
+        }),
+      );
+      return [...new Set(names)];
     });
-    expect(first).toEqual(['tokens', 'base', 'components', 'pages']);
+    expect(order).toEqual(['tokens', 'base', 'components', 'pages']);
   });
 }
 

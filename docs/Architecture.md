@@ -213,7 +213,7 @@ Technology labels and groupings come from [`src/content/technology-groups.md`](.
 
 The production target is current evergreen Chromium, Firefox, and Safari/WebKit. Native CSS nesting, logical properties, `:has()`, `color-mix()`, and the Popover API are baseline requirements. Scroll-driven header animation is progressive: browsers without it use the `IntersectionObserver` fallback.
 
-Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships.
+Playwright runs the bundled Chromium, Firefox, and WebKit engines on desktop and mobile-sized projects. That is the compatibility contract CI enforces. No CSS transpilation or polyfill bundle ships: Vite's `build.cssTarget` in [`astro.config.ts`](../astro.config.ts) names the oldest releases that parse the stylesheets as written, so lightningcss minifies them without lowering a rule.
 
 Biome lints the stylesheets from its recommended CSS rules, configured in [`biome.jsonc`](../biome.jsonc), and refuses a literal color: a rule names a custom property or mixes one with `color-mix()`. Its exceptions: `noDescendingSpecificity` reports false ordering positives under native nesting, and the forced-colors focus ring and the reduced-motion override use `!important` to outrank every component, each marked where it stands. The generated token blocks are the one place literals live, fenced off by `mise run sync:tokens`. `mise run checks:css-vars` fails when a custom property is defined but never referenced. Both run in `mise run fast` and affect development and CI only.
 

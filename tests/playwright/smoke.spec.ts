@@ -77,5 +77,8 @@ test('sticky header gains a shadow after scrolling', async ({ page }) => {
   await page.goto('/portfolio/');
   await page.evaluate(() => window.scrollTo(0, 200));
 
-  await expect.poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').boxShadow)).not.toBe('none');
+  // The shadow is always drawn and only its color fades in, so the scroll state is the promise.
+  await expect
+    .poll(() => page.locator('.site-header').evaluate((header) => getComputedStyle(header, '::before').getPropertyValue('--header-scroll')))
+    .toBe('1');
 });

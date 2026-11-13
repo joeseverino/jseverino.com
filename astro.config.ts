@@ -95,10 +95,11 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
-      // lightningcss, Vite's default, folds `animation-timeline: scroll()` into the `animation`
-      // shorthand, which no browser parses, so the scroll-driven header shadow never runs.
-      // esbuild keeps the longhand; it is a devDependency because Vite only lists it as an optional peer.
-      cssMinify: 'esbuild',
+      // The browser floor: the oldest releases whose CSS parses the stylesheets as written, so
+      // lightningcss minifies without lowering anything. Astro sets build.target to esnext, which
+      // leaves lightningcss with no targets, and then it folds `animation-timeline` into the
+      // `animation` shorthand, which no browser parses.
+      cssTarget: ['chrome123', 'firefox121', 'safari26.2', 'ios26.2'],
       // Silences the bundler's report of Astro's "use astro:head-inject" directive in MDX modules.
       rolldownOptions: {
         onwarn(warning, warn) {
