@@ -55,7 +55,7 @@ a usage error (exit 2, with the JSON error document).
 
 ### Protocol
 
-Every document carries `protocolVersion`, currently `1`.
+Every document carries `protocolVersion`, which is `1`.
 [`site-protocol-v1.json`](../public/schemas/site-protocol-v1.json), published at
 `https://jseverino.com/schemas/site-protocol-v1.json`, is the JSON Schema (2020-12)
 for the envelope and for the `site apply-plan` input. Each command's own fields
@@ -69,34 +69,21 @@ The content model a client edits against is
 
 ## Commands
 
-| Command | Does |
-| :--- | :--- |
-| `site new <slug>` | Scaffold `05 Writeups/<slug>/` from the vault template (`published: false`) |
-| `site validate [<slug>] [--draft]` | Resolve every reference, the frontmatter contract, and the catalog without writing (`sync-content --check`) |
-| `site dev [--drafts] [--host <host>] [--port <port>]` | Astro dev server; drafts come from the gitignored `.cache/drafts` overlay, never the committed snapshot |
-| `site publish [--dry-run] [--full] [--from <ref>]` | Preflight, a `content/<date>` branch from `origin/main` (or `--from <ref>`) in a temporary worktree, sync, content diff, `mise run fast` (`--full`: `mise run check`), a commit of exactly the declared outputs, push, open the PR. Never merges |
-| `site land [<pr>] [--timeout <min>]` | A PR into `main` (the latest open `content/*` PR when none is named): read the required checks from `main`'s ruleset and wait until each has reported and passed on the PR head, squash-merge pinned to that head, wait for the merge commit's `deploy` check (the production deploy), verify each published or edited writeup live (removed ones must 404), then `hq sync` if that CLI exists. `--timeout` bounds the waits for checks and deploy. Merges only when invoked |
-| `site verify <slug> [--origin <url>]` | Live checks for one writeup (`bin/deploy-verify.ts --slug`), on production or on the deployment at `--origin` |
-| `site status` | Repo, dependency, vault, build, and open content PR state |
-| `site featured [<slug> <slot\|up\|down\|top\|bottom\|off>]` | Show or reorder the home-page featured list (renumbers `1..N`) |
-| `site tech [<query>]` | Search the technology catalog |
-| `site seo <page> [--result]` | Search-snippet preview from the last build |
-| `site draft-alt <slug>\|--all [--apply]` | Draft `cover_alt` from the cover image (Claude API); `--all` drafts for every published writeup missing one |
-| `site writeups [--filter all\|published\|draft\|featured]` | Every writeup with its publish and featured state |
-| `site dashboard` | Every writeup, the featured order, the draft gate, and the `sourceFingerprint` a plan is checked against |
-| `site tag <slug>` | Which writeups use a technology slug, and how many are published |
-| `site prepare <slug> [--tag-usage]` | Publish readiness for one writeup: the ship gate plus its featured slot |
-| `site apply-plan [--file <plan.json>]` | Field updates and the complete featured order in one transaction (plan on stdin or `--file`) |
-| `site set <slug> [--<field> <value>...] [--published true\|false] [--touch-last-reviewed]` | Set editable frontmatter fields; the flags come from the content contract |
-| `site link <slug> --label <text> --from <url> --to <url>` | Replace one exact Markdown link in a writeup body |
-| `site contract` | The writeup field contract and its fingerprint |
-| `site render <slug\|-> [--document]` | One writeup body (`html`) rendered exactly as the build ships it, from the vault or stdin (`-`); `--document` adds `document`, a self-contained page in the site's article layout with its styles inlined, for previews |
-| `site contact [--limit <n>] [--pii]` | Recent contact submissions from D1 through Cloudflare's HTTP API, redacted unless `--pii` (audited; no rows are released if the audit line cannot be written) |
-| `site csp [--count] [--limit <n>] [--directive <name>] [--pii]` | CSP reports from D1 through the HTTP API, or counts by directive |
-| `site manage` | The interactive manager (below) |
+`site --help` lists every command and `site <command> --help` its flags. The
+everyday loop uses five:
 
-The everyday loop: `site new`, write, `site validate <slug> --draft`, set
-`published: true`, `site publish`, review the preview on the PR, `site land`.
+- `site new <slug>` scaffolds a writeup in the vault from its template,
+  unpublished.
+- `site validate [<slug>] [--draft]` checks references, the frontmatter
+  contract, and the catalog, and writes nothing.
+- `site publish` opens a pull request with the vault's public content (below).
+- `site land [<pr>]` merges a content pull request once the ruleset's required
+  checks pass on its head, waits for the production deploy, and verifies each
+  published, edited, or removed writeup live.
+- `site manage` is the interactive manager (below).
+
+Write, run `site validate <slug> --draft`, set `published: true`,
+`site publish`, review the preview on the pull request, then `site land`.
 
 ## How publish behaves
 
@@ -133,20 +120,13 @@ the vault only through the store and `site new`, which copies the template.
 
 ## `site manage`: the TUI
 
-Keyboard transitions live in `bin/site/manage-input.ts`: each mode updates staged
-state and returns a typed effect when an operation needs I/O. The controller in
-`bin/site/manage.ts` executes those effects. Frames in `bin/site/manage-render.ts`
-render loaded state without probing the filesystem or starting commands. The
-transition tests cover edits, confirmations, navigation, and text input; terminal
-replay tests exercise the controller against a temporary vault.
-
-
-The one interactive command; it refuses to start without a terminal. A full-screen terminal app over the whole publishing surface: a
+`site manage` is the one interactive command, and it refuses to start without a
+terminal. It is a full-screen app over the whole publishing surface: a
 **Writeups** tab for content state and a **Site** tab for operations. `←`/`→`
 (or Tab) switch between them. Nothing on the Writeups tab is written until
-`s` is pressed: changes are staged locally and then applied through the vault
-MCP, so the TUI cannot produce a frontmatter state the publish gate would
-not. The terminal window title names the open tab, writeup or running command,
+`s` is pressed: changes are staged and then applied through the writeup store,
+so the TUI cannot produce a frontmatter state `site validate` would reject.
+The terminal window title names the open tab, writeup or running command,
 and the shell's title returns on exit.
 
 ### Writeups tab
@@ -155,7 +135,7 @@ and the shell's title returns on exit.
 
 The featured list renders in the exact order the home page does, with
 everything else below the divider. Per row: `●` published, `◌` draft, `▲`/`▼`
-staged publish flips, red `!` where the publish gate would reject, `*` staged
+staged publish flips, red `!` where `site validate` would reject, `*` staged
 field edits. `space` picks a writeup up to move it (crossing the divider
 features or unfeatures it), and `f`/`p` toggle featured/published in place.
 The trailing `+` row (or `n`) scaffolds a new writeup via
@@ -178,9 +158,9 @@ wiki-links resolve.
 
 The operations dashboard: the Astro dev server, the git working tree, branch,
 and last commit, build output freshness, the `security.txt` signature, a live
-HTTP probe of the production site, content counts, and a publish-gate summary
-that separates published writeups failing the gate (red) from drafts that are
-not ready yet (yellow).
+HTTP probe of the production site, content counts, and a summary of
+`site validate` issues that separates published writeups that fail (red) from
+drafts that are not ready (yellow).
 
 Status is gathered once and cached; the `as of` timestamp shows its age, and
 `r` regathers it. Actions run inline: the TUI drops out of its
@@ -196,84 +176,15 @@ and `astro dev stop`. The server is the one Astro's lock file
 (`.astro/dev.json`) names, and it counts as running while it answers HTTP;
 `astro dev logs` shows its output.
 
-### Driving it on a pseudo-terminal
+### How it is built
 
-The unit tests replay keys without a terminal (`MANAGE_TUI_KEYS`). To check
-what a real terminal shows (colors, the focus window, a command run inline),
-drive `site manage` on a pseudo-terminal. macOS `script(1)` needs a terminal on
-its own stdin, so use Python's `pty`: save the script below at a gitignored
-path such as `.cache/pty-drive.py` and run it from the checkout root against a
-throwaway vault (the files `makeVault()` in `tests/unit/site-manage.test.ts`
-writes):
-
-```sh
-python3 .cache/pty-drive.py <vault> 16 90 '\x1b[B' '\t' q
-```
-
-The arguments are the vault, rows, columns, then each key as a raw string. It
-pauses after each key, prints each last frame's text and the colors drawn, and
-always ends the TUI (Ctrl+C, then SIGKILL). Prefix `NO_COLOR=1` or
-`FORCE_COLOR=1` to check styling.
-
-```python
-"""Drives `site manage` on a pseudo-terminal: python3 pty-drive.py <vault> <rows> <cols> <keys...>"""
-import fcntl, os, pty, re, select, struct, sys, termios, time
-
-vault, rows, cols, *keys = sys.argv[1:]
-root = os.getcwd()
-
-pid, fd = pty.fork()
-if pid == 0:
-    fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, struct.pack('HHHH', int(rows), int(cols), 0, 0))
-    os.chdir(root)
-    os.environ['VAULT_DIR'] = vault
-    os.environ['TERM'] = 'xterm-256color'
-    os.execvp('node', ['node', 'bin/site.ts', 'manage'])
-
-
-def drain(seconds):
-    out = b''
-    end = time.time() + seconds
-    while time.time() < end:
-        ready, _, _ = select.select([fd], [], [], 0.05)
-        if ready:
-            try:
-                chunk = os.read(fd, 65536)
-            except OSError:
-                break
-            if not chunk:
-                break
-            out += chunk
-    return out
-
-
-def exited(seconds):
-    end = time.time() + seconds
-    while time.time() < end:
-        if os.waitpid(pid, os.WNOHANG)[0]:
-            return True
-        drain(0.2)
-    return False
-
-
-screens = [drain(3)]
-for key in keys:
-    os.write(fd, key.encode().decode('unicode_escape').encode())
-    screens.append(drain(2.5))
-if not exited(5):
-    os.write(fd, b'\x03')
-    if not exited(5):
-        os.kill(pid, 9)
-        os.waitpid(pid, 0)
-
-for i, raw in enumerate(screens):
-    text = raw.decode('utf8', 'replace')
-    frames = text.split('\x1b[?2026h')
-    plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07', '', frames[-1])
-    colors = sorted(set(re.findall(r'\x1b\[(3[0-7]|9[0-7])m', text)))
-    print(f'--- after {"start" if i == 0 else repr(keys[i - 1])}: {len(frames) - 1} frames, colors {colors}')
-    print(plain)
-```
+Keyboard transitions live in `bin/site/manage-input.ts`: each mode updates staged
+state and returns a typed effect when an operation needs I/O. The controller in
+`bin/site/manage.ts` executes those effects. Frames in `bin/site/manage-render.ts`
+render loaded state without probing the filesystem or starting commands. The
+transition tests cover edits, confirmations, navigation, and text input; replay
+tests drive the controller with a key script (`MANAGE_TUI_KEYS`) against a
+temporary vault, with no terminal.
 
 ## Configuration
 
