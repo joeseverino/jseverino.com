@@ -6,7 +6,7 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 - `<html lang="en-US">` declares the document language for screen readers and translation services. Set in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro).
 - Every route renders a single `<main id="main">`. The skip link and analytics tools assume exactly one main landmark per page.
-- Headings start at `<h1>` (page title or writeup title) and descend. Writeup bodies start at `<h2>` because the article shell already renders the title as `h1`. See [`docs/SEO.md`](./SEO.md#heading-hierarchy).
+- Headings descend from one `<h1>` without skipping a level ([SEO, heading hierarchy](./SEO.md#heading-hierarchy)); `mise run built:html` fails a page that breaks it.
 
 ## Skip link
 
@@ -22,15 +22,15 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 ## Image alt text
 
-Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it to `writeup.heroAlt`, and both the `ProjectCard` listing and the article hero `<figure>` use that string as the `<img alt>`. When `cover_alt` is empty the title is used as a fallback so no image ever renders without alt text. `prepare_writeup_publish` in the vault MCP nags about missing `cover_alt` so drafts don't ship with duplicated-title alts.
+A cover's alt text is its writeup's `cover_alt`, with the title as the fallback ([SEO, cover alt text](./SEO.md#cover-alt-text)).
 
 Body images use the alt text from the markdown source. The `|width` and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`mise run built:html` fails on a missing one). No image on the site uses it today.
+An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`mise run built:html` fails on a missing one). No image on the site uses it.
 
 ## Focus management
 
-Visible focus is preserved on every interactive element. Shared focus and assistive styles live in [`src/styles/accessibility.css`](../src/styles/accessibility.css); component-specific selectors remain in their concern modules. The site uses `:focus` rather than `:focus-visible`, so focus rings render on mouse interaction as well as keyboard. The cost is cosmetic, and low-vision mouse users still see the focused control.
+Every interactive element keeps the browser's focus ring. The only rules that remove it are on the contact form's fields, which draw their own border and glow on `:focus`, and on the lightbox `<dialog>` itself, whose controls keep theirs. Components add a `:focus-visible` state that matches their hover (links, buttons, tags, the theme control), so a keyboard user sees the same emphasis a pointer gets and a click leaves none behind; a card raises its border on `:focus-within`. [`src/styles/accessibility.css`](../src/styles/accessibility.css) shows the skip link on `:focus` and, under forced colors, gives every link, button, field and summary a `Highlight` outline on `:focus`.
 
 Mobile navigation uses the native `popover` API. The browser restores focus when the popover closes.
 
@@ -100,13 +100,10 @@ mise run browser:visual
 ```
 
 Playwright runs the functional accessibility and layout checks in Chromium,
-Firefox, and WebKit desktop and mobile projects. Chromium on macOS owns the
-visual baselines to avoid engine- and OS-specific font-rasterization noise. When
-an intentional design change alters a baseline, inspect the expected, actual,
-and diff images, then run `mise run browser:visual --update-snapshots`. Commit the reviewed PNG changes with the frontend
-change. Never update snapshots only to make CI green. A manual keyboard pass
-through the home, a portfolio article, the portfolio listing, and the contact
-form remains useful before large interaction changes.
+Firefox, and WebKit desktop and mobile projects; the visual baselines follow
+[AGENTS.md](../AGENTS.md#visual-baselines). Before a large interaction change,
+tab through the home page, a portfolio article, the portfolio listing, and the
+contact form by hand.
 
 Two layers are machine-enforced on every gate run: structural HTML over every built page
 (unique ids, alt on every image, no unprocessed `::directive` text;
