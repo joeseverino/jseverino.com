@@ -1,0 +1,74 @@
+@layer components {
+  .prose li + li,
+  .content-flow li + li {
+    margin-block-start: 0.35rem;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .home-content figure,
+  .prose figure,
+  .content-flow figure {
+    margin-inline: auto;
+
+    & img {
+      border-radius: var(--radius-sm);
+    }
+
+    & figcaption {
+      margin-block-start: 0.5rem;
+      color: var(--color-muted);
+      font-size: var(--font-ui);
+      text-align: center;
+    }
+  }
+
+  .home-content p:has(img) + p,
+  .prose p:has(img) + p {
+    margin-block-start: 0.5rem;
+    color: var(--color-muted);
+    font-size: var(--font-ui);
+    text-align: center;
+  }
+
+  /* A run glued by no-break spaces around inline code can be wider than a phone's column; it breaks rather than
+     scrolling the page sideways. */
+  .prose {
+    line-height: 1.65;
+    overflow-wrap: break-word;
+
+    & > * + * {
+      margin-block-start: var(--space-30);
+    }
+
+    & h2 {
+      font-size: var(--font-prose-md);
+    }
+
+    /* Links in running text: underlined, dashed while pointed at or focused. */
+    & a:not(.button) {
+      text-decoration-line: underline;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration-style: dashed;
+      }
+    }
+
+    & img {
+      display: block;
+      margin-inline: auto;
+      border-radius: var(--radius-sm);
+    }
+
+    & p {
+      text-wrap: pretty;
+
+      &:has(img) {
+        margin-block-start: 18px;
+      }
+    }
+  }
+}

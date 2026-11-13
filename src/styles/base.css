@@ -4,7 +4,13 @@
 @import url('./brand.css');
 @import url('./foundation.css');
 @import url('./layout.css');
-@import url('./content.css');
+@import url('./blocks.css');
+@import url('./home.css');
+@import url('./buttons.css');
+@import url('./cards.css');
+@import url('./pills.css');
+@import url('./article.css');
+@import url('./prose.css');
 @import url('./footer.css');
 @import url('./overlays.css');
 @import url('./accessibility.css');
