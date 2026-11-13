@@ -5,11 +5,11 @@ import Image from '@components/Image.astro';
 
 type Props = {
   writeup: Writeup;
-  eager?: boolean;
+  priority?: boolean;
   headingLevel?: 2 | 3;
 };
 
-const { writeup, eager = false, headingLevel = 2 } = Astro.props;
+const { writeup, priority = false, headingLevel = 2 } = Astro.props;
 const Heading = `h${headingLevel}` as const;
 ---
 
@@ -24,8 +24,7 @@ const Heading = `h${headingLevel}` as const;
           src={writeup.heroImage}
           alt={writeup.heroAlt}
           sizes="(max-width: 700px) 100vw, 360px"
-          loading={eager ? 'eager' : 'lazy'}
-          fetchpriority={eager ? 'high' : undefined}
+          priority={priority}
         />
       </a>
     </figure>

@@ -88,12 +88,6 @@
       // with expect and then asserts the value present.
       "includes": ["tests/playwright/**", "tests/edge/**"],
       "linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
-    },
-    {
-      // Playwright's rules belong to its specs; elsewhere `describe` is a
-      // local function, not a test block.
-      "includes": ["bin/**", "src/**"],
-      "linter": { "rules": { "correctness": { "usePlaywrightValidDescribeCallback": "off" } } }
     }
   ]
 }

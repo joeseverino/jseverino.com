@@ -45,7 +45,7 @@ const tagCount = tagGroups.reduce((total, group) => total + group.tags.length, 0
 
     <section id="panel-writeups" class="portfolio-panel" data-panel="writeups">
       <ul class="project-grid">
-        {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+        {writeups.map((writeup, index) => <ProjectCard writeup={writeup} priority={index === 0} />)}
       </ul>
       <details class="archive-section">
         <summary>

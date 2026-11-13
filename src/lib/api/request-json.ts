@@ -28,6 +28,7 @@ export async function readRequestJson(request: Request, maxBytes: number): Promi
       buffer.set(value, length);
       length += value.byteLength;
     }
+    // The Workers runtime types require both options; ignoreBOM is the default.
     const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(buffer.subarray(0, length));
     return { ok: true, value: JSON.parse(text) };
   } catch {

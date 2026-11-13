@@ -23,7 +23,7 @@ const navigation = navItems.map((item) => ({
 <header class="site-header" data-sticky-header>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
-      <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" focusable="false" set:html={wordmarkInner} />
+      <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" set:html={wordmarkInner} />
     </a>
 
     <nav class="primary-nav" aria-label="Primary navigation">
@@ -37,7 +37,7 @@ const navigation = navItems.map((item) => ({
     </button>
   </div>
 
-  <nav class="mobile-nav" id="mobile-nav" popover="auto" aria-label="Mobile navigation" data-mobile-nav>
+  <nav class="mobile-nav" id="mobile-nav" popover aria-label="Mobile navigation" data-mobile-nav>
     <NavLinks items={navigation} listClass="mobile-nav-list" linkClass="mobile-nav-link" />
     <div class="mobile-nav-footer">
       <p class="page-kicker">{focusLabel}</p>

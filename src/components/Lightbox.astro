@@ -15,7 +15,7 @@
   const view = dialog?.querySelector<HTMLImageElement>('.lightbox-img');
   const caption = dialog?.querySelector<HTMLElement>('.lightbox-caption');
 
-  if (dialog && view && caption && typeof dialog.showModal === 'function') {
+  if (dialog && view && caption) {
     let lastTrigger: HTMLElement | null = null;
     let restoreFocusOnClose = false;
 

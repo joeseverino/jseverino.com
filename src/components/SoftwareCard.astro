@@ -22,7 +22,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     <div class="software-card-head">
       <h2 class="software-card-title">
         {titleHref ? (
-          <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+          <a href={titleHref} target="_blank" rel="noopener">{entry.title}</a>
         ) : (
           entry.title
         )}
@@ -58,10 +58,10 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 
     <div class="software-links">
       {entry.repoUrl && (
-        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a href={entry.repoUrl} target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
       )}
       {pkg && (
-        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} <span aria-hidden="true">↗</span></a>
+        <a href={pkg.url} target="_blank" rel="noopener">{registryLabel} <span aria-hidden="true">↗</span></a>
       )}
       {entry.writeupSlug && (
         <a class="software-writeup" href={writeupPath(entry.writeupSlug)}>Read the writeup <span aria-hidden="true">→</span></a>

@@ -14,7 +14,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
   <form class="contact-intake-form" action="/api/contact" method="post" data-timeout-ms={contactContract.runtime.submitTimeoutMs} hidden>
     <div class="contact-field">
       <label for="contact-name">Name</label>
-      <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
+      <input id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
     </div>
     <div class="contact-field">
       <label for="contact-email">Email</label>
@@ -26,9 +26,9 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
     </div>
     <div class="contact-field hidden-field" aria-hidden="true">
       <label for="contact-company">Company</label>
-      <input type="text" id="contact-company" name="company" tabindex="-1" autocomplete="off" />
+      <input id="contact-company" name="company" tabindex="-1" autocomplete="off" />
     </div>
-    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction} data-theme="auto"></div>
+    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction}></div>
     <p class="contact-privacy">
       Messages are stored in a private database. See <a href="/privacy/" class="privacy-link">Privacy</a> for details and data requests.
     </p>

@@ -33,8 +33,6 @@ const lastmods = sitemapLastmods(
 
 export default defineConfig({
   site: origin,
-  // Every page is prerendered; the routes that set `prerender = false` run in the Worker.
-  output: 'static',
   adapter: cloudflare({
     // Every image is encoded at build time by `image.service` below (sharp and its settings), and
     // the Worker serves the files. `astro dev` transforms through the local Images binding.
@@ -44,9 +42,6 @@ export default defineConfig({
   }),
   // Nothing uses sessions, so the adapter provisions no KV namespace for them.
   session: false,
-  // Pages keep their slash through `html_handling` in wrangler.jsonc, which redirects /about to
-  // /about/. Here 'always' would also redirect the API's /api/contact to /api/contact/.
-  trailingSlash: 'ignore',
   outDir: `./${astroOutDir}`,
   // Encoded images are cached by source and options, so one cache serves every
   // checkout and worktree; mise's [env] sets it under the repository's cache root.

@@ -39,9 +39,7 @@ const { writeup } = Astro.props;
       slot="hero"
       src={writeup.heroImage}
       alt={writeup.heroAlt}
-      sizes="(max-width: 720px) 100vw, 672px"
-      loading="eager"
-      fetchpriority="high"
+      priority
     />
     <ContentBody entry={writeup.entry} />
   </ArticleView>
