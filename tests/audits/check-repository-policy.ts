@@ -46,10 +46,12 @@ if (import.meta.main) {
   if (packageJson.engines?.node !== `>=${nodeMajor}`) {
     failures.push(`package.json engines.node must be ">=${nodeMajor}" to match mise.toml's node`);
   }
-  const npmPin = /^npm@(\d+)\.\d+\.\d+$/.exec(packageJson.packageManager ?? '');
+  // mise installs the npm packageManager names (idiomatic_version_file_enable_tools), so the npm
+  // on PATH is that release exactly, never the one Node bundles.
+  const npmPin = /^npm@(\d+\.\d+\.\d+)$/.exec(packageJson.packageManager ?? '');
   if (!npmPin) failures.push('package.json packageManager must pin an exact npm@x.y.z');
   const npmVersion = runSync('npm', ['--version'], { cwd: root });
-  if (npmPin && npmVersion.split('.')[0] !== npmPin[1]) {
+  if (npmPin && npmVersion !== npmPin[1]) {
     failures.push(`npm ${npmVersion} is on PATH; packageManager pins ${packageJson.packageManager}`);
   }
 
@@ -125,6 +127,7 @@ if (import.meta.main) {
   }
 
   interface Job {
+    env?: Record<string, unknown>;
     'runs-on'?: string | string[];
     'timeout-minutes'?: number | string;
     uses?: string;
@@ -132,8 +135,14 @@ if (import.meta.main) {
   }
 
   for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name))) {
-    const { jobs = {} } = load(read(file)) as { jobs?: Record<string, Job> };
+    const { env: workflowEnv = {}, jobs = {} } = load(read(file)) as { env?: Record<string, unknown>; jobs?: Record<string, Job> };
     for (const [name, job] of Object.entries(jobs)) {
+      // A job that enables only some tools and leaves npm out runs the npm Node bundles, not the
+      // packageManager release.
+      const enabled = String(job.env?.MISE_ENABLE_TOOLS ?? workflowEnv.MISE_ENABLE_TOOLS ?? '').split(',');
+      if (enabled.includes('node') && !enabled.includes('npm')) {
+        failures.push(`${file} job ${name} sets MISE_ENABLE_TOOLS with node but not npm`);
+      }
       // A job calling a reusable workflow takes its runner and timeout from that workflow.
       if (job.uses) continue;
       const matrix = job.strategy?.matrix;
@@ -148,11 +157,11 @@ if (import.meta.main) {
 
   finish(
     failures,
-    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no unexplained type-check suppressions; no floating runner labels; every job has a timeout`,
+    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; TypeScript only, no unexplained type-check suppressions; no floating runner labels; every job has a timeout and enables npm beside node`,
     {
       heading: 'repository policy failed:',
       bullet: '- ',
-      fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or a type-check suppression, or a workflow (a pinned runner image, timeout-minutes)',
+      fix: 'fix: the rule each line names: the Node and npm pins (mise.toml, engines, packageManager), a duplicated package (docs/Dependencies.md), the compatibility_date in wrangler.jsonc (move it to the date workerd supports, then run mise run browser:edge), an npm script (make it a mise task), a tracked forbidden file, a stylesheet rule, a JavaScript file or a type-check suppression, or a workflow (a pinned runner image, timeout-minutes, npm in MISE_ENABLE_TOOLS)',
     },
   );
 }

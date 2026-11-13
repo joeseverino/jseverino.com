@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 env:
-  MISE_ENABLE_TOOLS: node
+  MISE_ENABLE_TOOLS: node,npm
 
 jobs:
   # A version with the branch's alias (wrangler derives it from WORKERS_CI_BRANCH), wrapped in

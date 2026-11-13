@@ -154,7 +154,7 @@ Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--
 
 ### `check-repository-policy.ts`
 Structural health:
-- **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
+- **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` names its major, and the npm on `PATH` is the exact `packageManager` release.
 - **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
 - **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
 - **Stylesheets**: component styles live in `src/styles` modules.

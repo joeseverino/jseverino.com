@@ -61,8 +61,8 @@
       "enabled": false
     },
     {
-      "description": "@types/node and npm follow the Node major in mise.toml, so their majors move with a Node major (docs/Dependencies.md).",
-      "matchPackageNames": ["@types/node", "npm"],
+      "description": "@types/node follows the Node major in mise.toml, so its majors move with a Node major (docs/Dependencies.md).",
+      "matchPackageNames": ["@types/node"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },

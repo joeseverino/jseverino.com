@@ -87,7 +87,7 @@ hide = true
 run = "node tests/audits/check-css.ts"
 
 ["checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout"
+description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout and enables npm beside node"
 hide = true
 run = "node tests/audits/check-repository-policy.ts"
 

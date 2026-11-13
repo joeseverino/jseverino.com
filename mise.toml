@@ -27,9 +27,10 @@
 # are a `run` array; a body that branches or keeps a status is a file under
 # mise-tasks/, declared in its own #MISE header.
 #
-# Node is pinned here alone; checks:repo-policy holds engines.node and the
-# packageManager npm to it. npm packages come from package-lock.json;
-# node_modules/.bin is on every task's PATH.
+# Node is pinned here alone, and checks:repo-policy holds engines.node to it.
+# npm is pinned by package.json's packageManager, which mise reads (see
+# [settings]). npm packages come from package-lock.json; node_modules/.bin is
+# on every task's PATH.
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
@@ -38,6 +39,9 @@ min_version = "2026.11.7"
 [settings]
 # For [deps], mise's package installer.
 experimental = true
+# npm installs as its own tool at the release packageManager names, never the
+# one Node bundles.
+idiomatic_version_file_enable_tools = ["npm"]
 # Every tool installs from mise.lock's URLs and checksums, which cover these
 # platforms: the Mac and the Linux CI runners.
 locked = true

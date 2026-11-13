@@ -61,9 +61,9 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:7852dc5a7d72f5fe458a597d690f6c42fbc8e9e26ddfa95f8e6ef552558d9bbf
       options: --user 1001 --ipc=host
-    # Node alone: the suite runs Playwright from the lockfile.
+    # Node and npm alone: the suite runs Playwright from the lockfile.
     env:
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,npm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -115,9 +115,9 @@ jobs:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    # Node alone: the suites run Playwright and wrangler from the lockfile.
+    # Node and npm alone: the suites run Playwright and wrangler from the lockfile.
     env:
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,npm
     strategy:
       fail-fast: false
       matrix:

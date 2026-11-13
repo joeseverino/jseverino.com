@@ -7,7 +7,7 @@
   "engines": {
     "node": ">=26"
   },
-  "packageManager": "npm@11.20.0",
+  "packageManager": "npm@12.2.2",
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.6",
     "@astrojs/mdx": "^8.1.2",

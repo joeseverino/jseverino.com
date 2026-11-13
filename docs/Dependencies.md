@@ -34,19 +34,25 @@ validator, at the release the task pins.
 ## Runtime and package manager
 
 Node is pinned once, in [`mise.toml`](../mise.toml): an exact LTS release.
-`engines.node` in `package.json` names the same major, and `packageManager`
-pins the npm release that Node version bundles, so a fresh install of the
-pinned Node needs nothing else. `mise run checks:repo-policy` fails when the
-running Node's major.minor or npm's major disagrees with them. Patch drift passes, so a Node security
-release does not block the gates before the pin moves.
+`engines.node` in `package.json` names the same major. npm is pinned once, by
+`packageManager` in `package.json`: mise reads it
+(`idiomatic_version_file_enable_tools`) and installs that npm release beside
+Node, locked in `mise.lock`, in place of the one Node bundles.
+`mise run checks:repo-policy` fails when the running Node's major.minor
+disagrees with `mise.toml` or the npm on `PATH` is not the `packageManager`
+release. Node's patch drift passes, so a Node security release does not block
+the gates before the pin moves.
+
+[`.npmrc`](../.npmrc) sets `allow-remote=root`: npm refuses a tarball URL
+dependency by default, and `severino-brand` installs from its GitHub release.
 
 CI installs Node from `mise.toml` and `mise.lock` through `jdx/mise-action`,
 so a bump moves every workflow at once. mise itself is pinned once, by
 `min_version` in `mise.toml`: it is the floor every machine must meet and the
 release the setup action installs, and Renovate moves it after the same
 release-age hold it gives every other update. A Node major also
-moves `engines.node`, the npm major in `packageManager` and `@types/node`,
-whose majors Renovate holds for that reason.
+moves `engines.node` and `@types/node`, whose majors Renovate holds for that
+reason.
 
 ## Deliberate holds
 
@@ -59,7 +65,6 @@ disables the package's major updates, and the `wrangler` hold disables all of it
 | `@types/node` | 26.x | The types describe the Node runtime pinned in `mise.toml`; a newer major would type APIs that Node 26 does not have. | `mise.toml` moves to a newer Node major. |
 | `wrangler` | 4.154.0, exact | `@astrojs/cloudflare` builds and runs dev through `@cloudflare/vite-plugin` 1.x, which pins its own `wrangler` and `miniflare` to exact releases. Any other `wrangler` installs a second copy of both and of the native `workerd` binary. | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
 | `satteri` | 0.10.x | The content renderer's plugins in `src/lib/markdown/` run inside the copy `@astrojs/markdown-satteri` depends on, and a newer 0.x installs a second copy with its native bindings. | `@astrojs/markdown-satteri` depends on a newer satteri; then `prose.ts` moves its MDAST `setProperty` calls to `setField`. |
-| `npm` (`packageManager`) | 11.x | The pin names the npm release the pinned Node bundles. | `mise.toml` moves to a Node major that bundles a newer npm. |
 
 ## No overrides
 
