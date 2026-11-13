@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, test } from 'node:test';
 import { main } from '../../bin/cloudflare.ts';
-import { type AccessPolicy, type DesiredState, loadDesired } from '../../bin/lib/cloudflare.ts';
+import type { AccessPolicy, DesiredState } from '../../bin/lib/cloudflare.ts';
+import { loadDesired } from '../../bin/lib/drift.ts';
 import { type JsonSchema, validate } from '../../bin/lib/json-schema.ts';
 import { PREVIEW_HOST_SUFFIX } from '../../src/lib/site-config.ts';
 import { fromRoot, siteRoot } from '../../src/lib/site-root.ts';
@@ -46,7 +47,12 @@ const previewItem = async (accessApps: FakeState['accessApps']) => {
 };
 
 describe('cloudflare/zone.json', () => {
-  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')) });
+  schemaTests({
+    desired,
+    schema,
+    fields: DESIRED_FIELDS,
+    load: () => loadDesired<DesiredState>(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json')),
+  });
 
   test('the schema keeps one custom rule free and rejects unknown settings', () => {
     const fifth = { ...desired, firewall: Array.from({ length: 5 }, () => desired.firewall[0]) };

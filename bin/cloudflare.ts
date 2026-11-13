@@ -4,8 +4,8 @@
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';
-import { type ClientOptions, createClient, createRun, loadDesired } from './lib/cloudflare.ts';
-import { type ToolOptions, toolMain } from './lib/drift.ts';
+import { type ClientOptions, createClient, createRun, type DesiredState } from './lib/cloudflare.ts';
+import { loadDesired, type ToolOptions, toolMain } from './lib/drift.ts';
 
 const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 
@@ -35,7 +35,7 @@ export const main = toolMain<ToolOptions & Pick<ClientOptions, 'fetch'>>({
   usage: USAGE,
   commandLine: 'node bin/cloudflare.ts',
   setup({ env = process.env, fetch = globalThis.fetch }) {
-    const desired = loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json'));
+    const desired = loadDesired<DesiredState>(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json'));
     const openapi = fs.readFileSync(fromRoot(desired.schemaValidation.file), 'utf8');
     return createRun(desired, createClient({ token: env.CLOUDFLARE_API_TOKEN, fetch }), openapi);
   },

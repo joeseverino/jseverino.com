@@ -23,7 +23,7 @@ import type {
   Widget,
   Zone,
 } from './cloudflare-types.ts';
-import { applySteps, type Call, changedKeys, fields, type Item, item, loadDesired as load, type Method, pick, type Run, same } from './drift.ts';
+import { applySteps, type Call, changedKeys, fields, type Item, item, type Method, pick, type Run, same } from './drift.ts';
 import { absentOn404, createSend, type Fetch, RestError } from './rest.ts';
 
 export type * from './cloudflare-types.ts';
@@ -38,8 +38,6 @@ const FIREWALL_PHASE = 'http_request_firewall_custom';
 // Custom rules allowed in the phase, dashboard rules included.
 const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
-
-export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 export interface ClientOptions {
   token: string | undefined;
