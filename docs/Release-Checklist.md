@@ -82,7 +82,7 @@ CodeQL reports a high-severity alert or an error. Content changes go through `si
 `site land` ([Site CLI](./Site-CLI.md)), and `site land` reads the same list
 from the ruleset.
 
-Once `ci` passes, the `deploy` workflow uploads the pull request's build as a
+Once `ci` passes, the `preview` workflow uploads the pull request's build as a
 preview version, verifies it, and reports on the `deploy` check, whose summary
 names the version URL. Review that version before merging, with the review
 service token ([preview access](./Cloudflare.md#preview-access)):

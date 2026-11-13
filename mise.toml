@@ -60,8 +60,8 @@ output = "keep-order"
 # prints only its own. CI installs the same way, in its setup action. No
 # dependency's install script runs: package.json's allowScripts denies each one
 # there is, and .npmrc fails an install that meets one it does not name. The
-# deploy workflow also sets npm_config_ignore_scripts, so a script approved
-# later still never runs beside its secrets.
+# preview and deploy workflows also set npm_config_ignore_scripts, so a script
+# approved later still never runs beside their secrets.
 [deps.npm]
 auto = true
 run = "npm ci --no-audit --no-fund >&2"

@@ -22,7 +22,7 @@ preview. Only the branch's preview received the change; production stayed navy.
 
 ### 1. Turn a commit into a reviewable version
 
-No separate review server exists. Once `ci` passes, the `deploy` workflow wraps
+No separate review server exists. Once `ci` passes, the `preview` workflow wraps
 the build `ci` gated in the sitedrift viewer and uploads it as a Worker version
 tagged with the commit. Its `deploy` check on the commit names the version's own
 URL, which never moves, and the branch alias, which follows the next push.
@@ -87,7 +87,7 @@ so. They need no account system, write API, or database.
 
 ## Repository integration
 
-The build is the same for production and a preview. The `deploy` workflow's
+The build is the same for production and a preview. The `preview` workflow's
 `preview` job wraps it afterwards with `mise run preview:wrap`
 ([`bin/wrap-preview.ts`](../bin/wrap-preview.ts)), which:
 

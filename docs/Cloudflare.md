@@ -74,7 +74,8 @@ application on `*-jseverino.severino.workers.dev` covers them all, and they are
 reachable only with a service token. The application holds Service Auth policies alone (decision `non_identity`, include
 rules that name service tokens), with two tokens:
 
-- **CI.** The `deploy` workflow's `preview` and `production` jobs send
+- **CI.** The `preview` workflow's `preview` job and the `deploy` workflow's
+  `production` job send
   `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` to the version they
   verify. [`bin/lib/access.ts`](../bin/lib/access.ts) attaches them only to
   `https` hosts of one label plus `PREVIEW_HOST_SUFFIX`.
@@ -231,7 +232,7 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
    [`.github/repo.json`](../.github/repo.json) and run `mise run github apply
    --yes` ([GitHub Settings](./GitHub-Settings.md)). Its secret key goes only to
    the Worker, in step 4.
-3. **The deploy credentials.** The `deploy` workflow reads
+3. **The deploy credentials.** The `preview` and `deploy` workflows read
    `CLOUDFLARE_API_TOKEN` from the `production` environment's secrets and
    `CLOUDFLARE_ACCOUNT_ID` from the repository variables. Scope the token to
    this account: Workers Scripts edit, plus D1 read so wrangler can resolve the

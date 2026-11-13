@@ -47,7 +47,7 @@ See the [Vault-as-CMS Workflow](./Vault-Workflow.md).
 
 GitHub Actions checks out this repository, runs `mise run build` inside
 `mise run check`, and keeps the gated build as the `site` artifact the
-`deploy` workflow uploads with wrangler. The build:
+`preview` and `deploy` workflows upload with wrangler. The build:
 
 - never touches the private vault: it builds from the committed snapshot
   alone;
@@ -416,8 +416,8 @@ ships to visitors:
   Each release carries the attested SBOM.
 - **Install scripts** of dependencies never run: `package.json`'s
   `allowScripts` denies each one, and `.npmrc`'s `strict-allow-scripts` fails
-  an install that meets one it names neither way. The deploy workflow, which
-  holds the Cloudflare token, also sets `npm_config_ignore_scripts`.
+  an install that meets one it names neither way. The `preview` and `deploy`
+  workflows, which hold the Cloudflare token, also set `npm_config_ignore_scripts`.
 - **Preview wrap** is unit-tested in `mise run checks:unit`
   ([`tests/unit/wrap-preview.test.ts`](../tests/unit/wrap-preview.test.ts)):
   a feature branch receives the review wrapper with the CSP filled again,
@@ -447,9 +447,9 @@ ships to visitors:
 - **Least-privilege workflows.** Every GitHub Actions workflow declares an
   explicit top-level `permissions:` block defaulting to `contents: read`.
   Elevated scopes (notably `security-events: write` for the SARIF upload in
-  `scorecard.yml`) are granted per job, never per workflow. The `deploy`
-  workflow holds the Cloudflare token (in the `production` environment) and the
-  Access service token, so it runs only the default branch's code and never
+  `scorecard.yml`) are granted per job, never per workflow. The `preview`
+  and `deploy` workflows hold the Cloudflare token (in the `production` environment) and the
+  Access service token, so they run only the default branch's code and never
   checks out a pull request. A pull request's build does reach wrangler, so
   `bin/wrap-preview.ts` first refuses a deploy config with any key the adapter
   does not write (wrangler would run a `build.command` on the runner), another

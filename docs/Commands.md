@@ -109,7 +109,7 @@ including when Chrome fails to launch.
 - The live `security.txt` matches the committed file.
 - No CodeQL alert is open.
 
-Every check runs even after an earlier one fails. `--origin <url>` verifies one Worker version at its preview URL instead (what `deploy.yml` runs before a version takes traffic). `--preview` marks a branch preview, and `--slug <writeup>` checks one writeup.
+Every check runs even after an earlier one fails. `--origin <url>` verifies one Worker version at its preview URL instead (what `preview.yml` and `deploy.yml` run before a version takes traffic). `--preview` marks a branch preview, and `--slug <writeup>` checks one writeup.
 
 **`mise run build`**: the build every deploy ships (`bin/build-static.ts`):
 `astro build`, then the CSP hashes. CI builds once and the `deploy` workflow
