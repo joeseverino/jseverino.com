@@ -21,7 +21,7 @@ run = [
 ]
 
 ["checks:security-txt"]
-description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, is not close to expiry, and its Encryption URL names a committed WKD key"
 hide = true
 run = "node tests/audits/check-security-txt.ts"
 
@@ -89,7 +89,7 @@ hide = true
 run = "node tests/audits/check-css.ts"
 
 ["checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; a file has a shebang only if it is executable; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node"
+description = "Node and npm pins agree; the Worker compatibility date keeps close to the installed workerd's; no secrets or build output tracked; a file has a shebang only if it is executable; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node"
 hide = true
 run = "node tests/audits/check-repository-policy.ts"
 
