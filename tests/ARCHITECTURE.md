@@ -117,7 +117,7 @@ or a row for a file that is gone, fails the gate.
 | `tests/unit/type-escapes.test.ts` | The type-escape plugin refuses a cast to `never` or through `unknown`, in an `.astro` file too. | `checks:unit` |
 | `tests/unit/vacuous-assertions.test.ts` | The vacuous-assertion plugin refuses an inequality that passes for any result. | `checks:unit` |
 | `tests/unit/wrap-preview.test.ts` | A preview branch's build gets the review viewer and a filled CSP, `main`'s ships as the adapter wrote it, and a foreign deploy config is refused. | `checks:unit` |
-| `tests/unit/writeup-body.test.ts` | A writeup body drops the title, lede and cover its page renders from frontmatter. | `checks:unit` |
+| `tests/unit/writeup-body.test.ts` | A writeup body drops the title, lede and cover its page renders from frontmatter, and a paragraph repeating its description. | `checks:unit` |
 | `tests/unit/writeup-store.test.ts` | Frontmatter writes change only their key and keep the YAML structure and the body bytes. | `checks:unit` |
 
 ## Design rules
