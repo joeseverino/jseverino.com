@@ -1,6 +1,4 @@
 // Commits a built site to the dist branch, one commit per change. See docs/Dist-Branch.md.
-//
-//   node bin/publish-dist.ts [dir] [--push] [--archive-sha256 <hex>] [--attestation <url>]
 
 import { buildOutDir } from '../src/lib/build-output.ts';
 import { DIST_BRANCH } from '../src/lib/site-config.ts';

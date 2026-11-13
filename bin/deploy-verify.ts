@@ -1,14 +1,5 @@
 // Post-merge production verification, run from a clean main checkout. Expectations
 // come from src/lib/edge-expectations.ts, shared with tests/edge.
-//
-//   node bin/deploy-verify.ts                        # production, from a clean main
-//   node bin/deploy-verify.ts --origin <url> [--preview]
-//   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
-//
-// --origin verifies one deployment, such as a Worker version at its preview URL (outside
-// the zone, behind Access): served responses only, no git/check-run preconditions, no
-// HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
-// verifies one writeup after a publish.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -390,7 +381,6 @@ function siteChecks(target: Target, urls: readonly string[], preview: boolean): 
   ];
 }
 
-// Writes the report's summary and returns the exit code.
 function conclude(report: Report, against: string, { deployed, production }: { deployed: boolean; production: boolean }): number {
   const failed = report.failed();
   report.write(
@@ -409,7 +399,15 @@ function conclude(report: Report, against: string, { deployed, production }: { d
 
 async function main(): Promise<number> {
   const { values } = cli({
-    usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
+    usage: `usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]
+
+With no flags, verifies production from a clean main checkout.
+
+  --origin   Verify one deployment, such as a Worker version at its preview URL (outside the
+             zone, behind Access): served responses only, no git or check-run preconditions,
+             no HSTS.
+  --preview  The origin is a branch preview, where sitedrift wraps every HTML route.
+  --slug     Verify one writeup after a publish.`,
     options: {
       origin: { type: 'string' },
       preview: flag,
