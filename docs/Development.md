@@ -56,8 +56,7 @@ its own and is no gate: CI has no `gh` login, and the checks describe this
 machine, not the change.
 
 Every checkout and worktree shares one cache root, `SITE_CACHE_DIR` in
-`mise.toml`'s `[env]` (under the platform cache directory): the content
-sync's image masters, and Astro's encoded images in `astro/`.
+`mise.toml`'s `[env]`, whose comment says what it holds.
 
 ## Code
 
@@ -87,29 +86,32 @@ Vale, pinned in `mise.toml`, holds the engineering docs to the repository's word
 
 ## Gates
 
-```sh
-mise run fast             # the static gates: types, policy, docs, prose, lint, duplication, unused code, unit tests, astro check
-mise run check            # + the production build, then every gate on it (CI's build job)
-mise run browser          # the browser suites, one at a time: e2e, visual, edge
-mise run ci               # check, then browser: every gate the pipeline runs
-mise run diff:build       # build HEAD and the working tree, report any change to shipped output
-mise run deploy:verify    # after a merge: required checks, then the live deployment
-```
+Every gate is a hidden mise task named `<job>:<gate>`, declared in its job's
+file under [`mise-tasks/`](../mise-tasks/); `mise tasks --hidden` lists each
+with what it asserts, and CI runs the same tasks. Four aggregates run them:
 
-Every gate is a hidden mise task named `<job>:<gate>` (`mise tasks --hidden`
-lists each with what it asserts), and CI runs the same tasks. The gates validate the current checkout without vault access; run
-`mise run sync:content` explicitly before checking new editorial content. A
-failing gate prints its own fix. Signature verification uses an isolated
-keyring containing only the committed WKD public keys. Unit-test Git
-repositories disable signing locally; production commit signing remains
-configured by the author.
+- `mise run fast` runs every static `checks:*` gate, collecting every failure.
+- `mise run check` runs them, then the production build, then the `built:*`
+  gates on what it built, exactly as CI's `build` job does.
+- `mise run browser` builds once with the test site key and runs the three
+  `browser:*` suites one at a time.
+- `mise run ci` is `check`, then `browser`.
+
+mise runs the gates of a phase side by side, prints each one's output whole
+under its name, enforces each task's timeout, and ends on the gates that
+failed; a failing gate prints its own fix. The gates read the committed
+checkout and never the vault, so new editorial content is synced
+(`mise run sync:content`) before it is checked. `mise run diff:build` builds
+HEAD and the working tree and reports any change to the shipped output.
+After a merge, `mise run deploy:verify` waits for the commit's required
+checks and then verifies the live site.
 
 ```mermaid
 flowchart TB
     A["Source change"] --> B["mise run fast (checks:*)"] --> C["mise run check (checks:*, the build, built:*)"] --> D["Push the branch, open a PR"]
     G["mise run browser (browser:*)"] -.-> C
     D --> CI
-    CI -- "site artifact" --> P["deploy: preview version, wrapped and verified"]
+    CI -- "site artifact" --> P["preview: a version, wrapped and verified"]
     P --> M["Merge: site land"]
     M --> MCI["ci on main's tip"] --> V["deploy: upload a version, verify it at its preview URL"]
     V --> L["versions deploy @100%, attest, dist"] --> F["mise run deploy:verify"]
@@ -141,9 +143,9 @@ steps.
 
 | Workflow | Trigger | Does | Verified result |
 | --- | --- | --- | --- |
-| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | `build` runs `mise run check` and uploads the build as the `site` artifact; `e2e` runs in Playwright's image and the `playwright` matrix runs `visual` and `edge`, one `browser:*` task per job. No job waits on another. [Architecture](./Architecture.md#14-release-gate) has each job. | Green checks on the committed tree; a summary on every job, with each gate or browser project and its result. |
+| [`ci`](../.github/workflows/ci.yml) | push and pull request to `main` | `build` runs `mise run check` and uploads the build as the `site` artifact; `e2e` runs in Playwright's image and the `playwright` matrix runs `visual` and `edge`, one `browser:*` task per job. No job waits on another; the workflow's comments say what each job does. | Green checks on the committed tree; a summary on every job, with each gate or browser project and its result. |
 | [`preview`](../.github/workflows/preview.yml) | `ci` completed on a pull request | Ships `ci`'s `site` artifact as an Access-protected preview version verified at its preview URL, and keeps one comment on the pull request current with `ci`'s summaries and the preview's, whatever `ci` concluded. Each run is titled with the branch and the pull request. | A `deploy` check on the pull request's commit naming the version URL. |
-| [`deploy`](../.github/workflows/deploy.yml) | `ci` completed on `main` | Ships `main`'s tip: the `site` artifact as a version verified at its preview URL before it takes all traffic, then attested and committed to the [`dist` branch](./Dist-Branch.md). A superseded commit's check passes at once. Each run is titled with the commit it ships. [Architecture](./Architecture.md#14-release-gate) has each job. | A `deploy` check on every shipped commit; the `release-<sha>` artifact for each production deploy. |
+| [`deploy`](../.github/workflows/deploy.yml) | `ci` completed on `main` | Ships `main`'s tip: the `site` artifact as a version verified at its preview URL before it takes all traffic, then attested and committed to the [`dist` branch](./Dist-Branch.md). A superseded commit's check passes at once. Each run is titled with the commit it ships; the workflow's comments say what each job does. | A `deploy` check on every shipped commit; the `release-<sha>` artifact for each production deploy. |
 | [`dependency review`](../.github/workflows/dependency-review.yml) | pull request | Audits manifest package updates for high-severity advisories, passing at once when no manifest changed; comments only when it blocks. | Pull request status validation. |
 | [`release`](../.github/workflows/release.yml) | `v*` tag | Publishes the tagged commit's production deploy: the `release-<sha>` artifact the `deploy` workflow attested (the archive production served, its CycloneDX SBOM, and both Sigstore bundles). Nothing is rebuilt, so a tag on a commit `main` never deployed fails. The tag is signed by convention; the trigger does not verify it. | A GitHub release whose files verify with `gh attestation verify`. |
 | [`scorecard`](../.github/workflows/scorecard.yml) | weekly, branch-protection change | OpenSSF Scorecard supply-chain posture, published to the OpenSSF API (the README's badge) and uploaded as SARIF to code scanning. | The published score, and a code scanning alert per check with findings. |
