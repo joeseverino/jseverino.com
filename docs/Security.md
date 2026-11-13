@@ -158,7 +158,7 @@ policy that carries no hashes.
 [`bin/build-csp.ts`](../bin/build-csp.ts) writes the finished
 `Content-Security-Policy` and `Reporting-Endpoints` headers into
 `dist/_headers` (see Content Security Policy below). The policy is identical
-on every request.
+on every request. `mise run checks:docs` holds this table to the `/*` rule.
 
 | Header | Value | Purpose |
 |---|---|---|
@@ -167,6 +167,7 @@ on every request.
 | `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (Cloudflare-managed) | Forces HTTPS for one year on the apex and all subdomains. Set at the Cloudflare zone, so `_headers` does not repeat it. |
 | `X-Content-Type-Options` | `nosniff` | Stops MIME-type sniffing. |
 | `X-Frame-Options` | `SAMEORIGIN` | Blocks the site being framed by other origins (clickjacking). |
+| `X-Permitted-Cross-Domain-Policies` | `none` | Tells Adobe clients (Flash, Acrobat) that no cross-domain policy file applies. |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer leakage to other sites. |
 | `Cross-Origin-Opener-Policy` | `same-origin` | Isolates the browsing context group, blocking `window.opener` access from cross-origin pages (tab-napping, Spectre-class side channels). |
 | `Cross-Origin-Resource-Policy` | `same-site` | Blocks other sites from embedding the site's assets (hotlinking). `same-site` lets subdomains of `jseverino.com` load shared assets, which `same-origin` would block. |
@@ -245,11 +246,6 @@ report receiver's normalization and noise filtering
 ([`tests/unit/csp-report-api.test.ts`](../tests/unit/csp-report-api.test.ts)).
 The edge suite asserts hash coverage of every inline script and style, that the
 policy is identical on every request, and the `/contact/` exemption.
-
-[`public/_headers`](../public/_headers) carries the other security headers
-(`X-Content-Type-Options`, `X-Frame-Options`, `X-Permitted-Cross-Domain-Policies`,
-`Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`,
-`Cross-Origin-Resource-Policy`) alongside the CSP placeholders.
 
 `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and
 `frame-ancestors 'self'` close the remaining injection and clickjacking vectors.

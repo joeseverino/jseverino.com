@@ -2,13 +2,17 @@
 // no doc runs an npm script (package.json has none; every command is a mise task), every
 // backticked repo path resolves (git tracks or ignores it), and every backticked bare file name
 // is a tracked file's, so a renamed file leaves no stale name behind. Command refs are checked
-// everywhere, fenced code included. Links and #anchors are lychee's (`mise run checks:doc-links`).
+// everywhere, fenced code included. The two source lists a doc keeps in prose for its reader (the
+// security headers, the raw HTML tags) match their source. Links and #anchors are lychee's
+// (`mise run checks:doc-links`).
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { trackedFiles } from '../../bin/lib/git.ts';
 import { miseTasks, namesTask } from '../../bin/lib/mise.ts';
 import { spawnResult } from '../../bin/lib/run.ts';
+import { parseHeaders } from '../../src/lib/headers-file.ts';
+import { RAW_HTML_TAGS } from '../../src/lib/markdown/guard.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
 import { abort, finish } from './lib.ts';
 
@@ -147,6 +151,64 @@ export function missingNames<R extends PathRef>(refs: readonly R[], index: Pick<
   return refs.filter((ref) => !index.names.has(ref.path));
 }
 
+// The lines under a heading, up to the next heading of any level, or null without that heading.
+export function section(markdown: string, heading: string): string | null {
+  const lines = markdown.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.replace(/^#+\s+/, '') === heading && /^#+\s/.test(line));
+  if (start < 0) return null;
+  const end = lines.findIndex((line, index) => index > start && /^#+\s/.test(line));
+  return lines.slice(start + 1, end < 0 ? undefined : end).join('\n');
+}
+
+// The names in a table's first column, backticked.
+export function tableNames(text: string): Set<string> {
+  return new Set([...text.matchAll(/^\|\s*`([^`]+)`/gm)].map(([, name = '']) => name));
+}
+
+// The backticked names of the list item that opens with `label`, `h1` to `h6` spelled out.
+export function itemNames(text: string, label: string): Set<string> {
+  const item = text.split(/\n(?=- )/).find((part) => part.startsWith(`- ${label}`)) ?? '';
+  const spelled = item.replace(/`h(\d)` to `h(\d)`/g, (_, from: string, to: string) =>
+    Array.from({ length: Number(to) - Number(from) + 1 }, (_, i) => `\`h${Number(from) + i}\``).join(' '),
+  );
+  return new Set([...spelled.matchAll(/`([^`]+)`/g)].map(([, name = '']) => name));
+}
+
+// What a copy lists that its source does not, and what it leaves out.
+export function copyDrift(listed: ReadonlySet<string>, source: ReadonlySet<string>): { extra: string[]; missing: string[] } {
+  return { extra: [...listed].filter((name) => !source.has(name)), missing: [...source].filter((name) => !listed.has(name)) };
+}
+
+interface Copy {
+  doc: string;
+  heading: string;
+  source: string;
+  listed(text: string): Set<string>;
+  names(): Set<string>;
+}
+
+const COPIES: Copy[] = [
+  {
+    doc: 'docs/Security.md',
+    heading: 'HTTP response headers',
+    source: "public/_headers' /* rule, and HSTS from cloudflare/zone.json",
+    listed: tableNames,
+    names: () => {
+      const lines = parseHeaders(fs.readFileSync(path.join(siteRoot, 'public/_headers'), 'utf8')).get('/*') ?? [];
+      const zone = JSON.parse(fs.readFileSync(path.join(siteRoot, 'cloudflare/zone.json'), 'utf8')) as { hsts?: { enabled?: boolean } };
+      const names = lines.map((line) => line.slice(0, line.indexOf(':')));
+      return new Set(zone.hsts?.enabled ? [...names, 'Strict-Transport-Security'] : names);
+    },
+  },
+  {
+    doc: 'docs/Authoring-Guide.md',
+    heading: 'Raw HTML',
+    source: 'RAW_HTML_TAGS in src/lib/markdown/guard.ts',
+    listed: (text) => itemNames(text, 'Tags:'),
+    names: () => new Set(RAW_HTML_TAGS),
+  },
+];
+
 if (import.meta.main) {
   // The docs are the tracked files the pathspec arguments name (mise.toml's `docs` var), so a
   // gitignored local file or an untracked copy never fails the gate.
@@ -186,9 +248,23 @@ if (import.meta.main) {
   for (const ref of missingNames(allNameRefs, index)) {
     problems.push(`${ref.doc}:${ref.line}  no tracked file has this name -> ${ref.path}`);
   }
+  for (const copy of COPIES) {
+    const text = section(fs.readFileSync(path.join(siteRoot, copy.doc), 'utf8'), copy.heading);
+    if (text === null) {
+      problems.push(`${copy.doc}  no "${copy.heading}" section, which copies ${copy.source}`);
+      continue;
+    }
+    const { extra, missing } = copyDrift(copy.listed(text), copy.names());
+    if (extra.length > 0) problems.push(`${copy.doc} "${copy.heading}"  lists what ${copy.source} lacks -> ${extra.join(', ')}`);
+    if (missing.length > 0) problems.push(`${copy.doc} "${copy.heading}"  leaves out what ${copy.source} has -> ${missing.join(', ')}`);
+  }
 
-  finish(problems, `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths, ${allNameRefs.length} file names resolve`, {
-    heading: 'check-docs: documentation references that do not resolve:',
-    fix: 'fix: correct the reference at the reported file:line, or restore its target',
-  });
+  finish(
+    problems,
+    `${docs.length} docs, ${taskRefCount} task refs, ${allPathRefs.length} repo paths, ${allNameRefs.length} file names resolve, ${COPIES.length} copied lists match`,
+    {
+      heading: 'check-docs: documentation references that do not resolve:',
+      fix: 'fix: correct the reference at the reported file:line, or restore its target',
+    },
+  );
 }

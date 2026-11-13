@@ -1,7 +1,21 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { fileName, fileNameRefs, miseTaskRuns, missingNames, missingPaths, npmScriptRuns, pathRefs, repoIndex, repoPath } from '../audits/check-docs.ts';
+import {
+  copyDrift,
+  fileName,
+  fileNameRefs,
+  itemNames,
+  miseTaskRuns,
+  missingNames,
+  missingPaths,
+  npmScriptRuns,
+  pathRefs,
+  repoIndex,
+  repoPath,
+  section,
+  tableNames,
+} from '../audits/check-docs.ts';
 
 const top = new Set(['bin', 'docs', 'src', 'tests', 'dist', '.cache']);
 
@@ -60,7 +74,32 @@ test('a bare file name resolves only to a tracked file of that name', () => {
     { line: 1, path: 'build-csp.ts' },
   ]);
   const names = new Set(['contact.openapi.json', 'build-csp.ts']);
-  assert.deepEqual(missingNames(refs, { names }).map((ref) => ref.path), ['contact-openapi.json']);
+  assert.deepEqual(
+    missingNames(refs, { names }).map((ref) => ref.path),
+    ['contact-openapi.json'],
+  );
+});
+
+test('a copied list is read from its own section, and drift names both sides', () => {
+  const markdown = [
+    '## Headers',
+    '| Header | Value |',
+    '|---|---|',
+    '| `X-Frame-Options` | `SAMEORIGIN` |',
+    '| `Referrer-Policy` | `no-referrer` |',
+    '## Raw HTML',
+    '- Tags: `a`, `b`, `h1` to `h3`,',
+    '  `ul`.',
+    '- Attributes: `class`.',
+  ].join('\n');
+  const headers = tableNames(section(markdown, 'Headers') ?? '');
+  assert.deepEqual([...headers], ['X-Frame-Options', 'Referrer-Policy']);
+  assert.deepEqual(copyDrift(headers, new Set(['X-Frame-Options', 'X-Permitted-Cross-Domain-Policies'])), {
+    extra: ['Referrer-Policy'],
+    missing: ['X-Permitted-Cross-Domain-Policies'],
+  });
+  assert.deepEqual([...itemNames(section(markdown, 'Raw HTML') ?? '', 'Tags:')], ['a', 'b', 'h1', 'h2', 'h3', 'ul']);
+  assert.equal(section(markdown, 'Missing'), null);
 });
 
 test('the repo index sees tracked files and ignored generated output', () => {
