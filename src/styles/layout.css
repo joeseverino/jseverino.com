@@ -72,57 +72,8 @@
     text-wrap: balance;
   }
 
-  .page-actions,
-  .archive-taxonomy-list {
-    display: flex;
-    flex-wrap: wrap;
+  .page-actions {
     justify-content: center;
-    gap: var(--space-10);
-  }
-
-  .page-actions a,
-  .archive-tag {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: 34px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
-    background: var(--color-surface);
-    color: var(--color-text);
-    font-size: var(--font-ui);
-    font-weight: 600;
-    line-height: 1.2;
-    text-decoration: none;
-    transition:
-      color var(--motion-duration-fast) var(--motion-ease-standard),
-      border-color var(--motion-duration-fast) var(--motion-ease-standard),
-      background-color var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .page-actions a {
-    padding-inline: var(--space-inset);
-  }
-
-  .archive-tag {
-    gap: 7px;
-    min-block-size: 32px;
-    padding-inline: 10px;
-  }
-
-  .page-actions a:hover,
-  .page-actions a:focus-visible,
-  .archive-tag:hover,
-  .archive-tag:focus-visible {
-    border-color: color-mix(in oklch, var(--color-primary) 45%, var(--color-border));
-    color: var(--color-primary);
-    text-decoration: none;
-  }
-
-  .page-actions a:active,
-  .archive-tag:active {
-    border-color: var(--color-primary-deep);
-    background: var(--color-soft);
-    color: var(--color-primary-deep);
   }
 
   /* The narrow layouts in this file key off container width, not the viewport: 33.5rem is these
@@ -219,10 +170,6 @@
     .archive-taxonomy-group {
       grid-template-columns: 1fr;
     }
-  }
-
-  .archive-taxonomy-list {
-    justify-content: flex-start;
   }
 
   .archive-tag-count {

@@ -30,15 +30,15 @@ const titleHref = entry.repoUrl ?? pkg?.url;
       {(pkg || entry.selfHosted || entry.archived) && (
         <div class="software-badges">
           {pkg && (
-            <span class={`badge badge--${pkg.registry}`}>
+            <span class={`pill pill--meta pill--${pkg.registry}`}>
               {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
             </span>
           )}
           {pkg?.downloadsPerMonth != null && (
-            <span class="badge badge--muted"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+            <span class="pill pill--meta"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
           )}
-          {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
-          {entry.archived && <span class="badge badge--muted">Archived</span>}
+          {entry.selfHosted && <span class="pill pill--meta pill--self-hosted">Self-hosted</span>}
+          {entry.archived && <span class="pill pill--meta">Archived</span>}
         </div>
       )}
     </div>

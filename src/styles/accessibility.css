@@ -47,10 +47,7 @@
     /* biome-ignore-end lint/complexity/noImportantStyles: the override ends here. */
 
     .button,
-    .tag,
-    .tech-pills a,
-    .page-actions a,
-    .archive-tag,
+    .pill,
     .nav-toggle,
     .card-surface,
     .article-hero,

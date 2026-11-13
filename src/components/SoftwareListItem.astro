@@ -17,7 +17,7 @@ const titleHref = entry.repoUrl ?? entry.package?.url;
       ) : (
         entry.title
       )}
-      {entry.selfHosted && <span class="sli-flag">Self-hosted</span>}
+      {entry.selfHosted && <span class="pill pill--meta pill--self-hosted">Self-hosted</span>}
     </h3>
     <p class="sli-desc">{entry.description}</p>
   </div>

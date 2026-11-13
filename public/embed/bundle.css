@@ -109,6 +109,8 @@
     --font-ui: 0.875rem;
     --font-lede: clamp(1rem, 0.9rem + 0.6vw, 1.25rem);
     --space-inset: 0.875rem;
+    --space-pill-block: 0.375rem;
+    --space-pill-inline: 0.625rem;
     --space-row: 1.125rem;
   }
   :root[data-theme-mode=light] {
@@ -354,52 +356,8 @@
     line-height: 1.65;
     text-wrap: balance;
   }
-  .page-actions,
-  .archive-taxonomy-list {
-    display: flex;
-    flex-wrap: wrap;
+  .page-actions {
     justify-content: center;
-    gap: var(--space-10);
-  }
-  .page-actions a,
-  .archive-tag {
-    display: inline-flex;
-    align-items: center;
-    min-block-size: 34px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-pill);
-    background: var(--color-surface);
-    color: var(--color-text);
-    font-size: var(--font-ui);
-    font-weight: 600;
-    line-height: 1.2;
-    text-decoration: none;
-    transition:
-      color var(--motion-duration-fast) var(--motion-ease-standard),
-      border-color var(--motion-duration-fast) var(--motion-ease-standard),
-      background-color var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-  .page-actions a {
-    padding-inline: var(--space-inset);
-  }
-  .archive-tag {
-    gap: 7px;
-    min-block-size: 32px;
-    padding-inline: 10px;
-  }
-  .page-actions a:hover,
-  .page-actions a:focus-visible,
-  .archive-tag:hover,
-  .archive-tag:focus-visible {
-    border-color: color-mix(in oklch, var(--color-primary) 45%, var(--color-border));
-    color: var(--color-primary);
-    text-decoration: none;
-  }
-  .page-actions a:active,
-  .archive-tag:active {
-    border-color: var(--color-primary-deep);
-    background: var(--color-soft);
-    color: var(--color-primary-deep);
   }
   @container hero (inline-size < 33.5rem) {
     .page-hero > * {
@@ -479,9 +437,6 @@
     .archive-taxonomy-group {
       grid-template-columns: 1fr;
     }
-  }
-  .archive-taxonomy-list {
-    justify-content: flex-start;
   }
   .archive-tag-count {
     color: var(--color-muted);
@@ -835,14 +790,7 @@
       text-wrap: balance;
     }
     & > .hero-location {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4em;
       margin-block-start: 0;
-      padding-block: 6px;
-      padding-inline: 10px;
-      border: 1px solid var(--color-border-faint);
-      border-radius: var(--radius-pill);
       background: var(--color-soft);
       font-size: var(--font-ui);
       font-weight: 600;
@@ -1095,16 +1043,19 @@
     flex-wrap: wrap;
     gap: var(--space-10);
   }
-  .tag,
-  .tech-pills a {
-    display: inline-block;
-    padding-block: 6px;
-    padding-inline: 10px;
+  .pill,
+  :where(.hero > .hero-location) {
+    display: inline-flex;
+    align-items: center;
+    padding-block: var(--space-pill-block);
+    padding-inline: var(--space-pill-inline);
     border: 1px solid var(--color-border-faint);
     border-radius: var(--radius-pill);
     background: var(--color-fill-faint);
     color: var(--color-text);
     font-size: var(--font-2xs);
+  }
+  a.pill {
     transition:
       background-color var(--motion-duration-fast) var(--motion-ease-standard),
       border-color var(--motion-duration-fast) var(--motion-ease-standard),
@@ -1119,6 +1070,39 @@
     &:active {
       background: var(--color-border-faint);
     }
+  }
+  .pill--nav {
+    gap: 0.5em;
+    min-block-size: 34px;
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    font-size: var(--font-ui);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .pill--meta {
+    padding-block: calc(var(--space-pill-block) / 2);
+    padding-inline: var(--space-10);
+    font-family: var(--font-mono);
+    font-size: var(--font-3xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: var(--color-muted);
+  }
+  .pill--npm {
+    border-color: color-mix(in oklch, var(--color-error) 28%, transparent);
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+  .pill--pypi {
+    border-color: color-mix(in oklch, var(--color-primary) 28%, transparent);
+    background: var(--color-table-head);
+    color: var(--color-primary-deep);
+  }
+  .pill--self-hosted {
+    border-style: dashed;
+    border-color: var(--color-field-border);
   }
   .tag-group-title {
     margin-block-end: 0.6rem;
@@ -1164,14 +1148,6 @@
     & h2 {
       font-size: var(--font-prose-md);
       letter-spacing: normal;
-    }
-  }
-  .tech-pills {
-    display: flex;
-    flex-wrap: wrap;
-    & a {
-      margin-block: var(--space-5);
-      margin-inline: 0 var(--space-10);
     }
   }
   .prose {
@@ -1554,10 +1530,7 @@
       outline-offset: 2px !important;
     }
     .button,
-    .tag,
-    .tech-pills a,
-    .page-actions a,
-    .archive-tag,
+    .pill,
     .nav-toggle,
     .card-surface,
     .article-hero,
