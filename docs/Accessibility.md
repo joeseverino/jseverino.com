@@ -76,7 +76,7 @@ The three-state control in the footer ([`src/components/ThemeToggle.astro`](../s
 
 The palette is documented in CSS custom properties in [`src/styles/tokens.css`](../src/styles/tokens.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
-The [axe sweep](../tests/playwright/a11y.single.spec.ts) renders the key page archetypes once in the light scheme and once in the dark, and axe's `color-contrast` rule measures each text node against the background it actually renders on, so a token change, a new component, or an opacity that drops a pair under AA fails `mise run browser:e2e`. The code-block and terminal palette is measured the same way in both.
+The [axe sweep](../tests/playwright/a11y.single.spec.ts) renders the key page archetypes once in the light scheme and once in the dark, and axe's `color-contrast` rule measures each text node against the background it renders on, so a token change, a new component, or an opacity that drops a pair under AA fails `mise run browser:e2e`. The code-block and terminal palette is measured the same way in both.
 
 ## What's intentionally not done
 

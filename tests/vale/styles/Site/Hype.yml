@@ -1,7 +1,8 @@
 # A claim of quality says nothing a reader can check, and these words and
 # phrases are the marks of generated copy: name what the thing does instead.
+# The filler adverbs at the end add emphasis and no fact.
 extends: existence
-message: "'%s' praises instead of describing; say what it does"
+message: "'%s' praises or pads instead of describing; say what it does"
 level: error
 ignorecase: true
 scope: raw
@@ -35,7 +36,16 @@ tokens:
   - ever[- ](?:evolving|changing)
   - (?:unlock|harness|leverage) the power
   - elevate your
-  - robust and scalable
   - it['’]s worth noting
   - needless to say
   - in conclusion
+  - robust
+  - comprehensive(?:ly)?
+  - powerful(?:ly)?
+  - leverag(?:e|es|ed|ing)
+  - cleanly
+  - fully
+  - actually
+  - simply
+  - easily
+  - just
