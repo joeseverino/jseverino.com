@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
-import { createClient } from '../lib/cloudflare-settings.ts';
+import { createClient } from '../lib/cloudflare.ts';
 import { DetailedError } from '../lib/detailed-error.ts';
 import { wranglerConfig } from '../lib/wrangler-config.ts';
 

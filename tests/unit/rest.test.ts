@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { createClient as cloudflareClient } from '../../bin/lib/cloudflare-settings.ts';
+import { createClient as cloudflareClient } from '../../bin/lib/cloudflare.ts';
 import { createClient as githubClient } from '../../bin/lib/github.ts';
 import type { Fetch } from '../../bin/lib/rest.ts';
 

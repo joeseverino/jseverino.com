@@ -1,16 +1,8 @@
 // In-memory Cloudflare v4 fake seeded from an API-shaped fixture. Writes mutate state and every
 // call is recorded; an unknown route fails the test.
 
-import {
-  type AccessApp,
-  API_BASE,
-  type ApiSchema,
-  type LiveRule,
-  type Operation,
-  type Rule,
-  type ValidationSettings,
-  type Widget,
-} from '../../../bin/lib/cloudflare-settings.ts';
+import { API_BASE } from '../../../bin/lib/cloudflare.ts';
+import type { AccessApp, ApiSchema, LiveRule, Operation, Rule, ValidationSettings, Widget } from '../../../bin/lib/cloudflare-types.ts';
 import { callRecorder } from './desired-state.ts';
 
 type Fields = Record<string, unknown>;
