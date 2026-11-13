@@ -24,7 +24,7 @@ import type {
   Zone,
 } from './cloudflare-types.ts';
 import { applySteps, type Call, changedKeys, fields, type Item, item, type Method, pick, type Run, same } from './drift.ts';
-import { absentOn404, createSend, type Fetch, RestError } from './rest.ts';
+import { absentOn404, type ClientOptions, createSend, jsonBody, RestError } from './rest.ts';
 
 export type * from './cloudflare-types.ts';
 
@@ -39,18 +39,12 @@ const FIREWALL_PHASE = 'http_request_firewall_custom';
 const FIREWALL_LIMIT = 5;
 const RATELIMIT_PHASE = 'http_ratelimit';
 
-export interface ClientOptions {
-  token: string | undefined;
-  fetch?: Fetch | undefined;
-}
-
 export type Client = ReturnType<typeof createClient>;
 
 const errorDetail = ({ errors = [] }: ApiPayload<unknown>): string => errors.map((error) => `${error.code ?? ''} ${error.message ?? ''}`.trim()).join('; ');
 
 export function createClient({ token, fetch }: ClientOptions) {
-  if (!token) throw new Error('CLOUDFLARE_API_TOKEN is not set');
-  const send = createSend<ApiPayload<unknown>>({ token, fetch, detail: errorDetail });
+  const send = createSend<ApiPayload<unknown>>({ token, noToken: 'CLOUDFLARE_API_TOKEN is not set', fetch, detail: errorDetail });
   const ids: Record<string, string> = {};
   const resolve = (template: string) =>
     template.replace(/:([a-z]+)/g, (_, name: string) => {
@@ -63,7 +57,7 @@ export function createClient({ token, fetch }: ClientOptions) {
   // is labeled by the template, so it never prints a resolved id.
   async function request<T>(method: Method, template: string, body?: unknown): Promise<ApiPayload<T>> {
     const response = await send(method, `${API_BASE}${resolve(template)}`, template, body);
-    const payload: ApiPayload<T> = await response.json().catch(() => ({}));
+    const payload = (await jsonBody<ApiPayload<T>>(response)) ?? {};
     if (payload.success === false) throw new RestError(method, template, response.status, errorDetail(payload));
     return payload;
   }

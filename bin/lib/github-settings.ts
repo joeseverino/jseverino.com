@@ -1,6 +1,6 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, type Step, same } from './drift.ts';
+import { applySteps, changedKeys, fields, type Item, item, pick, type Run, type Step, same } from './drift.ts';
 import type { Client } from './github.ts';
 import { absentOn404 } from './rest.ts';
 
@@ -62,8 +62,6 @@ export interface LiveState {
   // Each declared ruleset's live copy, by name; a name with none is missing.
   rulesets: Map<string, Record<string, unknown> & { id: number }>;
 }
-
-export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const base = `/repos/${desired.repository}`;

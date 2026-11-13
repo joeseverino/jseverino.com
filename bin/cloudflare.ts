@@ -4,8 +4,9 @@
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';
-import { type ClientOptions, createClient, createRun, type DesiredState } from './lib/cloudflare.ts';
+import { createClient, createRun, type DesiredState } from './lib/cloudflare.ts';
 import { loadDesired, type ToolOptions, toolMain } from './lib/drift.ts';
+import type { ClientOptions } from './lib/rest.ts';
 
 const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 

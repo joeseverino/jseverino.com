@@ -17,12 +17,18 @@ export class RestError extends Error {
   }
 }
 
-export interface RestOptions<ErrorBody> {
-  token: string;
-  // Headers the provider adds to every request.
-  headers?: Record<string, string>;
+// What every provider's createClient takes.
+export interface ClientOptions {
+  token: string | undefined;
   // Read at each request when omitted, so a test can stand in for the global.
   fetch?: Fetch | undefined;
+}
+
+export interface RestOptions<ErrorBody> extends ClientOptions {
+  // The error a missing token raises: where this provider's token comes from.
+  noToken: string;
+  // Headers the provider adds to every request.
+  headers?: Record<string, string>;
   // The error detail in a failed response's body, read in the provider's documented error shape.
   // A body that is not JSON reads as empty, so every field may be missing.
   detail: (payload: Partial<ErrorBody>) => string | undefined;
@@ -30,8 +36,15 @@ export interface RestOptions<ErrorBody> {
 
 export type Send = (method: string, url: string, label: string, body?: unknown) => Promise<Response>;
 
+// A response's JSON body, or undefined when it has none (a 204, an empty 200).
+export async function jsonBody<T>(response: Response): Promise<T | undefined> {
+  const text = await response.text();
+  return text ? (JSON.parse(text) as T) : undefined;
+}
+
 // The token only ever goes into the Authorization header; nothing here formats a request's headers into output.
-export function createSend<ErrorBody>({ token, headers = {}, fetch, detail }: RestOptions<ErrorBody>): Send {
+export function createSend<ErrorBody>({ token, noToken, headers = {}, fetch, detail }: RestOptions<ErrorBody>): Send {
+  if (!token) throw new Error(noToken);
   return async (method, url, label, body) => {
     const response = await (fetch ?? globalThis.fetch)(url, {
       method,
@@ -40,8 +53,8 @@ export function createSend<ErrorBody>({ token, headers = {}, fetch, detail }: Re
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (!response.ok) {
-      const payload: Partial<ErrorBody> = await response.json().catch(() => ({}));
-      throw new RestError(method, label, response.status, detail(payload));
+      const payload = await jsonBody<Partial<ErrorBody>>(response).catch(() => undefined);
+      throw new RestError(method, label, response.status, detail(payload ?? {}));
     }
     return response;
   };

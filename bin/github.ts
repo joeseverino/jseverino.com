@@ -3,9 +3,10 @@
 
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';
-import { type ToolOptions, toolMain } from './lib/drift.ts';
-import { type ClientOptions, createClient, resolveToken } from './lib/github.ts';
-import { createRun, loadDesired } from './lib/github-settings.ts';
+import { loadDesired, type ToolOptions, toolMain } from './lib/drift.ts';
+import { createClient, resolveToken } from './lib/github.ts';
+import { createRun, type DesiredState } from './lib/github-settings.ts';
+import type { ClientOptions } from './lib/rest.ts';
 
 const USAGE = `usage: node bin/github.ts <check|plan|apply> [--json] [--yes]
 
@@ -27,7 +28,7 @@ export const main = toolMain<MainOptions>({
   usage: USAGE,
   commandLine: 'node bin/github.ts',
   // Tests pass the token in env; the command line resolves it below.
-  setup: ({ env = process.env, fetch }) => createRun(loadDesired(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN, fetch })),
+  setup: ({ env = process.env, fetch }) => createRun(loadDesired<DesiredState>(desiredFile, schemaFile), createClient({ token: env.GITHUB_TOKEN, fetch })),
 });
 
 if (import.meta.main) {

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { main } from '../../bin/github.ts';
+import { loadDesired } from '../../bin/lib/drift.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
-import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
+import type { DesiredState } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
 import { DIST_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
@@ -36,7 +37,12 @@ const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof crea
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
 describe('.github/repo.json', () => {
-  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
+  schemaTests({
+    desired,
+    schema,
+    fields: DESIRED_FIELDS,
+    load: () => loadDesired<DesiredState>(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')),
+  });
 
   // A ruleset that allows a method the settings turn off, or the reverse, leaves the merge
   // button and the rule disagreeing about how main can move.

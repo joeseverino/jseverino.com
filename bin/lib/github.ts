@@ -1,7 +1,7 @@
 // GitHub's REST API for the bin/ scripts: one client over fetch, and the
 // repository reads the deploy and land flows make with it.
 import { setTimeout as sleep } from 'node:timers/promises';
-import { absentOn404, createSend, type Fetch } from './rest.ts';
+import { absentOn404, type ClientOptions, createSend, jsonBody } from './rest.ts';
 import { spawnResult } from './run.ts';
 
 export const API_BASE = 'https://api.github.com';
@@ -9,18 +9,12 @@ export const API_BASE = 'https://api.github.com';
 export const resolveToken = (env: NodeJS.ProcessEnv = process.env): string | undefined =>
   env.GITHUB_TOKEN || env.GH_TOKEN || spawnResult('gh', ['auth', 'token']).stdout.trim() || undefined;
 
-export interface ClientOptions {
-  token: string | undefined;
-  // Read at each request when omitted, so a test can stand in for the global.
-  fetch?: Fetch | undefined;
-}
-
 export type Client = ReturnType<typeof createClient>;
 
 export function createClient({ token, fetch }: ClientOptions) {
-  if (!token) throw new Error('no GitHub token: set GITHUB_TOKEN or GH_TOKEN, or sign in with `gh auth login`');
   const send = createSend<{ message: string }>({
     token,
+    noToken: 'no GitHub token: set GITHUB_TOKEN or GH_TOKEN, or sign in with `gh auth login`',
     fetch,
     headers: {
       Accept: 'application/vnd.github+json',
@@ -32,10 +26,8 @@ export function createClient({ token, fetch }: ClientOptions) {
   // An error is labeled by the path alone, without the query.
   const call = (method: string, url: string, body?: unknown) => send(method, url, new URL(url).pathname, body);
 
-  async function request<T>(method: string, path: string, body?: unknown): Promise<T | undefined> {
-    const text = await (await call(method, `${API_BASE}${path}`, body)).text();
-    return text ? (JSON.parse(text) as T) : undefined;
-  }
+  const request = async <T>(method: string, path: string, body?: unknown): Promise<T | undefined> =>
+    jsonBody<T>(await call(method, `${API_BASE}${path}`, body));
 
   return {
     request,
@@ -45,7 +37,7 @@ export function createClient({ token, fetch }: ClientOptions) {
       const items: T[] = [];
       for (let url: string | undefined = `${API_BASE}${path}`; url; ) {
         const response = await call('GET', url);
-        items.push(...((await response.json()) as T[]));
+        items.push(...((await jsonBody<T[]>(response)) ?? []));
         url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
       }
       return items;
