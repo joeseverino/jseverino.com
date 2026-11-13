@@ -420,8 +420,9 @@ ships to visitors:
   `main`'s build is left as the adapter wrote it, and a deploy config the
   adapter would not write is refused.
 - **Workflow lint** runs jactionlint's correctness profile (actionlint's
-  checks, with shellcheck on every `run:` script) in `mise run fast`
-  (`checks:actionlint`).
+  checks, with shellcheck on every `run:` script) and its `missing-timeout`
+  and `mutable-runner-label` rules in `mise run fast` (`checks:actionlint`,
+  [`.github/jactionlint.yaml`](../.github/jactionlint.yaml)).
 - **Workflow audit** runs zizmor over every workflow and action in
   `mise run fast` (`checks:workflows`): actions pinned to commit SHAs,
   permissions, template injection, credential persistence, and dangerous

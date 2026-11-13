@@ -87,7 +87,7 @@ hide = true
 run = "node tests/audits/check-css.ts"
 
 ["checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout and enables npm beside node"
+description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node"
 hide = true
 run = "node tests/audits/check-repository-policy.ts"
 
@@ -102,11 +102,9 @@ env = { ZIZMOR_OFFLINE = "true" }
 run = "zizmor --quiet .github"
 
 ["checks:actionlint"]
-description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
+description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions, no job without timeout-minutes and no `-latest` runner label (.github/jactionlint.yaml)"
 hide = true
-# The correctness profile is actionlint's checks; zizmor (checks:workflows)
-# owns the security audits.
-run = "jactionlint --profile correctness --no-hints"
+run = "jactionlint --no-hints"
 
 ["checks:shellcheck"]
 description = "ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names"
