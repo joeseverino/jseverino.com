@@ -111,7 +111,7 @@ export async function publishDist({ repo, dir, sha, trailers = {}, push = false,
     const api = createClient({ token, fetch });
     const created = await api.request<{ sha: string }>('POST', `/repos/${repository}/git/commits`, { message, tree, parents: parent ? [parent] : [] });
     const signed = created?.sha;
-    if (!signed) throw new Error('GitHub created no commit for the deploy tree');
+    if (!signed) throw new Error(`GitHub answered the commit of tree ${tree} with no sha; rerun the dist job`);
     if (parent) await api.request('PATCH', `/repos/${repository}/git/refs/heads/${DIST_BRANCH}`, { sha: signed });
     else await api.request('POST', `/repos/${repository}/git/refs`, { ref: `refs/heads/${DIST_BRANCH}`, sha: signed });
     return { status: 'pushed', commit: signed };

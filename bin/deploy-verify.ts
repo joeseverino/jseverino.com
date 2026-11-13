@@ -93,12 +93,15 @@ async function waitForChecks(sha: string): Promise<string> {
 
 async function pollChecks(sha: string, deadline: number, started: number, report: (line: string) => void): Promise<string> {
   const names = await requiredChecks();
+  let waiting = names;
   const checks = await awaitChecks(repository, sha, names, {
     deadline,
-    onPending: ({ missing, pending }) =>
-      report(`waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`),
+    onPending: ({ missing, pending }) => {
+      waiting = [...new Set([...missing, ...pending])];
+      report(`waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`);
+    },
   });
-  if (!checks) throw new Error('timed out waiting for the required checks');
+  if (!checks) throw new Error(`timed out waiting for ${waiting.join(', ')}; rerun deploy:verify once they complete`);
   const failed = checks.filter((check) => check.status === 'completed' && !passed(check));
   if (failed.length > 0) {
     throw new Error(`remote checks failed: ${failed.map((check) => `${check.name}=${check.conclusion}`).join(', ')}`);
@@ -127,7 +130,7 @@ async function collectSitemapUrls(target: Target): Promise<string[]> {
     return response.text();
   });
 
-  if (publicUrls.length === 0) throw new Error('live sitemap lists zero URLs');
+  if (publicUrls.length === 0) throw new Error(`${index} lists zero URLs`);
   return publicUrls;
 }
 
