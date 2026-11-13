@@ -6,7 +6,7 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 - `<html lang="en-US">` declares the document language for screen readers and translation services. Set in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro).
 - Every route renders a single `<main id="main">`. The skip link and analytics tools assume exactly one main landmark per page.
-- Headings descend from one `<h1>` without skipping a level ([SEO, heading hierarchy](./SEO.md#heading-hierarchy)); `mise run built:html` fails a page that breaks it.
+- Headings descend from one `<h1>` without skipping a level ([SEO, heading hierarchy](./SEO.md#heading-hierarchy)).
 
 ## Skip link
 
