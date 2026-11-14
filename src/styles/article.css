@@ -1,0 +1,42 @@
+@layer components {
+  .article > * + * {
+    margin-block-start: 2rem;
+  }
+
+  .article-title {
+    margin-block: 10px 6px;
+  }
+
+  .article-date {
+    margin-block-end: 18px;
+    color: var(--color-muted);
+    font-size: var(--font-2xs);
+    text-transform: uppercase;
+  }
+
+  .article-hero {
+    margin-block: 40px var(--space-25);
+    overflow: hidden;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    aspect-ratio: 16 / 9;
+
+    & img {
+      display: block;
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .article-tags {
+    & > * + * {
+      margin-block-start: 1.2rem;
+    }
+
+    & h2 {
+      font-size: var(--font-prose-md);
+      letter-spacing: normal;
+    }
+  }
+}

@@ -27,6 +27,20 @@ export function parse<const O extends ParseArgsOptionsConfig = Record<never, nev
   });
 }
 
+// A whole-number option value of at least min, or undefined, so each caller words the error for
+// its own option and throws its own error type.
+export function positiveInt(value: string, min = 1): number | undefined {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= min ? n : undefined;
+}
+
+// Bad input to an entry point: the problem, if there is one beyond the usage, then the usage, and
+// exit 2, for arguments parseArgs cannot judge (a positional count, a variable left unset).
+export function usageError(usage: string | undefined, problem?: string): never {
+  console.error([problem, usage].filter(Boolean).join('\n\n'));
+  process.exit(2);
+}
+
 // parse() for an entry point: usage on --help, usage and exit 2 on bad input.
 export function cli<const O extends ParseArgsOptionsConfig = Record<never, never>, const P extends boolean = false>({
   usage,
@@ -36,8 +50,7 @@ export function cli<const O extends ParseArgsOptionsConfig = Record<never, never
   try {
     parsed = parse(config);
   } catch (error) {
-    console.error(`${errorMessage(error)}${usage ? `\n\n${usage}` : ''}`);
-    process.exit(2);
+    usageError(usage, errorMessage(error));
   }
   if ((parsed.values as { help?: boolean }).help) {
     console.log(usage ?? 'This command takes no options.');
@@ -47,7 +60,8 @@ export function cli<const O extends ParseArgsOptionsConfig = Record<never, never
 }
 
 // The write-or-verify scripts take one flag.
-export const checkMode = (usage: string): boolean => cli({ usage, options: { check: flag } }).values.check;
+export const checkMode = (usage: string): boolean =>
+  cli({ usage: `${usage}\n\n  --check  Write nothing; fail if a committed file differs from what this derives.`, options: { check: flag } }).values.check;
 
 // A tool's entry point: its exit code, or 2 with the error on stderr.
 export async function exitWith(name: string, run: () => Promise<number>): Promise<void> {

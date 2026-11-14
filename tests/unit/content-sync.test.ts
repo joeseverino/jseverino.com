@@ -13,7 +13,6 @@ import { checkContent, committedLayout, syncContent } from '../../bin/content-sy
 import { createWriter } from '../../bin/content-sync/writer.ts';
 import { permittedContentRoot } from '../../src/lib/content-root.ts';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
-import { stripArticleChrome } from '../../src/lib/writeup-body.ts';
 import { scratchDirs, write } from './helpers/fs.ts';
 
 const scratch = scratchDirs('content-sync-');
@@ -58,11 +57,6 @@ describe('asset references', () => {
     ]);
   });
 
-  test('a writeup body drops the H1, the lede blockquote, and the leading image its page renders from frontmatter', () => {
-    assert.equal(stripArticleChrome('# Title\n\n> The lede.\n\n![Cover](./images/cover.png)\n\nBody.\n'), 'Body.\n');
-    assert.equal(stripArticleChrome('Body first.\n\n# Later heading\n'), 'Body first.\n\n# Later heading\n');
-  });
-
   test('a reference escaping its folder is refused', () => {
     assert.throws(() => resolveAssetSource('/vault/w/demo', 'images/../../secret.md'), /outside its source folder/);
     assert.equal(resolveAssetSource('/vault/w/demo', 'images/a.png'), '/vault/w/demo/images/a.png');
@@ -80,7 +74,11 @@ describe('asset references', () => {
       'missing image: images/cover.png',
       'Obsidian wikilink does not render on the site: ![[embed.png]]',
     ]);
-    assert.deepEqual(collectReferences('[a](images/x.png) [b](images/x.png)').length, 1);
+    assert.deepEqual(
+      collectReferences('[a](images/x.png) [b](images/x.png)'),
+      [{ ref: 'images/x.png', raw: 'images/x.png' }],
+      'a repeated reference is collected once',
+    );
   });
 });
 
@@ -217,6 +215,23 @@ describe('education', () => {
   });
 });
 
+// The fixture vault's published writeup: the frontmatter every live writeup
+// carries, then `extra` frontmatter lines, then the body.
+const liveWriteup = (body: string, extra: string[] = []): string =>
+  [
+    '---',
+    'title: Live',
+    'description: A live one.',
+    'published: true',
+    'published_at: 2026-01-02',
+    'technologies:',
+    '  - astro',
+    ...extra,
+    '---',
+    body,
+    '',
+  ].join('\n');
+
 async function fixtureVault() {
   const vault = scratch.make();
   const png = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#123456' } })
@@ -227,23 +242,7 @@ async function fixtureVault() {
   write(path.join(vault, '06 Pages/about/images/me.png'), png);
   write(
     path.join(vault, '05 Writeups/live/index.md'),
-    [
-      '---',
-      'title: Live',
-      'description: A live one.',
-      'published: true',
-      'published_at: 2026-01-02',
-      'cover_image: ./images/cover.png',
-      'technologies:',
-      '  - astro',
-      'related_projects:',
-      '  - private',
-      '---',
-      '# Live',
-      '',
-      'Body with ![Diagram](images/diagram.png "Diagram").',
-      '',
-    ].join('\n'),
+    liveWriteup('# Live\n\nBody with ![Diagram](images/diagram.png "Diagram").', ['cover_image: ./images/cover.png', 'related_projects:', '  - private']),
   );
   write(path.join(vault, '05 Writeups/live/images/cover.png'), png);
   write(path.join(vault, '05 Writeups/live/images/diagram.png'), png);
@@ -256,10 +255,10 @@ async function fixtureVault() {
   return vault;
 }
 
-// A sync of the fixture vault into `root`, with no resume engine and no education export.
 // What checkContent reports against the fixture's live writeup.
 const liveIssues = async (vault: string) => (await checkContent({ vaultRoot: vault })).documents.find((doc) => doc.slug === 'live')?.issues ?? [];
 
+// A sync of the fixture vault into `root`, with no resume engine and no education export.
 const syncOptions = (vault: string, root: string) => ({
   layout: committedLayout(root),
   vaultRoot: vault,
@@ -314,22 +313,7 @@ describe('syncContent and checkContent against a temp vault', () => {
 
   test('a published relative link outside images/ stops the sync with the message validate reports', async () => {
     const vault = await fixtureVault();
-    write(
-      path.join(vault, '05 Writeups/live/index.md'),
-      [
-        '---',
-        'title: Live',
-        'description: A live one.',
-        'published: true',
-        'published_at: 2026-01-02',
-        'technologies:',
-        '  - astro',
-        '---',
-        '',
-        'See [the notes](notes.md).',
-        '',
-      ].join('\n'),
-    );
+    write(path.join(vault, '05 Writeups/live/index.md'), liveWriteup('\nSee [the notes](notes.md).'));
     const root = scratch.make();
     await assert.rejects(
       syncContent({ ...syncOptions(vault, root), date: '2026-07-26' }),
@@ -388,23 +372,7 @@ describe('image masters', () => {
 describe('MDX compile issues', () => {
   test('checkContent reports what the build would refuse, with its line', async () => {
     const vault = await fixtureVault();
-    write(
-      path.join(vault, '05 Writeups/live/index.md'),
-      [
-        '---',
-        'title: Live',
-        'description: A live one.',
-        'published: true',
-        'published_at: 2026-01-02',
-        'cover_image: ./images/cover.png',
-        'technologies:',
-        '  - astro',
-        '---',
-        '',
-        'Costs {price} today.',
-        '',
-      ].join('\n'),
-    );
+    write(path.join(vault, '05 Writeups/live/index.md'), liveWriteup('\nCosts {price} today.', ['cover_image: ./images/cover.png']));
     const issues = await liveIssues(vault);
     assert.ok(
       issues.some((issue) => /\{price\} is an expression/.test(issue)),

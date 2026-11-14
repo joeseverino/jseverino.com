@@ -10,16 +10,16 @@ import { checkContent } from '../content-sync/sync.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import type { MiseTask } from '../lib/mise.ts';
 import { expiresInDays, expiryProblem, parseFields, SECURITY_FILE, stripSignature, verifySecuritySignature } from '../lib/security-txt.ts';
-import { fingerprint } from '../lib/writeups/receipt.ts';
-import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from '../lib/writeups/store.ts';
 import { newWriteup } from './authoring.ts';
 import { createOutput, SiteError, SLUG, slugMessage } from './cli.ts';
 import { type DevLock, headStatus, servingDevServer } from './dev-server.ts';
 import { repoState } from './git.ts';
 import type { Note, Tone } from './tui.ts';
 import type { CommandName } from './types.ts';
+import { fingerprint } from './writeup-store/receipt.ts';
+import { byFeaturedOrder, snapshot, type WriteupDashboard, WriteupError, type WriteupSummary, writeupStore } from './writeup-store/store.ts';
 
-export const SITE = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
+export const SITE_CLI = [process.execPath, path.join(siteRoot, 'bin/site.ts')] as const;
 
 // The tabs in order; the number key for each is its position.
 export const TABS = [
@@ -30,7 +30,7 @@ export type Tab = (typeof TABS)[number]['name'];
 
 // How a session ends, as the terminal is handed back.
 export const OUTCOME = {
-  cancelled: 'cancelled · nothing written',
+  canceled: 'canceled · nothing written',
   discarded: 'discarded · nothing written',
   exited: 'exited',
   unchanged: 'no changes · nothing written',
@@ -67,7 +67,7 @@ export function describeActions(commands: CommandSummaries, tasks: readonly Mise
   return new Map(SITE_ACTIONS.map((action) => [action.key, describe(action)]));
 }
 
-// The writeup snapshot, or a load failure the TUI shows instead of crashing.
+// The writeup snapshot. A store failure is thrown as a SiteError that names the vault fix.
 function loadSnapshot(): WriteupDashboard {
   try {
     return snapshot(writeupStore());
@@ -376,7 +376,7 @@ export async function createWriteup(model: Model, slug: string): Promise<boolean
     model.flash = { tone: 'error', text: `site new failed: ${errorMessage(error)}` };
     return false;
   }
-  // Pull the scaffold's real frontmatter so the detail view edits the truth.
+  // Read the scaffold's own frontmatter, so the detail view edits what the file holds.
   let summary: WriteupSummary | undefined;
   try {
     const next = snapshot(writeupStore());

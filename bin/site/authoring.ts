@@ -6,9 +6,10 @@ import { writeupPath } from '../../src/lib/site-config.ts';
 import { checkContent } from '../content-sync/sync.ts';
 import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { listWriteups, reorderFeatured, technologyCatalog, writeupStore } from '../lib/writeups/store.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
 import type { FeaturedEntry, FeaturedListing, FeaturedResult, NewResult, TechResult, ValidateResult } from './types.ts';
+import { reorderFeatured } from './writeup-store/plan.ts';
+import { listWriteups, technologyCatalog, writeupStore } from './writeup-store/store.ts';
 import { guard } from './writeups.ts';
 
 export async function newWriteup({ slug: requested, out }: { slug: string | undefined; out: Output }): Promise<NewResult> {
@@ -21,7 +22,9 @@ export async function newWriteup({ slug: requested, out }: { slug: string | unde
 
   const body = fs.readFileSync(template, 'utf8').replaceAll('{{date:YYYY-MM-DD}}', localDate()).replaceAll('{{title}}', slug);
   if (parseFrontmatter(body).data.published !== false) {
-    throw new SiteError(`the template does not start writeups at published: false: ${template}`);
+    throw new SiteError(`the template does not start writeups at published: false: ${template}`, {
+      fix: `set published: false in the frontmatter of ${template}`,
+    });
   }
   fs.mkdirSync(path.join(target, 'images'), { recursive: true });
   const file = path.join(target, 'index.md');

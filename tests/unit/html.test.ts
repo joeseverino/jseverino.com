@@ -22,8 +22,16 @@ test('readers report an absent element as undefined', () => {
   assert.equal(title(parseHtml('<p>no head</p>')), undefined);
 });
 
-test('elementsNamed walks the whole tree in document order; textContent reads a script raw', () => {
-  const doc = parseHtml('<head><script type="application/ld+json">{"a":"&amp;"}</script></head><body><div><script>let b = 1 < 2;</script></div></body>');
-  assert.deepEqual(elementsNamed(doc, 'script').map(textContent), ['{"a":"&amp;"}', 'let b = 1 < 2;']);
-  assert.deepEqual(elementsNamed(doc, 'style'), []);
+const scripts = parseHtml('<head><script type="application/ld+json">{"a":"&amp;"}</script></head><body><div><script>let b = 1 < 2;</script></div></body>');
+
+test('elementsNamed walks the whole tree in document order', () => {
+  assert.deepEqual(
+    elementsNamed(scripts, 'script').map((element) => element.properties?.type ?? null),
+    ['application/ld+json', null],
+  );
+  assert.deepEqual(elementsNamed(scripts, 'style'), []);
+});
+
+test('textContent reads a script as written, entities and all', () => {
+  assert.deepEqual(elementsNamed(scripts, 'script').map(textContent), ['{"a":"&amp;"}', 'let b = 1 < 2;']);
 });

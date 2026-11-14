@@ -79,7 +79,7 @@ export interface DesiredState {
   turnstile: { domains: string[] };
 }
 
-export interface ApiErrorEntry {
+interface ApiErrorEntry {
   code?: number;
   message?: string;
 }

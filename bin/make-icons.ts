@@ -1,11 +1,5 @@
-#!/usr/bin/env node
-
 // Generates the favicon set and brand marks from the shared mark renderer into
 // public/favicon.ico, public/assets/icons/*, and public/assets/brand/*.
-//
-//   node bin/make-icons.ts           # (re)write every mark
-//   node bin/make-icons.ts --check   # fail if a committed SVG differs from the renderer's
-//
 // --check compares the vector marks alone: the rasters differ by machine.
 
 import fs from 'node:fs';
@@ -14,7 +8,7 @@ import { BRAND } from '../src/lib/brand.ts';
 import { SITE } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/make-icons.ts [--check]');
 

@@ -2,11 +2,13 @@ import { expect, type Page, test } from './helpers/test.ts';
 
 async function menu(page: Page) {
   await page.goto('/');
-  return { toggle: page.locator('[data-nav-toggle]'), popover: page.locator('[data-mobile-nav]') };
+  // The closed popover is out of the accessibility tree, so its lookup reaches past it.
+  return { toggle: page.getByRole('button', { name: 'Menu' }), popover: page.getByRole('navigation', { name: 'Mobile', includeHidden: true }) };
 }
 
+// The middle bar fades as the bars cross, so its opacity is what the toggle draws.
 const expectToggleShowsOpen = (page: Page, open: boolean) =>
-  expect(page.locator('[data-nav-toggle] .nav-toggle-bar').nth(1)).toHaveCSS('opacity', open ? '0' : '1');
+  expect(page.getByRole('button', { name: 'Menu' }).locator('.nav-toggle-bar').nth(1)).toHaveCSS('opacity', open ? '0' : '1');
 
 async function openMenu(page: Page) {
   const nav = await menu(page);
@@ -15,7 +17,8 @@ async function openMenu(page: Page) {
   return nav;
 }
 
-test('touch targets suppress title-only tap highlights', async ({ page, browserName }) => {
+// The highlight is each component's own style, so the test finds each by its class.
+test('the brand link and the card links draw no tap highlight', async ({ page, browserName }) => {
   test.skip(browserName === 'firefox', 'Firefox does not implement -webkit-tap-highlight-color.');
 
   await page.goto('/portfolio/');

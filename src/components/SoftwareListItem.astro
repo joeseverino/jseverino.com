@@ -13,11 +13,11 @@ const titleHref = entry.repoUrl ?? entry.package?.url;
   <div class="sli-body">
     <h3 class="sli-title">
       {titleHref ? (
-        <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+        <a href={titleHref} target="_blank" rel="noopener">{entry.title}</a>
       ) : (
         entry.title
       )}
-      {entry.selfHosted && <span class="sli-flag">Self-hosted</span>}
+      {entry.selfHosted && <span class="pill pill--meta pill--self-hosted">Self-hosted</span>}
     </h3>
     <p class="sli-desc">{entry.description}</p>
   </div>
@@ -26,7 +26,7 @@ const titleHref = entry.repoUrl ?? entry.package?.url;
     {meta && <p class="sli-meta">{meta}</p>}
     <div class="sli-links">
       {entry.repoUrl && (
-        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a href={entry.repoUrl} target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
       )}
       {entry.writeupSlug && (
         <a class="sli-writeup" href={writeupPath(entry.writeupSlug)}>Writeup <span aria-hidden="true">→</span></a>

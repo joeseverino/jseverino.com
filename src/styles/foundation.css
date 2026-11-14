@@ -1,6 +1,4 @@
 @layer base {
-  /* Reset + element defaults */
-
   *,
   *::before,
   *::after {
@@ -37,12 +35,6 @@
     transition: color var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
-  a:hover,
-  a:focus-visible {
-    text-decoration: underline;
-    text-decoration-style: dashed;
-  }
-
   button,
   input,
   textarea,
@@ -57,10 +49,6 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-user-drag: none;
-  }
-
-  picture {
-    display: contents;
   }
 
   h1,

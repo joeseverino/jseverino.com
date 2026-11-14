@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "status": "timed_out",
+  "started_at": "2026-11-13T03:49:23.744852Z",
+  "ended_at": "2026-11-13T03:49:25.804483Z",
+  "duration_ms": 2059,
+  "tasks": [
+    {
+      "name": "checks:lint",
+      "args": [],
+      "status": "passed",
+      "exit_code": 0,
+      "duration_ms": 110,
+      "started_at": "2026-11-13T03:49:23.751834Z",
+      "ended_at": "2026-11-13T03:49:23.862574Z"
+    },
+    {
+      "name": "checks:slow",
+      "args": [],
+      "status": "cancelled",
+      "exit_code": null,
+      "duration_ms": 1997,
+      "started_at": "2026-11-13T03:49:23.755255Z",
+      "ended_at": "2026-11-13T03:49:25.752515Z"
+    },
+    {
+      "name": "sync:worker-types",
+      "args": [],
+      "status": "passed",
+      "exit_code": 0,
+      "duration_ms": 8,
+      "started_at": "2026-11-13T03:49:23.758585Z",
+      "ended_at": "2026-11-13T03:49:23.76692Z"
+    },
+    {
+      "name": "checks:types",
+      "args": [],
+      "status": "failed",
+      "exit_code": 2,
+      "duration_ms": 6,
+      "started_at": "2026-11-13T03:49:23.767021Z",
+      "ended_at": "2026-11-13T03:49:23.773155Z"
+    }
+  ]
+}

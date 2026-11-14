@@ -32,7 +32,9 @@
     { "path": "./tests/literal-font-sizes.grit", "includes": ["src/styles/**"] },
     // TypeScript, and an .astro file's frontmatter and <script> elements.
     { "path": "./tests/client-html-sinks.grit", "includes": ["src/**"] },
-    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] }
+    { "path": "./tests/view-transition-hooks.grit", "includes": ["src/**"] },
+    { "path": "./tests/type-escapes.grit", "includes": ["src/**", "bin/**"] },
+    { "path": "./tests/vacuous-assertions.grit", "includes": ["tests/**"] }
   ],
   "linter": {
     "rules": {
@@ -84,16 +86,19 @@
       "linter": { "rules": { "preset": "none", "suspicious": { "noExplicitAny": "error", "noTsIgnore": "error" } } }
     },
     {
-      // Playwright's expect does not narrow a type, so a spec checks for null
-      // with expect and then asserts the value present.
-      "includes": ["tests/playwright/**", "tests/edge/**"],
-      "linter": { "rules": { "style": { "noNonNullAssertion": "off" } } }
-    },
-    {
-      // Playwright's rules belong to its specs; elsewhere `describe` is a
-      // local function, not a test block.
-      "includes": ["bin/**", "src/**"],
-      "linter": { "rules": { "correctness": { "usePlaywrightValidDescribeCallback": "off" } } }
+      // Every browser spec takes test and expect from the harness module, so a fixture it
+      // adds reaches every suite.
+      "includes": ["tests/playwright/**", "tests/edge/**", "!tests/playwright/helpers/test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": { "paths": { "@playwright/test": "Import test and expect from tests/playwright/helpers/test.ts." } }
+            }
+          }
+        }
+      }
     }
   ]
 }

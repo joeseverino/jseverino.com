@@ -1,5 +1,4 @@
-import { sitemapUrls } from '../../src/lib/sitemap.ts';
-import { expect, test } from './helpers/test.ts';
+import { expect, sitemapPaths, test } from './helpers/test.ts';
 
 // Route-level responses: every sitemap page, plus the endpoint and error routes
 // the sitemap cannot reach. Named *.single so the config runs them only on
@@ -34,17 +33,7 @@ test('an unknown route returns 404 and renders the not-found page', async ({ pag
 });
 
 test('every sitemap page returns 200', async ({ request }) => {
-  // <loc>s name the canonical origin; read each from the server under test.
-  const urls = await sitemapUrls('/sitemap-index.xml', async (url) => {
-    const pathname = url.startsWith('/') ? url : new URL(url).pathname;
-    const response = await request.get(pathname);
-    expect(response.status(), `expected 200 from ${pathname}`).toBe(200);
-    return response.text();
-  });
-  const publicPaths = urls.map((url) => new URL(url).pathname);
-
-  expect(publicPaths.length).toBeGreaterThan(0);
-  for (const path of publicPaths) {
+  for (const path of await sitemapPaths(request)) {
     const response = await request.get(path);
     expect(response.status(), `expected 200 from ${path}`).toBe(200);
   }

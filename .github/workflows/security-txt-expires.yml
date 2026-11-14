@@ -15,13 +15,15 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     env:
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,npm
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           install: 'false'
 

@@ -1,4 +1,5 @@
 ---
+// Its behavior is Header.client.ts, which BaseLayout loads on every page.
 import { site } from '@lib/site.ts';
 import NavLinks from '@components/NavLinks.astro';
 import SocialLinks from '@components/SocialLinks.astro';
@@ -11,21 +12,21 @@ if (!wordmarkViewBox) throw new Error('wordmark-caps.svg needs a viewBox on its 
 
 const current = Astro.url.pathname;
 const normalize = (p: string) => p.replace(/\/$/, '') || '/';
-const { name, navItems, socialLinks, focusLabel } = site;
+const { name, navItems, focusLabel } = site;
 const navigation = navItems.map((item) => ({
   ...item,
   current: normalize(current) === normalize(item.href),
 }));
 ---
 
-<div id="scroll-sentinel" class="scroll-sentinel"></div>
+<div class="scroll-sentinel"></div>
 <header class="site-header" data-sticky-header>
   <div class="wide site-nav">
     <a class="brand" href="/" rel="home" draggable="false" aria-current={current === '/' ? 'page' : undefined} aria-label={name}>
-      <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" focusable="false" set:html={wordmarkInner} />
+      <svg class="brand-mark" viewBox={wordmarkViewBox} aria-hidden="true" set:html={wordmarkInner} />
     </a>
 
-    <nav class="primary-nav" aria-label="Primary navigation">
+    <nav class="primary-nav" aria-label="Primary">
       <NavLinks items={navigation} listClass="nav-list" linkClass="nav-link" />
     </nav>
 
@@ -36,36 +37,11 @@ const navigation = navItems.map((item) => ({
     </button>
   </div>
 
-  <nav class="mobile-nav" id="mobile-nav" popover="auto" aria-label="Mobile navigation" data-mobile-nav>
+  <nav class="mobile-nav" id="mobile-nav" popover aria-label="Mobile" data-mobile-nav>
     <NavLinks items={navigation} listClass="mobile-nav-list" linkClass="mobile-nav-link" />
     <div class="mobile-nav-footer">
       <p class="page-kicker">{focusLabel}</p>
-      <SocialLinks links={socialLinks} class="mobile-nav-social" />
+      <SocialLinks />
     </div>
   </nav>
 </header>
-
-<script>
-  if (!CSS.supports('animation-timeline', 'scroll()')) {
-    const header = document.querySelector('[data-sticky-header]');
-    const sentinel = document.querySelector('#scroll-sentinel');
-    if (header && sentinel) {
-      const observer = new IntersectionObserver(([entry]) => {
-        if (entry) header.classList.toggle('scrolled', !entry.isIntersecting);
-      }, { threshold: 0 });
-      observer.observe(sentinel);
-    }
-  }
-
-  const mobileNav = document.querySelector<HTMLElement>('[data-mobile-nav]');
-
-  // The panel fills the screen below the header, so light dismiss never sees a click outside it:
-  // a followed link or a click on the empty panel closes it here.
-  if (mobileNav) {
-    mobileNav.addEventListener('click', (event) => {
-      if (event.target instanceof Element && (event.target === mobileNav || event.target.closest('a'))) {
-        mobileNav.hidePopover();
-      }
-    });
-  }
-</script>

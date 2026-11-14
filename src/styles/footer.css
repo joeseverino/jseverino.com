@@ -19,13 +19,11 @@
     font-size: var(--font-ui);
     font-weight: 700;
     color: var(--color-primary);
-    text-decoration: none;
     letter-spacing: 0.04em;
 
     &:hover,
     &:focus-visible {
       color: var(--color-primary-deep);
-      text-decoration: none;
     }
 
     &:active {
@@ -104,7 +102,6 @@
       &:hover,
       &:focus-visible {
         color: var(--color-primary-deep);
-        text-decoration: none;
       }
 
       &:active {

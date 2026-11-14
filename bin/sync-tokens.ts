@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Derive the vendored brand/design tokens from the lockfile-pinned severino-brand
 // contract. Run `mise run sync:tokens`, review, commit; CI runs it with `--check`.
 // Each target is rewritten between markers; the rest is hand-managed.
@@ -9,12 +7,11 @@ import { syncTargets, toJs, webContract } from 'severino-brand';
 import { brandVarsCss } from '../src/lib/brand.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { regenerateCommand } from './lib/projection.ts';
+import { regenerateCommand } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/sync-tokens.ts [--check]');
 
 const brandBlock = [
-  `export const BRAND_CONTRACT = ${toJs({ schema: webContract.schema, digest: webContract.digest })};`,
   `export const BRAND = ${toJs(webContract.identity)};`,
   `export const CARD_COLORS = ${toJs(webContract.cardColors)};`,
   `export const PRIMARY_BY_THEME = ${toJs(webContract.primaryByTheme)};`,

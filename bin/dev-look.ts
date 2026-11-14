@@ -1,21 +1,21 @@
-#!/usr/bin/env node
-
 // Screenshots of the built site as production serves it, at each width and color scheme, for a
 // look at a layout change before calling it done. Fails on a page that scrolls sideways or does
 // not load.
 
 import { type ChildProcess, spawn } from 'node:child_process';
+import { once } from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from '@playwright/test';
 import { buildOutDir, workerConfig } from '../src/lib/build-output.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 import { fromCheckoutCache, fromRoot, siteRoot } from '../src/lib/site-root.ts';
 import { sitemapUrls } from '../src/lib/sitemap.ts';
-import { cli, exitWith, flag } from './lib/args.ts';
+import { cli, exitWith, flag, positiveInt } from './lib/args.ts';
 import { mapLimit } from './lib/map-limit.ts';
 import { spawnResult } from './lib/run.ts';
 
@@ -83,9 +83,9 @@ async function sitemapPaths(): Promise<string[]> {
 
 const freePort = async (): Promise<number> => {
   const probe = http.createServer().listen(0, '127.0.0.1');
-  await new Promise((resolve) => probe.once('listening', resolve));
+  await once(probe, 'listening');
   const { port } = probe.address() as AddressInfo;
-  await new Promise((resolve) => probe.close(resolve));
+  await once(probe.close(), 'close');
   return port;
 };
 
@@ -131,7 +131,7 @@ async function waitForServer(origin: string, server: ChildProcess, log: () => st
       await fetch(origin, { method: 'HEAD', signal: AbortSignal.timeout(5_000) });
       return;
     } catch {
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      await sleep(250);
     }
   }
   throw new Error(`astro preview did not answer at ${origin} within 2 minutes:\n${log()}`);
@@ -141,12 +141,13 @@ async function waitForServer(origin: string, server: ChildProcess, log: () => st
 const settle = (page: Page) =>
   page.evaluate(async () => {
     for (const image of document.querySelectorAll('img[loading="lazy"]')) (image as HTMLImageElement).loading = 'eager';
-    // Through the page once, for whatever loads or reveals on scroll.
+    // Through the page once, for whatever loads or reveals on scroll. Each scroll is instant,
+    // since the site's smooth scroll-behavior would still be moving the page at the shot.
     for (let y = 0; y < document.documentElement.scrollHeight; y += window.innerHeight) {
-      window.scrollTo(0, y);
+      window.scrollTo({ top: y, behavior: 'instant' });
       await new Promise(requestAnimationFrame);
     }
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     await document.fonts.ready;
     await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
   });
@@ -207,8 +208,8 @@ async function look(): Promise<number> {
   });
   if (positionals.length === 0) throw new Error(`name a page or all\n\n${USAGE}`);
   const widths = list(values.widths, 'widths').map((width) => {
-    const number = Number(width);
-    if (!Number.isInteger(number) || number < 200) throw new Error(`--widths: ${width} is not a width in CSS pixels`);
+    const number = positiveInt(width, 200);
+    if (number === undefined) throw new Error(`--widths: ${width} is not a width in CSS pixels, 200 or more`);
     return number;
   });
   const schemes = list(values.schemes, 'schemes').map((scheme) => {

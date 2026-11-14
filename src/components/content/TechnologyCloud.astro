@@ -13,7 +13,7 @@ const groups = await groupedTags({ featuredOnly: true });
           <h3 class="tag-group-title">{group.name}</h3>
           <div class="tag-list">
             {group.tags.map((tag) => (
-              <a class="tag" href={tagPath(tag.slug)}>
+              <a class="pill" href={tagPath(tag.slug)}>
                 {tag.label}
               </a>
             ))}

@@ -4,6 +4,8 @@ import { getImage } from 'astro:assets';
 import { site } from '@lib/site.ts';
 
 type Breadcrumb = { name: string; url: string };
+type JsonLdNode = Record<string, unknown>;
+type Size = { width: number; height: number };
 
 type Props = {
   title?: string;
@@ -39,22 +41,22 @@ const canonical = new URL(path, site.url).href;
 const personId = `${site.url}/#person`;
 const websiteId = `${site.url}/#website`;
 // A content image becomes a 1200px JPEG card; getImage reports its size without exposing the original.
-const card = typeof image === 'string'
-  ? { src: image, ...(image === site.defaultOgImage ? { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight } : {}) }
-  : await (async () => {
-      const { src, attributes } = await getImage({ src: image, width: 1200, format: 'jpg' });
-      return { src, width: Number(attributes.width), height: Number(attributes.height) };
-    })();
+// Of the URL strings, only the default card's size is known.
+async function socialCard(source: ImageMetadata | string): Promise<{ src: string; size?: Size }> {
+  if (typeof source !== 'string') {
+    const { src, attributes } = await getImage({ src: source, width: 1200, format: 'jpg' });
+    return { src, size: { width: Number(attributes.width), height: Number(attributes.height) } };
+  }
+  return source === site.defaultOgImage ? { src: source, size: { width: site.defaultOgImageWidth, height: site.defaultOgImageHeight } } : { src: source };
+}
+
+const card = await socialCard(image);
 const ogImage = new URL(card.src, site.url).href;
 const personImage = new URL('/assets/brand/joe-severino.jpg', site.url).href;
-const ogDimensions = card.width && card.height ? { width: card.width, height: card.height } : undefined;
+// The default title already leads with the name.
 const fullTitle = title === site.defaultTitle ? title : `${title} | ${site.name}`;
 
-const imageObject: Record<string, unknown> = {
-  '@type': 'ImageObject',
-  url: ogImage,
-  ...(ogDimensions ? { width: ogDimensions.width, height: ogDimensions.height } : {}),
-};
+const imageObject: JsonLdNode = { '@type': 'ImageObject', url: ogImage, ...card.size };
 
 const person = {
   '@type': 'Person',
@@ -83,8 +85,7 @@ const breadcrumbList =
       }
     : undefined;
 
-type JsonLdNode = Record<string, unknown>;
-
+// One @graph whose nodes point at each other by @id, so the Person is declared once per page.
 const primaryNode: JsonLdNode =
   type === 'article'
     ? {
@@ -166,10 +167,10 @@ const jsonLd = {
 <meta property="og:url" content={canonical} />
 <meta property="og:image" content={ogImage} />
 {
-  ogDimensions && (
+  card.size && (
     <>
-      <meta property="og:image:width" content={String(ogDimensions.width)} />
-      <meta property="og:image:height" content={String(ogDimensions.height)} />
+      <meta property="og:image:width" content={String(card.size.width)} />
+      <meta property="og:image:height" content={String(card.size.height)} />
     </>
   )
 }
@@ -177,4 +178,5 @@ const jsonLd = {
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 {tags.map((tag) => <meta property="article:tag" content={tag} />)}
+{/* Escaping < keeps a "</script>" inside any string from closing the element early. */}
 <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd).replace(/</g, '\\u003c')} />

@@ -20,6 +20,7 @@
   },
   "vulnerabilityAlerts": true,
   "privateReporting": false,
+  "immutableReleases": false,
   "codeScanning": {
     "state": "not-configured",
     "languages": [],

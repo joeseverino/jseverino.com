@@ -4,7 +4,7 @@ export function requestMediaType(request: Request): string {
   return (request.headers.get('Content-Type') ?? '').split(';', 1)[0]?.trim().toLowerCase() ?? '';
 }
 
-/** Bound bytes while reading, even when Content-Length is absent or inaccurate. */
+// Bound bytes while reading, even when Content-Length is absent or inaccurate.
 export async function readRequestJson(request: Request, maxBytes: number): Promise<JsonBody> {
   const contentLength = Number(request.headers.get('Content-Length'));
   if (Number.isFinite(contentLength) && contentLength > maxBytes) {
@@ -28,6 +28,7 @@ export async function readRequestJson(request: Request, maxBytes: number): Promi
       buffer.set(value, length);
       length += value.byteLength;
     }
+    // The Workers runtime types require both options; ignoreBOM is the default.
     const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(buffer.subarray(0, length));
     return { ok: true, value: JSON.parse(text) };
   } catch {

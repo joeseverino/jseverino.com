@@ -41,7 +41,7 @@ export interface Binding {
 export const SAVE_KEY = 's';
 
 const exit = (message: string | null, save = false): ManageEffect => ({ type: 'exit', message, save });
-const cancel = (): ManageEffect => exit(OUTCOME.cancelled);
+const cancel = (): ManageEffect => exit(OUTCOME.canceled);
 
 function switchTab(model: Model, tab: Tab): ManageEffect | undefined {
   model.tab = tab;
@@ -59,7 +59,6 @@ function beginNew(model: Model): void {
   model.inputCursor = 0;
 }
 
-// Back to the writeup list.
 const toList = (keys: readonly Key[], hint: string): Binding => ({
   keys,
   hint,
@@ -120,7 +119,7 @@ const list: readonly Binding[] = [
   ...tabKeys,
   { keys: ['ctrl-r', 'r'], hint: 'reload', run: requestReload },
   { keys: [SAVE_KEY], hint: (model) => (hasStaged(model) ? 'save' : undefined), run: () => exit(null, true) },
-  quit(OUTCOME.cancelled),
+  quit(OUTCOME.canceled),
 ];
 
 const move: readonly Binding[] = [

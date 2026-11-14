@@ -34,11 +34,8 @@
       translate: 0 0;
       outline: 2px solid var(--color-bg);
       outline-offset: -2px;
-      text-decoration: none;
     }
   }
-
-  /* Forced colors */
 
   @media (forced-colors: active) {
     /* biome-ignore-start lint/complexity/noImportantStyles: the system focus ring outranks every component's own outline. */
@@ -49,10 +46,7 @@
     /* biome-ignore-end lint/complexity/noImportantStyles: the override ends here. */
 
     .button,
-    .tag,
-    .tech-pills a,
-    .page-actions a,
-    .archive-tag,
+    .pill,
     .nav-toggle,
     .card-surface,
     .article-hero,
@@ -71,8 +65,6 @@
       backdrop-filter: none;
     }
   }
-
-  /* Reduced motion */
 
   @media (prefers-reduced-motion: reduce) {
     /* biome-ignore-start lint/complexity/noImportantStyles: the reader's reduced-motion preference outranks every animation and transition. */

@@ -1,25 +1,28 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
-import { publishDist } from '../../bin/lib/dist.ts';
+import { publishDist, README } from '../../bin/lib/dist.ts';
 import { git } from '../../bin/lib/git.ts';
 import { runSync } from '../../bin/lib/run.ts';
-import { DIST_BRANCH } from '../../src/lib/site-config.ts';
+import { DIST_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
+import { tempDir, write as writeFile } from './helpers/fs.ts';
 
 let root: string;
 let origin: string;
 let repo: string;
 let site: string;
 
-const write = (file: string, text: string) => {
-  fs.mkdirSync(path.dirname(path.join(site, file)), { recursive: true });
-  fs.writeFileSync(path.join(site, file), text);
-};
+// A file in the site directory the publisher reads.
+const write = (file: string, text: string) => writeFile(path.join(site, file), text);
 const head = () => git(repo, 'rev-parse', 'HEAD');
-const publish = (push = true) => publishDist({ repo, dir: site, sha: head(), push });
-const tree = () => git(origin, 'ls-tree', '-r', '--name-only', DIST_BRANCH).split('\n');
+const publish = (push = true, trailers = {}) => publishDist({ repo, dir: site, sha: head(), push, trailers });
+// The site's own files; the branch's README is checked on its own.
+const tree = () =>
+  git(origin, 'ls-tree', '-r', '--name-only', DIST_BRANCH)
+    .split('\n')
+    .filter((file) => file !== 'README.md');
+const message = () => git(origin, 'log', '-1', '--format=%B', DIST_BRANCH);
 
 // The API calls the publisher makes, run against the bare origin. The commit comes back from an
 // identity the publisher never set, as a signed API commit does.
@@ -27,7 +30,7 @@ const API_IDENTITY = { GIT_AUTHOR_NAME: 'api', GIT_AUTHOR_EMAIL: 'api@example.co
 const apiCalls: { method: string; route: string }[] = [];
 const fakeApi = async (url: string, init: RequestInit) => {
   const body = JSON.parse(String(init.body)) as { message: string; tree: string; parents: string[]; ref?: string; sha: string };
-  const route = new URL(url).pathname.replace('/repos/joeseverino/jseverino.com', '');
+  const route = new URL(url).pathname.replace(`/repos/${SITE_REPOSITORY}`, '');
   apiCalls.push({ method: init.method ?? 'GET', route });
   if (route === '/git/commits') {
     const parents = body.parents.flatMap((parent) => ['-p', parent]);
@@ -37,11 +40,11 @@ const fakeApi = async (url: string, init: RequestInit) => {
   git(origin, 'update-ref', body.ref ?? route.replace('/git/refs/', 'refs/'), body.sha);
   return new Response('{}', { status: 200 });
 };
-const publishSigned = () => publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: fakeApi });
+const publishSigned = () => publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: fakeApi });
 
 beforeEach(() => {
   apiCalls.length = 0;
-  root = fs.mkdtempSync(path.join(os.tmpdir(), 'publish-dist-'));
+  root = tempDir('publish-dist-');
   origin = path.join(root, 'origin.git');
   repo = path.join(root, 'repo');
   site = path.join(root, 'site');
@@ -67,7 +70,34 @@ describe('publishDist', () => {
     assert.equal(result.status, 'pushed');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
     assert.equal(git(origin, 'rev-list', '--count', DIST_BRANCH), '1');
-    assert.match(git(origin, 'log', '-1', '--format=%B', DIST_BRANCH), new RegExp(`Source: ${head()}`));
+    assert.match(message(), new RegExp(`Source: ${head()}`));
+  });
+
+  test('the branch carries its README, and the site directory never does', async () => {
+    await publish();
+    assert.equal(git(origin, 'show', `${DIST_BRANCH}:README.md`), README.trimEnd());
+    assert.ok(!fs.existsSync(path.join(site, 'README.md')), 'nothing the site serves gains a README');
+  });
+
+  test('the trailers name the run, the archive digest and the attestation, after Source', async () => {
+    const trailers = {
+      Run: 'https://github.example/runs/1',
+      'Archive-SHA256': 'a'.repeat(64),
+      Attestation: 'https://github.example/attestations/2',
+    };
+    await publish(true, trailers);
+    const lines = git(origin, 'log', '-1', '--format=%(trailers:only,unfold)', DIST_BRANCH).split('\n');
+    assert.deepEqual(lines, [
+      `Source: ${head()}`,
+      `Run: ${trailers.Run}`,
+      `Archive-SHA256: ${trailers['Archive-SHA256']}`,
+      `Attestation: ${trailers.Attestation}`,
+    ]);
+  });
+
+  test('a trailer with no value is left out', async () => {
+    await publish(true, { Run: undefined });
+    assert.doesNotMatch(message(), /^Run:/m);
   });
 
   test('publishes ignored files and leaves the source checkout alone', async () => {
@@ -103,6 +133,7 @@ describe('publishDist', () => {
 describe('publishDist through the API', () => {
   test('the commit on the branch is the API commit, and the staging ref is gone', async () => {
     const result = await publishSigned();
+    assert.match(message(), new RegExp(`^Source: ${head()}$`, 'm'), 'the API commit carries the trailers');
     assert.equal(git(origin, 'rev-parse', DIST_BRANCH), result.commit);
     assert.equal(git(origin, 'log', '-1', '--format=%an', DIST_BRANCH), 'api', 'made by the API, not by a local identity');
     assert.deepEqual(tree(), ['about/index.html', 'index.html']);
@@ -134,10 +165,7 @@ describe('publishDist through the API', () => {
 
   test('a failed API call still removes the staging ref', async () => {
     const failing = (): Promise<Response> => Promise.resolve(new Response('{"message":"nope"}', { status: 500 }));
-    await assert.rejects(
-      publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: 'joeseverino/jseverino.com', fetch: failing }),
-      /500/,
-    );
+    await assert.rejects(publishDist({ repo, dir: site, sha: head(), push: true, token: 'token', repository: SITE_REPOSITORY, fetch: failing }), /500/);
     assert.equal(git(origin, 'for-each-ref', 'refs/dist-staging'), '');
   });
 });

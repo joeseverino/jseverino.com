@@ -19,6 +19,8 @@
     // Pages are static assets; only these paths start the Worker.
     "run_worker_first": ["/api/*", "/__sitedrift/*"],
     "not_found_handling": "404-page",
+    // Pages keep their slash here: /about redirects to /about/. Astro's trailingSlash stays at its
+    // default, 'ignore', since 'always' would also redirect the API's /api/contact to /api/contact/.
     "html_handling": "auto-trailing-slash"
   },
   // Set with `wrangler secret put`; locally from .env.

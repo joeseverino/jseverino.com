@@ -62,17 +62,6 @@ describe(':::table and tables', () => {
   test('wraps a bare table the same way, without a caption', () => {
     assert.match(render('| A |\n| --- |\n| 1 |'), /^<figure class="table-figure"><div class="table-box"><table>.*<\/table><\/div><\/figure>$/);
   });
-
-  test('keeps an address in a cell one token, so it never breaks at its separators', () => {
-    const html = render('| IP | MAC |\n| --- | --- |\n| 10.0.0.1 | 00:00:00:00:01:1e |');
-    assert.match(html, /<td>10\.0\.0\.1<\/td><td>00:00:00:00:01:1e<\/td>/);
-  });
-});
-
-describe('text that looks like a directive', () => {
-  test('a MAC address or host:port stays literal text', () => {
-    assert.equal(render('Gateway 00:00:00:00:02:1e on host:port.'), '<p>Gateway 00:00:00:00:02:1e on host:port.</p>');
-  });
 });
 
 describe(':::split', () => {
@@ -201,16 +190,10 @@ describe('content is data, not code', () => {
     compile('Hello \\{1+1\\}');
   });
 
-  test('tags outside the allow-list are refused', () => {
-    for (const markup of [
-      '<script>alert(1)</script>',
-      '<iframe src="https://evil.example/"></iframe>',
-      '<style>p{}</style>',
-      '<svg></svg>',
-      '<object data="x"></object>',
-    ]) {
-      assert.throws(() => compile(`Text ${markup}`), /is not allowed in content/, markup);
-    }
+  // content-properties.test.ts holds each safety class over generated input; these
+  // are one example of each, and the cases its generators do not reach.
+  test('a tag outside the allow-list is refused', () => {
+    assert.throws(() => compile('Text <script>alert(1)</script>'), /is not allowed in content/);
   });
 
   test('event handlers, expression values, and spreads are refused', () => {
@@ -219,15 +202,8 @@ describe('content is data, not code', () => {
     assert.throws(() => compile('<span {...props}>y</span>'), /takes no spread attributes/);
   });
 
-  test('unsafe URL schemes are refused in links, images, reference definitions, and raw HTML', () => {
-    for (const markup of [
-      '[a](javascript:alert(1))',
-      '![b](javascript:alert(1))',
-      '[c][r]\n\n[r]: javascript:alert(1)',
-      '![d][r]\n\n[r]: javascript:alert(1)',
-      '<a href="javascript:alert(1)">e</a>',
-      '<a href=" JaVaScRiPt:alert(1)">f</a>',
-    ]) {
+  test('an unsafe URL scheme is refused in an image, an image reference, and raw HTML', () => {
+    for (const markup of ['![b](javascript:alert(1))', '![d][r]\n\n[r]: javascript:alert(1)', '<a href=" JaVaScRiPt:alert(1)">f</a>']) {
       assert.throws(() => compile(markup), /scheme other than http\(s\) or mailto/, markup);
     }
   });

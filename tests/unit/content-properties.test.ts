@@ -66,9 +66,10 @@ describe('URL schemes', () => {
     );
   });
 
-  test('relative paths are always safe', () => {
+  // fc.webPath() is empty or starts with a slash, so every value is a path on this site.
+  test('a site-relative path is always safe', () => {
     fc.assert(
-      fc.property(fc.webPath(), (path) => assert.ok(isSafeUrl(path) || /^[a-z][a-z\d+.-]*:/i.test(path))),
+      fc.property(fc.webPath(), (path) => assert.ok(isSafeUrl(path))),
       RUNS,
     );
   });

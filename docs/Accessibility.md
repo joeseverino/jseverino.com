@@ -6,7 +6,7 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 - `<html lang="en-US">` declares the document language for screen readers and translation services. Set in [`src/layouts/BaseLayout.astro`](../src/layouts/BaseLayout.astro).
 - Every route renders a single `<main id="main">`. The skip link and analytics tools assume exactly one main landmark per page.
-- Headings start at `<h1>` (page title or writeup title) and descend. Writeup bodies start at `<h2>` because the article shell already renders the title as `h1`. See [`docs/SEO.md`](./SEO.md#heading-hierarchy).
+- Headings descend from one `<h1>` without skipping a level ([SEO, heading hierarchy](./SEO.md#heading-hierarchy)).
 
 ## Skip link
 
@@ -14,25 +14,23 @@ Accessibility is a property of the rendered HTML and CSS. This file records the 
 
 ## Landmarks and ARIA
 
-- Primary navigation: `<nav aria-label="Primary navigation">` in [`src/components/Header.astro`](../src/components/Header.astro).
-- Mobile navigation: `<nav aria-label="Mobile navigation">` with `popover="auto"` so the browser handles focus trap, escape-to-dismiss, and outside-click.
+- Primary navigation: `<nav aria-label="Primary">` in [`src/components/Header.astro`](../src/components/Header.astro).
+- Mobile navigation: `<nav aria-label="Mobile">` is a `popover`, so the browser closes it on Escape or an outside click, reports the toggle's expanded state, and returns focus to the toggle. A popover does not trap focus; its backdrop covers the page behind it ([Architecture, header and menu](./Architecture.md#header-and-menu)).
 - Active nav item: `aria-current="page"` on the matching link.
-- Contact form: `role="status" aria-live="polite"` on the submit-result region so screen readers announce success or failure without stealing focus.
-- Decorative SVGs (social icons, defs sheet): `aria-hidden="true" focusable="false"`. Each social *link* declares its destination via `aria-label`, since the icon itself carries no accessible name.
+- Contact form: the submit-result region is an `<output>`, whose implicit `status` role is a polite live region, so screen readers announce success or failure without stealing focus.
+- Decorative SVGs (social icons, defs sheet): `aria-hidden="true"`. Each social *link* declares its destination via `aria-label`, since the icon itself carries no accessible name.
 
 ## Image alt text
 
-Cover images carry `cover_alt` in writeup frontmatter. The site sync mirrors it to `writeup.heroAlt`, and both the `ProjectCard` listing and the article hero `<figure>` use that string as the `<img alt>`. When `cover_alt` is empty the title is used as a fallback so no image ever renders without alt text. `prepare_writeup_publish` in the vault MCP nags about missing `cover_alt` so drafts don't ship with duplicated-title alts.
+A cover's alt text is its writeup's `cover_alt`, with the title as the fallback ([SEO, cover alt text](./SEO.md#cover-alt-text)).
 
 Body images use the alt text from the markdown source. The `|width` and `|nozoom` modifiers ([`src/lib/image-directives.ts`](../src/lib/image-directives.ts)) change layout only; the alt text before them is kept verbatim in the rendered `<img>`.
 
-An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`mise run built:html` fails on a missing one). No image on the site uses it today.
+An image may use `alt=""` only when it is decorative or its figure caption says everything the image shows; the attribute is never omitted (`mise run built:html` fails on a missing one). No image on the site uses it.
 
 ## Focus management
 
-Visible focus is preserved on every interactive element. Shared focus and assistive styles live in [`src/styles/accessibility.css`](../src/styles/accessibility.css); component-specific selectors remain in their concern modules. The site uses `:focus` rather than `:focus-visible`, so focus rings render on mouse interaction as well as keyboard. The cost is cosmetic, and low-vision mouse users still see the focused control.
-
-Mobile navigation uses the native `popover` API. The browser restores focus when the popover closes.
+Every interactive element keeps the browser's focus ring. The only rules that remove it are on the contact form's fields, which draw their own border and glow on `:focus`, and on the lightbox `<dialog>` itself, whose controls keep theirs. Components add a `:focus-visible` state that matches their hover (links, buttons, tags, the theme control), so a keyboard user sees the same emphasis a pointer gets and a click leaves none behind; a card raises its border on `:focus-within`. [`src/styles/accessibility.css`](../src/styles/accessibility.css) shows the skip link on `:focus` and, under forced colors, gives every link, button, field and summary a `Highlight` outline on `:focus`.
 
 ## Reduced motion
 
@@ -62,7 +60,7 @@ The site renders in light or dark. Both come from one set of dual-valued tokens 
 
 Auto is the default and needs no JavaScript: with `color-scheme: light dark` set, the browser resolves every `light-dark()` token against `prefers-color-scheme`.
 
-The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, not a light/dark pair, so an explicit choice can be released back to the OS. Details:
+The three-state control in the footer ([`src/components/ThemeToggle.astro`](../src/components/ThemeToggle.astro)) only overrides that. It offers Auto, Light, and Dark, so an explicit choice can be released back to the OS. Details:
 
 - The control is a `role="group"` of three buttons, each carrying `aria-label` and `aria-pressed`. Segments are 28x24 CSS px, above the WCAG 2.2 target-size minimum (2.5.8).
 - An explicit choice sets `data-theme-mode` on `<html>`, whose `light` and `dark` values pin `color-scheme` in `tokens.css`, and persists to `localStorage`; auto clears the stored choice.
@@ -76,7 +74,7 @@ The three-state control in the footer ([`src/components/ThemeToggle.astro`](../s
 
 The palette is documented in CSS custom properties in [`src/styles/tokens.css`](../src/styles/tokens.css). Body text and primary surfaces target WCAG 2.1 AA (4.5:1 for normal text, 3:1 for large text) **in both themes**.
 
-The [axe sweep](../tests/playwright/a11y.single.spec.ts) renders the key page archetypes once in the light scheme and once in the dark, and axe's `color-contrast` rule measures each text node against the background it actually renders on, so a token change, a new component, or an opacity that drops a pair under AA fails `mise run browser:e2e`. The code-block and terminal palette is measured the same way in both.
+The [axe sweep](../tests/playwright/a11y.single.spec.ts) renders the key page archetypes once in the light scheme and once in the dark, and axe's `color-contrast` rule measures each text node against the background it renders on, so a token change, a new component, or an opacity that drops a pair under AA fails `mise run browser:e2e`. The code-block and terminal palette is measured the same way in both.
 
 ## What's intentionally not done
 
@@ -100,13 +98,10 @@ mise run browser:visual
 ```
 
 Playwright runs the functional accessibility and layout checks in Chromium,
-Firefox, and WebKit desktop and mobile projects. Chromium on macOS owns the
-visual baselines to avoid engine- and OS-specific font-rasterization noise. When
-an intentional design change alters a baseline, inspect the expected, actual,
-and diff images, then run `mise run browser:visual --update-snapshots`. Commit the reviewed PNG changes with the frontend
-change. Never update snapshots only to make CI green. A manual keyboard pass
-through the home, a portfolio article, the portfolio listing, and the contact
-form remains useful before large interaction changes.
+Firefox, and WebKit desktop and mobile projects; the visual baselines follow
+[AGENTS.md](../AGENTS.md#visual-baselines). Before a large interaction change,
+tab through the home page, a portfolio article, the portfolio listing, and the
+contact form by hand.
 
 Two layers are machine-enforced on every gate run: structural HTML over every built page
 (unique ids, alt on every image, no unprocessed `::directive` text;

@@ -1,19 +1,16 @@
-#!/usr/bin/env node
-
 // The Cloudflare zone and account posture in cloudflare/zone.json, checked
 // against the live API and applied on request. See docs/Cloudflare.md.
-//
-//   node bin/cloudflare.ts check [--json]    # read-only; exit 1 on drift
-//   node bin/cloudflare.ts plan [--json]     # the calls an apply would make
-//   node bin/cloudflare.ts apply [--yes]     # plan, or with --yes, execute
 
 import fs from 'node:fs';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { exitWith } from './lib/args.ts';
-import { type ClientOptions, createClient, createRun, loadDesired } from './lib/cloudflare.ts';
-import { type ToolOptions, toolMain } from './lib/drift.ts';
+import { createClient } from './lib/cloudflare.ts';
+import { createRun } from './lib/cloudflare-settings.ts';
+import type { DesiredState } from './lib/cloudflare-types.ts';
+import { loadDesired, type ToolOptions, toolMain } from './lib/drift.ts';
+import type { ClientOptions } from './lib/rest.ts';
 
-export const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
+const USAGE = `usage: node bin/cloudflare.ts <check|plan|apply> [--json] [--yes]
 
   check   Read the live zone and account, diff against cloudflare/zone.json,
           print a table (--json for machine output). Exit 1 on drift.
@@ -41,7 +38,7 @@ export const main = toolMain<ToolOptions & Pick<ClientOptions, 'fetch'>>({
   usage: USAGE,
   commandLine: 'node bin/cloudflare.ts',
   setup({ env = process.env, fetch = globalThis.fetch }) {
-    const desired = loadDesired(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json'));
+    const desired = loadDesired<DesiredState>(fromRoot('cloudflare/zone.json'), fromRoot('cloudflare/zone.schema.json'));
     const openapi = fs.readFileSync(fromRoot(desired.schemaValidation.file), 'utf8');
     return createRun(desired, createClient({ token: env.CLOUDFLARE_API_TOKEN, fetch }), openapi);
   },

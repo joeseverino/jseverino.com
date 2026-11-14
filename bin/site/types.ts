@@ -1,20 +1,13 @@
 // The `site` CLI's machine contract: every command under --json prints one SiteResult on stdout.
 
 import type { TechnologyTag } from '../../src/lib/technology-groups.ts';
-import type { ContentDiff } from '../content-diff.ts';
 import type { CheckedDocument } from '../content-sync/sync.ts';
 import type { PreflightCheck } from '../lib/preflight.ts';
-import type { CspCounts, PiiRows } from '../lib/site-ops.ts';
-import type {
-  FrontmatterResult,
-  LinkResult,
-  PlanResult,
-  PublishReadiness,
-  TagUsage,
-  WriteupDashboard,
-  WriteupListing,
-  writeupContract,
-} from '../lib/writeups/store.ts';
+import type { ContentDiff } from './content-diff.ts';
+import type { CspCounts, PiiRows } from './site-ops.ts';
+import type { LinkResult } from './writeup-store/link.ts';
+import type { FrontmatterResult, PlanResult } from './writeup-store/plan.ts';
+import type { PublishReadiness, TagUsage, WriteupDashboard, WriteupListing, writeupContract } from './writeup-store/store.ts';
 
 // The version of the --json documents, described by public/schemas/site-protocol-v1.json.
 export const PROTOCOL_VERSION = 1;

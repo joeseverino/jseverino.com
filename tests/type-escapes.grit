@@ -1,0 +1,10 @@
+// A cast to never, or through unknown, tells the compiler to stop checking the value: the
+// expression then fits any type, so a wrong shape compiles. This refuses both; a value that
+// needs a type the checker cannot see gets a declaration (a Window augmentation, a typed
+// builder) instead.
+language js
+
+or {
+  `$value as never`,
+  `$value as unknown as $type`
+} as $escape where { register_diagnostic(span=$escape, message="Declare the type the value has instead of casting through never or unknown.") }

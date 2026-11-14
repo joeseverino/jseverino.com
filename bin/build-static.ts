@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // `astro build`, then the CSP hashes. The build is the same for production and a preview:
 // a preview deploy wraps it afterwards (bin/wrap-preview.ts). The output dir comes from
 // src/lib/build-output.ts (shared with astro.config.ts).

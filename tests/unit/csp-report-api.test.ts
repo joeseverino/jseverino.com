@@ -5,7 +5,7 @@ import { describe, test } from 'node:test';
 import { storeCspReports } from '../../src/lib/api/csp-report.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
-import { postRequest } from './helpers/requests.ts';
+import { assertMediaTypes, postRequest } from './helpers/requests.ts';
 
 const reportRequest = (body: unknown, contentType = 'application/csp-report', headers: Record<string, string> = {}): Request =>
   postRequest('https://jseverino.com/api/csp-report', body, { 'Content-Type': contentType, ...headers });
@@ -30,16 +30,9 @@ const legacyReport = {
 };
 
 describe('request validation', () => {
-  test('rejects unexpected content types with 415', async () => {
-    const response = await call(reportRequest(legacyReport, 'text/plain'));
-    assert.equal(response.status, 415);
-  });
-
-  test('accepts media-type parameters without allowing substring matches', async () => {
-    for (const contentType of ['application/jsonp', 'text/plain; note=application/csp-report']) {
-      assert.equal((await call(reportRequest(legacyReport, contentType))).status, 415);
-    }
-    assert.equal((await call(reportRequest(legacyReport, 'Application/CSP-Report; charset=utf-8'))).status, 204);
+  test('accepts only the report media types, matched exactly, with parameters and in any case', async () => {
+    const status = async (contentType: string) => (await call(reportRequest(legacyReport, contentType))).status;
+    await assertMediaTypes(['application/csp-report', 'application/reports+json', 'application/json'], status, 204);
   });
 
   test('rejects an oversized body with 413', async () => {
@@ -122,12 +115,15 @@ describe('persistence', () => {
         lineNumber: 3,
       },
     };
-    const db = createD1Stub();
+    const db = createD1Sqlite();
     const response = await call(reportRequest(report, 'application/reports+json'), db);
     assert.equal(response.status, 204);
-    assert.equal(inserts(db)[0]?.values[0], 'https://jseverino.com/portfolio/');
-    assert.equal(inserts(db)[0]?.values[1], 'https://evil.example/tracker.js');
-    assert.equal(inserts(db)[0]?.values[3], null);
+    const [row] = db.rows('csp_reports');
+    assert.equal(row?.document_uri, 'https://jseverino.com/portfolio/');
+    assert.equal(row?.blocked_uri, 'https://evil.example/tracker.js');
+    assert.equal(row?.effective_directive, 'script-src-elem');
+    assert.equal(row?.violated_directive, null, 'the Reporting API body has no violatedDirective');
+    assert.equal(row?.line_number, 3);
   });
 
   test('writes every report of a request in one batch', async () => {
@@ -215,7 +211,7 @@ describe('write bounds', () => {
     );
     assert.equal(response.status, 204);
     assert.equal(response.headers.get('Cache-Control'), 'no-store');
-    const row = await db.prepare('SELECT * FROM csp_reports').first<Record<string, unknown>>();
+    const [row] = db.rows('csp_reports');
     assert.ok(row);
     assert.equal(row.document_uri, 'https://jseverino.com/contact/');
     assert.equal(row.blocked_uri, 'https://evil.example/payload.js');

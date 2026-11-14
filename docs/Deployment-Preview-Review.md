@@ -4,90 +4,64 @@ Every pull request's preview of `jseverino.com` carries a compact
 [sitedrift](https://github.com/joeseverino/sitedrift) review layer. The preview
 is a version of the `jseverino` Worker on its workers.dev preview URL
 ([Preview access](./Cloudflare.md#preview-access)); it is DEV, and the current
-`https://jseverino.com` release is LIVE.
+`https://jseverino.com` release is LIVE. Sitedrift's README lists every mode
+and check the layer offers.
 
-## Case study: one brand change, fully reviewed
+## What the preview shows
 
-Two public tools: [`branding-engine`](https://github.com/joeseverino/branding-engine)
-generates a brand system from structured inputs, and
-[`sitedrift`](https://github.com/joeseverino/sitedrift) compares a development
-deployment with the live site.
+The captures below are of a preview whose one change is the primary brand
+token, red in place of navy.
+[`branding-engine`](https://github.com/joeseverino/branding-engine) regenerates
+the favicon, marks, header wordmark, interface color, Open Graph card, and
+GitHub social preview from that token, and the preview shows how far the
+change reaches.
 
-The demonstration changed the primary brand token in `src/lib/brand.ts` from
-navy to red. `branding-engine` propagated that one decision through the favicon,
-marks, header wordmark, interface color, Open Graph card, and GitHub social
-preview. Only the branch's preview received the change; production stayed navy.
+![The palette changes once in src/lib/brand.ts, and the Open Graph card is regenerated from it](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
 
-![One token edit producing a coordinated Open Graph card](./images/sitedrift-brand-demo/github-brand-token-og-diff.png)
+![The same token change carried through the GitHub social preview and the transparent mark](./images/sitedrift-brand-demo/github-generated-assets-diff.png)
 
-### 1. Turn a commit into a reviewable version
+Solo mode presents DEV as the interactive site with a compact review bar; the
+layer leaves navigation, menus, scrolling, and responsive layout working.
 
-No separate review server exists. Once `ci` passes, the `deploy` workflow wraps
-the build `ci` gated in the sitedrift viewer and uploads it as a Worker version
-tagged with the commit. Its `deploy` check on the commit names the version's own
-URL, which never moves, and the branch alias, which follows the next push.
+![The red brand in Solo mode, an interactive site under the review bar](./images/sitedrift-brand-demo/red-brand-solo.png)
 
-### 2. Confirm the branch works by itself
+Split mode places DEV and LIVE on the same route and scroll position. Structure
+and content stay aligned, and the change appears in the mark, buttons, and the
+other generated surfaces.
 
-Solo mode presents DEV as a normal, interactive website with a compact review
-bar. The layer must not break navigation, menus, scrolling, or responsive layout.
+![Red DEV beside navy LIVE, every brand surface changed and the layout aligned](./images/sitedrift-brand-demo/red-vs-live-split.png)
 
-![The generated red brand running in sitedrift Solo mode](./images/sitedrift-brand-demo/red-brand-solo.png)
+Overlay Diff mode turns identical pixels black and leaves changed pixels lit,
+so a brand-only change shows only the brand surfaces.
 
-### 3. Compare the complete result with production
+![The changed brand pixels, isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
 
-Split mode places the red branch and navy production site on the same route and
-scroll position. Structure and content stay aligned; the brand change appears in
-the mark, buttons, and other generated surfaces. `branding-engine` made the
-change; `sitedrift` shows how far it reached.
+Both deployments get the same metadata preview and SEO checklist: title,
+description, canonical URL, headings, Open Graph fields, favicon, and image-alt
+coverage.
 
-![Red DEV beside unchanged navy LIVE](./images/sitedrift-brand-demo/red-vs-live-split.png)
-
-### 4. Isolate changed pixels
-
-Overlay Diff mode turns identical pixels black and leaves changed pixels lit.
-The sparse result shows the branch changed branding, not layout or content.
-
-![Changed brand pixels isolated in Diff mode](./images/sitedrift-brand-demo/red-vs-live-diff.png)
-
-### 5. Check more than appearance
-
-Both deployments receive the same metadata preview and SEO checklist. Here the
-title, description, canonical URL, headings, Open Graph fields, favicon, and
-image-alt coverage all pass, so the change makes no SEO difference.
-
-![DEV and LIVE metadata previews and SEO checks](./images/sitedrift-brand-demo/seo-comparison.png)
+![DEV and LIVE metadata previews and SEO checks, passing on both](./images/sitedrift-brand-demo/seo-comparison.png)
 
 The response popover shows HTTP status, response time, transfer size, and
-deltas. These are same-session diagnostics, not benchmarks, and expose a branch
-that fails, redirects, or gets heavier.
+deltas: same-session diagnostics that expose a branch that fails, redirects,
+or gets heavier.
 
-![Response timing, transfer size, and deltas](./images/sitedrift-brand-demo/response-deltas.png)
-
-### 6. Leave review context without adding a service
+![HTTP status, response timing, transfer size, and their deltas](./images/sitedrift-brand-demo/response-deltas.png)
 
 Review notes live only in that browser's `localStorage`, and the interface says
 so. They need no account system, write API, or database.
 
-![Browser-local review notes](./images/sitedrift-brand-demo/browser-local-notes.png)
-
-## What reviewers get
-
-- **Solo** view by default, with one-click switching between DEV and LIVE.
-- **Split** view with synchronized routes, links, and scrolling.
-- **Overlay** and pixel-difference modes for visual drift.
-- Per-side HTTP status plus response, DOM-ready, load, transfer, header, and
-  delta details.
-- A Google-style SEO preview for both sides.
-- Metadata comparison for title, description, and canonical URL.
-- SEO checks for title and description quality, H1 count, canonical, viewport,
-  language, Open Graph metadata, indexing directives, favicon, and image alt
-  coverage.
-- Review notes stored only in that browser's `localStorage`.
+![Browser-local review notes, labeled as local](./images/sitedrift-brand-demo/browser-local-notes.png)
 
 ## Repository integration
 
-The build is the same for production and a preview. The `deploy` workflow's
+No separate review server exists. Once `ci` passes, the `preview` workflow
+wraps the build `ci` gated in the sitedrift viewer and uploads it as a Worker
+version tagged with the commit. Its `deploy` check on the commit names the
+version's own URL, which never moves, and the branch alias, which follows the
+next push.
+
+The build is the same for production and a preview. The `preview` workflow's
 `preview` job wraps it afterwards with `mise run preview:wrap`
 ([`bin/wrap-preview.ts`](../bin/wrap-preview.ts)), which:
 
@@ -196,6 +170,6 @@ preview runtime (edge proxy).
 ## Related docs
 
 - [Architecture](./Architecture.md)
-- [SEO And Metadata](./SEO.md)
+- [SEO](./SEO.md)
 - [Release Checklist](./Release-Checklist.md)
 - [Security](../.github/SECURITY.md)

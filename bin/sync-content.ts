@@ -1,13 +1,5 @@
-#!/usr/bin/env node
-
 // Sync the public pages and writeups from the vault into the repo snapshot:
 // src/content/<collection>/<slug>/index.mdx with its image masters beside it.
-//
-//   node bin/sync-content.ts                  # write the committed snapshot
-//   node bin/sync-content.ts --report <file>  # also write the files it owns as JSON
-//   node bin/sync-content.ts --drafts         # drafts included, into the gitignored overlay
-//   node bin/sync-content.ts --check [--slug <s>] [--draft] [--json]
-//                                              # resolve references and the contract; write nothing
 
 import path from 'node:path';
 import { writeJson } from '../src/lib/json.ts';
@@ -20,7 +12,16 @@ import { cacheDir, draftsOverlay } from './lib/cache.ts';
 import { educationExportFile, existingDir, lifeVaultRoot, resumeEngineRoot, vaultRoot } from './lib/local-paths.ts';
 
 const usage = `usage: node bin/sync-content.ts [--drafts] [--report <file>]
-       node bin/sync-content.ts --check [--slug <slug>] [--draft] [--json]`;
+       node bin/sync-content.ts --check [--slug <slug>] [--draft] [--json]
+
+Writes the committed snapshot.
+
+  --drafts         Include drafts, written to the gitignored overlay instead.
+  --report <file>  Also write the files the sync owns, as JSON.
+  --check          Resolve every reference and the contract; write nothing.
+  --slug <slug>    Check one writeup.
+  --draft          Check unpublished documents too.
+  --json           Print the check's result as JSON.`;
 const { values } = cli({
   usage,
   options: {
@@ -34,7 +35,7 @@ const { values } = cli({
 });
 
 // --check: resolve every reference and the contract, write nothing.
-async function check(): Promise<number> {
+async function verifyContent(): Promise<number> {
   const result = await checkContent({ vaultRoot: existingDir('vault', vaultRoot(), 'VAULT_DIR'), slug: values.slug, draft: values.draft });
   if (values.json) {
     console.log(JSON.stringify(result, null, 2));
@@ -80,4 +81,4 @@ async function sync(): Promise<number> {
   return 0;
 }
 
-await exitWith('sync-content', values.check ? check : sync);
+await exitWith('sync-content', values.check ? verifyContent : sync);

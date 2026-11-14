@@ -58,6 +58,6 @@ describe('where each input comes from', () => {
     const readers = trackedFiles(fromRoot('.'), 'bin', 'src').filter(
       (file) => file.endsWith('.ts') && fs.readFileSync(fromRoot(file), 'utf8').includes('homedir('),
     );
-    assert.deepEqual(readers.sort(), ['bin/lib/site-ops.ts']);
+    assert.deepEqual(readers.sort(), ['bin/site/site-ops.ts']);
   });
 });

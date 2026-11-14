@@ -1,7 +1,7 @@
 // Terminal primitives behind `site manage`.
 import { once } from 'node:events';
 import os from 'node:os';
-import { type Key as Keypress, emitKeypressEvents as nodeEmitKeypressEvents } from 'node:readline';
+import { emitKeypressEvents, type Key as Keypress } from 'node:readline';
 import { styleText } from 'node:util';
 // Widths in terminal cells: Unicode's East Asian Width data, an emoji two cells, an escape sequence none.
 import stringWidth from 'string-width';
@@ -248,8 +248,10 @@ export interface KeyHandlers {
 
 // Node reads escapeCodeTimeout from emitKeypressEvents' second argument
 // (lib/internal/readline/emitKeypressEvents.js), but its types call that argument a readline
-// Interface, which declares no such field; this signature states what Node reads.
-const emitKeypressEvents = nodeEmitKeypressEvents as unknown as (stream: NodeJS.ReadableStream, options: { escapeCodeTimeout: number }) => void;
+// Interface, which declares no such field; this overload states what Node reads.
+declare module 'node:readline' {
+  function emitKeypressEvents(stream: NodeJS.ReadableStream, options: { escapeCodeTimeout: number }): void;
+}
 
 // How long a lone Esc waits for the rest of a sequence; Node's default is GNU readline's 500 ms.
 const ESCAPE_TIMEOUT_MS = 30;

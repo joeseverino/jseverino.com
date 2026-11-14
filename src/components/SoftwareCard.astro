@@ -22,7 +22,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     <div class="software-card-head">
       <h2 class="software-card-title">
         {titleHref ? (
-          <a href={titleHref} target="_blank" rel="noopener noreferrer">{entry.title}</a>
+          <a href={titleHref} target="_blank" rel="noopener">{entry.title}</a>
         ) : (
           entry.title
         )}
@@ -30,15 +30,15 @@ const titleHref = entry.repoUrl ?? pkg?.url;
       {(pkg || entry.selfHosted || entry.archived) && (
         <div class="software-badges">
           {pkg && (
-            <span class={`badge badge--${pkg.registry}`}>
+            <span class={`pill pill--meta pill--${pkg.registry}`}>
               {registryLabel}{pkg.version ? ` v${pkg.version}` : ''}
             </span>
           )}
           {pkg?.downloadsPerMonth != null && (
-            <span class="badge badge--muted"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
+            <span class="pill pill--meta"><span aria-hidden="true">↓</span>&nbsp;{formatDownloads(pkg.downloadsPerMonth)}/mo</span>
           )}
-          {entry.selfHosted && <span class="badge badge--self-hosted">Self-hosted</span>}
-          {entry.archived && <span class="badge badge--muted">Archived</span>}
+          {entry.selfHosted && <span class="pill pill--meta pill--self-hosted">Self-hosted</span>}
+          {entry.archived && <span class="pill pill--meta">Archived</span>}
         </div>
       )}
     </div>
@@ -58,10 +58,10 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 
     <div class="software-links">
       {entry.repoUrl && (
-        <a href={entry.repoUrl} target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a href={entry.repoUrl} target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
       )}
       {pkg && (
-        <a href={pkg.url} target="_blank" rel="noopener noreferrer">{registryLabel} <span aria-hidden="true">↗</span></a>
+        <a href={pkg.url} target="_blank" rel="noopener">{registryLabel} <span aria-hidden="true">↗</span></a>
       )}
       {entry.writeupSlug && (
         <a class="software-writeup" href={writeupPath(entry.writeupSlug)}>Read the writeup <span aria-hidden="true">→</span></a>
@@ -71,6 +71,8 @@ const titleHref = entry.repoUrl ?? pkg?.url;
 </li>
 
 <script>
+  // The copy buttons ship hidden and show only once this runs, since without it they do nothing.
+  // Each button's pending label reset, so a second click restarts the timer.
   const resets = new WeakMap<HTMLButtonElement, number>();
 
   for (const button of document.querySelectorAll<HTMLButtonElement>('.software-copy')) button.hidden = false;
@@ -82,6 +84,7 @@ const titleHref = entry.repoUrl ?? pkg?.url;
     try {
       await navigator.clipboard.writeText(button.dataset.copy ?? '');
     } catch {
+      // A denied clipboard leaves the label as it was; the command stays selectable.
       return;
     }
     const label = button.querySelector('.copy-label');

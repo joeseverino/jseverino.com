@@ -1,4 +1,5 @@
 ---
+// Its behavior is ThemeToggle.client.ts, which BaseLayout loads on every page.
 // Auto needs no JS. This control only overrides it, so it stays hidden until BaseLayout's boot script marks :root.
 const CHOICES = [
   { mode: 'auto', label: 'Match system theme' },
@@ -17,7 +18,7 @@ const CHOICES = [
         aria-label={label}
         aria-pressed={mode === 'auto' ? 'true' : 'false'}
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           {mode === 'auto' && (
             <Fragment>
               <circle cx="12" cy="12" r="9" />
@@ -36,51 +37,3 @@ const CHOICES = [
     ))
   }
 </div>
-
-<script>
-  type Mode = 'auto' | 'light' | 'dark';
-
-  const STORAGE_KEY = 'theme';
-  const root = document.documentElement;
-  const group = document.querySelector<HTMLElement>('[data-theme-toggle]');
-  const choices = document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]');
-  const metas = document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]');
-
-  function apply(mode: Mode) {
-    root.dataset.themeMode = mode;
-
-    // Auto defers theme-color to the media queries; an explicit choice pins one meta.
-    metas.forEach((meta) => {
-      const scheme = meta.dataset.scheme;
-      meta.media =
-        mode === 'auto'
-          ? `(prefers-color-scheme: ${scheme})`
-          : scheme === mode
-            ? 'all'
-            : 'not all';
-    });
-
-    choices.forEach((choice) => {
-      choice.setAttribute('aria-pressed', String(choice.dataset.themeChoice === mode));
-    });
-  }
-
-  if (group) {
-    apply((root.dataset.themeMode as Mode) || 'auto');
-
-    group.addEventListener('click', (event) => {
-      const choice = event.target instanceof Element ? event.target.closest<HTMLButtonElement>('[data-theme-choice]') : null;
-      if (!choice) return;
-
-      const mode = choice.dataset.themeChoice as Mode;
-      apply(mode);
-
-      try {
-        if (mode === 'auto') localStorage.removeItem(STORAGE_KEY);
-        else localStorage.setItem(STORAGE_KEY, mode);
-      } catch {
-        // Storage blocked: the choice applies to this page view only.
-      }
-    });
-  }
-</script>

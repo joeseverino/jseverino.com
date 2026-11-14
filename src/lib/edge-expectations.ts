@@ -13,13 +13,8 @@ export type HeaderRecord = Record<string, string>;
 
 export const trustedTypesExempt = (pathname: string): boolean => pathname.replace(/\/+$/, '') === '/contact';
 
-export function headersToRecord(headers: Headers): HeaderRecord {
-  const record: HeaderRecord = {};
-  headers.forEach((value, name) => {
-    record[name.toLowerCase()] = value;
-  });
-  return record;
-}
+// Headers iterates its names lower-cased, with repeats already joined.
+export const headersToRecord = (headers: Headers): HeaderRecord => Object.fromEntries(headers);
 
 // The clauses every response's policy carries, whatever its route.
 function baseClauseFindings(csp: string): string[] {

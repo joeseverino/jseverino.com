@@ -9,7 +9,7 @@ import type { ParseArgsOptionsConfig, parseArgs } from 'node:util';
 import { collectionFields } from '../src/lib/content-contract.ts';
 import { errorMessage } from '../src/lib/error-message.ts';
 import { DEFAULT_BRANCH } from '../src/lib/site-config.ts';
-import { flag, parse } from './lib/args.ts';
+import { flag, parse, positiveInt } from './lib/args.ts';
 import { JSON_LOGS_ENV } from './lib/run.ts';
 import { createOutput, EXIT, type Output, SiteError, terminalText } from './site/cli.ts';
 import { type CommandName, type CommandResults, PROTOCOL_VERSION, type SiteFailure, type SiteHelp, type SiteSuccessOf } from './site/types.ts';
@@ -22,7 +22,7 @@ interface RunContext<V> {
   out: Output;
 }
 
-export interface Command<R = unknown> {
+interface Command<R = unknown> {
   summary: string;
   usage: string;
   help?: string;
@@ -63,13 +63,13 @@ function setFields(values: Record<string, unknown>): Record<string, unknown> {
   return fields;
 }
 
-const minutes = (value: string, name: string): number => {
-  const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) throw new SiteError(`--${name} must be a positive number of minutes`, { code: EXIT.usage });
+const minutes = (value: string): number => {
+  const n = positiveInt(value);
+  if (n === undefined) throw new SiteError(`--timeout must be a whole number of minutes, got ${value}`, { code: EXIT.usage });
   return n * 60_000;
 };
 
-export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
+const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
   new: define({
     summary: 'Scaffold a vault writeup from the template (starts published: false)',
     usage: 'site new <slug>',
@@ -133,7 +133,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ values, positionals: [pr], out }) =>
       (await import('./site/land.ts')).land({
         pr,
-        timeoutMs: minutes(values.timeout, 'timeout'),
+        timeoutMs: minutes(values.timeout),
         out,
       }),
   }),
@@ -247,7 +247,7 @@ export const COMMANDS: { [C in CommandName]: Command<CommandResults[C]> } = {
     run: async ({ out }) => (await writeupOps()).contract({ out }),
   }),
   render: define({
-    summary: 'One writeup body rendered exactly as the build renders it',
+    summary: 'One writeup body rendered as the build renders it',
     usage: 'site render <slug|-> [--document]',
     help: 'Reads 05 Writeups/<slug>/index.md from the vault, or markdown on stdin with -. html is the body the build ships. --document adds document: a self-contained page with the site article layout and styles inlined, for previews (the Obsidian plugin, HQ). Asset paths stay vault-relative.',
     positionals: [1, 1],
@@ -425,5 +425,3 @@ async function main(argv: string[]): Promise<number> {
 }
 
 if (import.meta.main) process.exitCode = await main(process.argv.slice(2));
-
-export { main };

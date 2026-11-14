@@ -1,43 +1,32 @@
-# The toolchain, the environment, the entry points and the operator's tools.
+# The toolchain, the environment, the entry points and the tools.
 #
-#   mise install        the pinned tools (versions here, checksums in mise.lock)
-#   mise run <task>     first installs the npm packages when package.json or
-#                       package-lock.json changed ([deps.npm]), then the task
-#   mise run fast       the static gates, collect-all
-#   mise run check      does my change work: the static gates, the production
-#                       build, then every gate on what it built
-#   mise run browser    the browser suites, one at a time
-#   mise run ci         every gate the pipeline runs
-#   mise run <gate>     one gate a verdict names, e.g. `mise run checks:types`
-#   mise tasks          the entry points and tools; --hidden adds every gate
+#   mise run <task>      first installs the npm packages when package.json or
+#                        package-lock.json changed ([deps.npm]), then the task
+#   mise tasks --hidden  every gate too, each with what its pass guarantees
 #
 # A gate is a task named <job>:<gate>, declared in its job's file under
-# mise-tasks/ (mise-tasks/checks.toml for checks:*), mise's default task
-# directory, where it reads every .toml as a task file and every executable as
-# a file task. checks:* run before a build, built:* against the build in
-# dist/client/, browser:* in a browser. Each aggregate runs its job by glob
-# (`mise run -c 'checks:*'`), so a gate added there runs locally and in CI with
-# no second list to edit. Every gate is `hide = true`: the glob and
-# `mise run <gate>` still reach it. `-c` keeps going past a failure and names
-# every gate that failed. Under `-c` a task whose dependency failed still
-# starts, so no built:* gate depends on the build: the aggregates run the build
-# first and the built:* gates only after it succeeded. A failing gate prints
-# its own fix. No gate declares `sources`: a verdict also turns on the
-# environment and on files no list would name. Commands that run in sequence
-# are a `run` array; a body that branches or keeps a status is a file under
-# mise-tasks/, declared in its own #MISE header.
-#
-# Node is pinned here alone; checks:repo-policy holds engines.node and the
-# packageManager npm to it. npm packages come from package-lock.json;
-# node_modules/.bin is on every task's PATH.
+# mise-tasks/ (mise-tasks/checks.toml for checks:*). checks:* run before a
+# build, built:* against the build in dist/client/, browser:* in a browser.
+# Each aggregate runs its job by glob (`mise run -c 'checks:*'`), so a gate
+# added there runs locally and in CI with no second list to edit. Every gate is
+# `hide = true`: the glob and `mise run <gate>` still reach it. `-c` keeps going
+# past a failure and names every gate that failed. Under `-c` a task whose
+# dependency failed still starts, so no built:* gate depends on the build: the
+# aggregates run the build first and the built:* gates only after it succeeded.
+# No gate declares `sources`: a verdict also turns on the environment and on
+# files no list would name. Commands that run in sequence are a `run` array; a
+# body that branches or keeps a status is a file under mise-tasks/.
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.10.18"
+min_version = "2026.11.7"
 
 [settings]
-# For [deps], mise's package installer.
+# [deps.npm] needs it.
 experimental = true
+# npm installs as its own tool at the release packageManager names, never the
+# one Node bundles.
+idiomatic_version_file_enable_tools = ["npm"]
 # Every tool installs from mise.lock's URLs and checksums, which cover these
 # platforms: the Mac and the Linux CI runners.
 locked = true
@@ -48,14 +37,14 @@ lockfile_platforms = ["macos-arm64", "linux-x64"]
 # so each gate's failures sit under its own name.
 output = "keep-order"
 
-# A clean install from the lockfile, run before any `mise run` or `mise exec`
-# while package.json or package-lock.json differs from the last install or
-# node_modules is missing. --no-audit: dependency review and Renovate's alerts
+# A clean install from the lockfile. --no-audit: dependency review and Renovate's alerts
 # enforce advisories; an install would only print them. npm's output goes to
 # stderr, so a task whose stdout another program reads (`site --json`) still
-# prints only its own. CI installs in its setup action, and a job that holds a
-# secret installs nothing and runs its task with `mise run --no-deps`, so no
-# package install script sees the secret.
+# prints only its own. CI installs the same way, in its setup action. No
+# dependency's install script runs: package.json's allowScripts denies each one
+# there is, and .npmrc fails an install that meets one it does not name. The
+# preview and deploy workflows also set npm_config_ignore_scripts, so a script
+# approved later still never runs beside their secrets.
 [deps.npm]
 auto = true
 run = "npm ci --no-audit --no-fund >&2"
@@ -80,12 +69,12 @@ links_accept = "200,204,206,301,302,303,307,308,403,429,999"
 # never a gate: CI has no gh login, and these describe the machine, not the
 # change.
 [doctor.checks.packages]
-description = "node_modules is installed from the current package.json and package-lock.json"
+description = "The npm packages are installed from the current package.json and package-lock.json"
 run = "mise deps install npm --explain"
 hint = "Run `mise deps install npm --force`."
 
 [doctor.checks.gh]
-description = "gh is signed in, for site publish, site land and deploy:verify"
+description = "The GitHub CLI is signed in, for site publish, site land and deploy:verify"
 run = "gh auth status"
 hint = "Run `gh auth login`."
 
@@ -101,74 +90,55 @@ hint = "Run `mise exec -- playwright install chromium firefox webkit`."
 # It loads @playwright/test from node_modules.
 depends = ["packages"]
 
-# A tool one gate or one task runs is lazy: `mise install` leaves it out, and
-# the first run of its command installs it from mise.lock. A tool named by its
-# backend lists its commands in lazy_bins, which mise makes into the shims
-# that install it.
+# A tool only one gate or task runs is lazy, installed on its first run.
 [tools]
-node = "26.13.0"
-"aqua:lycheeverse/lychee" = "0.24.2"
-"aqua:biomejs/biome" = "2.6.4"
-
-[tools."aqua:zizmorcore/zizmor"]
-version = "1.31.1"
-lazy = true
-lazy_bins = ["zizmor"]
-
-[tools."github:jdx/jactionlint"]
-version = "2.4.0"
-lazy = true
-lazy_bins = ["jactionlint"]
-
+# Node is pinned here alone, and checks:repo-policy holds engines.node to it.
+# npm is pinned by package.json's packageManager (see [settings]).
+node = "26.13.1"
+lychee = "0.24.2"
+biome = "2.6.7"
+zizmor = { version = "1.32.0", lazy = true }
+jactionlint = { version = "2.6.0", lazy = true }
 # checks:shellcheck, and jactionlint on every workflow `run:` script.
-[tools."aqua:koalaman/shellcheck"]
-version = "0.11.0"
-lazy = true
-lazy_bins = ["shellcheck"]
-
+shellcheck = { version = "0.11.0", lazy = true }
 # make:font's uvx.
-[tools."aqua:astral-sh/uv"]
-version = "0.13.6"
-lazy = true
-lazy_bins = ["uv", "uvx"]
-
-[tools."aqua:vale-cli/vale"]
-version = "3.25.1"
-lazy = true
-lazy_bins = ["vale"]
+uv = { version = "0.13.8", lazy = true }
+vale = { version = "3.27.0", lazy = true }
 
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.
 
+# Under GATE_REPORT_DIR (mise-tasks/check), each aggregate writes mise's report
+# of every gate it ran to <dir>/<aggregate>.json.
 [tasks.checks]
-description = "CI job build, first phase: every static gate, collect-all"
+description = "Run every static gate, collect-all (CI job build, first phase)"
 alias = "fast"
-run = "mise run -c 'checks:*'"
+run = "mise run -c ${GATE_REPORT_DIR:+\"--report-file=$GATE_REPORT_DIR/checks.json\"} 'checks:*'"
 
 [tasks.build]
-description = "The build every deploy ships: astro build, then the CSP hashes"
+description = "Build what every deploy ships: the writeup index, astro build, then the CSP hashes"
 timeout = "10m"
 run = "node bin/build-static.ts"
 
 [tasks.built]
-description = "CI job build, last phase: every gate on the build in dist/client/, collect-all"
-run = "mise run -c 'built:*'"
+description = "Run every gate on the build in dist/client/, collect-all (CI job build, last phase)"
+run = "mise run -c ${GATE_REPORT_DIR:+\"--report-file=$GATE_REPORT_DIR/built.json\"} 'built:*'"
 
 [tasks."build:browser"]
-description = "The build the browser suites serve under PREBUILT: the deploy build, with the test site key"
+description = "Build what the browser suites serve under PREBUILT: the deploy build, with the test site key"
 timeout = "10m"
 run = "node tests/browser-test-env.ts build"
 
 # One suite at a time (-j 1): each starts browsers and a server, and two at
 # once exhaust a small machine's memory. The suites serve this one build.
 [tasks.browser]
-description = "Every browser gate, one at a time: one build with the test site key, then each suite"
+description = "Run every browser gate, one at a time: one build with the test site key, then each suite"
 timeout = "45m"
 env = { PREBUILT = "1" }
 run = ["mise run build:browser", "mise run -c -j 1 'browser:*'"]
 
 [tasks.ci]
-description = "Every gate the pipeline runs: check, then the browser suites"
+description = "Run every gate the pipeline runs: check, then the browser suites"
 timeout = "90m"
 run = "mise run -c -j 1 check ::: browser"
 
@@ -181,11 +151,11 @@ run = "mise run -c -j 1 check ::: browser"
 # `--format markdown --output "$GITHUB_STEP_SUMMARY"`.
 
 [tasks."links:docs"]
-description = "Every external link in the engineering docs answers (online)"
+description = "Check that every external link in the engineering docs answers (online)"
 run = "lychee --no-progress --verbose --accept {{vars.links_accept}} $(git ls-files -- {{vars.docs}})"
 
 [tasks."links:content"]
-description = "Every external link in the published content answers (online); links to jseverino.com itself are built:links' job"
+description = "Check that every external link in the published content answers (online); links to jseverino.com itself are built:links' job"
 # A page a pull request adds would 404 on the live site until it deploys.
 run = "lychee --no-progress --verbose --accept {{vars.links_accept}} --base-url https://jseverino.com --exclude '^https://jseverino\\.com' $(git ls-files -- 'src/content/*.md' 'src/content/*.mdx')"
 
@@ -197,7 +167,7 @@ run = "lychee --no-progress --verbose --accept {{vars.links_accept}} --base-url 
 # task-name prefix to its stdout.
 
 [tasks.site]
-description = "The publishing workflow CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)"
+description = "Run the publishing CLI: `mise run site <command>` (validate, publish, land, featured, manage, …)"
 raw_args = true
 interactive = true
 quiet = true
@@ -220,18 +190,17 @@ raw_args = true
 run = "node bin/sync-content.ts"
 
 [tasks."sync:contract"]
-description = "Regenerate typed content-contract projections"
+description = "Regenerate the typed projections of the content contract"
 raw_args = true
 run = "node bin/sync-content-contract.ts"
 
 [tasks."sync:contact-openapi"]
-description = "Regenerate contact OpenAPI from its request contract"
+description = "Regenerate the contact OpenAPI from its request contract"
 raw_args = true
 run = "node bin/sync-contact-openapi.ts"
 
 # Gitignored, so every task that type-checks or resolves `Env` depends on this
-# one, as Cloudflare directs: `wrangler types` before any task that relies on
-# TypeScript. Warnings and errors only, so a gate run does not print the Env.
+# one. Warnings and errors only, so a gate run does not print the Env.
 [tasks."sync:worker-types"]
 description = "Write the Worker's `Env` and runtime types from wrangler.jsonc into src/generated/worker-configuration.d.ts"
 env = { WRANGLER_LOG = "warn" }
@@ -243,31 +212,31 @@ raw_args = true
 run = "node bin/sync-tokens.ts"
 
 [tasks."diff:build"]
-description = "Build HEAD and the working tree; show what changed in the shipped site"
+description = "Build HEAD and the working tree, and show what changed in the shipped site"
 raw_args = true
 run = "node bin/diff-build.ts"
 
 [tasks."deploy:verify"]
-description = "After the merge deploys, from a residential IP: verify remote CI and the live production deploy"
+description = "Verify remote CI and the live production deploy, after the merge deploys, from a residential IP"
 raw_args = true
 quiet = true
 output = "interleave"
 run = "node bin/deploy-verify.ts"
 
 [tasks."publish:dist"]
-description = "Commit a build directory to the `dist` branch (CI publishes it on every push to `main`)"
+description = "Commit a build directory to the `dist` branch, as the deploy workflow's `dist` job does; `--push` pushes it"
 raw_args = true
 run = "node bin/publish-dist.ts"
 
 [tasks.cloudflare]
-description = "`check` diffs the live zone and account against `cloudflare/zone.json` (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)"
+description = "Hold the live zone and account to `cloudflare/zone.json`: `check` diffs them (read token; exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (edit token; owned rules only)"
 raw_args = true
 quiet = true
 output = "interleave"
 run = "node bin/cloudflare.ts"
 
 [tasks.github]
-description = "`check` diffs the live repository settings, security features, Actions permissions, and `main` ruleset against `.github/repo.json` (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)"
+description = "Hold the live repository settings, security features, Actions permissions, and `main` ruleset to `.github/repo.json`: `check` diffs them (exit 1 on drift), `plan` lists the API calls an apply would make, `apply --yes` makes them (admin token)"
 raw_args = true
 quiet = true
 output = "interleave"
@@ -302,7 +271,7 @@ arg "<database>" help="The local database or production" {
 run = "wrangler d1 execute DB --$usage_database --file=cloudflare/d1.sql"
 
 [tasks.lighthouse]
-description = "Lighthouse against the live site with the URLs and thresholds in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
+description = "Run Lighthouse against the live site with the URLs and floors in `tests/lighthouse.json` (needs Chrome; CI runs it weekly)"
 run = "node bin/lighthouse-check.ts"
 
 [tasks."make:icons"]
@@ -322,10 +291,6 @@ run = "node bin/make-embed-bundle.ts"
 [tasks."make:social"]
 description = "Regenerate the GitHub social preview"
 run = "node bin/make-github-social.ts"
-
-[tasks."make:content-index"]
-description = "Emit the published-writeup JSON projection consumed by Severino HQ"
-run = "node bin/make-content-index.ts"
 
 [tasks."snapshot:github"]
 description = "Refresh the committed GitHub repo snapshot, the only source the portfolio Software list reads for repos"

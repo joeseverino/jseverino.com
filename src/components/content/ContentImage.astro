@@ -1,6 +1,6 @@
 ---
 import type { ImageMetadata } from 'astro';
-import Picture from '@components/Picture.astro';
+import Image from '@components/Image.astro';
 
 type Props = {
   src: ImageMetadata | string;
@@ -12,4 +12,4 @@ type Props = {
 const { src, alt, width, 'data-no-zoom': noZoom } = Astro.props;
 ---
 
-<Picture src={src} alt={alt} width={width === undefined ? undefined : Number(width)} noZoom={noZoom !== undefined} />
+<Image src={src} alt={alt} width={width === undefined ? undefined : Number(width)} noZoom={noZoom !== undefined} />

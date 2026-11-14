@@ -21,7 +21,7 @@ run = [
 ]
 
 ["checks:security-txt"]
-description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and its Encryption URL names a committed WKD key"
+description = "security.txt is clear-signed with a valid signature, carries the RFC 9116 fields, is not close to expiry, and its Encryption URL names a committed WKD key"
 hide = true
 run = "node tests/audits/check-security-txt.ts"
 
@@ -52,9 +52,11 @@ hide = true
 usage = '''
 arg "[spec]..." help="A spec file or glob to run" default="tests/unit/**/*.test.ts"
 '''
+# One line on a pass; a failure prints the spec reporter's whole run.
+output = "summary"
 # usage_spec holds the specs shell-quoted, so each reaches node whole and
 # node, not the shell, expands the glob.
-run = 'eval "set -- $usage_spec" && node --test --test-reporter=./tests/unit/helpers/quiet-reporter.ts "$@"'
+run = 'eval "set -- $usage_spec" && node --test "$@"'
 
 ["checks:docs"]
 description = "Every `mise run` task and backticked repo path in the engineering docs resolves, and no doc runs an npm script"
@@ -87,7 +89,7 @@ hide = true
 run = "node tests/audits/check-css.ts"
 
 ["checks:repo-policy"]
-description = "Node and npm pins agree; the Worker compatibility date is within 90 days of the installed workerd's; no secrets or build output tracked; component styles live in src/styles; TypeScript only, no unexplained type-check suppressions; no floating `-latest` runner labels, and every job sets a timeout"
+description = "Node and npm pins agree; no npm scripts; the lock holds one copy of each native or Workers toolchain package; the Worker compatibility date keeps close to the installed workerd's; no secrets or build output tracked; component styles live in src/styles; no private-link marker in the public sources; a file has a shebang only if it is executable; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node"
 hide = true
 run = "node tests/audits/check-repository-policy.ts"
 
@@ -102,11 +104,9 @@ env = { ZIZMOR_OFFLINE = "true" }
 run = "zizmor --quiet .github"
 
 ["checks:actionlint"]
-description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions"
+description = "jactionlint finds no syntax, expression, action-input or shellcheck error in the workflows or actions, no job without timeout-minutes and no `-latest` runner label (.github/jactionlint.yaml)"
 hide = true
-# The correctness profile is actionlint's checks; zizmor (checks:workflows)
-# owns the security audits.
-run = "jactionlint --profile correctness --no-hints"
+run = "jactionlint --no-hints"
 
 ["checks:shellcheck"]
 description = "ShellCheck finds nothing in the file tasks under mise-tasks/, each checked as the shell its shebang names"
@@ -121,8 +121,11 @@ hide = true
 # npm prints only errors, so the deprecation warnings of Renovate's own
 # dependencies stay out of the gate's output. The exact pin is the gate on the
 # release, so the machine's npm release-age hold does not apply to this fetch.
-env = { npm_config_loglevel = "error", npm_config_min_release_age = "0" }
-run = "npx --yes --package renovate@44.176.3 -- renovate-config-validator --strict --no-global .github/renovate.json"
+# re2's install script fetches the RE2 binding Renovate validates regexes with,
+# as it does in production; npx skips the scripts of the dependencies the
+# validator does not use, where .npmrc's strict-allow-scripts would fail it.
+env = { npm_config_loglevel = "error", npm_config_min_release_age = "0", npm_config_allow_scripts = "re2", npm_config_strict_allow_scripts = "false" }
+run = "npx --yes --package renovate@44.237.0 -- renovate-config-validator --strict --no-global .github/renovate.json"
 
 ["checks:tasks"]
 description = "`mise tasks validate` finds no error in the task definitions: no dependency cycle, missing task, bad usage spec, timeout, glob or file task"

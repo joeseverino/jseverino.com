@@ -9,7 +9,6 @@ import { siteRoot } from '../../src/lib/site-root.ts';
 import { localDate } from '../lib/dates.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
 import { type MiseTask, miseTasks } from '../lib/mise.ts';
-import { applyPlan, WriteupError, type WriteupPlan, writeupStore } from '../lib/writeups/store.ts';
 import { EXIT, SiteError } from './cli.ts';
 import { servingDevServer, startDevServer, stopDevServer } from './dev-server.ts';
 import { handleManageKey, type ManageEffect, pasteManageInput } from './manage-input.ts';
@@ -24,13 +23,15 @@ import {
   type Model,
   OUTCOME,
   reload,
-  SITE,
   SITE_ACTIONS,
+  SITE_CLI,
   type SiteAction,
   TABS,
 } from './manage-model.ts';
 import { currentFrame, detailFrame, listFrame, rule, siteFrame } from './manage-render.ts';
 import { anyKey, fitFrame, frameLines, keySequence, lendTerminal, openTerminal, paint, restore, terminalColumns, terminalRows, tint } from './tui.ts';
+import { applyPlan, type WriteupPlan } from './writeup-store/plan.ts';
+import { WriteupError, writeupStore } from './writeup-store/store.ts';
 
 // Status gathering shells out and takes ~1s, so the Site tab regathers only on r / Ctrl+R or after an action.
 async function gatherSiteStatus(model: Model): Promise<string> {
@@ -82,7 +83,7 @@ async function switchDevServer(model: Model): Promise<void> {
 // Runs an action's command on the lent terminal. Replay scripts never run real commands.
 async function runCommandInline(command: Exclude<SiteAction['command'], 'dev-server'>, title: string): Promise<void> {
   if (!process.stdin.isTTY) return;
-  const [bin, ...args] = command[0] === 'site' ? [...SITE, ...command.slice(1)] : command;
+  const [bin, ...args] = command[0] === 'site' ? [...SITE_CLI, ...command.slice(1)] : command;
   await lendTerminal(`site manage: ${title}`, async () => {
     process.stdout.write(`\n=== ${tint('strong', title)} ===\n\n`);
     const child = spawn(bin, args, { cwd: siteRoot, stdio: 'inherit' });

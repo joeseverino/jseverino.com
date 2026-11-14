@@ -1,7 +1,8 @@
-import { expect, type Page, settle, test } from './helpers/test.ts';
+import { expect, type Page, settle, test, withoutTurnstile } from './helpers/test.ts';
 
 // Runs against the fixture build (tests/fixtures/content), never real content.
 // After an intended change, re-baseline with `mise run browser:visual --update-snapshots`.
+// A component baseline shoots that component alone, so its test finds it by its class.
 
 const DESKTOP_VIEWPORT = { width: 1280, height: 800 } as const;
 const MOBILE_VIEWPORT = { width: 412, height: 880 } as const;
@@ -21,14 +22,10 @@ async function open(page: Page, path: string, viewport: { width: number; height:
   await settle(page);
 }
 
-// The Turnstile widget changes height when it renders. Aborting its script keeps the
-// reserved box empty so the baseline pins this site's layout.
-const withoutTurnstile = (page: Page) => page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
-
 async function expectContactScreenshot(page: Page, name: string): Promise<void> {
   await withoutTurnstile(page);
   await open(page, '/contact/');
-  await expect(page.locator('.contact-intake-form')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send Message' })).toBeVisible();
   await expect(page).toHaveScreenshot(name, SCREENSHOT_OPTIONS);
 }
 
@@ -45,8 +42,8 @@ test.describe('visual regression', () => {
 
   test('mobile nav open', async ({ page }) => {
     await open(page, '/', MOBILE_VIEWPORT);
-    await page.locator('[data-nav-toggle]').click();
-    const nav = page.locator('[data-mobile-nav]');
+    await page.getByRole('button', { name: 'Menu' }).click();
+    const nav = page.getByRole('navigation', { name: 'Mobile' });
     await expect(nav).toBeVisible();
     await expect.poll(() => nav.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
     await expect(page).toHaveScreenshot('mobile-nav-open.png', SCREENSHOT_OPTIONS);
@@ -63,7 +60,7 @@ test.describe('visual regression', () => {
 
   test('portfolio archive open (desktop)', async ({ page }) => {
     await open(page, '/portfolio/');
-    await page.locator('.archive-section summary').click();
+    await page.getByText('Browse by technology').click();
     await expect(page.locator('.archive-taxonomy')).toBeVisible();
     await expect(page).toHaveScreenshot('portfolio-archive-open.png', SCREENSHOT_OPTIONS);
   });
@@ -71,13 +68,13 @@ test.describe('visual regression', () => {
   // Full-page so featured cards and the compact list are both covered.
   test('portfolio software tab (desktop)', async ({ page }) => {
     await open(page, '/portfolio/#software');
-    await expect(page.locator('[data-panel="software"]')).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name: 'Software' })).toBeVisible();
     await expect(page).toHaveScreenshot('portfolio-software-desktop.png', { ...SCREENSHOT_OPTIONS, fullPage: true });
   });
 
   test('portfolio software tab (mobile)', async ({ page }) => {
     await open(page, '/portfolio/#software', MOBILE_VIEWPORT);
-    await expect(page.locator('[data-panel="software"]')).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name: 'Software' })).toBeVisible();
     await expect(page).toHaveScreenshot('portfolio-software-mobile.png', { ...SCREENSHOT_OPTIONS, fullPage: true });
   });
 
@@ -131,7 +128,7 @@ test.describe('visual regression', () => {
 
     test('footer theme control (dark)', async ({ page }) => {
       await open(page, '/');
-      await page.locator('.site-footer').scrollIntoViewIfNeeded();
+      await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
       await expect(page.locator('.footer-inner')).toHaveScreenshot('footer-dark.png', SCREENSHOT_OPTIONS);
     });
   });

@@ -1,8 +1,8 @@
-// The Software tab list, from GitHub (github.ts), the curation config, and the
-// package-registry.json snapshot (PyPI/npm versions and downloads).
+// The Software tab's entries, built only from committed snapshots (GitHub's repo
+// list, the registries' versions and downloads) and the curation in
+// software.config.ts, so a build calls no outside API.
 
 import registry from '../data/package-registry.json' with { type: 'json' };
-import { asyncCache } from './async-cache.ts';
 import { fixtureContent } from './content-root.ts';
 import { getGithubRepos } from './github.ts';
 import { joinInline } from './html.ts';
@@ -14,7 +14,6 @@ type SoftwarePackage = PackageConfig & {
 };
 
 export type SoftwareEntry = {
-  slug: string;
   title: string;
   description: string;
   repoUrl: string;
@@ -28,13 +27,6 @@ export type SoftwareEntry = {
   order: number;
 };
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 // From the committed snapshot (`mise run snapshot:software`), so a build never calls PyPI or npm.
 const published: Record<string, { version?: string; downloadsPerMonth?: number }> = registry.packages;
 
@@ -44,10 +36,8 @@ function enrich(pkg: SoftwarePackage): void {
   pkg.downloadsPerMonth = known?.downloadsPerMonth;
 }
 
-export const getSoftware = asyncCache(build);
-
-async function build(): Promise<SoftwareEntry[]> {
-  const repos = await getGithubRepos();
+export function getSoftware(): SoftwareEntry[] {
+  const repos = getGithubRepos();
 
   const entries: SoftwareEntry[] = repos
     .filter((repo) => !repo.fork && !SKIP.has(repo.name) && repo.description.trim() !== '')
@@ -56,7 +46,6 @@ async function build(): Promise<SoftwareEntry[]> {
       const pkg: SoftwarePackage | undefined = config ? { ...config } : undefined;
       const rank = FEATURED.indexOf(repo.name);
       return {
-        slug: slugify(repo.name),
         title: pkg?.name ?? repo.name,
         description: repo.description,
         repoUrl: repo.url,

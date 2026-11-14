@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { writeupPath } from '@lib/site-config.ts';
-import Picture from '@components/Picture.astro';
+import Image from '@components/Image.astro';
 import Lightbox from '@components/Lightbox.astro';
 import ArticleView from '@components/content/ArticleView.astro';
 import ContentBody from '@components/content/ContentBody.astro';
@@ -35,13 +35,11 @@ const { writeup } = Astro.props;
   }}
 >
   <ArticleView title={writeup.title} date={writeup.date} technologies={writeup.technologies}>
-    <Picture
+    <Image
       slot="hero"
       src={writeup.heroImage}
       alt={writeup.heroAlt}
-      sizes="(max-width: 720px) 100vw, 672px"
-      loading="eager"
-      fetchpriority="high"
+      priority
     />
     <ContentBody entry={writeup.entry} />
   </ArticleView>

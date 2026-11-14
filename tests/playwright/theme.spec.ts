@@ -11,7 +11,8 @@ const DARK_BG = rgb(SURFACE.dark);
 
 const expectPageBg = (page: Page, color: string) => expect(page.locator('body')).toHaveCSS('background-color', color);
 
-const themeChoice = (page: Page, value: 'light' | 'dark' | 'auto') => page.locator(`[data-theme-choice="${value}"]`);
+const CHOICE = { auto: 'Match system theme', light: 'Light theme', dark: 'Dark theme' } as const;
+const themeChoice = (page: Page, value: keyof typeof CHOICE) => page.getByRole('button', { name: CHOICE[value], exact: true });
 
 async function homeIn(page: Page, scheme: 'light' | 'dark'): Promise<void> {
   await page.emulateMedia({ colorScheme: scheme });
@@ -23,6 +24,12 @@ async function homeIn(page: Page, scheme: 'light' | 'dark'): Promise<void> {
 test('declares the color scheme before any stylesheet loads', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('head meta[name="color-scheme"]')).toHaveAttribute('content', 'light dark');
+  const order = await page.evaluate(() =>
+    [...document.head.children].flatMap((element) =>
+      element.matches('meta[name="color-scheme"]') ? ['scheme'] : element.matches('style, link[rel="stylesheet"]') ? ['stylesheet'] : [],
+    ),
+  );
+  expect(order[0]).toBe('scheme');
 });
 
 test.describe('auto (default)', () => {
@@ -37,14 +44,26 @@ test.describe('auto (default)', () => {
     await expectPageBg(page, DARK_BG);
   });
 
+  // In dark, a raised surface is lighter than the page under it.
   test('raises cards above the page in dark', async ({ page }) => {
     await homeIn(page, 'dark');
-    const card = await page
+    const [card, body] = await page
       .locator('.card-surface')
       .first()
-      .evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(card).not.toBe(DARK_BG);
-    expect(card).not.toBe('rgba(0, 0, 0, 0)');
+      .evaluate((element) => {
+        // The color as the canvas paints it: [luminance, alpha], whatever syntax the style uses.
+        const painted = (color: string) => {
+          const context = document.createElement('canvas').getContext('2d');
+          if (!context) throw new Error('no 2d canvas');
+          context.fillStyle = color;
+          context.fillRect(0, 0, 1, 1);
+          const [r = 0, g = 0, b = 0, a = 0] = context.getImageData(0, 0, 1, 1).data;
+          return [0.2126 * r + 0.7152 * g + 0.0722 * b, a];
+        };
+        return [painted(getComputedStyle(element).backgroundColor), painted(getComputedStyle(document.body).backgroundColor)];
+      });
+    expect(card?.[1], 'the card paints an opaque surface').toBe(255);
+    expect(card?.[0]).toBeGreaterThan(body?.[0] ?? Number.POSITIVE_INFINITY);
   });
 });
 
@@ -94,8 +113,8 @@ test('the sticky header scrim follows a runtime theme switch', async ({ page }) 
   await homeIn(page, 'light');
 
   const scrimLightness = () =>
-    page.evaluate(() => {
-      const raw = getComputedStyle(document.querySelector('.site-header')!, '::before').backgroundColor;
+    page.getByRole('banner').evaluate((header) => {
+      const raw = getComputedStyle(header, '::before').backgroundColor;
       return Number(raw.match(/oklch\(([\d.]+)/)?.[1] ?? NaN);
     });
 
@@ -118,7 +137,7 @@ test.describe('without JavaScript', () => {
   test('auto still works, and the control is hidden', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.locator('.theme-toggle')).toBeHidden();
+    await expect(page.getByRole('group', { name: 'Color theme', includeHidden: true })).toBeHidden();
     await expectPageBg(page, DARK_BG);
   });
 });

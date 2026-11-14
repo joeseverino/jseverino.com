@@ -23,26 +23,50 @@ jobs:
   build:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
+    # Where `mise run check`'s phases write mise's report of every gate they ran.
+    env:
+      GATE_REPORT_DIR: ${{ github.workspace }}/.cache/gates
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
       # The gate a laptop runs: every static gate, the build, every gate on the
       # build. src/content is the committed snapshot; CI has no vault. The build
       # carries the production site key because it is the one that ships.
-      - name: Static gates
+      - name: Run the gates
+        id: gates
         run: mise run check
         env:
           PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
 
-      # The deploy workflow downloads this, unchanged for production and wrapped
-      # for a preview. Hidden files hold .well-known/ and the asset ignore list.
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      # One table of every gate, and an error annotation naming each that failed.
+      - name: Summarize the gates
+        if: always() && steps.gates.outcome != 'skipped'
+        run: node bin/gate-summary.ts
+        env:
+          JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-build.md
+
+      - name: Upload the summary for the PR comment
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: summary-build
+          path: ${{ runner.temp }}/summary-build.md
+          retention-days: 1
+          if-no-files-found: ignore
+
+      # The deploy workflow downloads this unchanged for production, and the preview
+      # workflow wraps it for a pull request. Hidden files hold .well-known/ and the
+      # asset ignore list.
+      - name: Upload the build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: site
           path: dist/
@@ -59,17 +83,19 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:7852dc5a7d72f5fe458a597d690f6c42fbc8e9e26ddfa95f8e6ef552558d9bbf
+      image: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe
       options: --user 1001 --ipc=host
-    # Node alone: the suite runs Playwright from the lockfile.
+    # Node and npm alone: the suite runs Playwright from the lockfile.
     env:
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,npm
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: 'true'
 
@@ -89,8 +115,9 @@ jobs:
         env:
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-e2e.md
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload the Playwright report
         if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-e2e-report
           path: |
@@ -99,7 +126,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Keep the summary for the PR comment
+      - name: Upload the summary for the PR comment
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -115,9 +142,9 @@ jobs:
     name: ${{ matrix.suite }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    # Node alone: the suites run Playwright and wrangler from the lockfile.
+    # Node and npm alone: the suites run Playwright and wrangler from the lockfile.
     env:
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,npm
     strategy:
       fail-fast: false
       matrix:
@@ -133,11 +160,13 @@ jobs:
             browsers: ''
             prebuild: true
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: $/.github/actions/setup
+      - name: Set up the toolchain
+        uses: $/.github/actions/setup
         with:
           astro-cache: ${{ matrix.prebuild }}
 
@@ -167,8 +196,9 @@ jobs:
           SUITE: ${{ matrix.suite }}
           JOB_SUMMARY_FILE: ${{ runner.temp }}/summary-${{ matrix.suite }}.md
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Upload the Playwright report
         if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-${{ matrix.suite }}-report
           path: |
@@ -177,7 +207,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Keep the summary for the PR comment
+      - name: Upload the summary for the PR comment
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

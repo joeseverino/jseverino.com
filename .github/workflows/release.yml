@@ -3,8 +3,11 @@ name: release
 # A version tag (signed by convention, docs/Release-Checklist.md §4; the
 # trigger matches any v* tag) publishes the tagged commit's production deploy as a
 # verifiable release: the archive of the static site the deploy shipped and its SBOM,
-# each with the Sigstore attestation the deploy workflow issued. Nothing is rebuilt. Verify with:
+# each with the Sigstore attestation the deploy workflow issued. Nothing is rebuilt. The release is
+# published with its files already attached, so it is complete once immutable releases lock it
+# (.github/repo.json), and GitHub attests it. Verify with:
 #   gh attestation verify jseverino.com-<tag>.tar.gz -R joeseverino/jseverino.com
+#   gh release verify <tag> -R joeseverino/jseverino.com
 on:
   push:
     tags: ['v*']
@@ -27,7 +30,8 @@ jobs:
       TAG: ${{ github.ref_name }}
       SHA: ${{ github.sha }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -54,9 +58,9 @@ jobs:
           gh run download "$run" -n "release-$SHA" -D release
           for file in release/*; do mv "$file" "${file/$SHA/$TAG}"; done
 
+      # Given files, gh release create makes a draft, uploads each file, then publishes it, and
+      # deletes the draft if an upload fails, so a release is never seen without its files.
       - name: Publish the release
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes release/*
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes
-          gh release upload "$TAG" --clobber release/*

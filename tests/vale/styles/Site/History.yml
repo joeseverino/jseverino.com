@@ -1,6 +1,8 @@
 # A doc says what the repository does now. How it came to be belongs in the
 # commit message: narration is read as a description long after it stopped
-# being true, and none of these phrases can describe present behavior.
+# being true, and none of these phrases can describe present behavior. A dated
+# record kept as one by design (a scanner's result) opens with
+# <!-- vale Site.History = NO --> and closes with = YES.
 extends: existence
 message: "'%s' narrates history; say what it does now"
 level: error
@@ -20,3 +22,17 @@ tokens:
   - we (?:had|used|found|added|removed|changed|tried)
   - now also
   - evaluated on
+  - replaced the
+  - moved (?:out|into|from)
+  - started with
+  - went back
+  - was (?:split|moved|added|removed|renamed)
+  - not used yet
+  - pending a decision
+  - now (?:serves|ships|runs|uses|lives|carries|holds)
+  - previously
+  - originally
+  - formerly
+  - the legacy platform
+  - (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}
+  - '(?<=\()\d{4}-\d{2}-\d{2}(?=[),])'

@@ -1,4 +1,5 @@
 ---
+import { projectCount } from '@lib/content.ts';
 import { tagPath } from '@lib/site-config.ts';
 import type { TagGroup } from '@components/tag-groups.ts';
 
@@ -16,9 +17,9 @@ const { groups } = Astro.props;
           <h2 id={headingId} class="archive-taxonomy-title">
             {group.name}
           </h2>
-          <div class="archive-taxonomy-list">
+          <div class="tag-list">
             {group.tags.map((tag) => (
-              <a class="archive-tag" href={tagPath(tag.slug)} aria-label={`${tag.label}, ${tag.count} ${tag.count === 1 ? 'project' : 'projects'}`}>
+              <a class="pill pill--nav" href={tagPath(tag.slug)} aria-label={`${tag.label}, ${projectCount(tag.count)}`}>
                 <span>{tag.label}</span>
                 <span class="archive-tag-count">{tag.count}</span>
               </a>

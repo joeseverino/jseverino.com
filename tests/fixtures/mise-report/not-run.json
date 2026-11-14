@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "status": "failed",
+  "started_at": "2026-11-13T03:49:30.158656Z",
+  "ended_at": "2026-11-13T03:49:30.172644Z",
+  "duration_ms": 13,
+  "tasks": [
+    {
+      "name": "build",
+      "args": [],
+      "status": "failed",
+      "exit_code": 1,
+      "duration_ms": 8,
+      "started_at": "2026-11-13T03:49:30.163407Z",
+      "ended_at": "2026-11-13T03:49:30.172134Z"
+    },
+    {
+      "name": "after",
+      "args": [],
+      "status": "not_run",
+      "exit_code": null,
+      "duration_ms": null,
+      "started_at": null,
+      "ended_at": null
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+@layer components {
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-10);
+  }
+
+  /* Every rounded label: a tag, an archive entry, a page action, a package badge. The home hero's
+     location line is synced page content, so it joins by its own class. */
+  .pill,
+  :where(.hero > .hero-location) {
+    display: inline-flex;
+    align-items: center;
+    padding-block: var(--space-pill-block);
+    padding-inline: var(--space-pill-inline);
+    border: 1px solid var(--color-border-faint);
+    border-radius: var(--radius-pill);
+    background: var(--color-fill-faint);
+    color: var(--color-text);
+    font-size: var(--font-2xs);
+  }
+
+  a.pill {
+    transition:
+      background-color var(--motion-duration-fast) var(--motion-ease-standard),
+      border-color var(--motion-duration-fast) var(--motion-ease-standard),
+      color var(--motion-duration-fast) var(--motion-ease-standard);
+
+    &:hover,
+    &:focus-visible {
+      border-color: color-mix(in oklch, var(--color-primary) 40%, var(--color-border-faint));
+      background: var(--color-fill-faint-strong);
+      color: var(--color-primary);
+    }
+
+    &:active {
+      background: var(--color-border-faint);
+    }
+  }
+
+  /* Navigation between listings: the archive's tags and a listing's way back, set at the UI size. */
+  .pill--nav {
+    gap: 0.5em;
+    min-block-size: 34px;
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    font-size: var(--font-ui);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  /* A package's facts in monospace, tighter than a tag so a row of them fits a card's head. */
+  .pill--meta {
+    padding-block: calc(var(--space-pill-block) / 2);
+    padding-inline: var(--space-10);
+    font-family: var(--font-mono);
+    font-size: var(--font-3xs);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: var(--color-muted);
+  }
+
+  .pill--npm {
+    border-color: color-mix(in oklch, var(--color-error) 28%, transparent);
+    background: var(--color-error-bg);
+    color: var(--color-error);
+  }
+
+  .pill--pypi {
+    border-color: color-mix(in oklch, var(--color-primary) 28%, transparent);
+    background: var(--color-table-head);
+    color: var(--color-primary-deep);
+  }
+
+  .pill--self-hosted {
+    border-style: dashed;
+    border-color: var(--color-field-border);
+  }
+
+  .tag-group-title {
+    margin-block-end: 0.6rem;
+    color: var(--color-muted);
+    font-size: var(--font-2xs);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .tag-groups {
+    display: grid;
+    gap: 1.5rem;
+  }
+}

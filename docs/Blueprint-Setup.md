@@ -1,15 +1,10 @@
 # Blueprint setup
 
-This repo is the reference implementation behind a future site blueprint. This
-file lists every *instance-specific* value: what a new site built from this
-codebase must change. Two kinds exist:
+Every value a new site built from this codebase changes. Most live in a few
+sources the rest of the code imports; the residue is static text in files that
+cannot `import` (deploy manifests, signed files, dashboards), changed by hand.
 
-1. **Importable**: single sources the rest of the code derives from. Edit the
-   source and every consumer follows.
-2. **Residue**: static text in files that cannot `import` (deploy manifests,
-   signed files, external dashboards). Change these by hand.
-
-## 1. Importable single sources
+## Sources the code imports
 
 | File | Holds | Consumers |
 | --- | --- | --- |
@@ -22,25 +17,7 @@ Changing `site-config.ts` propagates structural identity; nothing is generated f
 `mise run sync:tokens`; generated projections are never edited directly. `site.ts`
 carries the human copy (bio, skills, nav, social).
 
-### CSS and interaction contract
-
-[`base.css`](../src/styles/base.css) is the global stylesheet. Each focused
-module is imported once into the declared `tokens`, `base`, `components`, and
-`pages` layers, from `base.css` or from the page that alone renders it. Extend a shared component rule before adding a variant;
-variants own only their differences. Keep design values in named tokens and
-logical properties, with the site-local font choice next to its font asset.
-
-Cards share one `.card-surface` element and one
-hover rule. Animate the inner surface while the outer list item retains a
-stable pointer target. Preserve keyboard focus, reduced motion, forced colors,
-and touch behavior when adding interactions. Prefer native controls and bundled
-component scripts; reserve inline execution for first-paint initialization.
-
-After CSS changes, regenerate `public/embed/bundle.css` with `mise run make:embed`.
-The diagnostic gate verifies that generated output matches its source, along
-with contrast, page weight, responsive layouts, and interaction regressions.
-
-## 2. Residue: change by hand per instance
+## Residue: changed by hand
 
 ### Repo / package
 - [`package.json`](../package.json): `name`.

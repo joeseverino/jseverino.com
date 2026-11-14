@@ -21,7 +21,6 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   output: string;
-  duration: number;
   timedOut: boolean;
 }
 
@@ -93,7 +92,6 @@ export function spawnResult(cmd: string, args: readonly string[], { cwd, env, in
 // The timeout sends SIGKILL: spawn signals once, and a child that ignores SIGTERM would outlive it.
 export async function run(cmd: string, args: readonly string[], options: RunOptions = {}): Promise<RunResult> {
   const { cwd, env, timeout = DEFAULT_TIMEOUT_MS, stdio = 'capture' } = options;
-  const start = Date.now();
   const child = spawn(cmd, args, {
     cwd,
     env: env ? { ...process.env, ...env } : process.env,
@@ -124,7 +122,6 @@ export async function run(cmd: string, args: readonly string[], options: RunOpti
     stdout,
     stderr: notes,
     output: stripVTControlCharacters(`${stdout}\n${notes}`),
-    duration: Date.now() - start,
     timedOut,
   };
 }

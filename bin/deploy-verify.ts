@@ -1,16 +1,5 @@
-#!/usr/bin/env node
-
 // Post-merge production verification, run from a clean main checkout. Expectations
 // come from src/lib/edge-expectations.ts, shared with tests/edge.
-//
-//   node bin/deploy-verify.ts                        # production, from a clean main
-//   node bin/deploy-verify.ts --origin <url> [--preview]
-//   node bin/deploy-verify.ts [--origin <url>] --slug <writeup>
-//
-// --origin verifies one deployment, such as a Worker version at its preview URL (outside
-// the zone, behind Access): served responses only, no git/check-run preconditions, no
-// HSTS. --preview marks a branch preview, where sitedrift wraps every HTML route. --slug
-// verifies one writeup after a publish.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -104,12 +93,15 @@ async function waitForChecks(sha: string): Promise<string> {
 
 async function pollChecks(sha: string, deadline: number, started: number, report: (line: string) => void): Promise<string> {
   const names = await requiredChecks();
+  let waiting = names;
   const checks = await awaitChecks(repository, sha, names, {
     deadline,
-    onPending: ({ missing, pending }) =>
-      report(`waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`),
+    onPending: ({ missing, pending }) => {
+      waiting = [...new Set([...missing, ...pending])];
+      report(`waiting${missing.length ? `; not yet reported: ${missing.join(', ')}` : ''}${pending.length ? `; still running: ${pending.join(', ')}` : ''}`);
+    },
   });
-  if (!checks) throw new Error('timed out waiting for the required checks');
+  if (!checks) throw new Error(`timed out waiting for ${waiting.join(', ')}; rerun deploy:verify once they complete`);
   const failed = checks.filter((check) => check.status === 'completed' && !passed(check));
   if (failed.length > 0) {
     throw new Error(`remote checks failed: ${failed.map((check) => `${check.name}=${check.conclusion}`).join(', ')}`);
@@ -138,7 +130,7 @@ async function collectSitemapUrls(target: Target): Promise<string[]> {
     return response.text();
   });
 
-  if (publicUrls.length === 0) throw new Error('live sitemap lists zero URLs');
+  if (publicUrls.length === 0) throw new Error(`${index} lists zero URLs`);
   return publicUrls;
 }
 
@@ -318,7 +310,7 @@ async function verifyCodeScanning(): Promise<string> {
   return 'zero open CodeQL alerts';
 }
 
-async function check(report: Report, name: string, verify: () => string | Promise<string>): Promise<boolean> {
+async function runCheck(report: Report, name: string, verify: () => string | Promise<string>): Promise<boolean> {
   try {
     const detail = await verify();
     report.add(name, true, detail);
@@ -392,7 +384,6 @@ function siteChecks(target: Target, urls: readonly string[], preview: boolean): 
   ];
 }
 
-// Writes the report's summary and returns the exit code.
 function conclude(report: Report, against: string, { deployed, production }: { deployed: boolean; production: boolean }): number {
   const failed = report.failed();
   report.write(
@@ -409,9 +400,17 @@ function conclude(report: Report, against: string, { deployed, production }: { d
   return 0;
 }
 
-export async function main(): Promise<number> {
+async function main(): Promise<number> {
   const { values } = cli({
-    usage: 'usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]',
+    usage: `usage: node bin/deploy-verify.ts [--origin <url> [--preview]] [--slug <writeup>]
+
+With no flags, verifies production from a clean main checkout.
+
+  --origin   Verify one deployment, such as a Worker version at its preview URL (outside the
+             zone, behind Access): served responses only, no git or check-run preconditions,
+             no HSTS.
+  --preview  The origin is a branch preview, where sitedrift wraps every HTML route.
+  --slug     Verify one writeup after a publish.`,
     options: {
       origin: { type: 'string' },
       preview: flag,
@@ -427,10 +426,10 @@ export async function main(): Promise<number> {
   const sha = production ? releaseCandidate() : (process.env.DEPLOY_SHA ?? 'deployment');
   status('target', `${origin}${preview ? ' (preview)' : ''}`);
 
-  const deployed = production ? await check(report, 'remote', () => waitForChecks(sha)) : true;
+  const deployed = production ? await runCheck(report, 'remote', () => waitForChecks(sha)) : true;
 
   let urls: string[] = [];
-  const sitemapOk = await check(report, 'sitemap', async () => {
+  const sitemapOk = await runCheck(report, 'sitemap', async () => {
     urls = await collectSitemapUrls(target);
     return `${urls.length} URLs listed`;
   });
@@ -438,7 +437,7 @@ export async function main(): Promise<number> {
   for (const { name, verify, pages, skipped } of checks) {
     const reason = skipped ?? (pages && !sitemapOk ? 'sitemap unavailable' : undefined);
     if (reason) skip(report, name, reason);
-    else await check(report, name, verify);
+    else await runCheck(report, name, verify);
   }
   return conclude(report, `for \`${sha.slice(0, 12)}\` against ${origin}`, { deployed, production });
 }

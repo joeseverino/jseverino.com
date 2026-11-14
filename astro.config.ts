@@ -33,8 +33,6 @@ const lastmods = sitemapLastmods(
 
 export default defineConfig({
   site: origin,
-  // Every page is prerendered; the routes that set `prerender = false` run in the Worker.
-  output: 'static',
   adapter: cloudflare({
     // Every image is encoded at build time by `image.service` below (sharp and its settings), and
     // the Worker serves the files. `astro dev` transforms through the local Images binding.
@@ -44,9 +42,6 @@ export default defineConfig({
   }),
   // Nothing uses sessions, so the adapter provisions no KV namespace for them.
   session: false,
-  // Pages keep their slash through `html_handling` in wrangler.jsonc, which redirects /about to
-  // /about/. Here 'always' would also redirect the API's /api/contact to /api/contact/.
-  trailingSlash: 'ignore',
   outDir: `./${astroOutDir}`,
   // Encoded images are cached by source and options, so one cache serves every
   // checkout and worktree; mise's [env] sets it under the repository's cache root.
@@ -58,7 +53,7 @@ export default defineConfig({
     ...(devHost && { host: true }),
     ...(devPort && { port: devPort }),
   },
-  // Site plugins in src/lib/markdown/; MDX lets images render as <Picture>.
+  // Site plugins in src/lib/markdown/; MDX lets images render as <Image>.
   markdown: {
     syntaxHighlight: false,
     processor: satteri(processorOptions),
@@ -69,7 +64,6 @@ export default defineConfig({
       entrypoint: 'astro/assets/services/sharp',
       config: {
         avif: { quality: 60 },
-        webp: { quality: 82 },
         jpeg: { quality: 82 },
         png: { compressionLevel: 9 },
       },
@@ -96,10 +90,11 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 0,
-      // lightningcss, Vite's default, folds `animation-timeline: scroll()` into the `animation`
-      // shorthand, which no browser parses, so the scroll-driven header shadow never runs.
-      // esbuild keeps the longhand; it is a devDependency because Vite only lists it as an optional peer.
-      cssMinify: 'esbuild',
+      // The browser floor: the oldest releases whose CSS parses the stylesheets as written, so
+      // lightningcss minifies without lowering anything. Astro sets build.target to esnext, which
+      // leaves lightningcss with no targets, and then it folds `animation-timeline` into the
+      // `animation` shorthand, which no browser parses.
+      cssTarget: ['chrome123', 'firefox121', 'safari26.2', 'ios26.2'],
       // Silences the bundler's report of Astro's "use astro:head-inject" directive in MDX modules.
       rolldownOptions: {
         onwarn(warning, warn) {

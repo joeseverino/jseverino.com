@@ -79,10 +79,9 @@ Modifiers go after the alt text, separated by `|`:
 - A number sets the display width; the height follows the image's ratio.
 - `nozoom` keeps the image out of the zoom view a writeup image opens on click.
 
-The sync writes each image's master beside its document: at most 1600 pixels
-wide, converted to sRGB, with every metadata block (EXIF, XMP, ICC) removed.
-Astro encodes AVIF and WebP at 512, 768, 1024, and 1600 pixels from it, with
-the intrinsic size on every `<img>` so nothing shifts as it loads.
+The sync writes each image's master beside its document, and Astro encodes the
+sizes the page serves from it
+([Architecture, image pipeline](./Architecture.md#8-image-pipeline)).
 
 ## Figures
 
@@ -185,12 +184,9 @@ fails the build:
   `i`, `img`, `kbd`, `li`, `mark`, `ol`, `p`, `pre`, `s`, `small`, `span`,
   `strong`, `sub`, `sup`, `table`, `tbody`, `td`, `tfoot`, `th`, `thead`, `tr`,
   `u`, `ul`, `wbr`.
-- Attributes on any of them: `class`, `title`, `aria-hidden`, `aria-label`. Per
-  tag: `a` takes `href`, `target`, `rel`; `img` takes `src`, `alt`, `width`,
-  `height`, `loading`, `decoding`; `ol` takes `start`; `td`/`th` take
-  `colspan`, `rowspan` (`th` also `scope`).
-- Attribute values are plain strings, and URLs in `href` and `src` are relative
-  or `http`, `https`, or `mailto`.
+- Attributes: each tag takes only the ones `guard.ts` lists for it, as plain
+  strings. URLs in `href` and `src` are relative or `http`, `https`, or
+  `mailto`.
 
 ## Review checklist
 

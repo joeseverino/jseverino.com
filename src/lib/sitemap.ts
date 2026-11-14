@@ -12,7 +12,7 @@ export async function sitemapUrls(index: string, read: (url: string) => Promise<
 export interface LastmodWriteup {
   url: string;
   technologies: readonly string[];
-  /** last_reviewed, else published_at. */
+  // last_reviewed, else published_at.
   date: Date | string | undefined;
 }
 

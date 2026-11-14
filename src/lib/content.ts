@@ -9,8 +9,6 @@ import { isoDate } from './dates.ts';
 import { site } from './site.ts';
 import { readTechnologyGroups, type TechnologyGroup } from './technology-groups.ts';
 
-export type { TechnologyGroup } from './technology-groups.ts';
-
 export type Writeup = {
   slug: string;
   title: string;
@@ -167,3 +165,8 @@ export function titleCase(value: string): string {
 export function formatDate(value: string): string {
   return value ? Temporal.PlainDate.from(value).toLocaleString('en-US', { dateStyle: 'long' }) : '';
 }
+
+const plural = new Intl.PluralRules('en-US');
+
+// '1 project', '3 projects'.
+export const projectCount = (count: number): string => `${count} ${plural.select(count) === 'one' ? 'project' : 'projects'}`;

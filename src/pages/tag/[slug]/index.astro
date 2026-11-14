@@ -3,7 +3,7 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import { tagPath, writeupPath } from '@lib/site-config.ts';
 import PageHero from '@components/PageHero.astro';
 import ProjectCard from '@components/ProjectCard.astro';
-import { getAllTags, getWriteups } from '@lib/content.ts';
+import { getAllTags, getWriteups, projectCount } from '@lib/content.ts';
 
 export async function getStaticPaths() {
   return (await getAllTags()).map((tag) => ({
@@ -16,7 +16,6 @@ const { tag } = Astro.props;
 const allWriteups = await getWriteups();
 const writeups = allWriteups.filter((writeup) => writeup.technologies.includes(tag.slug));
 const tagName = tag.label;
-const projectLabel = writeups.length === 1 ? 'project' : 'projects';
 ---
 
 <BaseLayout
@@ -40,15 +39,15 @@ const projectLabel = writeups.length === 1 ? 'project' : 'projects';
     <PageHero
       class="page-hero--tag"
       title={`${tagName} Projects`}
-      description={`${writeups.length} ${projectLabel} tagged ${tagName}.`}
+      description={`${projectCount(writeups.length)} tagged ${tagName}.`}
     >
-      <nav class="page-actions" aria-label="Portfolio navigation">
-        <a href="/portfolio/">All projects</a>
+      <nav class="tag-list page-actions" aria-label="Portfolio">
+        <a class="pill pill--nav" href="/portfolio/">All projects</a>
       </nav>
     </PageHero>
     <hr class="page-divider" />
     <ul class="project-grid">
-      {writeups.map((writeup, index) => <ProjectCard writeup={writeup} eager={index === 0} />)}
+      {writeups.map((writeup, index) => <ProjectCard writeup={writeup} priority={index === 0} />)}
     </ul>
   </main>
 </BaseLayout>

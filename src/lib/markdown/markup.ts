@@ -1,5 +1,5 @@
-// HTML-level finishing: a ```terminal fence renders as the terminal block, and
-// every table sits in a scrollable figure.
+// Markup the pages need that Markdown cannot write: the terminal block a
+// ```terminal fence stands for, and the figure and box a table scrolls inside.
 
 import type { Element, ElementContent, Text } from 'hast';
 import { defineHastPlugin } from 'satteri';

@@ -33,11 +33,10 @@ export interface SourceEntry {
   parsed: ParsedFrontmatter;
 }
 
-// Where a folder entry's source lives: a Markdown file itself, or a folder's index.md. Underscored
-// and hidden entries, conflict copies and the wrong kind of entry are not sources.
-function sourceOf(root: string, entry: Dirent, files: boolean): Omit<SourceEntry, 'parsed'> | undefined {
+// A source is a folder's index.md. Files, underscored and hidden entries, and conflict copies are not
+// sources.
+function sourceOf(root: string, entry: Dirent): Omit<SourceEntry, 'parsed'> | undefined {
   if (entry.name.startsWith('_') || entry.name.startsWith('.') || isConflictCopy(entry.name)) return undefined;
-  if (files) return entry.isFile() ? { slug: path.basename(entry.name, '.md'), sourceDir: root, sourceFile: path.join(root, entry.name) } : undefined;
   if (!entry.isDirectory()) return undefined;
   const sourceDir = path.join(root, entry.name);
   return { slug: entry.name, sourceDir, sourceFile: path.join(sourceDir, 'index.md') };
@@ -47,10 +46,10 @@ export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultR
   const pagesRoot = path.join(vaultRoot, PAGES_FOLDER);
   const writeupsRoot = path.join(vaultRoot, WRITEUPS_FOLDER);
 
-  async function entries(root: string, { files = false } = {}): Promise<SourceEntry[]> {
+  async function entries(root: string): Promise<SourceEntry[]> {
     const result: SourceEntry[] = [];
     for (const entry of await fs.readdir(root, { withFileTypes: true })) {
-      const source = sourceOf(root, entry, files);
+      const source = sourceOf(root, entry);
       const text = source && (await readIfPresent(source.sourceFile));
       if (!source || text === undefined) continue;
       const parsed = parseFrontmatter(text);
@@ -64,7 +63,7 @@ export function createVaultSource({ vaultRoot, includeDrafts = false }: { vaultR
     pagesRoot,
     writeupsRoot,
     technologyGroups: path.join(pagesRoot, '_technology-groups.md'),
-    pages: () => entries(pagesRoot, { files: false }),
+    pages: () => entries(pagesRoot),
     writeups: () => entries(writeupsRoot),
   };
 }

@@ -1,7 +1,8 @@
 // The GitHub repository posture in .github/repo.json against the live repository.
 // bin/github.ts is the CLI; the check / plan / apply flow is bin/lib/drift.ts.
-import { applySteps, changedKeys, fields, type Item, item, loadDesired as load, pick, type Run, type Step, same } from './drift.ts';
+import { applySteps, changedKeys, fields, type Item, item, pick, type Run, type Step, same } from './drift.ts';
 import type { Client } from './github.ts';
+import { absentOn404 } from './rest.ts';
 
 interface RulesetSpec {
   name: string;
@@ -36,6 +37,7 @@ export interface DesiredState {
     dependabot_security_updates: Status;
     vulnerability_alerts: boolean;
     private_vulnerability_reporting: boolean;
+    immutable_releases: boolean;
     code_scanning: { state: 'configured' | 'not-configured'; languages: string[] };
   };
   actions: {
@@ -45,30 +47,32 @@ export interface DesiredState {
     can_approve_pull_request_reviews: boolean;
   };
   variables: Record<string, string>;
-  ruleset: RulesetSpec;
+  rulesets: RulesetSpec[];
 }
 
 export interface LiveState {
   repo: Record<string, unknown>;
   vulnerabilityAlerts: boolean;
   privateReporting: boolean;
+  immutableReleases: boolean;
   codeScanning: Record<string, unknown>;
   permissions: Record<string, unknown>;
   workflow: Record<string, unknown>;
   variables: Record<string, string>;
-  ruleset: (Record<string, unknown> & { id: number }) | null;
+  // Each declared ruleset's live copy, by name; a name with none is missing.
+  rulesets: Map<string, Record<string, unknown> & { id: number }>;
 }
-
-export const loadDesired = (file: string, schemaFile: string): DesiredState => load<DesiredState>(file, schemaFile);
 
 async function readLive(client: Client, desired: DesiredState): Promise<LiveState> {
   const base = `/repos/${desired.repository}`;
-  const rulesets = await client.get<{ id: number; name: string }[]>(`${base}/rulesets`);
-  const found = rulesets.find((entry) => entry.name === desired.ruleset.name);
+  const listed = await client.get<{ id: number; name: string }[]>(`${base}/rulesets`);
+  const declared = new Set(desired.rulesets.map((ruleset) => ruleset.name));
   return {
     repo: await client.get<Record<string, unknown>>(base),
     vulnerabilityAlerts: await client.isOn(`${base}/vulnerability-alerts`),
     privateReporting: Boolean(fields(await client.get(`${base}/private-vulnerability-reporting`)).enabled),
+    // GitHub documents a 404 when off; the live API answers 200 with enabled false.
+    immutableReleases: Boolean(fields(await absentOn404(client.get(`${base}/immutable-releases`))).enabled),
     codeScanning: await client.get<Record<string, unknown>>(`${base}/code-scanning/default-setup`),
     permissions: await client.get<Record<string, unknown>>(`${base}/actions/permissions`),
     workflow: await client.get<Record<string, unknown>>(`${base}/actions/permissions/workflow`),
@@ -78,7 +82,13 @@ async function readLive(client: Client, desired: DesiredState): Promise<LiveStat
         value,
       ]),
     ),
-    ruleset: found ? await client.get<Record<string, unknown> & { id: number }>(`${base}/rulesets/${found.id}`) : null,
+    rulesets: new Map(
+      await Promise.all(
+        listed
+          .filter((entry) => declared.has(entry.name))
+          .map(async ({ id, name }) => [name, await client.get<Record<string, unknown> & { id: number }>(`${base}/rulesets/${id}`)] as const),
+      ),
+    ),
   };
 }
 
@@ -142,6 +152,7 @@ function securityItems(desired: DesiredState, live: LiveState, base: string): It
   for (const [key, have, path] of [
     ['vulnerability_alerts', live.vulnerabilityAlerts, `${base}/vulnerability-alerts`],
     ['private_vulnerability_reporting', live.privateReporting, `${base}/private-vulnerability-reporting`],
+    ['immutable_releases', live.immutableReleases, `${base}/immutable-releases`],
   ] as const) {
     const want = desired.security[key];
     items.push(have === want ? item('security', key, want, have, 'ok') : item('security', key, want, have, 'drift', [toggle(path, want)]));
@@ -191,21 +202,27 @@ function actionsItems(desired: DesiredState, live: LiveState, base: string): Ite
   return items;
 }
 
-function rulesetItem(desired: DesiredState, live: LiveState, base: string): Item {
-  const name = `ruleset ${desired.ruleset.name}`;
-  if (!live.ruleset) return item('ruleset', name, 'present', null, 'drift', [{ method: 'POST', path: `${base}/rulesets`, body: desired.ruleset }]);
-  const want = canonicalRuleset({ ...desired.ruleset });
-  const have = canonicalRuleset(live.ruleset);
+function rulesetItem(desired: RulesetSpec, live: LiveState, base: string): Item {
+  const name = `ruleset ${desired.name}`;
+  const found = live.rulesets.get(desired.name);
+  if (!found) return item('ruleset', name, 'present', null, 'drift', [{ method: 'POST', path: `${base}/rulesets`, body: desired }]);
+  const want = canonicalRuleset({ ...desired });
+  const have = canonicalRuleset(found);
   return same(want, have)
     ? item('ruleset', name, 'as in repo.json', 'as in repo.json', 'ok')
     : item('ruleset', name, 'as in repo.json', `differs: ${changedKeys(fields(want), fields(have)).join(', ')}`, 'drift', [
-        { method: 'PUT', path: `${base}/rulesets/${live.ruleset.id}`, body: desired.ruleset },
+        { method: 'PUT', path: `${base}/rulesets/${found.id}`, body: desired },
       ]);
 }
 
 function diff(desired: DesiredState, live: LiveState): Item[] {
   const base = `/repos/${desired.repository}`;
-  return [...repoItems(desired, live, base), ...securityItems(desired, live, base), ...actionsItems(desired, live, base), rulesetItem(desired, live, base)];
+  return [
+    ...repoItems(desired, live, base),
+    ...securityItems(desired, live, base),
+    ...actionsItems(desired, live, base),
+    ...desired.rulesets.map((ruleset) => rulesetItem(ruleset, live, base)),
+  ];
 }
 
 export const createRun = (desired: DesiredState, client: Client): Run => ({

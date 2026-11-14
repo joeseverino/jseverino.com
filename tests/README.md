@@ -1,19 +1,19 @@
-# Tests & Validation
+# Tests and validation
 
-Every change passes four layers: Node audits that assert invariants about the
-source and the build, unit tests for the pure logic, Playwright specs that drive
-the **built** output in a browser and through the Cloudflare runtime, and
+Every change passes five layers: Node audits that assert invariants about the
+source and the build, unit tests, Playwright specs that drive the **built**
+output in a browser, request specs against it in the Cloudflare runtime, and
 post-deploy probes against each deployment. This directory holds the first
-three; the task files under [`mise-tasks/`](../mise-tasks/) name each one a
+four; the task files under [`mise-tasks/`](../mise-tasks/) name each one a
 gate, and the aggregates in [`mise.toml`](../mise.toml) sequence them.
 
-> This file is the tour. Every audit with its fix, every spec, and the CI
-> workflows are in the full reference: **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+> This file is the tour. The map of every spec and audit, with the gate that
+> runs it and the rules they share, is **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
 
 ```
 tests/
 ├── audits/        Node checks: assert an invariant, exit non-zero with the fix on failure
-├── unit/          node:test specs for pure logic (Markdown DSL, API handlers, process harness, audit rules)
+├── unit/          node:test specs for the code and for single repository files, no build or browser
 ├── edge/          request specs against the build served by astro preview (API routes, _headers, built policy)
 ├── playwright/    browser specs against the build served by astro preview
 └── fixtures/      the synthetic content the visual suite builds
@@ -42,37 +42,13 @@ failing gate prints its own fix.
 
 ## The layers
 
-**[`tests/audits/`](./audits/)**: Node checks with no browser. Before the build
-they cover the signed `security.txt`, the contact
-contract's handler/OpenAPI/D1 parity, strict types, duplicated
-code, unused CSS variables, repository policy, and the docs' links and paths.
-After the build they cover internal links, page and image weight, structural HTML
-(including unprocessed directives), the built headers, and SEO metadata.
-`mise tasks --hidden` says what each one asserts; a failing one prints its fix.
-
-**[`tests/unit/`](./unit/)**: `node:test` specs for pure logic, no browser and no
-build. The [content renderer](./ARCHITECTURE.md#the-unit-layer) in
-[`src/lib/markdown/`](../src/lib/markdown/) is pinned block by block to the
-HTML it must produce, and its guard to what it refuses. The API handlers (contact, CSP report
-endpoint) and the preview proxy run request in, response out, with D1 and
-Turnstile stubbed. The process harness, the `site` CLI's publish and
-land flows, and each audit's rule are tested too. Node runs the specs directly
-by stripping types.
-
-**[`tests/edge/`](./edge/)**: the build served by `astro preview`, so the
-API routes and `public/_headers` answer as they do on
-Cloudflare. [Details](./ARCHITECTURE.md#the-edge-runtime-suite-testsedge).
-
-**[`tests/playwright/`](./playwright/)**: specs against the compiled site. The
-[routes suite](./ARCHITECTURE.md#routessinglespects) requests every URL in the
-sitemap, so new writeups are covered automatically. Others drive the
-[mobile drawer](./ARCHITECTURE.md#menumobilespects),
-[accessibility and motion](./ARCHITECTURE.md#css-qualityspects), the
-[Turnstile-gated contact form](./ARCHITECTURE.md#contactspects) (mocked API, no
-backend), portfolio interactions, `rel=noopener`, and an
-[axe-core WCAG A/AA sweep](./ARCHITECTURE.md#a11ysinglespects) over the key
-page archetypes in both color schemes, color contrast included. The visual suite renders the fixture content only, so a
-publish never moves a baseline.
+[The layer map](./ARCHITECTURE.md#the-layers) says what each directory runs
+against, and [its table](./ARCHITECTURE.md#every-spec-and-audit) what each spec
+and audit proves. The [routes suite](./playwright/routes.single.spec.ts) and the
+[responsive layout suite](./playwright/responsive-layout.single.spec.ts) read
+every page from the sitemap, so a new writeup is covered with no test to add.
+The visual suite renders the fixture content only, so a publish never moves a
+baseline.
 
 ## What it catches
 
@@ -88,9 +64,28 @@ merge:
 | :---: | :---: | :---: |
 | <img src="./playwright/examples/visual-diff/header-shift/expected.png" alt="Expected baseline" width="220"> | <img src="./playwright/examples/visual-diff/header-shift/actual.png" alt="Actual run" width="220"> | <img src="./playwright/examples/visual-diff/header-shift/diff.png" alt="Diff" width="220"> |
 
-Functional failures screenshot the page at the moment of the failed assertion.
-The full baseline gallery and more diff/failure examples are in
-[ARCHITECTURE.md §5](./ARCHITECTURE.md#5-visual-regression).
+Functional failures screenshot the page at the moment of the failed assertion,
+here the contact form submitted without solving Turnstile:
+
+<img src="./playwright/examples/functional-failures/contact-form-failure.png" alt="Contact form Turnstile validation failure" width="500">
+
+Every baseline is under [`visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/).
+
+## Writing a test
+
+A test's name is the behavior it holds, written as a sentence: what is true,
+with no subject prefix and no "should". A name never holds a value computed when
+the file loads (a time, a random path): each Playwright worker loads the file
+again, and a name that differs between them fails the run as a test not found. A `describe` groups tests only where a
+file holds more than one subject; it never wraps a whole file. Each behavior is
+tested once, and setup two files share lives in `unit/helpers/` or
+`playwright/helpers/`.
+
+A test that holds one repository file to a rule (a workflow's permissions,
+`repo.json`, the mise config) lives in `unit/` beside the logic tests: it reads
+files and needs no build or browser, so `checks:unit` runs it in the fast gate.
+An audit in `audits/` is its own gate, for a rule over every file or over the
+build, and prints the fix for each failure.
 
 ## Run it
 
@@ -112,5 +107,5 @@ mise run dev:look all                        # see every page at each width and 
 
 ---
 
-Full reference: [ARCHITECTURE.md](./ARCHITECTURE.md), with every audit and its
-fix, every spec, post-deploy `deploy:verify`, and the CI workflows.
+The map: [ARCHITECTURE.md](./ARCHITECTURE.md), with every spec and audit, the
+gate that runs it, and the rules they share.

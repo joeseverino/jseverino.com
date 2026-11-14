@@ -1,0 +1,12 @@
+# A gate is named by its task (`checks:*`, `built:*`, `browser:*`), which
+# `mise tasks --hidden` lists. These names call a gate by a role no task has.
+extends: existence
+message: "'%s' names no gate; name the task"
+level: error
+ignorecase: true
+scope: raw
+tokens:
+  - publish gate
+  - diagnostic gate
+  - ship gate
+  - every diagnosis

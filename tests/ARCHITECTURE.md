@@ -1,481 +1,221 @@
-# Validation architecture (full reference)
+# Test architecture
 
-The complete reference for how `jseverino.com` is verified: the exact assertion
-each check makes, the command that runs it, and how to fix a failure. A short
-tour is in [`tests/README.md`](./README.md).
+The map of what verifies the site: the layers, every spec and audit with the
+gate that runs it, and the rules they share. [`tests/README.md`](./README.md) is
+the tour, and [Development](../docs/Development.md#gates) owns the gate model
+and the CI jobs. Each gate's one-line assertion is its task's `description`,
+which `mise tasks --hidden` lists.
 
-Verification lives in four directories, and the task files under
-[`mise-tasks/`](../mise-tasks/) name each check a gate, which the aggregates in
-[`mise.toml`](../mise.toml) sequence:
+## The layers
 
-| Directory | What it holds | How it runs |
+| Layer | Runs against | Gates |
 | :--- | :--- | :--- |
-| [`tests/audits/`](./audits/) | Node scripts that read the source tree or the build and assert invariants. No browser. | `mise run checks:<gate>`, `mise run built:<gate>` |
-| [`tests/unit/`](./unit/) | `node:test` specs for pure logic: the Markdown DSL, the Worker's API handlers, the process harness, and the audits' rules. No browser, no build. | `mise run checks:unit` |
-| [`tests/playwright/`](./playwright/) | Browser specs that drive the build (`dist/client/`) served by `astro preview`. | `mise run browser:e2e`, `mise run browser:visual` |
-| [`tests/edge/`](./edge/) | Request specs against the build served through `astro preview` (the Workers runtime). | `mise run browser:edge` |
+| [`tests/audits/`](./audits/) | the source tree, or the build in `dist/client/` | `checks:*` before the build, `built:*` on it |
+| [`tests/unit/`](./unit/) | the code itself, with no build or browser | `checks:unit` |
+| [`tests/playwright/`](./playwright/) | the build served by `astro preview`, in a browser | `browser:e2e`, and `browser:visual` for the fixture build |
+| [`tests/edge/`](./edge/) | the build served through the local Workers runtime, by request | `browser:edge` |
+| [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) | a live deployment | `deploy:verify` |
 
-### Gates are mise tasks
+Beside these, Biome and the plugins in `tests/*.grit` hold source rules in
+`checks:lint`, and the gates that run a tool (types, duplication, knip, Vale,
+lychee, zizmor) say what they assert in their descriptions.
 
-A gate is a task named `<job>:<gate>`: `checks:*` run before a build, `built:*`
-against the build in `dist/client/`, `browser:*` in a browser. Each aggregate runs its
-job by glob (`mise run -c 'checks:*'`), so a gate added to its job's file
-under `mise-tasks/` (`mise-tasks/checks.toml`, or a script in
-`mise-tasks/checks/`) runs locally and in CI with no second list to edit. Every
-gate is hidden, so `mise tasks` and the [task list](../docs/Commands.md#every-task)
-show the entry points, and `mise tasks --hidden` shows each gate with its
-`description`, the one-line assertion a pass guarantees.
+## Every spec and audit
 
-mise does the orchestration: `-c` keeps a phase going past a failure and ends
-on the list of gates that failed, `output = "keep-order"` prints each gate's
-output whole under its name, each task's `timeout` stops a hung run, and
-`wait_for` keeps `astro sync` and `astro check` from rewriting `.astro/` at
-once. Under `-c` a task whose dependency failed still starts, so no `built:*`
-gate depends on the build: `mise run check` runs the build after the static
-gates and the `built:*` gates only after a build that succeeded. A passing gate
-prints one line; a failing gate prints every failure and its own fix on its
-last lines.
+`checks:docs` holds this table to the files: a spec or audit missing from it,
+or a row for a file that is gone, fails the gate.
+
+| File | What it proves | Gate |
+| :--- | :--- | :--- |
+| `tests/audits/check-css.ts` | Every CSS custom property defined under `src/styles/` is read somewhere under `src/`, in a stylesheet, a template or a script. | `checks:css-vars` |
+| `tests/audits/check-d1-writes.ts` | Every module under `src/` that writes D1 is imported by a unit spec that runs it against `cloudflare/d1.sql` in `node:sqlite`. | `checks:d1` |
+| `tests/audits/check-docs.ts` | Every task reference, backticked repo path and file name in the engineering docs resolves, no doc runs an npm script, and each list a doc copies (the security headers, the raw HTML tags, this table) matches its source. | `checks:docs` |
+| `tests/audits/check-headers.ts` | The built `_headers` has no placeholder left, lists each path once, and carries the policy on `/*` and its own on `/contact/*`. | `built:headers` |
+| `tests/audits/check-html.ts` | No literal `::name` directive reaches a built page's text; html-validate holds the structural rules in the same gate. | `built:html` |
+| `tests/audits/check-page-weight.ts` | Each page, the inlined CSS, total JS and each image stay within their [byte budgets](#check-page-weightts). | `built:weight` |
+| `tests/audits/check-repository-policy.ts` | The Node and npm pins agree, `package.json` declares no scripts, the lock holds one copy of each native package, the Worker's compatibility date keeps up with workerd, nothing secret or built is tracked, shebangs and executable bits agree, styles live in `src/styles/`, the public sources carry no private-link marker, the code is TypeScript with no unexplained suppression, and every workflow job that enables node enables npm. | `checks:repo-policy` |
+| `tests/audits/check-security-txt.ts` | `security.txt` is clear-signed with a valid signature, carries the RFC 9116 fields, expires at least 60 days out, and names a committed WKD key. | `checks:security-txt` |
+| `tests/audits/check-seo.ts` | Every built page has a canonical link, `og:title`, an `og:image` the build emitted, and only valid JSON-LD. | `built:seo` |
+| `tests/edge/runtime.spec.ts` | `/`, `/contact/` and one built writeup carry the CSP, a hash for each inline script and style, and the security headers; a missing page or asset is a static 404 under the policy; assets carry their cache rules; a slashless path redirects; the review proxy is absent; the contact API refuses bad input before any external call; `security.txt` and the WKD key are served as committed. | `browser:edge` |
+| `tests/playwright/a11y.single.spec.ts` | axe finds no WCAG A/AA violation on home, the portfolio, a writeup, contact, the resume and an open lightbox, in light and dark. | `browser:e2e` |
+| `tests/playwright/contact-fallback.single.spec.ts` | Without JavaScript, or with the form's module blocked, the LinkedIn line stands in for the form, and it stays hidden while the module loads. | `browser:e2e` |
+| `tests/playwright/contact.spec.ts` | The browser holds an empty form; a submit without a Turnstile token asks for the challenge; a verified submit posts exactly the fields and the token, confirms and clears; a pending submit blocks a second, and a network failure keeps the message. | `browser:e2e` |
+| `tests/playwright/css-quality.spec.ts` | Each page ranks its layers in the declared order; a fragment target clears the sticky header; the skip link shows on focus; brand paint resolves in both schemes; a hovered or pressed card or button holds still; reduced motion stops transitions; cover images fill their boxes; forced colors keep outlines. | `browser:e2e` |
+| `tests/playwright/lightbox.spec.ts` | A figure opens a dialog with scroll locked and focus on it; the close button and the backdrop close it without focusing the trigger; a keyboard close returns focus. | `browser:e2e` |
+| `tests/playwright/menu.mobile.spec.ts` | The menu opens from its toggle, locks scroll, and closes on Escape, the backdrop and a link; without JavaScript it opens natively; links draw no tap highlight. | `browser:e2e` |
+| `tests/playwright/portfolio-software.single.spec.ts` | The portfolio tabs follow clicks, keys, the `#software` hash and history, and both panels show without JavaScript; a package card shows its badge, install line and copy button; copy feedback restarts on a second click; writeup cross-links answer 200. | `browser:e2e` |
+| `tests/playwright/responsive-layout.single.spec.ts` | Every sitemap page and the software tab, at phone, tablet and desktop widths, never scrolls sideways, and every table fits its box or scrolls inside it without breaking a token. | `browser:e2e` |
+| `tests/playwright/routes.single.spec.ts` | `robots.txt` and `feed.xml` serve their formats, an unknown route is a real 404 page, and every sitemap page answers 200. | `browser:e2e` |
+| `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link on the key pages carries `rel="noopener"`. | `browser:e2e` |
+| `tests/playwright/smoke.spec.ts` | The home page names its author; every primary nav link opens a page that answers 200; a writeup renders; key routes log no warning or error; the header shadows after a scroll. | `browser:e2e` |
+| `tests/playwright/theme.spec.ts` | The color-scheme meta precedes every stylesheet; auto follows the OS; a choice overrides it, survives a reload and a navigation, and repaints the browser chrome and the header scrim; without JavaScript auto still works. | `browser:e2e` |
+| `tests/playwright/visual.spec.ts` | Page and component screenshots of the fixture build, light and dark, match the [committed baselines](./playwright/visual.spec.ts-snapshots/). | `browser:visual` |
+| `tests/unit/access.test.ts` | The Access service token goes only to this Worker's preview hosts, and a redirect to the Access login reads as a challenge. | `checks:unit` |
+| `tests/unit/args.test.ts` | A script refuses an unknown flag or a stray positional with exit 2 before doing any work. | `checks:unit` |
+| `tests/unit/async-cache.test.ts` | Concurrent callers share one load, and a failed load can be retried. | `checks:unit` |
+| `tests/unit/brand-contract.test.ts` | The vendored brand mirror names the contract the lockfile pins, and each card render gets its own copy of the colors. | `checks:unit` |
+| `tests/unit/browser-visual.test.ts` | Off macOS the visual task says it skipped and fails; on macOS it runs the visual config. | `checks:unit` |
+| `tests/unit/build-csp.test.ts` | The CSP build hashes each inline tag once, fills every placeholder, fails on an unmarked script, and gives a second run the same result. | `checks:unit` |
+| `tests/unit/cache.test.ts` | The cache root comes from `SITE_CACHE_DIR`, and an unset one names mise as the fix. | `checks:unit` |
+| `tests/unit/canonical-json.test.ts` | Equal JSON compares equal whatever its key order and whitespace. | `checks:unit` |
+| `tests/unit/check-docs.test.ts` | The docs audit's rules: which tokens name a path or a file, how each resolves, and how a copied list drifts. | `checks:unit` |
+| `tests/unit/check-html.test.ts` | A directive left in page text is a leak, and code, markup and `::` inside words are not. | `checks:unit` |
+| `tests/unit/check-repository-policy.test.ts` | A type-check escape needs a reason, and a shebang and the executable bit come together. | `checks:unit` |
+| `tests/unit/client-script-plugins.test.ts` | The HTML-sink and after-swap plugins refuse their patterns in TypeScript and in an `.astro` file. | `checks:unit` |
+| `tests/unit/cloudflare.test.ts` | `cloudflare/zone.json` matches its schema and type, and `mise run cloudflare` reports drift, plans, and applies only owned rules. | `checks:unit` |
+| `tests/unit/contact-api.test.ts` | The contact handler's validation, honeypot, Turnstile verification, rate limit and D1 writes, against the real schema. | `checks:unit` |
+| `tests/unit/content-contract.test.ts` | `contracts/content.v1.json` drives the public projection, the writeup store and `site manage`. | `checks:unit` |
+| `tests/unit/content-properties.test.ts` | Over generated input, the content guard admits only allowed tags and safe URL schemes, and no event handler. | `checks:unit` |
+| `tests/unit/content-render.test.ts` | Each block, fence, placeholder and image modifier renders the HTML it must, and the guard refuses MDX code. | `checks:unit` |
+| `tests/unit/content-sync.test.ts` | The sync finds every asset reference, refuses one outside its folder, writes and prunes its outputs, and checks a whole vault. | `checks:unit` |
+| `tests/unit/csp-report-api.test.ts` | The CSP report endpoint reads both formats, drops noise, caps each IP, and stores reports in the real schema. | `checks:unit` |
+| `tests/unit/csp.test.ts` | The policy module hashes inline code and builds a policy with no nonce or escape hatch. | `checks:unit` |
+| `tests/unit/deploy-workflow.test.ts` | The deploy check main requires is the one the workflow writes, and no job holds a secret beside install scripts or a repository write. | `checks:unit` |
+| `tests/unit/dev-server.test.ts` | A dev server counts only when its lock names a live process whose URL answers. | `checks:unit` |
+| `tests/unit/draft-cover-alt.test.ts` | Cover-alt drafting skips unpublished writeups and never applies an unusable reply. | `checks:unit` |
+| `tests/unit/drift.test.ts` | Drift compares values whatever their key order, and a bad invocation exits 2 before loading anything. | `checks:unit` |
+| `tests/unit/edge-expectations.test.ts` | The predicates the edge suite and `deploy:verify` share flag every policy escape hatch, missing hash, wrong header and wrong cache rule. | `checks:unit` |
+| `tests/unit/education-source.test.ts` | The education export is read once and held to its published schema, and a failure says what failed. | `checks:unit` |
+| `tests/unit/explicit-inputs.test.ts` | The sync reads each machine path from its variable, and only the audit log reads the home directory. | `checks:unit` |
+| `tests/unit/fetch-json.test.ts` | A JSON fetch returns the body of a 200, rejects an error status, and times out a stalled server. | `checks:unit` |
+| `tests/unit/frontmatter.test.ts` | Frontmatter parses, round-trips and keeps its YAML types, and a non-mapping block is refused. | `checks:unit` |
+| `tests/unit/gate-summary.test.ts` | The gate summary names every failed or unreached gate and never counts one as passed. | `checks:unit` |
+| `tests/unit/git.test.ts` | `gitAsync` resolves to trimmed stdout and rejects with git's own stderr. | `checks:unit` |
+| `tests/unit/github.test.ts` | `.github/repo.json` agrees with itself and the site config, and `mise run github` reports drift. | `checks:unit` |
+| `tests/unit/headers-file.test.ts` | `_headers` parses as Cloudflare reads it, and the Worker's own responses take the `/*` rule. | `checks:unit` |
+| `tests/unit/html.test.ts` | The built-page readers return decoded values, and undefined for an absent element. | `checks:unit` |
+| `tests/unit/json-schema.test.ts` | The schema validator names each problem's path and refuses an unknown keyword. | `checks:unit` |
+| `tests/unit/json.test.ts` | `writeJson` creates its directory, ends in a newline, and round-trips through `readJson`. | `checks:unit` |
+| `tests/unit/link-check-workflow.test.ts` | A pull request that edits any doc the docs gates read runs the link check. | `checks:unit` |
+| `tests/unit/literal-values.test.ts` | The color and font-size plugins refuse literals and pass tokens. | `checks:unit` |
+| `tests/unit/local-paths.test.ts` | Every machine path comes from its variable, with no default. | `checks:unit` |
+| `tests/unit/manage-input.test.ts` | `site manage` reads keys whole and stages edits until an explicit save or discard. | `checks:unit` |
+| `tests/unit/map-limit.test.ts` | `mapLimit` never exceeds its limit and keeps the input order. | `checks:unit` |
+| `tests/unit/mise.test.ts` | A doc names a task by its name, an alias or a matching glob, and every task carries a description. | `checks:unit` |
+| `tests/unit/package-registry.test.ts` | The registry snapshot reads PyPI and npm versions and fails whole on one failed lookup. | `checks:unit` |
+| `tests/unit/playwright-summary.test.ts` | The Playwright summary fails a run on a flaky test or a stopped run, and never counts a skip as passed. | `checks:unit` |
+| `tests/unit/pr-comment.test.ts` | The pull request comment links each required check and folds only passing summaries. | `checks:unit` |
+| `tests/unit/publish-dist.test.ts` | Publishing `dist` commits only a changed build, with its trailers, and leaves the checkout alone. | `checks:unit` |
+| `tests/unit/request-json.test.ts` | The request reader holds its byte limit on any stream and turns bad bodies into client errors. | `checks:unit` |
+| `tests/unit/rest.test.ts` | Each REST client sends its token only as a bearer header, bounds each call, and never prints the token. | `checks:unit` |
+| `tests/unit/routes.test.ts` | A route maps to the file it is served from. | `checks:unit` |
+| `tests/unit/run-harness.test.ts` | The process runner resolves on a failed, missing or hung command, and never hangs. | `checks:unit` |
+| `tests/unit/scorecard-workflow.test.ts` | The Scorecard workflow meets what the OpenSSF API needs to publish its result. | `checks:unit` |
+| `tests/unit/security-txt.test.ts` | Verification fails a modified file against the committed key, and the gate fails 60 days before `Expires`. | `checks:unit` |
+| `tests/unit/site-cli.test.ts` | The `site` CLI's `--json` documents, usage errors, and neutralized terminal controls. | `checks:unit` |
+| `tests/unit/site-git.test.ts` | `repoState` reads the branch, changes and last commit of a real checkout. | `checks:unit` |
+| `tests/unit/site-manage.test.ts` | `site manage` refuses to start without a terminal, and its frames and saves act on a temp vault. | `checks:unit` |
+| `tests/unit/site-ops.test.ts` | Contact submissions come redacted unless `--pii`, which releases nothing without its audit line. | `checks:unit` |
+| `tests/unit/site-orchestration.test.ts` | `site publish` and `site land` against a real remote and a stubbed `gh`: they commit only declared outputs, and every failure is reported. | `checks:unit` |
+| `tests/unit/site-protocol.test.ts` | Every `--json` document the CLI prints is valid under the published protocol schema. | `checks:unit` |
+| `tests/unit/site-render.test.ts` | `site render` renders a vault writeup or stdin as the page would, and refuses a missing slug. | `checks:unit` |
+| `tests/unit/sitemap-lastmod.test.ts` | Each sitemap entry takes the date of the newest writeup it shows, or none. | `checks:unit` |
+| `tests/unit/snapshot.test.ts` | The snapshot readers read the content root the build reads, from any working directory. | `checks:unit` |
+| `tests/unit/source-adapters.test.ts` | An iCloud conflict copy never becomes a slug. | `checks:unit` |
+| `tests/unit/step-summary.test.ts` | Text written to a step summary cannot forge a workflow command. | `checks:unit` |
+| `tests/unit/tui.test.ts` | The terminal layer measures, clips and windows text, and every bound key is in the key table. | `checks:unit` |
+| `tests/unit/type-escapes.test.ts` | The type-escape plugin refuses a cast to `never` or through `unknown`, in an `.astro` file too. | `checks:unit` |
+| `tests/unit/vacuous-assertions.test.ts` | The vacuous-assertion plugin refuses an inequality that passes for any result. | `checks:unit` |
+| `tests/unit/wrap-preview.test.ts` | A preview branch's build gets the review viewer and a filled CSP, `main`'s ships as the adapter wrote it, and a foreign deploy config is refused. | `checks:unit` |
+| `tests/unit/writeup-body.test.ts` | A writeup body drops the title, lede and cover its page renders from frontmatter, and a paragraph repeating its description. | `checks:unit` |
+| `tests/unit/writeup-store.test.ts` | Frontmatter writes change only their key and keep the YAML structure and the body bytes. | `checks:unit` |
+
+## Design rules
+
+- **The build under test.** The browser and edge suites serve the build through
+  `astro preview`, which runs it in Cloudflare's `workerd` through the adapter,
+  never the dev server. `PREBUILT=1` reuses one `mise run build:browser`.
+- **Projects by file name.** In [`playwright.config.ts`](./playwright.config.ts),
+  `*.mobile.spec.ts` runs on the mobile devices, `*.single.spec.ts` on
+  `chromium-desktop` alone, and the rest on every desktop engine. In CI a
+  failure runs once more with a trace, and a pass only on that retry fails the run.
+- **One harness.** Every browser and edge spec imports `test` and `expect` from
+  [`helpers/test.ts`](./playwright/helpers/test.ts), which a `noRestrictedImports`
+  override in `biome.jsonc` enforces. On WebKit that module drops
+  `upgrade-insecure-requests` from the preview's document CSP, since WebKit
+  upgrades the plain-http preview and loads nothing; production keeps the
+  directive. Its route turns on WebKit's interception, which fails Turnstile's
+  `blob:` load, so the module names that one console error for `smoke.spec.ts`.
+- **Elements as a person finds them.** A spec finds an element by role, label or
+  text. A class stays only where the test measures that component's own style
+  or shoots it alone. A lookup for an element that ships hidden passes
+  `includeHidden`, so a hidden assertion still names a real element.
+- **Readiness is a condition.** A spec waits on `settle()` (fonts and eager
+  images), `expect.poll`, or the page's own events, never a sleep or
+  `networkidle`.
+- **Content by capability.** The functional specs resolve writeups from the
+  synced snapshot by what they hold ([`helpers/writeups.ts`](./playwright/helpers/writeups.ts)),
+  so renaming a writeup breaks no gate. The visual suite builds only the
+  synthetic tree in [`fixtures/content/`](./fixtures/content/), with no network
+  call, so a baseline moves only with a layout or a fixture. Baselines are
+  macOS Chromium renders.
+- **Turnstile stays out.** A spec that does not test the challenge aborts its
+  script (`withoutTurnstile`), since its always-pass key solves on its own
+  schedule. The contact spec writes the token field the widget writes.
+- **An audit is importable.** Each audit exports its rule and runs only under
+  `import.meta.main`, so a unit spec tests the rule without a repo or a build.
+  It ends through `finish()` in [`lib.ts`](./audits/lib.ts), which requires a
+  fix: one for a single rule's problems, or one on each problem.
+- **D1 writes meet the schema.** A unit spec that runs a D1 writer builds
+  `cloudflare/d1.sql` in `node:sqlite` ([`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts)),
+  so SQLite rejects a column the schema lacks.
+
+### Rules a tool holds
+
+- Biome (`checks:lint`) refuses an explicit `any`, `@ts-ignore`, a non-null
+  assertion, a hex color in a stylesheet, and `@playwright/test` imported past
+  the harness.
+- The plugins [`literal-colors.grit`](./literal-colors.grit) and
+  [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuse literal colors
+  and font sizes in `src/styles/`, outside the token blocks `mise run sync:tokens`
+  fences with `biome-ignore-start`.
+- [`client-html-sinks.grit`](./client-html-sinks.grit),
+  [`view-transition-hooks.grit`](./view-transition-hooks.grit) and
+  [`type-escapes.grit`](./type-escapes.grit) refuse HTML sinks, after-swap
+  listeners and type escapes under `src/`, and
+  [`vacuous-assertions.grit`](./vacuous-assertions.grit) an inequality that
+  passes for any result under `tests/`.
+- jactionlint and zizmor hold the workflows: a timeout on every job, no
+  `-latest` runner, every action pinned to a SHA.
 
 ## Adding a new audit
 
-Three steps; the gates enforce most of them:
+1. Write `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in
+   [`src/lib/site-root.ts`](../src/lib/site-root.ts), read built pages through
+   `builtPages()`, and end through `finish()`.
+2. Declare the task in [`mise-tasks/checks.toml`](../mise-tasks/checks.toml) as
+   `checks:<thing>` or [`mise-tasks/built.toml`](../mise-tasks/built.toml) as
+   `built:<thing>`, hidden, with a `description` stating what a pass
+   guarantees. The aggregates run it by glob.
+3. Add its row to the table above, and run `mise run fast`.
 
-1. **Write the script** in `tests/audits/check-<thing>.ts`. Resolve paths from `siteRoot` in [`src/lib/site-root.ts`](../src/lib/site-root.ts), never the cwd, and list files with `fs.readdirSync(dir, { recursive: true })`. Post-build audits get the built pages from `builtPages()` in [`lib.ts`](./audits/lib.ts) instead of re-resolving the outDir; the outDir decision itself is single-sourced in [`src/lib/build-output.ts`](../src/lib/build-output.ts). End through `finish()`: on violation it prints the problems and the `fix` line and exits non-zero; on success it prints one `ok` summary line. Export the pure logic and guard the run with `import.meta.main` so a unit spec can import it.
-2. **Declare the task** in [`mise-tasks/checks.toml`](../mise-tasks/checks.toml) as `checks:<thing>` (before the build) or [`mise-tasks/built.toml`](../mise-tasks/built.toml) as `built:<thing>` (on it), with `hide = true` and a `description` stating what a pass guarantees. The aggregates pick it up by glob, locally and in CI. Add a `### check-<thing>.ts` section below only when there is more to say than the one-line description.
-3. **Run `mise run fast`**: `checks:doc-links` verifies the new links and anchors, `check-docs` the script and task references and paths.
-
----
-
-## 1. The gate ladder
-
-The [validation flow](../docs/Development.md#gates) traces a change from the
-local gates through the pull request's CI and preview to production; the
-sections below say what each gate asserts.
-
-### The gates
-
-1. **`mise run fast`** (the `checks` aggregate): every static gate, collect-all, side by side. A literal color or an unpinned action fails in seconds.
-2. **`mise run check`**: the static gates, then the production build (`mise run build`, the artifact the `deploy` workflow ships), then every `built:*` gate on it. CI's `build` job runs exactly this, so the green check proves what a green local run proves. It validates the checkout and never syncs the vault.
-3. **`mise run browser`**: builds once with the Turnstile test key and runs the three `browser:*` suites one at a time against it (`PREBUILT=1`), so an 8 GB machine never runs two browsers at once. The CI legs `e2e`, `visual`, and `edge` each run one of those tasks.
-4. **`mise run ci`**: `check`, then `browser`; every gate the pipeline runs.
-
-`mise tasks --hidden` lists every gate with what it asserts.
-
----
-
-## 2. Audits
-
-Each audit's assertion is its task's `description`, which
-`mise tasks --hidden` lists; a failing audit prints its fix. The
-detail that does not fit one line is in [§3](#3-testsaudits-audit-detail).
-
-### Other checks
-
-The unit specs, the browser specs, and the checks that run outside the gates.
-
-| Scope | Check | File / command | What it asserts |
-| :--- | :--- | :--- | :--- |
-| Logic | [content renderer](#the-unit-layer) | `tests/unit/content-render.test.ts` | Every block (`:::figure`, `:::table`, `:::split`, `:::buttons`, `:::button`, `:::center`, `:::hero`), the ` ```terminal ` fence, the placeholders, image modifiers, and standalone-link buttons render to the expected HTML; the guard refuses `import`/`export`, expressions, unlisted tags and attributes, and unsafe URL schemes. |
-| Logic | [contact API](#the-unit-layer) | `tests/unit/contact-api.test.ts` | The contact handler's validation ladder, honeypot, Turnstile verification (hostname and action included), rate limit, and D1 persistence paths behave, with D1 and siteverify stubbed. |
-| Logic | [CSP report API](#the-unit-layer) | `tests/unit/csp-report-api.test.ts` | Both CSP report formats normalize correctly; foreign-document/extension noise is dropped; batches cap at ten; D1 failures return 500. |
-| Logic | [CSP policy](#the-unit-layer) | `tests/unit/csp.test.ts` | The policy module builds the build-time hash policy (no nonce, `'unsafe-inline'`, or `'unsafe-eval'`, `report-to` plus the `report-uri` fallback Firefox needs, enforced Trusted Types except on `/contact/`) and the preview proxy's request-time policy (a nonce for the injected bridge script plus a hash per inline script and style). |
-| Logic | [content sync](#the-unit-layer) | `tests/unit/content-sync.test.ts` | Reference collection (titles, angle brackets, link definitions, raw `src=`), the path-traversal guard, the writeup chrome strip, image masters (width cap, no metadata, cached), the writer's declared outputs and prune, the document rows, the education join, and a whole sync and `--check` (MDX compile issues included) against a temp vault. |
-| Logic | [content contract](#the-unit-layer) | `tests/unit/content-contract.test.ts` | [`contracts/content.v1.json`](../contracts/content.v1.json) drives every consumer: the public projection emits exactly its public fields, the writeup store accepts exactly its editable ones, and `site manage` lists the rest as the contract marks them. |
-| Logic | [publish/land orchestration](#the-unit-layer) | `tests/unit/site-orchestration.test.ts` | `site publish` and `site land` against a bare git remote and a stubbed `gh`: a stale checkout is irrelevant, nothing-changed stops, gh failures are fatal, `--dry-run` leaves no branch, and only declared outputs are committed. |
-| Logic | [manage TUI](#the-unit-layer) | `tests/unit/site-manage.test.ts` | `site manage` refuses to start without a terminal, and its frames render the featured order, drafts, and gate issues. |
-| Logic | [process harness](#the-unit-layer) | `tests/unit/run-harness.test.ts` | The shared runner resolves (never hangs) on non-zero exits, missing binaries, and timeouts. |
-| Logic | [task references](#the-unit-layer) | `tests/unit/mise.test.ts` | A `mise run` reference in a doc names a task by its name, an alias, or a glob matching one, and nothing else. |
-| Logic | [audit logic](#the-unit-layer) | `tests/unit/check-docs.test.ts`, `tests/unit/check-html.test.ts` | The pure halves of the docs and HTML audits: path extraction and resolution, directive leaks. |
-| Logic | [preview wrap](#the-unit-layer) | `tests/unit/wrap-preview.test.ts` | The deploy's own wrap ([`bin/wrap-preview.ts`](../bin/wrap-preview.ts)) on simulated builds: a feature branch (`WORKERS_CI=1`, `WORKERS_CI_BRANCH` other than `main`) gets the sitedrift viewer with the CSP filled again, `main`'s build stays as the adapter wrote it, and a deploy config with a key the adapter does not write, another Worker's name, or a script or assets directory outside the build is refused. |
-| Logic | [content snapshot](#the-unit-layer) | `tests/unit/snapshot.test.ts` | The snapshot readers list the writeups and pages of the content root the build reads (`SITE_CONTENT_ROOT`), from any working directory. |
-| Logic | [edge expectations](#the-unit-layer) | `tests/unit/edge-expectations.test.ts` | The predicates the edge suite and `deploy:verify` share flag every policy escape hatch, a missing hash, a wrong header or cache rule, and a leaked CORS header; `public/_headers` pins only write-once paths `immutable`. |
-| E2E | [smoke + routing](#smokespects) | `tests/playwright/smoke.spec.ts` | Console stays clean; hero, navigation, and header behave in every engine. |
-| E2E | [mobile menu](#menumobilespects) | `tests/playwright/menu.mobile.spec.ts` | Drawer toggles, locks body scroll, closes on Escape, on link nav and on its empty panel, and staggers its items in with JavaScript off. |
-| E2E | [CSS quality](#css-qualityspects) | `tests/playwright/css-quality.spec.ts` | Skip link, brand tokens, motion durations, reduced-motion, stable click targets, no narrow-viewport overflow. |
-| E2E | [contact form](#contactspects) | `tests/playwright/contact.spec.ts` | HTML5 validation, Turnstile-gated error path, and a mocked successful submit + reset. |
-| E2E | [portfolio software tab](#portfolio-softwaresinglespects) | `tests/playwright/portfolio-software.single.spec.ts` | The Writeups/Software tab toggle (default, swap, `#software` deep-link, both panels in the DOM), a published package's badge + install line + copy button, the More-projects list, and writeup cross-links. |
-| Routes | [routes + 404](#routessinglespects) | `tests/playwright/routes.single.spec.ts` | Every URL in the sitemap returns 200, plus `robots.txt`, `feed.xml`, and unknown-route 404 behavior. |
-| Security | [new-tab links](#securitysinglespects) | `tests/playwright/security.single.spec.ts` | Every `target="_blank"` link carries `rel="noopener"`. |
-| A11y | [axe sweep](#a11ysinglespects) | `tests/playwright/a11y.single.spec.ts` | Key page archetypes pass the full axe WCAG A/AA ruleset in a real browser, in the light and the dark color scheme. |
-| Post-deploy | [deploy verification](#post-deploy-verification) | `bin/deploy-verify.ts` | Remote CI status, live headers and HSTS, live sitemap 200s, hash coverage of the home page's inline script and stylesheet, cache rules, the contact gate, `security.txt` parity, open CodeQL alerts. The response predicates are the edge suite's, from `src/lib/edge-expectations.ts`. |
-| CI | CodeQL | default setup, `.github/repo.json` | Semantic JS/TS and workflow scanning for injection, XSS, prototype pollution; the ruleset's code scanning rule holds a merge on a high-severity alert. |
-| CI | dependency review | `.github/workflows/dependency-review.yml` | Blocks PRs adding high-severity advisories. |
-| CI | OpenSSF Scorecard | `.github/workflows/scorecard.yml` | Supply-chain posture: branch protection, pinned actions, token scope. |
-
----
-
-## 3. `tests/audits/`: audit detail
-
-The audits whose rules need more than the one line in the [audit table](#2-audits).
-
-### `check-security-txt.ts`
-Verifies `public/.well-known/security.txt`:
-- It is PGP clear-signed and the signature verifies (`gpg --verify`, GOODSIG/VALIDSIG).
-- All RFC 9116 required fields are present (`Contact`, `Encryption`, `Expires`, `Canonical`, `Policy`).
-- `Expires` is a parseable future date at least 60 days out, so the monthly `security-txt-expires` run fails, and GitHub emails it, before the file lapses.
-- `Canonical` matches the production URL and `Encryption` is a WKD URL whose key file exists under `public/.well-known/openpgpkey/hu/`.
-
-Signing is a separate tool, [`bin/sign-security.ts`](../bin/sign-security.ts) (`mise run sign:security`), because it writes the file and verifiers do not write. Both share the canonical strip/parse logic in [`bin/lib/security-txt.ts`](../bin/lib/security-txt.ts) so the signer and the checker read the signed body the same way.
-
-### TypeScript type check
-
-`mise run checks:types`: `wrangler types` (its dependency `sync:worker-types`), `astro sync`, `tsc -p .`, then `tsc -p src/tsconfig.worker.json`. Every script in the repo is TypeScript that Node runs directly by stripping types, so this is the only place types are checked. The root [`tsconfig.json`](../tsconfig.json) is one strict program over `bin/`, `src/`, `tests/`, and the configs (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `erasableSyntaxOnly`, so nothing needs a build step). [`tsconfig.worker.json`](../src/tsconfig.worker.json) compiles the Worker's routes, middleware and everything they import again, with neither DOM nor Node globals, under the runtime types `wrangler types` generates from [`wrangler.jsonc`](../wrangler.jsonc) into `src/generated/worker-configuration.d.ts`, gitignored and written before every type check. `astro check` reads [`tsconfig.astro.json`](../src/tsconfig.astro.json), which narrows the same options to `src/`, for the `.astro` files.
-
-### `checks:duplication`
-
-[jscpd](https://jscpd.dev) reads every TypeScript file git does not ignore and fails on any run of 30 identical tokens spanning 3 or more lines that appears twice; the specs and unit tests (`tests/unit/`, `tests/playwright/`, `tests/edge/`) are held to 40 tokens over 4 lines, since specs repeat a little setup. jscpd takes one threshold per run, so the task runs it twice: the code bar without the tests, then the test bar over everything. Import and re-export lines, the generated projection (`src/generated/`), and the fixture content repeat by design and are skipped. The fix is always one shared primitive both sites import.
-
-### `checks:knip`
-
-[knip](https://knip.dev) follows the imports from every entry point and fails on a file nothing reaches, an export or type nothing imports, a package in `package.json` nothing uses, or one the code imports without declaring it. Its plugins find Astro's routes and content config and the Playwright specs; [`tests/knip.jsonc`](./knip.jsonc) names the rest, each with the program that reads it: the scripts the mise tasks run, the audits, the unit specs, the fixture content tree, and the files loaded by path. A package or binary only a gate runs is ignored there by name. An export kept for a reader outside the code carries `@public` and the reader's name. A configured entry or ignore that no longer matches anything fails the gate too.
-
-### `check-d1-writes.ts`
-
-Every module under `src` that passes an `INSERT`, `UPDATE` or `DELETE` to
-D1's `prepare()` or `exec()` is imported, beside
-[`d1-sqlite.ts`](./unit/helpers/d1-sqlite.ts), by one unit spec; the audit
-parses each file with TypeScript and resolves each import from the spec's
-directory. `d1-sqlite.ts` builds `cloudflare/d1.sql` in `node:sqlite`, so
-SQLite rejects a column the schema lacks or a value count that differs from
-the column list. The per-IP caps live inside each `INSERT`, and two specs run
-them against that schema: "caps an IP at the hourly limit inside one
-statement" in [`contact-api.test.ts`](./unit/contact-api.test.ts) and "stores
-at most thirty reports per IP per hour" in
-[`csp-report-api.test.ts`](./unit/csp-report-api.test.ts). The contact spec
-also holds the handler to the limits
-[`contracts/contact.v1.json`](../contracts/contact.v1.json) declares. The API
-Shield document, [`contracts/contact.openapi.json`](../contracts/contact.openapi.json),
-is regenerated and compared whole by `mise run checks:contracts`, which also
-runs `make:icons --check` so the committed vector brand marks (`favicon.svg`,
-`mark.svg`, `wordmark-caps.svg`) match what the engine renders.
-
-### `check-css.ts`
-Scans `src/styles/**/*.css` for `--variable: …` declarations, collects `var(--variable)` usages from the stylesheets and from every `.astro` and `.ts` file under `src/` (a token consumed only in a template or script still counts), and fails listing any custom property that is defined but never consumed.
-
-### `check-repository-policy.ts`
-Structural health:
-- **Node version**: the running Node matches the `node` pin in [`mise.toml`](../mise.toml) on major.minor (patch drift is allowed, so a Node security patch doesn't block the gates); `engines.node` and the exact `packageManager` npm pin agree with it.
-- **No npm scripts**: `package.json` has no `scripts`; every command is a mise task.
-- **Clean tree**: no committed `.env`, no `dist/` or `.cache/`.
-- **Stylesheets**: component styles live in `src/styles` modules.
-- **Public sources** (`src/content`, `src/pages`, `src/components`) carry no private-link markers or internal hostnames.
-- **Workflows**, read as YAML: no job's `runs-on` or matrix `os` is a floating `-latest` label, and every job that runs steps sets `timeout-minutes`.
-- **Compatibility date**: `wrangler.jsonc`'s `compatibility_date` trails the installed workerd's supported date by at most 90 days and is never past it.
-- **TypeScript only**: no tracked `.js`/`.mjs`/`.cjs`.
-- **No unexplained suppressions**: no `@ts-nocheck` in a `.ts` or `.astro` file, and every `@ts-expect-error` comment carries a reason.
-
-What a maintained tool checks is left to it:
-
-- `npm ci` refuses a lockfile out of step with `package.json`.
-- Biome (`checks:lint`) refuses an explicit `any` and a `@ts-ignore` (`noExplicitAny`, `noTsIgnore`) in TypeScript and in an `.astro` file's frontmatter and `<script>` elements.
-- Biome's `noHexColors` refuses a hex color in a stylesheet.
-- The plugin [`literal-colors.grit`](./literal-colors.grit) refuses the named and `rgb()`/`hsl()` color spellings.
-- The plugin [`literal-font-sizes.grit`](./literal-font-sizes.grit) refuses a rem, px or em `font-size`. [`unit/literal-values.test.ts`](./unit/literal-values.test.ts) holds its node patterns to Biome's CSS grammar.
-- The plugin [`client-html-sinks.grit`](./client-html-sinks.grit) refuses an `innerHTML` or `outerHTML` assignment and an `insertAdjacentHTML` call under `src/`, and [`view-transition-hooks.grit`](./view-transition-hooks.grit) an `astro:after-swap` listener, in TypeScript and in an `.astro` file's frontmatter and `<script>` elements. [`unit/client-script-plugins.test.ts`](./unit/client-script-plugins.test.ts) lints a fixture of each kind.
-- The color and font-size rules skip the generated token blocks, which `mise run sync:tokens` fences with `biome-ignore-start` comments for exactly the rules their values trip.
-- zizmor (`checks:workflows`) refuses an action not pinned to a commit SHA. Each finding it accepts is marked by a `# zizmor: ignore[<audit>]` comment with its reason where it is found.
-
-### Links: `checks:doc-links` and `built:links`
-[lychee](https://lychee.cli.rs), pinned in `mise.toml`, run offline with fragment checking, every setting on the task's command line.
-- `checks:doc-links` reads the tracked engineering docs (the `docs` pathspecs in `mise.toml`: `README.md`, `AGENTS.md`, `.github/SECURITY.md`, `.github/CONTRIBUTING.md`, `docs/*.md` and its subdirectories, and `tests/*.md` at the top of `tests/` only): every relative link and image resolves, and a `#fragment` names a heading slugged as GitHub does, or an explicit `id`. Fenced and inline code are example syntax and skipped.
-- `built:links` runs after the build over everything in `dist/client/`: every `href`, `src`, and `srcset` candidate, root-relative or `https://jseverino.com/` (the canonical link), resolves to an emitted file, a directory link to its `index.html`, and its `#fragment` to an `id` on that page. The API routes and `/cdn-cgi/` have no file and are excluded by the task's `--exclude`. `og:image` is a `<meta content>` value, which lychee does not extract; [`check-seo.ts`](#check-seots) resolves it.
-
-### `check-docs.ts`
-What no link checker knows, over the same tracked docs:
-- every `mise run <task>` reference names a task, and no doc runs an npm script (every command is a mise task),
-- every backticked repo path resolves. A token in inline code is a repo path when its first segment is a top-level entry (`bin/site.ts`, `docs/`, `dist/`); it resolves when `git ls-files` tracks it or a file under it, or when `git check-ignore` reports it ignored (generated output such as `dist/` and `.cache/`). A placeholder (`tests/audits/<name>.ts`, `src/styles/**/*.css`) is checked up to the directory before it.
-
-Paths inside fenced code blocks are example syntax and skipped; script and task references are validated everywhere, including command blocks. Site content under `src/content` is out of scope (it links to live routes and external URLs, which the weekly link check covers).
-
-### `checks:prose`
-[Vale](https://vale.sh), pinned in `mise.toml`, reads the same tracked docs with the rules in [`tests/vale/styles/Site/`](./vale/styles/Site/), configured in [`tests/vale/vale.ini`](./vale/vale.ini): no em dash (`Dash`), no praise word or phrase of generated copy (`Hype`), no "not X, but Y" contrast (`Contrast`), and no narration of how the code came to be (`History`). Every rule fails at error level. `Dash` reads the rendered text, so a code span is left alone and so is the task list mise writes into [`docs/Commands.md`](../docs/Commands.md#every-task), which spells an argument's help with an em dash; the other rules read the raw file, code included.
+## Audit detail
 
 ### `check-page-weight.ts`
-`built:weight` runs after the build, as the deterministic complement to the CI Lighthouse run. Four byte budgets over the emitted output: per-page HTML (150 KB), CSS (75 KB: the stylesheet every page inlines, plus any external `.css`), total JS (25 KB), and each image the build ships, committed under `public/assets/` or encoded from content (1.5 MB; any at or over it fails, listed largest first). The page, CSS and JS budgets sit above the measured baseline (~115 KB worst page carrying the ~36 KB inlined stylesheet, ~5 KB JS) with headroom. The `ok` line carries the heaviest page, the totals, and the image count and weight. Raising a budget is a commit to `tests/audits/check-page-weight.ts`.
 
-### `built:html`
-Runs after the build. Structural assertions over every emitted page, statically. [html-validate](https://html-validate.org), configured in [`html-validate.json`](./html-validate.json) with only these rules: `element-required-content` and `empty-title` (every `<head>` holds a `<title>` with text, which search results and the browser tab show; the first rule also holds `<html>`, `<details>` and `<hgroup>` to their required children), `no-dup-id` (duplicate ids silently break fragment links, label association, and `aria-*` references), `wcag/h37` (every `<img>` carries an `alt` attribute; empty `alt` is valid and marks a decorative image, a missing attribute is always an authoring bug), and `heading-level` (a page opens at its one `h1` and never skips a level going down; an `h3` straight under the `h1` hides the structure assistive technology navigates by). Then `check-html.ts` asserts no literal `::name` directive reaches the page text, which no rule covers. A leaked directive is a typo (`::termnial`) or a directive the page's renderer does not support; text inside `<pre>`, `<code>`, `<script>`, `<style>`, and comments is ignored, and `a::b` or `::1` never counts. The all-pages static complement to the browser-side [axe sweep](#a11ysinglespects), which runs deeper rules on fewer pages.
+Four budgets over the emitted output: per-page HTML, CSS (the largest
+stylesheet a page inlines, plus any external `.css` a page loads, which leaves
+out `embed/bundle.css`), total JS, and each image. Each sits about a quarter
+above what the build ships, and raising one is its own commit to the file. It is
+the deterministic complement to the weekly Lighthouse run.
 
-### `check-headers.ts`
-Runs after the build. Pages and assets are static files the assets layer serves without starting the Worker ([Worker routing](../docs/Cloudflare.md#worker-routing)), so the CSP is written into the built `_headers`, not issued per request. The audit reads `dist/client/_headers` and fails if a build placeholder is left, a path rule is listed twice, `/*` sets no Content-Security-Policy, or `/contact/*` lacks its own (detach the global policy, then an enforced and a report-only line). The edge suite proves the routing and the headers under `astro preview`.
-
-### `check-seo.ts`
-Runs after the build, over the emitted HTML in the outDir (`dist`), read through the hast readers in [`src/lib/html.ts`](../src/lib/html.ts). Every rendered page must carry a canonical link, `og:title`, an `og:image`, and only valid JSON-LD. The `og:image` URL must be on the site and name a file the build emitted, since `built:links` (lychee) never reads a `<meta content>` value. It also fails on zero pages, since an empty or stale outDir is a broken build.
-
-### The unit layer
-
-A third pre-build layer beside the audits and browser specs: `node:test` suites under [`tests/unit/`](./unit/) that exercise pure logic directly: input in, output out, no browser and no build. The [other checks](#other-checks) table lists every spec; the main surfaces:
-
-- **The content renderer** ([`content-render.test.ts`](./unit/content-render.test.ts)), described below.
-- **The API handlers**, the production code that otherwise first runs on Cloudflare. [`contact-api.test.ts`](./unit/contact-api.test.ts) drives the full contact ladder (content-type/size/JSON validation, honeypot, field limits, Turnstile verification, the per-IP rate limit, D1 persistence and failure) with D1 and the siteverify call stubbed. [`csp-report-api.test.ts`](./unit/csp-report-api.test.ts) covers both report formats, the noise filters (foreign documents, browser extensions, extension-injected inline violations), batch capping, and D1 failure. `csp.test.ts` verifies the policy module: the build-time hash policy and the preview proxy's request-time nonce and hash policy.
-- **The process harness** ([`run-harness.test.ts`](./unit/run-harness.test.ts)): the failure modes a green run never exercises (non-zero exits, missing binaries, and hung commands must all resolve as failed results, never hang a caller).
-- **The audits' pure logic** ([`check-docs.test.ts`](./unit/check-docs.test.ts), [`check-html.test.ts`](./unit/check-html.test.ts)): each audit exports its rule and runs only under `import.meta.main`, so the rule is tested without a repo or a build.
-- **Task references** ([`mise.test.ts`](./unit/mise.test.ts)): how `checks:docs` decides that a `mise run` reference names a task.
-- **The preview wrap** ([`wrap-preview.test.ts`](./unit/wrap-preview.test.ts)): the deploy's own wrap on simulated builds, so a feature branch gets the review viewer and `main` ships untouched.
-- **The edge expectations** ([`edge-expectations.test.ts`](./unit/edge-expectations.test.ts)): the predicates the edge suite and `deploy:verify` share, and that `public/_headers` pins only write-once paths `immutable`.
-
-[`tests/unit/content-render.test.ts`](./unit/content-render.test.ts) compiles Markdown with Sätteri and the site's plugins from [`src/lib/markdown/`](../src/lib/markdown/), the same options Astro's processor gets. The guard cases compile as MDX, the format content ships in, and assert the refusal.
-
-Runs on Node's test runner via type stripping, with no extra dependency. Its reporter, [`quiet-reporter.ts`](./unit/helpers/quiet-reporter.ts), prints one line on a pass and hands a failing run to Node's own spec reporter, so every failure prints in full. The task runs every spec, or only the files or globs it is given, under the pinned Node:
-
-```sh
-mise run checks:unit
-mise run checks:unit tests/unit/contact-api.test.ts
-```
-
-Each case pairs a markdown input with the HTML it must produce, so a processor upgrade either keeps the block grammar or fails.
-
----
-
-## 4. `tests/playwright/`: browser specs
-
-The browser suite runs against the build (`dist/client/`) served by `astro preview`, never Astro's dev server. Config lives in [`tests/playwright.config.ts`](./playwright.config.ts); routing is by filename suffix, so every spec's project matrix is set by its name: `*.mobile.spec.ts` runs on the mobile device projects, everything else on the desktop projects. Specs named `*.single.spec.ts` are engine-independent (route responses, file resolution, link attributes) and run only on `chromium-desktop` instead of the full matrix (one run, not six). In CI a failed test runs once more, recording a trace, and a test that passes only on that retry still fails the run (`failOnFlakyTests`); the summary lists it as flaky.
-
-Every spec imports `test` and `expect` from [`helpers/test.ts`](./playwright/helpers/test.ts), and `tests/unit/browser-specs.test.ts` holds them to it. On WebKit that module drops `upgrade-insecure-requests` from the preview's document CSP, since WebKit upgrades the plain-http localhost preview and loads nothing; production and `tests/edge/` keep the directive. That route turns on WebKit's interception for every request, which fails Turnstile's `blob:` load, so the module also names that one console error for `smoke.spec.ts` to allow.
-
-The functional specs do not pin writeup slugs. [`helpers/writeups.ts`](./playwright/helpers/writeups.ts) resolves URLs from the synced content snapshot by capability (for example, the writeup with a table or the most images), so renaming a writeup in the vault cannot break the code gates. The visual suite is separate: it never renders real content. It builds the synthetic tree in [`fixtures/content/`](./fixtures/content/) and pins the fixture slugs, so a publish cannot move a baseline.
-
-### `smoke.spec.ts`
-- **Console health**: fails on browser console errors during navigation (with narrow allowances for preconnect noise).
-- **Interactivity**: hero renders, header shadow toggles on scroll, primary links resolve.
-
-Sitemap route health lives in `routes.single.spec.ts`.
-
-### `menu.mobile.spec.ts`
-- **Overlay logic**: the popover toggles open/closed, locks body overflow, and closes on `Escape`, on link navigation, or on a backdrop click.
-- **Tap highlights**: touch targets suppress the title-only tap highlight on WebKit/Blink.
-
-### `css-quality.spec.ts`
-- **Accessibility**: the skip link focuses and becomes visible; forced-colors (high-contrast) outlines render.
-- **Theme integrity**: brand token application, standard motion duration, and reduced-motion media queries that drop transitions to `0s`.
-- **Interaction stability**: button/card click targets don't layout-shift between hover, press, and release.
-- **Containment**: tables don't overflow a 320px viewport; images fill their boxes with `object-fit: cover`.
-
-```ts
-test('focus exposes the skip link', async ({ page }) => {
-  await page.goto('/');
-  const skipLink = page.locator('.skip-link');
-  await skipLink.focus();
-  await expect(skipLink).toBeFocused();
-  await expect(skipLink).toBeVisible();
-  await expect(skipLink).toHaveCSS('outline-style', 'solid');
-});
-```
-
-```ts
-test('buttons and cards keep a stable click target through press and release', async ({ page }) => {
-  await page.goto('/404.html');
-  const button = page.getByRole('link', { name: 'View Portfolio' });
-  const buttonBox = await button.boundingBox();
-  expect(buttonBox).not.toBeNull();
-
-  await page.mouse.move(buttonBox!.x + buttonBox!.width / 2, buttonBox!.y + buttonBox!.height / 2);
-  await expect(button).toHaveCSS('translate', '0px -1px'); // hover raises the button
-
-  const raisedButtonBox = await button.boundingBox();
-  await page.mouse.down();
-  expect(await button.boundingBox()).toEqual(raisedButtonBox); // press must not shift it
-  await page.mouse.up();
-});
-```
-
-### `contact.spec.ts`
-Drives the contact form with Cloudflare Turnstile in test-key mode (`PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA`, set in `tests/browser-test-env.ts`). The `beforeEach` aborts the Turnstile script (`challenges.cloudflare.com`) so its always-pass test key cannot auto-solve mid-test; each test then controls the token state deterministically instead of racing the widget. Three paths: HTML5 required-field validation, the error shown when no token is present, and a fully mocked successful submit. The success case intercepts `POST /api/contact`, asserts the payload, and overrides `FormData.prototype.get` so the form reads a stubbed Turnstile token even though no real challenge ran:
-
-```ts
-test('submits successfully with simulated turnstile and mocked api', async ({ page }) => {
-  await page.route('/api/contact', async (route) => {
-    const payload = route.request().postDataJSON();
-    expect(payload.name).toBe('Jane Doe');
-    expect(payload.turnstileToken).toBe('mocked-turnstile-token');
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
-  });
-
-  await page.locator('#contact-name').fill('Jane Doe');
-  await page.locator('#contact-email').fill('jane@example.com');
-  await page.locator('#contact-message').fill('Mocked message content');
-
-  // Stub the Turnstile token the form reads off the FormData on submit.
-  await page.evaluate(() => {
-    const originalGet = FormData.prototype.get;
-    FormData.prototype.get = function (name) {
-      if (name === 'cf-turnstile-response') return 'mocked-turnstile-token';
-      return originalGet.call(this, name);
-    };
-  });
-
-  await page.locator('.contact-submit').click();
-
-  const status = page.locator('.contact-status');
-  await expect(status).toHaveAttribute('data-kind', 'success');
-  await expect(status).toContainText('Thanks, your message has been sent');
-  await expect(page.locator('#contact-name')).toHaveValue('');
-});
-```
-
-### `a11y.single.spec.ts`
-Runs axe-core's full WCAG A/AA ruleset (`wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`) against the key page archetypes: home, the portfolio listing, a writeup (resolved via `helpers/writeups.ts`), the contact form, the resume, and an open lightbox. Each runs once per color scheme (Playwright's `colorScheme` option), so the `light-dark()` tokens resolve both ways. Label association, landmark structure, and computed color contrast in both themes resolve here; the static audits cover the cheaper structural rules on every page. Failures print the rule id, impact, and an offending node.
-
-### `routes.single.spec.ts`
-Route-level responses, engine-independent so chromium only: every URL in the sitemap index returns 200 (request-only, no page render); `robots.txt` (200, plain text, contains the `Sitemap:` line), `feed.xml` (200, XML, valid RSS with at least one `<item>`), and an unknown route (returns a real `404` status and renders the not-found page).
-
-### `security.single.spec.ts`
-Asserts every `target="_blank"` link across the key pages carries `rel="noopener"`, so an opened tab cannot reach back through `window.opener`.
-
-### `portfolio-software.single.spec.ts`
-Covers the Software tab of `/portfolio`. Asserts the tab toggle behavior: defaults to Writeups, swaps panels on click while updating `aria-selected` and the `#software` hash, deep-links straight to Software via the hash, and keeps both panels in the DOM (so the content is present without JS and for crawlers). Then checks the derived content renders: a published package's registry badge, install line, and copy button; the "More projects" compact list; and that a software writeup cross-link resolves to a real writeup page. Engine-independent DOM, so it runs `chromium-desktop` only (`.single`).
-
-### Running the suite
-
-```sh
-mise run browser:e2e                 # functional specs across Chromium, Firefox, WebKit
-mise run browser:e2e --ui              # interactive Playwright runner
-mise run browser:visual          # visual regression (macOS Chromium)
-mise run browser:visual --update-snapshots   # re-baseline after an intentional design change
-```
-
-The HTML report after a full run:
-
-<img src="./playwright/examples/playwright-html-report.png" alt="Playwright HTML test report" width="640">
-
----
-
-## 5. Visual regression
-
-`visual.spec.ts` captures whole-page and element-level screenshots and diffs them against committed baselines. To avoid cross-platform font and rasterization noise, baselines are owned by Chromium on macOS. It runs under [`tests/playwright.visual.config.ts`](./playwright.visual.config.ts), which builds [`fixtures/content/`](./fixtures/content/) (four synthetic writeups with a fixed featured order, a shared tag, a table, a terminal block, and a figure; the pages the build renders; a fixed GitHub snapshot; committed fixture images) into `.cache/dist-visual/` with `SITE_CONTENT_ROOT` set. That build is hermetic (no GitHub or package-registry calls), so a baseline moves only when a layout or a fixture does; real content stays covered by the functional suite and the build audits. Retries are off, and readiness is deterministic (fonts and eager images settled, overlays polled to full opacity) not `networkidle` or sleeps. Failed runs write `expected`, `actual`, and `diff` images to `.cache/test-results/visual/`; CI uploads them with the HTML report.
-
-The committed PNGs under [`playwright/visual.spec.ts-snapshots/`](./playwright/visual.spec.ts-snapshots/) are review artifacts: check them in the diff before any visual change merges.
-
-### What each baseline protects
-
-| Baseline | Protects |
-| :--- | :--- |
-| Home (desktop / mobile) | Hero, header, primary CTAs, above-the-fold spacing; mobile narrow layout independently. |
-| Mobile nav open | Overlay, close control, link spacing, body lock, viewport coverage. |
-| Writeup (desktop) | Article typography, metadata, hero treatment, reading width, sticky action. |
-| Contact (desktop) | Form layout, field spacing, labels, copy, submit control. |
-| Table / terminal block | High-risk authored blocks isolated so a page change can't hide block regressions. |
-| Resume action | The fixed, centered resume action relative to page content. |
-| Portfolio Software (desktop / mobile) | Full-page Software tab: featured cards, install lines, the More-projects list, and mobile stacking. Live versions, downloads, and dates are masked so the baseline pins layout, not numbers. |
-
-### Committed baselines
-
-**Home, desktop and mobile**
-
-<img src="./playwright/visual.spec.ts-snapshots/home-desktop-chromium-desktop-darwin.png" alt="Home desktop baseline" width="560">
-
-<img src="./playwright/visual.spec.ts-snapshots/home-mobile-chromium-desktop-darwin.png" alt="Home mobile baseline" width="280">
-
-**Mobile navigation open**
-
-<img src="./playwright/visual.spec.ts-snapshots/mobile-nav-open-chromium-desktop-darwin.png" alt="Mobile nav open baseline" width="280">
-
-**Portfolio writeup** and **contact**
-
-<img src="./playwright/visual.spec.ts-snapshots/writeup-desktop-chromium-desktop-darwin.png" alt="Writeup desktop baseline" width="560">
-
-<img src="./playwright/visual.spec.ts-snapshots/contact-desktop-chromium-desktop-darwin.png" alt="Contact desktop baseline" width="560">
-
-**Structured content**
-
-<img src="./playwright/visual.spec.ts-snapshots/table-block-chromium-desktop-darwin.png" alt="Table block baseline" width="460">
-
-<img src="./playwright/visual.spec.ts-snapshots/terminal-block-chromium-desktop-darwin.png" alt="Terminal block baseline" width="460">
-
-**Resume action**
-
-<img src="./playwright/visual.spec.ts-snapshots/resume-sticky-action-chromium-desktop-darwin.png" alt="Resume sticky action baseline" width="560">
-
-**Portfolio Software tab, desktop and mobile**
-
-<img src="./playwright/visual.spec.ts-snapshots/portfolio-software-desktop-chromium-desktop-darwin.png" alt="Portfolio Software desktop baseline" width="560">
-
-<img src="./playwright/visual.spec.ts-snapshots/portfolio-software-mobile-chromium-desktop-darwin.png" alt="Portfolio Software mobile baseline" width="280">
-
-### Diff example: header height shift
-Triggered by changing the header height (e.g. `3.6rem` → `8rem`), pushing the whole layout down:
-
-| Expected | Actual | Diff |
-| :---: | :---: | :---: |
-| <img src="./playwright/examples/visual-diff/header-shift/expected.png" alt="Expected baseline" width="240"> | <img src="./playwright/examples/visual-diff/header-shift/actual.png" alt="Actual run" width="240"> | <img src="./playwright/examples/visual-diff/header-shift/diff.png" alt="Diff" width="240"> |
-
-### Diff example: terminal block color shift
-Triggered by changing the terminal block background (`#0b1220` → `#3b82f6`):
-
-| Expected | Actual | Diff |
-| :---: | :---: | :---: |
-| <img src="./playwright/examples/visual-diff/terminal-block/expected.png" alt="Expected baseline" width="240"> | <img src="./playwright/examples/visual-diff/terminal-block/actual.png" alt="Actual run" width="240"> | <img src="./playwright/examples/visual-diff/terminal-block/diff.png" alt="Diff" width="240"> |
-
-### Functional failure capture
-When a functional assertion fails, Playwright screenshots the page at the moment of failure. Below: the contact form's error state when submitted without solving Turnstile.
-
-<img src="./playwright/examples/functional-failures/contact-form-failure.png" alt="Contact form Turnstile validation failure" width="500">
-
----
-
-## 6. Edge runtime and post-deploy verification
+## Edge runtime and post-deploy verification
 
 ### The edge runtime suite (`tests/edge/`)
 
-The API routes and the served [`public/_headers`](../public/_headers) rules (carrying the CSP that
-`bin/build-csp.ts` writes at build time) exist only in the Workers runtime, so the browser suite
-cannot see them. The edge suite serves the built output through `astro preview`, which runs it
-in Cloudflare's `workerd` through the adapter (no account or token involved), and asserts the served
-responses. Config and port live in [`tests/playwright.edge.config.ts`](./playwright.edge.config.ts),
-and the compatibility date is the one in [`wrangler.jsonc`](../wrangler.jsonc). The specs use Playwright's request fixture
-only, so no browser is launched.
-
-[`runtime.spec.ts`](./edge/runtime.spec.ts) asserts, against `/` and one writeup
-page picked from the build rather than a pinned slug:
-
-- the CSP carries `default-src 'none'`, `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, and `report-to csp-endpoint` with the `report-uri` fallback; it has no nonce, `'unsafe-inline'`, `'unsafe-eval'`, `'strict-dynamic'`, or `blob:`, Trusted Types is enforced except on `/contact/` where it is report-only (that path's own rule detaches the global policy), and `Reporting-Endpoints` is present. The predicates live in [`src/lib/edge-expectations.ts`](../src/lib/edge-expectations.ts), shared with `deploy:verify`;
-- every inline script and style is covered by a hash in the policy, and the policy is identical on every request;
-- the static security headers on each page, and the Cache-Control on a fingerprinted `/_astro/` file and a chrome icon, are what `public/_headers` gives that path, with no CORS header; that only write-once paths are `immutable` is a unit test of the file itself ([`edge-expectations.test.ts`](./unit/edge-expectations.test.ts));
-- an unknown route, and a miss under `/assets/`, `/_astro/` or `/.well-known/`, returns a real 404 under the same policy, a page path without its slash redirects to the slashed page (`307`), and the sitedrift review proxy is absent from a production build;
-- `POST /api/contact` answers with the security headers and `Cache-Control: no-store`, and refuses a submission without a Turnstile token, a non-JSON body (`415`), malformed JSON, and fields outside the contract, all before Turnstile or D1 are touched;
-- `security.txt` is served byte-for-byte from the committed, signed file, and the WKD key is served as `application/octet-stream`.
-
-```sh
-mise run browser:edge    # build, serve through astro preview, run the suite
-mise run preview          # the same runtime, for checks by hand
-```
-
-CI runs this as the `edge` leg of the `playwright` matrix; locally it is part of
-`mise run browser`.
+The API routes and the served [`public/_headers`](../public/_headers) exist only
+in the Workers runtime, so the browser suite cannot see them. The edge suite
+uses Playwright's request fixture alone, on the port and runtime
+[`playwright.edge.config.ts`](./playwright.edge.config.ts) sets, and its
+expectations are the functions in
+[`src/lib/edge-expectations.ts`](../src/lib/edge-expectations.ts), which
+`deploy:verify` asserts against production.
 
 ### Post-deploy verification
 
-`bin/deploy-verify.ts` (`mise run deploy:verify`) runs after a deploy to production, from a residential IP, and confirms the live deploy matches the local gate. Against `jseverino.com` it runs by hand from a clean `main` checkout, since its first check is that checkout's state. The `deploy` workflow instead runs `deploy-verify --origin <url>` against each Worker version's own preview URL on workers.dev, which is outside the zone, before production takes that version: the response checks below minus the repo state, remote checks, code scanning, and HSTS (zone-level). `--preview` skips the sitedrift guard and the page-markup checks (inline hash coverage, cache rules) on branch previews, where sitedrift wraps every HTML route; `--slug <writeup>` checks one writeup after a publish (listed, served with headers, images resolve).
-
-1. **Repo state**: local branch is `main`, clean, fully pushed.
-2. **Remote checks**: polls the GitHub API until `build`, `e2e`, `visual`, `edge`, and `deploy` report success.
-3. **Live response audit** against `https://jseverino.com/` and one deep writeup page (picked from the live sitemap, not a pinned slug, so renaming a writeup can't break verification):
-   - HSTS present with `includeSubDomains`,
-   - CSP active with no `'unsafe-inline'` script source and the home page's inline script and stylesheet covered by its hashes (`inline`),
-   - `reporting-endpoints` and `report-to` routed to `/api/csp-report`, Trusted Types enforced with report-only on `/contact/`,
-   - sitedrift proxy paths return `404`.
-4. **Live sitemap traversal**: HEAD every route from `sitemap-index.xml`; zero dead links.
-5. **Dist branch**: every sitemap page matches the `dist` branch byte for byte, at a verified commit (retried for six minutes while the publish catches up; see [Dist Branch](../docs/Dist-Branch.md)).
-6. **CodeQL**: no open scanning alerts.
-
----
-
-## 7. Remote CI/CD workflows
-
-Each workflow, its trigger and what it verifies are in the
-[continuous integration table](../docs/Development.md#continuous-integration).
-
----
-
-## 8. Troubleshooting
-
-A failing audit prints its own fix; `mise run <gate>` reruns that one gate. Two failures need more than a line:
-
-### Visual mismatch
-If unintended, fix the layout/CSS. If it's an approved redesign:
-1. `mise run browser:visual --update-snapshots` on macOS,
-2. inspect the image diff under `tests/playwright/visual.spec.ts-snapshots/` to confirm only the expected pixels changed,
-3. commit the updated baselines with the styling change.
-
-### Unpinned GitHub Action
-`checks:workflows` (zizmor `unpinned-uses`) reports a tag (`@v4`) where a SHA belongs. Replace it with the commit SHA for that release, e.g. `uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2`.
+`mise run deploy:verify` runs from a clean `main` checkout after a merge
+deploys: remote CI status, live headers and HSTS, hash coverage of inline code,
+cache rules, every sitemap route, the contact gate, `security.txt` parity, the
+`dist` branch and open CodeQL alerts. The `deploy` workflow runs it with
+`--origin` against each Worker version's preview URL before production takes
+that version; [`bin/deploy-verify.ts`](../bin/deploy-verify.ts) lists its flags.

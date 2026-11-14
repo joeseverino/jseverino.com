@@ -7,20 +7,20 @@ import { errorMessage } from '../../src/lib/error-message.ts';
 import { readJson } from '../../src/lib/json.ts';
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, SITE_ORIGIN, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from '../content-diff.ts';
 import type { SyncReport } from '../content-sync/writer.ts';
 import { type CheckName, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, type RunOptions, type RunResult, run, SYNC_TIMEOUT_MS } from '../lib/run.ts';
 import { EXIT, type Output, requireReady, SiteError } from './cli.ts';
+import { type ContentDiff, commitMessage, contentDiff, describeDiff, isEmpty } from './content-diff.ts';
 import { changedPaths, ghInput, git, gitInput, refExists } from './git.ts';
 import type { PublishCommitted, PublishResult } from './types.ts';
 
-const pad = (n: number): string => String(n).padStart(2, '0');
-const branchName = (now: Date): string =>
-  `${CONTENT_BRANCH_PREFIX}${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+// content/YYYY-MM-DD-HHMM on this machine's clock, so the name reads as when it ran.
+const branchName = (now: Temporal.PlainDateTime): string =>
+  `${CONTENT_BRANCH_PREFIX}${now.toPlainDate()}-${now.toPlainTime().toString({ smallestUnit: 'minute' }).replace(':', '')}`;
 
 // A branch name free both locally and on origin.
-function freshBranch(root: string, now: Date): string {
+function freshBranch(root: string, now: Temporal.PlainDateTime): string {
   const base = branchName(now);
   const remote = new Set(
     git(root, 'ls-remote', '--heads', 'origin', `${base}*`)
@@ -135,20 +135,19 @@ interface PublishOptions {
   dryRun?: boolean;
   full?: boolean;
   out: Output;
-  now?: Date;
+  now?: Temporal.PlainDateTime;
   checks?: CheckName[];
   sync?: (context: StageContext) => Promise<SyncReport>;
   gate?: (context: GateContext) => Promise<void>;
 }
 
-// out: a createOutput(); sync/gate are injectable for tests.
 export async function publish({
   root = siteRoot,
   from,
   dryRun = false,
   full = false,
   out,
-  now = new Date(),
+  now = Temporal.Now.plainDateTimeISO(),
   checks = dryRun ? DEFAULT_CHECKS.filter((name) => name !== 'gh') : DEFAULT_CHECKS,
   sync = syncInWorktree,
   gate = gateInWorktree,

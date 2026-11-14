@@ -18,7 +18,7 @@ export type GithubRepo = {
   archived: boolean;
 };
 
-export async function getGithubRepos(): Promise<GithubRepo[]> {
-  if (!fixtureContent) return snapshot as GithubRepo[];
+export function getGithubRepos(): GithubRepo[] {
+  if (!fixtureContent) return snapshot;
   return readJson<GithubRepo[]>(path.resolve(contentRoot, 'github-repos.json'));
 }

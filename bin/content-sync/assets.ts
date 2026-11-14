@@ -9,14 +9,14 @@ import { defineMdastPlugin, type HastNode, htmlToHast, markdownToHtml } from 'sa
 import sharp from 'sharp';
 import { errorMessage } from '../../src/lib/error-message.ts';
 import { features } from '../../src/lib/markdown/index.ts';
-import { isExternal } from '../../src/lib/refs.ts';
+import { isRelativePath } from '../../src/lib/refs.ts';
 
 // The folder-relative path (`images/...`) a destination names, or undefined
 // when it is external, an anchor, or a site-absolute path.
 export function normalizeLocalAssetRef(destination: unknown): string | undefined {
   if (typeof destination !== 'string' || !destination.trim()) return undefined;
   const ref = destination.trim();
-  if (isExternal(ref)) return undefined;
+  if (!isRelativePath(ref)) return undefined;
   const [withoutHash = ''] = ref.split('#');
   const [withoutQuery = ''] = withoutHash.split('?');
   let decoded: string;
@@ -97,7 +97,7 @@ export async function referenceIssues(markdown: string, sourceDir: string, { cov
   const issues: string[] = [];
   const refs = collectReferences(markdown);
   const coverRef = normalizeLocalAssetRef(cover);
-  if (cover && !coverRef && !isExternal(String(cover))) issues.push(`cover_image is empty or unreadable: ${cover}`);
+  if (cover && !coverRef && isRelativePath(String(cover))) issues.push(`cover_image is empty or unreadable: ${cover}`);
   if (coverRef) refs.push({ ref: coverRef, raw: `cover_image ${String(cover)}` });
   for (const { ref, raw } of refs) {
     if (!isAssetRef(ref)) {

@@ -33,12 +33,14 @@ describe('run()', () => {
   });
 
   test('ends a command that ignores SIGTERM at the timeout', async () => {
+    const start = performance.now();
     const result = await run(process.execPath, ['-e', "process.on('SIGTERM', () => {}); setTimeout(() => {}, 20_000)"], { timeout: 500 });
+    const elapsed = performance.now() - start;
     assert.equal(result.timedOut, true);
-    assert.ok(result.duration < 3_000, `ran ${result.duration}ms`);
+    assert.ok(elapsed < 3_000, `ran ${elapsed}ms`);
   });
 
-  test('a command that exits on its own has not timed out', async () => {
+  test('a command killed by its own signal before the timeout has not timed out', async () => {
     const result = await run(process.execPath, ['-e', 'process.kill(process.pid, "SIGTERM")'], { timeout: 5_000 });
     assert.notEqual(result.code, 0);
     assert.equal(result.timedOut, false);

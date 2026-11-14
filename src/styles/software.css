@@ -84,7 +84,6 @@
     & a:hover,
     & a:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
   }
 
@@ -92,43 +91,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-5);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding-block: 3px;
-    padding-inline: 8px;
-    border-radius: var(--radius-pill);
-    font-family: var(--font-mono);
-    font-size: var(--font-3xs);
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-  }
-
-  .badge--pypi {
-    color: var(--color-primary-deep);
-    background: var(--color-table-head);
-    border: 1px solid color-mix(in oklch, var(--color-primary) 28%, transparent);
-  }
-
-  .badge--npm {
-    color: var(--color-error);
-    background: var(--color-error-bg);
-    border: 1px solid color-mix(in oklch, var(--color-error) 28%, transparent);
-  }
-
-  .badge--muted {
-    color: var(--color-muted);
-    background: var(--color-fill-faint);
-    border: 1px solid var(--color-border-faint);
-  }
-
-  .badge--self-hosted {
-    color: var(--color-muted);
-    background: var(--color-fill-faint);
-    border: 1px dashed var(--color-field-border);
   }
 
   .software-card-summary {
@@ -202,7 +164,6 @@
     & a:hover,
     & a:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
   }
 
@@ -236,17 +197,7 @@
     & a:hover,
     & a:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
-  }
-
-  .sli-flag {
-    color: var(--color-muted);
-    font-family: var(--font-sans);
-    font-size: var(--font-3xs);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
 
   .sli-desc {
@@ -283,7 +234,6 @@
     & a:hover,
     & a:focus-visible {
       color: var(--color-primary);
-      text-decoration: none;
     }
   }
 

@@ -5,16 +5,23 @@ import { TURNSTILE_SCRIPT_URL } from '@lib/api/turnstile.ts';
 
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 const fields = contactContract.request.properties;
-const linkedin = site.socialLinks.find((link) => link.label === 'LinkedIn');
+const linkedin = site.socialLinks.find((link) => link.icon === 'linkedin');
 if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socialLinks for its fallback link.');
+
+// The form posts JSON with a Turnstile token, so it cannot work without JavaScript: it ships
+// hidden, the script reveals it, and until then the LinkedIn line stands in. forms.css holds that
+// line back for three seconds when scripting is on, so a page whose module loads in time never
+// flashes it.
+// "company" is a honeypot. inert keeps it from people (no focus, nothing read aloud), a bot that
+// fills every input still fills it, and the API drops any submission that does.
 ---
 
 <div class="contact-intake">
   <p class="contact-fallback prose">If the form is unavailable, <a href={linkedin.href}>get in touch on LinkedIn</a>.</p>
-  <form class="contact-intake-form" action="/api/contact" method="post" data-timeout-ms={contactContract.runtime.submitTimeoutMs} hidden>
+  <form class="contact-intake-form" action="/api/contact" method="post" aria-labelledby="page-title" data-timeout-ms={contactContract.runtime.submitTimeoutMs} hidden>
     <div class="contact-field">
       <label for="contact-name">Name</label>
-      <input type="text" id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
+      <input id="contact-name" name="name" autocomplete="name" required maxlength={fields.name.maxLength} />
     </div>
     <div class="contact-field">
       <label for="contact-email">Email</label>
@@ -24,26 +31,33 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       <label for="contact-message">Message</label>
       <textarea id="contact-message" name="message" required maxlength={fields.message.maxLength} rows="7"></textarea>
     </div>
-    <div class="contact-field hidden-field" aria-hidden="true">
+    <div class="contact-field hidden-field" inert>
       <label for="contact-company">Company</label>
-      <input type="text" id="contact-company" name="company" tabindex="-1" autocomplete="off" />
+      <input id="contact-company" name="company" autocomplete="off" />
     </div>
-    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction} data-theme="auto"></div>
-    <p class="contact-privacy">
-      Messages are stored in a private database. See <a href="/privacy/" class="privacy-link">Privacy</a> for details and data requests.
+    <div class="cf-turnstile" data-sitekey={turnstileSiteKey} data-action={contactContract.runtime.turnstileAction}></div>
+    <p class="contact-privacy prose">
+      Messages are stored in a private database. See <a href="/privacy/">Privacy</a> for details and data requests.
     </p>
     <button type="submit" class="button contact-submit">Send Message</button>
-    <p class="contact-status" role="status"></p>
+    <output class="contact-status"></output>
   </form>
 </div>
 
 <script is:inline async src={TURNSTILE_SCRIPT_URL}></script>
 
 <script>
+  declare global {
+    interface Window {
+      // The Turnstile script's global, once it has loaded.
+      turnstile?: { reset(): void };
+    }
+  }
+
   const form = document.querySelector<HTMLFormElement>('.contact-intake-form');
 
   if (form) {
-    const status = form.querySelector<HTMLParagraphElement>('.contact-status');
+    const status = form.querySelector<HTMLOutputElement>('.contact-status');
     const button = form.querySelector<HTMLButtonElement>('.contact-submit');
 
     const show = (message: string, kind: 'success' | 'error') => {
@@ -52,6 +66,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       status.dataset.kind = kind;
     };
 
+    // An error stands only until the visitor changes the form.
     form.addEventListener('input', () => {
       if (status?.dataset.kind === 'error') {
         status.textContent = '';
@@ -64,6 +79,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
       if (!button || button.disabled) return;
 
       const data = new FormData(form);
+      // Turnstile writes its token into the form; without one the API refuses the submission.
       const token = String(data.get('cf-turnstile-response') ?? '');
       if (!token) {
         show('Please complete the verification challenge, then try again.', 'error');
@@ -79,6 +95,7 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           signal: AbortSignal.timeout(Number(form.dataset.timeoutMs)),
+          // The contract names the token turnstileToken, so the widget's own field stays out.
           body: JSON.stringify({
             ...Object.fromEntries(
               [...data.entries()].filter(([name]) => name !== 'cf-turnstile-response'),
@@ -106,10 +123,11 @@ if (!linkedin) throw new Error('ContactForm needs a LinkedIn entry in site.socia
         button.disabled = false;
         form.removeAttribute('aria-busy');
         button.textContent = 'Send Message';
-        const turnstile = (window as unknown as { turnstile?: { reset: () => void } }).turnstile;
-        turnstile?.reset();
+        // A token verifies once, so a retry needs a fresh one.
+        window.turnstile?.reset();
       }
     });
+    // Only a module that ran gets here, so the form can now stand in for the fallback.
     form.hidden = false;
     const fallback = document.querySelector<HTMLElement>('.contact-fallback');
     if (fallback) fallback.hidden = true;

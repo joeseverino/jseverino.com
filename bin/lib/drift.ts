@@ -160,7 +160,7 @@ function parseArgv(argv: string[], usage: string, write: (line: string) => void)
   return { invocation: { command, json: Boolean(values.json), yes: Boolean(values.yes) } };
 }
 
-function check({ target, source }: Run, items: Item[], json: boolean, commandLine: string, write: (line: string) => void): number {
+function reportDrift({ target, source }: Run, items: Item[], json: boolean, commandLine: string, write: (line: string) => void): number {
   const drift = drifted(items);
   if (json) write(JSON.stringify({ target, drift: drift.length, items: items.map(({ steps, ...rest }) => rest) }, null, 2));
   else {
@@ -200,7 +200,7 @@ async function runTool({ usage, commandLine, argv = process.argv.slice(2), write
   const { invocation } = parsed;
   const run = setup();
   const items = await run.survey();
-  return invocation.command === 'check' ? check(run, items, invocation.json, commandLine, write) : planOrApply(run, items, invocation, write);
+  return invocation.command === 'check' ? reportDrift(run, items, invocation.json, commandLine, write) : planOrApply(run, items, invocation, write);
 }
 
 // A tool's main(): the command flow over the Run its setup builds from the

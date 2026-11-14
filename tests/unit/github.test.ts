@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { main } from '../../bin/github.ts';
+import { loadDesired } from '../../bin/lib/drift.ts';
 import { API_BASE, createClient } from '../../bin/lib/github.ts';
-import { type DesiredState, loadDesired } from '../../bin/lib/github-settings.ts';
+import type { DesiredState } from '../../bin/lib/github-settings.ts';
 import type { JsonSchema } from '../../bin/lib/json-schema.ts';
+import { DIST_BRANCH, SITE_REPOSITORY } from '../../src/lib/site-config.ts';
 import { fromRoot } from '../../src/lib/site-root.ts';
 import { read, runner, schemaTests } from './helpers/desired-state.ts';
 import { createGithubFake, type FakeState } from './helpers/github-fake.ts';
@@ -12,8 +14,13 @@ const TOKEN = 'fixture-token-never-printed';
 const seed = read<FakeState>('tests/fixtures/github/live-drifted.json');
 const schema = read<JsonSchema>('.github/repo.schema.json');
 const desired = read<DesiredState>('.github/repo.json');
+const ruleset = (name: string) => {
+  const found = desired.rulesets.find((entry) => entry.name === name);
+  assert.ok(found, `repo.json declares the ${name} ruleset`);
+  return found;
+};
+const mainRuleset = ruleset('main');
 
-// A field added to the type and not the schema (or the reverse) fails here.
 const DESIRED_FIELDS = {
   $schema: true,
   repository: true,
@@ -22,7 +29,7 @@ const DESIRED_FIELDS = {
   security: true,
   actions: true,
   variables: true,
-  ruleset: true,
+  rulesets: true,
 } satisfies Record<keyof DesiredState, true>;
 
 const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof createGithubFake>) => ({ env: { GITHUB_TOKEN: TOKEN }, fetch: fake.fetch }));
@@ -30,26 +37,38 @@ const { run, checkJson, ...shared } = runner(main, (fake: ReturnType<typeof crea
 const status = (report: { items: { name: string; status: string }[] }, name: string) => report.items.find((entry) => entry.name === name)?.status;
 
 describe('.github/repo.json', () => {
-  schemaTests({ desired, schema, fields: DESIRED_FIELDS, load: () => loadDesired(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')) });
-
-  test('squash is the only merge method, in the settings and in the ruleset', () => {
-    const { settings, ruleset } = desired;
-    assert.deepEqual([settings.allow_squash_merge, settings.allow_merge_commit, settings.allow_rebase_merge], [true, false, false]);
-    const pullRequest = ruleset.rules.find((rule) => rule.type === 'pull_request');
-    assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, ['squash']);
+  schemaTests({
+    desired,
+    schema,
+    fields: DESIRED_FIELDS,
+    load: () => loadDesired<DesiredState>(fromRoot('.github/repo.json'), fromRoot('.github/repo.schema.json')),
   });
 
-  test('the ruleset keeps signed commits required and the branch undeletable', () => {
-    const types = desired.ruleset.rules.map((rule) => rule.type);
-    for (const type of ['required_signatures', 'non_fast_forward', 'deletion']) assert.ok(types.includes(type), type);
+  // A ruleset that allows a method the settings turn off, or the reverse, leaves the merge
+  // button and the rule disagreeing about how main can move.
+  test('the merge methods the settings allow are the ones the main ruleset allows', () => {
+    const { settings } = desired;
+    const allowed = Object.entries({ merge: settings.allow_merge_commit, squash: settings.allow_squash_merge, rebase: settings.allow_rebase_merge })
+      .filter(([, on]) => on)
+      .map(([method]) => method);
+    const pullRequest = mainRuleset.rules.find((rule) => rule.type === 'pull_request');
+    assert.deepEqual(pullRequest?.parameters?.allowed_merge_methods, allowed);
   });
 
-  test('CodeQL gates merges through default setup and the code_scanning rule, never a workflow check', () => {
-    assert.equal(desired.security.code_scanning.state, 'configured');
-    const scanning = desired.ruleset.rules.find((rule) => rule.type === 'code_scanning')?.parameters?.code_scanning_tools as { tool: string }[] | undefined;
-    assert.ok(scanning?.some((entry) => entry.tool === 'CodeQL'));
-    const gate = desired.ruleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
-    assert.ok(!gate.some((check) => /^analyze\b/i.test(check.context)), 'no required check is a CodeQL workflow job');
+  test('the dist ruleset guards the branch the deploy publishes to', () => {
+    assert.deepEqual(ruleset(DIST_BRANCH).conditions, { ref_name: { include: [`refs/heads/${DIST_BRANCH}`], exclude: [] } });
+  });
+
+  test('names the repository the site config declares', () => {
+    assert.equal(desired.repository, SITE_REPOSITORY);
+  });
+
+  // Default setup has no workflow job, so a required check named for one never reports
+  // and blocks every merge.
+  test('with CodeQL on default setup, no required check is a CodeQL workflow job', () => {
+    const gate = mainRuleset.rules.find((rule) => rule.type === 'required_status_checks')?.parameters?.required_status_checks as { context: string }[];
+    const workflowJobs = gate.filter((check) => /^analyze\b/i.test(check.context));
+    assert.deepEqual(desired.security.code_scanning.state === 'configured' ? workflowJobs : [], []);
   });
 });
 
@@ -66,11 +85,13 @@ describe('check', () => {
     assert.equal(status(report, 'secret_scanning_push_protection'), 'drift');
     assert.equal(status(report, 'private_vulnerability_reporting'), 'drift');
     assert.equal(status(report, 'vulnerability_alerts'), 'ok');
+    assert.equal(status(report, 'immutable_releases'), 'drift');
     assert.equal(status(report, 'code_scanning'), 'drift');
     assert.equal(status(report, 'permissions'), 'drift');
     assert.equal(status(report, 'workflow token'), 'ok');
     assert.equal(status(report, 'PUBLIC_TURNSTILE_SITE_KEY'), 'drift');
     assert.equal(status(report, 'ruleset main'), 'ok', 'the fixture lists the same rules and checks in another order');
+    assert.equal(status(report, 'ruleset dist'), 'drift', 'the fixture has no dist ruleset');
     assert.equal(fake.writes().length, 0, 'check is read-only');
   });
 
@@ -84,6 +105,15 @@ describe('check', () => {
     assert.equal(status(report, 'ruleset main'), 'drift');
   });
 
+  // GitHub documents a 404 for immutable releases that are off, where the live API answers 200.
+  test('immutable releases answering 404 read as off', async () => {
+    const fake = createGithubFake(seed, TOKEN);
+    const fetch = (input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith('/immutable-releases') ? Promise.resolve(new Response('{"message":"Not Found"}', { status: 404 })) : fake.fetch(input, init);
+    const { report } = await checkJson({ ...fake, fetch });
+    assert.equal(status(report, 'immutable_releases'), 'drift');
+  });
+
   test('sends the token only as a bearer header and never prints it', async () => {
     await shared.bearerOnly(createGithubFake(seed, TOKEN), TOKEN);
   });
@@ -94,14 +124,16 @@ describe('check', () => {
 describe('plan', () => {
   test('lists the fixing calls and touches nothing', async () => {
     const lines = await shared.planLines(createGithubFake(seed, TOKEN));
-    const repo = '/repos/joeseverino/jseverino.com';
+    const repo = `/repos/${desired.repository}`;
     assert.deepEqual(lines.toSorted(), [
       `PATCH ${repo}`,
       `PATCH ${repo}`,
       `PATCH ${repo}`,
       `PATCH ${repo}/code-scanning/default-setup`,
       `POST ${repo}/actions/variables`,
+      `POST ${repo}/rulesets`,
       `PUT ${repo}/actions/permissions`,
+      `PUT ${repo}/immutable-releases`,
       `PUT ${repo}/private-vulnerability-reporting`,
       `PUT ${repo}/topics`,
     ]);
@@ -111,11 +143,14 @@ describe('plan', () => {
 });
 
 describe('apply --yes', () => {
-  test('a missing ruleset is created whole', async () => {
+  test('each missing ruleset is created whole', async () => {
     const fake = createGithubFake({ ...seed, rulesets: [] }, TOKEN);
     await run(fake, 'apply', '--yes');
-    assert.equal(fake.writes().filter((call) => call.method === 'POST' && call.path.endsWith('/rulesets')).length, 1);
-    assert.equal(fake.state.rulesets[0]?.name, desired.ruleset.name);
+    assert.equal(fake.writes().filter((call) => call.method === 'POST' && call.path.endsWith('/rulesets')).length, desired.rulesets.length);
+    assert.deepEqual(
+      fake.state.rulesets.map((entry) => entry.name),
+      desired.rulesets.map((entry) => entry.name),
+    );
   });
 
   test('converges and re-applies as a no-op', async () => {
@@ -123,10 +158,12 @@ describe('apply --yes', () => {
     const first = await run(fake, 'apply', '--yes');
     assert.equal(first.code, 0, first.output);
     assert.equal(fake.state.repo.allow_merge_commit, false);
-    assert.match(String(fake.state.repo.description), /Hash-based CSP/);
+    assert.equal(fake.state.repo.description, desired.settings.description);
     assert.deepEqual(fake.state.repo.topics, [...desired.topics]);
     assert.deepEqual((fake.state.repo.security_and_analysis as Record<string, unknown>).secret_scanning_push_protection, { status: 'enabled' });
     assert.equal(fake.state.privateReporting, true);
+    assert.equal(fake.state.immutableReleases, true);
+    assert.ok(fake.state.rulesets.some((entry) => entry.name === DIST_BRANCH));
     assert.equal(fake.state.permissions.sha_pinning_required, true);
     assert.equal(fake.state.codeScanning.state, 'configured');
     assert.deepEqual(fake.state.codeScanning.languages, ['actions', 'javascript-typescript']);
@@ -160,7 +197,7 @@ describe('apply --yes', () => {
   test('a rejected token fails loudly without printing it', async () => {
     const fake = createGithubFake(seed, 'a-different-token');
     await assert.rejects(run(fake, 'apply', '--yes'), (error: Error) => {
-      assert.match(error.message, /GET \/repos\/joeseverino\/jseverino\.com\/rulesets → 401/);
+      assert.ok(error.message.includes(`GET /repos/${SITE_REPOSITORY}/rulesets → 401`), error.message);
       assert.ok(!error.message.includes(TOKEN));
       return true;
     });

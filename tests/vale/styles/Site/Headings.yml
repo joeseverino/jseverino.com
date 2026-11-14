@@ -1,0 +1,45 @@
+# Every heading is in sentence case, as the reference pages are: a Title Case
+# heading reads as a slide. Proper nouns and product names are the exceptions;
+# a code span is left alone.
+extends: capitalization
+message: "'%s' should be in sentence case"
+level: error
+scope: heading
+match: $sentence
+threshold: 1
+prefix: '^\d+\.\s'
+exceptions:
+  - Actions
+  - API
+  - API Shield
+  - Astro
+  - Biome
+  - CI
+  - Cloudflare
+  - CSP
+  - CSS
+  - D1
+  - DNS
+  - GitHub
+  - GitHub Action
+  - HTML
+  - HTTP
+  - JavaScript
+  - jseverino.com
+  - Lighthouse
+  - Markdown
+  - MDX
+  - Obsidian
+  - OpenSSF
+  - Playwright
+  - Renovate
+  - SEO
+  - security.txt
+  - Sätteri
+  - Trusted Types
+  - Turnstile
+  - TypeScript
+  - Vale
+  - WAF
+  - WordPress
+  - Worker

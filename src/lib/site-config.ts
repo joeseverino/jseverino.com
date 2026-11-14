@@ -1,5 +1,4 @@
 // Instance identity, dependency-free so the site and bin/ scripts can both import it.
-// A new site from this blueprint changes these plus the residue in docs/Blueprint-Setup.md.
 export interface SiteIdentity {
   domain: string;
   owner: string;
@@ -30,7 +29,7 @@ export const DIST_BRANCH = 'dist';
 // Every preview URL of the Worker is <label><suffix> on the account's workers.dev subdomain: the
 // label is a branch's alias or a version's ID prefix. The Access token goes only to these hosts.
 export const PREVIEW_HOST_SUFFIX = `-${SITE.worker}.severino.workers.dev`;
-// The check-run the deploy workflow writes on each commit it deploys: a pull request's preview, or main's
+// The check-run the preview and deploy workflows write on each commit they deploy: a pull request's preview, or main's
 // production deploy. main's ruleset requires it, and `site land` and deploy-verify wait on it.
 export const DEPLOY_CHECK = 'deploy';
 

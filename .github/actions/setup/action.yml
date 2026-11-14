@@ -6,9 +6,8 @@ description: The mise toolchain and environment from mise.toml, then the npm pac
 inputs:
   install:
     description: >-
-      How to install the npm packages: 'true' through mise's [deps.npm] provider; 'no-scripts' with
-      `npm ci --ignore-scripts`, for a job that holds a secret, so no package install script runs beside
-      it; 'false' not at all. A job that does not install runs its task with `mise run --no-deps`.
+      Install the npm packages through mise's [deps.npm] provider: 'true', or 'false' not at all. A
+      job that does not install runs its task with `mise run --no-deps`.
     default: 'true'
   astro-cache:
     description: Restore and save Astro's image cache, for jobs that build the site.
@@ -17,19 +16,6 @@ inputs:
 runs:
   using: composite
   steps:
-    # Tool downloads, which mise verifies against mise.lock's checksums before
-    # use, so a cache written by another workflow cannot change what is
-    # installed. That holds in release jobs too, so the action's own cache of
-    # installed tools, which nothing verifies, stays off everywhere. A job that
-    # needs only some tools sets MISE_ENABLE_TOOLS at the job level, so the
-    # install and every later `mise run` see the same list; the key names it,
-    # so a job with fewer tools never saves a partial cache under the full key.
-    - name: Restore the tool download cache
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      with:
-        path: ${{ runner.os == 'macOS' && '~/Library/Caches/mise/downloads-cas' || '~/.cache/mise/downloads-cas' }}
-        key: mise-downloads-${{ runner.os }}-${{ runner.arch }}-${{ env.MISE_ENABLE_TOOLS || 'all' }}-${{ hashFiles('mise.lock') }}
-
     # The mise release mise.toml's min_version names, so CI runs the mise every
     # machine is held to; Renovate moves min_version after its release-age hold.
     - name: Read the mise version
@@ -38,31 +24,20 @@ runs:
       run: python3 -c "import tomllib; print('version=' + tomllib.load(open('mise.toml', 'rb'))['min_version'])" >> "$GITHUB_OUTPUT"
 
     # Installs the tools mise.toml does not mark lazy, from mise.lock (mise.toml
-    # sets `locked`), and exports mise.toml's [env] to every later step.
-    - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+    # sets `locked`), and exports mise.toml's [env] to every later step. A job
+    # that needs only some tools sets MISE_ENABLE_TOOLS at the job level, so the
+    # install and every later `mise run` see the same list. The action's cache
+    # of installed tools stays off: nothing verifies a restored install.
+    - name: Install mise and the tools
+      uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
       with:
         version: ${{ steps.mise.outputs.version }}
         cache: false
 
-    - name: Restore the npm download cache
-      if: inputs.install != 'false'
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-      with:
-        path: ~/.npm
-        key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-        restore-keys: npm-${{ runner.os }}-
-
-    # npm checks every package against the lockfile's integrity hash, so the
-    # restored download cache cannot change what is installed.
     - name: Install dependencies
       if: inputs.install == 'true'
       shell: bash
       run: mise deps install npm
-
-    - name: Install dependencies without their install scripts
-      if: inputs.install == 'no-scripts'
-      shell: bash
-      run: npm ci --ignore-scripts
 
     # Astro writes every encoded image variant to the cacheDir mise's [env] names, keyed
     # by source and options, so a partial restore is still correct.

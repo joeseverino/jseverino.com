@@ -14,7 +14,7 @@ const { title, date, technologies } = Astro.props;
 
 <main id="main" class="article">
   <header class="article-header">
-    <div class="article-meta">
+    <div>
       <h1 class="article-title">{title}</h1>
       {date && <p class="article-date"><time datetime={date}>{formatDate(date)}</time></p>}
     </div>
@@ -27,9 +27,9 @@ const { title, date, technologies } = Astro.props;
     technologies.length > 0 && (
       <footer class="article-tags">
         <h2>Technologies Used</h2>
-        <div class="tech-pills">
+        <div class="tag-list">
           {technologies.map((tag) => (
-            <a href={tagPath(tag)} rel="tag">{titleCase(tag)}</a>
+            <a class="pill" href={tagPath(tag)} rel="tag">{titleCase(tag)}</a>
           ))}
         </div>
       </footer>

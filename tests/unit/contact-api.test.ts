@@ -8,7 +8,7 @@ import { CONTACT_PROPERTIES, CONTACT_RUNTIME } from '../../src/lib/api/contact-c
 import { siteverifyAccepts, TURNSTILE_TEST_SECRETS } from '../../src/lib/api/turnstile.ts';
 import { createD1Sqlite } from './helpers/d1-sqlite.ts';
 import { createD1Stub } from './helpers/d1-stub.ts';
-import { postRequest } from './helpers/requests.ts';
+import { assertMediaTypes, postRequest } from './helpers/requests.ts';
 
 const realFetch = globalThis.fetch;
 let turnstile: 'pass' | 'fail' | 'error';
@@ -47,16 +47,9 @@ function call(request: Request, db: { prepare: unknown } = createD1Stub()) {
 }
 
 describe('request validation', () => {
-  test('rejects non-JSON content types with 415', async () => {
-    const response = await call(contactRequest('x=1', { 'Content-Type': 'application/x-www-form-urlencoded' }));
-    assert.equal(response.status, 415);
-  });
-
-  test('matches the media type exactly while accepting parameters and case differences', async () => {
-    for (const contentType of ['application/jsonp', 'text/plain; note=application/json']) {
-      assert.equal((await call(contactRequest(validPayload, { 'Content-Type': contentType }))).status, 415);
-    }
-    assert.equal((await call(contactRequest(validPayload, { 'Content-Type': 'Application/JSON; charset=utf-8' }))).status, 200);
+  test('accepts only JSON, matched exactly, with parameters and in any case', async () => {
+    const status = async (contentType: string) => (await call(contactRequest(validPayload, { 'Content-Type': contentType }))).status;
+    await assertMediaTypes(['application/json'], status, 200);
   });
 
   test('rejects an oversized body with 413', async () => {
@@ -131,11 +124,10 @@ describe('request validation', () => {
 
   test('stores the source only when it names this site, as a path without query or fragment', async () => {
     const stored = async (sourceUrl: string | undefined, referer?: string) => {
-      const db = createD1Stub();
-      const payload = sourceUrl === undefined ? { ...validPayload, sourceUrl: undefined } : { ...validPayload, sourceUrl };
-      const response = await call(contactRequest(payload, referer ? { Referer: referer } : {}), db);
+      const db = createD1Sqlite();
+      const response = await call(contactRequest({ ...validPayload, sourceUrl }, referer ? { Referer: referer } : {}), db);
       assert.equal(response.status, 200);
-      return db.queries.at(-1)?.values[8];
+      return db.rows('contact_submissions')[0]?.source_url;
     };
     assert.equal(await stored('https://jseverino.com/contact/?utm=x#top'), 'https://jseverino.com/contact/');
     assert.equal(await stored('https://evil.example/phish'), null);
@@ -296,30 +288,37 @@ describe('rate limiting', () => {
 
 describe('persistence', () => {
   test('stores the normalized submission with parsed browser and device', async () => {
-    const db = createD1Stub();
-    const response = await call(
-      contactRequest(validPayload, {
-        'CF-Connecting-IP': '203.0.113.7',
-        'CF-IPCountry': 'US',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/126.0 Safari/537.36',
-      }),
-      db,
-    );
+    const db = createD1Sqlite();
+    const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/126.0 Safari/537.36';
+    const response = await call(contactRequest(validPayload, { 'CF-Connecting-IP': '203.0.113.7', 'CF-IPCountry': 'US', 'User-Agent': userAgent }), db);
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), { ok: true });
-
-    const insert = db.queries.at(-1);
-    assert.ok(insert);
-    assert.match(insert.query, /INSERT INTO contact_submissions/);
-    const [name, email, message, ip, , browser, device, country, sourceUrl] = insert.values;
-    assert.equal(name, 'Jane Doe');
-    assert.equal(email, 'jane@example.com');
-    assert.equal(message, 'Hello from the unit suite.');
-    assert.equal(ip, '203.0.113.7');
-    assert.equal(browser, 'Chrome');
-    assert.equal(device, 'Mac');
-    assert.equal(country, 'US');
-    assert.equal(sourceUrl, 'https://jseverino.com/contact/');
+    const [row] = db.rows('contact_submissions');
+    assert.ok(row);
+    assert.deepEqual(
+      {
+        name: row.name,
+        email: row.email,
+        message: row.message,
+        ip: row.ip_address,
+        userAgent: row.user_agent,
+        browser: row.browser,
+        device: row.device,
+        country: row.country,
+        source: row.source_url,
+      },
+      {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        message: 'Hello from the unit suite.',
+        ip: '203.0.113.7',
+        userAgent,
+        browser: 'Chrome',
+        device: 'Mac',
+        country: 'US',
+        source: 'https://jseverino.com/contact/',
+      },
+    );
   });
 
   test('names mobile Edge, Chrome and Firefox by their iOS and Android tokens', async () => {
@@ -330,9 +329,9 @@ describe('persistence', () => {
       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) FxiOS/127.0 Mobile/15E148 Safari/605.1.15': 'Firefox',
     };
     for (const [userAgent, expected] of Object.entries(cases)) {
-      const db = createD1Stub();
+      const db = createD1Sqlite();
       assert.equal((await call(contactRequest(validPayload, { 'User-Agent': userAgent }), db)).status, 200);
-      assert.equal(db.queries.at(-1)?.values[5], expected, userAgent);
+      assert.equal(db.rows('contact_submissions')[0]?.browser, expected, userAgent);
     }
   });
 

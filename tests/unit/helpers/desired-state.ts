@@ -82,7 +82,9 @@ export function runner<F extends Fake, Extra extends ToolOptions>(main: (options
   return { run, checkJson, bearerOnly, missingTokenStops, planLines, applyWithoutYesIsAPlan, reapplyIsNoOp };
 }
 
-// A field added to the type and not the schema (or the reverse) fails here.
+// `fields` lists every key of the DesiredState type (the caller writes it with
+// `satisfies Record<keyof DesiredState, true>`), so a field added to the type and
+// not the schema, or the reverse, fails here.
 export function schemaTests({
   desired,
   schema,

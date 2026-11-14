@@ -1,15 +1,10 @@
-#!/usr/bin/env node
-
 // Project contracts/contact.v1.json into the OpenAPI document API Shield validates requests against.
-//
-//   node bin/sync-contact-openapi.ts           # write the projection
-//   node bin/sync-contact-openapi.ts --check   # fail if it is stale
 
 import { jsonText, readJson } from '../src/lib/json.ts';
 import { SITE, SITE_ORIGIN } from '../src/lib/site-config.ts';
 import { fromRoot } from '../src/lib/site-root.ts';
 import { checkMode } from './lib/args.ts';
-import { writeOrCheck } from './lib/projection.ts';
+import { writeOrCheck } from './lib/generated-files.ts';
 
 const check = checkMode('usage: node bin/sync-contact-openapi.ts [--check]');
 const contract = readJson<{ request: unknown }>(fromRoot('contracts/contact.v1.json'));

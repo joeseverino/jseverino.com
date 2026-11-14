@@ -122,19 +122,16 @@
           "company": {
             "type": "string",
             "maxLength": 190,
-            "description": "Honeypot; human submissions leave this empty.",
-            "x-purpose": "honeypot"
+            "description": "Honeypot; human submissions leave this empty."
           },
           "sourceUrl": {
             "type": "string",
             "format": "uri",
-            "maxLength": 2048,
-            "x-purpose": "request-context"
+            "maxLength": 2048
           },
           "turnstileToken": {
             "type": "string",
-            "minLength": 1,
-            "x-purpose": "verification"
+            "minLength": 1
           }
         }
       },

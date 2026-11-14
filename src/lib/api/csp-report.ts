@@ -31,6 +31,7 @@ type NormalizedReport = {
   rawReport: string;
 };
 
+const ALLOWED_MEDIA_TYPES = new Set(['application/csp-report', 'application/reports+json', 'application/json']);
 const MAX_BODY_BYTES = 16_384;
 const MAX_REPORTS_PER_REQUEST = 10;
 const MAX_FIELD_LENGTH = 2_048;
@@ -40,14 +41,13 @@ const RETENTION_DAYS = 60;
 // Reports whose blocked URI or source file is a browser extension's own.
 const EXTENSION_SCHEMES = ['chrome-extension:', 'moz-extension:', 'safari-extension:', 'safari-web-extension:', 'edge-extension:'];
 
-function noContent(status = 204): Response {
+// A browser reads nothing from the reply, so every outcome is a status with no body.
+function emptyResponse(status = 204): Response {
   return new Response(null, {
     status,
     headers: { 'Cache-Control': 'no-store' },
   });
 }
-
-const ALLOWED_MEDIA_TYPES = new Set(['application/csp-report', 'application/reports+json', 'application/json']);
 
 const field = (value: unknown) => asString(value, MAX_FIELD_LENGTH);
 const directive = (value: unknown) => asString(value, MAX_DIRECTIVE_LENGTH);
@@ -127,15 +127,15 @@ function normalizeReports(payload: unknown): NormalizedReport[] {
 
 export async function storeCspReports(request: Request, db: D1Database): Promise<Response> {
   if (!ALLOWED_MEDIA_TYPES.has(requestMediaType(request))) {
-    return noContent(415);
+    return emptyResponse(415);
   }
 
   const payload = await readRequestJson(request, MAX_BODY_BYTES);
-  if (!payload.ok) return noContent(payload.status);
+  if (!payload.ok) return emptyResponse(payload.status);
   const parsed = normalizeReports(payload.value);
-  if (parsed.length === 0) return noContent(400);
+  if (parsed.length === 0) return emptyResponse(400);
   const reports = parsed.filter((report) => !isIgnoredReport(report));
-  if (reports.length === 0) return noContent();
+  if (reports.length === 0) return emptyResponse();
 
   const { ip, userAgent, country } = requestMeta(request, CONTACT_RUNTIME.maxUserAgentLength);
   const insert = db.prepare(
@@ -183,8 +183,8 @@ export async function storeCspReports(request: Request, db: D1Database): Promise
     ]);
   } catch (error) {
     console.error('D1 CSP report insert failed', error);
-    return noContent(500);
+    return emptyResponse(500);
   }
 
-  return noContent();
+  return emptyResponse();
 }

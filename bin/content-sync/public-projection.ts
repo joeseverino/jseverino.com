@@ -1,3 +1,5 @@
+// Vault frontmatter as the committed snapshot carries it: only the contract's public fields, the
+// cover as a document-relative path, and a last_reviewed date that moves only when the body does.
 import { projectFrontmatter } from '../../src/lib/content-contract.ts';
 import type { FrontmatterData, ParsedFrontmatter } from '../../src/lib/frontmatter.ts';
 import { normalizeLocalAssetRef } from './assets.ts';

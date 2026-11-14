@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { errorMessage } from '../../src/lib/error-message.ts';
-import { createClient } from './cloudflare.ts';
-import { DetailedError } from './detailed-error.ts';
-import { wranglerConfig } from './wrangler-config.ts';
+import { createClient } from '../lib/cloudflare.ts';
+import { DetailedError } from '../lib/detailed-error.ts';
+import { wranglerConfig } from '../lib/wrangler-config.ts';
 
 export interface SiteOpsConfig {
   d1Database: string;
@@ -100,7 +100,7 @@ export const abbreviateName = (name: string): string => {
   return `${parts[0]} ${(parts.at(-1) ?? '').slice(0, 1)}.`;
 };
 
-export const preview = (text: string, limit = 80): string => {
+export const messagePreview = (text: string, limit = 80): string => {
   const collapsed = text.split(/\s+/).filter(Boolean).join(' ');
   return collapsed.length <= limit ? collapsed : `${collapsed.slice(0, limit).trimEnd()}…`;
 };
@@ -112,7 +112,7 @@ const redactContact = (row: Row): Row => {
     created_at: row.created_at,
     name: abbreviateName(String(row.name ?? '')),
     email: redactEmail(String(row.email ?? '')),
-    message_preview: preview(message),
+    message_preview: messagePreview(message),
     message_chars: message.length,
     status: row.status,
     browser: row.browser,

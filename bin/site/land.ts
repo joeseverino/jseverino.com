@@ -4,11 +4,11 @@
 
 import { CONTENT_BRANCH_PREFIX, DEFAULT_BRANCH, DEPLOY_CHECK, SITE_REPOSITORY, writeupUrl } from '../../src/lib/site-config.ts';
 import { siteRoot } from '../../src/lib/site-root.ts';
-import { type ContentDiff, contentDiff } from '../content-diff.ts';
 import { awaitChecks, passed, requiredContexts } from '../lib/github.ts';
 import { type CheckName, preflight } from '../lib/preflight.ts';
 import { BUILD_TIMEOUT_MS, GATE_TIMEOUT_MS, spawnResult } from '../lib/run.ts';
 import { EXIT, type Output, requireReady, runScript, SiteError } from './cli.ts';
+import { type ContentDiff, contentDiff } from './content-diff.ts';
 import { gh, ghJson, git } from './git.ts';
 import type { HqSync, LandResult, PullRequestRef, ScriptRun, Verified } from './types.ts';
 
@@ -61,7 +61,7 @@ async function waitForChecks(pr: PullRequest, deadline: number, intervalMs: numb
   if (required.length === 0) {
     throw new SiteError("main's ruleset requires no status checks, so land cannot tell when the PR is ready", {
       result: { pr: pr.url },
-      fix: 'add the required status checks to the main ruleset (docs/Release-Checklist.md)',
+      fix: 'declare the required status checks in .github/repo.json and apply them (docs/GitHub-Settings.md)',
     });
   }
   const head = pr.headRefOid;
@@ -191,7 +191,12 @@ export async function land({
   const pr = await merged(root, requestedPr, { deadline, intervalMs, out });
 
   const sha = pr.mergeCommit?.oid;
-  if (!sha) throw new SiteError(`#${pr.number} has no merge commit`, { result: { pr: pr.url } });
+  if (!sha) {
+    throw new SiteError(`#${pr.number} is merged but GitHub reports no merge commit yet`, {
+      result: { pr: pr.url },
+      fix: `rerun site land ${pr.number}; a merged PR skips straight to the deploy wait`,
+    });
+  }
   await waitForDeploy(sha, deadline, intervalMs, out);
 
   git(root, 'fetch', '--quiet', 'origin', DEFAULT_BRANCH);

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jdx/jactionlint/main/schema/jactionlint-config.json
+# actionlint's checks; zizmor (checks:workflows) owns the security audits.
+profile: correctness
+
+rules:
+  # A hung step otherwise holds the runner for GitHub's six-hour default.
+  missing-timeout: error
+  # A `-latest` label moves to a new image on GitHub's schedule, outside this
+  # repository's control.
+  mutable-runner-label: error

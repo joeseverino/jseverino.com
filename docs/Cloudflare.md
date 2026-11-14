@@ -37,14 +37,14 @@ Worker. `run_worker_first` in [`wrangler.jsonc`](../wrangler.jsonc) sends only
 307. Static asset requests are not billed as Worker requests.
 
 The adapter writes the static site to `dist/client/` and the Worker with its
-deploy config to `dist/server/` (`wrangler.json`, which `wrangler deploy`
+deploy config to `dist/server/` (`dist/server/wrangler.json`, which `wrangler deploy`
 reads). [`bin/build-csp.ts`](../bin/build-csp.ts) writes the
 Content-Security-Policy into `dist/client/_headers` at build time, so it does not
 depend on the Worker. The assets layer applies `_headers` to static assets only,
 so [`src/middleware.ts`](../src/middleware.ts) gives every response the Worker
 renders the `/*` rule's security headers, with a policy that has no hashes.
 
-[`check-headers.ts`](../tests/audits/check-headers.ts) fails the publish gate if
+[`check-headers.ts`](../tests/audits/check-headers.ts) (`mise run built:headers`) fails if
 the built `_headers` has a leftover placeholder, lists a path twice, lacks a
 `Content-Security-Policy` on `/*`, or lacks the detach-plus-set override on
 `/contact/*`. The edge suite proves the routing and the headers under
@@ -57,7 +57,7 @@ the built `_headers` has a leftover placeholder, lists a path twice, lacks a
 | WAF custom rules | 5, no regex | 2 here, 2 made in the dashboard; one stays free for an incident |
 | Rate-limiting rules | 1; path and verified-bot fields; per IP; 10 s period; 10 s block | 1: `/api/*`, 15 requests per 10 s |
 | API Shield schema validation | Block is the only action | Block on `POST /api/contact` |
-| Workers Rate Limiting binding | available to the Worker | not used yet: the contact and report handlers count in D1 |
+| Workers Rate Limiting binding | available to the Worker | unused: the contact and report handlers count in D1 |
 
 Zone controls (WAF, rate limit, HSTS, API Shield) apply only to hostnames in the
 zone, and workers.dev is outside it. The Worker therefore has no workers.dev
@@ -74,7 +74,8 @@ application on `*-jseverino.severino.workers.dev` covers them all, and they are
 reachable only with a service token. The application holds Service Auth policies alone (decision `non_identity`, include
 rules that name service tokens), with two tokens:
 
-- **CI.** The `deploy` workflow's `preview` and `production` jobs send
+- **CI.** The `preview` workflow's `preview` job and the `deploy` workflow's
+  `production` job send
   `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET` to the version they
   verify. [`bin/lib/access.ts`](../bin/lib/access.ts) attaches them only to
   `https` hosts of one label plus `PREVIEW_HOST_SUFFIX`.
@@ -105,7 +106,22 @@ the dashboard during an incident is never touched.
 | `api-request` | anything but `POST` under `/api/`; `/api/contact` without `application/json`; `/api/csp-report` without `application/csp-report`, `application/reports+json`, or `application/json` (a `; charset` suffix is fine) |
 | `sitedrift-production` | `/__sitedrift*` on `jseverino.com` and `www.jseverino.com` (the route already 404s there; this stops it at the edge) |
 
-At most five custom rules, dashboard rules included. `cloudflare check` reports the total as `rule budget`.
+`cloudflare check` reports the custom rules in use, dashboard rules included,
+against the platform limit as `rule budget`.
+
+## API Shield
+
+[Schema validation](https://developers.cloudflare.com/api-shield/security/schema-validation/)
+checks a request body against an OpenAPI 3 schema at the edge, before the
+Worker runs. `POST /api/contact` is bound to
+[`contracts/contact.openapi.json`](../contracts/contact.openapi.json)'s
+`ContactSubmission` schema, which `mise run sync:contact-openapi` derives from
+[`contracts/contact.v1.json`](../contracts/contact.v1.json); it refuses unknown
+properties (`additionalProperties: false`) and documents each response shape.
+`POST /api/csp-report` has no schema: browsers shape legacy CSP reports and
+Reporting API reports differently, so a schema would refuse real ones. The
+action is Block, the only one offered, so a non-compliant payload costs no
+Worker compute. The binding is declared as `schemaValidation` in `zone.json`.
 
 ## Features that stay off
 
@@ -231,7 +247,7 @@ run through `mise exec --`, which puts the lockfile's wrangler on the `PATH`.
    [`.github/repo.json`](../.github/repo.json) and run `mise run github apply
    --yes` ([GitHub Settings](./GitHub-Settings.md)). Its secret key goes only to
    the Worker, in step 4.
-3. **The deploy credentials.** The `deploy` workflow reads
+3. **The deploy credentials.** The `preview` and `deploy` workflows read
    `CLOUDFLARE_API_TOKEN` from the `production` environment's secrets and
    `CLOUDFLARE_ACCOUNT_ID` from the repository variables. Scope the token to
    this account: Workers Scripts edit, plus D1 read so wrangler can resolve the

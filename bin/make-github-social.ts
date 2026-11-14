@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Generates the 1280x640 GitHub social preview at .github/social-preview.png
 // (uploaded manually in repo settings).
 

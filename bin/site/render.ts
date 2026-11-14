@@ -4,10 +4,10 @@ import path from 'node:path';
 import { parseFrontmatter } from '../../src/lib/frontmatter.ts';
 import { stripArticleChrome, stripRepeatedDescription } from '../../src/lib/writeup-body.ts';
 import { vaultRoot, WRITEUPS_FOLDER } from '../lib/local-paths.ts';
-import { renderMarkdown } from '../lib/render.ts';
-import { optionalString } from '../lib/writeups/store.ts';
 import { assertSlug, EXIT, type Output, SiteError } from './cli.ts';
+import { renderMarkdown } from './markdown.ts';
 import type { RenderResult } from './types.ts';
+import { optionalString } from './writeup-store/store.ts';
 
 const text = (value: unknown): string => optionalString(value) ?? '';
 
@@ -42,7 +42,7 @@ export async function render({
   const { html } = renderMarkdown(stripArticleChrome(stripRepeatedDescription(content, data.description)), 'writeups');
   const result: RenderResult = { slug: name, source, html, next: null };
   if (document) {
-    const { renderDocument } = await import('../lib/render-document.ts');
+    const { renderDocument } = await import('./preview-document.ts');
     const heroSrc = text(data.cover_image);
     result.document = await renderDocument({
       title: text(data.title) || name || 'Preview',

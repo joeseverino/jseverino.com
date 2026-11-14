@@ -1,8 +1,4 @@
-#!/usr/bin/env node
-
 // Prints the Google-style result, metadata, and SEO checks for one built page.
-//
-//   node bin/seo-preview.ts [--result] <url|path|slug>
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,12 +8,12 @@ import { linkHref, metaContent, parseHtml, title } from '../src/lib/html.ts';
 import { SITE, SITE_ORIGIN as siteUrl, writeupPath } from '../src/lib/site-config.ts';
 import { siteRoot } from '../src/lib/site-root.ts';
 import { snapshotPageSlugs, snapshotWriteups } from '../src/lib/snapshot.ts';
-import { cli } from './lib/args.ts';
+import { cli, usageError } from './lib/args.ts';
 import { routeFile } from './lib/routes.ts';
 
 const distRoot = path.join(siteRoot, buildOutDir);
 const siteHost = new URL(siteUrl).hostname;
-const USAGE = `usage: node bin/seo-preview.ts <url|path|slug>
+const USAGE = `usage: node bin/seo-preview.ts [--result] <url|path|slug>
 
 Examples:
   node bin/seo-preview.ts ${SITE.domain}
@@ -75,7 +71,7 @@ function row(label: string, value: string): void {
   console.log(`  ${styleText('dim', label.padEnd(12))} ${value}`);
 }
 
-function check(label: string, ok: boolean, detail: string): void {
+function verdict(label: string, ok: boolean, detail: string): void {
   const mark = ok ? styleText('green', 'PASS'.padEnd(8)) : styleText('yellow', 'REVIEW'.padEnd(8));
   console.log(`  ${mark} ${label.padEnd(13)} ${detail}`);
 }
@@ -88,10 +84,7 @@ const { values, positionals } = cli({
 const resultOnly = values.result;
 const [input] = positionals;
 
-if (!input) {
-  console.error(USAGE);
-  process.exit(2);
-}
+if (!input) usageError(USAGE);
 
 const urlPath = normalizePath(input);
 const file = path.join(distRoot, routeFile(urlPath));
@@ -151,9 +144,9 @@ row('og:image', ogImage || styleText('yellow', 'missing'));
 console.log();
 
 console.log(styleText('bold', 'Checks'));
-check('canonical', new URL(canonical).hostname === siteHost, 'production domain');
-check('title', titleLength >= 20 && titleLength <= 65, 'target 20-65 chars');
-check('description', descriptionLength >= 70 && descriptionLength <= 170, 'target 70-170 chars');
-check('robots', !/noindex/i.test(robots), robots || 'indexable');
-check('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image');
+verdict('canonical', new URL(canonical).hostname === siteHost, 'production domain');
+verdict('title', titleLength >= 20 && titleLength <= 65, 'target 20-65 chars');
+verdict('description', descriptionLength >= 70 && descriptionLength <= 170, 'target 70-170 chars');
+verdict('robots', !/noindex/i.test(robots), robots || 'indexable');
+verdict('Open Graph', Boolean(ogTitle && ogDescription && ogImage), 'title, description, image');
 console.log();
