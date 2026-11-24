@@ -23,7 +23,7 @@ this repository's rules, each with a `description`:
   and the Playwright image the `e2e` job runs in move together, majors included,
   since the image's browsers serve only the release of the same version.
 - Each major comes on its own, except the holds below, which are disabled.
-- Renovate's mise manager moves each mise tool, Node included, across
+- Renovate's mise manager moves each mise tool, Node and npm included, across
   `mise.toml` and `mise.lock` together.
 - Commits go through GitHub's API, so they carry the signature the `main`
   ruleset requires. Nothing merges on its own: each pull request runs the
@@ -34,15 +34,15 @@ validator, at the release the task pins.
 
 ## Runtime and package manager
 
-Node is pinned once, in [`mise.toml`](../mise.toml): an exact LTS release.
-`engines.node` in `package.json` names the same major. npm is pinned once, by
-`packageManager` in `package.json`: mise reads it
-(`idiomatic_version_file_enable_tools`) and installs that npm release beside
-Node, locked in `mise.lock`, in place of the one Node bundles.
+Node and npm are pinned once, in [`mise.toml`](../mise.toml): Node an exact
+LTS release, and npm the release mise installs beside it, locked in
+`mise.lock`, in place of the one Node bundles. Renovate's mise manager moves
+both with their `mise.lock` entries, and its npm manager writes
+`package-lock.json` with the npm `mise.toml` names.
 `mise run checks:repo-policy` fails when the running Node's major.minor
-disagrees with `mise.toml` or the npm on `PATH` is not the `packageManager`
-release. Node's patch drift passes, so a Node security release does not block
-the gates before the pin moves.
+disagrees with `mise.toml` or the npm on `PATH` is not its release. Node's
+patch drift passes, so a Node security release does not block the gates before
+the pin moves.
 
 [`.npmrc`](../.npmrc) sets `allow-remote=root`: npm refuses a tarball URL
 dependency by default, and `severino-brand` installs from its GitHub release.
@@ -53,8 +53,7 @@ so a bump moves every workflow at once. mise itself is pinned once, by
 release the setup action installs, and Renovate moves it after the same
 release-age hold it gives every other update, in a pull request of its own
 (`.github/renovate.json` says why). A Node major also
-moves `engines.node` and `@types/node`, whose majors Renovate holds for that
-reason.
+moves `@types/node`, whose majors Renovate holds for that reason.
 
 ## Deliberate holds
 

@@ -24,9 +24,6 @@ min_version = "2026.11.14"
 [settings]
 # [deps.npm] needs it.
 experimental = true
-# npm installs as its own tool at the release packageManager names, never the
-# one Node bundles.
-idiomatic_version_file_enable_tools = ["npm"]
 # Every tool installs from mise.lock's URLs and checksums, which cover these
 # platforms: the Mac and the Linux CI runners.
 locked = true
@@ -92,9 +89,10 @@ depends = ["packages"]
 
 # A tool only one gate or task runs is lazy, installed on its first run.
 [tools]
-# Node is pinned here alone, and checks:repo-policy holds engines.node to it.
-# npm is pinned by package.json's packageManager (see [settings]).
 node = "26.13.1"
+# npm installs as its own tool, never the one Node bundles; Renovate's npm
+# manager writes package-lock.json with this release.
+npm = "12.2.3"
 lychee = "0.24.2"
 biome = "2.6.7"
 zizmor = { version = "1.33.1", lazy = true }
