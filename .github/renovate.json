@@ -55,12 +55,6 @@
       "enabled": false
     },
     {
-      "description": "TypeScript 7.0 ships no compiler API. astro check runs Astro's language tools, which load it (@astrojs/check declares typescript ^5.0.0 || ^6.0.0), and checks:d1 parses the source with it, so the majors are held (docs/Dependencies.md).",
-      "matchPackageNames": ["typescript"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
-    },
-    {
       "description": "The types describe the Node runtime mise.toml pins; a newer major would type APIs that Node does not have, so its majors move with a Node major (docs/Dependencies.md).",
       "matchPackageNames": ["@types/node"],
       "matchUpdateTypes": ["major"],

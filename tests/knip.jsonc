@@ -28,8 +28,10 @@
   },
   "ignoreDependencies": [
     // Command-line tools the gates under mise-tasks/ run: astro check
-    // (checks:astro), html-validate (built:html), jscpd (checks:duplication).
+    // (checks:astro), tsc (checks:types), html-validate (built:html), jscpd
+    // (checks:duplication).
     "@astrojs/check",
+    "@typescript/native",
     "html-validate",
     "jscpd",
     // Spawned from node_modules/.bin by bin/lighthouse-check.ts.

@@ -1,7 +1,8 @@
 # Dependencies
 
 How dependencies are updated, the runtime pins, the packages held below their
-latest major on purpose, and how an update is reviewed before it merges.
+latest major on purpose, the bridges that run a newest release beside the one
+a dependent needs, and how an update is reviewed before it merges.
 
 ## Updates
 
@@ -62,10 +63,19 @@ the `satteri` hold caps its 0.x line, and the `wrangler` hold disables all of it
 
 | Package | Held at | Revisit when |
 | :--- | :--- | :--- |
-| `typescript` | 6.x | Astro's language tools support 7.x and TypeScript ships its new compiler API. |
 | `@types/node` | 26.x | `mise.toml` moves to a newer Node major. |
 | `wrangler` | 4.160.0, exact | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin --min-release-age=0` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
 | `satteri` | 0.11.x | `@astrojs/markdown-satteri` depends on a newer satteri. |
+
+## Bridges
+
+A package a dependent cannot load at its newest release yet is installed beside
+the release the dependent needs, in the vendor's own form, so the repository
+itself runs the newest.
+
+| Package | Bridge | Remove when |
+| :--- | :--- | :--- |
+| `typescript` | `typescript` is the alias `npm:@typescript/typescript6` and `@typescript/native` is `npm:typescript@7`: `tsc` is TypeScript 7, and `@astrojs/check`, which declares `typescript ^5.0.0 \|\| ^6.0.0` and loads the compiler API 7.0 does not ship, imports 6. | `@astrojs/check` supports TypeScript 7, or TypeScript 7.1 ships its compiler API. |
 
 ## No overrides
 
