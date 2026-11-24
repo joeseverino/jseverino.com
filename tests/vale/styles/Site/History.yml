@@ -9,30 +9,30 @@ level: error
 ignorecase: true
 scope: raw
 tokens:
-  - used to be
-  - the first version
-  - the old version
-  - reached production
-  - turned out
-  - until now
-  - until recently
-  - this regression
-  - the bug (?:that|was)
-  - shipped (?:once|unstyled|for a while)
-  - we (?:had|used|found|added|removed|changed|tried)
-  - now also
-  - evaluated on
-  - replaced the
-  - moved (?:out|into|from)
-  - started with
-  - went back
-  - was (?:split|moved|added|removed|renamed)
-  - not used yet
-  - pending a decision
-  - now (?:serves|ships|runs|uses|lives|carries|holds)
+  - used\s+to\s+be
+  - the\s+first\s+version
+  - the\s+old\s+version
+  - reached\s+production
+  - turned\s+out
+  - until\s+now
+  - until\s+recently
+  - this\s+regression
+  - the\s+bug\s+(?:that|was)
+  - shipped\s+(?:once|unstyled|for\s+a\s+while)
+  - we\s+(?:had|used|found|added|removed|changed|tried)
+  - now\s+also
+  - evaluated\s+on
+  - replaced\s+the
+  - moved\s+(?:out|into|from)
+  - started\s+with
+  - went\s+back
+  - was\s+(?:split|moved|added|removed|renamed)
+  - not\s+used\s+yet
+  - pending\s+a\s+decision
+  - now\s+(?:serves|ships|runs|uses|lives|carries|holds)
   - previously
   - originally
   - formerly
-  - the legacy platform
-  - (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4}
+  - the\s+legacy\s+platform
+  - (?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4}
   - '(?<=\()\d{4}-\d{2}-\d{2}(?=[),])'
