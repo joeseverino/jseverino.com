@@ -6,7 +6,7 @@ level: error
 ignorecase: true
 scope: raw
 tokens:
-  - publish gate
-  - diagnostic gate
-  - ship gate
-  - every diagnosis
+  - publish\s+gate
+  - diagnostic\s+gate
+  - ship\s+gate
+  - every\s+diagnosis

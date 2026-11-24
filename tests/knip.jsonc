@@ -18,18 +18,16 @@
     // Loaded by path through Vite's ssrLoadModule in bin/site/preview-document.ts.
     "src/components/content/WriteupPreview.astro"
   ],
-  "astro": {
-    // The visual suite's build config beside the site's, passed to astro as --config.
-    "config": ["astro.config.ts", "tests/fixtures/astro.config.ts"]
-  },
   "playwright": {
     // The suites' configs, which browser:* passes to playwright test -c.
     "config": ["tests/playwright*.config.ts"]
   },
   "ignoreDependencies": [
     // Command-line tools the gates under mise-tasks/ run: astro check
-    // (checks:astro), html-validate (built:html), jscpd (checks:duplication).
+    // (checks:astro), tsc (checks:types), html-validate (built:html), jscpd
+    // (checks:duplication).
     "@astrojs/check",
+    "@typescript/native",
     "html-validate",
     "jscpd",
     // Spawned from node_modules/.bin by bin/lighthouse-check.ts.

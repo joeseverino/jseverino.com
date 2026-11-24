@@ -29,7 +29,7 @@ runs:
     # install and every later `mise run` see the same list. The action's cache
     # of installed tools stays off: nothing verifies a restored install.
     - name: Install mise and the tools
-      uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+      uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
       with:
         version: ${{ steps.mise.outputs.version }}
         cache: false

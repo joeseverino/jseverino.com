@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro and each major on their own, security fixes at once.",
+  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro, mise and each major on their own, security fixes at once.",
   "extends": ["config:best-practices", ":semanticCommits", ":semanticCommitTypeAll(build)", ":semanticCommitScope(deps)"],
   "schedule": ["* * * * 1"],
   "minimumReleaseAge": "7 days",
@@ -33,6 +33,12 @@
       "groupSlug": "weekly"
     },
     {
+      "description": "Renovate's mise manager runs `mise lock` on every dependency a branch moves in mise.toml, this file's regex dependencies included, and mise refuses to lock min_version's jdx/mise, which is no tool; no Renovate option keeps another manager's dependency out of that command, so min_version moves on a branch where no mise tool does.",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["jdx/mise"],
+      "groupName": "mise"
+    },
+    {
       "description": "Astro and its integrations release together and are tested together.",
       "matchPackageNames": ["astro", "@astrojs/**"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
@@ -50,15 +56,14 @@
       "automerge": false
     },
     {
-      "description": "@astrojs/cloudflare builds and runs dev through @cloudflare/vite-plugin 1.x, which pins its own wrangler and miniflare to exact releases; any other wrangler installs a second copy of both and of the native workerd binary, which checks:repo-policy fails. wrangler moves by hand to the release the plugin pins (docs/Dependencies.md).",
-      "matchPackageNames": ["wrangler"],
-      "enabled": false
+      "description": "@cloudflare/vite-plugin pins wrangler and miniflare behind wrangler's releases; package.json's overrides give it the root wrangler and that wrangler's miniflare, so one copy of each and of workerd installs, which checks:repo-policy enforces. The two move in one pull request (docs/Dependencies.md).",
+      "matchPackageNames": ["wrangler", "miniflare"],
+      "groupName": "wrangler"
     },
     {
-      "description": "TypeScript 7.0 ships no compiler API. astro check runs Astro's language tools, which load it (@astrojs/check declares typescript ^5.0.0 || ^6.0.0), and checks:d1 parses the source with it, so the majors are held (docs/Dependencies.md).",
-      "matchPackageNames": ["typescript"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "description": "wrangler depends on miniflare's beta line, which npm's latest tag does not name.",
+      "matchPackageNames": ["miniflare"],
+      "followTag": "beta"
     },
     {
       "description": "The types describe the Node runtime mise.toml pins; a newer major would type APIs that Node does not have, so its majors move with a Node major (docs/Dependencies.md).",

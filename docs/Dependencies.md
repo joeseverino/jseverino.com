@@ -1,7 +1,8 @@
 # Dependencies
 
 How dependencies are updated, the runtime pins, the packages held below their
-latest major on purpose, and how an update is reviewed before it merges.
+latest major on purpose, the bridges that run a newest release beside the one
+a dependent needs, and how an update is reviewed before it merges.
 
 ## Updates
 
@@ -22,7 +23,7 @@ this repository's rules, each with a `description`:
   and the Playwright image the `e2e` job runs in move together, majors included,
   since the image's browsers serve only the release of the same version.
 - Each major comes on its own, except the holds below, which are disabled.
-- Renovate's mise manager moves each mise tool, Node included, across
+- Renovate's mise manager moves each mise tool, Node and npm included, across
   `mise.toml` and `mise.lock` together.
 - Commits go through GitHub's API, so they carry the signature the `main`
   ruleset requires. Nothing merges on its own: each pull request runs the
@@ -33,15 +34,15 @@ validator, at the release the task pins.
 
 ## Runtime and package manager
 
-Node is pinned once, in [`mise.toml`](../mise.toml): an exact LTS release.
-`engines.node` in `package.json` names the same major. npm is pinned once, by
-`packageManager` in `package.json`: mise reads it
-(`idiomatic_version_file_enable_tools`) and installs that npm release beside
-Node, locked in `mise.lock`, in place of the one Node bundles.
+Node and npm are pinned once, in [`mise.toml`](../mise.toml): Node an exact
+LTS release, and npm the release mise installs beside it, locked in
+`mise.lock`, in place of the one Node bundles. Renovate's mise manager moves
+both with their `mise.lock` entries, and its npm manager writes
+`package-lock.json` with the npm `mise.toml` names.
 `mise run checks:repo-policy` fails when the running Node's major.minor
-disagrees with `mise.toml` or the npm on `PATH` is not the `packageManager`
-release. Node's patch drift passes, so a Node security release does not block
-the gates before the pin moves.
+disagrees with `mise.toml` or the npm on `PATH` is not its release. Node's
+patch drift passes, so a Node security release does not block the gates before
+the pin moves.
 
 [`.npmrc`](../.npmrc) sets `allow-remote=root`: npm refuses a tarball URL
 dependency by default, and `severino-brand` installs from its GitHub release.
@@ -50,30 +51,41 @@ CI installs Node from `mise.toml` and `mise.lock` through `jdx/mise-action`,
 so a bump moves every workflow at once. mise itself is pinned once, by
 `min_version` in `mise.toml`: it is the floor every machine must meet and the
 release the setup action installs, and Renovate moves it after the same
-release-age hold it gives every other update. A Node major also
-moves `engines.node` and `@types/node`, whose majors Renovate holds for that
-reason.
+release-age hold it gives every other update, in a pull request of its own
+(`.github/renovate.json` says why). A Node major also
+moves `@types/node`, whose majors Renovate holds for that reason.
 
 ## Deliberate holds
 
 Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json), whose
 `description` gives the reason: a major hold disables the package's major updates,
-the `satteri` hold caps its 0.x line, and the `wrangler` hold disables all of its updates.
+and the `satteri` hold caps its 0.x line.
 
 | Package | Held at | Revisit when |
 | :--- | :--- | :--- |
-| `typescript` | 6.x | Astro's language tools support 7.x and TypeScript ships its new compiler API. |
 | `@types/node` | 26.x | `mise.toml` moves to a newer Node major. |
-| `wrangler` | 4.160.0, exact | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin --min-release-age=0` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
 | `satteri` | 0.11.x | `@astrojs/markdown-satteri` depends on a newer satteri. |
 
-## No overrides
+## Bridges
 
-`package.json` has no `overrides` block: the lockfile installs one copy each of
-`esbuild`, `sharp`, `workerd`, `miniflare`, and `wrangler` across Astro, Vite, and
-the Cloudflare adapter, which `checks:repo-policy` enforces. An override is added only for a
-duplicate native binary or a split `esbuild`, with a row here naming the
-dependent that pins it and the condition for removal.
+A dependent that lags a package's newest release gets a bridge in place of a
+hold, so the repository runs the newest: the vendor's alias pair, or an npm
+override in `package.json`.
+
+| Package | Bridge | Remove when |
+| :--- | :--- | :--- |
+| `typescript` | `typescript` is the alias `npm:@typescript/typescript6` and `@typescript/native` is `npm:typescript@7`: `tsc` is TypeScript 7, and `@astrojs/check`, which declares `typescript ^5.0.0 \|\| ^6.0.0` and loads the compiler API 7.0 does not ship, imports 6. | `@astrojs/check` supports TypeScript 7, or TypeScript 7.1 ships its compiler API. |
+| `wrangler`, `miniflare` | `@cloudflare/vite-plugin`, which the adapter builds and runs dev through, pins both exactly, behind wrangler's releases. `overrides` gives it `$wrangler`, the root pin, and that wrangler's `miniflare`, which Renovate moves in the same pull request. | `@cloudflare/vite-plugin` pins the root `wrangler` or a newer one. |
+
+## One copy of each toolchain package
+
+The lockfile installs one copy each of `esbuild`, `sharp`, `workerd`,
+`miniflare`, and `wrangler` across Astro, Vite, and the Cloudflare adapter,
+which `checks:repo-policy` enforces. A second copy is settled by a pin, a hold
+or a bridge above, then `npm dedupe`: an update applied to an existing lock can
+leave a nested copy of a package the new versions already share. An override is
+added only for a duplicate native binary or a split `esbuild`, with a row under
+Bridges naming the dependent that pins it and the condition for removal.
 
 ## Advisories
 

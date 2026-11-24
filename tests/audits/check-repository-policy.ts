@@ -34,10 +34,12 @@ if (import.meta.main) {
     failures.push({ problem, fix });
   };
 
-  // mise.toml is the one Node pin. Major.minor must match it; patch drift is allowed so a
-  // Node security patch doesn't block every gate until the pin is bumped.
-  const expectedNode = /^node = "(\d+\.\d+\.\d+)"$/m.exec(read('mise.toml'))?.[1];
-  if (!expectedNode) abort('repository policy', 'mise.toml pins no exact node = "x.y.z"', 'fix: pin node in mise.toml as node = "x.y.z"');
+  // mise.toml is the one Node and npm pin. Node's major.minor must match it; patch drift is allowed
+  // so a Node security patch doesn't block every gate until the pin is bumped.
+  const pin = (tool: string): string =>
+    new RegExp(`^${tool} = "(\\d+\\.\\d+\\.\\d+)"$`, 'm').exec(read('mise.toml'))?.[1] ??
+    abort('repository policy', `mise.toml pins no exact ${tool} = "x.y.z"`, `fix: pin ${tool} in mise.toml as ${tool} = "x.y.z"`);
+  const expectedNode = pin('node');
   const actualNode = process.versions.node;
   const majorMinor = (version: string): string => version.split('.').slice(0, 2).join('.');
   if (majorMinor(actualNode) !== majorMinor(expectedNode)) {
@@ -47,39 +49,25 @@ if (import.meta.main) {
     );
   }
 
-  interface Manifest {
-    engines?: { node?: string };
-    packageManager?: string;
-    scripts?: Record<string, string>;
-  }
-
-  const packageJson: Manifest = JSON.parse(read('package.json'));
-
   // Every command is a mise task, so npm scripts would be a second, ungated entry point.
+  const packageJson: { scripts?: Record<string, string> } = JSON.parse(read('package.json'));
   if (packageJson.scripts) fail('package.json declares scripts; every command is a mise task', 'move each script to a mise task, then delete scripts');
 
-  const nodeMajor = expectedNode.split('.')[0];
-  if (packageJson.engines?.node !== `>=${nodeMajor}`) {
-    fail(`package.json engines.node is not ">=${nodeMajor}", the major of mise.toml's node`, `set engines.node to ">=${nodeMajor}"`);
-  }
-  // mise installs the npm packageManager names (idiomatic_version_file_enable_tools), so the npm
-  // on PATH is that release exactly, never the one Node bundles.
-  const npmPin = /^npm@(\d+\.\d+\.\d+)$/.exec(packageJson.packageManager ?? '');
-  if (!npmPin) fail('package.json packageManager pins no exact npm release', 'set packageManager to npm@x.y.z');
+  // The npm on PATH is mise.toml's release exactly, never the one Node bundles.
+  const expectedNpm = pin('npm');
   const npmVersion = runSync('npm', ['--version'], { cwd: root });
-  if (npmPin && npmVersion !== npmPin[1]) {
-    fail(`npm ${npmVersion} is on PATH; packageManager pins ${packageJson.packageManager}`, 'run mise install, which installs the npm packageManager names');
-  }
+  if (npmVersion !== expectedNpm)
+    fail(`npm ${npmVersion} is on PATH; mise.toml pins npm ${expectedNpm}`, 'run the gate through mise run, which puts the pinned npm on PATH');
 
   // A second copy of a native binary or of the Workers toolchain is a package two
-  // dependents disagree on; docs/Dependencies.md says which pin or hold settles it.
+  // dependents disagree on; docs/Dependencies.md says which pin, hold or bridge settles it.
   const lock: { packages: Record<string, unknown> } = JSON.parse(read('package-lock.json'));
   for (const name of ['esbuild', 'sharp', 'workerd', 'miniflare', 'wrangler']) {
     const copies = Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
     if (copies.length > 1) {
       fail(
         `package-lock.json installs ${copies.length} copies of ${name}: ${copies.join(', ')}`,
-        `apply the pin or hold docs/Dependencies.md names for ${name}, then npm install`,
+        `apply the pin, hold or bridge docs/Dependencies.md names for ${name}, then npm dedupe`,
       );
     }
   }
@@ -166,8 +154,8 @@ if (import.meta.main) {
     fail(`type-check suppressions without a reason: ${suppressed.join(', ')}`, 'fix the type error, or write @ts-expect-error <reason>');
   }
 
-  // A job that enables only some tools and leaves npm out runs the npm Node bundles, not the
-  // packageManager release.
+  // A job that enables only some tools and leaves npm out runs the npm Node bundles, not
+  // mise.toml's release.
   type Env = { env?: Record<string, unknown> };
   for (const file of tracked.filter((name) => /^\.github\/workflows\/[^/]+\.ya?ml$/.test(name))) {
     const { env: workflowEnv = {}, jobs = {} } = load(read(file)) as Env & { jobs?: Record<string, Env> };
@@ -181,7 +169,7 @@ if (import.meta.main) {
 
   finish(
     failures,
-    `Node ${actualNode}, ${packageJson.packageManager}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; no private marker in the public sources; every shebang on an executable file; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
+    `Node ${actualNode}, npm ${npmVersion}; one copy of each native package; compatibility date ${compatibilityDate} within ${maxTrailDays} days of workerd's ${supportedDate}; no npm scripts; component styles in src/styles; no forbidden files; no private marker in the public sources; every shebang on an executable file; TypeScript only, no unexplained type-check suppressions; every workflow job enables npm beside node`,
     { heading: 'repository policy failed:', bullet: '- ' },
   );
 }

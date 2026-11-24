@@ -27,18 +27,18 @@ tokens:
   - battle[- ]tested
   - zero[- ]drift
   - self[- ]healing
-  - continuous trust
-  - unified verification
-  - paradigm shift
+  - continuous\s+trust
+  - unified\s+verification
+  - paradigm\s+shift
   - synerg(?:y|ies|istic)
   - delv(?:e|es|ed|ing)
   - fast[- ]paced
   - ever[- ](?:evolving|changing)
-  - (?:unlock|harness|leverage) the power
-  - elevate your
-  - it['’]s worth noting
-  - needless to say
-  - in conclusion
+  - (?:unlock|harness|leverage)\s+the\s+power
+  - elevate\s+your
+  - it['’]s\s+worth\s+noting
+  - needless\s+to\s+say
+  - in\s+conclusion
   - robust
   - comprehensive(?:ly)?
   - powerful(?:ly)?
