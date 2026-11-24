@@ -72,14 +72,14 @@ if (import.meta.main) {
   }
 
   // A second copy of a native binary or of the Workers toolchain is a package two
-  // dependents disagree on; docs/Dependencies.md says which pin or hold settles it.
+  // dependents disagree on; docs/Dependencies.md says which pin, hold or bridge settles it.
   const lock: { packages: Record<string, unknown> } = JSON.parse(read('package-lock.json'));
   for (const name of ['esbuild', 'sharp', 'workerd', 'miniflare', 'wrangler']) {
     const copies = Object.keys(lock.packages).filter((key) => key === `node_modules/${name}` || key.endsWith(`/node_modules/${name}`));
     if (copies.length > 1) {
       fail(
         `package-lock.json installs ${copies.length} copies of ${name}: ${copies.join(', ')}`,
-        `apply the pin or hold docs/Dependencies.md names for ${name}, then npm install`,
+        `apply the pin, hold or bridge docs/Dependencies.md names for ${name}, then npm dedupe`,
       );
     }
   }

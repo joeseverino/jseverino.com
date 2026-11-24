@@ -59,31 +59,33 @@ reason.
 
 Each hold is a rule in [`.github/renovate.json`](../.github/renovate.json), whose
 `description` gives the reason: a major hold disables the package's major updates,
-the `satteri` hold caps its 0.x line, and the `wrangler` hold disables all of its updates.
+and the `satteri` hold caps its 0.x line.
 
 | Package | Held at | Revisit when |
 | :--- | :--- | :--- |
 | `@types/node` | 26.x | `mise.toml` moves to a newer Node major. |
-| `wrangler` | 4.160.0, exact | `@cloudflare/vite-plugin` pins a newer `wrangler` (`npm update @cloudflare/vite-plugin --min-release-age=0` moves the plugin, which an adapter upgrade leaves where it is); this pin moves to the same release. |
 | `satteri` | 0.11.x | `@astrojs/markdown-satteri` depends on a newer satteri. |
 
 ## Bridges
 
-A package a dependent cannot load at its newest release yet is installed beside
-the release the dependent needs, in the vendor's own form, so the repository
-itself runs the newest.
+A dependent that lags a package's newest release gets a bridge in place of a
+hold, so the repository runs the newest: the vendor's alias pair, or an npm
+override in `package.json`.
 
 | Package | Bridge | Remove when |
 | :--- | :--- | :--- |
 | `typescript` | `typescript` is the alias `npm:@typescript/typescript6` and `@typescript/native` is `npm:typescript@7`: `tsc` is TypeScript 7, and `@astrojs/check`, which declares `typescript ^5.0.0 \|\| ^6.0.0` and loads the compiler API 7.0 does not ship, imports 6. | `@astrojs/check` supports TypeScript 7, or TypeScript 7.1 ships its compiler API. |
+| `wrangler`, `miniflare` | `@cloudflare/vite-plugin`, which the adapter builds and runs dev through, pins both exactly, behind wrangler's releases. `overrides` gives it `$wrangler`, the root pin, and that wrangler's `miniflare`, which Renovate moves in the same pull request. | `@cloudflare/vite-plugin` pins the root `wrangler` or a newer one. |
 
-## No overrides
+## One copy of each toolchain package
 
-`package.json` has no `overrides` block: the lockfile installs one copy each of
-`esbuild`, `sharp`, `workerd`, `miniflare`, and `wrangler` across Astro, Vite, and
-the Cloudflare adapter, which `checks:repo-policy` enforces. An override is added only for a
-duplicate native binary or a split `esbuild`, with a row here naming the
-dependent that pins it and the condition for removal.
+The lockfile installs one copy each of `esbuild`, `sharp`, `workerd`,
+`miniflare`, and `wrangler` across Astro, Vite, and the Cloudflare adapter,
+which `checks:repo-policy` enforces. A second copy is settled by a pin, a hold
+or a bridge above, then `npm dedupe`: an update applied to an existing lock can
+leave a nested copy of a package the new versions already share. An override is
+added only for a duplicate native binary or a split `esbuild`, with a row under
+Bridges naming the dependent that pins it and the condition for removal.
 
 ## Advisories
 
