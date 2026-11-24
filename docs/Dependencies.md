@@ -51,7 +51,8 @@ CI installs Node from `mise.toml` and `mise.lock` through `jdx/mise-action`,
 so a bump moves every workflow at once. mise itself is pinned once, by
 `min_version` in `mise.toml`: it is the floor every machine must meet and the
 release the setup action installs, and Renovate moves it after the same
-release-age hold it gives every other update. A Node major also
+release-age hold it gives every other update, in a pull request of its own
+(`.github/renovate.json` says why). A Node major also
 moves `engines.node` and `@types/node`, whose majors Renovate holds for that
 reason.
 

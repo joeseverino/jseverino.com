@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro and each major on their own, security fixes at once.",
+  "description": "Every pin in the repository, proposed as one weekly pull request, sitedrift, Astro, mise and each major on their own, security fixes at once.",
   "extends": ["config:best-practices", ":semanticCommits", ":semanticCommitTypeAll(build)", ":semanticCommitScope(deps)"],
   "schedule": ["* * * * 1"],
   "minimumReleaseAge": "7 days",
@@ -31,6 +31,12 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "dependencies",
       "groupSlug": "weekly"
+    },
+    {
+      "description": "Renovate's mise manager runs `mise lock` on every dependency a branch moves in mise.toml, this file's regex dependencies included, and mise refuses to lock min_version's jdx/mise, which is no tool; no Renovate option keeps another manager's dependency out of that command, so min_version moves on a branch where no mise tool does.",
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["jdx/mise"],
+      "groupName": "mise"
     },
     {
       "description": "Astro and its integrations release together and are tested together.",
