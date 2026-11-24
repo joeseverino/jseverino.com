@@ -18,10 +18,6 @@
     // Loaded by path through Vite's ssrLoadModule in bin/site/preview-document.ts.
     "src/components/content/WriteupPreview.astro"
   ],
-  "astro": {
-    // The visual suite's build config beside the site's, passed to astro as --config.
-    "config": ["astro.config.ts", "tests/fixtures/astro.config.ts"]
-  },
   "playwright": {
     // The suites' configs, which browser:* passes to playwright test -c.
     "config": ["tests/playwright*.config.ts"]
