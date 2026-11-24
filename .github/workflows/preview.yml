@@ -74,6 +74,11 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ github.token }}
 
+      # The verifier's expected headers come from public/_headers, and the checkout is main's: it
+      # takes the pull request's own from its build, read as data, so a header change verifies.
+      - name: Hold the verifier to the build's headers
+        run: cp dist/_headers.template public/_headers
+
       - name: Wrap the build for review
         run: mise run preview:wrap
         env:
