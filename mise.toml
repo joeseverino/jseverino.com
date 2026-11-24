@@ -19,7 +19,7 @@
 
 # The mise these tasks run on: the floor for every machine and the release CI
 # installs (.github/actions/setup). Renovate moves it after its release-age hold.
-min_version = "2026.11.7"
+min_version = "2026.11.14"
 
 [settings]
 # [deps.npm] needs it.
@@ -97,13 +97,13 @@ depends = ["packages"]
 node = "26.13.1"
 lychee = "0.24.2"
 biome = "2.6.7"
-zizmor = { version = "1.32.0", lazy = true }
+zizmor = { version = "1.33.1", lazy = true }
 jactionlint = { version = "2.6.0", lazy = true }
 # checks:shellcheck, and jactionlint on every workflow `run:` script.
 shellcheck = { version = "0.11.0", lazy = true }
 # make:font's uvx.
-uv = { version = "0.13.8", lazy = true }
-vale = { version = "3.27.0", lazy = true }
+uv = { version = "0.13.9", lazy = true }
+vale = { version = "3.28.1", lazy = true }
 
 # ------------------------------------------------------------ entry points
 # The aggregates CI's jobs and the inner loop run, and the builds they serve.
